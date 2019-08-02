@@ -89,6 +89,19 @@ if not exist %BOOST_FILES:~0,-4%* (
   del %BOOST_FILES%
 )
 
+if not exist sentry-cli.exe (
+  echo Installing sentry-cli
+  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/1.41.2/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+)
+
+if not exist breakpad-tools-windows (
+  echo Installing breakpad tools for Windows
+  wget %WGET_ARGS% "https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip"
+  echo Unzipping breakpad tools
+  unzip %UNZIP_ARGS% breakpad-tools-windows.zip -d breakpad-tools-windows
+  del breakpad-tools-windows.zip
+)
+
 if not exist ..\..\src\gwt\lib (
   mkdir ..\..\src\gwt\lib
 )
@@ -164,5 +177,7 @@ popd
 if not defined RSTUDIO_SKIP_QT (
   call install-qt-sdk-win.cmd
 )
+
+regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd

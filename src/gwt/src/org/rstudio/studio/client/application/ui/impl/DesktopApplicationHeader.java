@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,9 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -52,7 +54,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
@@ -70,14 +72,9 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class DesktopApplicationHeader implements ApplicationHeader
+public class DesktopApplicationHeader implements ApplicationHeader,
+                                      WebApplicationHeaderOverlay.Context
 {
-   public interface Binder
-         extends CommandBinder<Commands, DesktopApplicationHeader>
-   {
-   }
-   private static Binder binder_ = GWT.create(Binder.class);
-
    public DesktopApplicationHeader()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -90,7 +87,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           ApplicationServerOperations server, 
                           Provider<DesktopHooks> pDesktopHooks,
                           Provider<CodeSearch> pCodeSearch,
-                          Provider<UIPrefs> pUIPrefs,
+                          Provider<UserPrefs> pUIPrefs,
                           ErrorManager errorManager,
                           GlobalDisplay globalDisplay,
                           ApplicationQuit appQuit)
@@ -103,6 +100,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
       server_ = server;
       appQuit_ = appQuit;
       binder_.bind(commands, this);
+      overlay_ = new WebApplicationHeaderOverlay();
+
       commands.mainMenu(new DesktopMenuCallback());
 
       pDesktopHooks.get();
@@ -123,7 +122,15 @@ public class DesktopApplicationHeader implements ApplicationHeader
             
             isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get()); 
             toolbar_.completeInitialization(sessionInfo);
-            
+
+            if (Desktop.isRemoteDesktop())
+            {
+               overlay_.addRVersionsToolbar(DesktopApplicationHeader.this);
+               overlay_.addSessionsToolbar(DesktopApplicationHeader.this);
+            }
+
+            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
+
             new JSObjectStateValue(
                   "updates",
                   "ignoredUpdates",
@@ -180,9 +187,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       });
       
-      toolbar_ = new GlobalToolbar(commands, 
-                                   events, 
-                                   pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
@@ -354,10 +359,12 @@ public class DesktopApplicationHeader implements ApplicationHeader
       if (result.getUpdateVersion().length() > 0 &&
           !ignoredUpdate)
       {
-         ArrayList<String> buttonLabels = new ArrayList<String>();
-         ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
+         ArrayList<String> buttonLabels = new ArrayList<>();
+         ArrayList<String> elementIds = new ArrayList<>();
+         ArrayList<Operation> buttonOperations = new ArrayList<>();
          
          buttonLabels.add("Quit and Download...");
+         elementIds.add(ElementIds.DIALOG_YES_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
@@ -375,6 +382,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          });
 
          buttonLabels.add("Remind Later");
+         elementIds.add(ElementIds.DIALOG_NO_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
@@ -388,6 +396,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
          if (result.getUpdateUrgency() == 0)
          {
             buttonLabels.add("Ignore Update");
+            elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
                public void execute()
@@ -401,7 +410,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION, 
                "Update Available", 
                result.getUpdateMessage(), 
-               buttonLabels, 
+               buttonLabels,
+               elementIds,
                buttonOperations, 0);
       }
       else if (manual) 
@@ -439,15 +449,94 @@ public class DesktopApplicationHeader implements ApplicationHeader
          return focusElem.hasClassName("ace_text-input");
       return false;
    }
-   
+
+   @Override
+   public void addCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addLeftCommand(Widget widget)
+   {
+      toolbar_.addLeftWidget(widget);
+   }
+
+   @Override
+   public void addLeftCommand(Widget widget, String width)
+   {
+      toolbar_.addLeftWidget(widget);
+   }
+
+   @Override
+   public void addRightCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addRightCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addProjectCommand(Widget widget)
+   {
+
+   }
+
+   @Override
+   public Widget addProjectCommandSeparator()
+   {
+      return null;
+   }
+
+   @Override
+   public void addProjectRightCommand(Widget widget)
+   {
+      toolbar_.addRightWidget(widget);
+   }
+
+   @Override
+   public Widget addProjectRightCommandSeparator()
+   {
+      return toolbar_.addRightSeparator();
+   }
+
+   @Override
+   public void addUserCommand(Widget widget)
+   {
+
+   }
+
+   @Override
+   public AppMenuBar getMainMenu()
+   {
+      return null;
+   }
+
+   public interface Binder
+         extends CommandBinder<Commands, DesktopApplicationHeader>
+   {
+   }
+
+   private static Binder binder_ = GWT.create(Binder.class);
    private Session session_;
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;
    private GlobalDisplay globalDisplay_;
-   Provider<UIPrefs> pUIPrefs_;
+   Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_; 
    private Boolean isFlatTheme_ = false;
+   private WebApplicationHeaderOverlay overlay_;
 }

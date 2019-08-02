@@ -34,7 +34,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -73,6 +72,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
@@ -115,7 +115,8 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -207,7 +208,7 @@ public class Source implements InsertSourceHandler,
                                     HasSelectionHandlers<Integer>
    {
       void addTab(Widget widget,
-                  ImageResource icon,
+                  FileIcon icon,
                   String docId,
                   String name,
                   String tooltip,
@@ -236,7 +237,7 @@ public class Source implements InsertSourceHandler,
       void ensureVisible();
 
       void renameTab(Widget child,
-                     ImageResource icon,
+                     FileIcon icon,
                      String value,
                      String tooltip);
 
@@ -262,7 +263,8 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UIPrefs uiPrefs,
+                 UserPrefs userPrefs,
+                 UserState userState,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
@@ -283,7 +285,8 @@ public class Source implements InsertSourceHandler,
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       dependencyManager_ = dependencyManager;
@@ -352,6 +355,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.debugImportDump());
       dynamicCommands_.add(commands.goToLine());
       dynamicCommands_.add(commands.checkSpelling());
+      dynamicCommands_.add(commands.wordCount());
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.findUsages());
       dynamicCommands_.add(commands.debugBreakpoint());
@@ -636,14 +640,14 @@ public class Source implements InsertSourceHandler,
          }
       };
       
-      AceEditorNative.syncUiPrefs(uiPrefs_);
+      AceEditorNative.syncUiPrefs(userPrefs_);
       
       // sync UI prefs with shortcut manager
-      if (uiPrefs_.useVimMode().getGlobalValue())
+      if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
-      else if (uiPrefs_.enableEmacsKeybindings().getGlobalValue())
+      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_EMACS);
-      else if (uiPrefs_.enableSublimeKeybindings().getGlobalValue())
+      else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_SUBLIME)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
@@ -748,7 +752,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.closeAllTabs(this);
       vimCommands_.createNewDocument(this);
       vimCommands_.saveAndCloseActiveTab(this);
-      vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
+      vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
       vimCommands_.runRScript(this);
       vimCommands_.reflowText(this);
       vimCommands_.showVimHelp(
@@ -1177,14 +1181,11 @@ public class Source implements InsertSourceHandler,
                         "creation were not installed.");
                   return;
                }
-               String basename = "r_markdown_notebook";
-               if (BrowseCap.isMacintosh())
-                  basename += "_osx";
 
                newSourceDocWithTemplate(
                      FileTypeRegistry.RMARKDOWN,
                      "",
-                     basename + ".Rmd",
+                     "notebook.Rmd",
                      Position.create(3, 0));
             }
          });
@@ -1193,33 +1194,19 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      if (uiPrefs_.useRcppTemplate().getValue())
-      {
-         newSourceDocWithTemplate(
-             FileTypeRegistry.CPP, 
-             "", 
-             "rcpp.cpp",
-             Position.create(0, 0),
-             new CommandWithArg<EditingTarget> () {
-               @Override
-               public void execute(EditingTarget target)
-               {
-                  target.verifyCppPrerequisites(); 
-               }
-             }
-         );
-      }
-      else
-      {
-         newDoc(FileTypeRegistry.CPP,
-                new ResultCallback<EditingTarget, ServerError> () {
-                   @Override
-                   public void onSuccess(EditingTarget target)
-                   {
-                      target.verifyCppPrerequisites();
-                   }
-                });
-      }
+      newSourceDocWithTemplate(
+          FileTypeRegistry.CPP, 
+          "", 
+          userPrefs_.useRcppTemplate().getValue() ? "rcpp.cpp" : "default.cpp",
+          Position.create(0, 0),
+          new CommandWithArg<EditingTarget> () {
+            @Override
+            public void execute(EditingTarget target)
+            {
+               target.verifyCppPrerequisites(); 
+            }
+          }
+      );
    }
    
    @Handler
@@ -1282,10 +1269,10 @@ public class Source implements InsertSourceHandler,
    {
       // set concordance value if we need to
       String concordance = new String();
-      if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
+      if (userPrefs_.alwaysEnableRnwConcordance().getValue())
       {
          RnwWeave activeWeave = rnwWeaveRegistry_.findTypeIgnoreCase(
-                                    uiPrefs_.defaultSweaveEngine().getValue());
+                                    userPrefs_.defaultSweaveEngine().getValue());
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
@@ -1477,9 +1464,8 @@ public class Source implements InsertSourceHandler,
    {
       newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
                                "", 
-                               "r_html.Rhtml");
+                               "default.Rhtml");
    }
-   
    
    @Handler
    public void onNewRDocumentationDoc()
@@ -1496,7 +1482,7 @@ public class Source implements InsertSourceHandler,
                   {
                      newSourceDocWithTemplate(FileTypeRegistry.RD, 
                            result.name, 
-                           "r_documentation_empty.Rd",
+                           "default.Rd",
                            Position.create(3, 7));
                   }  
                };
@@ -1599,7 +1585,7 @@ public class Source implements InsertSourceHandler,
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
             "", 
-            "r_markdown.Rmd",
+            "v1.Rmd",
             Position.create(3, 0));
    }
    
@@ -1611,15 +1597,20 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute(final NewRMarkdownDialog.Result result)
             {
-               if (result.isNewDocument())
+               if (result == null)
+               {
+                  // No document chosen, just create an empty one
+                  newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
+               }
+               else if (result.isNewDocument())
                {
                   NewRMarkdownDialog.RmdNewDocument doc = 
                         result.getNewDocument();
                   String author = doc.getAuthor();
                   if (author.length() > 0)
                   {
-                     uiPrefs_.documentAuthor().setGlobalValue(author);
-                     uiPrefs_.writeUIPrefs();
+                     userPrefs_.documentAuthor().setGlobalValue(author);
+                     userPrefs_.writeUserPrefs();
                   }
                   newRMarkdownV2Doc(doc);
                }
@@ -1667,17 +1658,17 @@ public class Source implements InsertSourceHandler,
             String template = "";
             // select a template appropriate to the document type we're creating
             if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
-               template = "r_markdown_v2_presentation.Rmd";
+               template = "presentation.Rmd";
             else if (doc.isShiny())
             {
                if (doc.getFormat().endsWith(
                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
-                  template = "r_markdown_presentation_shiny.Rmd";
+                  template = "shiny_presentation.Rmd";
                else
-                  template = "r_markdown_shiny.Rmd";
+                  template = "shiny.Rmd";
             }
             else
-               template = "r_markdown_v2.Rmd";
+               template = "document.Rmd";
             newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
                   "", 
                   template,
@@ -1772,7 +1763,33 @@ public class Source implements InsertSourceHandler,
    private void newDoc(EditableFileType fileType,
                        ResultCallback<EditingTarget, ServerError> callback)
    {
-      newDoc(fileType, null, callback);
+      if (fileType instanceof TextFileType)
+      {
+         // This is a text file, so see if the user has defined a template for it.
+         TextFileType textType = (TextFileType)fileType;
+         server_.getSourceTemplate("", 
+               "default" + textType.getDefaultExtension(),
+               new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String template)
+                  {
+                     // Create a new document with the supplied template.
+                     newDoc(fileType, template, callback);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // Ignore errors; there's just not a template for this type.
+                     newDoc(fileType, null, callback);
+                  }
+               });
+      }
+      else
+      {
+         newDoc(fileType, null, callback);
+      }
    }
    
    private void newDoc(EditableFileType fileType,
@@ -1910,13 +1927,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onPreviousTab()
    {
-      switchToTab(-1, uiPrefs_.wrapTabNavigation().getValue());
+      switchToTab(-1, userPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler
    public void onNextTab()
    {
-      switchToTab(1, uiPrefs_.wrapTabNavigation().getValue());
+      switchToTab(1, userPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler
@@ -2741,7 +2758,7 @@ public class Source implements InsertSourceHandler,
          return;
       
       // we're about to open in this window--if it's the main window, focus it
-      if (SourceWindowManager.isMainSourceWindow() && Desktop.isDesktop())
+      if (SourceWindowManager.isMainSourceWindow() && Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
       
       final boolean isDebugNavigation = 
@@ -2772,7 +2789,7 @@ public class Source implements InsertSourceHandler,
                         filePos.getEndLine() - 1,
                         filePos.getEndColumn() + 1);
                   
-                  if (Desktop.isDesktop() && 
+                  if (Desktop.hasDesktopFrame() &&
                       navMethod != NavigationMethods.DEBUG_END)
                       Desktop.getFrame().bringMainFrameToFront();
                }
@@ -2822,7 +2839,7 @@ public class Source implements InsertSourceHandler,
                      // now navigate to the new position
                      boolean highlight = 
                            navMethod == NavigationMethods.HIGHLIGHT_LINE &&
-                           !uiPrefs_.highlightSelectedLine().getValue();
+                           !userPrefs_.highlightSelectedLine().getValue();
                      target.navigateToPosition(srcPosition,
                                                false,
                                                highlight);
@@ -3261,7 +3278,7 @@ public class Source implements InsertSourceHandler,
       server_.openDocument(
             file.getPath(),
             fileType.getTypeId(),
-            uiPrefs_.defaultEncoding().getValue(),
+            userPrefs_.defaultEncoding().getValue(),
             new ServerRequestCallback<SourceDocument>()
             {
                @Override
@@ -3603,7 +3620,7 @@ public class Source implements InsertSourceHandler,
       syncTabOrder();
 
       String[] ids = new String[editors_.size()];
-      ImageResource[] icons = new ImageResource[editors_.size()];
+      FileIcon[] icons = new FileIcon[editors_.size()];
       String[] names = new String[editors_.size()];
       String[] paths = new String[editors_.size()];
       for (int i = 0; i < ids.length; i++)
@@ -3856,7 +3873,7 @@ public class Source implements InsertSourceHandler,
    private void manageRSConnectCommands()
    {
       boolean rsCommandsAvailable = 
-            SessionUtils.showPublishUi(session_, uiPrefs_) &&
+            SessionUtils.showPublishUi(session_, userState_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() != null &&
@@ -4085,7 +4102,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomIn()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomIn();
       }
@@ -4094,7 +4111,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomOut()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomOut();
       }
@@ -4103,7 +4120,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onZoomActualSize()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().zoomActualSize();
       }
@@ -4862,7 +4879,8 @@ public class Source implements InsertSourceHandler,
    private final Session session_;
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
    private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();

@@ -19,7 +19,7 @@
 }
 
 .functionNamespace {
-   color: #888;
+   color: #717171;
    padding-right: 6px;
 }
 
@@ -37,5 +37,9 @@
 
 .readOnly {
    margin-right: 7px;
-   color: #888;
+   color: #717171;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .readOnly {
+   color: #DDD;
 }

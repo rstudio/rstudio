@@ -49,6 +49,10 @@ int verifyInstallation()
    return EXIT_SUCCESS;
 }
 
+void initMonitorClient()
+{
+}
+
 } // namespace overlay
 } // namespace modules
 } // namespace session

@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -53,7 +52,8 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -102,7 +102,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 Display display,
                 Session session,
                 Commands commands,
-                UIPrefs uiPrefs, 
+                UserPrefs uiPrefs, 
                 ErrorManager errorManager,
                 DependencyManager dependencyManager,
                 ConsoleEditorProvider editorProvider,
@@ -489,7 +489,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
       errorManager_.setDebugSessionHandlerType(
-            ErrorHandlerType.ERRORS_BREAK,
+            UserState.ERROR_HANDLER_TYPE_BREAK,
             new ServerRequestCallback<Void>()
             {
                @Override
@@ -719,7 +719,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (isBrowsePrompt())
          browseHistoryManager_.navigateHistory(offset);
       else
-         historyManager_.navigateHistory(offset);
+      {
+         if (input_.isCursorAtEnd())
+            historyManager_.navigateHistory(offset);
+         else
+            historyCompletion_.navigatePrefix(offset);
+      }
       
       view_.ensureInputVisible();
    }
@@ -741,7 +746,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onBeforeUnselected()
    {
       view_.onBeforeUnselected();
-
    }
 
    public void onBeforeSelected()
@@ -768,7 +772,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    private final ConsoleLanguageTracker languageTracker_;
    

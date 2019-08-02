@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -145,7 +146,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setNumSpacesForTab(getTabWidth());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
-      config.setLineEndings(lineEndings_.getIntValue());
+      config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));
       config.setEncoding(encodingValue_);
       return false;
    }
@@ -179,5 +180,4 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private TextBoxWithButton encoding_;
    private String encodingValue_;
    private RProjectConfig initialConfig_;
-
 }

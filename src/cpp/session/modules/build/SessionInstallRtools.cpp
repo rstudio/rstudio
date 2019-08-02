@@ -26,7 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core ;
 
@@ -81,7 +81,7 @@ Error installRtools()
       {
          version = rTools.name();
 
-         std::string repos = userSettings().cranMirror().url;
+         std::string repos = prefs::userPrefs().getCRANMirror().url;
          if (repos.empty())
             repos = module_context::rstudioCRANReposURL();
          url = rTools.url(repos);

@@ -75,6 +75,9 @@
 #include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
@@ -327,6 +330,11 @@ SEXP rs_rstudioCitation()
    FilePath resPath = session::options().rResourcesPath();
    FilePath citationPath = resPath.childPath("CITATION");
 
+   // the citation file may not exist when working in e.g.
+   // development configurations so just ignore if it's missing
+   if (!citationPath.exists())
+      return R_NilValue;
+
    SEXP citationSEXP;
    r::sexp::Protect rProtect;
    Error error = r::exec::RFunction("utils:::readCitationFile",
@@ -348,7 +356,7 @@ SEXP rs_rstudioCitation()
 SEXP rs_setUsingMingwGcc49(SEXP usingSEXP)
 {
    bool usingMingwGcc49 = r::sexp::asLogical(usingSEXP);
-   userSettings().setUsingMingwGcc49(usingMingwGcc49);
+   prefs::userState().setUsingMingwGcc49(usingMingwGcc49);
    return R_NilValue;
 }
 
@@ -877,11 +885,11 @@ Error registerIdleOnlyAsyncRpcMethod(
 core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
 {
    // potential special case for Makevars
-   if (userSettings().useNewlineInMakefiles() && isPackagePosixMakefile(srcFile))
+   if (prefs::userPrefs().useNewlinesInMakefiles() && isPackagePosixMakefile(srcFile))
       return string_utils::LineEndingPosix;
 
    // get the global default behavior
-   string_utils::LineEnding lineEndings = userSettings().lineEndings();
+   string_utils::LineEnding lineEndings = prefs::userPrefs().lineEndings();
 
    // use project-level override if available
    using namespace session::projects;
@@ -1799,7 +1807,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
        ext == ".httr-oauth" ||
        ext == ".github" ||
        ext == ".gitignore" ||
-       ext == ".gitattributes")
+       ext == ".gitattributes" ||
+       ext == ".circleci")
    {
       return true;
    }
@@ -1811,7 +1820,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
-   else if (userSettings().hideObjectFiles() &&
+   else if (prefs::userPrefs().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")
    {
@@ -2163,13 +2172,13 @@ std::string CRANReposURL()
    std::string url;
    r::exec::evaluateString("getOption('repos')[['CRAN']]", &url);
    if (url.empty())
-      url = userSettings().cranMirror().url;
+      url = prefs::userPrefs().getCRANMirror().url;
    return url;
 }
 
 std::string rstudioCRANReposURL()
 {
-   std::string protocol = userSettings().securePackageDownload() ?
+   std::string protocol = prefs::userPrefs().useSecureDownload() ?
                                                            "https" : "http";
    return protocol + "://cran.rstudio.com/";
 }
@@ -2419,7 +2428,7 @@ bool isLoadBalanced()
 bool usingMingwGcc49()
 {
    // return true if the setting is true
-   bool gcc49 = userSettings().usingMingwGcc49();
+   bool gcc49 = prefs::userState().usingMingwGcc49();
    if (gcc49)
       return true;
 
@@ -2440,162 +2449,36 @@ bool usingMingwGcc49()
 
 Error initialize()
 {
-   // register rs_enqueClientEvent with R 
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_enqueClientEvent" ;
-   methodDef.fun = (DL_FUNC) rs_enqueClientEvent ;
-   methodDef.numArgs = 2;
-   r::routines::addCallMethod(methodDef);
-      
-   // register rs_showErrorMessage with R 
-   R_CallMethodDef methodDef3 ;
-   methodDef3.name = "rs_showErrorMessage" ;
-   methodDef3.fun = (DL_FUNC) rs_showErrorMessage ;
-   methodDef3.numArgs = 2;
-   r::routines::addCallMethod(methodDef3);
-   
-   // register rs_logErrorMessage with R 
-   R_CallMethodDef methodDef4 ;
-   methodDef4.name = "rs_logErrorMessage" ;
-   methodDef4.fun = (DL_FUNC) rs_logErrorMessage ;
-   methodDef4.numArgs = 1;
-   r::routines::addCallMethod(methodDef4);
-   
-   // register rs_logWarningMessage with R 
-   R_CallMethodDef methodDef5 ;
-   methodDef5.name = "rs_logWarningMessage" ;
-   methodDef5.fun = (DL_FUNC) rs_logWarningMessage ;
-   methodDef5.numArgs = 1;
-   r::routines::addCallMethod(methodDef5);
-
-   // register rs_threadSleep with R (debugging function used to test rpc/abort)
-   R_CallMethodDef methodDef6 ;
-   methodDef6.name = "rs_threadSleep" ;
-   methodDef6.fun = (DL_FUNC) rs_threadSleep ;
-   methodDef6.numArgs = 1;
-   r::routines::addCallMethod(methodDef6);
-
-   // register rs_rstudioProgramMode with R
-   R_CallMethodDef methodDef7 ;
-   methodDef7.name = "rs_rstudioProgramMode" ;
-   methodDef7.fun = (DL_FUNC) rs_rstudioProgramMode ;
-   methodDef7.numArgs = 0;
-   r::routines::addCallMethod(methodDef7);
-
-   // register rs_ensureFileHidden with R
-   R_CallMethodDef methodDef8;
-   methodDef8.name = "rs_ensureFileHidden" ;
-   methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
-   methodDef8.numArgs = 1;
-   r::routines::addCallMethod(methodDef8);
-
-   // register rs_sourceDiagnostics
-   R_CallMethodDef methodDef9;
-   methodDef9.name = "rs_sourceDiagnostics" ;
-   methodDef9.fun = (DL_FUNC) rs_sourceDiagnostics;
-   methodDef9.numArgs = 0;
-   r::routines::addCallMethod(methodDef9);
-
-   // register rs_activatePane
-   R_CallMethodDef methodDef10;
-   methodDef10.name = "rs_activatePane" ;
-   methodDef10.fun = (DL_FUNC) rs_activatePane;
-   methodDef10.numArgs = 1;
-   r::routines::addCallMethod(methodDef10);
-
-   // register rs_packageLoaded
-   R_CallMethodDef methodDef11;
-   methodDef11.name = "rs_packageLoaded" ;
-   methodDef11.fun = (DL_FUNC) rs_packageLoaded;
-   methodDef11.numArgs = 1;
-   r::routines::addCallMethod(methodDef11);
-
-   // register rs_packageUnloaded
-   R_CallMethodDef methodDef12;
-   methodDef12.name = "rs_packageUnloaded" ;
-   methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
-   methodDef12.numArgs = 1;
-   r::routines::addCallMethod(methodDef12);
-
-   // register rs_userPrompt
-   R_CallMethodDef methodDef13;
-   methodDef13.name = "rs_userPrompt" ;
-   methodDef13.fun = (DL_FUNC) rs_userPrompt;
-   methodDef13.numArgs = 7;
-   r::routines::addCallMethod(methodDef13);
-
-   // register rs_restartR
-   R_CallMethodDef methodDef14;
-   methodDef14.name = "rs_restartR" ;
-   methodDef14.fun = (DL_FUNC) rs_restartR;
-   methodDef14.numArgs = 1;
-   r::routines::addCallMethod(methodDef14);
-
-   // register rs_restartR
-   R_CallMethodDef methodDef15;
-   methodDef15.name = "rs_rstudioCRANReposUrl" ;
-   methodDef15.fun = (DL_FUNC) rs_rstudioCRANReposUrl;
-   methodDef15.numArgs = 0;
-   r::routines::addCallMethod(methodDef15);
-
-   // register rs_rstudioEdition with R
-   R_CallMethodDef methodDef16 ;
-   methodDef16.name = "rs_rstudioEdition" ;
-   methodDef16.fun = (DL_FUNC) rs_rstudioEdition ;
-   methodDef16.numArgs = 0;
-   r::routines::addCallMethod(methodDef16);
-
-   R_CallMethodDef methodDef17;
-   methodDef17.name = "rs_markdownToHTML";
-   methodDef17.fun = (DL_FUNC) rs_markdownToHTML;
-   methodDef17.numArgs = 1;
-   r::routines::addCallMethod(methodDef17);
-   
-   // register persistent value functions
-   RS_REGISTER_CALL_METHOD(rs_setPersistentValue, 2);
-   RS_REGISTER_CALL_METHOD(rs_getPersistentValue, 1);
-
-   // register rs_isRScriptInPackageBuildTarget
-   r::routines::registerCallMethod(
-            "rs_isRScriptInPackageBuildTarget",
-            (DL_FUNC) rs_isRScriptInPackageBuildTarget,
-            1);
-   
-   // register rs_packageNameForSourceFile
-   r::routines::registerCallMethod(
-            "rs_packageNameForSourceFile",
-            (DL_FUNC) rs_packageNameForSourceFile,
-            1);
-
-   // register rs_rstudioVersion
-   r::routines::registerCallMethod(
-            "rs_rstudioVersion",
-            (DL_FUNC) rs_rstudioVersion,
-            0);
-
-   // regsiter rs_rstudioCitation
-   r::routines::registerCallMethod(
-            "rs_rstudioCitation",
-            (DL_FUNC) rs_rstudioCitation,
-            0);
-
-   // register rs_setUsingMingwGcc49
-   r::routines::registerCallMethod(
-            "rs_setUsingMingwGcc49",
-            (DL_FUNC)rs_setUsingMingwGcc49,
-            1);
-
-   r::routines::registerCallMethod(
-            "rs_generateShortUuid",
-            (DL_FUNC)rs_generateShortUuid, 
-            0);
-
-   RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
-   RS_REGISTER_CALL_METHOD(rs_base64encodeFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
-   
-   RS_REGISTER_CALL_METHOD(rs_resolveAliasedPath, 1);
-   RS_REGISTER_CALL_METHOD(rs_sessionModulePath, 0);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_activatePane);
+   RS_REGISTER_CALL_METHOD(rs_base64decode);
+   RS_REGISTER_CALL_METHOD(rs_base64encode);
+   RS_REGISTER_CALL_METHOD(rs_base64encodeFile);
+   RS_REGISTER_CALL_METHOD(rs_enqueClientEvent);
+   RS_REGISTER_CALL_METHOD(rs_ensureFileHidden);
+   RS_REGISTER_CALL_METHOD(rs_generateShortUuid);
+   RS_REGISTER_CALL_METHOD(rs_getPersistentValue);
+   RS_REGISTER_CALL_METHOD(rs_isRScriptInPackageBuildTarget);
+   RS_REGISTER_CALL_METHOD(rs_logErrorMessage);
+   RS_REGISTER_CALL_METHOD(rs_logWarningMessage);
+   RS_REGISTER_CALL_METHOD(rs_markdownToHTML);
+   RS_REGISTER_CALL_METHOD(rs_packageLoaded);
+   RS_REGISTER_CALL_METHOD(rs_packageNameForSourceFile);
+   RS_REGISTER_CALL_METHOD(rs_packageUnloaded);
+   RS_REGISTER_CALL_METHOD(rs_resolveAliasedPath);
+   RS_REGISTER_CALL_METHOD(rs_restartR);
+   RS_REGISTER_CALL_METHOD(rs_rstudioCitation);
+   RS_REGISTER_CALL_METHOD(rs_rstudioCRANReposUrl);
+   RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
+   RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
+   RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
+   RS_REGISTER_CALL_METHOD(rs_sessionModulePath);
+   RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
+   RS_REGISTER_CALL_METHOD(rs_setUsingMingwGcc49);
+   RS_REGISTER_CALL_METHOD(rs_showErrorMessage);
+   RS_REGISTER_CALL_METHOD(rs_sourceDiagnostics);
+   RS_REGISTER_CALL_METHOD(rs_threadSleep);
+   RS_REGISTER_CALL_METHOD(rs_userPrompt);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

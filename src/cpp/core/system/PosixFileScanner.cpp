@@ -80,12 +80,7 @@ Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
    for(int i=0; i<entries; i++)
    {
       // get the name (then free it)
-      std::string name(namelist[i]->d_name,
-#ifdef __APPLE__
-                       namelist[i]->d_namlen);
-#else
-                       namelist[i]->d_reclen);
-#endif
+      std::string name(namelist[i]->d_name);
       ::free(namelist[i]);
 
       // add to the vector

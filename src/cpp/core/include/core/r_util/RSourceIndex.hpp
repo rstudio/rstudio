@@ -287,7 +287,7 @@ public:
 
    static const std::set<std::string>& getAllInferredPackages()
    {
-      return s_allInferredPkgNames_;
+      return allInferredPkgNames();
    }
 
    const std::vector<std::string>& getInferredPackages()
@@ -298,36 +298,36 @@ public:
    static void addPackageInformation(const std::string& package,
                                      const PackageInformation& info)
    {
-      s_packageInformation_[package] = info;
+      packageInformation()[package] = info;
    }
 
    static bool hasInformation(const std::string& package)
    {
-      return s_packageInformation_.find(package) != s_packageInformation_.end();
+      return packageInformation().find(package) != packageInformation().end();
    }
    
    typedef std::map<std::string, PackageInformation> PackageInformationDatabase;
    static const PackageInformationDatabase& getPackageInformationDatabase()
    {
-      return s_packageInformation_;
+      return packageInformation();
    }
    
    static const PackageInformation& getPackageInformation(const std::string& package)
    {
-      return s_packageInformation_[package];
+      return packageInformation()[package];
    }
    
    static bool hasFunctionInformation(const std::string& func,
                                       const std::string& pkg)
    {
-      return s_packageInformation_[pkg].functionInfo.count(func);
+      return packageInformation()[pkg].functionInfo.count(func);
    }
    
    static const FunctionInformation& getFunctionInformation(
          const std::string& func,
          const std::string& pkg)
    {
-      return s_packageInformation_[pkg].functionInfo[func];
+      return packageInformation()[pkg].functionInfo[func];
    }
    
    static const FunctionInformation& getFunctionInformationAnywhere(
@@ -340,27 +340,27 @@ public:
            ++it)
       {
          const std::string& pkg = *it;
-         if (s_packageInformation_.count(pkg))
+         if (packageInformation().count(pkg))
          {
-            const PackageInformation& pkgInfo = s_packageInformation_[pkg];
+            const PackageInformation& pkgInfo = packageInformation()[pkg];
             if (pkgInfo.functionInfo.count(func))
                return const_cast<FunctionInformationMap&>(pkgInfo.functionInfo)[func];
          }
       }
       
       *pLookupFailed = true;
-      return s_noSuchFunction_;
+      return noSuchFunction();
    }
 
    static std::vector<std::string> getAllUnindexedPackages()
    {
       std::vector<std::string> result;
       typedef std::set<std::string>::const_iterator iterator_t;
-      for (iterator_t it = s_allInferredPkgNames_.begin();
-           it != s_allInferredPkgNames_.end();
+      for (iterator_t it = allInferredPkgNames().begin();
+           it != allInferredPkgNames().end();
            ++it)
       {
-         if (s_packageInformation_.count(*it) == 0)
+         if (allInferredPkgNames().count(*it) == 0)
             result.push_back(*it);
       }
       return result;
@@ -369,40 +369,40 @@ public:
    void addInferredPackage(const std::string& packageName)
    {
       inferredPkgNames_.push_back(packageName);
-      s_allInferredPkgNames_.insert(packageName);
+      allInferredPkgNames().insert(packageName);
    }
    
    static void addGloballyInferredPackage(const std::string& pkgName)
    {
-      s_allInferredPkgNames_.insert(pkgName);
+      allInferredPkgNames().insert(pkgName);
    }
    
    static void setImportedPackages(const std::set<std::string>& pkgNames)
    {
-      s_importedPackages_.clear();
-      s_importedPackages_.insert(pkgNames.begin(), pkgNames.end());
-      s_allInferredPkgNames_.insert(pkgNames.begin(), pkgNames.end());
+      importedPackages().clear();
+      importedPackages().insert(pkgNames.begin(), pkgNames.end());
+      allInferredPkgNames().insert(pkgNames.begin(), pkgNames.end());
    }
    
    static const std::set<std::string>& getImportedPackages()
    {
-      return s_importedPackages_;
+      return importedPackages();
    }
    
    typedef std::map< std::string, std::set<std::string> > ImportFromMap;
    
    static void setImportFromDirectives(const ImportFromMap& map)
    {
-      s_importFromDirectives_ = map;
+      importFromDirectives() = map;
       for (const std::string& pkg : map | boost::adaptors::map_keys)
       {
-         s_allInferredPkgNames_.insert(pkg);
+         allInferredPkgNames().insert(pkg);
       }
    }
    
    static ImportFromMap& getImportFromDirectives()
    {
-      return s_importFromDirectives_;
+      return importFromDirectives();
    }
    
    void addSourceItem(const RSourceItem& item)
@@ -424,13 +424,37 @@ private:
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
    std::vector<std::string> inferredPkgNames_;
-   static std::set<std::string> s_importedPackages_;
-   static ImportFromMap s_importFromDirectives_;
-   static std::set<std::string> s_allInferredPkgNames_;
+   
+   static std::set<std::string>& importedPackages()
+   {
+      static std::set<std::string> instance;
+      return instance;
+   }
+   
+   static ImportFromMap& importFromDirectives()
+   {
+      static ImportFromMap instance;
+      return instance;
+   }
+   
+   static std::set<std::string>& allInferredPkgNames()
+   {
+      static std::set<std::string> instance;
+      return instance;
+   }
    
    // NOTE: All source indexes share a set of completions
-   static std::map<std::string, PackageInformation> s_packageInformation_;
-   static FunctionInformation s_noSuchFunction_;
+   static std::map<std::string, PackageInformation>& packageInformation()
+   {
+      static std::map<std::string, PackageInformation> instance;
+      return instance;
+   }
+   
+   static FunctionInformation& noSuchFunction()
+   {
+      static FunctionInformation instance;
+      return instance;
+   }
    
 };
 

@@ -43,8 +43,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SourceControlPreferencesPane extends PreferencesPane
 {
@@ -146,23 +145,20 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs prefs)
    {
-      // source control prefs
-      SourceControlPrefs prefs = rPrefs.getSourceControlPrefs();
-
       chkVcsEnabled_.setEnabled(true);
       gitExePathChooser_.setEnabled(true);
       svnExePathChooser_.setEnabled(true);
       terminalPathChooser_.setEnabled(true);
 
-      chkVcsEnabled_.setValue(prefs.getVcsEnabled());
-      gitExePathChooser_.setText(prefs.getGitExePath());
-      svnExePathChooser_.setText(prefs.getSvnExePath());
-      terminalPathChooser_.setText(prefs.getTerminalPath());
+      chkVcsEnabled_.setValue(prefs.vcsEnabled().getValue());
+      gitExePathChooser_.setText(prefs.gitExePath().getValue());
+      svnExePathChooser_.setText(prefs.svnExePath().getValue());
+      terminalPathChooser_.setText(prefs.terminalPath().getValue());
       
-      sshKeyWidget_.setRsaSshKeyPath(prefs.getRsaKeyPath(),
-                                     prefs.getHaveRsaKey());
+      sshKeyWidget_.setRsaSshKeyPath(prefs.rsaKeyPath().getValue(),
+                                     prefs.haveRsaKey().getValue());
       sshKeyWidget_.setProgressIndicator(getProgressIndicator());
 
       manageControlVisibility();
@@ -187,15 +183,14 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs prefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
-
-      SourceControlPrefs prefs = SourceControlPrefs.create(
-            chkVcsEnabled_.getValue(), gitExePathChooser_.getText(),
-            svnExePathChooser_.getText(), terminalPathChooser_.getText());
-
-      rPrefs.setSourceControlPrefs(prefs);
+      boolean restartRequired = super.onApply(prefs);
+      
+      prefs.vcsEnabled().setGlobalValue(chkVcsEnabled_.getValue());
+      prefs.gitExePath().setGlobalValue(gitExePathChooser_.getText());
+      prefs.svnExePath().setGlobalValue(svnExePathChooser_.getText());
+      prefs.terminalPath().setGlobalValue(terminalPathChooser_.getText());
 
       return restartRequired;
    }

@@ -484,12 +484,8 @@ Error initialize()
 {
    using namespace module_context;
    using boost::bind;
-   
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_showShinyGadgetDialog" ;
-   methodDef.fun = (DL_FUNC)rs_showShinyGadgetDialog ;
-   methodDef.numArgs = 4;
-   r::routines::addCallMethod(methodDef);
+
+   RS_REGISTER_CALL_METHOD(rs_showShinyGadgetDialog);
 
    events().onPackageLoaded.connect(onPackageLoaded);
 

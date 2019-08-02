@@ -3,6 +3,8 @@
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
 
    <ui:style>
+      @external .gwt-TextBox;
+
       .panel input[type=checkbox] {
          margin-left: 0;
       }
@@ -11,7 +13,7 @@
          outline: none;
       }
 
-      .pattern, .filePattern {
+      .pattern .gwt-TextBox, .filePattern {
          width: 375px;
       }
 
@@ -26,9 +28,7 @@
 
    <g:HTMLPanel styleName="{style.panel}">
       <p>
-         <g:Label text="Find:"/>
-         <g:TextBox ui:field="txtSearchPattern_" styleName="{style.pattern}"/>
-         <br/>
+         <widget:LabeledTextBox ui:field="txtSearchPattern_" labelText="Find:" enableSpellcheck="false" styleName="{style.pattern}"/>
          <g:CheckBox ui:field="checkboxCaseSensitive_" text="Case sensitive"/>
          &#x00a0;&#x00a0;&#x00a0;&#x00a0;
          <g:CheckBox ui:field="checkboxRegex_" text="Regular expression"/>
@@ -38,7 +38,7 @@
          <widget:DirectoryChooserTextBox ui:field="dirChooser_"/>
       </p>
 
-      <p><g:Label text="Search these files:"/>
+      <p><widget:FormLabel ui:field="labelFilePatterns_" text="Search these files:"/>
          <g:ListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">All Files</g:item>

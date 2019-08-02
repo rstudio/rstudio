@@ -1,7 +1,7 @@
 /*
  * FileUploadDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.Hidden;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HtmlFormModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -43,9 +54,10 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          RemoteFileSystemContext fileSystemContext,
          OperationWithInput<PendingFileUpload> completedOperation)
    {
-      super("Upload Files", 
-            "Uploading file...", 
-            actionURL, 
+      super("Upload Files",
+            Roles.getDialogRole(),
+            "Uploading file...",
+            actionURL,
             completedOperation);
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
@@ -55,7 +67,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected void positionAndShowDialog(final Command onCompleted)
    {
-      final PopupPanel thisPanel = this; 
+      final PopupPanel thisPanel = this;
       setPopupPositionAndShow(new PopupPanel.PositionCallback() {
          public void setPosition(int offsetWidth, int offsetHeight)
          {
@@ -131,30 +143,18 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       directoryPanel.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       
       // directory name (informational field)
-      panel.add(new Label("Target directory:"));
       directoryNameWidget_ = new DirectoryNameWidget();
       directoryNameWidget_.setDirectory(targetDirectory_);
+      panel.add(new FormLabel("Target directory:", directoryNameWidget_));
       directoryPanel.add(directoryNameWidget_);
       
-      // browse directory button
-      // JJA: removed browse button (was causing confusion for users who
-      // thought it was what they should press to browse local files)
-      /*
-      Button browseButton = new Button("Browse...", 
-                                       new BrowseDirectoryClickHandler());
-      browseButton.getElement().getStyle().setMarginRight(5, Unit.PX);
-      directoryPanel.add(browseButton);
-      directoryPanel.setCellHorizontalAlignment(
-                                          browseButton, 
-                                          HasHorizontalAlignment.ALIGN_RIGHT);
-      */
       panel.add(directoryPanel);
       
       // filename field
-      panel.add(new Label("File to upload:"));
       fileUpload_ = new FileUpload();
       fileUpload_.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       fileUpload_.setName("file");
+      panel.add(new FormLabel("File to upload:", fileUpload_));
       panel.add(fileUpload_);
       
       // zip file tip field
@@ -166,8 +166,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       panel.add(tip);
       
       // target directory hidden field
-      targetDirectoryHidden_ = new Hidden("targetDirectory", 
-                                           targetDirectory_.getPath());
+      targetDirectoryHidden_ = new Hidden("targetDirectory", targetDirectory_.getPath());
       panel.add(targetDirectoryHidden_);
             
       return panel;
@@ -206,9 +205,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       {
          setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
          
-         image_ = new Image();
-         image_.setStyleName(
-                     FileDialogResources.INSTANCE.styles().columnIcon());
+         image_ = new DecorativeImage();
+         image_.setStyleName(FileDialogResources.INSTANCE.styles().columnIcon());
          this.add(image_);
          name_ = new HTML();
          this.add(name_);
@@ -228,7 +226,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          }
       }
       
-      Image image_ ;
+      DecorativeImage image_ ;
       HTML name_ ;
    }
    

@@ -1,7 +1,7 @@
 /*
  * ChooseMirrorDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,10 @@ package org.rstudio.studio.client.common.mirrors;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -38,7 +40,6 @@ import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -58,7 +59,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                              OperationWithInput<CRANMirror> inputOperation,
                              MirrorsServerOperations mirrorOperations)
    {
-      super("Retrieving list of CRAN mirrors...", inputOperation);
+      super("Retrieving list of CRAN mirrors...", Roles.getDialogRole(), inputOperation);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
       mirrorOperations_ = mirrorOperations;
@@ -158,14 +159,13 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
    {
       VerticalPanel root = new VerticalPanel();
 
-      Label customLabel = new Label("Custom:");
-      root.add(customLabel);
-
       customTextBox_ = new TextBox();
       customTextBox_.setStylePrimaryName(RESOURCES.styles().customRepo());
+      FormLabel customLabel = new FormLabel("Custom:", customTextBox_);
+      root.add(customLabel);
       root.add(customTextBox_);
 
-      Label mirrorsLabel = new Label("CRAN Mirrors:");
+      FormLabel mirrorsLabel = new FormLabel("CRAN Mirrors:");
       mirrorsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(mirrorsLabel);
 
@@ -209,6 +209,8 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                
                listBox_.setSelectedIndex(0);
             }
+
+            mirrorsLabel.setFor(listBox_);
             
             // set it into the panel
             panel.setWidget(listBox_);
@@ -221,10 +223,9 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                @Override
                public void onDoubleClick(DoubleClickEvent event)
                {
-                  clickOkButton();              
+                  clickOkButton();
                }
             });
-            
             
             // if the list box is larger than the space we initially allocated
             // then increase the panel height

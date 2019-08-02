@@ -1,7 +1,7 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -64,7 +65,7 @@ public class BuildPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Build Tab");
       
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
@@ -92,7 +93,8 @@ public class BuildPane extends WorkbenchPane
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
          BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
-         ToolbarButton buildMenuButton = new ToolbarButton(buildPopupMenu, true);
+         ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
+               "Build book options", buildPopupMenu, true);
          toolbar.addLeftWidget(buildMenuButton);
       }
       
@@ -136,10 +138,11 @@ public class BuildPane extends WorkbenchPane
          moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
          
          // add more menu
-         ToolbarButton moreButton = new ToolbarButton(
-                                      "More",
-                                      new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
-                                      moreMenu);
+         ToolbarMenuButton moreButton = new ToolbarMenuButton(
+               "More",
+               ToolbarButton.NoTitle,
+               new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
+               moreMenu);
          toolbar.addLeftWidget(moreButton);
       }
       

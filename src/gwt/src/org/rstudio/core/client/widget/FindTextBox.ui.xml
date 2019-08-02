@@ -1,5 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources'/>
 
@@ -9,11 +10,12 @@
            style="margin-right: 3px">
          <div class="{res.themeStyles.left}"></div>
          <div class="{res.themeStyles.rstheme_center}">
-            <g:Image ui:field='icon_'
+            <rw:DecorativeImage ui:field='icon_'
                      resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div ui:field='textBoxDiv_' 
                  class="{res.themeStyles.searchBoxContainer2}">
+               <label ui:field='hiddenLabel_' class="{res.themeStyles.visuallyHidden}"/>
                <g:TextBox ui:field='textBox_'
                           styleName='{res.themeStyles.searchBox}'/>
             </div>

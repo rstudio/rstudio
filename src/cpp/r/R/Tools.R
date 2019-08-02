@@ -543,7 +543,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    # check whether the user has already set a CRAN repository
    # in their .Rprofile
    repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
 
    if (!cranMirrorConfigured)
       .rs.setCRANRepos(cran, secondary)
@@ -1025,4 +1025,41 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction("completeUrl", function(url, path)
 {
   .Call("rs_completeUrl", url, path)
+})
+
+.rs.addFunction("defaultHttpUserAgent", function()
+{
+   fields <- c(
+      format(getRversion()),
+      format(R.version$platform),
+      format(R.version$arch),
+      format(R.version$os)
+   )
+   
+   sprintf("R (%s)", paste(fields, collapse = " "))
+})
+
+.rs.addFunction("initHttpUserAgent", function()
+{
+   utils <- asNamespace("utils")
+   
+   defaultAgent <- if (is.function(utils$defaultUserAgent))
+      utils$defaultUserAgent()
+   else
+      .rs.defaultHttpUserAgent()
+   
+   if (identical(defaultAgent, getOption("HTTPUserAgent")))
+   {
+      info <- .rs.api.versionInfo()
+      fields <- c(
+         "RStudio",
+         if (info$mode == "desktop") "Desktop" else "Server",
+         if (!is.null(info$edition)) "Pro",
+         paste("(", format(info$version), ")", sep = "")
+      )
+      
+      rstudioAgent <- paste(fields, collapse = " ")
+      newAgent <- paste(rstudioAgent, defaultAgent, sep = "; ")
+      options(HTTPUserAgent = newAgent)
+   }
 })

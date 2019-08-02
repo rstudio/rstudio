@@ -31,7 +31,6 @@
 #include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include <iostream>
 

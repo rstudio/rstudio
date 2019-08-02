@@ -23,6 +23,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
+#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -38,6 +39,7 @@
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
 
+#include <server/ServerConstants.hpp>
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerSessionProxy.hpp>
@@ -73,8 +75,6 @@ void assumeRootPriv()
        }
     }
 }
-
-const char * const kUserId = "user-id";
 
 // It's important that URIs be in the root directory, so the cookie
 // gets set/unset at the correct scope!
@@ -151,7 +151,7 @@ std::string getUserIdentifier(const core::http::Request& request)
    if (server::options().authNone())
       return core::system::username();
    else
-      return core::http::secure_cookie::readSecureCookie(request, kUserId);
+      return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -229,9 +229,10 @@ void signIn(const http::Request& request,
             http::Response* pResponse)
 {
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserIdCookie,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -284,29 +285,73 @@ void publicKey(const http::Request&,
 void setSignInCookies(const core::http::Request& request,
                       const std::string& username,
                       bool persist,
-                      core::http::Response* pResponse)
+                      core::http::Response* pResponse,
+                      bool reuseCsrf = false)
 {
+   std::string csrfToken = reuseCsrf ? request.cookieValue(kCSRFTokenCookie) : std::string();
+
    int staySignedInDays = server::options().authStaySignedInDays();
-   boost::optional<boost::gregorian::days> expiry;
-   if (persist && canStaySignedIn())
-      expiry = boost::gregorian::days(staySignedInDays);
+   int authTimeoutMinutes = server::options().authTimeoutMinutes();
+
+   if (authTimeoutMinutes == 0)
+   {
+      // legacy auth expiration - users do not idle
+      // and stay signed in for multiple days
+      // not very secure, but maintained for those users that want this
+      boost::optional<boost::gregorian::days> expiry;
+      if (persist && canStaySignedIn())
+         expiry = boost::gregorian::days(staySignedInDays);
+      else
+         expiry = boost::none;
+
+      core::http::secure_cookie::set(kUserIdCookie,
+                                     username,
+                                     request,
+                                     boost::posix_time::time_duration(24*staySignedInDays,
+                                                                      0,
+                                                                      0,
+                                                                      0),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     options().getOverlayOption("ssl-enabled") == "1");
+
+      // add cross site request forgery detection cookie
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, pResponse);
+   }
    else
-      expiry = boost::none;
+   {
+      // new auth expiration - users are forced to sign in
+      // after being idle for authTimeoutMinutes amount
+      boost::optional<boost::posix_time::time_duration> expiry;
+      if (persist)
+         expiry = boost::posix_time::minutes(authTimeoutMinutes);
+      else
+         expiry = boost::none;
 
-   core::http::secure_cookie::set(kUserId,
-                                  username,
-                                  request,
-                                  boost::posix_time::time_duration(24*staySignedInDays,
-                                                                   0,
-                                                                   0,
-                                                                   0),
-                                  expiry,
-                                  "/",
-                                  pResponse,
-                                  options().getOverlayOption("ssl-enabled") == "1");
+      // set the secure user id cookie
+      core::http::secure_cookie::set(kUserIdCookie,
+                                     username,
+                                     request,
+                                     boost::posix_time::minutes(authTimeoutMinutes),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     options().getOverlayOption("ssl-enabled") == "1");
 
-   // add cross site request forgery detection cookie
-   core::http::setCSRFTokenCookie(request, expiry, "", pResponse);
+      // set a cookie indicating whether or not we should persist the auth cookie
+      // when it is automatically refreshed
+      core::http::Cookie persistCookie(request,
+                                       kPersistAuthCookie,
+                                       persist ? "1" : "0",
+                                       "/",
+                                       true,
+                                       options().getOverlayOption("ssl-enabled") == "1");
+      persistCookie.setExpires(boost::posix_time::minutes(authTimeoutMinutes));
+      pResponse->addCookie(persistCookie);
+
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, pResponse);
+   }
 }
 
 void doSignIn(const http::Request& request,
@@ -315,8 +360,6 @@ void doSignIn(const http::Request& request,
    std::string appUri = request.formFieldValue(kAppUri);
    if (appUri.empty())
       appUri = "/";
-
-
 
    bool persist = false;
    std::string username, password;
@@ -365,6 +408,17 @@ void doSignIn(const http::Request& request,
    username = auth::handler::userIdentifierToLocalUsername(username);
 
    onUserUnauthenticated(username);
+
+   // ensure user is not throttled from logging in
+   if (auth::handler::isUserSignInThrottled(username))
+   {
+      pResponse->setMovedTemporarily(
+            request,
+            applicationSignInURL(request,
+                                 appUri,
+                                 kErrorServer));
+      return;
+   }
 
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
@@ -422,10 +476,24 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username, true);
    }
 
+   // instruct browser to clear the user's auth cookies
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserIdCookie,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
+
+   if (options().authTimeoutMinutes() > 0)
+   {
+      core::http::secure_cookie::remove(request,
+                                        kPersistAuthCookie,
+                                        "/",
+                                        pResponse,
+                                        boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   }
+
+   // invalidate the auth cookie so that it can no longer be used
+   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
@@ -480,7 +548,7 @@ Error initialize()
 {
    // register ourselves as the auth handler
    server::auth::handler::Handler pamHandler;
-   pamHandler.getUserIdentifier = getUserIdentifier;
+   pamHandler.getUserIdentifier = boost::bind(getUserIdentifier, _1);
    pamHandler.userIdentifierToLocalUsername = userIdentifierToLocalUsername;
    pamHandler.mainPageFilter = mainPageFilter;
    pamHandler.signInThenContinue = signInThenContinue;
@@ -488,7 +556,8 @@ Error initialize()
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
    if (canSetSignInCookies())
-      pamHandler.setSignInCookies = setSignInCookies;
+      pamHandler.setSignInCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, false);
+   pamHandler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

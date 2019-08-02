@@ -23,6 +23,7 @@ RUN apt-get update && \
     ant \
     build-essential \
     clang \
+    curl \
     debsigs \
     dpkg-sig \
     expect \
@@ -50,6 +51,7 @@ RUN apt-get update && \
     sudo \
     unzip \
     uuid-dev \
+    valgrind \
     wget \
     zlib1g-dev
 

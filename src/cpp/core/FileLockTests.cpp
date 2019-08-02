@@ -75,7 +75,7 @@ void forkAndCheckLock()
    ::waitpid(child, &status, 0);
 }
    
-TEST_CASE("File Locking")
+TEST_CASE("File Locking", "[!hide]")
 {
    SECTION("A link-based lock can only be acquired once")
    {

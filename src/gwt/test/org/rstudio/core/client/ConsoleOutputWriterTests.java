@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
@@ -58,13 +59,13 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       }
    
       @Override
-      public int consoleAnsiMode()
+      public String consoleAnsiMode()
       {
          return ansiMode_;
       }
       
       public int truncateLines_ = 1000;
-      public int ansiMode_ = VirtualConsole.ANSI_COLOR_ON;
+      public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
    }
    
    private class VCFactory implements VirtualConsoleFactory

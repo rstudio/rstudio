@@ -1,0 +1,35 @@
+24a25
+> import com.google.gwt.event.shared.HandlerRegistration;
+137a139,141
+> 
+>           fireEvent(new SplitterBeforeResizeEvent());
+> 
+169a174,176
+> 
+>           fireEvent(new SplitterResizedEvent());
+> 
+485a493,505
+>     splitter.addHandler(new SplitterBeforeResizeHandler() {
+>       public void onSplitterBeforeResize(SplitterBeforeResizeEvent event)
+>       {
+>         delegateEvent(SplitLayoutPanel.this, event);
+>       }
+>     }, SplitterBeforeResizeEvent.TYPE);
+>     splitter.addHandler(new SplitterResizedHandler() {
+>       public void onSplitterResized(SplitterResizedEvent event)
+>       {
+>         delegateEvent(SplitLayoutPanel.this, event);
+>       }
+>     }, SplitterResizedEvent.TYPE);
+> 
+487a508,517
+> 
+>   public HandlerRegistration addSplitterBeforeResizeHandler(SplitterBeforeResizeHandler handler)
+>   {
+>     return addHandler(handler, SplitterBeforeResizeEvent.TYPE);
+>   }
+> 
+>   public HandlerRegistration addSplitterResizedHandler(SplitterResizedHandler handler)
+>   {
+>     return addHandler(handler, SplitterResizedEvent.TYPE);
+>   }

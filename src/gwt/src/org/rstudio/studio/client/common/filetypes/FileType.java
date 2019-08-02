@@ -1,7 +1,7 @@
 /*
  * FileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ public abstract class FileType
    public static final String STAN_LANG_MODE = "Stan";
    public static final String PYTHON_LANG_MODE = "Python";
    
-   static ArrayList<FileType> ALL_FILE_TYPES = new ArrayList<FileType>();
+   static ArrayList<FileType> ALL_FILE_TYPES = new ArrayList<>();
 
    protected FileType(String id)
    {
@@ -53,6 +53,7 @@ public abstract class FileType
    }
    
    protected abstract void openFile(FileSystemItem file, EventBus eventBus);
+   protected abstract FileIcon getDefaultFileIcon();
    
    private final String id_;
 }

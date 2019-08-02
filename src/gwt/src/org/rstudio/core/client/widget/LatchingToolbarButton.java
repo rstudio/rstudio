@@ -1,7 +1,7 @@
 /*
  * LatchingToolbarButton.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,10 +23,11 @@ public class LatchingToolbarButton extends ToolbarButton
 {
 
    public LatchingToolbarButton(String text, 
+                                String title,
                                 ImageResource leftImage,
                                 ClickHandler clickHandler)
    {
-      super(text, leftImage, clickHandler);
+      super(text, title, leftImage, clickHandler);
       getElement().addClassName(ThemeStyles.INSTANCE.toolbarButtonLatchable());
    }
    

@@ -107,9 +107,9 @@ public class PackageInfo extends JavaScriptObject
       return getPackratBoolField("currently.used");
    }
 
-   public final boolean getInPackratLibary()
+   public final boolean isInProjectLibrary()
    {
-      return getPackratBoolField("in.packrat.library");
+      return getPackratBoolField("in.project.library");
    }
    
    public final String getSourceLibrary()

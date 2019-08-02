@@ -2,7 +2,7 @@
  * 
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
@@ -65,7 +66,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -104,7 +104,7 @@ public class DocTabLayoutPanel
                             int padding,
                             int rightMargin)
    {
-      super(BAR_HEIGHT, Style.Unit.PX);
+      super(BAR_HEIGHT, Style.Unit.PX, "Documents");
       closeableTabs_ = closeableTabs;
       padding_ = padding;
       rightMargin_ = rightMargin;
@@ -150,7 +150,7 @@ public class DocTabLayoutPanel
    }
    
    public void add(final Widget child,
-                   ImageResource icon,
+                   FileIcon icon,
                    String docId,
                    final String text,
                    String tooltip,
@@ -924,7 +924,7 @@ public class DocTabLayoutPanel
                   initDragParams_, null, destPos_));
          }
          
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             // on desktop, we call back to discover whether the cursor is
             // currently outside of any RStudio window; in such a case we
@@ -1038,7 +1038,7 @@ public class DocTabLayoutPanel
 
    private class DocTab extends Composite
    {
-      private DocTab(ImageResource icon,
+      private DocTab(FileIcon icon,
                      String docId,
                      String title,
                      String tooltip,
@@ -1106,6 +1106,7 @@ public class DocTabLayoutPanel
          Image img = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x()));
          img.setStylePrimaryName(styles_.closeTabButton());
          img.addStyleName(ThemeStyles.INSTANCE.handCursor());
+         img.setAltText("Close document tab");
          contentPanel_.add(img);
 
          layoutPanel.add(contentPanel_);
@@ -1138,7 +1139,7 @@ public class DocTabLayoutPanel
          contentPanel_.setTitle(tooltip);
       }
 
-      public void replaceIcon(ImageResource icon)
+      public void replaceIcon(FileIcon icon)
       {
          if (contentPanel_.getWidget(0) instanceof Image)
             contentPanel_.remove(0);
@@ -1150,10 +1151,11 @@ public class DocTabLayoutPanel
          return docId_;
       }
       
-      private Image imageForIcon(ImageResource icon)
+      private Image imageForIcon(FileIcon icon)
       {
-         Image image = new Image(icon);
+         Image image = new Image(icon.getImageResource());
          image.setStylePrimaryName(styles_.docTabIcon());
+         image.setAltText(icon.getDescription());
          return image;
       }
 
@@ -1198,7 +1200,7 @@ public class DocTabLayoutPanel
    }
 
    public void replaceDocName(int index,
-                              ImageResource icon,
+                              FileIcon icon,
                               String title,
                               String tooltip)
    {

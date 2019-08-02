@@ -26,6 +26,7 @@ int RReadScript (const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist
 
 void RWriteStdout (const char *buf, int buflen, int otype);
 
+void RScriptCleanUp(SA_TYPE saveact, int status, int runLast);
 
 } // namespace session
 } // namespace r

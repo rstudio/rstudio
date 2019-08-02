@@ -16,7 +16,9 @@
 #include "DesktopWebPage.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/thread/once.hpp>
 
+#include <core/http/URL.hpp>
 #include <core/Thread.hpp>
 
 #include <QFileDialog>
@@ -30,6 +32,7 @@
 #include "DesktopSecondaryWindow.hpp"
 #include "DesktopWebProfile.hpp"
 #include "DesktopWindowTracker.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 
 using namespace rstudio::core;
 
@@ -243,14 +246,6 @@ QWebEnginePage* WebPage::createWindow(QWebEnginePage::WebWindowType type)
       pWindow = new SatelliteWindow(pMainWindow, name, this);
       pWindow->resize(width, height);
 
-      // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
-      QAction* action = new QAction(pWindow);
-      action->setShortcut(Qt::CTRL + Qt::Key_W);
-      pWindow->addAction(action);
-      QObject::connect(
-               action, &QAction::triggered,
-               static_cast<SatelliteWindow*>(pWindow), &SatelliteWindow::onCloseWindowShortcut);
-
       if (x >= 0 && y >= 0)
       {
          // if the window specified its location, use it
@@ -334,15 +329,30 @@ void WebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel /*level*/, 
 
 namespace {
 
-bool isSafeHost(const std::string& host)
+boost::once_flag s_once = BOOST_ONCE_INIT;
+std::vector<std::string> safeHosts_;
+
+void initSafeHosts()
 {
-   static const std::vector<std::string> whitelist = {
+   safeHosts_ = {
       ".youtube.com",
       ".vimeo.com",
       ".c9.ms"
    };
-   
-   for (auto entry : whitelist)
+
+   for (const SessionServer& server : sessionServerSettings().servers())
+   {
+      http::URL url(server.url());
+      safeHosts_.push_back(url.hostname());
+   }
+}
+
+bool isSafeHost(const std::string& host)
+{  
+   boost::call_once(s_once,
+                    initSafeHosts);
+
+   for (auto entry : safeHosts_)
       if (boost::algorithm::ends_with(host, entry))
          return true;
    
@@ -481,6 +491,18 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
 void WebPage::triggerAction(WebAction action, bool checked)
 {
    QWebEnginePage::triggerAction(action, checked);
+}
+
+PendingWindow::PendingWindow(QString name,
+                             MainWindow* pMainWindow,
+                             int screenX,
+                             int screenY,
+                             int width,
+                             int height)
+   : name(name), pMainWindow(pMainWindow), x(screenX), y(screenY),
+     width(width), height(height), isSatellite(true),
+     allowExternalNavigate(pMainWindow->isRemoteDesktop()), showToolbar(false)
+{
 }
 
 } // namespace desktop

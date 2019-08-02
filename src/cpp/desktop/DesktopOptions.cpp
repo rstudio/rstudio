@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,16 @@ void Options::initFromCommandLine(const QStringList& arguments)
       const QString &arg = arguments.at(i);
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
+      else if (arg == QString::fromUtf8(kSessionServerOption))
+      {
+         if ((i + 1) < arguments.size())
+            sessionServer_ = arguments.at(++i).toStdString();
+      }
+      else if (arg == QString::fromUtf8(kSessionServerUrlOption))
+      {
+         if ((i + 1) < arguments.size())
+            sessionUrl_ = arguments.at(++i).toStdString();
+      }
    }
 
    // synchronize zoom level with desktop frame
@@ -74,6 +84,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
    // https://github.com/rstudio/rstudio/issues/3498
    // https://github.com/rstudio/rstudio/issues/3159
    //
+   
    QSize size = QSize(1200, 900).boundedTo(
             QApplication::desktop()->availableGeometry().size());
    if (size.width() > 800 && size.height() > 500)
@@ -81,9 +92,40 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
       // Only use default size if it seems sane; otherwise let Qt set it
       win->resize(size);
    }
-   
+
    if (settings_.contains(kMainWindowGeometry))
+   {
+      // try to restore the geometry
       win->restoreGeometry(settings_.value(kMainWindowGeometry).toByteArray());
+
+      // double-check that we haven't accidentally restored a geometry that
+      // places the Window off-screen (can happen if the screen configuration
+      // changes between the time geometry was saved and loaded)
+      QRect desktopRect = QApplication::desktop()->availableGeometry();
+      QRect winRect = win->geometry();
+      
+      // shrink the window rectangle a bit just to capture cases like RStudio
+      // too close to edge of window and hardly showing at all
+      QRect checkRect(
+               winRect.topLeft() + QPoint(5, 5),
+               winRect.bottomRight() - QPoint(5, 5));
+      
+      // check for intersection
+      if (!desktopRect.intersects(checkRect))
+      {
+         // restore size and center the window
+         win->resize(size);
+         win->move(
+                  desktopRect.width() / 2 - size.width() / 2,
+                  desktopRect.height() / 2 - size.height() / 2);
+      }
+   }
+   
+   // ensure a minimum width, height for the window on restore
+   win->resize(
+            std::max(300, win->width()),
+            std::max(200, win->height()));
+      
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
@@ -325,6 +367,14 @@ void Options::setUseFontConfigDatabase(bool use)
 #ifdef _WIN32
 QString Options::rBinDir() const
 {
+   // HACK: If RBinDir doesn't appear at all, that means the user has never
+   // specified a preference for R64 vs. 32-bit R. In this situation we should
+   // accept either. We'll distinguish between this case (where preferR64
+   // should be ignored) and the other case by using null for this case and
+   // empty string for the other.
+   if (!settings_.contains(QString::fromUtf8("RBinDir")))
+      return QString::null;
+
    QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
 }
@@ -334,6 +384,20 @@ void Options::setRBinDir(QString path)
    settings_.setValue(QString::fromUtf8("RBinDir"), path);
 }
 
+bool Options::preferR64() const
+{
+   if (!core::system::isWin64())
+      return false;
+
+   if (!settings_.contains(QString::fromUtf8("PreferR64")))
+      return true;
+   return settings_.value(QString::fromUtf8("PreferR64")).toBool();
+}
+
+void Options::setPreferR64(bool preferR64)
+{
+   settings_.setValue(QString::fromUtf8("PreferR64"), preferR64);
+}
 #endif
 
 FilePath Options::scriptsPath() const
@@ -462,6 +526,21 @@ void Options::cleanUpScratchTempDir()
    core::FilePath temp = scratchTempDir(core::FilePath());
    if (!temp.empty())
       temp.removeIfExists();
+}
+
+QString Options::lastRemoteSessionUrl(const QString& serverUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   QString sessionUrl = settings_.value(serverUrl).toString();
+   settings_.endGroup();
+   return sessionUrl;
+}
+
+void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   settings_.setValue(serverUrl, sessionUrl);
+   settings_.endGroup();
 }
 
 } // namespace desktop

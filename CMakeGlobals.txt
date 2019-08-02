@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -54,8 +54,8 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-# enable testing on debug builds
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT RSTUDIO_UNIT_TESTS_DISABLED)
+# enable testing on all builds unless explicitly disabled
+if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
@@ -75,9 +75,14 @@ if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desk
    set(RSTUDIO_DESKTOP TRUE)
 endif()
 
+# set session32 if specified
+if(RSTUDIO_TARGET STREQUAL "SessionWin32")
+   set(RSTUDIO_SESSION_WIN32 TRUE)
+endif()
+
 # record git revision hash (cache it since we don't use this in development
 # mode and we don't want it to force rebuilds there)
-if(NOT RSTUDIO_GIT_REVISION_HASH)
+if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSTUDIO_GIT_REVISION_HASH)
    find_program(GIT_EXECUTABLE git)
    if(GIT_EXECUTABLE)
       execute_process(
@@ -163,7 +168,11 @@ if (APPLE AND RSTUDIO_DESKTOP)
    set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
    set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
 else()
-   set(RSTUDIO_INSTALL_BIN bin)
+   if (RSTUDIO_SESSION_WIN32)
+     set(RSTUDIO_INSTALL_BIN x86)
+   else()
+     set(RSTUDIO_INSTALL_BIN bin)
+   endif()
    set(RSTUDIO_INSTALL_SUPPORTING .)
 endif()
 
@@ -198,6 +207,9 @@ endif()
 
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
+
+# embedded packages
+set(RSTUDIO_EMBEDDED_PACKAGES renv CACHE INTERNAL "Embedded R Packages")
 
 # include utilities
 include(RStudioCMakeUtils)

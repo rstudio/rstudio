@@ -1,7 +1,7 @@
 /*
  * NewPlumberAPI.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
@@ -34,16 +38,11 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -76,21 +75,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    
    private void addTextFieldValidator(HasKeyDownHandlers widget)
    {
-      widget.addKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  validateAPIName();
-               }
-            });
-         }
-      });
+      widget.addKeyDownHandler(event -> Scheduler.get().scheduleDeferred(() -> validateAPIName()));
    }
    
    private boolean isValidAPIName(String apiName)
@@ -176,7 +161,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    public NewPlumberAPI(String caption, 
                         OperationWithInput<Result> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Create");
@@ -186,15 +171,14 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls_ = new VerticalPanel();
       
       // Create individual widgets
-      apiNameLabel_ = new Label("API name:");
-      apiNameLabel_.addStyleName(RES.styles().label());
-      controls_.add(apiNameLabel_);
-      
       apiNameTextBox_ = new TextBox();
-      apiNameTextBox_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(apiNameTextBox_);
       apiNameTextBox_.addStyleName(RES.styles().apiNameTextBox());
-      apiNameTextBox_.getElement().setAttribute("placeholder", "Name");
+      DomUtils.setPlaceholder(apiNameTextBox_, "Name");
       addTextFieldValidator(apiNameTextBox_);
+      FormLabel apiNameLabel = new FormLabel("API name:", apiNameTextBox_);
+      apiNameLabel.addStyleName(RES.styles().label());
+      controls_.add(apiNameLabel);
       controls_.add(apiNameTextBox_);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
@@ -206,11 +190,10 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls_.add(new VerticalSpacer("20px"));
       
       container_ = new HorizontalPanel();
-      Image image = new Image(NewProjectResources.INSTANCE.plumberAppIcon2x());
+      DecorativeImage image = new DecorativeImage(NewProjectResources.INSTANCE.plumberAppIcon2x());
       image.addStyleName(RES.styles().image());
       container_.add(image);
       container_.add(controls_);
-      
       
       plumberHelpLink_ = new HelpLink(
             "Plumber APIs",
@@ -218,13 +201,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
             false);
       plumberHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
       addLeftWidget(plumberHelpLink_);
-   }
-   
-   @Override
-   protected void onDialogShown()
-   {
-      super.onDialogShown();
-      apiNameTextBox_.setFocus(true);
    }
    
    @Override
@@ -278,7 +254,6 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    private HorizontalPanel container_;
    private VerticalPanel controls_;
    
-   private Label   apiNameLabel_;
    private TextBox apiNameTextBox_;
    
    private DirectoryChooserTextBox directoryChooserTextBox_;
@@ -319,5 +294,4 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    static {
       RES.styles().ensureInjected();
    }
-   
 }

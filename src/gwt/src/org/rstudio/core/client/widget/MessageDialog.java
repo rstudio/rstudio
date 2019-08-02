@@ -1,7 +1,7 @@
 /*
  * MessageDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
@@ -38,33 +37,35 @@ public class MessageDialog extends ModalDialogBase
    
    public MessageDialog(int type, String caption, Widget message)
    {
+      super(Roles.getAlertdialogRole());
       type_ = type;
       setText(caption);
       messageWidget_ = message;
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+      
+      // read the message when dialog is shown
+      setARIADescribedBy(messageWidget_.getElement());
    }
 
    public ThemedButton addButton(String label,
+                                 String elementId,
                                  final Operation operation,
                                  boolean isDefault,
                                  boolean isCancel)
    {
-      ThemedButton button = new ThemedButton(label, new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            if (operation != null)
-               operation.execute();
-            closeDialog();
-         }
+      ThemedButton button = new ThemedButton(label, event -> {
+         if (operation != null)
+            operation.execute();
+         closeDialog();
       });
 
-      addButton(button, isDefault, isCancel);
+      addButton(button, elementId, isDefault, isCancel);
 
       return button;
    }
 
    public ThemedButton addButton(String label,
+                                 String elementId,
                                  final ProgressOperation operation,
                                  boolean isDefault,
                                  boolean isCancel)
@@ -72,32 +73,29 @@ public class MessageDialog extends ModalDialogBase
       if (operation != null && progress_ == null)
          progress_ = addProgressIndicator();
 
-      ThemedButton button = new ThemedButton(label, new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            if (operation != null)
-               operation.execute(progress_);
-            else
-               closeDialog();
-         }
+      ThemedButton button = new ThemedButton(label, event -> {
+         if (operation != null)
+            operation.execute(progress_);
+         else
+            closeDialog();
       });
 
-      addButton(button, isDefault, isCancel);
+      addButton(button, elementId, isDefault, isCancel);
 
       return button;
    }
 
    private void addButton(ThemedButton button,
+                          String elementId,
                           boolean isDefault,
                           boolean isCancel)
    {
       if (isDefault)
-         addOkButton(button);
+         addOkButton(button, elementId);
       else if (isCancel)
-         addCancelButton(button);
+         addCancelButton(button, elementId);
       else
-         addButton(button);
+         addButton(button, elementId);
    }
 
    @Override
@@ -109,25 +107,33 @@ public class MessageDialog extends ModalDialogBase
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
       Image image = null;
+      String imageText = null;
       switch(type_)
       {
       case INFO:
          image = new Image(new ImageResource2x(images.dialog_info2x()));
+         imageText = MessageDialogImages.DIALOG_INFO_TEXT;
          break;
       case WARNING:
          image = new Image(new ImageResource2x(images.dialog_warning2x()));
+         imageText = MessageDialogImages.DIALOG_WARNING_TEXT;
          break;
       case ERROR:
          image = new Image(new ImageResource2x(images.dialog_error2x()));
+         imageText = MessageDialogImages.DIALOG_ERROR_TEXT;
          break;
       case QUESTION:
          image = new Image(new ImageResource2x(images.dialog_question2x()));
+         imageText = MessageDialogImages.DIALOG_QUESTION_TEXT;
          break;
       case POPUP_BLOCKED:
          image = new Image(new ImageResource2x(images.dialog_popup_blocked2x()));
+         imageText = MessageDialogImages.DIALOG_POPUP_BLOCKED_TEXT;
          break;
       }
       horizontalPanel.add(image);
+      if (image != null)
+         image.setAltText(imageText);
 
       // add message widget
       horizontalPanel.add(messageWidget_);
@@ -138,17 +144,16 @@ public class MessageDialog extends ModalDialogBase
    public static Label labelForMessage(String message)
    {
       Label label = new MultiLineLabel(StringUtil.notNull(message));
-      label.setStylePrimaryName(
-                     ThemeResources.INSTANCE.themeStyles().dialogMessage());
+      label.setStylePrimaryName(ThemeResources.INSTANCE.themeStyles().dialogMessage());
       return label;
    }
-    
+
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       focusOkButton();
    }
-   
+
    private int type_ ;
    private Widget messageWidget_ ;
    private ProgressIndicator progress_ ;

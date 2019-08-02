@@ -19,6 +19,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/SessionConsoleProcessSocket.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
@@ -83,8 +85,12 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (session::userSettings().terminalBusyMode() == core::system::busy_detection::Whitelist)
-      options.subprocWhitelist = session::userSettings().terminalBusyWhitelist();
+   if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   {
+      std::vector<std::string> whitelist;
+      core::json::fillVectorString(prefs::userPrefs().busyWhitelist(), &whitelist);
+      options.subprocWhitelist = whitelist;
+   }
 
    // set path to shell
    AvailableTerminalShells shells;
@@ -645,7 +651,7 @@ void ConsoleProcess::onExit(int exitCode)
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
       procInfo_->setAutoClose(
-            session::userSettings().terminalAutoclose() ? AlwaysAutoClose :  NeverAutoClose);
+            prefs::userPrefs().terminalAutoClose() ? AlwaysAutoClose :  NeverAutoClose);
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)
@@ -985,7 +991,7 @@ std::string ConsoleProcess::getShellName() const
 bool ConsoleProcess::useWebsockets()
 {
    return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
+                     prefs::userPrefs().terminalWebsockets();
 }
 
 core::json::Array processesAsJson(SerializationMode serialMode)

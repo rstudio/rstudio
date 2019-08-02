@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.workbench.projects.RenvContext;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -29,20 +30,24 @@ public class RProjectOptions extends JavaScriptObject
       return create(RProjectConfig.createEmpty(), 
                     RProjectVcsOptions.createEmpty(),
                     RProjectBuildOptions.createEmpty(),
-                    RProjectPackratOptions.createEmpty());
+                    RProjectPackratOptions.createEmpty(),
+                    RProjectRenvOptions.createEmpty());
    }
    
    public native static final RProjectOptions create(
                                     RProjectConfig config,
                                     RProjectVcsOptions vcsOptions,
                                     RProjectBuildOptions buildOptions,
-                                    RProjectPackratOptions packratOptions) /*-{
+                                    RProjectPackratOptions packratOptions,
+                                    RProjectRenvOptions renvOptions)
+   /*-{
       var options = new Object();
       options.config = config;
       options.vcs_options = vcsOptions;
       options.vcs_options_default = new Object();
       options.build_options = buildOptions;
       options.packrat_options = packratOptions;
+      options.renv_options = renvOptions;
       return options;
    }-*/;
    
@@ -61,6 +66,10 @@ public class RProjectOptions extends JavaScriptObject
    public native final RProjectPackratOptions getPackratOptions() /*-{
       return this.packrat_options;
    }-*/;
+   
+   public native final RProjectRenvOptions getRenvOptions() /*-{
+      return this.renv_options;
+   }-*/;
 
    public native final RProjectVcsContext getVcsContext() /*-{
       return this.vcs_context;
@@ -72,6 +81,10 @@ public class RProjectOptions extends JavaScriptObject
    
    public native final PackratContext getPackratContext() /*-{
       return this.packrat_context;
+   }-*/;
+   
+   public native final RenvContext getRenvContext() /*-{
+      return this.renv_context;
    }-*/;
    
    

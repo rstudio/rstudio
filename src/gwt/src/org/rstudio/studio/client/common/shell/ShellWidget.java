@@ -34,7 +34,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.N
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -73,7 +74,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UIPrefs prefs, EventBus events)
+   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
@@ -132,15 +133,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
             if (input_.isPopupVisible())
                return;
             
-            // If the user hits Page-Up from inside the console input, we need
-            // to simulate pageup because focus is not contained in the scroll
-            // panel (it's in the hidden textarea that Ace uses under the
-            // covers).
+            // If the user hits PageUp or PageDown from inside the console
+            // input, we need to simulate its action because focus is not contained
+            // in the scroll panel (it's in the hidden textarea that Ace uses
+            // under the covers).
 
             int keyCode = event.getNativeKeyCode();
             switch (keyCode)
             {
                case KeyCodes.KEY_PAGEUP:
+               {
                   event.stopPropagation();
                   event.preventDefault();
 
@@ -148,11 +150,33 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   if (scrollPanel_.getVerticalScrollPosition() == 0)
                      return;
 
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() -
+                        scrollPanel_.getOffsetHeight() +
+                        40;
+                  
                   scrollPanel_.focus();
-                  int newScrollTop = scrollPanel_.getVerticalScrollPosition() -
-                                     scrollPanel_.getOffsetHeight() + 40;
                   scrollPanel_.setVerticalScrollPosition(Math.max(0, newScrollTop));
                   break;
+               }
+                  
+               case KeyCodes.KEY_PAGEDOWN:
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  
+                  if (scrollPanel_.isScrolledToBottom())
+                     return;
+                  
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() +
+                        scrollPanel_.getOffsetHeight() -
+                        40;
+                  
+                  scrollPanel_.focus();
+                  scrollPanel_.setVerticalScrollPosition(newScrollTop);
+                  break;
+               }
             }
          }
       });
@@ -389,7 +413,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String getErrorClass()
    {
       return styles_.error() + " " + 
-             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+             AceTheme.getThemeErrorClass(
+                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
    }
 
    /**
@@ -743,7 +768,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       output_.setMaxOutputLines(maxLines);
    }
-   
+
+   @Override
+   public void setTextInputAriaLabel(String label)
+   {
+      input_.setTextInputAriaLabel(label);
+   }
+
    @Override
    public Widget getShellWidget()
    {
@@ -774,7 +805,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    // A list of errors that have occurred between console prompts. 
    private Map<String, List<Element>> errorNodes_ = new TreeMap<String, List<Element>>();

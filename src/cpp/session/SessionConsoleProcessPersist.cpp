@@ -51,7 +51,10 @@ namespace console_persist {
 //                Added autoClose, zombie
 // 2017/06/16 - console05 -> console06
 //                Added trackEnv
-#define kConsoleDir "console06"
+// 2019/07/30 - console06 -> console07
+//                Changed shell type from int to string to align with user
+//                preferences
+#define kConsoleDir "console07"
 
 namespace {
 

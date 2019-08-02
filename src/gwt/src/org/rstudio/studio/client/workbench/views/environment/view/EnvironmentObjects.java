@@ -33,7 +33,8 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -607,10 +608,12 @@ public class EnvironmentObjects extends ResizeComposite
 
    private Widget buildEmptyGridMessage()
    {
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
       environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
-      environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
+      environmentEmptyMessage_.setStyleName(styles.subtitle());
+      environmentEmptyMessage_.setStylePrimaryName(style.emptyEnvironmentMessage());
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
@@ -705,8 +708,14 @@ public class EnvironmentObjects extends ResizeComposite
    // container's physical limit
    private void redrawRowSafely(int idx)
    {
-      if (idx < MAX_ENVIRONMENT_OBJECTS)
-         objectDisplay_.redrawRow(idx);
+      boolean oob =
+            idx >= MAX_ENVIRONMENT_OBJECTS ||
+            idx >= objectDisplay_.getRowCount();
+
+      if (oob)
+         return;
+            
+      objectDisplay_.redrawRow(idx);
    }
    
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
@@ -716,7 +725,7 @@ public class EnvironmentObjects extends ResizeComposite
    public static final int OBJECT_GRID_VIEW = 1;
 
    @UiField EnvironmentStyle style;
-   @UiField AutoHidingSplitLayoutPanel splitPanel;
+   @UiField SplitLayoutPanel splitPanel;
 
    EnvironmentObjectDisplay objectDisplay_;
    CallFramePanel callFramePanel_;

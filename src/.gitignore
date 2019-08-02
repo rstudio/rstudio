@@ -3,4 +3,4 @@ qtcreator-build*/
 CMakeLists.txt.user
 cpp-build*/
 cmake-build-*/
-
+session32/*

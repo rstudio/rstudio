@@ -1,7 +1,7 @@
 /*
  * ConsoleInterruptButton.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -45,9 +46,13 @@ public class ConsoleInterruptButton extends Composite
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
 
       commands_ = commands;
-      ImageResource icon = commands_.interruptR().getImageResource();
-      ToolbarButton button = new ToolbarButton(icon,
-                                               commands.interruptR());
+      AppCommand interruptCommand = commands_.interruptR();
+      ImageResource icon = interruptCommand.getImageResource();
+      ToolbarButton button = new ToolbarButton(
+            ToolbarButton.NoText,
+            interruptCommand.getTooltip(),
+            icon,
+            interruptCommand);
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);

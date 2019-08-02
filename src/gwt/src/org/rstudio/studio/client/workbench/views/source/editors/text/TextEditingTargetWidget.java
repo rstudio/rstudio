@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
@@ -37,6 +38,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -72,8 +74,9 @@ import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
@@ -95,7 +98,8 @@ public class TextEditingTargetWidget
    public TextEditingTargetWidget(final TextEditingTarget target,
                                   DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
-                                  UIPrefs uiPrefs,
+                                  UserPrefs userPrefs,
+                                  UserState userState,
                                   FileTypeRegistry fileTypeRegistry,
                                   final DocDisplay editor,
                                   TextFileType fileType,
@@ -107,7 +111,8 @@ public class TextEditingTargetWidget
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
@@ -225,6 +230,8 @@ public class TextEditingTargetWidget
          }
       });
 
+      editor_.setTextInputAriaLabel("Text editor");
+
       initWidget(panel_);
    }
    
@@ -251,6 +258,7 @@ public class TextEditingTargetWidget
    {
       compareTestButton_ = new ToolbarButton(
             "Compare Results", 
+            ToolbarButton.NoTitle,
             commands_.shinyCompareTest().getImageResource(), 
             new ClickHandler() 
             {
@@ -267,6 +275,7 @@ public class TextEditingTargetWidget
 
       testThatButton_ = new ToolbarButton(
             "Run Tests", 
+            ToolbarButton.NoTitle,
             commands_.testTestthatFile().getImageResource(), 
             new ClickHandler() 
             {
@@ -283,6 +292,7 @@ public class TextEditingTargetWidget
 
       testShinyButton_ = new ToolbarButton(
             "Run Tests", 
+            ToolbarButton.NoTitle,
             commands_.testShinytestFile().getImageResource(), 
             new ClickHandler() 
             {
@@ -336,7 +346,10 @@ public class TextEditingTargetWidget
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
       if (fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(shinyTestMenu, true);
+         shinyLaunchButton_ = new ToolbarMenuButton(
+               ToolbarButton.NoText,
+               "Shiny test options",
+               shinyTestMenu, true);
          toolbar.addLeftWidget(shinyLaunchButton_);
       }
 
@@ -358,8 +371,9 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
       
-      rmdOptionsButton_ = new ToolbarButton(
-            null,  
+      rmdOptionsButton_ = new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            commands_.editRmdFormatOptions().getTooltip(),
             new ImageResource2x(StandardIcons.INSTANCE.options2x()),
             rmdOptionsMenu, 
             false);
@@ -381,8 +395,9 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
 
-      insertChunkMenu_ = new ToolbarButton(
+      insertChunkMenu_ = new ToolbarMenuButton(
                        "Insert",
+                       commands_.insertChunk().getTooltip(),
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
                        true);
@@ -403,21 +418,21 @@ public class TextEditingTargetWidget
       
       sourceButton_ = new ToolbarButton(
             "Source", 
+            SOURCE_BUTTON_TITLE,
             commands_.sourceActiveDocument().getImageResource(), 
             new ClickHandler() 
             {
                @Override
                public void onClick(ClickEvent event)
                {
-                  if (uiPrefs_.sourceWithEcho().getValue())
+                  if (userPrefs_.sourceWithEcho().getValue())
                      commands_.sourceActiveDocumentWithEcho().execute();
                   else
                      commands_.sourceActiveDocument().execute();
                }
             });
-      
-      sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
       toolbar.addRightWidget(sourceButton_);
+      ElementIds.assignElementId(sourceButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON);
 
       previewJsButton_ = commands_.previewJS().createToolbarButton(false);
       toolbar.addRightWidget(previewJsButton_);
@@ -427,7 +442,7 @@ public class TextEditingTargetWidget
 
       createTestToolbarButtons(toolbar);
       
-      uiPrefs_.sourceWithEcho().addValueChangeHandler(
+      userPrefs_.sourceWithEcho().addValueChangeHandler(
                                        new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -446,8 +461,9 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(commands_.sourceAsLauncherJob().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceAsJob().createMenuItem(false));
          
-      sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
-      toolbar.addRightWidget(sourceMenuButton_);  
+      sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
+      toolbar.addRightWidget(sourceMenuButton_);
+      ElementIds.assignElementId(sourceMenuButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
 
       //toolbar.addRightSeparator();
      
@@ -458,13 +474,13 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
-      chunksMenu.addItem(runSetupChunkOptionMenu_= new UIPrefMenuItem<Boolean>(
-            uiPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
-            uiPrefs_));
+      chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<Boolean>(
+            userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
+            userPrefs_));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
-      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      if (userPrefs_.rmdChunkOutputInline().getValue())
       {
          chunksMenu.addSeparator();
          chunksMenu.addItem(
@@ -474,8 +490,9 @@ public class TextEditingTargetWidget
       }
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
-      chunksButton_ = new ToolbarButton(
+      chunksButton_ = new ToolbarMenuButton(
                        "Run",
+                       ToolbarButton.NoTitle,
                        commands_.executeCode().getImageResource(),
                        chunksMenu,
                        true);
@@ -483,16 +500,24 @@ public class TextEditingTargetWidget
       
       ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
       if (!fileType.canKnitToHTML()) {
-         shinyLaunchButton_ = new ToolbarButton(shinyLaunchMenu, true);
+         shinyLaunchButton_ = new ToolbarMenuButton(
+               ToolbarButton.NoText,
+               "Run app options",
+               shinyLaunchMenu, 
+               true);
          toolbar.addRightWidget(shinyLaunchButton_);
       }
       shinyLaunchButton_.setVisible(false);
 
-      plumberLaunchButton_ = new ToolbarButton(plumberViewerMenu_, true);
+      plumberLaunchButton_ = new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            "Run API options",
+            plumberViewerMenu_, 
+            true);
       toolbar.addRightWidget(plumberLaunchButton_);
       plumberLaunchButton_.setVisible(false);
 
-      if (SessionUtils.showPublishUi(session_, uiPrefs_))
+      if (SessionUtils.showPublishUi(session_, userState_))
       {
          toolbar.addRightSeparator();
          publishButton_ = new RSConnectPublishButton(
@@ -509,7 +534,8 @@ public class TextEditingTargetWidget
       }
       
       toggleDocOutlineButton_ = new LatchingToolbarButton(
-         "",
+            ToolbarButton.NoText,
+            ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             new ClickHandler()
             {
@@ -580,7 +606,7 @@ public class TextEditingTargetWidget
       
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
-      showWhitespaceCharactersCheckbox_.setValue(uiPrefs_.showInvisibles().getValue());
+      showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          editor_.setShowInvisibles(event.getValue());
       });
@@ -601,11 +627,12 @@ public class TextEditingTargetWidget
    private ToolbarButton createLatexFormatButton()
    {
       ToolbarPopupMenu texMenu = new TextEditingTargetLatexFormatMenu(editor_,
-                                                                      uiPrefs_);
+                                                                      userPrefs_);
     
-      ToolbarButton texButton = new ToolbarButton(
+      ToolbarMenuButton texButton = new ToolbarMenuButton(
                            "Format", 
-                           fileTypeRegistry_.getIconForFilename("foo.tex"), 
+                           ToolbarButton.NoTitle,
+                           fileTypeRegistry_.getIconForFilename("foo.tex").getImageResource(),
                            texMenu, 
                            false);
       return texButton;
@@ -639,8 +666,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.showDiagnosticsProject().createMenuItem(false));
          menu.addSeparator();
          menu.addItem(commands_.profileCode().createMenuItem(false));
-         codeTransform_ = new ToolbarButton("", icon, menu);
-         codeTransform_.setTitle("Code Tools");
+         codeTransform_ = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       }
       
       return codeTransform_;
@@ -1010,7 +1036,7 @@ public class TextEditingTargetWidget
    public void debug_dumpContents()
    {
       String dump = editor_.debug_getDocumentDump();
-      new EditDialog(dump, false, false, new ProgressOperationWithInput<String>()
+      new EditDialog(dump, Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)
@@ -1023,7 +1049,7 @@ public class TextEditingTargetWidget
    @Override
    public void debug_importDump()
    {
-      new EditDialog("", false, false, new ProgressOperationWithInput<String>()
+      new EditDialog("", Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
       {
          @Override
          public void execute(String input, ProgressIndicator indicator)
@@ -1100,8 +1126,8 @@ public class TextEditingTargetWidget
       {
          String ext = extensions.get(i);
          ImageResource img = ext != null ? 
-               fileTypeRegistry_.getIconForFilename("output." + ext) :
-               fileTypeRegistry_.getIconForFilename("Makefile");
+               fileTypeRegistry_.getIconForFilename("output." + ext).getImageResource() :
+               fileTypeRegistry_.getIconForFilename("Makefile").getImageResource();
          final String valueName = values.get(i);
          ScheduledCommand cmd = new ScheduledCommand()
          {
@@ -1143,23 +1169,23 @@ public class TextEditingTargetWidget
          DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
                "Document Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_DEFAULT);
+               UserPrefs.KNIT_WORKING_DIR_DEFAULT);
          knitDirMenu.addItem(knitInDocDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
                "Project Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_PROJECT);
+               UserPrefs.KNIT_WORKING_DIR_PROJECT);
          knitDirMenu.addItem(knitInProjectDir);
          DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
                "Current Working Directory", 
                docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
+               userPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_CURRENT);
+               UserPrefs.KNIT_WORKING_DIR_CURRENT);
          knitDirMenu.addItem(knitInCurrentDir);
 
          rmdFormatButton_.addSeparator();
@@ -1442,20 +1468,20 @@ public class TextEditingTargetWidget
          boolean isRmd, int type)
    {
       if (rmdViewerPaneMenuItem_ == null)
-         rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_PANE, 
-               "Preview in Viewer Pane", uiPrefs_);
+         rmdViewerPaneMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_PANE, 
+               "Preview in Viewer Pane", userPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
-         rmdViewerWindowMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_WINDOW, 
-               "Preview in Window", uiPrefs_);
+         rmdViewerWindowMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_WINDOW, 
+               "Preview in Window", userPrefs_);
       if (rmdViewerNoPreviewMenuItem_ == null)
-         rmdViewerNoPreviewMenuItem_ = new UIPrefMenuItem<Integer>(
-               uiPrefs_.rmdViewerType(),
-               RmdOutput.RMD_VIEWER_TYPE_NONE,
-               "(No Preview)", uiPrefs_);
+         rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<String>(
+               userPrefs_.rmdViewerType(),
+               UserPrefs.RMD_VIEWER_TYPE_NONE,
+               "(No Preview)", userPrefs_);
       
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
@@ -1470,26 +1496,26 @@ public class TextEditingTargetWidget
       
       menu.addSeparator();
 
-      String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
       menu.addItem(new DocPropMenuItem(
             "Preview Images and Equations", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
-               pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER),
+               pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
             DocUpdateSentinel.PROPERTY_TRUE));
       menu.addItem(new DocPropMenuItem(
             "Show Previews Inline", docUpdateSentinel_, 
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-                 pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS),
+                 pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
             TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
             DocUpdateSentinel.PROPERTY_TRUE));
       menu.addSeparator();
       
       if (type != RmdOutput.TYPE_SHINY)
       {
-        boolean inline = uiPrefs_.showRmdChunkOutputInline().getValue();
+        boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
         menu.addItem(new DocPropMenuItem(
               "Chunk Output Inline", docUpdateSentinel_,
               inline,
@@ -1521,7 +1547,8 @@ public class TextEditingTargetWidget
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
    private final EventBus events_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
@@ -1537,11 +1564,11 @@ public class TextEditingTargetWidget
    private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
-   private ToolbarButton codeTransform_;
+   private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
-   private ToolbarButton insertChunkMenu_;
+   private ToolbarMenuButton insertChunkMenu_;
    private ToolbarButton insertChunkButton_;
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
@@ -1553,12 +1580,12 @@ public class TextEditingTargetWidget
    private ToolbarButton testThatButton_;
    private ToolbarButton testShinyButton_;
    private ToolbarButton compareTestButton_;
-   private ToolbarButton sourceMenuButton_;
-   private UIPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
-   private ToolbarButton chunksButton_;
-   private ToolbarButton shinyLaunchButton_;
-   private ToolbarButton plumberLaunchButton_;
-   private ToolbarButton rmdOptionsButton_;
+   private ToolbarMenuButton sourceMenuButton_;
+   private UserPrefMenuItem<Boolean> runSetupChunkOptionMenu_;
+   private ToolbarMenuButton chunksButton_;
+   private ToolbarMenuButton shinyLaunchButton_;
+   private ToolbarMenuButton plumberLaunchButton_;
+   private ToolbarMenuButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;

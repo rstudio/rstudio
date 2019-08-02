@@ -30,8 +30,8 @@
 #include <core/http/Response.hpp>
 
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserState.hpp>
 
 using namespace rstudio::core ;
 
@@ -71,7 +71,7 @@ Error agreementFileContents(std::string* pContents, std::string* pContentType)
 Agreement checkForPendingAgreement()
 {
    // get hash of any previously agreed to agreement
-   std::string agreedToHash = userSettings().agreementHash();
+   std::string agreedToHash = prefs::userState().agreementHash();
    
    // read agreement file contents
    std::string contents, contentType ;
@@ -115,7 +115,7 @@ Error handleAcceptAgreement(const json::JsonRpcRequest& request,
       return paramError;
    
    // set it
-   userSettings().setAgreementHash(hash);
+   prefs::userState().setAgreementHash(hash);
    
    // return success
    return Success();

@@ -36,7 +36,7 @@ import org.rstudio.studio.client.pdfviewer.model.SyncTexCoordinates;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PDFLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -59,7 +59,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                     final GlobalDisplay display,
                     final SatelliteManager satelliteManager,
                     final Synctex synctex,
-                    final UIPrefs prefs)
+                    final UserPrefs prefs)
    {  
       display_ = display;
       server_ = server;
@@ -103,7 +103,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       // only handle PDF compile events when we're the preferred viewer
-      if (prefs_.pdfPreview().getValue() != UIPrefs.PDF_PREVIEW_RSTUDIO)
+      if (prefs_.pdfPreviewer().getValue() != UserPrefs.PDF_PREVIEWER_RSTUDIO)
          return;
       
       // only handle successful compiles
@@ -137,7 +137,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       if (event.getPdfLocation().getFile() == lastSuccessfulPdfPath_)
       {
          PdfJsWindow.navigateTo(pdfJsWindow_, event.getPdfLocation());
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             Desktop.getFrame().activateMinimalWindow(WINDOW_NAME);
          }
@@ -149,7 +149,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    {
       if (lastSuccessfulPdfPath_ != null)
       {
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             Desktop.getFrame().bringMainFrameToFront();
          }
@@ -238,7 +238,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       };
 
       // in the browser we need to close and reopen the window
-      if (haveActivePdfJsWindow() && !Desktop.isDesktop())
+      if (haveActivePdfJsWindow() && !Desktop.hasDesktopFrame())
       {
          width = pdfJsWindow_.getOuterWidth();
          height = pdfJsWindow_.getOuterHeight();
@@ -272,7 +272,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       else
       {
          // we already have an open window, activate it
-         if (Desktop.isDesktop()) 
+         if (Desktop.hasDesktopFrame())
             Desktop.getFrame().activateMinimalWindow(WINDOW_NAME);
          
          loadPdf.execute();
@@ -287,7 +287,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private void initializePdfJsWindow(WindowEx win)
    {
       pdfJsWindow_ = win.cast();
-      pdfJsWindow_.injectUiOnLoad(Desktop.isDesktop());
+      pdfJsWindow_.injectUiOnLoad(Desktop.hasDesktopFrame());
    }
 
    private void synctexInverseSearch(SyncTexCoordinates coord, 
@@ -332,7 +332,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
    private final Synctex synctex_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    private final static String WINDOW_NAME = "rstudio_pdfjs";
 }

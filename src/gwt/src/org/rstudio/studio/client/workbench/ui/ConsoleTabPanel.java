@@ -27,8 +27,8 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
@@ -47,13 +47,13 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
                           ConsoleClearButton consoleClearButton,
-                          UIPrefs uiPrefs,
+                          UserPrefs uiPrefs,
                           Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
       consoleClearButton_ = consoleClearButton;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       session_ = session;
    }
    
@@ -361,17 +361,17 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       });
 
       // Determine initial visibility of terminal tab
-      terminalTabVisible_ = uiPrefs_.showTerminalTab().getValue();
+      terminalTabVisible_ = userPrefs_.showTerminalTab().getValue();
       if (terminalTabVisible_ && !session_.getSessionInfo().getAllowShell())
       {
          terminalTabVisible_ = false;
       }
       
       // Determine initial visibility of local jobs and launcher jobs tabs
-      int jobsTabVisibilitySetting = uiPrefs_.jobsTabVisibility().getValue();
+      String jobsTabVisibilitySetting = userPrefs_.jobsTabVisibility().getValue();
       if (session_.getSessionInfo().getLauncherJobsEnabled())
       {
-         launcherJobsTabVisible_ = uiPrefs_.showLauncherJobsTab().getValue();
+         launcherJobsTabVisible_ = userPrefs_.showLauncherJobsTab().getValue();
          
          // By default, we don't show the Jobs tab when Launcher tab is visible.
          // However, if user has explicitly shown or hidden Jobs, we'll
@@ -379,15 +379,15 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          switch (jobsTabVisibilitySetting)
          {
             default:
-            case UIPrefsAccessor.JOBS_TAB_DEFAULT:
+            case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
                jobsTabVisible_ = !launcherJobsTabVisible_;
                break;
 
-            case UIPrefsAccessor.JOBS_TAB_CLOSED:
+            case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
                jobsTabVisible_ = false;
                break;
 
-            case UIPrefsAccessor.JOBS_TAB_SHOWN:
+            case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
                jobsTabVisible_ = true;
                break;
          }
@@ -398,12 +398,12 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          switch (jobsTabVisibilitySetting)
          {
             default:
-            case UIPrefsAccessor.JOBS_TAB_DEFAULT:
-            case UIPrefsAccessor.JOBS_TAB_SHOWN:
+            case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
+            case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
                jobsTabVisible_ = true;
                break;
 
-            case UIPrefsAccessor.JOBS_TAB_CLOSED:
+            case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
                jobsTabVisible_ = false;
                break;
          }
@@ -554,7 +554,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    private Session session_;
    private final WorkbenchTab testsTab_;
    private boolean testsTabVisible_;

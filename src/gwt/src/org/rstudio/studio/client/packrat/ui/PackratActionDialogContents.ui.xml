@@ -1,27 +1,27 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:rw="urn:import:org.rstudio.core.client.widget"
-	xmlns:rc="urn:import:org.rstudio.studio.client.common" xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui"
-	xmlns:c="urn:import:com.google.gwt.user.cellview.client" xmlns:rs="urn:import:org.rstudio.core.client.cellview">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:rc="urn:import:org.rstudio.studio.client.common" xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui"
+   xmlns:c="urn:import:com.google.gwt.user.cellview.client" xmlns:rs="urn:import:org.rstudio.core.client.cellview">
 
 
-	<ui:style>
-	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
-	.RestoreActionsTable {
-		height: 300px;
-		width: 600px;
-		border: 1px solid #BBB;
-		background-color: white;
-	}
+   <ui:style>
+   @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+   .RestoreActionsTable {
+      height: 300px;
+      width: 600px;
+      border: 1px solid #BBB;
+      background-color: white;
+   }
 
-	.Summary {
-	  margin-bottom: 15px;
-	}
-	</ui:style>
+   .Summary {
+     margin-bottom: 15px;
+   }
+   </ui:style>
 
-	<g:HTMLPanel>
-	   <g:Label ui:field="summaryLabel_" styleName="{style.Summary}"></g:Label>
-		<c:DataGrid ui:field="table_" styleName="{style.RestoreActionsTable}" />
-	</g:HTMLPanel>
+   <g:HTMLPanel>
+      <g:Label ui:field="summaryLabel_" styleName="{style.Summary}"></g:Label>
+      <c:DataGrid ui:field="table_" styleName="{style.RestoreActionsTable}" />
+   </g:HTMLPanel>
 
 </ui:UiBinder> 

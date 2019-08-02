@@ -150,7 +150,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openTerminal(String terminalPath,
                      String workingDirectory,
                      String extraPathEntries,
-                     int shellType);
+                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
@@ -202,4 +202,10 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setWindowTitle(String title);
    
    void installRtools(String version, String installerPath);
+
+   void showSessionServerOptionsDialog();
+
+   void onSessionQuit();
+
+   void getSessionServer(CommandWithArg<String> callback);
 }

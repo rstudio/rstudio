@@ -1,7 +1,7 @@
 /*
  * VirtualConsoleTests.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.core.client;
+
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -43,13 +45,13 @@ public class VirtualConsoleTests extends GWTTestCase
       }
    
       @Override
-      public int consoleAnsiMode()
+      public String consoleAnsiMode()
       {
          return ansiMode_;
       }
       
       public int truncateLines_ = 1000;
-      public int ansiMode_ = VirtualConsole.ANSI_COLOR_ON;
+      public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
    }
    
    private static String consolify(String text)
@@ -697,7 +699,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_STRIP;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" + 
@@ -714,7 +716,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_OFF;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" + 
@@ -731,7 +733,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_STRIP;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(AnsiCode.CSI + color);
       vc.submit(AnsiCode.SGR + AnsiCode.CSI);
@@ -746,7 +748,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.ForeColorNum.MAGENTA;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      prefs.ansiMode_ = VirtualConsole.ANSI_COLOR_OFF;
+      prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(AnsiCode.CSI + color, "myStyle");
       vc.submit(AnsiCode.SGR + "Hello", "myStyle");
@@ -919,4 +921,95 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("✔xxx yyy zzzx\n", vc.toString());
    }
 
+   public void testProgressBar4777Part1()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      vc.submit("=>---------- 1.11 kB/s");
+      vc.submit("\r");
+      vc.submit("==>--------- 1.12 kB/s");
+      vc.submit("\r");
+      vc.submit("==>--------- 1.13 kB/s");
+      vc.submit("\r");
+      vc.submit("===>-------- 1.14 kB/s");
+      vc.submit("\r");
+      vc.submit("====>------- 1.15 kB/s");
+      vc.submit("\r");
+      vc.submit("====>-------- 1.2 kB/s");
+      vc.submit("\r");
+      vc.submit("======>----- 1.21 kB/s");
+      vc.submit("\r");
+      vc.submit("=======>---- 1.22 kB/s");
+      vc.submit("\r");
+      vc.submit("========>--- 1.23 kB/s");
+      vc.submit("\r");
+      vc.submit("=========>--- 1.3 kB/s");
+      vc.submit("\r");
+      vc.submit("==========>- 1.32 kB/s");
+      vc.submit("\r");
+      String lastLine = "===========> 1.33 kB/s";
+      vc.submit(lastLine);
+
+      String expected = "<span>===========&gt; 1.33 kB/s</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals(lastLine, vc.toString());
+   }
+
+   public void testProgressBar4777Part2()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String color = "\033[32m";
+      String restore = "\033[39m";
+
+      vc.submit("=>---------- " + color + "1.11 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("==>--------- " + color + "1.12 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("==>--------- " + color + "1.13 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("===>-------- " + color + "1.14 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("====>------- " + color + "1.15 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("====>------- " + color + "1.20 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("======>----- " + color + "1.21 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("=======>---- " + color + "1.22 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("========>--- " + color + "1.23 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("=========>-- " + color + "1.30 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("==========>- " + color + "1.32 kB/s " + restore);
+      vc.submit("\r");
+      vc.submit("===========> " + color + "1.33 kB/s " + restore);
+
+      Assert.assertTrue(true);
+      String expected = "<span>===========&gt; </span><span class=\"xtermColor2\">1.33 kB/s </span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("===========> 1.33 kB/s " , vc.toString());
+   }
+
+   public void testProgressBar4777Part3()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String color = "\033[32m";
+      String restore = "\033[39m";
+
+      vc.submit("aa " + color + "11 " + restore);
+      vc.submit("\r");
+      vc.submit("bbb " + color + "2 " + restore);
+      vc.submit("\r");
+      vc.submit("cc " + color + "33 " + restore);
+
+      String expected = "<span>cc </span><span class=\"xtermColor2\"></span><span class=\"xtermColor2\">33 </span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("cc 33 ", vc.toString());
+   }
  }

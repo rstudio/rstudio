@@ -1,7 +1,7 @@
 /*
  * ConsolePane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,7 +47,7 @@ public class ConsolePane extends WorkbenchPane
       Debug,      // ongoing debugging session
       Profiler,   // ongoing profile session
       Job         // ongoing asynchronous job
-   };
+   }
    
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
@@ -116,7 +116,7 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Console Tab");
       workingDir_ = new Label();
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(workingDir_);
@@ -139,7 +139,7 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      secondaryToolbar_ = new SecondaryToolbar(true);
+      secondaryToolbar_ = new SecondaryToolbar(true, "Console Tab Second");
       secondaryToolbar_.getWrapper().addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
        
       return secondaryToolbar_;
@@ -152,8 +152,9 @@ public class ConsolePane extends WorkbenchPane
       // is entered.
       syncSecondaryToolbar();
 
-      shell_ = consoleProvider_.get() ;
-      return (Widget) shell_.getDisplay() ;
+      shell_ = consoleProvider_.get();
+      shell_.getDisplay().setTextInputAriaLabel("Console");
+      return (Widget) shell_.getDisplay();
    }
 
    @Override
@@ -275,6 +276,7 @@ public class ConsolePane extends WorkbenchPane
    
    private void initDebugToolbar()
    {
+      secondaryToolbar_.setLabel("Console Tab Debug");
       secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
       if (session_.getSessionInfo().getHaveAdvancedStepCommands())
       {
@@ -291,12 +293,14 @@ public class ConsolePane extends WorkbenchPane
    
    private void initProfilerToolbar()
    {
+      secondaryToolbar_.setLabel("Console Tab Profiler");
       secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
    }
    
    private void initJobToolbar()
    {
       progress_ = progressProvider_.get();
+      secondaryToolbar_.setLabel("Console Tab Job Progress");
       secondaryToolbar_.addLeftWidget(progress_.asWidget());
       secondaryToolbar_.setLeftWidgetWidth(progress_.asWidget(), "100%");
 

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.shiny.model;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 
 public interface ShinyServerOperations
 {
@@ -25,10 +24,10 @@ public interface ShinyServerOperations
                ServerRequestCallback<ShinyCapabilities> requestCallback);
 
    void getShinyViewerType(
-               ServerRequestCallback<ShinyViewerType> requestCallback);
+               ServerRequestCallback<String> requestCallback);
    
    void setShinyViewerType(
-               int viewerType, 
+               String viewerType, 
                ServerRequestCallback<Void> requestCallback);
    
    void getShinyRunCmd(

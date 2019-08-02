@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -46,11 +48,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
    { 
-      public CommandToolbarButton(String buttonLabel,
+      public CommandToolbarButton(String buttonLabel, String buttonTitle,
             ImageResourceProvider imageResourceProvider, AppCommand command,
             boolean synced)
       {
-         super(buttonLabel, imageResourceProvider, command);
+         super(buttonLabel, buttonTitle, imageResourceProvider, command);
          command_ = command;
          synced_ = synced;
       }
@@ -106,7 +108,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    
    public AppCommand()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          addEnabledChangedHandler((command) -> DesktopMenuCallback.setCommandEnabled(id_, enabled_));
          addVisibleChangedHandler((command) -> DesktopMenuCallback.setCommandVisible(id_, visible_));
@@ -147,7 +149,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             satellite.focusMainWindow();
          }
          else if (getWindowMode() == WINDOW_MODE_BACKGROUND &&
-                  Desktop.isDesktop())
+                  Desktop.hasDesktopFrame())
          {
             // for background commands, we still want the main window to be
             // as visible as possible, so bring it up behind the current window
@@ -215,7 +217,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setCheckable(boolean isCheckable)
    {
-      checkable_ = isCheckable;
+      if (isRadio())
+         checkable_ = true;
+      else
+         checkable_ = isCheckable;
    }
 
    public boolean isChecked()
@@ -229,8 +234,30 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          return;
       
       checked_ = checked;
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          DesktopMenuCallback.setCommandChecked(id_, checked_);
+   }
+
+   public void setRadio(boolean isRadio)
+   {
+      radio_ = isRadio;
+      if (radio_)
+         setCheckable(true);
+   }
+
+   public boolean isRadio()
+   {
+      return radio_;
+   }
+
+   public MenuitemRole getMenuRole()
+   {
+      if (isRadio())
+         return Roles.getMenuitemradioRole();
+      else if (isCheckable())
+         return Roles.getMenuitemcheckboxRole();
+      else
+         return Roles.getMenuitemRole();
    }
 
    public String getWindowMode()
@@ -380,7 +407,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          DesktopMenuCallback.setCommandLabel(id_, menuLabel_);
    }
 
@@ -457,11 +484,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public ToolbarButton createToolbarButton(boolean synced)
    {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
+                                                             getDesc(),
                                                              this, 
                                                              this, 
                                                              synced);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
+      ElementIds.assignElementId(button.getElement(), "tb_" + ElementIds.idSafeString(getId()));
       return button;
    }
 
@@ -565,7 +594,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       int topOffset = -2;
       if (iconOffsetY != null)
          topOffset += iconOffsetY;
-      text.append("<table ");
+      text.append("<table role=\"presentation\"");
       if (label != null)
       {
          text.append("id=\"" + ElementIds.idFromLabel(label) + "_command\" ");
@@ -655,10 +684,12 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "class", ThemeStyles.INSTANCE.menuRightImage(),
         "title", StringUtil.notNull(desc),
+        "aria-label", StringUtil.notNull(desc),
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
 
@@ -668,8 +699,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       sb.append(SafeHtmlUtil.createOpenTag("img",
         "width", Integer.toString(image.getWidth()),
         "height", Integer.toString(image.getHeight()),
-        "src", image.getSafeUri().asString()));
-      sb.appendHtmlConstant("</img>");   
+        "src", image.getSafeUri().asString(),
+        "alt", ""));
+      sb.appendHtmlConstant("</img>");
       return sb.toSafeHtml();
    }
    
@@ -677,6 +709,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean visible_ = true;
    private boolean removed_ = false;
    private boolean checkable_ = false;
+   private boolean radio_ = false;
    private boolean checked_ = false;
    private String windowMode_ = "any";
    private final HandlerManager handlers_ = new HandlerManager(this);

@@ -15,6 +15,7 @@ RUN apt-get update -y && apt-get install -y \
     libboost-all-dev \
     bzip2 \
     clang-4.0 \
+    curl \
     debsigs \
     dpkg-sig \
     expect \
@@ -28,6 +29,7 @@ RUN apt-get update -y && apt-get install -y \
     libcurl4-openssl-dev \
     libpam0g-dev \
     libffi-dev \
+    procps \
     uuid-dev \
     make \
     libssl1.0-dev \
@@ -45,7 +47,8 @@ RUN apt-get update -y && apt-get install -y \
     lsof \
     python \
     libuser1-dev \
-    libglib2.0-dev
+    libglib2.0-dev \
+    valgrind
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15

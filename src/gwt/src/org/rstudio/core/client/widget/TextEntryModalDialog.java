@@ -1,7 +1,7 @@
 /*
  * TextEntryModalDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,15 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.*;
 
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -35,7 +41,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                ProgressOperationWithInput<String> okOperation,
                                Operation cancelOperation)
    {
-      super(title, okOperation, cancelOperation);
+      super(title, Roles.getDialogRole(), okOperation, cancelOperation);
       type_ = type;
       selectionIndex_ = selectionIndex;
       selectionLength_ = selectionLength;
@@ -53,7 +59,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
       }
       textBox_.setWidth("100%");
       DomUtils.disableAutoBehavior(textBox_);
-      captionLabel_ = new Label(caption);
+      captionLabel_ = new FormLabel(caption, textBox_);
 
       extraOption_ = new CheckBox(StringUtil.notNull(extraOptionPrompt));
       extraOption_.setVisible(
@@ -68,7 +74,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       textBox_.setFocus(true);
       
@@ -114,7 +120,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                   "Error",
                                                   "You must enter a value.");
-         dialog.addButton("OK", (Operation)null, true, true);
+         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textBox_.setFocus(true);
          return false;
@@ -131,7 +137,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
             MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                      "Error",
                                                      "Not a valid number.");
-            dialog.addButton("OK", (Operation)null, true, true);
+            dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
             dialog.showModal();
             textBox_.setFocus(true);
             textBox_.selectAll();
@@ -150,7 +156,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
 
 
    private int width_;
-   private Label captionLabel_;
+   private FormLabel captionLabel_;
    private TextBox textBox_;
    private CheckBox extraOption_;
    private final int selectionIndex_;

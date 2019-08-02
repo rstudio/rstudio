@@ -1,7 +1,7 @@
 /*
  * CaptionWithHelp.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
-
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -28,20 +28,19 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class CaptionWithHelp extends Composite
 {
-   public CaptionWithHelp(String caption, String helpCaption)
+   public CaptionWithHelp(String caption, String helpCaption, Widget forWidget)
    {
-      this(caption, helpCaption, null);
+      this(caption, helpCaption, null, forWidget);
    }
    
    public CaptionWithHelp(String caption, 
                           String helpCaption,
-                          final String rstudioLinkName)
+                          final String rstudioLinkName,
+                          Widget forWidget)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -49,10 +48,10 @@ public class CaptionWithHelp extends Composite
       
       HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
-      captionLabel_ = new Label(caption);
+      captionLabel_ = new FormLabel(caption, forWidget);
       panel.add(captionLabel_);
       helpPanel_ = new HorizontalPanel();
-      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
+      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
       helpPanel_.add(helpImage);
       HyperlinkLabel link = new HyperlinkLabel(helpCaption);
@@ -63,7 +62,7 @@ public class CaptionWithHelp extends Composite
             if (rstudioLinkName_ != null)
                globalDisplay_.openRStudioLink(rstudioLinkName_,
                                               includeVersionInfo_);
-         }  
+         }
       });
       helpPanel_.add(link);
       panel.add(helpPanel_);
@@ -77,6 +76,15 @@ public class CaptionWithHelp extends Composite
    public void setCaption(String caption)
    {
       captionLabel_.setText(caption);
+   }
+
+   /**
+    * Associate caption with a widget for a11y
+    * @param widget
+    */
+   public void setFor(Widget widget)
+   {
+      captionLabel_.setFor(widget);
    }
    
    public void setRStudioLinkName(String linkName)
@@ -124,7 +132,7 @@ public class CaptionWithHelp extends Composite
       styles.ensureInjected();
    }
    
-   private Label captionLabel_;
+   private FormLabel captionLabel_;
    private String rstudioLinkName_;
    private boolean includeVersionInfo_ = true;
    private HorizontalPanel helpPanel_;

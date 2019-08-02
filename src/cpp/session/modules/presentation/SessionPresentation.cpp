@@ -246,28 +246,6 @@ Error setWorkingDirectory(const json::JsonRpcRequest& request,
    return filePath.makeCurrentPath();
 }
 
-Error tutorialFeedback(const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
-{
-   // get the feedback
-   std::string feedback;
-   Error error = json::readParam(request.params, 0, &feedback);
-   if (error)
-      return error;
-
-   // confirm we are active
-   if (!presentation::state::isActive())
-   {
-      pResponse->setError(json::errc::MethodUnexpected);
-      return Success();
-   }
-
-   // record the feedback
-   presentation::log().recordFeedback(feedback);
-
-   return Success();
-}
-
 Error tutorialQuizResponse(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -461,18 +439,8 @@ json::Value presentationStateAsJson()
 Error initialize()
 {
    // register rs_showPresentation
-   R_CallMethodDef methodDefShowPresentation;
-   methodDefShowPresentation.name = "rs_showPresentation" ;
-   methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
-   methodDefShowPresentation.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowPresentation);
-
-   // register rs_showPresentationHelpDoc
-   R_CallMethodDef methodDefShowHelpDoc;
-   methodDefShowHelpDoc.name = "rs_showPresentationHelpDoc" ;
-   methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
-   methodDefShowHelpDoc.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowHelpDoc);
+   RS_REGISTER_CALL_METHOD(rs_showPresentation);
+   RS_REGISTER_CALL_METHOD(rs_showPresentationHelpDoc);
 
    // initialize presentation log
    Error error = log().initialize();
@@ -494,7 +462,6 @@ Error initialize()
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
       (bind(registerRpcMethod, "set_working_directory", setWorkingDirectory))
-      (bind(registerRpcMethod, "tutorial_feedback", tutorialFeedback))
       (bind(registerRpcMethod, "tutorial_quiz_response", tutorialQuizResponse))
       (bind(registerRpcMethod, "get_slide_navigation_for_file", getSlideNavigationForFile))
       (bind(registerRpcMethod, "get_slide_navigation_for_code", getSlideNavigationForCode))

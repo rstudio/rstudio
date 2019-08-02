@@ -1,7 +1,7 @@
 /*
  * SVNCommitDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn.commit;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -29,7 +30,10 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -58,6 +62,7 @@ public class SVNCommitDialog extends ModalDialogBase
                           GlobalDisplay globalDisplay,
                           Session session)
    {
+      super(Roles.getDialogRole());
       server_ = server;
       globalDisplay_ = globalDisplay;
       session_ = session;
@@ -93,7 +98,7 @@ public class SVNCommitDialog extends ModalDialogBase
             attemptCommit();
          }
       });
-      addButton(commitButton);
+      addButton(commitButton, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       
      
@@ -111,6 +116,8 @@ public class SVNCommitDialog extends ModalDialogBase
       topHPanel_.setCellHorizontalAlignment(btnClearSelection_,
                                             HorizontalPanel.ALIGN_RIGHT);
 
+      lblMessage_.setFor(message_);
+
       btnClearSelection_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -120,7 +127,7 @@ public class SVNCommitDialog extends ModalDialogBase
          }
       });
 
-      message_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(message_);
       
       if (!StringUtil.isNullOrEmpty(commitDraft_))
          message_.setText(commitDraft_);
@@ -242,6 +249,8 @@ public class SVNCommitDialog extends ModalDialogBase
 
    @UiField(provided = true)
    ChangelistTable changelist_;
+   @UiField
+   FormLabel lblMessage_;
    @UiField
    TextArea message_;
    @UiField

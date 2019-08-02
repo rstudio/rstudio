@@ -1,7 +1,7 @@
 /*
  * DirEntryCheckBox.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ public class DirEntryCheckBox extends Composite
       
       // add an icon representing the file
       ImageResource icon = 
-            RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFile(fsi);
+            RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFile(fsi).getImageResource();
       SafeHtmlBuilder hb = new SafeHtmlBuilder();
       hb.append(AbstractImagePrototype.create(icon).getSafeHtml());
       

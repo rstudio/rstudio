@@ -17,6 +17,7 @@
 
 #include <sstream>
 
+#include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -53,6 +54,16 @@ Error setUserHandlerEnabled(bool)
    return Success();
 }
 
+bool hasUserBeenPromptedForPermission()
+{
+   return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return Success();
+}
+
 } // namespace crash_handler
 } // namespace core
 } // namespace rstudio
@@ -63,7 +74,7 @@ Error setUserHandlerEnabled(bool)
 #include <crashpad/client/settings.h>
 
 #define kCrashHandlingEnabled         "crash-handling-enabled"
-#define kCrashHandlingEnabledDefault  true
+#define kCrashHandlingEnabledDefault  false
 #define kCrashDatabasePath            "crash-db-path"
 #define kCrashDatabasePathDefault     ""
 #define kUploadUrl                    "upload-url"
@@ -119,7 +130,9 @@ void readOptions()
       // can properly see the state at all times
       if (!optionsFile.exists())
       {
-         Error error = optionsFile.ensureFile();
+         Error error = optionsFile.parent().ensureDirectory();
+         if (!error)
+            error = optionsFile.ensureFile();
          if (error)
             LOG_ERROR(error);
       }
@@ -170,6 +183,13 @@ void logClientCreation(const base::FilePath& handlerPath,
     LOG_INFO_MESSAGE(message);
 }
 
+FilePath permissionFile()
+{
+   return core::system::userSettingsPath(core::system::userHomePath(),
+                                         "R",
+                                         false).complete("crash-handler-permission");
+}
+
 } // anonymous namespace
 
 Error initialize(ProgramMode programMode)
@@ -207,9 +227,9 @@ Error initialize(ProgramMode programMode)
             return error;
 
          // ensure that it is writeable by all users
-         error = core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
-         if (error)
-            return error;
+         // this is best case and we swallow the error because it is legitimately possible we
+         // lack the permissions to perform this (such as if we are an unprivileged rsession user)
+         core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
 
          databasePathStr = databasePath.absolutePath();
       }
@@ -268,6 +288,21 @@ Error initialize(ProgramMode programMode)
    // open the crashpad database
    std::unique_ptr<crashpad::CrashReportDatabase> pDatabase =
          crashpad::CrashReportDatabase::Initialize(databasePath);
+
+   // in server mode, attempt to give full access to the entire database for all users
+   // this is necessary so unprivileged processes can write crash dumps properly
+   // again, we swallow the errors here because unprivileged processes cannot change permissions
+#ifdef RSTUDIO_SERVER
+   if (s_programMode == ProgramMode::Server)
+   {
+      std::vector<FilePath> dbFolders;
+      FilePath(databasePathStr).children(&dbFolders);
+      for (const FilePath& subPath : dbFolders)
+         core::system::changeFileMode(subPath, core::system::EveryoneReadWriteExecuteMode);
+   }
+#endif
+
+   // ensure database is properly initialized
    if (pDatabase != nullptr && pDatabase->GetSettings() != nullptr)
       pDatabase->GetSettings()->SetUploadsEnabled(uploadDumps);
    else
@@ -278,6 +313,7 @@ Error initialize(ProgramMode programMode)
    // initialize and start crashpad client
    s_crashpadClient.reset(new crashpad::CrashpadClient());
    std::map<std::string, std::string> annotations;
+   annotations["sentry[release]"] = RSTUDIO_VERSION;
    std::vector<std::string> args {"--no-rate-limit"};
 
 #ifdef __linux__
@@ -359,6 +395,27 @@ Error setUserHandlerEnabled(bool handlerEnabled)
    }
 
    return Success();
+}
+
+bool hasUserBeenPromptedForPermission()
+{
+   if (!permissionFile().exists())
+   {
+      // if for some reason the parent directory is not writeable
+      // we will just treat the user as if they have been prompted
+      // to prevent indefinite repeated promptings
+      if (!file_utils::isDirectoryWriteable(permissionFile().parent()))
+         return true;
+      else
+         return false;
+   }
+   else
+      return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return permissionFile().ensureFile();
 }
 
 } // namespace crash_handler

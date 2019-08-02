@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@
 #include <QList>
 #include <QMenu>
 #include <QMenuBar>
+#include <QPointer>
 #include <QStack>
 #include <QKeyEvent>
 #include <DesktopSubMenu.hpp>
@@ -53,6 +54,10 @@ public Q_SLOTS:
     void setCommandVisible(QString commandId, bool visible);
     void setCommandLabel(QString commandId, QString label);
     void setCommandChecked(QString commandId, bool checked);
+    void setMainMenuEnabled(bool enabled);
+
+    // other slots
+    void cleanUpActions();
 
 Q_SIGNALS:
     void menuBarCompleted(QMenuBar* menuBar);
@@ -78,9 +83,9 @@ private:
                                     QKeySequence keySequence,
                                     bool checkable);
 private:
-    QMenuBar* pMainMenu_;
+    QMenuBar* pMainMenu_ = nullptr;
     QStack<SubMenu*> menuStack_;
-    QMap<QString, QAction*> actions_;
+    QMap<QString, QVector<QPointer<QAction>>> actions_;
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,

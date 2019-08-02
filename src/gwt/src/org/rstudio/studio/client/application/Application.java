@@ -83,7 +83,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -103,7 +104,8 @@ public class Application implements ApplicationEventHandlers
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
                       SessionOpener sessionOpener,
-                      Provider<UIPrefs> uiPrefs,
+                      Provider<UserPrefs> userPrefs,
+                      Provider<UserState> userState,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -123,7 +125,8 @@ public class Application implements ApplicationEventHandlers
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
       sessionOpener_ = sessionOpener;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
@@ -168,6 +171,11 @@ public class Application implements ApplicationEventHandlers
 
       Widget w = view_.getWidget();
       rootPanel.add(w);
+
+      // a11y landmarks, we are a role=application, but wrapping that in a role=main helps
+      // placate various automated accessibility checks
+      rootPanel.getElement().setAttribute("role", "main");
+      w.getElement().setAttribute("role", "application");
 
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
@@ -282,28 +290,20 @@ public class Application implements ApplicationEventHandlers
    @Handler
    void onShowAboutDialog()
    {
-      if (aboutDialog_ == null)
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
       {
-         server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+         @Override
+         public void onResponseReceived(ProductInfo info)
          {
-            @Override
-            public void onResponseReceived(ProductInfo info)
-            {
-               aboutDialog_ = new AboutDialog(info);
-               aboutDialog_.showModal();
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-      else
-      {
-         aboutDialog_.center();
-         aboutDialog_.showModal();
-      }
+            AboutDialog about = new AboutDialog(info);
+            about.showModal();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Handler
@@ -312,6 +312,15 @@ public class Application implements ApplicationEventHandlers
       if (pEdition_.get() != null)
       {
          pEdition_.get().showLicense();
+      }
+   }
+
+   @Handler
+   void onShowSessionServerOptionsDialog()
+   {
+      if (pEdition_.get() != null)
+      {
+         pEdition_.get().showSessionServerOptionsDialog();
       }
    }
    
@@ -456,6 +465,7 @@ public class Application implements ApplicationEventHandlers
                           0);   // no timeout
          break;
       case SessionSerializationAction.SUSPEND_SESSION:
+         events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
                           "Backing up R session...",
                           true,    // modal, inputs will fall dead anyway
@@ -608,7 +618,13 @@ public class Application implements ApplicationEventHandlers
             {
                view_.showApplicationQuit();
             }
-            
+
+            if (Desktop.isRemoteDesktop())
+            {
+               // inform the desktop application that the remote session has finished quitting
+               Desktop.getFrame().onSessionQuit();
+            }
+
             // attempt to close the window if this is a quit
             // action (may or may not be able to depending on 
             // how it was created)
@@ -624,7 +640,8 @@ public class Application implements ApplicationEventHandlers
             }
             else if (session_.getSessionInfo().getShowUserHomePage())
             {
-               loadUserHomePage();
+               if (!Desktop.isRemoteDesktop())
+                  loadUserHomePage();
             }
          }
       }
@@ -895,7 +912,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // disable external publishing if requested
-      if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))
+      if (!SessionUtils.showExternalPublishUi(session_, userState_.get()))
       {
          commands_.publishHTML().remove();
       } 
@@ -909,7 +926,7 @@ public class Application implements ApplicationEventHandlers
          commands_.knitWithParameters().remove();
          
       // show the correct set of data import commands
-      if (uiPrefs_.get().useDataImport().getValue())
+      if (userPrefs_.get().useDataimport().getValue())
       {
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
@@ -987,15 +1004,31 @@ public class Application implements ApplicationEventHandlers
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
       // hide zoom in and zoom out in web mode
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          commands_.zoomActualSize().remove();
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
       }
       
+      // remove main menu commands in desktop mode
+      if (Desktop.hasDesktopFrame())
+      {
+         commands_.showFileMenu().remove();
+         commands_.showEditMenu().remove();
+         commands_.showCodeMenu().remove();
+         commands_.showViewMenu().remove();
+         commands_.showPlotsMenu().remove();
+         commands_.showSessionMenu().remove();
+         commands_.showBuildMenu().remove();
+         commands_.showDebugMenu().remove();
+         commands_.showProfileMenu().remove();
+         commands_.showToolsMenu().remove();
+         commands_.showHelpMenu().remove();
+      }
+      
       // show new session when appropriate
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          if (sessionInfo.getMultiSession())
             commands_.newSession().setMenuLabel("New Session...");
@@ -1009,19 +1042,20 @@ public class Application implements ApplicationEventHandlers
          if (!pEdition_.get().proLicense())
             commands_.rstudioSupport().remove();
          
-         // only show License menu command in Desktop Pro
-         if (!pEdition_.get().proLicense() || !Desktop.isDesktop())
+         // pro-only menu items
+         if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())
          {
             commands_.showLicenseDialog().remove();
+            commands_.showSessionServerOptionsDialog().remove();
          }
       }
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( uiPrefs_.get().toolbarVisible().getValue());
+      showToolbar( userPrefs_.get().toolbarVisible().getValue());
       
       // sync to changes in the toolbar visibility state
-      uiPrefs_.get().toolbarVisible().addValueChangeHandler(
+      userPrefs_.get().toolbarVisible().addValueChangeHandler(
                                           new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -1094,8 +1128,8 @@ public class Application implements ApplicationEventHandlers
    
    private void setToolbarPref(boolean showToolbar)
    {
-      uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
-      uiPrefs_.get().writeUIPrefs();
+      userPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
+      userPrefs_.get().writeUserPrefs();
    }
    
    private void showToolbar(boolean showToolbar)
@@ -1197,7 +1231,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
    private final SessionOpener sessionOpener_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;
@@ -1205,8 +1240,6 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
-   
-   private AboutDialog aboutDialog_;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 

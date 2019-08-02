@@ -34,9 +34,9 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionPdfLatex.hpp"
 #include "SessionRnwWeave.hpp"
@@ -651,7 +651,7 @@ private:
       pdflatex::PdfLatexOptions options;
       options.fileLineError = false;
       options.syncTex = !isTargetRnw() || !concordances.empty();
-      options.shellEscape = userSettings().enableLaTeXShellEscape();
+      options.shellEscape = prefs::userPrefs().latexShellEscape();
 
       // get back-end version info
       core::system::ProcessResult result;
@@ -685,7 +685,7 @@ private:
       removeExistingLatexAncillaryFiles(texFilePath);
 
       // setup cleanup context if clean was specified
-      if (userSettings().cleanTexi2DviOutput())
+      if (prefs::userPrefs().cleanTexi2dviOutput())
          auxillaryFileCleanupContext_.init(texFilePath);
 
       // run latex compile

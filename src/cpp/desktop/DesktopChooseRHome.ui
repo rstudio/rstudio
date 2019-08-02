@@ -58,7 +58,20 @@
    <item>
     <widget class="QRadioButton" name="radioDefault64">
      <property name="text">
-      <string>Use your machine's default version of R</string>
+      <string>Use your machine's default version of R64 (64-bit)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QRadioButton" name="radioDefault">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Use your machine's default version of R (32-bit)</string>
      </property>
     </widget>
    </item>

@@ -62,8 +62,8 @@ set (CORE_SOURCE_FILES
    ColorUtils.cpp
    Thread.cpp
    Trace.cpp
-   YamlUtil.cpp
    WaitUtils.cpp
+   YamlUtil.cpp
    file_lock/FileLock.cpp
    file_lock/AdvisoryFileLock.cpp
    file_lock/LinkBasedFileLock.cpp
@@ -123,6 +123,7 @@ set (CORE_SOURCE_FILES
    system/Process.cpp
    system/ShellUtils.cpp
    system/System.cpp
+   system/Xdg.cpp
    system/file_monitor/FileMonitor.cpp
    terminal/PrivateCommand.cpp
    tex/TexLogParser.cpp

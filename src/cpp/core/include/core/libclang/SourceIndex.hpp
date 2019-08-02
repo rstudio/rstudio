@@ -39,6 +39,7 @@ struct CompilationDatabase
    boost::function<std::vector<std::string>()> translationUnits;
    boost::function<std::vector<std::string>(const std::string&, bool)>
                                     compileArgsForTranslationUnit;
+   boost::function<void()> rebuildPackageCompilationDatabase;
 };
 
 class SourceIndex : boost::noncopyable

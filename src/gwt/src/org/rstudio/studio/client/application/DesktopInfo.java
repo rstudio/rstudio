@@ -34,7 +34,7 @@ public class DesktopInfo
                       EventBus events)
    {
       // do no work in server mode
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
          return;
       
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()

@@ -1,7 +1,7 @@
 /*
  * HelpLink.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,17 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.dom.client.Element;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 
 public class HelpLink extends Composite
 {
@@ -41,9 +41,9 @@ public class HelpLink extends Composite
    
    public HelpLink(String caption,
                    String link,
-                   final boolean withVersionInf)
+                   final boolean withVersionInfo)
    {
-      this(caption, link, true, true);
+      this(caption, link, withVersionInfo, true);
    }
 
    public HelpLink(String caption, 
@@ -57,22 +57,18 @@ public class HelpLink extends Composite
 
       HorizontalPanel helpPanel = new HorizontalPanel();
     
-      Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
+      DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
-      helpLink_ = new HyperlinkLabel(caption);
-      helpLink_.addClickHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            if (isRStudioLink_) {
-               RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
-                  link_,
-                  withVersionInfo_);
-            }
-            else {
-               RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(link_);
-            }
-         }  
+      helpLink_ = new HyperlinkLabel(caption, () -> {
+         if (isRStudioLink_) {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
+               link_,
+               withVersionInfo_);
+         }
+         else {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(link_);
+         }
       });
       helpPanel.add(helpLink_);
 
@@ -116,6 +112,12 @@ public class HelpLink extends Composite
       withVersionInfo_ = withVersionInfo;
    }
    
+   public boolean hasFocus()
+   {
+      Element e = DomUtils.getActiveElement();
+      return e != null && e == helpLink_.getElement();
+   }
+
    private HyperlinkLabel helpLink_;
    private String link_;
    private boolean isRStudioLink_;

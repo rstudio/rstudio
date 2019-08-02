@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -42,7 +43,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -77,7 +78,7 @@ public class EnvironmentPane extends WorkbenchPane
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
                           Session session,
-                          UIPrefs prefs)
+                          UserPrefs prefs)
    {
       super("Environment");
       
@@ -118,7 +119,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Environment Tab");
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -129,8 +130,9 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
-      viewButton_ = new ToolbarButton(
+      viewButton_ = new ToolbarMenuButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            ToolbarButton.NoTitle,
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
       toolbar.addRightWidget(viewButton_);
@@ -151,7 +153,8 @@ public class EnvironmentPane extends WorkbenchPane
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
+      toolbar.addRightWidget(
+            new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
 
       return toolbar;
    }
@@ -159,11 +162,12 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
       
       environmentMenu_ = new EnvironmentPopupMenu();
-      environmentButton_ = new ToolbarButton(
+      environmentButton_ = new ToolbarMenuButton(
             friendlyEnvironmentName(),
+            ToolbarButton.NoTitle,
             imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
       toolbar.addLeftWidget(environmentButton_);
@@ -171,7 +175,7 @@ public class EnvironmentPane extends WorkbenchPane
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
-      SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
+      SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -425,13 +429,13 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public boolean getShowInternalFunctions()
    {
-      return prefs_.showInternalFunctionsInTraceback().getValue();
+      return prefs_.showInternalFunctions().getValue();
    }
 
    @Override
    public void setShowInternalFunctions(boolean show)
    {
-      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
+      prefs_.showInternalFunctions().setProjectValue(show);
    }
 
    public void fillObjectContents(final RObject object, 
@@ -489,8 +493,9 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addSeparator();
       menu.addItem(commands_.importDatasetFromMongo().createMenuItem(false));
       
-      dataImportButton_ = new ToolbarButton(
+      dataImportButton_ = new ToolbarMenuButton(
               "Import Dataset",
+              ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
       return dataImportButton_;
@@ -713,13 +718,13 @@ public class EnvironmentPane extends WorkbenchPane
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Value<Boolean> environmentMonitoring_;
 
-   private ToolbarButton dataImportButton_;
+   private ToolbarMenuButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
-   private ToolbarButton environmentButton_;
-   private ToolbarButton viewButton_;
+   private ToolbarMenuButton environmentButton_;
+   private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
 

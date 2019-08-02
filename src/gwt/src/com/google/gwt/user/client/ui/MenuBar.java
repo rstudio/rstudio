@@ -15,8 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -30,19 +35,19 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.client.Command;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A standard menu bar widget. A menu bar can contain any number of menu items,
- * each of which can either fire a {@link com.google.gwt.user.client.Command} or
+ * each of which can either fire a {@link com.google.gwt.core.client.Scheduler.ScheduledCommand} or
  * open a cascaded menu bar.
  *
  * <p>
@@ -174,6 +179,110 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     ImageResource menuBarSubMenuIcon();
   }
 
+  private final class MenuPopup extends DecoratedPopupPanel {
+    private boolean towardsEast = !LocaleInfo.getCurrentLocale().isRTL();
+
+    public MenuPopup() {
+      super(true, false, "menuPopup");
+      setAnimationType(AnimationType.ONE_WAY_CORNER);
+      setAnimationEnabled(isAnimationEnabled);
+      setStyleName(STYLENAME_DEFAULT + "Popup");
+      String primaryStyleName = MenuBar.this.getStylePrimaryName();
+      if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
+        addStyleName(primaryStyleName + "Popup");
+      }
+      setPreviewingAllNativeEvents(true);
+    }
+
+    @Override
+    protected void onPreviewNativeEvent(NativePreviewEvent event) {
+      // Hook the popup panel's event preview. We use this to keep it from
+      // auto-hiding when the parent menu is clicked.
+      if (!event.isCanceled()) {
+
+        switch (event.getTypeInt()) {
+          case Event.ONMOUSEDOWN:
+            // If the event target is part of the parent menu, suppress the
+            // event altogether.
+            EventTarget target = event.getNativeEvent().getEventTarget();
+            Element parentMenuElement = MenuBar.this.getElement();
+            if (parentMenuElement.isOrHasChild(Element.as(target))) {
+              event.cancel();
+              return;
+            }
+            super.onPreviewNativeEvent(event);
+            if (event.isCanceled()) {
+              selectItem(null);
+            }
+            return;
+        }
+      }
+      super.onPreviewNativeEvent(event);
+    }
+
+    public void positionBelow(MenuItem target) {
+      int top = MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight();
+      int left = towardsEast ? leftOf(target) : rightOf(target) - getOffsetWidth();
+      setPositionInClient(left, top);
+    }
+
+    public void positionNextTo(MenuItem target) {
+      // Calculate top
+      int offsetTop = target.getSubMenu().getAbsoluteTop() - getAbsoluteTop();
+      int top = target.getAbsoluteTop() - offsetTop;
+
+      // Calculate left for alternative directions
+      int leftIfTowardEast = rightOf(MenuBar.this);
+      int leftIfTowardWest = leftOf(MenuBar.this) - getOffsetWidth();
+
+      // Choose direction to show
+      int overflowIfTowardsEast = leftIfTowardEast + getOffsetWidth() - getClientRight();
+      int overflowIfTowardsWest = getClientLeft() - leftIfTowardWest;
+      selectDirection(overflowIfTowardsEast, overflowIfTowardsWest);
+
+      int left = towardsEast ? leftIfTowardEast : leftIfTowardWest;
+
+      setPositionInClient(left, top);
+    }
+
+    private void setPositionInClient(int left, int top) {
+      // Keep the popup inside client area
+      if (getOffsetWidth() < Window.getClientWidth()) {
+        left = Math.min(left, getClientRight() - getOffsetWidth());
+        left = Math.max(getClientLeft(), left);
+      }
+      setPopupPosition(left, top);
+    }
+
+    private void selectDirection(int overflowIfTowardsEast, int overflowIfTowardsWest) {
+      if (overflowIfTowardsEast <= 0 && overflowIfTowardsWest <= 0) {
+        // Fits both sides, use the direction from parent - if there is one
+        if (parentMenu != null && parentMenu.popup != null) {
+          towardsEast = parentMenu.popup.towardsEast;
+        }
+      } else {
+        // Doesn't fit both sides, use the side with less or no overflow
+        towardsEast = (overflowIfTowardsEast < overflowIfTowardsWest);
+      }
+    }
+
+    private int leftOf(UIObject object) {
+      return object.getAbsoluteLeft();
+    }
+
+    private int rightOf(UIObject object) {
+      return object.getAbsoluteLeft() + object.getOffsetWidth();
+    }
+
+    private int getClientLeft() {
+      return Window.getScrollLeft();
+    }
+
+    private int getClientRight() {
+      return getClientLeft() + Window.getClientWidth();
+    }
+  }
+
   private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
 
   /**
@@ -191,9 +300,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private AbstractImagePrototype subMenuIcon = null;
   private boolean isAnimationEnabled = false;
   private MenuBar parentMenu;
-  private PopupPanel popup;
+  private MenuPopup popup;
   private MenuItem selectedItem;
   private MenuBar shownChildMenu;
+  private MenuItem expandedMenuItem;
   private boolean vertical, autoOpen;
   private boolean focusOnHover = true;
 
@@ -260,6 +370,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     this(false, resources);
   }
 
+  @Override
   public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
     return addHandler(handler, CloseEvent.getType());
   }
@@ -282,8 +393,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(SafeHtml html, Command cmd) {
-    return addItem(new MenuItem(html, cmd));
+  public MenuItem addItem(SafeHtml html, ScheduledCommand cmd) {
+    return addItem(new MenuItem(html, Roles.getMenuitemRole(), false, cmd));
   }
 
   /**
@@ -295,8 +406,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, boolean asHTML, Command cmd) {
-    return addItem(new MenuItem(text, asHTML, cmd));
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, asHTML, Roles.getMenuitemRole(), false, cmd));
   }
 
   /**
@@ -320,7 +431,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param popup the menu to be cascaded from it
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, boolean asHTML, MenuBar popup) {
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, MenuBar popup) {
     return addItem(new MenuItem(text, asHTML, popup));
   }
 
@@ -332,8 +443,51 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param cmd the command to be fired
    * @return the {@link MenuItem} object created
    */
-  public MenuItem addItem(String text, Command cmd) {
-    return addItem(new MenuItem(text, cmd));
+  public MenuItem addItem(String text, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, Roles.getMenuitemRole(), false, cmd));
+  }
+
+  /**
+   * Adds a menu item to the bar, that will fire the given command when it is
+   * selected.
+   *
+   * @param text the item's text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(String text, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, role, checked, cmd));
+  }
+
+  /**
+   * Adds a menu item to the bar, that will fire the given command when it is
+   * selected.
+   *
+   * @param text the item's text
+   * @param asHTML <code>true</code> to treat the specified text as html
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(text, asHTML, role, checked, cmd));
+  }
+
+ /**
+   * Adds a menu item to the bar containing SafeHtml, that will fire the given
+   * command when it is selected.
+   *
+   * @param html the item's html text
+   * @param role the item's a11y role
+   * @param checked <code>true</code> if item is checked
+   * @param cmd the command to be fired
+   * @return the {@link MenuItem} object created
+   */
+  public MenuItem addItem(SafeHtml html, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+    return addItem(new MenuItem(html, role, checked, cmd));
   }
 
   /**
@@ -378,7 +532,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     Element container = getItemContainerElement();
     while (DOM.getChildCount(container) > 0) {
-      DOM.removeChild(container, DOM.getChild(container, 0));
+      container.removeChild(DOM.getChild(container, 0));
     }
 
     // Set the parent of all items to null
@@ -404,6 +558,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   public void closeAllChildren(boolean focus) {
     if (shownChildMenu != null) {
       // Hide any open submenus of this item
+      if (expandedMenuItem != null)
+      {
+        expandedMenuItem.setAriaExpanded(false);
+        expandedMenuItem = null;
+      }
       shownChildMenu.onHide(focus);
       shownChildMenu = null;
       selectItem(null);
@@ -527,6 +686,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     return separator;
   }
 
+  @Override
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -610,7 +770,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       case Event.ONMOUSEOUT: {
         if (item != null) {
-          itemOver(null, true);
+          itemOver(null, false);
         }
         break;
       }
@@ -621,22 +781,16 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       }
 
       case Event.ONKEYDOWN: {
-        int keyCode = DOM.eventGetKeyCode(event);
+        int keyCode = event.getKeyCode();
+        boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
+        keyCode = KeyCodes.maybeSwapArrowKeysForRtl(keyCode, isRtl);
         switch (keyCode) {
           case KeyCodes.KEY_LEFT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              moveToNextItem();
-            } else {
-              moveToPrevItem();
-            }
+            moveToPrevItem();
             eatEvent(event);
             break;
           case KeyCodes.KEY_RIGHT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              moveToPrevItem();
-            } else {
-              moveToNextItem();
-            }
+            moveToNextItem();
             eatEvent(event);
             break;
           case KeyCodes.KEY_UP:
@@ -673,6 +827,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    *
    * @deprecated Use {@link #addCloseHandler(CloseHandler)} instead
    */
+  @Override
   @Deprecated
   public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
     // If the menu popup was auto-closed, close all of its parents as well.
@@ -680,10 +835,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       closeAllParents();
     }
 
-    // When the menu popup closes, remember that no item is
-    // currently showing a popup menu.
     onHide(!autoClosed);
     CloseEvent.fire(MenuBar.this, sender);
+    // When the menu popup closes, remember that no item is
+    // currently showing a popup menu.
     shownChildMenu = null;
     popup = null;
     if (parentMenu != null && parentMenu.popup != null) {
@@ -742,15 +897,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           setStyleName(td, "subMenuIcon-selected", false);
         }
       }
-
-      if (vertical
-          && shownChildMenu != null
-          && shownChildMenu == selectedItem.getSubMenu())
-      {
-        shownChildMenu.onHide(false);
-        popup.hide();
-        shownChildMenu = null;
-      }
     }
 
     if (item != null) {
@@ -763,16 +909,23 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
           Element td = DOM.getChild(tr, 1);
           setStyleName(td, "subMenuIcon-selected", true);
         }
+
+        if (shownChildMenu != null
+            && shownChildMenu == selectedItem.getSubMenu())
+        {
+          hideChildMenu(false);
+          shownChildMenu = null;
+        }
       }
 
-      Accessibility.setState(getElement(),
-          Accessibility.STATE_ACTIVEDESCENDANT, DOM.getElementAttribute(
-              item.getElement(), "id"));
+      Roles.getMenubarRole().setAriaActivedescendantProperty(getElement(),
+          Id.of(item.getElement()));
     }
 
     selectedItem = item;
   }
 
+  @Override
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
@@ -881,7 +1034,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * <code>true</code> if the item's command should be fired, <code>false</code>
    * otherwise.
    */
-  void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
+  protected void doItemAction(final MenuItem item, boolean fireCommand, boolean focus) {
     // Should not perform any action if the item is disabled
     if (!item.isEnabled()) {
       return;
@@ -890,50 +1043,48 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     // Ensure that the item is selected.
     selectItem(item);
 
-    if (item != null) {
-      // if the command should be fired and the item has one, fire it
-      if (fireCommand && item.getCommand() != null) {
-        // Close this menu and all of its parents.
-        closeAllParents();
+    // if the command should be fired and the item has one, fire it
+    if (fireCommand && item.getScheduledCommand() != null) {
+      // Close this menu and all of its parents.
+      closeAllParents();
 
-        // Fire the item's command. The command must be fired in the same event
-        // loop or popup blockers will prevent popups from opening.
-        final Command cmd = item.getCommand();
-        Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
-          public void execute() {
-            cmd.execute();
-          }
-        });
+      // Remove the focus from the menu
+      FocusPanel.impl.blur(getElement());
 
-        // hide any open submenus of this item
-        if (shownChildMenu != null) {
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          shownChildMenu = null;
-          selectItem(null);
+      // Fire the item's command. The command must be fired in the same event
+      // loop or popup blockers will prevent popups from opening.
+      final ScheduledCommand cmd = item.getScheduledCommand();
+      Scheduler.get().scheduleFinally(new Scheduler.ScheduledCommand() {
+        @Override
+        public void execute() {
+          cmd.execute();
         }
-      } else if (item.getSubMenu() != null) {
-        if (shownChildMenu == null) {
-          // open this submenu
-          openPopup(item);
-        } else if (item.getSubMenu() != shownChildMenu) {
-          // close the other submenu and open this one
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          openPopup(item);
-        } else if (fireCommand && !autoOpen) {
-          // close this submenu
-          shownChildMenu.onHide(focus);
-          popup.hide();
-          shownChildMenu = null;
-          selectItem(item);
-        }
-      } else if (autoOpen && shownChildMenu != null) {
-        // close submenu
-        shownChildMenu.onHide(focus);
-        popup.hide();
+      });
+
+      // hide any open submenus of this item
+      if (shownChildMenu != null) {
+        hideChildMenu(focus);
         shownChildMenu = null;
+        selectItem(null);
       }
+    } else if (item.getSubMenu() != null) {
+      if (shownChildMenu == null) {
+        // open this submenu
+        openPopup(item);
+      } else if (item.getSubMenu() != shownChildMenu) {
+        // close the other submenu and open this one
+        hideChildMenu(focus);
+        openPopup(item);
+      } else if (fireCommand && !autoOpen) {
+        // close this submenu
+        hideChildMenu(focus);
+        shownChildMenu = null;
+        selectItem(item);
+      }
+    } else if (autoOpen && shownChildMenu != null) {
+      // close submenu
+      hideChildMenu(focus);
+      shownChildMenu = null;
     }
   }
 
@@ -947,7 +1098,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   void itemOver(MenuItem item, boolean focus) {
     if (item == null) {
       // Don't clear selection if the currently selected item's menu is showing.
-      if ((selectedItem != null)
+      if ((selectedItem != null) && shownChildMenu != null
           && (shownChildMenu == selectedItem.getSubMenu())) {
         return;
       }
@@ -1010,15 +1161,20 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     if (submenu == null || !item.isVisible()) {
       // Remove the submenu indicator
       if (tdCount == 2) {
-        DOM.removeChild(tr, DOM.getChild(tr, 1));
+        tr.removeChild(DOM.getChild(tr, 1));
       }
       setItemColSpan(item, 2);
     } else if (tdCount == 1) {
       // Show the submenu indicator
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
-      DOM.setElementProperty(td, "vAlign", "middle");
-      DOM.setInnerHTML(td, subMenuIcon.getHTML());
+      td.setPropertyString("vAlign", "middle");
+      String indicatorHtml = subMenuIcon.getSafeHtml().asString();
+      // add null alt attribute for a11y
+      if (indicatorHtml.startsWith("<img") && indicatorHtml.endsWith(">"))
+        indicatorHtml = indicatorHtml.substring(0, indicatorHtml.length() - 1) + " alt>";
+      td.setInnerHTML(indicatorHtml);
+
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
     }
@@ -1057,13 +1213,13 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   private void eatEvent(Event event) {
-    DOM.eventCancelBubble(event, true);
-    DOM.eventPreventDefault(event);
+    event.stopPropagation();
+    event.preventDefault();
   }
 
   private MenuItem findItem(Element hItem) {
     for (MenuItem item : items) {
-      if (DOM.isOrHasChild(item.getElement(), hItem)) {
+      if (item.getElement().isOrHasChild(hItem)) {
         return item;
       }
     }
@@ -1092,11 +1248,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     this.vertical = vertical;
 
-    com.google.gwt.dom.client.Element outer = FocusPanel.impl.createFocusable();
+    Element outer = FocusPanel.impl.createFocusable();
     DOM.appendChild(outer, table);
     setElement(outer);
 
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
+    Roles.getMenubarRole().set(getElement());
+    Roles.getPresentationRole().set(table);
 
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
         | Event.ONFOCUS | Event.ONKEYDOWN);
@@ -1108,14 +1265,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       addStyleDependentName("horizontal");
     }
 
-    // Hide focus outline in Mozilla/Webkit/Opera
-    DOM.setStyleAttribute(getElement(), "outline", "0px");
+    // Hide focus outline in Mozilla/Webkit
+    getElement().getStyle().setProperty("outline", "0px");
 
     // Hide focus outline in IE 6/7
-    DOM.setElementAttribute(getElement(), "hideFocus", "true");
+    getElement().setAttribute("hideFocus", "true");
 
     // Deselect items when blurring without a child menu.
     addDomHandler(new BlurHandler() {
+      @Override
       public void onBlur(BlurEvent event) {
         if (shownChildMenu == null) {
           selectItem(null);
@@ -1171,20 +1329,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    */
   private void onHide(boolean focus) {
     if (shownChildMenu != null) {
-      shownChildMenu.onHide(focus);
-      popup.hide();
+      hideChildMenu(focus);
       if (focus) {
         focus();
       }
     }
-  }
-
-  /*
-   * This method is called when a menu bar is shown.
-   */
-  private void onShow() {
-    // clear the selection; a keyboard user can cursor down to the first item
-    selectItem(null);
   }
 
   private void openPopup(final MenuItem item) {
@@ -1193,81 +1342,22 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       parentMenu.popup.setPreviewingAllNativeEvents(false);
     }
 
-    // Create a new popup for this item, and position it next to
-    // the item (below if this is a horizontal menu bar, to the
-    // right if it's a vertical bar).
-    popup = new DecoratedPopupPanel(true, false, "menuPopup") {
-      {
-        setWidget(item.getSubMenu());
-        setPreviewingAllNativeEvents(true);
-        item.getSubMenu().onShow();
-      }
-
-      @Override
-      protected void onPreviewNativeEvent(NativePreviewEvent event) {
-        // Hook the popup panel's event preview. We use this to keep it from
-        // auto-hiding when the parent menu is clicked.
-        if (!event.isCanceled()) {
-
-          switch (event.getTypeInt()) {
-            case Event.ONMOUSEDOWN:
-              // If the event target is part of the parent menu, suppress the
-              // event altogether.
-              EventTarget target = event.getNativeEvent().getEventTarget();
-              Element parentMenuElement = item.getParentMenu().getElement();
-              if (parentMenuElement.isOrHasChild(Element.as(target))) {
-                event.cancel();
-                return;
-              }
-              super.onPreviewNativeEvent(event);
-              if (event.isCanceled()) {
-                selectItem(null);
-              }
-              return;
-          }
-        }
-        super.onPreviewNativeEvent(event);
-      }
-    };
-    popup.setAnimationType(AnimationType.ONE_WAY_CORNER);
-    popup.setAnimationEnabled(isAnimationEnabled);
-    popup.setStyleName(STYLENAME_DEFAULT + "Popup");
-    String primaryStyleName = getStylePrimaryName();
-    if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
-      popup.addStyleName(primaryStyleName + "Popup");
-    }
-    popup.addPopupListener(this);
-
     shownChildMenu = item.getSubMenu();
-    item.getSubMenu().parentMenu = this;
+    shownChildMenu.selectItem(null);
+    shownChildMenu.parentMenu = this;
+    expandedMenuItem = item;
+    item.setAriaExpanded(true);
 
-    // Show the popup, ensuring that the menubar's event preview remains on top
-    // of the popup's.
-    popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
-
+    popup = new MenuPopup();
+    popup.setWidget(shownChildMenu);
+    popup.addPopupListener(this);
+    popup.setPopupPositionAndShow(new PositionCallback() {
+      @Override
       public void setPosition(int offsetWidth, int offsetHeight) {
-
-        // depending on the bidi direction position a menu on the left or right
-        // of its base item
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - offsetWidth
-                + 1, item.getAbsoluteTop());
-          } else {
-            popup.setPopupPosition(item.getAbsoluteLeft()
-                + item.getOffsetWidth() - offsetWidth,
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
-                    - 1);
-          }
+        if (vertical) {
+          popup.positionNextTo(item);
         } else {
-          if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft()
-                + MenuBar.this.getOffsetWidth() - 1, item.getAbsoluteTop());
-          } else {
-            popup.setPopupPosition(item.getAbsoluteLeft(),
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
-                    - 1);
-          }
+          popup.positionBelow(item);
         }
       }
     });
@@ -1287,7 +1377,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     }
 
     Element container = getItemContainerElement();
-    DOM.removeChild(container, DOM.getChild(container, idx));
+    container.removeChild(DOM.getChild(container, idx));
     allItems.remove(idx);
     return true;
   }
@@ -1301,9 +1391,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
       for (MenuItem nextItem : items) {
-        if (nextItem.isEnabled()) {
+        if (nextItem.isEnabled() && nextItem.isVisible()) {
           selectItem(nextItem);
-          break;
+          return true;
+        }
+      }
+      for (MenuItem nextItem : items) {
+        if (nextItem.isVisible()) {
+          selectItem(nextItem);
+          return true;
         }
       }
       return true;
@@ -1336,7 +1432,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1373,7 +1469,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } else {
         itemToBeSelected = items.get(index);
-        if (itemToBeSelected.isEnabled()) {
+        if (itemToBeSelected.isEnabled() && itemToBeSelected.isVisible()) {
           break;
         }
       }
@@ -1392,6 +1488,21 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param colspan the colspan
    */
   private void setItemColSpan(UIObject item, int colspan) {
-    DOM.setElementPropertyInt(item.getElement(), "colSpan", colspan);
+    item.getElement().setPropertyInt("colSpan", colspan);
+  }
+
+  /**
+   * Hide currently displayed child menu and mark the associate menu item as closed.
+   * @param focus
+   */
+  private void hideChildMenu(boolean focus)
+  {
+    if (expandedMenuItem != null)
+    {
+      expandedMenuItem.setAriaExpanded(false);
+      expandedMenuItem = null;
+    }
+    shownChildMenu.onHide(focus);
+    popup.hide();
   }
 }

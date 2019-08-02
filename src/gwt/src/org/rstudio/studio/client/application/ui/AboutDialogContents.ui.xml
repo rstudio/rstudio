@@ -1,115 +1,119 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
-	<ui:style>
-		@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-		.productName {
-			font-size: 20pt;
-			font-weight: bold;
-			margin-bottom: 3px;
-		}
-		
-		.productVersion {
-			font-size: 10pt;
-			margin-bottom: 3px;
-		}
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
+   <ui:style>
+      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+      .productName {
+         font-size: 20pt;
+         font-weight: bold;
+         margin-bottom: 3px;
+      }
+      
+      .productVersion {
+         font-size: 10pt;
+         margin-bottom: 3px;
+      }
 
-		.buildInfo {
-			margin-top: 10px;
-		}
+      .buildInfo {
+         margin-top: 10px;
+      }
 
-		.buildInfo, .userAgent {
-			text-align: center;
-			font-size: 8pt;
-			margin-bottom: 3px;
-			user-select: text;
-		}
-		
-		.userAgent {
-			margin-bottom: 15px;
-		}
-		
-		.noticeBox {
-			clear: both;
-			width: 100%;
-			font-family: fixedWidthFont;
-			margin-top: 15px;
-			margin-bottom: 15px;
-		}
-		.licenseBox {
-			clear: both;
-			width: 100%;
-			font-family: fixedWidthFont;
-			margin-top: 3px;
-			margin-bottom: 15px;
-		}
-		
-		.logo {
-	      float: left;
-	      margin-right: 20px;
-	      width: 64px;
-	      height: 64px;
-	   }
-	   
-	   .productInfo {
-	      text-align: left;
-	      overflow: hidden;
-	      margin-left: auto;
-	      margin-right: auto;
-	      width: 50%;
-	      user-select: text;
-	   }
-	   
-	   .outerProductInfo {
-	      text-align: center;
-	      width: 580px;
-	   }
+      .buildInfo, .userAgent {
+         text-align: center;
+         font-size: 8pt;
+         margin-bottom: 3px;
+         user-select: text;
+      }
+      
+      .userAgent {
+         margin-bottom: 15px;
+      }
+      
+      .noticeBox {
+         clear: both;
+         width: 100%;
+         font-family: fixedWidthFont;
+         margin-top: 15px;
+         margin-bottom: 15px;
+      }
+      .licenseBox {
+         clear: both;
+         width: 100%;
+         font-family: fixedWidthFont;
+         margin-top: 3px;
+         margin-bottom: 15px;
+      }
+      
+      .logo {
+         float: left;
+         margin-right: 20px;
+         width: 64px;
+         height: 64px;
+      }
+      
+      .productInfo {
+         text-align: left;
+         overflow: hidden;
+         margin-left: auto;
+         margin-right: auto;
+         width: 50%;
+         user-select: text;
+      }
+      
+      .outerProductInfo {
+         text-align: center;
+         width: 580px;
+      }
 
-		.licenseLabel {
-			font-size: 12pt;
-			font-weight: bold;
-			text-align: center;
-		}
-	</ui:style>
-	<g:HTMLPanel>
-	   <g:HTMLPanel styleName="{style.outerProductInfo}">
-		   <g:HTMLPanel styleName="{style.productInfo}">
-				<g:Image resource='{res.rstudioLarge2x}'
-                     styleName="{style.logo}"
-                     width="48"
-                     height="48"/>
-				<g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
-				<g:HTMLPanel styleName="{style.productVersion}">
-					<g:InlineLabel text="Version "></g:InlineLabel>
-					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
-				</g:HTMLPanel>
-				<g:HTMLPanel styleName="{style.productVersion}">
-                    <g:InlineLabel text="&copy;"></g:InlineLabel>
-                    <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
-                    <g:InlineLabel text="RStudio, Inc."></g:InlineLabel>
-				</g:HTMLPanel>
-			</g:HTMLPanel>
-	   </g:HTMLPanel>
-		<g:HTMLPanel styleName="{style.buildInfo}">
-			<g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
-		</g:HTMLPanel>
-		<g:HTMLPanel styleName="{style.userAgent}">
-			<g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
-		</g:HTMLPanel>
-		<g:HTMLPanel ui:field="gplNotice">
-			<g:InlineLabel
-				text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
-			<g:Anchor href="http://www.gnu.org/licenses/agpl-3.0.txt"
-				text="Affero General Public License."
-				target="_blank"></g:Anchor>
-		</g:HTMLPanel>
-		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
-			visibleLines="15" readOnly="true"></g:TextArea>
-		<g:Label ui:field="licenseLabel" visible="false" text="RStudio Pro License Status" styleName="{style.licenseLabel}"></g:Label>
-  		<g:TextArea ui:field="licenseBox" styleName="{style.licenseBox}"
-     		visibleLines="10" visible="false" readOnly="true"></g:TextArea>
+      .licenseLabel {
+         font-size: 12pt;
+         font-weight: bold;
+         text-align: center;
+      }
+   </ui:style>
+   <g:HTMLPanel>
+      <g:HTMLPanel ui:field="productInfo">
+         <g:HTMLPanel styleName="{style.outerProductInfo}">
+            <g:HTMLPanel styleName="{style.productInfo}">
+               <g:Image resource='{res.rstudioLarge2x}'
+                        styleName="{style.logo}"
+                        width="48"
+                        height="48"
+                        altText="RStudio Logo"/>
+               <g:Label ui:field="productName" text="RStudio" styleName="{style.productName}"></g:Label>
+               <g:HTMLPanel styleName="{style.productVersion}">
+                  <g:InlineLabel text="Version "></g:InlineLabel>
+                  <g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
+               </g:HTMLPanel>
+               <g:HTMLPanel styleName="{style.productVersion}">
+                       <g:InlineLabel text="&copy;"></g:InlineLabel>
+                       <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
+                       <g:InlineLabel text="RStudio, Inc."></g:InlineLabel>
+               </g:HTMLPanel>
+            </g:HTMLPanel>
+         </g:HTMLPanel>
+         <g:HTMLPanel styleName="{style.buildInfo}">
+            <g:InlineLabel ui:field="buildLabel"></g:InlineLabel>
+         </g:HTMLPanel>
+         <g:HTMLPanel styleName="{style.userAgent}">
+            <g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
+         </g:HTMLPanel>
+         <g:HTMLPanel ui:field="gplNotice">
+            <g:InlineLabel
+               text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
+            <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
+               text="Affero General Public License."
+               target="_blank"></g:Anchor>
+            <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
+         </g:HTMLPanel>
+      </g:HTMLPanel>
+      <g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
+         visibleLines="15" readOnly="true"></g:TextArea>
+      <g:Label ui:field="licenseLabel" visible="false" text="RStudio Pro License Status" styleName="{style.licenseLabel}"></g:Label>
+        <g:TextArea ui:field="licenseBox" styleName="{style.licenseBox}"
+           visibleLines="10" visible="false" readOnly="true"></g:TextArea>
 
-	</g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 
 

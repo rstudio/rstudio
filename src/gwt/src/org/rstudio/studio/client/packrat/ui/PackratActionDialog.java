@@ -1,6 +1,6 @@
 /* PackratActionDialog.java
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2014-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,7 @@
  */
 
 package org.rstudio.studio.client.packrat.ui;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
@@ -27,7 +28,7 @@ public class PackratActionDialog extends ModalDialog<Void>
          JsArray<PackratPackageAction> actions,
          final OperationWithInput<Void> operation)
    {
-      super("Packrat " + packratAction, operation);
+      super("Packrat " + packratAction, Roles.getDialogRole(), operation);
       setOkButtonCaption(packratAction);
       contents_ = new PackratActionDialogContents(packratAction, actions);
       setWidth("500px");

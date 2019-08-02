@@ -1,23 +1,23 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rs="urn:import:org.rstudio.core.client.widget"
-	>
-	<ui:style>
-	.headerLabel
-	{
-		font-weight: bold;
-	}
-	
-	.spaced
-	{
-		padding-bottom: 1em;
-	}
-	</ui:style>
-	<g:HTMLPanel>
-	  <g:HTMLPanel ui:field="waitingPanel_">
-	     <g:Label styleName="{style.headerLabel}" text="Waiting for Authentication">
-	     </g:Label>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rs="urn:import:org.rstudio.core.client.widget"
+   >
+   <ui:style>
+   .headerLabel
+   {
+      font-weight: bold;
+   }
+   
+   .spaced
+   {
+      padding-bottom: 1em;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+     <g:HTMLPanel ui:field="waitingPanel_">
+        <g:Label styleName="{style.headerLabel}" text="Waiting for Authentication">
+        </g:Label>
          <g:HTML>
             <p>
                A window will open momentarily to confirm your account. If it doesn't,
@@ -26,9 +26,9 @@
          </g:HTML>
          <g:Anchor ui:field="claimLink_" target="_blank"></g:Anchor>
       </g:HTMLPanel>
-	  <g:HTMLPanel ui:field="successPanel_" visible="false">
-	     <g:Label styleName="{style.headerLabel}" text="Account Verified">
-	     </g:Label>
+     <g:HTMLPanel ui:field="successPanel_" visible="false">
+        <g:Label styleName="{style.headerLabel}" text="Account Verified">
+        </g:Label>
          <g:HTML>
             <p>
                You've successfully authorized this computer. Click "Connect
@@ -36,13 +36,13 @@
             </p>
          </g:HTML>
       </g:HTMLPanel>
-	  <g:HTMLPanel ui:field="errorPanel_" visible="false">
+     <g:HTMLPanel ui:field="errorPanel_" visible="false">
         <g:Label styleName="{style.headerLabel} {style.spaced}" 
                  ui:field="errorHeader_"></g:Label>
-	  	<g:Label styleName="{style.spaced}" 
-	  	         ui:field="errorMessage_"></g:Label>
-	  	<rs:ThemedButton ui:field="tryAgainButton_" 
-	  	                 text="Try Again"></rs:ThemedButton>
+        <g:Label styleName="{style.spaced}" 
+                 ui:field="errorMessage_"></g:Label>
+        <rs:ThemedButton ui:field="tryAgainButton_" 
+                         text="Try Again"></rs:ThemedButton>
       </g:HTMLPanel>
-	</g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 

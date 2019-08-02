@@ -44,7 +44,6 @@ import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEven
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
@@ -109,7 +108,9 @@ import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEve
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -527,10 +528,15 @@ public class ClientEventDispatcher
          {
             eventBus_.dispatchEvent(new ListChangedEvent(event.<JsObject>getData()));
          }
-         else if (type == ClientEvent.UiPrefsChanged)
+         else if (type == ClientEvent.UserPrefsChanged)
          {
-            UiPrefsChangedEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new UiPrefsChangedEvent(data));
+            PrefLayer data = event.getData();
+            eventBus_.dispatchEvent(new UserPrefsChangedEvent(data));
+         }
+         else if (type == ClientEvent.UserStateChanged)
+         {
+            PrefLayer data = event.getData();
+            eventBus_.dispatchEvent(new UserStateChangedEvent(data));
          }
          else if (type == ClientEvent.ContextDepthChanged) {
             EnvironmentContextData data = event.getData();
@@ -595,8 +601,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ErrorHandlerChanged)
          {
-            ErrorHandlerType handlerType = event.getData();
-            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(handlerType));
+            ErrorHandlerChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(data));
          }
          else if (type == ClientEvent.ViewerNavigate)
          {

@@ -26,8 +26,10 @@
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DockTileView.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 #include "DesktopRCommandEvaluator.hpp"
 
 using namespace rstudio::core;
@@ -50,11 +52,14 @@ void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
 
 } // end anonymous namespace
 
-MainWindow::MainWindow(QUrl url) :
-      GwtWindow(false, false, QString(), url, nullptr),
+MainWindow::MainWindow(QUrl url,
+                       bool isRemoteDesktop) :
+      GwtWindow(false, false, QString(), url, nullptr, nullptr, isRemoteDesktop),
+      isRemoteDesktop_(isRemoteDesktop),
       menuCallback_(this),
-      gwtCallback_(this, this),
+      gwtCallback_(this, this, isRemoteDesktop),
       pSessionLauncher_(nullptr),
+      pRemoteSessionLauncher_(nullptr),
       pCurrentSessionProcess_(nullptr)
 {
    RCommandEvaluator::setMainWindow(this);
@@ -67,6 +72,8 @@ MainWindow::MainWindow(QUrl url) :
    // bind GWT callbacks
    auto* channel = webPage()->webChannel();
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   if (isRemoteDesktop_)
+      channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
 
    // Dummy menu bar to deal with the fact that
@@ -101,9 +108,17 @@ MainWindow::MainWindow(QUrl url) :
            this, SIGNAL(firstWorkbenchInitialized()));
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SLOT(onWorkbenchInitialized()));
+   connect(&gwtCallback_, SIGNAL(sessionQuit()),
+           this, SLOT(onSessionQuit()));
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
+
+   connect(webView(), &WebView::urlChanged,
+           this, &MainWindow::onUrlChanged);
+
+   connect(webPage(), &QWebEnginePage::loadFinished,
+           &menuCallback_, &MenuCallback::cleanUpActions);
 
    connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
       QString js = QStringLiteral(
@@ -125,6 +140,11 @@ MainWindow::MainWindow(QUrl url) :
 #endif
 
    desktop::enableFullscreenMode(this, true);
+}
+
+bool MainWindow::isRemoteDesktop() const
+{
+   return isRemoteDesktop_;
 }
 
 QString MainWindow::getSumatraPdfExePath()
@@ -153,6 +173,26 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
                                const std::string& initialDir)
 {
     pAppLauncher_->launchRStudio(args, initialDir);
+}
+
+void MainWindow::launchRemoteRStudio()
+{
+   std::vector<std::string> args;
+   args.push_back(kSessionServerOption);
+   args.push_back(pRemoteSessionLauncher_->sessionServer().url());
+
+   pAppLauncher_->launchRStudio(args);
+}
+
+void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
+{
+   std::vector<std::string> args;
+   args.push_back(kSessionServerOption);
+   args.push_back(pRemoteSessionLauncher_->sessionServer().url());
+   args.push_back(kSessionServerUrlOption);
+   args.push_back(projectUrl.toStdString());
+
+   pAppLauncher_->launchRStudio(args);
 }
 
 void MainWindow::onWorkbenchInitialized()
@@ -209,6 +249,11 @@ void MainWindow::loadUrl(const QUrl& url)
    webView()->load(url);
 }
 
+QWebEngineProfile* MainWindow::getPageProfile()
+{
+   return webView()->page()->profile();
+}
+
 void MainWindow::quit()
 {
    RCommandEvaluator::setMainWindow(nullptr);
@@ -247,6 +292,19 @@ void closeAllSatellites(QWidget* mainWindow)
 
 } // end anonymous namespace
 
+void MainWindow::onSessionQuit()
+{
+   if (isRemoteDesktop_)
+   {
+      int pendingQuit = collectPendingQuitRequest();
+      if (pendingQuit == PendingQuitAndExit || quitConfirmed_)
+      {
+         closeAllSatellites(this);
+         quit();
+      }
+   }
+}
+
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
 #ifdef _WIN32
@@ -262,36 +320,63 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       geometrySaved_ = true;
    }
 
+   CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
+
    if (quitConfirmed_ ||
-       pCurrentSessionProcess_ == nullptr ||
-       pCurrentSessionProcess_->state() != QProcess::Running)
+       (!isRemoteDesktop_ && pCurrentSessionProcess_ == nullptr) ||
+       (!isRemoteDesktop_ && pCurrentSessionProcess_->state() != QProcess::Running))
    {
       closeAllSatellites(this);
       pEvent->accept();
       return;
    }
 
+   auto quit = [this]()
+   {
+      if (isRemoteDesktop_)
+      {
+         closeAllSatellites(this);
+         this->quit();
+      }
+   };
+
    pEvent->ignore();
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
-            [&](QVariant hasQuitR) {
+            [=](QVariant hasQuitR) {
 
       if (!hasQuitR.toBool())
       {
          LOG_ERROR_MESSAGE("Main window closed unexpectedly");
 
          // exit to avoid user having to kill/force-close the application
-         closeAllSatellites(this);
-         QApplication::quit();
+         quit();
       }
       else
       {
-         webPage()->runJavaScript(
-                  QStringLiteral("window.desktopHooks.quitR()"),
-                  [&](QVariant ignored)
+         if (!isRemoteDesktop_ ||
+             close == CloseServerSessions::Always)
          {
-            // don't close all the satellites here since the user hasn't confirmed quit yet
-         });
+            webPage()->runJavaScript(
+                     QStringLiteral("window.desktopHooks.quitR()"),
+                     [=](QVariant ignored)
+            {
+               quitConfirmed_ = true;
+            });
+         }
+         else if (close == CloseServerSessions::Never)
+         {
+            quit();
+         }
+         else
+         {
+            webPage()->runJavaScript(
+                     QStringLiteral("window.desktopHooks.promptToQuitR()"),
+                     [=](QVariant ignored)
+            {
+               quitConfirmed_ = true;
+            });
+         }
       }
    });
 }
@@ -351,6 +436,16 @@ void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
    pSessionLauncher_ = pSessionLauncher;
 }
 
+RemoteDesktopSessionLauncher* MainWindow::getRemoteDesktopSessionLauncher()
+{
+   return pRemoteSessionLauncher_;
+}
+
+void MainWindow::setRemoteDesktopSessionLauncher(RemoteDesktopSessionLauncher* pSessionLauncher)
+{
+   pRemoteSessionLauncher_ = pSessionLauncher;
+}
+
 void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 {
    pCurrentSessionProcess_ = pSessionProcess;
@@ -395,6 +490,11 @@ bool MainWindow::desktopHooksAvailable()
 
 void MainWindow::onActivated()
 {
+}
+
+void MainWindow::onUrlChanged(QUrl url)
+{
+   urlChanged(url);
 }
 
 } // namespace desktop

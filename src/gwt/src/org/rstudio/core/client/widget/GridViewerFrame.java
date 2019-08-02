@@ -1,7 +1,7 @@
 /*
  * GridViewerFrame.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,14 +22,15 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class GridViewerFrame extends RStudioThemedFrame
 {
-   public GridViewerFrame()
+   public GridViewerFrame(String title)
    {
-      this(false);
+      this(title, false);
    }
 
-   public GridViewerFrame(boolean enableThemes)
+   public GridViewerFrame(String title, boolean enableThemes)
    {
       super(
+         title,
          "grid_resource/gridviewer.html?data_source=data",
          false,
          null, 

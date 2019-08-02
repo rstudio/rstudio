@@ -31,7 +31,7 @@ set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 
-REM perform build 
+REM perform 64-bit build
 cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
@@ -47,6 +47,9 @@ cmake -G"Visual Studio 15 2017 Win64" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% || goto :error
 cd ..
+
+REM perform 32-bit build and install it into the 64-bit tree
+call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
 
 REM create packages
 set VSINSTALLDIR="C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools"

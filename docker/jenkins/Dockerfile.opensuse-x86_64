@@ -1,4 +1,4 @@
-FROM opensuse:42.3
+FROM opensuse/leap:42.3
 
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
@@ -8,6 +8,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
+    curl \
     expect \
     fakeroot \
     gcc \
@@ -32,6 +33,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     sudo \
     tar \
     unzip \
+    valgrind \
     wget \
     xml-commons-apis \
     zlib-devel \

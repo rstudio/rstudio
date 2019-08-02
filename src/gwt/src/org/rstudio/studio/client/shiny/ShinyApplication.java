@@ -37,9 +37,8 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerOptions;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -66,7 +65,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    public ShinyApplication(EventBus eventBus, 
                            Commands commands,
                            Binder binder,
-                           Provider<UIPrefs> pPrefs,
+                           Provider<UserPrefs> pPrefs,
                            final SatelliteManager satelliteManager, 
                            ShinyServerOperations server,
                            GlobalDisplay display,
@@ -80,7 +79,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       server_ = server;
       display_ = display;
       isBusy_ = false;
-      currentViewType_ = ShinyViewerType.SHINY_VIEWER_NONE;
+      currentViewType_ = UserPrefs.SHINY_VIEWER_TYPE_NONE;
       dependencyManager_ = dependencyManager;
       interrupt_ = interrupt;
       
@@ -105,11 +104,11 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          currentViewType_ = event.getParams().getViewerType();
 
          // open the window to view the application if needed
-         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+         if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
          {
             activateWindow(event.getParams());
          }
-         else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_BROWSER)
+         else if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
          {
             display_.openWindow(event.getParams().getUrl());
          }
@@ -142,7 +141,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       // if the browser is up and R stops being busy, presume it's because the
       // app has stopped
       if (!isBusy_ && params_ != null && 
-          params_.getViewerType() == ShinyViewerType.SHINY_VIEWER_BROWSER)
+          params_.getViewerType() == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
       {
          params_.setState(ShinyApplicationParams.STATE_STOPPED);
          eventBus_.fireEvent(new ShinyApplicationStatusEvent(params_));
@@ -156,7 +155,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       // browser, automatically return to the app by activating the window.
       if (!event.debugging() && 
           params_ != null &&
-          currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW) 
+          currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW) 
       {
          satelliteManager_.activateSatelliteWindow(
                ShinyApplicationSatellite.NAME);
@@ -171,7 +170,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       // ShinyApplicationStatusEvent that allows the rest of the UI a chance
       // to react to the app's termination.
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED &&
-          currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+          currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
       {
             satelliteManager_.closeSatelliteWindow(
                   ShinyApplicationSatellite.NAME);
@@ -200,19 +199,19 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Handler
    public void onShinyRunInPane()
    {
-      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_PANE);
+      setShinyViewerType(UserPrefs.SHINY_VIEWER_TYPE_PANE);
    }
    
    @Handler
    public void onShinyRunInViewer()
    {
-      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_WINDOW);
+      setShinyViewerType(UserPrefs.SHINY_VIEWER_TYPE_WINDOW);
    }
 
    @Handler
    public void onShinyRunInBrowser()
    {
-      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_BROWSER);
+      setShinyViewerType(UserPrefs.SHINY_VIEWER_TYPE_BROWSER);
    }
    
    // Public methods ----------------------------------------------------------
@@ -227,18 +226,18 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          // The app being launched is the one already running; open and
          // reload the app.
-         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+         if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
          {
             satelliteManager_.dispatchCommand(commands_.reloadShinyApp(), 
                   ShinyApplicationSatellite.NAME);
             activateWindow();
          } 
-         else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE &&
+         else if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_PANE &&
                   commands_.viewerRefresh().isEnabled())
          {
             commands_.viewerRefresh().execute();
          }
-         else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_BROWSER)
+         else if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
          {
             eventBus_.fireEvent(new ShinyApplicationStatusEvent(params_));
          }
@@ -359,11 +358,11 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       ); 
    }-*/;
 
-   private void setShinyViewerType(int viewerType)
+   private void setShinyViewerType(String viewerType)
    {
-      UIPrefs prefs = pPrefs_.get();
+      UserPrefs prefs = pPrefs_.get();
       prefs.shinyViewerType().setGlobalValue(viewerType);
-      prefs.writeUIPrefs();
+      prefs.writeUserPrefs();
 
       // if we have a running Shiny app and the viewer type has changed, 
       // snap the app into the new location
@@ -372,10 +371,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          // if transitioning away from the pane or the window, close down
          // the old instance
-         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE ||
-             currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW) 
+         if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_PANE ||
+             currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW) 
          {
-            if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+            if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
             {
                stopOnNextClose_ = false;
                satelliteManager_.closeSatelliteWindow(
@@ -391,9 +390,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          currentViewType_ = viewerType;
          params_.setViewerType(viewerType);
          
-         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE ||
-             currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW ||
-             currentViewType_ == ShinyViewerType.SHINY_VIEWER_BROWSER)
+         if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_PANE ||
+             currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW ||
+             currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
          {
             eventBus_.fireEvent(new ShinyApplicationStatusEvent(params_));
          }
@@ -466,7 +465,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private final SatelliteManager satelliteManager_;
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final ShinyServerOperations server_;
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;
@@ -476,5 +475,5 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private boolean isBusy_;
    private boolean stopOnNextClose_ = true;
    private String satelliteClosePath_ = null;
-   private int currentViewType_;
+   private String currentViewType_;
 }

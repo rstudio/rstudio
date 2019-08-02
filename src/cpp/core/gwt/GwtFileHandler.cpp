@@ -26,10 +26,11 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
+#include "config.h"
 
 namespace rstudio {
 namespace core {
-namespace gwt {   
+namespace gwt {
    
 namespace {
    
@@ -132,6 +133,12 @@ void handleFileRequest(const std::string& wwwLocalPath,
       // gwt prefix
       vars["gwt_prefix"] = gwtPrefix;
 
+#ifndef RSTUDIO_SERVER
+      vars["viewport_tag"] = R"(<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />)";
+#else
+      vars["viewport_tag"] = std::string();
+#endif
+
       // read existing CSRF token 
       std::string csrfToken = request.cookieValue("csrf-token");
       if (csrfToken.empty())
@@ -139,7 +146,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
          // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
          // set when using proxied authentication. generate and apply a new token.
          csrfToken = core::system::generateUuid();
-         core::http::setCSRFTokenCookie(request, boost::none, csrfToken, pResponse);
+         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, pResponse);
       }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
@@ -159,7 +166,6 @@ void handleFileRequest(const std::string& wwwLocalPath,
       pResponse->setCacheWithRevalidationHeaders();
       pResponse->setCacheableFile(filePath, request);
    }
-  
 }
    
 } // anonymous namespace
@@ -183,7 +189,7 @@ http::UriHandlerFunction fileHandlerFunction(
                       frameOptions,
                       _1,
                       _2);
-}  
+}
 
 } // namespace gwt
 } // namespace core

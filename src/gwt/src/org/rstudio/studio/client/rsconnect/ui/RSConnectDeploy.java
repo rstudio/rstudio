@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,8 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -180,8 +181,8 @@ public class RSConnectDeploy extends Composite
          hideCheckUncheckAllButton();
       }
 
-      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUIPrefs()
-            .enableRStudioConnect().getGlobalValue();
+      final boolean rsConnectEnabled = 
+            userState_.enableRsconnectPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
@@ -283,12 +284,14 @@ public class RSConnectDeploy extends Composite
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
                           GlobalDisplay display,
-                          UIPrefs prefs)
+                          UserPrefs prefs,
+                          UserState state)
    {
       server_ = server;
       connector_ = connector;
       display_ = display;
-      prefs_ = prefs;
+      userPrefs_ = prefs;
+      userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
             !asStatic_);
       appName_ = new AppNameTextbox(this);
@@ -310,7 +313,7 @@ public class RSConnectDeploy extends Composite
                // when doing a first-time publish, select the account the user
                // prefers (currently this just tracks the last account used)
                RSConnectAccount preferred = 
-                     prefs_.preferredPublishAccount().getGlobalValue();
+                     userState_.publishAccount().getGlobalValue().cast();
                if (preferred != null)
                {
                   accountList_.selectAccount(preferred);
@@ -470,10 +473,10 @@ public class RSConnectDeploy extends Composite
       // new content
       if (fromPrevious_ == null && 
           !getSelectedAccount().equals(
-                prefs_.preferredPublishAccount().getGlobalValue()))
+                userState_.publishAccount().getGlobalValue()))
       {
-         prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
-         prefs_.writeUIPrefs();
+         userState_.publishAccount().setGlobalValue(getSelectedAccount());
+         userState_.writeState();
       }
       
       return new RSConnectPublishResult(
@@ -1331,7 +1334,8 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
-   private UIPrefs prefs_;
+   private UserPrefs userPrefs_;
+   private UserState userState_;
    
    private RSConnectPublishSource source_;
    private boolean asMultipleRmd_;

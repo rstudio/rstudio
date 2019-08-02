@@ -428,11 +428,7 @@ Error initialize()
    r::session::consoleHistory().connectOnAdd(onHistoryAdd);
 
    // register timestamp function
-   R_CallMethodDef methodDef;
-   methodDef.name = "rs_timestamp" ;
-   methodDef.fun = (DL_FUNC) rs_timestamp;
-   methodDef.numArgs = 1;
-   r::routines::addCallMethod(methodDef);   
+   RS_REGISTER_CALL_METHOD(rs_timestamp);
 
    // install handlers
    using boost::bind;

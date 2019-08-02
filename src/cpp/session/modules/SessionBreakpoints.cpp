@@ -37,7 +37,6 @@
 #include <r/RInternal.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
@@ -195,6 +194,10 @@ std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)
    std::vector<int> lines;
    for (boost::shared_ptr<Breakpoint> pbp : s_breakpoints)
    {
+      // silence gcc warning
+      if (pbp == nullptr)
+         continue;
+
       if (sf.contains(pbp->path, pbp->lineNumber) &&
           pbp->type == TYPE_TOPLEVEL)
          lines.push_back(pbp->lineNumber);
@@ -401,7 +404,7 @@ void unregisterShinyFunction(SEXP ptr)
 //
 // Sets up a data structure and attaches it to the function as an EXTPTRSXP
 // attribute; unregistration is performed when R garbage-collects this pointer.
-void rs_registerShinyFunction(SEXP params)
+SEXP rs_registerShinyFunction(SEXP params)
 {
    Protect protect;
    SEXP expr = r::sexp::findVar("expr", params);
@@ -413,7 +416,7 @@ void rs_registerShinyFunction(SEXP params)
    std::string objName;
    Error error = r::sexp::extract(name, &objName);
    if (error)
-      return;
+      return R_NilValue;
 
    boost::shared_ptr<ShinyFunction> psf =
             boost::make_shared<ShinyFunction>(expr, objName, where);
@@ -450,6 +453,8 @@ void rs_registerShinyFunction(SEXP params)
       // Copy the function into the Shiny object first
       r::exec::RFunction(".rs.setShinyBreakpoints", name, where, lines).call();
    }
+
+   return R_NilValue;
 }
 
 // Executes the contents of the given file under the debugger
@@ -500,19 +505,9 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
 
 Error initBreakpoints()
 {
-   // Register rs_debugSourceFile; called from the console (as debugSource)
-   R_CallMethodDef debugSource;
-   debugSource.name = "rs_debugSourceFile";
-   debugSource.fun = (DL_FUNC)rs_debugSourceFile;
-   debugSource.numArgs = 3;
-   r::routines::addCallMethod(debugSource);
-
-   // Register rs_registerShinyFunction; called from registerShinyDebugHook
-   R_CallMethodDef registerShiny;
-   registerShiny.name = "rs_registerShinyFunction";
-   registerShiny.fun = (DL_FUNC)rs_registerShinyFunction;
-   registerShiny.numArgs = 1;
-   r::routines::addCallMethod(registerShiny);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_debugSourceFile);
+   RS_REGISTER_CALL_METHOD(rs_registerShinyFunction);
 
    // Initializes the set of breakpoints the server knows about by populating
    // it from client state. This set is used for synchronous breakpoint
@@ -648,5 +643,3 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
-
-

@@ -68,6 +68,12 @@ td.expandCol
    width: 20px;
 }
 
+td.resizeCol {
+   width: 0px;
+   border: none;
+   position: relative;
+}
+
 td.valueCol
 {
    border: 1px solid #f0f0f0;
@@ -76,6 +82,7 @@ td.valueCol
    overflow-x: hidden;
    padding-right: 20px;
    background-color: #ffffff;
+   padding-left: 5px;
 }
 
 .rstudio-themes-flat td.valueCol
@@ -85,6 +92,7 @@ td.valueCol
 
 .widthSettingRow td.expandCol,
 .widthSettingRow td.nameCol,
+.widthSettingRow td.resizeCol,
 .widthSettingRow td.valueCol
 {
    margin: 0px;
@@ -137,6 +145,7 @@ td.decoratedValueCol
 .rstudio-themes-flat .rstudio-themes-default td.nameCol,
 .rstudio-themes-flat .rstudio-themes-default td.expandCol,
 .rstudio-themes-flat .rstudio-themes-default td.valueCol,
+.rstudio-themes-flat .rstudio-themes-default td.resizeCol,
 .rstudio-themes-flat .rstudio-themes-default .detailRow,
 .rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
    border-color: THEME_DEFAULT_BORDER;
@@ -145,6 +154,7 @@ td.decoratedValueCol
 .rstudio-themes-flat .rstudio-themes-dark-grey td.nameCol,
 .rstudio-themes-flat .rstudio-themes-dark-grey td.expandCol,
 .rstudio-themes-flat .rstudio-themes-dark-grey td.valueCol,
+.rstudio-themes-flat .rstudio-themes-dark-grey td.resizeCol,
 .rstudio-themes-flat .rstudio-themes-dark-grey .detailRow,
 .rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
    border-color: THEME_DARKGREY_BORDER;
@@ -153,7 +163,18 @@ td.decoratedValueCol
 .rstudio-themes-flat .rstudio-themes-alternate td.nameCol,
 .rstudio-themes-flat .rstudio-themes-alternate td.expandCol,
 .rstudio-themes-flat .rstudio-themes-alternate td.valueCol,
+.rstudio-themes-flat .rstudio-themes-alternate td.resizeCol,
 .rstudio-themes-flat .rstudio-themes-alternate .detailRow,
 .rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
    border-color: THEME_ALTERNATE_BORDER;
+}
+
+.colResizer
+{
+   cursor: ew-resize;
+   width: 6px;
+   top: 0px;
+   left: -3px;
+   height: 100%;
+   position: absolute;
 }

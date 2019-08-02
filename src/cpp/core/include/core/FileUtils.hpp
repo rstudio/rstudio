@@ -40,6 +40,8 @@ bool isWindowsReservedName(const std::string& name);
 Error copyDirectory(const FilePath& sourceDirectory,
                     const FilePath& targetDirectory);
 
+bool isDirectoryWriteable(const FilePath& directory);
+
 } // namespace file_utils
 } // namespace core
 } // namespace rstudio

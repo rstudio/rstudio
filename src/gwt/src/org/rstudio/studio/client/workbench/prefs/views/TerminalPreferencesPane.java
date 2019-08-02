@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -32,10 +33,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.TerminalPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -51,7 +49,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 {
 
    @Inject
-   public TerminalPreferencesPane(UIPrefs prefs,
+   public TerminalPreferencesPane(UserPrefs prefs,
                                   PreferencesDialogResources res,
                                   Session session,
                                   final GlobalDisplay globalDisplay,
@@ -107,7 +105,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       customShellOptionsLabel_ = new Label("Custom shell command-line options:");
       add(spacedBefore(customShellOptionsLabel_));
       customShellOptions_ = new TextBox();
-      customShellOptions_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(customShellOptions_);
       customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
       add(customShellOptions_);
@@ -128,7 +126,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (haveWebsocketPref())
       {
          CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
-               prefs_.terminalUseWebsockets(), 
+               prefs_.terminalWebsockets(), 
                "WebSockets are generally more responsive; try turning off if terminal won't connect.");
          add(chkTerminalWebsocket);
          showPerfLabel = true;
@@ -169,7 +167,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyWhitelistLabel_ = new Label("Don't ask before killing:");
          add(busyWhitelistLabel_);
          busyWhitelist_ = new TextBox();
-         busyWhitelist_.getElement().setAttribute("spellcheck", "false");
+         DomUtils.disableSpellcheck(busyWhitelist_);
          busyWhitelist_.setWidth(textboxWidth);
          add(busyWhitelist_);
          busyWhitelist_.setEnabled(false);
@@ -194,17 +192,17 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      final TerminalPrefs terminalPrefs = prefs.getTerminalPrefs();
-
       Scheduler.get().scheduleDeferred(() -> server_.getTerminalShells(
             new ServerRequestCallback<JsArray<TerminalShellInfo>>()
       {
          @Override
          public void onResponseReceived(JsArray<TerminalShellInfo> shells)
          {
-            int currentShell = terminalPrefs.getDefaultTerminalShellValue();
+            String currentShell = BrowseCap.isWindowsDesktop() ?
+               prefs.windowsTerminalShell().getValue() :
+               prefs.posixTerminalShell().getValue();
             int currentShellIndex = 0;
 
             TerminalPreferencesPane.this.terminalShell_.getListBox().clear();
@@ -214,10 +212,10 @@ public class TerminalPreferencesPane extends PreferencesPane
             for (int i = 0; i < shells.length(); i++)
             {
                TerminalShellInfo info = shells.get(i);
-               if (info.getShellType() == TerminalShellInfo.SHELL_CUSTOM)
+               if (StringUtil.equals(info.getShellType(), UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM))
                   hasCustom = true;
                TerminalPreferencesPane.this.terminalShell_.addChoice(
-                     info.getShellName(), Integer.toString(info.getShellType()));
+                     info.getShellName(), info.getShellType());
                if (info.getShellType() == currentShell)
                   currentShellIndex = i;
             }
@@ -229,9 +227,9 @@ public class TerminalPreferencesPane extends PreferencesPane
 
             if (hasCustom)
             {
-               customShellChooser_.setText(terminalPrefs.getCustomTerminalShellPath());
+               customShellChooser_.setText(prefs.customShellCommand().getValue());
                customShellChooser_.setEnabled(true);
-               customShellOptions_.setText(terminalPrefs.getCustomTerminalShellOptions());
+               customShellOptions_.setText(prefs.customShellOptions().getValue());
                customShellOptions_.setEnabled(true);
             }
             manageCustomShellControlVisibility();
@@ -244,20 +242,22 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (busyMode_ != null)
       {
          busyMode_.getListBox().clear();
-         busyMode_.addChoice("Always", Integer.toString(UIPrefsAccessor.BUSY_DETECT_ALWAYS));
-         busyMode_.addChoice("Never", Integer.toString(UIPrefsAccessor.BUSY_DETECT_NEVER));
-         busyMode_.addChoice("Always except for whitelist", Integer.toString(UIPrefsAccessor.BUSY_DETECT_WHITELIST));
+         busyMode_.addChoice("Always", UserPrefs.BUSY_DETECTION_ALWAYS);
+         busyMode_.addChoice("Never", UserPrefs.BUSY_DETECTION_NEVER);
+         busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
          busyMode_.setEnabled(true);
          
-         int selection = prefs_.terminalBusyMode().getValue();
-         if (selection < UIPrefsAccessor.BUSY_DETECT_ALWAYS ||
-               selection > UIPrefsAccessor.BUSY_DETECT_WHITELIST)
-            selection = UIPrefsAccessor.BUSY_DETECT_ALWAYS;
-         
-         busyMode_.getListBox().setSelectedIndex(selection);
+         String selection = prefs_.busyDetection().getValue();
+         for (int i = 0; i < busyMode_.getListBox().getItemCount(); i++)
+         {
+            if (busyMode_.getListBox().getValue(i) == prefs_.busyDetection().getValue())
+            {
+               busyMode_.getListBox().setSelectedIndex(i);
+            }
+         }
          
          List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
-               prefs_.terminalBusyWhitelist().getValue());
+               prefs_.busyWhitelist().getValue());
          
          StringBuilder whitelist = new StringBuilder();
          for (String entry: whitelistArray)
@@ -281,19 +281,23 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public boolean onApply(UserPrefs rPrefs)
    {
       boolean restartRequired = super.onApply(rPrefs);
      
       if (haveBusyDetectionPref())
       {
-         prefs_.terminalBusyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
-         prefs_.terminalBusyMode().setGlobalValue(selectedBusyMode());
+         prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.busyDetection().setGlobalValue(selectedBusyMode());
       } 
-      TerminalPrefs terminalPrefs = TerminalPrefs.create(selectedShellType(),
-            customShellChooser_.getText(),
-            customShellOptions_.getText());
-      rPrefs.setTerminalPrefs(terminalPrefs);
+      
+      if (BrowseCap.isWindowsDesktop())
+         prefs_.windowsTerminalShell().setGlobalValue(selectedShellType());
+      else
+         prefs_.posixTerminalShell().setGlobalValue(selectedShellType());
+
+      prefs_.customShellCommand().setGlobalValue(customShellChooser_.getText());
+      prefs_.customShellOptions().setGlobalValue(customShellOptions_.getText());
 
       return restartRequired;
    }
@@ -318,32 +322,29 @@ public class TerminalPreferencesPane extends PreferencesPane
       return !BrowseCap.isWindowsDesktop();
    }
 
-   private int selectedShellType()
+   private String selectedShellType()
    {
-      int idx = terminalShell_.getListBox().getSelectedIndex();
-      String valStr = terminalShell_.getListBox().getValue(idx);
-      return StringUtil.parseInt(valStr, TerminalShellInfo.SHELL_DEFAULT);
+      return terminalShell_.getListBox().getSelectedValue();
    }
 
    private void manageCustomShellControlVisibility()
    {
-      boolean customEnabled = (selectedShellType() == TerminalShellInfo.SHELL_CUSTOM);
+      boolean customEnabled = (selectedShellType() == UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM);
       customShellPathLabel_.setVisible(customEnabled);
       customShellChooser_.setVisible(customEnabled);
       customShellOptionsLabel_.setVisible(customEnabled);
       customShellOptions_.setVisible(customEnabled);
    }
 
-   private int selectedBusyMode()
+   private String selectedBusyMode()
    {
       int idx = busyMode_.getListBox().getSelectedIndex();
-      String valStr = busyMode_.getListBox().getValue(idx);
-      return StringUtil.parseInt(valStr, UIPrefsAccessor.BUSY_DETECT_ALWAYS);
+      return busyMode_.getListBox().getValue(idx);
    }
 
    private void manageBusyModeControlVisibility()
    {
-      boolean whitelistEnabled = selectedBusyMode() == UIPrefsAccessor.BUSY_DETECT_WHITELIST;
+      boolean whitelistEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_WHITELIST;
       busyWhitelistLabel_.setVisible(whitelistEnabled);
       busyWhitelist_.setVisible(whitelistEnabled);
    }
@@ -378,7 +379,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private TextBox busyWhitelist_;
    
    // Injected ----  
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
    private final Session session_;
    private final Server server_;

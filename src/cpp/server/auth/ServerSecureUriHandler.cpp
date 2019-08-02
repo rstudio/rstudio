@@ -26,6 +26,7 @@
 
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server/ServerConstants.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
 
@@ -40,10 +41,12 @@ namespace {
 class UriHandler
 {
 public:
-   UriHandler(SecureUriHandlerFunction handlerFunction,
-              http::UriHandlerFunction unauthorizedResponseFunction)
+   UriHandler(SecureUriHandlerFunctionEx handlerFunction,
+              http::UriHandlerFunction unauthorizedResponseFunction,
+              bool refreshAuthCookies)
    : handlerFunction_(handlerFunction),
-     unauthorizedResponseFunction_(unauthorizedResponseFunction)
+     unauthorizedResponseFunction_(unauthorizedResponseFunction),
+     refreshAuthCookies_(refreshAuthCookies)
    {
    }
    
@@ -52,34 +55,40 @@ public:
    // provide http::UriHandlerFunction concept
    void operator()(const http::Request& request, http::Response *pResponse)
    {
-      std::string userIdentifier = handler::getUserIdentifier(request);
+      std::string userIdentifier = handler::getUserIdentifier(request, pResponse);
       if (userIdentifier.empty())
       {
          unauthorizedResponseFunction_(request, pResponse);
          return;
       }
 
+      if (refreshAuthCookies_)
+         handler::refreshAuthCookies(userIdentifier, request, pResponse);
+
       // convert to local username
       std::string username = handler::userIdentifierToLocalUsername(
                                                             userIdentifier);
 
       // call the handler
-      handlerFunction_(username, request, pResponse);
+      handlerFunction_(username, userIdentifier, request, pResponse);
    }
    
 private:
-   SecureUriHandlerFunction handlerFunction_;
+   SecureUriHandlerFunctionEx handlerFunction_;
    http::UriHandlerFunction unauthorizedResponseFunction_;
+   bool refreshAuthCookies_;
 };
 
 class AsyncUriHandler
 {
 public:
    AsyncUriHandler(
-            SecureAsyncUriHandlerFunction handlerFunction,
-            http::AsyncUriHandlerFunction unauthorizedResponseFunction)
+            SecureAsyncUriHandlerFunctionEx handlerFunction,
+            http::AsyncUriHandlerFunction unauthorizedResponseFunction,
+            bool refreshAuthCookies)
    : handlerFunction_(handlerFunction),
-     unauthorizedResponseFunction_(unauthorizedResponseFunction)
+     unauthorizedResponseFunction_(unauthorizedResponseFunction),
+     refreshAuthCookies_(refreshAuthCookies)
    {
    }
 
@@ -89,24 +98,29 @@ public:
    void operator()(boost::shared_ptr<http::AsyncConnection> pConnection)
    {
       std::string userIdentifier = handler::getUserIdentifier(
-                                                   pConnection->request());
+                                                   pConnection->request(),
+                                                   &pConnection->response());
       if (userIdentifier.empty())
       {
          unauthorizedResponseFunction_(pConnection);
          return;
       }
 
+      if (refreshAuthCookies_)
+         handler::refreshAuthCookies(userIdentifier, pConnection->request(), &pConnection->response());
+
       // convert to local username
       std::string username = handler::userIdentifierToLocalUsername(
                                                             userIdentifier);
 
       // call the handler
-      handlerFunction_(username, pConnection);
+      handlerFunction_(username, userIdentifier, pConnection);
    }
 
 private:
-   SecureAsyncUriHandlerFunction handlerFunction_;
+   SecureAsyncUriHandlerFunctionEx handlerFunction_;
    http::AsyncUriHandlerFunction unauthorizedResponseFunction_;
+   bool refreshAuthCookies_;
 };
    
    
@@ -135,6 +149,16 @@ void asyncSetError(const http::UriHandlerFunction& syncSetErrorFunction,
    syncSetErrorFunction(pConnection->request(), &(pConnection->response()));
    pConnection->writeResponse();
 }
+
+SecureUriHandlerFunctionEx makeExtendedUriHandler(SecureUriHandlerFunction handler)
+{
+   return boost::bind(handler, _1, _3, _4);
+}
+
+SecureAsyncUriHandlerFunctionEx makeExtendedAsyncUriHandler(SecureAsyncUriHandlerFunction handler)
+{
+   return boost::bind(handler, _1, _3);
+}
    
 } // anonymous namespace
    
@@ -142,51 +166,84 @@ http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
                                            bool authenticate)
 {
    if (authenticate)
-      return UriHandler(handler, auth::handler::signInThenContinue);
+      return UriHandler(makeExtendedUriHandler(handler), auth::handler::signInThenContinue, true);
    else
-      return UriHandler(handler, setHttpError);
+      return UriHandler(makeExtendedUriHandler(handler), setHttpError, true);
 }
 
 http::UriHandlerFunction secureJsonRpcHandler(
                                        SecureUriHandlerFunction handler)
 {
-   return UriHandler(handler, setJsonRpcError); 
+   // automatic auth refresh is dependant on the actual RPC being invoked
+   // (since many of them are invoked automatically on timers)
+   // therefore, auth refresh is handled in the session proxy, before the request
+   // is forwarded to the actual session
+   return UriHandler(makeExtendedUriHandler(handler), setJsonRpcError, false);
+}
+
+http::UriHandlerFunction secureJsonRpcHandlerEx(
+                                       SecureUriHandlerFunctionEx handler)
+{
+   return UriHandler(handler, setJsonRpcError, false);
 }
 
 http::UriHandlerFunction secureUploadHandler(SecureUriHandlerFunction handler)
 {
-   return UriHandler(handler, setFileUploadError); 
+   return UriHandler(makeExtendedUriHandler(handler), setFileUploadError, true);
 }   
 
 http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
-                                    bool authenticate)
+                                    bool authenticate,
+                                    bool refreshAuthCookies)
 {
    if (authenticate)
    {
        // try to recover from auth failure by silently refreshing credentials
-       return AsyncUriHandler(handler,
-                              auth::handler::refreshCredentialsThenContinue);
+       return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+                              auth::handler::refreshCredentialsThenContinue,
+                              refreshAuthCookies);
    }
    else
    {
-      return AsyncUriHandler(handler,
-                             boost::bind(asyncSetError, setHttpError, _1));
+      return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+                             boost::bind(asyncSetError, setHttpError, _1),
+                             refreshAuthCookies);
    }
+}
+
+http::AsyncUriHandlerFunction secureAsyncHttpHandler(
+                                    SecureAsyncUriHandlerFunction handler,
+                                    http::AsyncUriHandlerFunction unauthorizedResponseFunction,
+                                    bool refreshAuthCookies)
+{
+   return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+                          unauthorizedResponseFunction,
+                          refreshAuthCookies);
 }
 
 http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler)
 {
+   return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+                          boost::bind(asyncSetError, setJsonRpcError, _1),
+                          false);
+}
+
+http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
+                                    SecureAsyncUriHandlerFunctionEx handler)
+{
    return AsyncUriHandler(handler,
-                          boost::bind(asyncSetError, setJsonRpcError, _1));
+                          boost::bind(asyncSetError, setJsonRpcError, _1),
+                          false);
 }
 
 http::AsyncUriHandlerFunction secureAsyncUploadHandler(
                                     SecureAsyncUriHandlerFunction handler)
 {
-   return AsyncUriHandler(handler,
-                          boost::bind(asyncSetError, setFileUploadError, _1));
+   return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+                          boost::bind(asyncSetError, setFileUploadError, _1),
+                          true);
 }
 
 } // namespace auth

@@ -1,0 +1,914 @@
+{
+    "$id": "https://rstudio.com/rstudio.preferences.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RStudio User Preferences",
+    "type": "object",
+    "properties": {
+        "run_rprofile_on_resume": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to run .Rprofile again after resuming a suspended R session."
+        },
+        "save_workspace": {
+            "type": "string",
+            "enum": ["always", "never", "ask"],
+            "default": "ask",
+            "description": "Whether to save the workspace after the R session ends."
+        },
+        "load_workspace": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to load the workspace when the R session begins."
+        },
+        "initial_working_directory": {
+            "type": "string",
+            "default": "",
+            "description": "The initial working directory for new R sessions."
+        },
+        "cran_mirror": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the default CRAN mirror."
+                },
+                "host": {
+                    "type": "string",
+                    "description": "The host of the default CRAN mirror."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the default CRAN mirror."
+                },
+                "repos": {
+                    "type": "string",
+                    "description": "The secondary CRAN mirror."
+                },
+                "country": {
+                    "type": "string",
+                    "description": "The country of the default CRAN mirror."
+                },
+                "secondary": {
+                    "type": "string",
+                    "description": "A pipe-separated list of secondary repositories."
+                }
+            },
+            "description": "The CRAN mirror to use.",
+            "default": {
+                "name": "Global (CDN)",
+                "host": "RStudio",
+                "url": "http://cran.rstudio.com/",
+                "repos": "",
+                "country": "us",
+                "secondary": ""
+            }
+        },
+        "bioconductor_mirror_name": {
+            "type": "string",
+            "default": "Seattle (USA)",
+            "description": "The name of the default Bioconductor mirror."
+        },
+        "bioconductor_mirror_url": {
+            "type": "string",
+            "default": "http://www.bioconductor.org",
+            "description": "The URL of the default Bioconductor mirror."
+        },
+        "always_save_history": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to always save the R console history."
+        },
+        "remove_history_duplicates": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to remove duplicate entries from the R console history."
+        },
+        "show_last_dot_value": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show the result of the last expression (.Last.value) in the Environment pane."
+        },
+        "line_ending_conversion": {
+            "type": "string",
+            "enum": ["default", "windows", "posix", "native", "passthrough"],
+            "default": "native",
+            "description": "The line ending format to use when saving files."
+        },
+        "use_newlines_in_makefiles": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use newlines when saving Makefiles."
+        },
+        "windows_terminal_shell": {
+            "type": "string",
+            "enum": ["default", "win-git-bash", "win-wsl-bash", "win-cmd", "win-ps", "ps-core", "custom", "none"],
+            "default": "default", 
+            "description": "The terminal shell to use on Windows."
+        },
+        "posix_terminal_shell": {
+            "type": "string",
+            "enum": ["default", "bash", "custom", "none"],
+            "default": "default", 
+            "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
+        },
+        "custom_shell_command": {
+            "type": "string",
+            "default": "",
+            "description": "The fully qualified path to the custom shell command to use in the Terminal tab."  
+        },
+        "custom_shell_options": {
+            "type": "string",
+            "default": "",
+            "description": "The command-line options to pass to the custom shell command."  
+        },
+        "show_line_numbers": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show line numbers in RStudio's code editor."  
+        },
+        "highlight_selected_word": {
+            "type": "boolean",
+            "default": true,
+            "description": "Highlight the selected word in RStudio's code editor."  
+        },
+        "highlight_selected_line": {
+            "type": "boolean",
+            "default": false,
+            "description": "Highlight the selected line in RStudio's code editor."  
+        },
+        "panes": {
+            "type": "object",
+            "properties": {
+                "quadrants": {
+                    "type": "array",
+                    "description": "Allocation of panes to quadrants.",
+                    "items": {
+                        "type": "string",
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2"]
+                    }
+                },
+                "tabSet1": {
+                    "type": "array",
+                    "description": "The panes included in the first tabset.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tabSet2": {
+                    "type": "array",
+                    "description": "The panes included in the second tabset.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "console_left_on_top": {
+                    "type": "boolean",
+                    "description": "Whether the console is on top when it is on the left side of the workbench."
+                },
+                "console_right_on_top": {
+                    "type": "boolean",
+                    "description": "Whether the console is on top when it is on the right side of the workbench."
+                }
+            },
+            "default": {
+                "quadrants": [
+                    "Source", 
+                    "Console", 
+                    "TabSet1",
+                    "TabSet2"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
+                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "console_left_on_top": false,
+                "console_right_on_top": true
+            },
+            "description": "Layout of panes in the RStudio workbench."
+        },
+        "use_spaces_for_tab": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to insert spaces when pressing the Tab key."
+        },
+        "num_spaces_for_tab": {
+            "type": "integer",
+            "default": 2,
+            "description": "The number of spaces to insert when pressing the Tab key."
+        },
+        "auto_detect_indentation": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically detect indentation settings from file contents."
+        },
+        "show_margin": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show the margin guide in the RStudio code editor."
+        },
+        "blinking_cursor": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to flash the cursor off and on."
+        },
+        "margin_column": {
+            "type": "integer",
+            "default": 80,
+            "description": "The number of columns of text after which the margin is shown."
+        },
+        "show_invisibles": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor."
+        },
+        "show_indent_guides": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show indentation guides in the RStudio code editor."
+        },
+        "continue_comments_on_newline": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether continue comments (by inserting the comment character) after adding a new line."
+        },
+        "editor_keybindings": {
+            "type": "string",
+            "enum": ["default", "vim", "emacs", "sublime"],
+            "default": "default",
+            "description": "The keybindings to use in the RStudio code editor."
+        },
+        "insert_matching": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to insert matching pairs, such as () and [], when the first is typed."
+        },
+        "insert_spaces_around_equals": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to insert spaces around the equals sign in R code."
+        },
+        "insert_parens_after_function_completion": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to insert parentheses after function completions."
+        },
+        "tab_multiline_completion": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
+        },
+        "show_help_tooltip_on_idle": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show help tooltips for functions when the cursor has not been recently moved."
+        },
+        "surround_selection": {
+            "type": "string",
+            "enum": ["never", "quotes", "quotes_and_brackets"],
+            "default": "quotes_and_brackets",
+            "description": "Which kinds of delimiters can be used to surround the current selection."
+        },
+        "enable_snippets": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enable code snippets in the RStudio code editor."
+        },
+        "code_completion": {
+            "type": "string",
+            "enum": ["always", "never", "triggered", "manual"],
+            "default": "always",
+            "description": "When to use auto-completion for R code in the RStudio code editor."
+        },
+        "code_completion_other": {
+            "type": "string",
+            "enum": ["always", "triggered", "manual"],
+            "default": "always",
+            "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
+        },
+        "console_code_completion": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to always use code completion in the R console."
+        },
+        "code_completion_delay": {
+            "type": "integer",
+            "default": 250,
+            "description": "The number of milliseconds to wait before offering code suggestions."
+        },
+        "code_completion_characters": {
+            "type": "integer",
+            "default": 3,
+            "description": "The number of characters in a symbol that can be entered before completions are offered."
+        },
+        "show_function_signature_tooltips": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show function signature tooltips during autocompletion."
+        },
+        "show_diagnostics_r": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type."
+        },
+        "show_diagnostics_cpp": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show diagnostic messages for C++ code as you type."
+        },
+        "show_diagnostics_other": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
+        },
+        "style_diagnostics": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show style diagnostics (suggestions for improving R code style)"
+        },
+        "diagnostics_on_save": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to check code for problems after saving it."
+        },
+        "background_diagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to run code diagnostics in the background, as you type."
+        },
+        "background_diagnostics_delay_ms": {
+            "type": "integer",
+            "default": 2000,
+            "description": "The number of milliseconds to delay before running code diagnostics in the background."
+        },
+        "diagnostics_in_r_function_calls": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to run diagnostics in R function calls."
+        },
+        "check_arguments_to_r_function_calls": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to check arguments to R function calls."
+        },
+        "check_unexpected_assignment_in_function_call": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to check for unexpected variable assignments inside R function calls."
+        },
+        "warn_if_no_such_variable_in_scope": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to generate a warning if a variable is used without being defined in the current scope."
+        },
+        "warn_variable_defined_but_not_used": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to generate a warning if a variable is defined without being used in the current scope"
+        },
+        "auto_discover_package_dependencies": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically discover and offer to install missing R package dependenices."
+        },
+        "auto_append_newline": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to ensure that source files end with a newline character."
+        },
+        "strip_trailing_whitespace": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to strip trailing whitespace from each line when saving."
+        },
+        "restore_source_document_cursor_position": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to save the position of the cursor when a fille is closed, restore it when the file is opened."
+        },
+        "reindent_on_paste": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically re-indent code when it's pasted into RStudio."
+        },
+        "vertically_align_arguments_indent": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to vertically align arguments to R function calls during automatic indentation."
+        },
+        "soft_wrap_r_files": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters."
+        },
+        "focus_console_after_exec": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to focus the R console after executing an R command from a script."
+        },
+        "fold_style": {
+            "type": "string",
+            "enum": ["begin-only", "begin-and-end"],
+            "default": "begin-and-end",
+            "description": "The style of folding to use."
+        },
+        "save_before_sourcing": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically save scripts before executing them."
+        },
+        "syntax_color_console": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to use syntax highlighting in the R console."
+        },
+        "scroll_past_end_of_document": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to allow scrolling past the end of a file."
+        },
+        "highlight_r_function_calls": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to highlight R function calls in the code editor."
+        },
+        "console_line_length_limit": {
+            "type": "integer",
+            "default": 1000,
+            "description": "The maximum number of characters to display in a single line in the R console."
+        },
+        "ansi_console_mode": {
+            "type": "string",
+            "enum": ["off", "on", "strip"],
+            "default": "on",
+            "description": "How to treat ANSI escape codes in the console."
+        },
+        "show_inline_toolbar_for_r_code_chunks": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show a toolbar on code chunks in R Markdown documents."
+        },
+        "highlight_code_chunks": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to highlight code chunks in R Markdown documents with a different background color."
+        },
+        "save_files_before_build": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to save all open, unsaved files before building the project."
+        },
+        "font_size_points": {
+            "type": "number",
+            "default": 10.0,
+            "description": "The default editor font size, in points."
+        },
+        "editor_theme": {
+            "type": "string",
+            "default": "Textmate (default)",
+            "description": "The name of the color theme to apply to the text editor in RStudio."
+        },
+        "default_encoding": {
+            "type": "string",
+            "default": "",
+            "description": "The default character encoding to use when saving files."
+        },
+        "toolbar_visible": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show the toolbar at the top of the RStudio workbench."
+        },
+        "default_project_location": {
+            "type": "string",
+            "default": "",
+            "description": "The directory path under which to place new projects by default."
+        },
+        "source_with_echo": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to echo R code when sourcing it."
+        },
+        "new_project_git_init": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initialize new projects with a Git repo by default."
+        },
+        "default_sweave_engine": {
+            "type": "string",
+            "default": "Sweave",
+            "description": "The default engine to use when processing Sweave documents."
+        },
+        "default_latex_program": {
+            "type": "string",
+            "default": "pdfLaTeX",
+            "description": "The default program to use when processing LaTeX documents."
+        },
+        "use_roxygen": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to use Roxygen for documentation."
+        },
+        "use_dataimport": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use RStudio's data import feature."
+        },
+        "pdf_previewer": {
+            "type": "string",
+            "enum": ["none", "default", "rstudio", "desktop-synctex", "system"],
+            "default": "default",
+            "description": "The program to use to preview PDF files after generation."
+        },
+        "always_enable_rnw_concordance": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to always enable the concordance for RNW files."
+        },
+        "insert_numbered_latex_sections": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to insert numbered sections in LaTeX."
+        },
+        "spelling_dictionary_language": {
+            "type": "string",
+            "default": "en_US",
+            "description": "The language of the spelling dictionary to use for spell checking."
+        },
+        "spelling_custom_dictionaries": {
+            "type": "array",
+            "default": [],
+            "description": "The list of custom dictionaries to use when spell checking."
+        },
+        "document_load_lint_delay": {
+            "type": "integer",
+            "default": 5000,
+            "description": "The number of milliseconds to wait before linting a document after it is loaded."
+        },
+        "ignore_uppercase_words": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to ignore words in uppercase when spell checking."
+        },
+        "ignore_words_with_numbers": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to ignore words with numbers in them when spell checking."
+        },
+        "max_spellcheck_words": {
+            "type": "integer",
+            "default": 500,
+            "description": "The maximum number of spelling words to check at once."
+        },
+        "max_spellcheck_prefetch": {
+            "type": "integer",
+            "default": 20,
+            "description": "The maximum number of spelling correction suggestions to prefetch."
+        },
+        "real_time_spellchecking": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable real-time spellchecking by default."
+        },
+        "navigate_to_build_error": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to navigate to build errors."
+        },
+        "packages_pane_enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enable RStudio's Packages pane."
+        },
+        "use_rcpp_template": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use RCPP templates."
+        },
+        "restore_source_documents": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to restore the last opened source documents when RStudio starts up."
+        },
+        "handle_errors_in_user_code_only": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to handle errors only when user code is on the stack."
+        },
+        "auto_expand_error_tracebacks": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to automatically expand tracebacks when an error occurs."
+        },
+        "check_for_updates": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to check for new versions of RStudio when RStudio starts."
+        },
+        "show_internal_functions": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show functions without source references in the Traceback pane while debugging."
+        },
+        "shiny_viewer_type": {
+            "type": "string",
+            "enum": ["user", "none", "pane", "window", "browser"],
+            "default": "window",
+            "description": "Where to display Shiny applications when they are run."
+        },
+        "plumber_viewer_type": {
+            "type": "string",
+            "enum": ["user", "none", "pane", "window", "browser"],
+            "default": "window",
+            "description": "Where to display Shiny applications when they are run."
+        },
+        "document_author": {
+            "type": "string",
+            "default": "",
+            "description": "The default name to use as the document author when creating new documents."
+        },
+        "rmd_preferred_template_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the preferred R Markdown template."
+        },
+        "rmd_viewer_type": {
+            "type": "string",
+            "enum": ["window", "pane", "none"],
+            "default": "window",
+            "description": "Where to display R Markdown documents when they have completed rendering."
+        },
+        "show_publish_diagnostics": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show verbose diagnostic information when publishing content."
+        },
+        "publish_check_certificates": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to check remote server SSL certificates when publishing content."
+        },
+        "use_publish_ca_bundle": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to use a custom certificate authority (CA) bundle when publishing content."
+        },
+        "publish_ca_bundle": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the custom certificate authority (CA) bundle to use when publishing content."
+        },
+        "rmd_chunk_output_inline": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show chunk output inline for ordinary R Markdown documents."
+        },
+        "show_doc_outline_rmd": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show the document outline by default when opening R Markdown documents."
+        },
+        "auto_run_setup_chunk": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically run an R Markdown document's Setup chunk before running other chunks."
+        },
+        "hide_console_on_chunk_execute": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to hide the R console when executing inline R Markdown chunks."
+        },
+        "execution_behavior": {
+            "type": "string",
+            "enum": ["line", "statement", "paragraph"],
+            "default": "statement",
+            "description": "The unit of R code to execute when the Execute command is invoked."
+        },
+        "show_terminal_tab": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show the Terminal tab."
+        },
+        "terminal_local_echo": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use local echo in the Terminal."
+        },
+        "terminal_websockets": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use websockets to communicate with the shell in the Terminal tab."
+        },
+        "terminal_auto_close": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically close the Terminal tab."
+        },
+        "terminal_track_environment": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to track and save changes to system environment variables in the Terminal."
+        },
+        "show_rmd_render_command": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to print the render command use to knit R Markdown documents in the R Markdown tab."
+        },
+        "enable_text_drag": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enable moving text on the editing surface by clicking and dragging it."
+        },
+        "show_hidden_files": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show hidden files in the Files pane."
+        },
+        "jobs_tab_visibility": {
+            "type": "string",
+            "enum": ["closed", "shown", "default"],
+            "default": "default",
+            "description": "The visibility of the Jobs tab."
+        },
+        "show_launcher_jobs_tab": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show the Launcher jobs tab in RStudio Pro."
+        },
+        "launcher_jobs_sort": {
+            "type": "string",
+            "enum": ["recorded", "state"],
+            "default": "recorded",
+            "description": "How to sort jobs in the Launcher tab in RStudio Pro."
+        },
+        "busy_detection": {
+            "type": "string",
+            "enum": ["always", "never", "whitelist"],
+            "default": "always",
+            "description": "How to detect busy status in the Terminal."
+        },
+        "busy_whitelist": {
+            "type": "array",
+            "default": ["tmux", "screen"],
+            "description": "A whitelist of apps that should not be considered busy in the Terminal."
+        },
+        "knit_working_dir": {
+            "type": "string",
+            "enum": ["default", "current", "project"],
+            "default": "default",
+            "description": "The working directory to use when knitting R Markdown documents."
+        },
+        "doc_outline_show": {
+            "type": "string",
+            "enum": ["sections_only", "sections_and_chunks", "all"],
+            "default": "sections_only",
+            "description": "Which objects to show in the document outline pane."
+        },
+        "latex_preview_on_cursor_idle": {
+            "type": "string",
+            "enum": ["never", "inline_only", "always"],
+            "default": "always",
+            "description": "When to preview LaTeX mathematical equations when cursor has not moved recently."
+        },
+        "wrap_tab_navigation": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to wrap around when going to the previous or next editor tab."
+        },
+        "global_theme": {
+            "type": "string",
+            "default": "default",
+            "enum": ["classic", "default", "alternate"],
+            "description": "The theme to use for the main RStudio user interface."
+        },
+        "git_diff_ignore_whitespace": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to ignore whitespace when generating diffs of version controlled files."
+        },
+        "console_double_click_select": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether double-clicking should select a word in the Console pane."
+        },
+        "new_proj_git_init": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "root_document": {
+            "type": "string",
+            "default": "",
+            "description": "The root document to use when compiling PDF documents."
+        },
+        "show_user_home_page": {
+            "type": "string",
+            "enum": ["always", "never", "sessions"],
+            "default": "sessions",
+            "description": "When to show the server home page in RStudio Server Pro."
+        },
+        "reuse_sessions_for_project_links": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to reuse sessions when opening projects in RStudio Server Pro."
+        },
+        "vcs_enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to enable RStudio's version control system interface."
+        },
+        "git_exe_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the Git executable to use."
+        },
+        "svn_exe_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the Subversion executable to use."
+        },
+        "terminal_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the terminal executable to use."
+        },
+        "rsa_key_path": {
+            "type": "string",
+            "default": "",
+            "description": "The path to the RSA key file to use."
+        },
+        "use_devtools": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use the devtools R package."
+        },
+        "use_internet2": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use Internet2 for networking on R for Windows."
+        },
+        "use_secure_download": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to use secure downloads when fetching R packages."
+        },
+        "cleanup_after_r_cmd_check": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to clean up temporary files after running R CMD CHECK."
+        },
+        "view_dir_after_r_cmd_check": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to view the directory after running R CMD CHECK."
+        },
+        "hide_object_files": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to hide object files in the Files pane."
+        },
+        "restore_last_project": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to restore the last project when starting RStudio."
+        },
+        "clean_texi2dvi_output": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to clean output after running Texi2Dvi."
+        },
+        "latex_shell_escape": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable shell escaping with LaTeX documents."
+        },
+        "restore_project_r_version": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to restore the last version of R used by the project in RStudio Pro."
+        },
+        "clang_verbose": {
+            "type": "integer",
+            "default": 0,
+            "description": "The verbosity level to use with Clang (0 - 2)"
+        },
+        "submit_crash_reports": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to automatically submit crash reports to RStudio."
+        },
+        "default_r_version": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "description": "The R version."
+                },
+                "r_home": {
+                    "type": "string",
+                    "description": "The home directory (R_HOME) for the R installation."
+                },
+                "label": {
+                    "type": "string",
+                    "description": "A free-form label for describing the R version."
+                }
+            },
+            "description": "The R version to use by default."
+        }
+    }
+}

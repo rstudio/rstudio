@@ -169,8 +169,12 @@ else()
       -D_WIN32_WINNT=0x601
       -D_WIN32_IE=0x601
       -DWIN32_LEAN_AND_MEAN
-      -D_WIN64
       -DBOOST_USE_WINDOWS_H)
+
+   # ensure we use 64-bit APIs for 64-bit builds
+   if(NOT RSTUDIO_SESSION_WIN32)
+      add_definitions(-D_WIN64)
+   endif()
 endif()
 
 if(RSTUDIO_PACKAGE_BUILD)
@@ -205,6 +209,8 @@ list(APPEND BOOST_LIBS
    thread
 )
 
+# tell cmake not to look for boost on system paths.
+set(Boost_NO_SYSTEM_PATHS ON)
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
@@ -215,7 +221,7 @@ if(UNIX)
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
       endif()
@@ -239,16 +245,20 @@ if(UNIX)
 else()
    # hard-code to our own prebuilt boost libs
    add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
-   set(BOOST_ARCH "64")
+   if(RSTUDIO_SESSION_WIN32)
+      set(BOOST_ARCH "32")
+   else()
+      set(BOOST_ARCH "64")
+   endif()
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc141-mt-x64-1_69.lib")
+      set(BOOST_SUFFIX "vc141-mt-x${BOOST_ARCH}-1_69.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc141-mt-gd-x64-1_69.lib")
+      set(BOOST_SUFFIX "vc141-mt-gd-x${BOOST_ARCH}-1_69.lib")
       set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.69.0-win-msvc141-debug-static/boost${BOOST_ARCH}")
    endif()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_69_0")
-   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+   find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
       list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/librstudio_boost_${BOOST_LIB}-${BOOST_SUFFIX}")
@@ -288,13 +298,17 @@ else()
    else()
       set(RSTUDIO_TOOLS_CRASHPAD "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/crashpad-release")
    endif()
-
+   if(RSTUDIO_SESSION_WIN32)
+      set(CRASHPAD_ARCH "x86")
+   else()
+      set(CRASHPAD_ARCH "x64")
+   endif()
    set(CRASHPAD_INCLUDE_DIR "${RSTUDIO_TOOLS_CRASHPAD}/include")
    include_directories(SYSTEM ${CRASHPAD_INCLUDE_DIR})
    include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/crashpad")
    include_directories(SYSTEM "${CRASHPAD_INCLUDE_DIR}/mini_chromium")
    set(CRASHPAD_OUTPUT_DIR "${RSTUDIO_TOOLS_CRASHPAD}/bin")
-   set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/lib_md")
+   set(CRASHPAD_LIBRARY_DIR "${RSTUDIO_TOOLS_CRASHPAD}/${CRASHPAD_ARCH}/lib_md")
 endif()
 
 # find crashpad libraries, ensuring the correct link order
@@ -331,7 +345,7 @@ else()
    if(UNIX)
       install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler" DESTINATION ${RSTUDIO_INSTALL_BIN})
       install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload" DESTINATION ${RSTUDIO_INSTALL_BIN})
-   else()
+   elseif(NOT RSTUDIO_SESSION_WIN32)
       install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.com" DESTINATION ${RSTUDIO_INSTALL_BIN})
       install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_handler.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
       install(PROGRAMS "${CRASHPAD_OUTPUT_DIR}/crashpad_http_upload.exe" DESTINATION ${RSTUDIO_INSTALL_BIN})
@@ -340,9 +354,14 @@ endif()
 
 if(WIN32)
      # winpty - pseudoterminal support on Windows
-     set(WINPTY_ARCH "64")
+     if(RSTUDIO_SESSION_WIN32)
+        set(WINPTY_ARCH "32")
+     else()
+        set(WINPTY_ARCH "64")
+     endif()
      set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.3-msys2-2.7.0")
      set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/${WINPTY_ARCH}/include")
+     set(WINPTY_BINDIR_32 "${WINPTY_ROOT}/32/bin")
      set(WINPTY_BINDIR_64 "${WINPTY_ROOT}/64/bin")
 
      # add winpty as system include directory
@@ -355,7 +374,12 @@ if(WIN32)
         set(OPENSSL_BUILD_TYPE "release")
      endif()
 
-     set(OPENSSL_BITNESS "64")
+     if(RSTUDIO_SESSION_WIN32)
+        set(OPENSSL_BITNESS "32")
+     else()
+        set(OPENSSL_BITNESS "64")
+     endif()
+
      set(OPENSSL_NAME "openssl-1.1.1b")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
@@ -401,6 +425,9 @@ endif()
 if(RSTUDIO_CONFIG_CORE_DEV)
    message(STATUS "Configured to build CORE_DEV")
 endif()
+if(RSTUDIO_SESSION_WIN32)
+   message(STATUS "Configured to build SESSION_WIN32")
+endif()
 if(RSTUDIO_CONFIG_MONITOR_ONLY)
    message(STATUS "Configured to build MONITOR_ONLY")
 elseif(RSTUDIO_CONFIG_SESSION_ONLY)
@@ -428,6 +455,9 @@ else()
    if(NOT RSTUDIO_CONFIG_MONITOR_ONLY)
 
       # find LibR
+      if(RSTUDIO_SESSION_WIN32)
+         set(LIBR_FIND_WINDOWS_32BIT TRUE)
+      endif()
       find_package(LibR REQUIRED)
 
       # verify we got the required R version

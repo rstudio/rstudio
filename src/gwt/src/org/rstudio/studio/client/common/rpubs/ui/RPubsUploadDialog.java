@@ -1,7 +1,7 @@
 /*
  * RPubsUploadDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,10 @@
 
 package org.rstudio.studio.client.common.rpubs.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
@@ -76,6 +79,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                              StaticHtmlGenerator htmlGenerator,
                              boolean isPublished)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;
@@ -156,7 +160,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          verticalPanel.add(titleLabel);
          titleTextBox_ = new TextBox();
          titleTextBox_.addStyleName(styles.titleTextBox());
-         titleTextBox_.getElement().setAttribute("spellcheck", "false");
+         DomUtils.disableSpellcheck(titleTextBox_);
          verticalPanel.add(titleTextBox_);
          
          Label commentLabel = new Label("Comment (optional):");
@@ -189,7 +193,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                   });       
             }
          });
-         addLeftButton(previewButton_);
+         addLeftButton(previewButton_, ElementIds.PREVIEW_BUTTON);
       }
       
       HTML warningLabel =  new HTML(
@@ -246,7 +250,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       else
       {
          addOkButton(updateButton_);
-         addButton(createButton_);
+         addButton(createButton_, ElementIds.CREATE_BUTTON);
          addCancelButton(cancelButton);
       }
      
@@ -255,12 +259,12 @@ public class RPubsUploadDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
-      
       if (hasTitle())
          titleTextBox_.setFocus(true);
+      else
+         super.focusInitialControl();
    }
    
    protected void onUnload()

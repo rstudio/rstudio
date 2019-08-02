@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
 
@@ -8,7 +9,7 @@
 
 <style type="text/css">
 #banner {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 .shortcuts th {
   text-align: left;
@@ -24,11 +25,10 @@
 
 <body>
 
-<h3 id="banner"><img src="../images/rstudio.png" width="73" height="17" title="RStudio"/></h3>
+<header role="banner" id="banner"><img src="../images/rstudio.png" alt="RStudio logo"/></header>
+<main><div style="margin-left: 20px; margin-right: 20px">
 
-<div style="margin-left: 20px; margin-right: 20px">
-
-<h2>Keyboard Shortcuts</h2>
+<h1>Keyboard Shortcuts</h1>
 
 <style type='text/css'> 
   .shortcuts td, .shortcuts th {
@@ -36,7 +36,7 @@
     padding-bottom: 0.5em; }
 </style> 
 <table class='shortcuts'>
-  <tr><td colspan="3"><h3>Console</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Console</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Move cursor to Console</td>
     <td>Ctrl+2</td>
@@ -78,7 +78,7 @@
     <td>Ctrl+Shift+H</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Source</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Source</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
    <tr>
     <td>Goto File/Function</td>
     <td>Ctrl+.</td>
@@ -410,7 +410,7 @@
     <td>F7</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Editing (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Editing (Console and Source)</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Undo</td>
     <td>Ctrl+Z</td>
@@ -557,7 +557,7 @@
     <td>Cmd+Option+U</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Completions (Console and Source)</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Completions (Console and Source)</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Attempt completion</td>
     <td>Tab or Ctrl+Space</td>
@@ -579,7 +579,7 @@
     <td>Esc</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Views</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Views</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Move focus to Source Editor</td>
     <td>Ctrl+1</td>
@@ -642,7 +642,7 @@
   </tr>
   <tr><td><br/></td></tr>
   
-  <tr><td colspan="3"><h3>Build</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Build</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Install and Restart</td>
     <td>Ctrl+Shift+B</td>
@@ -675,7 +675,7 @@
   </tr>
   <tr><td><br/></td></tr>
 
-  <tr><td colspan="3"><h3>Debug</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Debug</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
    <td>Toggle Breakpoint</td>
    <td>Shift+F9</td>
@@ -708,7 +708,7 @@
   </tr>   
   <tr><td><br/></td></tr>
 
-  <tr><td colspan="3"><h3>Plots</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Plots</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Previous plot</td>
     <td>Ctrl+Alt+F11</td>
@@ -720,7 +720,7 @@
     <td>Command+Option+F12</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Git/SVN</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Git/SVN</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Diff active source document</td>
     <td>Ctrl+Alt+D</td>
@@ -747,7 +747,7 @@
     <td>Enter</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Session</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Session</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>Quit Session (desktop only)</td>
     <td>Ctrl+Q</td>
@@ -759,7 +759,7 @@
     <td>Command+Shift+F10</td>
   </tr>
   <tr><td><br/></td></tr>
-  <tr><td colspan="3"><h3>Terminal</h3></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr><td colspan="3"><h2>Terminal</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
   <tr>
     <td>New Terminal</td>
     <td>Shift+Alt+T</td>
@@ -791,8 +791,65 @@
     <td>Ctrl+Option+F12</td>
   </tr>
   <tr><td><br/></td></tr>
+  <tr><td colspan="3"><h2>Main Menu (Server)</h2></td></tr><tr><th>Description</th><th>Windows &amp; Linux</th><th>Mac</th></tr>
+  <tr>
+    <td>File Menu</td>
+    <td>Ctrl+Alt+F</td>
+    <td>Ctrl+Option+F</td>
+  </tr>
+  <tr>
+    <td>Edit Menu</td>
+    <td>Ctrl+Alt+I</td>
+    <td>Ctrl+Option+I</td>
+  </tr>
+  <tr>
+    <td>Code Menu</td>
+    <td>Ctrl+Alt+C</td>
+    <td>Ctrl+Option+C</td>
+  </tr>
+  <tr>
+    <td>View Menu</td>
+    <td>Ctrl+Alt+V</td>
+    <td>Ctrl+Option+V</td>
+  </tr>
+  <tr>
+    <td>Plots Menu</td>
+    <td>Ctrl+Alt+P</td>
+    <td>Ctrl+Option+P</td>
+  </tr>
+  <tr>
+    <td>Session Menu</td>
+    <td>Ctrl+Alt+S</td>
+    <td>Ctrl+Option+S</td>
+  </tr>
+  <tr>
+    <td>Build Menu</td>
+    <td>Ctrl+Alt+B</td>
+    <td>Ctrl+Option+B</td>
+  </tr>
+  <tr>
+    <td>Debug Menu</td>
+    <td>Ctrl+Alt+U</td>
+    <td>Ctrl+Option+U</td>
+  </tr>
+  <tr>
+    <td>Profile Menu</td>
+    <td>Ctrl+Alt+O</td>
+    <td>Ctrl+Option+O</td>
+  </tr>
+  <tr>
+    <td>Tools Menu</td>
+    <td>Ctrl+Alt+T</td>
+    <td>Ctrl+Option+T</td>
+  </tr>
+  <tr>
+    <td>Help Menu</td>
+    <td>Ctrl+Alt+H</td>
+    <td>Ctrl+Option+H</td>
+  </tr>
+  <tr><td><br/></td></tr>
 </table>
-</div>
+</div></main>
    
 </body>
 </html>

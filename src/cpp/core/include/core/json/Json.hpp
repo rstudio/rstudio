@@ -486,7 +486,7 @@ public:
 
       bool operator==(iterator other) const
       {
-         return num_ == other.num_;
+         return (parent_ == other.parent_) && (num_ == other.num_);
       }
 
       bool operator!=(iterator other) const
@@ -652,7 +652,7 @@ public:
 
       bool operator==(iterator other) const
       {
-         return num_ == other.num_;
+         return (parent_ == other.parent_) && (num_ == other.num_);
       }
 
       bool operator!=(iterator other) const
@@ -823,7 +823,7 @@ int asJsonType(const T& object,
 }
 
 template <typename T>
-struct is_json_type : public boost::is_same<T, Value>
+struct is_json_type : public boost::is_base_of<Value, T>
 {
 };
 
@@ -932,6 +932,9 @@ bool parse(const std::string& input, Value* pValue);
 // Parses, returning the parse error that occurred.
 Error parse(const std::string& input, const ErrorLocation& location, Value* pValue);
 
+// Validates a JSON value according to a schema.
+Error validate(const json::Value& value, const std::string& schema, const ErrorLocation& location);
+
 // Parse input according to the given JSON schema document. Returns an error if either the input or
 // schema does not parse, or if the input is not valid according to the schema. Does not apply
 // default values from the schema.
@@ -940,7 +943,7 @@ Error parseAndValidate(const std::string& input, const std::string& schema,
 
 // Given a JSON schema document, return an object representing the default values named in the
 // schema.
-Error getSchemaDefaults(const std::string& schema, Value* pValue);
+Error getSchemaDefaults(const std::string& schema, Object* pValue);
 
 // Given two JSON objects, return their union, with properties in "overlay" preferred when both
 // objects contain a property of the same name. Merges sub-objects.

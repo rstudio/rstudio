@@ -126,6 +126,11 @@ public class JsObject extends JavaScriptObject
          return null;
       return _getDouble(key);
    }
+   
+   public final Double getDbl(String key)
+   {
+      return getDouble(key);
+   }
 
    public final native double _getDouble(String key) /*-{
       return this[key];
@@ -148,6 +153,11 @@ public class JsObject extends JavaScriptObject
       if (!hasKey(key) || getValueType(key) != "boolean")
          return null;
       return _getBoolean(key);
+   }
+   
+   public final Boolean getBool(String key)
+   {
+      return getBoolean(key);
    }
 
    public final native boolean _getBoolean(String key) /*-{

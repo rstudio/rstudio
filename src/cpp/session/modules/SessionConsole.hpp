@@ -30,6 +30,8 @@ namespace session {
 namespace modules { 
 namespace console {
    
+void syncConsoleColorEnv();
+
 core::Error initialize();
                        
 } // namespace console

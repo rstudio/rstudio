@@ -79,6 +79,21 @@
    return(TRUE)
 })
 
+.rs.addFunction("reticulate.initialize", function()
+{
+   # try to default to the tkAgg backend (note that we'll
+   # force a vanilla 'agg' backend when required otherwise)
+   engine <- tolower(Sys.getenv("MPLENGINE"))
+   if (engine %in% c("", "qt5agg"))
+      Sys.setenv(MPLENGINE = "tkAgg")
+})
+
+.rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
+{
+   .rs.setVar("reticulate.matplotlib.show", plt$show)
+   plt$show <- .rs.reticulate.matplotlib.showHook
+})
+
 .rs.addFunction("reticulate.matplotlib.showHook", function(...)
 {
    # read device size

@@ -18,7 +18,7 @@ fi
 cd rstudio-ace
 git pull
 git reset --hard "${BRANCH}"
-git submodule update --init --recursive
+git submodule update --init --recursive --force
 npm install
 cd ..
 

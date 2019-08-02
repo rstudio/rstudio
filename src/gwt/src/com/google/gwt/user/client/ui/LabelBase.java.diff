@@ -1,0 +1,17 @@
+22a23
+> import org.rstudio.core.client.StringUtil;
+55a57,70
+>   /**
+>    * Create a Label using a <code>label</code> element.
+>    * @param inline
+>    * @param forId
+>    */
+>   protected LabelBase(boolean inline, String forId) {
+>     setElement(Document.get().createLabelElement());
+>     if (!inline)
+>       getElement().getStyle().setProperty("display", "block");
+>     if (!StringUtil.isNullOrEmpty(forId))
+>       getElement().setAttribute("for", forId);
+>     directionalTextHelper = new DirectionalTextHelper(getElement(), inline);
+>   }
+> 

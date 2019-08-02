@@ -1,7 +1,7 @@
 /*
  * RmdOutputPanel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -226,7 +226,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected AnchorableFrame createFrame(String url)
    {
-      AnchorableFrame frame = new AnchorableFrame();
+      AnchorableFrame frame = new AnchorableFrame("Rmd Output Panel");
       
       // allow full screen
       Element el = frame.getElement();

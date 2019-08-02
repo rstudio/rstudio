@@ -1,7 +1,7 @@
 /*
  * GitPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -56,7 +57,7 @@ public class GitPane extends WorkbenchPane implements Display
       
       commands_ = commands;
       switchBranchToolbarButton_ = switchBranchToolbarButton;
-      createBranchToolbarButton_ = createBranchToolbarButton;     
+      createBranchToolbarButton_ = createBranchToolbarButton;
       
       table_ = changelistTablePresenter.getView();
       table_.addStyleName("ace_editor_theme");
@@ -86,20 +87,21 @@ public class GitPane extends WorkbenchPane implements Display
       ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Git Tab");
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
-      toolbar.addLeftWidget(new ToolbarButton(pullMoreMenu, true));
+      toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "Pull options", pullMoreMenu, true));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(historyButton_ = commands_.vcsShowHistory().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(moreButton_ = new ToolbarButton(
+      toolbar.addLeftWidget(moreButton_ = new ToolbarMenuButton(
             "More",
+            ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
             moreMenu));
 
@@ -113,6 +115,8 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addRightSeparator();
       
       toolbar.addRightWidget(new ToolbarButton(
+            ToolbarButton.NoText,
+            commands_.vcsRefresh().getTooltip(),
             commands_.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override
@@ -226,13 +230,13 @@ public class GitPane extends WorkbenchPane implements Display
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
          {
-            menu.setPopupPosition(clientX, clientY);     
+            menu.setPopupPosition(clientX, clientY);
          }
       });
    }
 
    private ToolbarButton historyButton_;
-   private ToolbarButton moreButton_;
+   private ToolbarMenuButton moreButton_;
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    

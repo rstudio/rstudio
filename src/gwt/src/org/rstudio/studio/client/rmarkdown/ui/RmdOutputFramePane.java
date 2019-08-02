@@ -25,6 +25,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -115,9 +116,9 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
 
    @Override
-   public int getViewerType()
+   public String getViewerType()
    {
-      return RmdOutput.RMD_VIEWER_TYPE_PANE;
+      return UserPrefs.RMD_VIEWER_TYPE_PANE;
    }
    
    @Override

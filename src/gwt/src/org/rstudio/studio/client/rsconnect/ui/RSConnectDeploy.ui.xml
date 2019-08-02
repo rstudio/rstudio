@@ -30,7 +30,7 @@
                                visible="false"></rw:ThemedButton>
            </g:HorizontalPanel>
          </g:VerticalPanel>
-         <g:VerticalPanel ui:field="descriptionPanel_" 
+         <g:VerticalPanel ui:field="descriptionPanel_"
                           visible="false">
             <g:Label text="Publish: "></g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
@@ -72,7 +72,7 @@
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{res.style.controlLabel}" visible="false" 
                       ui:field="appInfoPanel_">
-            <g:HorizontalPanel width="100%" 
+            <g:HorizontalPanel width="100%"
                                styleName="{res.style.controlLabel}">
                <g:Label text="Update:">
                </g:Label>

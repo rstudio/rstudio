@@ -1,7 +1,7 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,6 +106,7 @@ public class HelpPane extends WorkbenchPane
       });
 
       frame_ = new RStudioThemedFrame(
+         "Help Pane",
          null,
          RES.editorStyles().getText(),
          null,
@@ -187,19 +188,7 @@ public class HelpPane extends WorkbenchPane
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::unload()();
          });
       } ;
-      $wnd.helpNavigate = function(url, encode) {
-         // on some platforms url may arrive unencoded; on others it will already be encoded. to
-         // ascertain the difference, check to see if the url contains any characters that require
-         // encoding. 
-         if (encode)
-         {
-            var re = new RegExp("^([!#$&-;=?-[]_a-z~]|%[0-9a-fA-F]{2})+$");
-            if (!re.test(url)) 
-            {
-               url = encodeURI(url);
-            }
-         }
-         
+      $wnd.helpNavigate = function(url) {
          if (url.length)
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
@@ -286,12 +275,9 @@ public class HelpPane extends WorkbenchPane
             // they can participate in virtual session history. This
             // won't have any effect for right-click > Show in New Window
             // but that's a good thing.
-            
-            a.setAttribute("onclick",
-                           "window.parent.helpNavigate(this.href, " + 
-                           (BrowseCap.isLinuxDesktop() || BrowseCap.isWindowsDesktop() ?
-                                 "true" : "false") +
-                           "); return false");
+            a.setAttribute(
+                  "onclick",
+                  "window.parent.helpNavigate(this.href); return false");
          }
       }
       
@@ -334,7 +320,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Help Tab");
 
       toolbar.addLeftWidget(commands_.helpBack().createToolbarButton());
       toolbar.addLeftWidget(commands_.helpForward().createToolbarButton());
@@ -363,7 +349,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Help Tab Second");
 
       title_ = new Label();
       title_.addStyleName(RES.styles().topicTitle());
@@ -741,9 +727,9 @@ public class HelpPane extends WorkbenchPane
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
                "Find in Topic", 
-               "No occurences found",
+               "No occurrences found",
                findInputSource);
-      }     
+      }
    }
    
    private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{

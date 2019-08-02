@@ -1,7 +1,7 @@
 /*
  * BaseMenuBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -260,6 +260,44 @@ public class BaseMenuBar extends MenuBar
          if (item.isVisible())
             items.add(item);
       return items;
+   }
+
+   public MenuItem getItem(int index)
+   {
+      int count = getItemCount();
+      if (count == 0)
+         return null;
+
+      if (index < 0)
+         index = 0;
+
+      if (index >= count - 1)
+         index = count - 1;
+
+      List<MenuItem> items = getItems();
+      return items.get(index);
+   }
+
+   public void selectItem(int index)
+   {
+      MenuItem item = getItem(index);
+      if (item == null)
+         return;
+
+      selectItem(item);
+   }
+
+   public void keyboardActivateItem(int index)
+   {
+      MenuItem item = getItem(index);
+      if (item == null)
+         return;
+      
+      // set focus
+      getElement().focus();
+
+      // activate item
+      doItemAction(item, true, true);
    }
 
    /**

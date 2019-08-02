@@ -31,10 +31,13 @@ public class RegexUtil
    
    public static final boolean isSyntacticRIdentifier(String identifier)
    {
-      Pattern pattern = Pattern.create(
+      String regex =
+            "^" +
             "[" + WORD_CHARACTER + ".]" +
-            "[" + WORD_CHARACTER +  "._]*");
+            "[" + WORD_CHARACTER +  "._]*" +
+            "$";
       
+      Pattern pattern = Pattern.create(regex, "");
       return pattern.test(identifier);
    }
    

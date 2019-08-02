@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,20 +38,19 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -99,7 +97,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public CodeBrowserEditingTarget(SourceServerOperations server,
                                    Commands commands,
                                    EventBus events,
-                                   UIPrefs prefs,
+                                   UserPrefs prefs,
                                    FontSizeManager fontSizeManager,
                                    GlobalDisplay globalDisplay,
                                    DocDisplay docDisplay)
@@ -405,9 +403,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
    
 
    @Override
-   public ImageResource getIcon()
+   public FileIcon getIcon()
    {
-      return new ImageResource2x(FileIconResources.INSTANCE.iconSourceViewer2x());
+      return FileIcon.CODE_BROWSER_ICON;
    }
 
    @Override
@@ -806,7 +804,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final Commands commands_;
    private final EventBus events_;
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final FontSizeManager fontSizeManager_;
    private Display view_;
    private HandlerRegistration commandReg_;

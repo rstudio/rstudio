@@ -423,7 +423,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    # cran mirror configured
    repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
    
    # selected repository names (assume an unnamed repo == CRAN)
    selectedRepositoryNames <- names(repos)

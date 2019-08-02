@@ -1,7 +1,7 @@
 /*
  * ShowAddinsDialog.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style;
@@ -65,12 +66,12 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
 {
    public BrowseAddinsDialog(OperationWithInput<Command> operation)
    {
-      super("Addins", operation);
+      super("Addins", Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Execute");
       
-      filterWidget_ = new FilterWidget()
+      filterWidget_ = new FilterWidget("Filter by addin name")
       {
          @Override
          public void filter(String query)
@@ -333,7 +334,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    {
       Label label = new Label(caption);
       label.getElement().getStyle().setMarginTop(20, Unit.PX);
-      label.getElement().getStyle().setColor("#888");
+      label.getElement().getStyle().setColor("#656565");
       return label;
    }
    

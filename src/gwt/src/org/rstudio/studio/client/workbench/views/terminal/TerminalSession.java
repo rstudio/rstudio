@@ -42,7 +42,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -97,7 +97,7 @@ public class TerminalSession extends XTermWidget
    private void initialize(WorkbenchServerOperations server,
                            EventBus events,
                            final Session session,
-                           UIPrefs uiPrefs,
+                           UserPrefs uiPrefs,
                            GlobalDisplay globalDisplay)
    {
       server_ = server;
@@ -290,13 +290,11 @@ public class TerminalSession extends XTermWidget
       String inputText = input;
       if (inputText != null && BrowseCap.isWindowsDesktop())
       {
-         int shellType = getProcInfo().getShellType();
-         if (shellType == TerminalShellInfo.SHELL_CMD32 ||
-               shellType == TerminalShellInfo.SHELL_CMD64 ||
-               shellType == TerminalShellInfo.SHELL_PS32 ||
-               shellType == TerminalShellInfo.SHELL_PS64 ||
-               shellType == TerminalShellInfo.SHELL_PSCORE ||
-               (BrowseCap.isWindowsDesktop() && shellType == TerminalShellInfo.SHELL_CUSTOM))
+         String shellType = getProcInfo().getShellType();
+         if (shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD ||
+             shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS ||
+             shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE ||
+               (BrowseCap.isWindowsDesktop() && shellType == UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM))
          {
             inputText = StringUtil.normalizeNewLinesToCR(inputText);
          }
@@ -367,7 +365,7 @@ public class TerminalSession extends XTermWidget
       // On desktop, rapid typing sometimes causes RPC messages for writeStandardInput
       // to arrive out of sequence in the terminal; send a sequence number with each
       // message so server can put messages back in order
-      if (Desktop.isDesktop() && 
+      if (Desktop.hasDesktopFrame() &&
             consoleProcess_.getChannelMode() == ConsoleProcessInfo.CHANNEL_RPC)
       {
          if (inputSequence_ == ShellInput.IGNORE_SEQUENCE)
@@ -698,17 +696,15 @@ public class TerminalSession extends XTermWidget
       {
       // Windows command-prompt and PowerShell don't support buffer reloading
       // due to limitations of how they work with WinPty.
-      case TerminalShellInfo.SHELL_CMD32:
-      case TerminalShellInfo.SHELL_CMD64:
-      case TerminalShellInfo.SHELL_PS32:
-      case TerminalShellInfo.SHELL_PS64:
-      case TerminalShellInfo.SHELL_PSCORE:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
          // Do load the buffer if terminal was just created via API, as
          // the initial message and prompt may have been sent before the
          // client/server channel was opened.
          return createdByApi_;
 
-      case TerminalShellInfo.SHELL_CUSTOM:
+      case UserPrefs.WINDOWS_TERMINAL_SHELL_CUSTOM:
          // on Windows we don't know if custom shell supports reload so
          // assume it does not
          if (BrowseCap.isWindowsDesktop())
@@ -877,7 +873,7 @@ public class TerminalSession extends XTermWidget
    // Injected ---- 
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
    private GlobalDisplay globalDisplay_;
 }

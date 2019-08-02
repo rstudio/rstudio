@@ -1,7 +1,7 @@
 /*
  * CreateKeyDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -34,7 +36,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -46,7 +47,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                           final VCSServerOperations server,
                           final OperationWithInput<String> onCompleted)
    {
-      super("Create RSA Key", new ProgressOperationWithInput<CreateKeyOptions>() {
+      super("Create RSA Key", Roles.getDialogRole(), new ProgressOperationWithInput<CreateKeyOptions>() {
          
          @Override
          public void execute(final CreateKeyOptions input, 
@@ -192,19 +193,19 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       namePanel.setWidth("100%");
      
       // path
-      CaptionWithHelp pathCaption = new CaptionWithHelp(
-                                 "The RSA key will be created at:",
-                                 "SSH/RSA key management",
-                                 "rsa_key_help");  
-      pathCaption.setIncludeVersionInfo(false);
-      pathCaption.setWidth("100%");
-      namePanel.add(pathCaption);
-      
       TextBox txtKeyPath = new TextBox();
       txtKeyPath.addStyleName(styles.keyPathTextBox());
       txtKeyPath.setReadOnly(true);
       txtKeyPath.setText(rsaSshKeyPath_.getPath());
       txtKeyPath.setWidth("100%");
+      CaptionWithHelp pathCaption = new CaptionWithHelp(
+                                 "The RSA key will be created at:",
+                                 "SSH/RSA key management",
+                                 "rsa_key_help",
+                                 txtKeyPath);
+      pathCaption.setIncludeVersionInfo(false);
+      pathCaption.setWidth("100%");
+      namePanel.add(pathCaption);
       namePanel.add(txtKeyPath);
       
       panel.add(namePanel);
@@ -213,22 +214,22 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       passphrasePanel.addStyleName(styles.newSection());
       
       VerticalPanel passphrasePanel1 = new VerticalPanel();
-      Label passphraseLabel1 = new Label("Passphrase (optional):");
-      passphraseLabel1.addStyleName(styles.entryLabel());
-      passphrasePanel1.add(passphraseLabel1);
       txtPassphrase_ = new PasswordTextBox();
       txtPassphrase_.addStyleName(styles.passphrase());
+      FormLabel passphraseLabel1 = new FormLabel("Passphrase (optional):", txtPassphrase_);
+      passphraseLabel1.addStyleName(styles.entryLabel());
+      passphrasePanel1.add(passphraseLabel1);
       
       passphrasePanel1.add(txtPassphrase_);
       passphrasePanel.add(passphrasePanel1);
       
       VerticalPanel passphrasePanel2 = new VerticalPanel();
       passphrasePanel2.addStyleName(styles.lastSection());
-      Label passphraseLabel2 = new Label("Confirm:");
-      passphraseLabel2.addStyleName(styles.entryLabel());
-      passphrasePanel2.add(passphraseLabel2);
       txtConfirmPassphrase_ = new PasswordTextBox();
       txtConfirmPassphrase_.addStyleName(styles.passphraseConfirm());
+      FormLabel passphraseLabel2 = new FormLabel("Confirm:", txtConfirmPassphrase_);
+      passphraseLabel2.addStyleName(styles.entryLabel());
+      passphrasePanel2.add(passphraseLabel2);
       passphrasePanel2.add(txtConfirmPassphrase_);
       passphrasePanel.add(passphrasePanel2);
       

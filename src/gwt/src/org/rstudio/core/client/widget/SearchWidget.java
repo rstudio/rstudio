@@ -1,7 +1,7 @@
 /*
  * SearchWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -29,16 +30,24 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
 
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextBoxBase;
+import com.google.gwt.user.client.ui.ValueBoxBase;
+import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
-public class SearchWidget extends Composite implements SearchDisplay                                   
+public class SearchWidget extends Composite implements SearchDisplay
 {
    interface MyUiBinder extends UiBinder<Widget, SearchWidget> {}
    private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
@@ -75,9 +84,9 @@ public class SearchWidget extends Composite implements SearchDisplay
       }
    }
   
-   public SearchWidget()
+   public SearchWidget(String label)
    {
-      this(new SuggestOracle()
+      this(label, new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -87,30 +96,33 @@ public class SearchWidget extends Composite implements SearchDisplay
       });
    }
 
-   public SearchWidget(SuggestOracle oracle)
+   public SearchWidget(String label, SuggestOracle oracle)
    {
-      this(oracle, null);
+      this(label, oracle, null);
    }
    
-   public SearchWidget(SuggestOracle oracle, 
+   public SearchWidget(String label,
+                       SuggestOracle oracle,
                        SuggestionDisplay suggestDisplay)
    {
-      this(oracle, new TextBox(), suggestDisplay);
+      this(label, oracle, new TextBox(), suggestDisplay);
    }
    
-   public SearchWidget(SuggestOracle oracle, 
+   public SearchWidget(String label,
+                       SuggestOracle oracle, 
                        TextBoxBase textBox, 
                        SuggestionDisplay suggestDisplay)
    {
-      this(oracle, textBox, suggestDisplay, true);
+      this(label, oracle, textBox, suggestDisplay, true);
    }
 
-   public SearchWidget(SuggestOracle oracle,
+   public SearchWidget(String label,
+                       SuggestOracle oracle,
                        TextBoxBase textBox,
                        SuggestionDisplay suggestDisplay,
                        boolean continuousSearch)
    {
-      textBox.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textBox);
       
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
@@ -119,7 +131,9 @@ public class SearchWidget extends Composite implements SearchDisplay
       
       initWidget(uiBinder.createAndBindUi(this));
       close_.setVisible(false);
-
+      close_.setAltText("Clear text");
+      hiddenLabel_.setInnerText(label);
+      hiddenLabel_.setHtmlFor(DomUtils.ensureHasId(textBox.getElement()));
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       suggestBox_.setStylePrimaryName(styles.searchBox());
@@ -302,7 +316,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public void focus()
    {
-      suggestBox_.setFocus(true);      
+      suggestBox_.setFocus(true);
    }
    
    public void clear()
@@ -335,7 +349,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public void setPlaceholderText(String value)
    {
-      suggestBox_.getElement().setAttribute("placeholder", value);
+      DomUtils.setPlaceholder(suggestBox_.getElement(), value);
    }
    
    public boolean isFocused()
@@ -356,7 +370,9 @@ public class SearchWidget extends Composite implements SearchDisplay
    @UiField
    Image close_;
    @UiField
-   Image icon_;
+   DecorativeImage icon_;
+   @UiField
+   LabelElement hiddenLabel_;
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;

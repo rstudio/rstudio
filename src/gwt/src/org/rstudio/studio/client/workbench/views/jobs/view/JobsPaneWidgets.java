@@ -40,9 +40,11 @@ public class JobsPaneWidgets implements JobsPaneOperations
       events_ = events;
       list_ = list;
 
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Jobs Tab");
       
       allJobs_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "View all jobs",
             commands_.helpBack().getImageResource(), evt ->
       {
          // deselect current job
@@ -50,7 +52,6 @@ public class JobsPaneWidgets implements JobsPaneOperations
                JobConstants.JOB_TYPE_SESSION, false, true));
       });
       
-      allJobs_.setTitle("View all jobs");
       installMainToolbar();
    }
    

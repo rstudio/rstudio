@@ -1,7 +1,7 @@
 /*
  * MessageDialogImages.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,20 +20,25 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface MessageDialogImages extends ClientBundle
 {
-   public static final MessageDialogImages INSTANCE =
-                                       GWT.create(MessageDialogImages.class);
+    MessageDialogImages INSTANCE = GWT.create(MessageDialogImages.class);
+
    @Source("dialog_info_2x.png")
    ImageResource dialog_info2x();
+   String DIALOG_INFO_TEXT = "Info";
 
    @Source("dialog_error_2x.png")
    ImageResource dialog_error2x();
+   String DIALOG_ERROR_TEXT = "Error";
 
    @Source("dialog_warning_2x.png")
    ImageResource dialog_warning2x();
+   String DIALOG_WARNING_TEXT = "Warning";
 
    @Source("dialog_question_2x.png")
    ImageResource dialog_question2x();
+   String DIALOG_QUESTION_TEXT = "Question";
 
    @Source("dialog_popup_blocked_2x.png")
    ImageResource dialog_popup_blocked2x();
+   String DIALOG_POPUP_BLOCKED_TEXT = "Popup Blocked";
 }

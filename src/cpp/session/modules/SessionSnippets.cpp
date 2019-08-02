@@ -19,6 +19,7 @@
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/Json.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <boost/bind.hpp>
 
@@ -44,10 +45,15 @@ void notifySnippetsChanged()
       LOG_ERROR(error);
 }
 
+FilePath getLegacySnippetsDir()
+{
+   // Hard-coded snippets folder used in RStudio 1.2 and below.
+   return module_context::resolveAliasedPath("~/.R/snippets");
+}
+
 FilePath getSnippetsDir(bool autoCreate = false)
 {
-   FilePath homeDir = module_context::userHomePath();
-   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   FilePath snippetsDir = core::system::xdg::userConfigDir().complete("snippets");
    if (autoCreate)
    {
       Error error = snippetsDir.ensureDirectory();
@@ -107,33 +113,61 @@ bool isSnippetFilePath(const FilePath& filePath,
 
 Error getSnippetsAsJson(json::Array* pJsonData)
 {
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
-      return Success();
-   
-   // Get the contents of each file here, and pass that info back up
-   // to the client
-   std::vector<FilePath> snippetPaths;
-   Error error = snippetsDir.children(&snippetPaths);
-   if (error)
-      return error;
-   
-   for (const FilePath& filePath : snippetPaths)
+   std::vector<FilePath> dirs;
+
+   // Add system-level snippets files
+   dirs.push_back(core::system::xdg::systemConfigDir().complete("snippets"));
+
+   // Add snippets files from older RStudio
+   dirs.push_back(getLegacySnippetsDir());
+
+   // Add user snippets files
+   dirs.push_back(getSnippetsDir());
+
+   for (const auto& snippetsDir: dirs)
    {
-      // bail if this doesn't appear to be a snippets file
-      std::string mode;
-      if (!isSnippetFilePath(filePath, &mode))
+      if (!snippetsDir.exists() || !snippetsDir.isDirectory())
+      {
+         // Skip if no snippets at this location
          continue;
+      }
       
-      std::string contents;
-      error = readStringFromFile(filePath, &contents);
+      // Get the contents of each file here, and pass that info back up
+      // to the client
+      std::vector<FilePath> snippetPaths;
+      Error error = snippetsDir.children(&snippetPaths);
       if (error)
          return error;
       
-      json::Object snippetJson;
-      snippetJson["mode"] = mode;
-      snippetJson["contents"] = contents;
-      pJsonData->push_back(snippetJson);
+      for (const FilePath& filePath : snippetPaths)
+      {
+         // bail if this doesn't appear to be a snippets file
+         std::string mode;
+         if (!isSnippetFilePath(filePath, &mode))
+            continue;
+         
+         std::string contents;
+         error = readStringFromFile(filePath, &contents);
+         if (error)
+            return error;
+
+         // Remove (override) any existing snippets for this mode.
+         for (auto it = pJsonData->begin(); it != pJsonData->end(); it++)
+         {
+            json::Object obj = (*it).get_obj();
+            if (obj["mode"].get_str() == mode)
+            {
+               pJsonData->erase(it);
+               break;
+            }
+         }
+         
+         // Add the snippets for this mode to the collection
+         json::Object snippetJson;
+         snippetJson["mode"] = mode;
+         snippetJson["contents"] = contents;
+         pJsonData->push_back(snippetJson);
+      }
    }
    return Success();
 }

@@ -1,7 +1,7 @@
 /*
  * GlobalToolbar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,8 +21,8 @@ import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -40,10 +40,9 @@ import com.google.inject.Provider;
 public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands, 
-                        EventBus eventBus,
                         Provider<CodeSearch> pCodeSearch)
    {
-      super();
+      super("Main");
       
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
@@ -75,9 +74,10 @@ public class GlobalToolbar extends Toolbar
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
-      ToolbarButton newButton = new ToolbarButton("",
-                                                  new ImageResource2x(icons.stock_new2x()),
-                                                  newMenu_);
+      ToolbarMenuButton newButton = new ToolbarMenuButton(ToolbarButton.NoText,
+                                                          "New File",
+                                                          new ImageResource2x(icons.stock_new2x()),
+                                                          newMenu_);
       addLeftWidget(newButton);
       addLeftSeparator();
       
@@ -106,8 +106,10 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addSeparator();
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
       
-      ToolbarButton mruButton = new ToolbarButton(mruMenu, false);
-      mruButton.setTitle("Open recent files");
+      ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText, 
+                                                          "Open recent files", 
+                                                          mruMenu, 
+                                                          false);
       addLeftWidget(mruButton);
       addLeftSeparator();
       
@@ -120,7 +122,7 @@ public class GlobalToolbar extends Toolbar
       
       addLeftSeparator();
       CodeSearch codeSearch = pCodeSearch_.get();
-      codeSearch.setObserver(new CodeSearch.Observer() {     
+      codeSearch.setObserver(new CodeSearch.Observer() {
          @Override
          public void onCancel()
          {
@@ -191,11 +193,11 @@ public class GlobalToolbar extends Toolbar
          else if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             vcsIcon = new ImageResource2x(icons.svn2x());
          
-         ToolbarButton vcsButton = new ToolbarButton(
-               null,
+         ToolbarMenuButton vcsButton = new ToolbarMenuButton(
+               ToolbarButton.NoText,
+               "Version control",
                vcsIcon, 
                vcsMenu);
-         vcsButton.setTitle("Version control");
          addLeftWidget(vcsButton);
       }
       
@@ -226,11 +228,11 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
       
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
-      ToolbarButton paneLayoutButton = new ToolbarButton(
-            null,
+      ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            "Workspace Panes",
             paneLayoutIcon,
             paneLayoutMenu);
-      paneLayoutButton.setTitle("Workspace Panes");
       
       addLeftWidget(paneLayoutButton);
       

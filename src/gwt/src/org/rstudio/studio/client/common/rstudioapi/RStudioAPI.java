@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.common.rstudioapi;
 
+import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.StringUtil;
@@ -32,8 +34,6 @@ import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperati
 import org.rstudio.studio.client.common.satellite.Satellite;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -94,10 +94,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       
       if (!StringUtil.isNullOrEmpty(url))
       {
-         HyperlinkLabel link = new HyperlinkLabel(url, 
-               new ClickHandler() {
+         HyperlinkLabel link = new HyperlinkLabel(url, new Command() {
             @Override
-            public void onClick(ClickEvent event)
+            public void execute()
             {
                RStudioGinjector.INSTANCE.getGlobalDisplay()
                   .openWindow(url);
@@ -113,7 +112,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             verticalPanel
             );
 
-      dlg.addButton("OK", new Operation() {
+      dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
          @Override
          public void execute()
          {

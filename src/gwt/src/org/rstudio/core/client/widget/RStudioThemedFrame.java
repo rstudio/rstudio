@@ -1,7 +1,7 @@
 /*
  * RStudioThemedFrame.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,18 +34,20 @@ import com.google.inject.Inject;
 public class RStudioThemedFrame extends RStudioFrame
                                 implements ThemeChangedEvent.Handler
 {
-   public RStudioThemedFrame()
+   public RStudioThemedFrame(String title)
    {
-      this(null, null, null, false);
+      this(title, null, null, null, false);
    }
 
    public RStudioThemedFrame(
+      String title,
       String url,
       String customStyle,
       String urlStyle,
       boolean removeBodyStyle)
    {
-      this(url,
+      this(title,
+           url,
            customStyle,
            urlStyle,
            removeBodyStyle,
@@ -53,13 +55,15 @@ public class RStudioThemedFrame extends RStudioFrame
    }
 
    public RStudioThemedFrame(
+      String title,
       String url,
       String customStyle,
       String urlStyle,
       boolean removeBodyStyle,
       boolean enableThemes)
    {
-      this(url,
+      this(title,
+           url,
            false,
            null,
            customStyle,
@@ -69,6 +73,7 @@ public class RStudioThemedFrame extends RStudioFrame
    }
 
    public RStudioThemedFrame(
+      String title,
       String url,
       boolean sandbox,
       String sandboxAllow,
@@ -77,7 +82,7 @@ public class RStudioThemedFrame extends RStudioFrame
       boolean removeBodyStyle,
       boolean enableThemes)
    {
-      super(url, sandbox, sandboxAllow);
+      super(title, url, sandbox, sandboxAllow);
       
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;
@@ -134,8 +139,9 @@ public class RStudioThemedFrame extends RStudioFrame
             if (removeBodyStyle) body.removeAttribute("style");
             
             RStudioThemes.initializeThemes(
-              RStudioGinjector.INSTANCE.getUIPrefs(),
-              document, document.getBody());
+               RStudioGinjector.INSTANCE.getUserPrefs(),
+               RStudioGinjector.INSTANCE.getUserState(),
+               document, document.getBody());
             
             body.addClassName("ace_editor_theme");
          }

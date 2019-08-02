@@ -1,7 +1,7 @@
 /*
  * EditorCommandManager.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.files.FileBacked;
+import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.events.EditorKeybindingsChangedEvent;
@@ -106,7 +106,7 @@ public class EditorCommandManager
       
       manager_ = AceCommandManager.create();
       
-      bindings_ = new FileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             files_,
             KEYBINDINGS_PATH,
             false,
@@ -245,12 +245,12 @@ public class EditorCommandManager
       return manager_.getRelevantCommands();
    }
    
-   private final FileBacked<EditorKeyBindings> bindings_;
+   private final ConfigFileBacked<EditorKeyBindings> bindings_;
    private AceCommandManager manager_;
    
    private boolean isBindingsLoaded_ = false;
    public static final String KEYBINDINGS_PATH =
-         "~/.R/rstudio/keybindings/editor_bindings.json";
+         "keybindings/editor_bindings.json";
    
    // Injected ----
    private EventBus events_;

@@ -1,7 +1,7 @@
 /*
  * AceEditorNative.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.LinkedList;
 
@@ -156,7 +156,21 @@ public class AceEditorNative extends JavaScriptObject {
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
    }-*/;
-   
+
+   public native final void onChangeScrollTop(Command command) /*-{
+       this.getSession().on("changeScrollTop",
+           $entry(function () {
+               command.@com.google.gwt.user.client.Command::execute()();
+           }));
+   }-*/;
+
+   public native final <Tooltip> void onShowGutterTooltip(CommandWithArg<Tooltip> command) /*-{
+       this.on("showGutterTooltip",
+           $entry(function (arg) {
+               command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+           }));
+   }-*/;
+
    public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
       this.on("guttermousedown",
          $entry(function (arg) {
@@ -169,6 +183,8 @@ public class AceEditorNative extends JavaScriptObject {
       final LinkedList<JavaScriptObject> handles = new LinkedList<JavaScriptObject>();
       handles.add(addDomListener(getTextInputElement(), "keydown", handlers));
       handles.add(addDomListener(getTextInputElement(), "keypress", handlers));
+      handles.add(addDomListener(getTextInputElement(), "changeScrollTop", handlers));
+      handles.add(addDomListener(this.cast(), "showGutterTooltip", handlers));
       handles.add(addDomListener(this.<Element>cast(), "focus", handlers));
       handles.add(addDomListener(this.<Element>cast(), "blur", handlers));
 
@@ -185,6 +201,16 @@ public class AceEditorNative extends JavaScriptObject {
    private native Element getTextInputElement() /*-{
       return this.textInput.getElement();
    }-*/;
+
+   /**
+    * Set an aria-label on the input element
+    * @param label
+    */
+   public final void setTextInputAriaLabel(String label)
+   {
+      Element textInput = getTextInputElement();
+      textInput.setAttribute("aria-label", label);
+   }
 
    private native static JavaScriptObject addDomListener(
          Element element,
@@ -537,12 +563,12 @@ public class AceEditorNative extends JavaScriptObject {
       $wnd.require("mode/auto_brace_insert").setInsertMatching(value);
    }-*/;
    
-   public final static void syncUiPrefs(UIPrefs uiPrefs)
+   public final static void syncUiPrefs(UserPrefs userPrefs)
    {
       if (uiPrefsSynced_)
          return;
 
-      uiPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
+      userPrefs.insertMatching().bind(new CommandWithArg<Boolean>() 
       {
          @Override
          public void execute(Boolean arg) 
@@ -551,7 +577,7 @@ public class AceEditorNative extends JavaScriptObject {
          }
       });
       
-      uiPrefs.verticallyAlignArgumentIndent().bind(new CommandWithArg<Boolean>()
+      userPrefs.verticallyAlignArgumentsIndent().bind(new CommandWithArg<Boolean>()
       {
          @Override
          public void execute(Boolean arg)

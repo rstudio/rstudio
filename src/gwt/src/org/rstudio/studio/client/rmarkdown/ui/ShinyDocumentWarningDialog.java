@@ -1,7 +1,7 @@
 /*
  * ShinyDocumentWarningDialog.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -27,15 +29,18 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
    public ShinyDocumentWarningDialog(
          final OperationWithInput<Integer> onSelected)
    {
+      super(Roles.getAlertdialogRole());
       warning_ = new ShinyDocumentWarning();
       setWidth("400px");
       setText("Shiny Content");
       addOkButton(new ThemedButton("Yes, Once", 
             returnResult(onSelected, RENDER_SHINY_ONCE)));
       addButton(new ThemedButton("Yes, Always", 
-            returnResult(onSelected, RENDER_SHINY_ALWAYS)));
+            returnResult(onSelected, RENDER_SHINY_ALWAYS)),
+            ElementIds.DIALOG_YES_BUTTON);
       addLeftButton(new ThemedButton("No", 
-            returnResult(onSelected, RENDER_SHINY_NO)));
+            returnResult(onSelected, RENDER_SHINY_NO)),
+            ElementIds.DIALOG_NO_BUTTON);
    }
 
    @Override

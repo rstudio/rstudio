@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Base64ImageCell;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -61,6 +62,7 @@ import org.rstudio.core.client.widget.SlidingLayoutPanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -333,9 +335,9 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Connections Tab");
    
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Filter by connection", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -346,7 +348,7 @@ public class ConnectionsPane extends WorkbenchPane
          }
       });
 
-      objectSearchWidget_ = new SearchWidget(new SuggestOracle() {
+      objectSearchWidget_ = new SearchWidget("Filter by object", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -361,8 +363,9 @@ public class ConnectionsPane extends WorkbenchPane
          connectionExplorer_.setFilterText(event.getValue()));
       
       backToConnectionsButton_ = new ToolbarButton(
-            commands_.helpBack().getImageResource(), (ClickHandler)null);
-      backToConnectionsButton_.setTitle("View all connections");
+            ToolbarButton.NoText,
+            "View all connections",
+            commands_.helpBack().getImageResource());
        
       // connect meuu
       ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
@@ -387,8 +390,9 @@ public class ConnectionsPane extends WorkbenchPane
                "Copy to Clipboard",
                ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
       }
-      connectMenuButton_ = new ToolbarButton(
-            "Connect", 
+      connectMenuButton_ = new ToolbarMenuButton(
+            "Connect",
+            ToolbarButton.NoTitle,
             commands_.newConnection().getImageResource(), 
             connectMenu);
       
@@ -412,7 +416,7 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      secondaryToolbar_ = new SecondaryToolbar();
+      secondaryToolbar_ = new SecondaryToolbar("Connections Tab Connection");
       secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
       connectionIcon_ = new Image();
       connectionIcon_.setWidth("16px");
@@ -495,9 +499,9 @@ public class ConnectionsPane extends WorkbenchPane
             final ConnectionAction action = connection.getActions().get(i);
 
             // use the supplied base64 icon data if it was provided
-            Image icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
+            DecorativeImage icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
                   null :
-                  new Image(action.getIconData());
+                  new DecorativeImage(action.getIconData());
             
             // force to 20x18
             if (icon != null)
@@ -506,7 +510,8 @@ public class ConnectionsPane extends WorkbenchPane
                icon.setHeight("18px");
             }
              
-            ToolbarButton button = new ToolbarButton(action.getName(), 
+            ToolbarButton button = new ToolbarButton(action.getName(),
+                  ToolbarButton.NoTitle,
                   icon, // left image
                   null, // right image
                   // invoke the action when the button is clicked
@@ -588,7 +593,7 @@ public class ConnectionsPane extends WorkbenchPane
    private SearchWidget searchWidget_;
    private SearchWidget objectSearchWidget_;
    private ToolbarButton backToConnectionsButton_;
-   private ToolbarButton connectMenuButton_;
+   private ToolbarMenuButton connectMenuButton_;
    
    private SecondaryToolbar secondaryToolbar_;
    private ToolbarLabel connectionName_;

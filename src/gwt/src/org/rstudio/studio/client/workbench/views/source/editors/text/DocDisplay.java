@@ -1,7 +1,7 @@
 /*
  * DocDisplay.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.function.BiPredicate;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeySequence;
 
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceComm
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -75,6 +77,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -365,6 +368,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       (BreakpointSetEvent.Handler handler);
    HandlerRegistration addBreakpointMoveHandler
       (BreakpointMoveEvent.Handler handler);
+   HandlerRegistration addScrollYHandler
+      (ScrollYEvent.Handler handler);
    void addOrUpdateBreakpoint(Breakpoint breakpoint);
    void removeBreakpoint(Breakpoint breakpoint);
    void removeAllBreakpoints();
@@ -376,6 +381,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void clearLint();
    void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
+   void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate);
+   void removeMarkersAtWord(String word);
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();
@@ -447,4 +454,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToLineEnd();
    
    void toggleTokenInfo();
+   void setTextInputAriaLabel(String label);
 }

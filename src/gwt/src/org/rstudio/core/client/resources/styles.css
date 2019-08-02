@@ -19,7 +19,6 @@
    font-weight: bold;
 }
 
-
 .gwt-Button-Toolbar {
    height: 19px;
    background-color: transparent;
@@ -29,7 +28,7 @@
 }
 
 .gwt-Button-Toolbar:active {
-  border: 1px inset #ccc;
+   border: 1px inset #ccc;
 }
 
 .gwt-Button-Toolbar:hover {
@@ -40,51 +39,75 @@
 }
 
 .gwt-Button-Toolbar[disabled] {
-  cursor: default;
-  color: #888;
+   cursor: default;
+   color: #888;
 }
 
 .gwt-Button-Toolbar[disabled]:hover {
-  border: 1px outset #ccc;
+   border: 1px outset #ccc;
 }
 
 .gwt-DecoratedPopupPanel-Toolbar .popupMiddleCenter {
-  background: white;
+   background: white;
 }
 
 .gwt-DialogBox-ModalDialog .Caption {
-  font-weight: bold;
-} 
+   font-weight: bold;
+}
 
 .rstudio-DialogBoxProgressPanel {
   height: 25px;
 }
 
 .rstudio-DialogBoxProgressPanel .gwt-Label-ProgressText {
-  color: grey;
-  padding-left: 4px;
+   color: grey;
+   padding-left: 4px;
 }
 
 .rstudio-DialogBoxVerticalInputLabel {
-  margin-bottom: 2px;
+   margin-bottom: 2px;
 }
 
 .rstudio-ModalDialogButtonSpacer {
-  width: 5px;
+   width: 5px;
 }
-
 
 .rstudio-HyperlinkLabel {
    color: #0000AA;
+}
+
+.rstudio-HyperlinkLabel:focus {
+   outline: none;
 }
 
 .rstudio-HyperlinkLabel-Link {
    text-decoration: underline;
 }
 
+.rstudio-HelpButton {
+   display: block;
+   padding: 0;
+   margin: 0;
+   border: none;
+   background-color: transparent;
+}
+
+.rstudio-HelpButton:focus {
+   outline:none;
+}
+
+.rstudio-ImageButton {
+   padding: 0;
+   margin: 0;
+   border: none;
+   background-color: transparent;
+}
+
+.rstudio-ImageButton:focus {
+   outline:none;
+}
 
 .rstudio-StatusIndicator {
-   
 }
 
 .rstudio-StatusIndicator .Message {
@@ -98,4 +121,8 @@
 
 .rstudio-StatusIndicator .Message-Error {
    background-color: #FF6347;
+}
+
+.gwt-TabLayoutPanelTab, .gwt-TabLayoutPanelTab-selected {
+   outline: none;
 }

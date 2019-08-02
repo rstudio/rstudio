@@ -23,6 +23,8 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <core/CrashHandler.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/Log.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
@@ -38,13 +40,19 @@
 #include "DesktopDetectRHome.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 
 #ifdef _WIN32
 #include <core/system/RegistryKey.hpp>
 #include <Windows.h>
+#endif
+
+#ifdef Q_OS_LINUX
+#include <core/system/PosixSystem.hpp>
 #endif
 
 QProcess* pRSessionProcess;
@@ -418,6 +426,21 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    }
 }
 
+boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
+{
+   auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                            sessionServerSettings().servers().end(),
+                            [&](const SessionServer& server) { return server.url() == url; });
+
+   if (iter != sessionServerSettings().servers().end())
+   {
+      SessionServer server = *iter;
+      return boost::optional<SessionServer>(server);
+   }
+
+   return boost::optional<SessionServer>();
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -484,6 +507,13 @@ int main(int argc, char* argv[])
 
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+      // don't synthesize mouse events for unhandled tablet events,
+      // as this causes tablet clicks to be duplicated (effectively
+      // leading to single clicks registering as double clicks)
+      //
+      // https://bugreports.qt.io/browse/QTBUG-76347
+      QCoreApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTabletEvents, false);
       
       // enable viewport meta (allows us to control / restrict
       // certain touch gestures)
@@ -583,12 +613,25 @@ int main(int argc, char* argv[])
       }
 #endif
 
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
+#if defined(Q_OS_LINUX) 
+
+      static char noSandbox[] = "--no-sandbox";
+
+#if (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
       // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
       // https://bugreports.qt.io/browse/QTBUG-67023
       // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
       arguments.push_back(noSandbox);
+
+#else
+      // is this root? if so, we need --no-sandbox on Linux. 
+      // see https://crbug.com/638180.
+      if (core::system::effectiveUserIsRoot())
+      {
+         arguments.push_back(noSandbox);
+      }
+#endif
+
 #endif
       
       // allow users to supply extra command-line arguments
@@ -637,11 +680,52 @@ int main(int argc, char* argv[])
       }
 
       // if we have a filename and it is NOT a project file then see
-      // if we can open it within an existing instance
+      // if we can open it within an existing instance - we do not attempt
+      // to do this if opening an rdprsp file since that should start a remote session
+      FilePath openFile(filename.toUtf8().constData());
+      std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
       {
-         if (pAppLaunch->sendMessage(filename))
-            return 0;
+         if (openFile.extension() == ".rdprsp")
+         {
+            std::string contents;
+            Error error = readStringFromFile(openFile, &contents);
+            if (error)
+            {
+               LOG_ERROR(error);
+            }
+            else
+            {
+               json::Value val;
+               error = json::parse(contents, ERROR_LOCATION, &val);
+               if (error)
+               {
+                  LOG_ERROR(error);
+               }
+               else
+               {
+                  if (val.type() != json::ObjectType)
+                  {
+                     LOG_ERROR_MESSAGE("Invalid .rdprsp file");
+                  }
+                  else
+                  {
+                     error = json::readObject(val.get_obj(),
+                                              "sessionUrl", &sessionUrl,
+                                              "serverUrl", &serverUrl);
+                     if (error)
+                     {
+                        LOG_ERROR(error);
+                     }
+                  }
+               }
+            }
+         }
+         else
+         {
+            if (pAppLaunch->sendMessage(filename))
+               return 0;
+         }
       }
       else
       {
@@ -663,10 +747,6 @@ int main(int argc, char* argv[])
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
 
-      Options& options = desktop::options();
-      if (!prepareEnvironment(options))
-         return 1;
-
       // get install path
       FilePath installPath;
       error = core::system::installPath("..", argv[0], &installPath);
@@ -675,10 +755,6 @@ int main(int argc, char* argv[])
          LOG_ERROR(error);
          return EXIT_FAILURE;
       }
-
-#ifdef _WIN32
-      RVersion version = detectRVersion(false);
-#endif
 
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
@@ -710,26 +786,193 @@ int main(int argc, char* argv[])
          }
 #endif
       }
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
+
+      Options& options = desktop::options();
+      if (!prepareEnvironment(options))
+         return 1;
+
+#ifdef _WIN32
+      RVersion version = detectRVersion(false);
+      if (devMode)
+      {
+         if (version.architecture() == ArchX86 &&
+             installPath.complete("session/x86").exists())
+         {
+            sessionPath = installPath.complete("session/x86/rsession");
+         }
+      }
+      else
+      {
+         // check for win32 binary on windows
+          if (version.architecture() == ArchX86 &&
+             installPath.complete("bin/x86").exists())
+         {
+            sessionPath = installPath.complete("bin/x86/rsession");
+         }
+      }
+#endif
+
       core::system::fixupExecutablePath(&sessionPath);
 
       auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
-      // set the scripts path in options
-      desktop::options().setScriptsPath(scriptsPath);
+      // determine where the session should be launched
+      boost::optional<SessionServer> launchServer;
+      bool forceSessionServerLaunch = false;
+      if (!desktop::options().sessionServer().empty())
+      {
+         forceSessionServerLaunch = true;
 
-      // launch session
-      SessionLauncher sessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
-      sessionLauncher.launchFirstSession(installPath, devMode, pApp->arguments());
+         // launched with a specific session server selected
+         // such as opening a new session in another window
+         launchServer = getLaunchServerFromUrl(desktop::options().sessionServer());
+         if (!launchServer)
+         {
+            // if we don't have an entry for the server URL, something is horribly wrong
+            // just show an error and exit
+            showError(nullptr,
+                      QString::fromUtf8("Invalid session server"),
+                      QString::fromStdString("Session server " + desktop::options().sessionServer() +
+                                                " does not exist"),
+                      QString::null);
+            return EXIT_FAILURE;
+         }
+      }
 
-      ProgressActivator progressActivator;
+      if (!serverUrl.empty())
+      {
+         forceSessionServerLaunch = true;
 
-      int result = pApp->exec();
+         launchServer = getLaunchServerFromUrl(serverUrl);
+         if (!launchServer)
+         {
+            // it's possible we were told to open an rdprsp file but we don't have the
+            // server defined locally - that's okay - just create one for now
+            launchServer = SessionServer(std::string(), serverUrl);
+         }
+      }
 
-      desktop::activation().releaseLicense();
-      options.cleanUpScratchTempDir();
+      bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
 
-      return result;
+      while (true)
+      {
+         SessionLocation location = forceShowSessionLocationDialog ?
+                  SessionLocation::Ask :
+                  sessionServerSettings().sessionLocation();
+
+         if (!forceSessionServerLaunch)
+         {
+            switch (location)
+            {
+               case SessionLocation::Server:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // remote launch on default server
+                     auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                                              sessionServerSettings().servers().end(),
+                                              [](const SessionServer& server) { return server.isDefault(); });
+
+                     if (iter == sessionServerSettings().servers().end())
+                     {
+                        // somehow, no default was specified
+                        // log an error and launch session on the first server in the list
+                        launchServer = sessionServerSettings().servers().at(0);
+                        LOG_ERROR_MESSAGE("No default session server specified. Using first server");
+                     }
+                     else
+                        launchServer = *iter;
+                  }
+                  break;
+
+               case SessionLocation::Ask:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // display session location chooser dialog
+                     LaunchLocationResult result = sessionServers().showSessionLaunchLocationDialog();
+                     if (result.dialogResult == QDialog::Rejected)
+                        return EXIT_SUCCESS;
+
+                     launchServer = result.sessionServer;
+                  }
+                  break;
+
+               case SessionLocation::Locally:
+               default:
+                  break;
+            }
+         }
+
+         // keep the launcher object alive for the program's duration
+         boost::shared_ptr<void> pSessionLauncher;
+
+         if (!launchServer)
+         {
+            // launch a local session
+            SessionLauncher* pLauncher = new SessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
+            pLauncher->launchFirstSession(installPath, devMode, pApp->arguments());
+            pSessionLauncher.reset(pLauncher);
+         }
+         else
+         {
+            // launch a remote session
+            // first, check to make sure the server is reachable/valid
+            Error error = launchServer->test();
+            if (error)
+            {
+               bool continueConnecting =
+                     showYesNoDialog(QMessageBox::Warning,
+                                     nullptr,
+                                     QString::fromUtf8("Server Error"),
+                                     QString::fromUtf8("There was an error while attempting to run "
+                                                       "prelaunch diagnostics for this server. "
+                                                       "Do you want to attempt to connect anyway?"),
+                                     QString::fromStdString(error.getProperty("description")),
+                                     false);
+               if (!continueConnecting)
+               {
+                  if (forceSessionServerLaunch)
+                     return EXIT_FAILURE;
+
+                  forceShowSessionLocationDialog = true;
+                  continue;
+               }
+            }
+
+            RemoteDesktopSessionLauncher* pLauncher;
+
+            if (sessionUrl.empty())
+               sessionUrl = desktop::options().sessionUrl();
+
+            if (sessionUrl.empty())
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            forceSessionServerLaunch);
+            }
+            else
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            sessionUrl);
+            }
+
+            pLauncher->launchFirstSession();
+            pSessionLauncher.reset(pLauncher);
+         }
+
+         ProgressActivator progressActivator;
+
+         int result = pApp->exec();
+
+         desktop::activation().releaseLicense();
+         options.cleanUpScratchTempDir();
+
+         return result;
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

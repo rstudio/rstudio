@@ -30,7 +30,11 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
+#include <core/system/Xdg.hpp>
+
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -180,7 +184,7 @@ void getThemesInLocation(
                {
                   isDark = convertToBool(matches[1].str());
                }
-               catch (boost::bad_lexical_cast)
+               catch (boost::bad_lexical_cast&)
                {
                   LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string for theme \"" + name + "\".");
                }
@@ -232,11 +236,12 @@ FilePath getGlobalCustomThemePath()
 }
 
 /**
- * @brief Gets the location of custom themes that are installed for the current user.
+ * @brief Gets the location of custom themes that are installed for the current user (legacy RStudio
+ * 1.2 version)
  *
  * @return The location of custom themes that are installed for the current user.
  */
-FilePath getLocalCustomThemePath()
+FilePath getLegacyLocalCustomThemePath()
 {
    using rstudio::core::FilePath;
    const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
@@ -246,6 +251,16 @@ FilePath getLocalCustomThemePath()
    }
 
    return module_context::userHomePath().childPath(".R/rstudio/themes/");
+}
+
+/**
+ * @brief Gets the location of custom themes that are installed for the current user.
+ *
+ * @return The location of custom themes that are installed for the current user.
+ */
+FilePath getLocalCustomThemePath()
+{
+   return core::system::xdg::userConfigDir().complete("themes");
 }
 
 /**
@@ -262,6 +277,7 @@ ThemeMap getAllThemes()
    ThemeMap themeMap;
    getThemesInLocation(getDefaultThemePath(), kDefaultThemeLocation, &themeMap);
    getThemesInLocation(getGlobalCustomThemePath(), kGlobalCustomThemeLocation, &themeMap);
+   getThemesInLocation(getLegacyLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
    getThemesInLocation(getLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
 
    return themeMap;
@@ -350,7 +366,7 @@ FilePath getDefaultTheme(const http::Request& request)
    {
       isDark = convertToBool(isDarkStr);
    }
-   catch (boost::bad_lexical_cast)
+   catch (boost::bad_lexical_cast&)
    {
       LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
    }
@@ -492,7 +508,7 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
-void onDeferredInit(bool newSession)
+void onDeferredInit(bool)
 {
    s_deferredInitComplete = true;
 }
@@ -545,10 +561,66 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    // ability to pop up a warning dialog or something to the user.
    std::string prefix = "/" + kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
+
+   // Check first in the local custom theme path; if the theme isn't found there, try the legacy
+   // theme path (where RStudio 1.2 wrote custom themes)
    FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
+   if (!requestedTheme.exists())
+      requestedTheme = getLegacyLocalCustomThemePath().childPath(fileName);
+
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
+}
+
+Error syncThemePrefs()
+{
+   // Determine whether the preference storing the theme is out of sync with the theme details in
+   // user state.
+   Error err;
+   std::string prefTheme = prefs::userPrefs().editorTheme(); 
+   json::Object stateTheme = prefs::userState().theme();
+   auto themeName = stateTheme.find(kThemeName);
+   if (themeName != stateTheme.end() &&
+       (*themeName).value().get_str() != prefTheme)
+   {
+      bool found = false;
+      ThemeMap themes = getAllThemes();
+      json::Array jsonThemeArray;
+      for (auto theme: themes)
+      {
+         if (std::get<0>(theme.second) == prefTheme)
+         {
+            found = true;
+            json::Object jsonTheme;
+            jsonTheme["name"] = std::get<0>(theme.second);
+            jsonTheme["url"] = std::get<1>(theme.second);
+            jsonTheme["isDark"] = std::get<2>(theme.second);
+            err = prefs::userState().setTheme(jsonTheme);
+            break;
+         }
+      }
+
+      if (!found)
+      {
+         LOG_WARNING_MESSAGE("The theme preference was set to '" + prefTheme + "' "
+               "but no theme with that name was found.");
+      }
+   }
+
+   return err;
+}
+
+SEXP rs_getGlobalThemeDir()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(getGlobalCustomThemePath().absolutePath(), &protect);
+}
+
+SEXP rs_getLocalThemeDir()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(getLocalCustomThemePath().absolutePath(), &protect);
 }
 
 Error initialize()
@@ -559,6 +631,8 @@ Error initialize()
    s_waitForThemeColors = registerWaitForMethod("set_computed_theme_colors");
 
    RS_REGISTER_CALL_METHOD(rs_getThemes);
+   RS_REGISTER_CALL_METHOD(rs_getLocalThemeDir);
+   RS_REGISTER_CALL_METHOD(rs_getGlobalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getThemeColors);
 
    events().onDeferredInit.connect(onDeferredInit);
@@ -574,7 +648,8 @@ Error initialize()
       (bind(registerRpcMethod, "remove_theme", removeTheme))
       (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
-      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest));
+      (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest))
+      (bind(syncThemePrefs));
 
    return initBlock.execute();
 }

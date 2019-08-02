@@ -23,11 +23,13 @@
 #include <session/SessionScopes.hpp>
 
 #define kRVersionSettings              "rversion-settings"
-#define kDefaultRVersion               "defaultRVersion"
-#define kDefaultRVersionHome           "defaultRVersionHome"
-#define kRestoreProjectRVersion        "restoreProjectRVersion"
+#define kSettingDefaultRVersion        "defaultRVersion"
+#define kSettingDefaultRVersionHome    "defaultRVersionHome"
+#define kSettingDefaultRVersionLabel   "defaultRVersionLabel"
+#define kRestoreProjectRVersionFlag    "restoreProjectRVersion"
 #define kRVersionSuffix                "-RVersion"
 #define kRVersionHomeSuffix            "-RVersionHome"
+#define kRVersionLabelSuffix           "-RVersionLabel"
 #define kRVersionProjectFile           "RVersion"
 
 namespace rstudio {
@@ -46,35 +48,43 @@ public:
 
    std::string defaultRVersion()
    {
-      return readSetting(kDefaultRVersion);
+      return readSetting(kSettingDefaultRVersion);
    }
 
    std::string defaultRVersionHome()
    {
-      return readSetting(kDefaultRVersionHome);
+      return readSetting(kSettingDefaultRVersionHome);
+   }
+
+   std::string defaultRVersionLabel()
+   {
+      return readSetting(kSettingDefaultRVersionLabel);
    }
 
    void setDefaultRVersion(const std::string& version,
-                           const std::string& versionHome)
+                           const std::string& versionHome,
+                           const std::string& versionLabel)
    {
-      writeSetting(kDefaultRVersion, version);
-      writeSetting(kDefaultRVersionHome, versionHome);
+      writeSetting(kSettingDefaultRVersion, version);
+      writeSetting(kSettingDefaultRVersionHome, versionHome);
+      writeSetting(kSettingDefaultRVersionLabel, versionLabel);
    }
 
    bool restoreProjectRVersion()
    {
-      return readSetting(kRestoreProjectRVersion) != "0";
+      return readSetting(kRestoreProjectRVersionFlag) != "0";
    }
 
    void setRestoreProjectRVersion(bool restoreProjectRVersion)
    {
-      writeSetting(kRestoreProjectRVersion, restoreProjectRVersion ? "1" : "0");
+      writeSetting(kRestoreProjectRVersionFlag, restoreProjectRVersion ? "1" : "0");
    }
 
    void setProjectLastRVersion(const std::string& projectDir,
                                const core::FilePath& sharedProjectScratchPath,
                                const std::string& version,
-                               const std::string& versionHome)
+                               const std::string& versionHome,
+                               const std::string& versionLabel)
    {
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
@@ -84,8 +94,8 @@ public:
 
       // save the version
       writeProjectSetting(projectId.asString(), kRVersionSuffix, version);
-      writeProjectSetting(projectId.asString(), kRVersionHomeSuffix,
-                          versionHome);
+      writeProjectSetting(projectId.asString(), kRVersionHomeSuffix, versionHome);
+      writeProjectSetting(projectId.asString(), kRVersionLabelSuffix, versionLabel);
 
       // save R version in the project itself; used as a hint on preferred R version
       // when opening a project for the first time on a different machine/container
@@ -98,7 +108,8 @@ public:
    void readProjectLastRVersion(const std::string& projectDir,
                                 const core::FilePath& sharedProjectScratchPath,
                                 std::string* pVersion,
-                                std::string* pVersionHome)
+                                std::string* pVersionHome,
+                                std::string* pVersionLabel)
    {
       // get a project id
       core::r_util::FilePathToProjectId filePathToProjectId =
@@ -110,6 +121,8 @@ public:
                                      kRVersionSuffix);
       *pVersionHome = readProjectSetting(projectId.asString(),
                                          kRVersionHomeSuffix);
+      *pVersionLabel = readProjectSetting(projectId.asString(),
+                                          kRVersionLabelSuffix);
 
       // if no local setting for R version, check for hint in .Rproj.user
       if ((pVersion->empty() || pVersionHome->empty()) && !sharedProjectScratchPath.empty())

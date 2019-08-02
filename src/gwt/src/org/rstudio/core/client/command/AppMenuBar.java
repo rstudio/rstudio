@@ -1,7 +1,7 @@
 /*
  * AppMenuBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,10 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 
@@ -36,18 +37,20 @@ public class AppMenuBar extends BaseMenuBar
    }
 
    @Override
-   public MenuItem addItem(String text, Command cmd)
+   public MenuItem addItem(String text, MenuitemRole role, boolean checked, ScheduledCommand cmd)
    {
-      return addItem(text, false, cmd);
+      return addItem(text, false, role, checked, cmd);
    }
 
    @Override
-   public MenuItem addItem(String text, boolean asHTML, Command cmd)
+   public MenuItem addItem(String text, boolean asHTML, MenuitemRole role, boolean checked, ScheduledCommand cmd)
    {
       if (vertical_ && !asHTML)
          text = AppCommand.formatMenuLabel(null, text, null);
       return super.addItem(text,
                            true,
+                           role,
+                           checked,
                            cmd);
    }
 

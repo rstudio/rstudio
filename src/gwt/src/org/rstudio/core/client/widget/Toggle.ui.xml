@@ -59,12 +59,12 @@
 </ui:style>
 
 <g:HorizontalPanel ui:field="container_" styleName="{styles_.container}">
-	<g:FlowPanel ui:field="track_" styleName="{styles_.track}">
-		<g:FlowPanel ui:field="knob_" styleName="{styles_.knob}">
-		</g:FlowPanel>
-	</g:FlowPanel>
-	<g:Label ui:field="label_" styleName="{styles_.label}">
-	</g:Label>
+   <g:FlowPanel ui:field="track_" styleName="{styles_.track}">
+      <g:FlowPanel ui:field="knob_" styleName="{styles_.knob}">
+      </g:FlowPanel>
+   </g:FlowPanel>
+   <g:Label ui:field="label_" styleName="{styles_.label}">
+   </g:Label>
 </g:HorizontalPanel>
 
 </ui:UiBinder> 

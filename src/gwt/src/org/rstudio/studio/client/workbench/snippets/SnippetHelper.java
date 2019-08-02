@@ -1,7 +1,7 @@
 /*
  * SnippetHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -418,7 +418,7 @@ public class SnippetHelper
          
          // Try 'special' snippets (those that start with punctuation characters)
          String line = editor_.getCurrentLine().trim();
-         if (!Character.isLetterOrDigit(line.charAt(0)))
+         if (!line.isEmpty() && !Character.isLetterOrDigit(line.charAt(0)))
          {
             for (int i = 0; i < snippets.size(); i++)
             {
@@ -441,11 +441,7 @@ public class SnippetHelper
    private final String path_;
    private final HandlerRegistrations handlers_;
    
-   private static boolean customCppSnippetsLoaded_;
-   private static boolean customRSnippetsLoaded_;
-   
-   private static final Pattern RE_R_CODE =
-         Pattern.create("`[Rr]\\s+[^`]+`", "");
+   private static final Pattern RE_R_CODE = Pattern.create("`[Rr]\\s+[^`]+`", "");
    
    // Injected ----
    private SnippetServerOperations server_;

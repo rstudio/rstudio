@@ -1,7 +1,7 @@
 /*
  * DiffFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,18 +15,19 @@
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -62,7 +63,7 @@ public class DiffFrame extends Composite
                     String filename2,
                     String commitId,
                     LineTableView diff,
-                    ClickHandler viewFileClickHandler,
+                    Command viewFileClickHandler,
                     boolean suppressViewLink)
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -73,7 +74,9 @@ public class DiffFrame extends Composite
       FileSystemItem fsItem = FileSystemItem.createFile(filename2 == null ? 
                                                       filename1 : filename2);
       
-      fileIcon_.setResource(fileTypeRegistry.getIconForFile(fsItem));
+      FileIcon fileIcon = fileTypeRegistry.getIconForFile(fsItem);
+      fileIcon_.setResource(fileIcon.getImageResource());
+      fileIcon_.setAltText(fileIcon.getDescription());
      
       headerLabel_.setText(filename1);
      
@@ -112,5 +115,5 @@ public class DiffFrame extends Composite
    @UiField
    HyperlinkLabel viewFileHyperlink_;
    
-   private static final Resources RES = GWT.<Resources>create(Resources.class);
+   private static final Resources RES = GWT.create(Resources.class);
 }

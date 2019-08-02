@@ -30,7 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUrlPorts.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "shiny/SessionShiny.hpp"
 #include "session-config.h"
@@ -128,7 +128,7 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
    return R_NilValue;
 }
 
-void setShinyViewerType(int viewerType)
+void setShinyViewerType(const std::string& viewerType)
 {
    Error error =
       r::exec::RFunction(".rs.setShinyViewerType",
@@ -137,21 +137,22 @@ void setShinyViewerType(int viewerType)
       LOG_ERROR(error);
 }
 
-void onUserSettingsChanged(boost::shared_ptr<int> pShinyViewerType)
+void onUserSettingsChanged(const std::string& pref,
+      boost::shared_ptr<std::string> pShinyViewerType)
 {
-   int shinyViewerType = userSettings().shinyViewerType();
-   if (shinyViewerType != *pShinyViewerType)
-   {
-      setShinyViewerType(shinyViewerType);
-      *pShinyViewerType = shinyViewerType;
-   }
+   if (pref != kShinyViewerType)
+      return;
+
+   std::string shinyViewerType = prefs::userPrefs().shinyViewerType();
+   setShinyViewerType(shinyViewerType);
+   *pShinyViewerType = shinyViewerType;
 }
 
-Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
+Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
                      const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {
-   int viewerType = 0;
+   std::string viewerType;
    Error error = json::readParams(request.params, &viewerType);
    if (error)
       return error;
@@ -235,10 +236,10 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
+Error initShinyViewerPref(boost::shared_ptr<std::string> pShinyViewerType)
 {
    SEXP shinyBrowser = r::options::getOption("shiny.launch.browser");
-   *pShinyViewerType = userSettings().shinyViewerType();
+   *pShinyViewerType = prefs::userPrefs().shinyViewerType();
    if (shinyBrowser == R_NilValue)
    {
       setShinyViewerType(*pShinyViewerType);
@@ -279,20 +280,16 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   boost::shared_ptr<int> pShinyViewerType =
-         boost::make_shared<int>(SHINY_VIEWER_NONE);
+   boost::shared_ptr<std::string> pShinyViewerType =
+         boost::make_shared<std::string>(kShinyViewerTypeNone);
 
    json::JsonRpcFunction setShinyViewerTypeRpc =
          boost::bind(setShinyViewer, pShinyViewerType, _1, _2);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_shinyviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_shinyviewer);
 
    events().onConsoleInput.connect(onConsoleInput);
-   userSettings().onChanged.connect(bind(onUserSettingsChanged,
+   prefs::userPrefs().onChanged.connect(bind(onUserSettingsChanged, _1,
                                          pShinyViewerType));
 
    ExecBlock initBlock;

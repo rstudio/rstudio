@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.application.model;
 
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor.DefaultRVersion;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class RVersionSpec extends JavaScriptObject
+public class RVersionSpec extends DefaultRVersion
 {
    protected RVersionSpec() {}
  
@@ -34,18 +36,6 @@ public class RVersionSpec extends JavaScriptObject
          r_home: rHome,
          label: label
       };
-   }-*/;                               
-   
-   public final native String getVersion() /*-{
-      return this.version;
-   }-*/;
-   
-   public final native String getLabel() /*-{
-      return this.label;
-   }-*/;
-
-   public final native String getRHome() /*-{
-      return this.r_home;
    }-*/;
    
    public static boolean hasDuplicates(JsArray<RVersionSpec> rVersions)

@@ -557,6 +557,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (length(csvData) == 0 || nrow(csvData) == 0)
       return(list())
    
+   # remove ANSI escapes used for color from text
+   csvData$text <- gsub("\033\\[\\d*(?:;\\d*)*m", "", csvData$text)
+   
    # split on type
    cutpoints <- .rs.cutpoints(csvData$type)
    

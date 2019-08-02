@@ -1,7 +1,7 @@
 /*
  * AskSecretDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rstudioapi.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -34,7 +35,9 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -55,7 +58,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                           ProgressOperationWithInput<AskSecretDialogResult> okOperation,
                           Operation cancelOperation)
    {
-      super(title, okOperation, cancelOperation);
+      super(title, Roles.getDialogRole(), okOperation, cancelOperation);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      
@@ -100,7 +103,8 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       });
 
       label_.setText(prompt);
-      textbox_.setFocus(true);
+      label_.setFor(textbox_);
+      Roles.getTextboxRole().setAriaRequiredProperty(textbox_.getElement(), true);
 
       install_.addClickHandler(new ClickHandler() {
          @Override
@@ -129,7 +133,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                "Keyring",
                verticalPanel);
             
-            dialog.addButton("Install", new Operation()
+            dialog.addButton("Install", ElementIds.DIALOG_OK_BUTTON, new Operation()
             {
                @Override
                public void execute()
@@ -147,7 +151,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
                }
             }, true, false);
             
-            dialog.addButton("Cancel", (Operation)null, false, true);
+            dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
             dialog.showModal();
          }
       });
@@ -190,7 +194,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       textbox_.setFocus(true);
       textbox_.setSelectionRange(0, textbox_.getText().length());
@@ -204,7 +208,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
                                                   "Error",
                                                   "You must enter a value.");
-         dialog.addButton("OK", (Operation)null, true, true);
+         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textbox_.setFocus(true);
 
@@ -234,7 +238,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
    private Widget mainWidget_;
 
-   @UiField Label label_;
+   @UiField FormLabel label_;
    @UiField PasswordTextBox textbox_;
    @UiField CheckBox remember_;
    @UiField Label install_;

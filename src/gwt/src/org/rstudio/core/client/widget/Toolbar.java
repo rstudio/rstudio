@@ -1,7 +1,7 @@
 /*
  * Toolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
@@ -76,9 +77,9 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets)
+   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets, String label)
    {
-      this();
+      this(label);
 
       if (leftWidgets != null)
       {
@@ -101,11 +102,14 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar()
+   public Toolbar(String label)
    {
       super();
 
       toolbarWrapper_ = new HTMLPanel("");
+
+      Roles.getToolbarRole().set(toolbarWrapper_.getElement());
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
 
       horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -297,7 +301,16 @@ public class Toolbar extends Composite
    {
       return toolbarWrapper_;
    }
-   
+
+   /**
+    * Change the accessibility label for the toolbar
+    * @param label
+    */
+   public void setLabel(String label)
+   {
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
+   }
+
    private void removeAllWidgets(HorizontalPanel panel)
    {
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)
@@ -317,7 +330,6 @@ public class Toolbar extends Composite
          }
       }, left);
    }
-   
 
    private Widget addPopupMenu(final MenuLabel menuLabel, 
          final MenuSource menuSource,
@@ -355,7 +367,6 @@ public class Toolbar extends Composite
       
       return image;
    }
-   
 
    private HorizontalPanel horizontalPanel_ ;
    private HorizontalPanel leftToolbarPanel_ ;

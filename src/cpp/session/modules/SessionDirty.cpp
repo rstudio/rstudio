@@ -34,7 +34,6 @@
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
 using namespace rstudio::core ;

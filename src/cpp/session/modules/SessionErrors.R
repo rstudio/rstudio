@@ -1,7 +1,7 @@
 #
 # SessionErrors.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -213,39 +213,39 @@ attrs = list(hideFromDebugger = TRUE))
    .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
-             errorHandlerType = 1L))
+             errorHandlerType = "traceback"))
 
 .rs.addFunction("recordUserTraceback", function()
 {
    .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
-             errorHandlerType = 1L))
+             errorHandlerType = "traceback"))
 
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
 attrs = list(hideFromDebugger = TRUE, 
-             errorHandlerType = 2L))
+             errorHandlerType = "break"))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
 attrs = list(hideFromDebugger = TRUE,
-             errorHandlerType = 2L))
+             errorHandlerType = "break"))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
-   if (type == 0)
+   if (identical(type, "message"))
       options(error = NULL)
-   else if (type == 1 && userOnly)
+   else if (identical(type, "traceback") && userOnly)
       options(error = .rs.recordUserTraceback) 
-   else if (type == 1 && !userOnly)
+   else if (identical(type, "traceback") && !userOnly)
       options(error = .rs.recordAnyTraceback)
-   else if (type == 2 && userOnly)
+   else if (identical(type, "break") && userOnly)
       options(error = .rs.breakOnUserError)
-   else if (type == 2 && !userOnly)
+   else if (identical(type, "break") && !userOnly)
       options(error = .rs.breakOnAnyError)
 })

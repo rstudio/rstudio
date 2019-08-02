@@ -1,7 +1,7 @@
 /*
  * FileSystemDialog.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -97,12 +98,14 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    public FileSystemDialog(String title,
                            String caption,
+                           DialogRole role,
                            String buttonName,
                            FileSystemContext context,
                            String filter,
                            boolean allowFolderCreation,
                            ProgressOperationWithInput<FileSystemItem> operation)
    {
+      super(role);
       context_ = context;
       operation_ = operation;
       context_.setCallbacks(this);
@@ -113,13 +116,13 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
       if (allowFolderCreation)
       {
-         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()));
+         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()),
+               ElementIds.FILE_NEW_FOLDER_BUTTON);
       }
 
       ThemedButton okButton = new ThemedButton(buttonName, event -> maybeAccept());
-      ElementIds.assignElementId(okButton.getElement(), 
+      addOkButton(okButton,
             ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
-      addOkButton(okButton);
       
       ThemedButton cancelButton = 
          new ThemedButton("Cancel",
@@ -130,9 +133,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
             }
             closeDialog();
          });
-      ElementIds.assignElementId(cancelButton.getElement(), 
+      addCancelButton(cancelButton,
             ElementIds.FILE_CANCEL_BUTTON + "_" + ElementIds.idSafeString(buttonName));
-      addCancelButton(cancelButton);
 
       addDomHandler(event ->
          {
@@ -229,11 +231,6 @@ public abstract class FileSystemDialog extends ModalDialogBase
    public void onDirectoryCreated(FileSystemItem directory)
    {
       browser_.onDirectoryCreated(directory);
-   }
-
-   @Override
-   protected void onDialogShown()
-   {
    }
 
    @Override

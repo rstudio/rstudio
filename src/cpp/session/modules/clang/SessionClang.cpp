@@ -1,7 +1,7 @@
 /*
  * SessionClang.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@
 #include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <core/libclang/LibClang.hpp>
 
@@ -37,6 +37,7 @@
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
+#include "RCompilationDatabase.hpp"
 
 using namespace rstudio::core ;
 using namespace rstudio::core::libclang;
@@ -51,8 +52,10 @@ namespace {
 
 std::string embeddedLibClangPath()
 {
-#if defined(_WIN32)
+#if defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
 #elif defined(__APPLE__)
    std::string libclang = "libclang.dylib";
 #else
@@ -151,6 +154,11 @@ void onAllSourceDocsRemoved()
    rSourceIndex().removeAllTranslationUnits();
 }
 
+void onPackageLibraryMutated()
+{
+   rCompilationDatabase().rebuildPackageCompilationDatabase();
+}
+
 bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
@@ -190,7 +198,7 @@ SEXP rs_isLibClangAvailable()
 SEXP rs_setClangDiagnostics(SEXP levelSEXP)
 {
    int level = r::sexp::asInteger(levelSEXP);
-   userSettings().setClangVerbose(level);
+   prefs::userPrefs().setClangVerbose(level);
    return R_NilValue;
 }
 
@@ -204,17 +212,8 @@ bool isAvailable()
 Error initialize()
 {
    // register diagnostics functions
-   R_CallMethodDef methodDef1 ;
-   methodDef1.name = "rs_isLibClangAvailable" ;
-   methodDef1.fun = (DL_FUNC)rs_isLibClangAvailable;
-   methodDef1.numArgs = 0;
-   r::routines::addCallMethod(methodDef1);
-
-   R_CallMethodDef methodDef2 ;
-   methodDef2.name = "rs_setClangDiagnostics" ;
-   methodDef2.fun = (DL_FUNC)rs_setClangDiagnostics;
-   methodDef2.numArgs = 1;
-   r::routines::addCallMethod(methodDef2);
+   RS_REGISTER_CALL_METHOD(rs_isLibClangAvailable);
+   RS_REGISTER_CALL_METHOD(rs_setClangDiagnostics);
 
    ExecBlock initBlock ;
    using boost::bind;
@@ -250,6 +249,10 @@ Error initialize()
    source_database::events().onDocUpdated.connect(onSourceDocUpdated);
    source_database::events().onDocRemoved.connect(onSourceDocRemoved);
    source_database::events().onRemoveAll.connect(onAllSourceDocsRemoved);
+
+   // listen for package install / remove events (required in case we
+   // need to rebuild package compilation db)
+   module_context::events().onPackageLibraryMutated.connect(onPackageLibraryMutated);
 
    return Success();
 }

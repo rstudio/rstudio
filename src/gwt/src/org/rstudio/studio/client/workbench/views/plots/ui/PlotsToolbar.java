@@ -1,7 +1,7 @@
 /*
  * PlotsToolbar.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HasCustomizableToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -27,7 +28,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
    public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
-   {   
+   {
+      super("Plots Pane");
       commands_ = commands ;
       publishButton_ = publishButton;
       installStandardUI();
@@ -62,8 +64,9 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       exportMenu.addItem(commands_.savePlotAsPdf().createMenuItem(false));
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
-      ToolbarButton exportButton = new ToolbarButton(
-            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+      ToolbarMenuButton exportButton = new ToolbarMenuButton(
+            "Export", ToolbarButton.NoTitle, 
+            new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       addLeftWidget(exportButton);
       addLeftSeparator();

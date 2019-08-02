@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -199,7 +200,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
          panel.add(captionWidget);
          
          textBox_ = new TextBox();
-         textBox_.getElement().setAttribute("spellcheck", "false");
+         DomUtils.disableSpellcheck(textBox_);
          panel.add(textBox_);
    
          initWidget(panel);

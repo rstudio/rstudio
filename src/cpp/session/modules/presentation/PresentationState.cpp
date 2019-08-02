@@ -22,8 +22,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "Tutorial.hpp"
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -212,7 +210,6 @@ json::Value asJson()
    json::Object stateJson;
    stateJson["active"] = s_presentationState.active;
    stateJson["pane_caption"] = s_presentationState.paneCaption;
-   stateJson["is_tutorial"] = s_presentationState.isTutorial;
    stateJson["file_path"] = module_context::createAliasedPath(
                                                 s_presentationState.filePath);
    stateJson["slide_index"] = s_presentationState.slideIndex;
@@ -223,9 +220,7 @@ Error initialize()
 {
    // attempt to load any cached state
    loadPresentationState();
-
-   // call tutorial init
-   return initializeTutorial();
+   return Success();
 }
 
 } // namespace state

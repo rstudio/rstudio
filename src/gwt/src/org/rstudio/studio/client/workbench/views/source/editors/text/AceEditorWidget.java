@@ -31,6 +31,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+
+import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
@@ -65,9 +67,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tooltip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -159,6 +163,17 @@ public class AceEditorWidget extends Composite
             fireEvent(new FoldChangeEvent());
          }
       });
+      editor_.onChangeScrollTop(() -> {
+         Position pos = Position.create(editor_.getFirstVisibleRow(), 0);
+         fireEvent(new ScrollYEvent(pos));
+      });
+
+      // don't show gutter tooltips for spelling warnings
+      editor_.onShowGutterTooltip((Tooltip tooltip) -> {
+         if (tooltip.getTextContent().toLowerCase().contains("spellcheck"))
+            tooltip.hide();
+      });
+
       editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
       {
         @Override
@@ -428,7 +443,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, BreakpointMoveEvent.TYPE);
    }
-   
+
    public void toggleBreakpointAtCursor()
    {
       Position pos = editor_.getSession().getSelection().getCursor();
@@ -505,6 +520,11 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, BlurEvent.getType());
    }
 
+   public HandlerRegistration addScrollYHandler(ScrollYEvent.Handler handler)
+   {
+      return addHandler(handler, ScrollYEvent.TYPE);
+   }
+
    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
    {
       return addDomHandler(handler, ContextMenuEvent.getType());
@@ -563,6 +583,12 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
    {
       return capturingHandlers_.addHandler(KeyUpEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addScrollHandler(ScrollHandler handler)
+   {
+      capturingHandlers_.addHandler(ScrollEvent.getType(), handler);
+      return addHandler(handler, ScrollEvent.getType());
    }
 
    private static native void addEventListener(Element element,
@@ -917,7 +943,7 @@ public class AceEditorWidget extends Composite
    {
       return getEditor().getSession().createAnchoredRange(start, end);
    }
-   
+
    // This class binds an ace annotation (used for the gutter) with an
    // inline marker (the underlining for associated lint). We also store
    // the associated marker. Ie, with some beautiful ASCII art:
@@ -1020,16 +1046,10 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.warning();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         
-         annotations_.add(new AnchoredAceAnnotation(
+            annotations_.add(new AnchoredAceAnnotation(
                annotations.get(i),
                range,
                id));
-
-         if (item.getType() == "spelling")
-            editor_.getRenderer().removeGutterDecoration(
-               range.getStart().getColumn(),
-               "ace_warning");
       }
    }
    
@@ -1068,78 +1088,82 @@ public class AceEditorWidget extends Composite
    
    public void removeMarkersOnCursorLine()
    {
-      // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         
-         @Override
-         public void execute()
-         {
-            int cursorRow = editor_.getCursorPosition().getRow();
-            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-            
-            for (int i = 0; i < annotations_.size(); i++)
-            {
-               AnchoredAceAnnotation annotation = annotations_.get(i);
-               int markerId = annotation.getMarkerId();
-               Marker marker = editor_.getSession().getMarker(markerId);
-               
-               // The marker may have already been removed in response to
-               // a previous action.
-               if (marker == null)
-                  continue;
-               
-               Range range = marker.getRange();
-               int rowStart = range.getStart().getRow();
-               int rowEnd = range.getEnd().getRow();
-               
-               if (cursorRow >= rowStart && cursorRow <= rowEnd)
-                  editor_.getSession().removeMarker(markerId);
-               else
-                  newAnnotations.push(annotation.asAceAnnotation());
-            }
-            
-            editor_.getSession().setAnnotations(newAnnotations);
-            editor_.getRenderer().renderMarkers();
-            
-         }
+      int cursorRow = editor_.getCursorPosition().getRow();
+      removeMarkers((annotation, marker) -> {
+         Range range = marker.getRange();
+         int rowStart = range.getStart().getRow();
+         int rowEnd = range.getEnd().getRow();
+         return cursorRow < rowStart || cursorRow > rowEnd;
       });
    }
-   
+
+   public void removeMarkersAtWord(String word)
+   {
+      removeMarkers((annotation, marker) -> {
+         String textRange = editor_.getSession().getTextRange(marker.getRange());
+         return textRange.equals(word);
+      });
+   }
+
+   public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
+   {
+      // Defer this so other event handling can update anchors etc.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+
+         for (int i = 0; i < annotations_.size(); i++)
+         {
+            AnchoredAceAnnotation annotation = annotations_.get(i);
+            int markerId = annotation.getMarkerId();
+            Marker marker = editor_.getSession().getMarker(markerId);
+
+            // The marker may have already been removed in response to
+            // a previous action.
+            if (marker == null)
+               continue;
+
+            if (!predicate.test(annotation.asAceAnnotation(), marker))
+            {
+               newAnnotations.push(annotation.asAceAnnotation());
+            }
+            else
+               editor_.getSession().removeMarker(markerId);
+         }
+
+         editor_.getSession().setAnnotations(newAnnotations);
+         editor_.getRenderer().renderMarkers();
+      });
+   }
+
    public void removeMarkersAtCursorPosition()
    {
       // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleDeferred(() ->
       {
-         
-         @Override
-         public void execute()
+         Position cursor = editor_.getCursorPosition();
+         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+
+         for (int i = 0; i < annotations_.size(); i++)
          {
-            Position cursor = editor_.getCursorPosition();
-            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-            
-            for (int i = 0; i < annotations_.size(); i++)
-            {
-               AnchoredAceAnnotation annotation = annotations_.get(i);
-               int markerId = annotation.getMarkerId();
-               Marker marker = editor_.getSession().getMarker(markerId);
-               
-               // The marker may have already been removed in response to
-               // a previous action.
-               if (marker == null)
-                  continue;
-               
-               Range range = marker.getRange();
-               if (!range.contains(cursor))
-                  newAnnotations.push(annotation.asAceAnnotation());
-               else
-                  editor_.getSession().removeMarker(markerId);
-            }
-            
-            editor_.getSession().setAnnotations(newAnnotations);
-            editor_.getRenderer().renderMarkers();
-            
+            AnchoredAceAnnotation annotation = annotations_.get(i);
+            int markerId = annotation.getMarkerId();
+            Marker marker = editor_.getSession().getMarker(markerId);
+
+            // The marker may have already been removed in response to
+            // a previous action.
+            if (marker == null)
+               continue;
+
+            Range range = marker.getRange();
+            if (!range.contains(cursor))
+               newAnnotations.push(annotation.asAceAnnotation());
+            else
+               editor_.getSession().removeMarker(markerId);
          }
+
+         editor_.getSession().setAnnotations(newAnnotations);
+         editor_.getRenderer().renderMarkers();
       });
    }
    
@@ -1167,7 +1191,7 @@ public class AceEditorWidget extends Composite
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private ArrayList<AnchoredAceAnnotation> annotations_ =
          new ArrayList<AnchoredAceAnnotation>();
-   private ArrayList<ChunkRowExecState> lineExecState_ = 
+   private ArrayList<ChunkRowExecState> lineExecState_ =
          new ArrayList<ChunkRowExecState>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    

@@ -61,7 +61,7 @@
             margin-left: 5px;
             margin-right: 5px;
 
-			margin-bottom: 2px;
+         margin-bottom: 2px;
         }
         .nameTextBox {
             -ms-flex-grow: 1;

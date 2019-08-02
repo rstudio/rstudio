@@ -31,8 +31,10 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -203,7 +205,7 @@ public class ChunkOutputStream extends FlowPanel
          url += "viewer_pane=1&capabilities=1";
       }
 
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
+      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk HTML Output Frame");
 
       if (chunkOutputSize_ == ChunkOutputSize.Default) {
          if (knitrFigure) {
@@ -253,7 +255,7 @@ public class ChunkOutputStream extends FlowPanel
             }
             
             onHeightChanged();
-         };
+         }
       });
 
       themeColors_ = ChunkOutputWidget.getEditorColors();
@@ -309,9 +311,12 @@ public class ChunkOutputStream extends FlowPanel
          flushQueuedErrors();
       }
       
-      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
-      ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
+      UserState state =  RStudioGinjector.INSTANCE.getUserState();
+      ConsoleError error = new ConsoleError(err, 
+            AceTheme.getThemeErrorClass(state.theme().getValue().cast()),
             this, null);
+
+      UserPrefs prefs =  RStudioGinjector.INSTANCE.getUserPrefs();
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
 
       add(error);
@@ -590,7 +595,8 @@ public class ChunkOutputStream extends FlowPanel
    private String classOfOutput(int type)
    {
       if (type == ChunkConsolePage.CONSOLE_ERROR)
-        return RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+         return AceTheme.getThemeErrorClass(
+               RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
       else if (type == ChunkConsolePage.CONSOLE_INPUT)
         return "ace_keyword";
       return null;

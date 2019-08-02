@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,24 +16,27 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.CheckboxCell;
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
@@ -91,7 +94,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
          final OperationWithInput<Result> saveOperation,
          final Command onCancelled)
    {
-      super(title, 
+      super(title,
+            Roles.getAlertdialogRole(),
             saveOperation, 
             onCancelled != null ? new Operation() {
                                     @Override
@@ -114,11 +118,11 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                                        new ArrayList<UnsavedChangesTarget>(),
                                        false));
          } 
-      }));
+      }), ElementIds.DIALOG_NO_BUTTON);
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       focusOkButton();
    }
@@ -168,6 +172,10 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
                            "The following files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
+      
+      // read message when dialog shows
+      setARIADescribedBy(captionLabel.getElement());
+      
       panel.add(scrollPanel);      
       if (!StringUtil.isNullOrEmpty(alwaysSaveOption_))
       { 
@@ -180,15 +188,15 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       return panel;
    }
    
-   private Column<UnsavedChangesTarget, Boolean> addSelectionColumn()
+   private Column<UnsavedChangesTarget, LabeledBoolean> addSelectionColumn()
    {
-      Column<UnsavedChangesTarget, Boolean> checkColumn = 
-         new Column<UnsavedChangesTarget, Boolean>(new CheckboxCell(true, false)) 
+      Column<UnsavedChangesTarget, LabeledBoolean> checkColumn = 
+         new Column<UnsavedChangesTarget, LabeledBoolean>(new AriaLabeledCheckboxCell(true, false)) 
          {
             @Override
-            public Boolean getValue(UnsavedChangesTarget object)
+            public LabeledBoolean getValue(UnsavedChangesTarget object)
             {
-               return selectionModel_.isSelected(object);
+               return new LabeledBoolean(object.getTitle(), selectionModel_.isSelected(object));
             }   
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
@@ -199,13 +207,13 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
    }
   
    
-   private Column<UnsavedChangesTarget, ImageResource> addIconColumn()
+   private Column<UnsavedChangesTarget, FileIcon> addIconColumn()
    {
-      Column<UnsavedChangesTarget, ImageResource> iconColumn = 
-         new Column<UnsavedChangesTarget, ImageResource>(new ImageResourceCell()) {
+      Column<UnsavedChangesTarget, FileIcon> iconColumn = 
+         new Column<UnsavedChangesTarget, FileIcon>(new FileIconResourceCell()) {
 
             @Override
-            public ImageResource getValue(UnsavedChangesTarget object)
+            public FileIcon getValue(UnsavedChangesTarget object)
             {
                return object.getIcon();
             }

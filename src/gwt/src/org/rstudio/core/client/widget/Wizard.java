@@ -1,7 +1,7 @@
 /*
  * Wizard.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,12 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -38,11 +43,12 @@ public class Wizard<I,T> extends ModalDialog<T>
 {
    public Wizard(String caption, 
                  String okCaption,
+                 DialogRole role,
                  I initialData,
                  WizardPage<I, T> firstPage,
                  final ProgressOperationWithInput<T> operation)
    {
-      super(caption, operation);
+      super(caption, role, operation);
 
       initialData_ = initialData;
       okCaption_ = okCaption;
@@ -125,6 +131,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       // first page caption
       subCaptionLabel_ = new Label(firstPage_.getPageCaption());
       subCaptionLabel_.addStyleName(styles.headerLabel());
+      
       headerPanel_.add(subCaptionLabel_);
       headerPanel_.setWidgetLeftWidth(subCaptionLabel_,
                                       kTopMargin, Unit.PX, 
@@ -138,6 +145,8 @@ public class Wizard<I,T> extends ModalDialog<T>
       backButton_ = new Label("Back");
       backButton_.addStyleName(styles.wizardBackButton());
       backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+      backButton_.getElement().setTabIndex(0);
+      Roles.getButtonRole().set(backButton_.getElement());
       headerPanel_.add(backButton_);
       headerPanel_.setWidgetLeftWidth(backButton_,
                                       kTopMargin - 2, Unit.PX, 
@@ -147,7 +156,15 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       bkImg.getHeight(), Unit.PX);
       backButton_.setVisible(false);
       backButton_.addClickHandler((event) -> goBack());
-      
+      backButton_.addDomHandler(event -> {
+         if (event.getNativeKeyCode() == KeyCodes.KEY_SPACE)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            goBack();
+         }
+      }, KeyDownEvent.getType());
+
       // second page caption label
       pageCaptionLabel_ = new Label();
       pageCaptionLabel_.addStyleName(styles.headerLabel());
@@ -160,7 +177,6 @@ public class Wizard<I,T> extends ModalDialog<T>
                                       kCaptionHeight, Unit.PX);
       pageCaptionLabel_.setVisible(false);
       
-     
       mainWidget.add(headerPanel_);
       
       // main body panel for transitions
@@ -271,6 +287,23 @@ public class Wizard<I,T> extends ModalDialog<T>
          setOkButtonVisible(pageIsFinal(firstPage_));
          firstPage_.onActivate(getProgressIndicator());
       }
+      deferRefreshFocusableElements();
+   }
+
+   @Override
+   protected void focusInitialControl()
+   {
+      ArrayList<Element> focusableElements = getFocusableElements();
+      if (focusableElements.size() == 0)
+         return;
+      
+      // don't focus the back button by default when a pane is first displayed
+      if (backButton_.isVisible() && focusableElements.size() > 1)
+      {
+         focusableElements.get(1).focus();
+         return;
+      }
+      focusableElements.get(0).focus();
    }
    
    protected WizardPage<I,T> getFirstPage()
@@ -381,14 +414,12 @@ public class Wizard<I,T> extends ModalDialog<T>
                   onPageActivated(page, okButtonVisible);
                   page.onActivate(getProgressIndicator());
 
-                  // set focus
-                  FocusHelper.setFocusDeferred(page);
+                  deferRefreshFocusableElements();
             })
          );
       }, this);
    }
-   
-  
+
    private void goBack()
    {
       final boolean isNavigationPage = activeParentNavigationPage_ != null;
@@ -431,6 +462,8 @@ public class Wizard<I,T> extends ModalDialog<T>
 
             // call hook
             onSelectorActivated();
+
+            deferRefreshFocusableElements();
 
             // set focus
             focusWidget.focus();

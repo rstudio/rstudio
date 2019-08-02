@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.core.client.prefs;
 
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -42,14 +44,14 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                                    boolean showApplyButton,
                                    PreferencesDialogPaneBase<T>[] panes)
    {
-      super();
+      super(Roles.getDialogRole());
       setText(caption);
       panes_ = panes;
       
       PreferencesDialogBaseResources res = 
                                    PreferencesDialogBaseResources.INSTANCE;
       
-      sectionChooser_ = new SectionChooser();
+      sectionChooser_ = new SectionChooser(caption);
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) 
@@ -60,11 +62,10 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
                {
                   closeDialog();
                }
-            });        
+            });
          }
       });
-      ElementIds.assignElementId(okButton.getElement(), ElementIds.PREFERENCES_CONFIRM);
-      addOkButton(okButton);
+      addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
       
       if (showApplyButton)
@@ -75,7 +76,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             {
                attemptSaveChanges();
             }
-         }));
+         }), ElementIds.DIALOG_APPLY_BUTTON);
       }
       
       progressIndicator_ = addProgressIndicator(false);
@@ -89,7 +90,9 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
        
       for (final PreferencesDialogPaneBase<T> pane : panes_)
       {
-         sectionChooser_.addSection(pane.getIcon(), pane.getName());
+         Id sectionTabId = sectionChooser_.addSection(pane.getIcon(), pane.getName());
+         pane.getElement().setId(SectionChooser.getTabPanelId(sectionTabId).getAriaValue());
+         Roles.getTabpanelRole().setAriaLabelledbyProperty(pane.getElement(), sectionTabId);
          pane.setWidth("100%");
          pane.setDialog(this);
          pane.setProgressIndicator(progressIndicator_);
@@ -161,7 +164,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       return panel_;
    }
-   
+
    protected void hidePane(int index)
    {
       sectionChooser_.hideSection(index);

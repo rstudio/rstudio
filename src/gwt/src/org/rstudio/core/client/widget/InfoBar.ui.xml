@@ -53,8 +53,8 @@
       </g:west>
       <g:center>
          <g:HorizontalPanel>
-         	<g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
-         	<g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
+            <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+            <g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
          </g:HorizontalPanel>
       </g:center>
       <g:east size="13">

@@ -1,0 +1,125 @@
+17a18,21
+> import com.google.gwt.aria.client.CheckedValue;
+> import com.google.gwt.aria.client.MenuitemRole;
+> import com.google.gwt.aria.client.MenuitemcheckboxRole;
+> import com.google.gwt.aria.client.MenuitemradioRole;
+25a30
+> import org.rstudio.core.client.a11y.A11y;
+43a49
+>   private final MenuitemRole menurole;
+51c57
+<     this(html.asString(), true);
+---
+>     this(html.asString(), true, Roles.getMenuitemRole(), false);
+82c88
+<     this(text, asHTML);
+---
+>     this(text, asHTML, Roles.getMenuitemRole(), false);
+94c100
+<     this(text, asHTML);
+---
+>     this(text, asHTML, Roles.getMenuitemRole(), false);
+106c112
+<     this(text, false);
+---
+>     this(text, false, Roles.getMenuitemRole(), false);
+118c124
+<     this(text, false);
+---
+>     this(text, false, Roles.getMenuitemRole(), false);
+122a129,192
+>     this(text, asHTML, Roles.getMenuitemRole(), false);
+>   }
+> 
+>   /**
+>    * Constructs a new menu item that fires a command when it is selected.
+>    *
+>    * @param text the item's text
+>    * @param asHTML <code>true</code> to treat the specified text as html
+>    * @param role the item's a11y role
+>    * @param checked <code>true</code> if item is checked
+>    * @param cmd the command to be fired when it is selected
+>    */
+>   public MenuItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+>     this(text, asHTML, role, checked);
+>     setScheduledCommand(cmd);
+>   }
+> 
+>   /**
+>    * Constructs a new menu item that fires a command when it is selected.
+>    *
+>    * @param html the item's text
+>    * @param role the item's a11y role
+>    * @param checked <code>true</code> if item is checked
+>    * @param cmd the command to be fired when it is selected
+>    */
+>   public MenuItem(SafeHtml html, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+>     this(html.asString(), true, role, checked, cmd);
+>   }
+> 
+>   /**
+>    * Constructs a new menu item that fires a command when it is selected.
+>    *
+>    * @param text the item's text
+>    * @param role the item's a11y role
+>    * @param checked <code>true</code> if item is checked
+>    * @param cmd the command to be fired when it is selected
+>    */
+>   @SuppressIsSafeHtmlCastCheck
+>   public MenuItem(String text, MenuitemRole role, boolean checked, ScheduledCommand cmd) {
+>     this(text, false, role, checked);
+>     setScheduledCommand(cmd);
+>   }
+> 
+>    /**
+>    * Constructs a new menu item that fires a command when it is selected.
+>    *
+>    * @param html the item's html text
+>    * @param role the item's a11y role
+>    * @param checked <code>true</code> if item is checked
+>    */
+>   public MenuItem(SafeHtml html, MenuitemRole role, boolean checked) {
+>     this(html.asString(), true, role, checked);
+>   }
+> 
+>   public void setChecked(boolean checked)
+>   {
+>     CheckedValue value = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
+>     if (menurole instanceof MenuitemradioRole)
+>       Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), value);
+>     else if (menurole instanceof MenuitemcheckboxRole)
+>       Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), value);
+>   }
+> 
+>   MenuItem(@IsSafeHtml String text, boolean asHTML, MenuitemRole role, boolean checked) {
+124a195
+>     menurole = role;
+134,135c205,219
+<     // Add a11y role "menuitem"
+<     Roles.getMenuitemRole().set(getElement());
+---
+>     CheckedValue checkedValue = checked ? CheckedValue.TRUE : CheckedValue.FALSE;
+>     if (role instanceof MenuitemradioRole)
+>     {
+>       Roles.getMenuitemradioRole().set(getElement());
+>       Roles.getMenuitemradioRole().setAriaCheckedState(getElement(), checkedValue);
+>     }
+>     else if (role instanceof MenuitemcheckboxRole)
+>     {
+>       Roles.getMenuitemcheckboxRole().set(getElement());
+>       Roles.getMenuitemcheckboxRole().setAriaCheckedState(getElement(), checkedValue);
+>     }
+>     else
+>     {
+>       Roles.getMenuitemRole().set(getElement());
+>     }
+228a313
+>     Roles.getMenuitemRole().setAriaDisabledState(getElement(), !enabled);
+267a353
+>       setAriaExpanded(false);
+273a360,364
+>   public void setAriaExpanded(boolean expanded)
+>   {
+>     A11y.setARIAMenuItemExpanded(getElement(), expanded);
+>   }
+> 

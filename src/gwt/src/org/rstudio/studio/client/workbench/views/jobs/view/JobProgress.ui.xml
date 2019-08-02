@@ -1,52 +1,52 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:style>
-	
-	.name, .elapsed, .status
-	{
-		text-overflow: ellipsis;
-		overflow: hidden;
-		word-wrap: nowrap;
-	}
-	
-	.status
-	{
-		color: #808080;
-	}
-	
-	.host
-	{
-		width: 100%;
-		table-layout: fixed;
-	}
-	
-	.elapsed
-	{
-		padding-right: 5px;
-		padding-right: 5px;
-	}
-	
-	</ui:style>
-	<g:HorizontalPanel styleName="{style.host}">
-		<g:cell horizontalAlignment="ALIGN_LEFT" 
-		        verticalAlignment="ALIGN_MIDDLE"
-		        width="20%">
-			<g:Label styleName="{style.name}" ui:field="name_"></g:Label>
-		</g:cell>
-		<g:cell horizontalAlignment="ALIGN_RIGHT" 
-		        verticalAlignment="ALIGN_MIDDLE"
-		        width="70%">
-			<g:HTMLPanel styleName="{style.host}">
-				<g:Label styleName="{style.status}" ui:field="status_"></g:Label>
-				<rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
-			</g:HTMLPanel>
-		</g:cell>
-		<g:cell horizontalAlignment="ALIGN_RIGHT" 
-		        verticalAlignment="ALIGN_MIDDLE"
-		        width="10%">
-			<g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
-		</g:cell>
-	</g:HorizontalPanel>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   <ui:style>
+   
+   .name, .elapsed, .status
+   {
+      text-overflow: ellipsis;
+      overflow: hidden;
+      word-wrap: nowrap;
+   }
+   
+   .status
+   {
+      color: #808080;
+   }
+   
+   .host
+   {
+      width: 100%;
+      table-layout: fixed;
+   }
+   
+   .elapsed
+   {
+      padding-right: 5px;
+      padding-right: 5px;
+   }
+   
+   </ui:style>
+   <g:HorizontalPanel styleName="{style.host}">
+      <g:cell horizontalAlignment="ALIGN_LEFT" 
+              verticalAlignment="ALIGN_MIDDLE"
+              width="20%">
+         <g:Label styleName="{style.name}" ui:field="name_"></g:Label>
+      </g:cell>
+      <g:cell horizontalAlignment="ALIGN_RIGHT" 
+              verticalAlignment="ALIGN_MIDDLE"
+              width="70%">
+         <g:HTMLPanel styleName="{style.host}">
+            <g:Label styleName="{style.status}" ui:field="status_"></g:Label>
+            <rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
+         </g:HTMLPanel>
+      </g:cell>
+      <g:cell horizontalAlignment="ALIGN_RIGHT" 
+              verticalAlignment="ALIGN_MIDDLE"
+              width="10%">
+         <g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
+      </g:cell>
+   </g:HorizontalPanel>
 </ui:UiBinder> 

@@ -1,7 +1,7 @@
 /*
  * IgnoreDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.vcs.ignore;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -40,22 +42,25 @@ public class IgnoreDialog extends ModalDialogBase
    @Inject
    public IgnoreDialog()
    {
+      super(Roles.getDialogRole());
       dirChooser_ = new DirectoryChooserTextBox("Directory:", 
                                                 "", 
                                                 null);
       dirChooser_.addStyleName(RES.styles().dirChooser());
       
-      ignoresCaption_ = new CaptionWithHelp("Ignore:",
-                                             "Specifying ignored files");
-      ignoresCaption_.setIncludeVersionInfo(false);
-      ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
-      
       editor_ = new AceEditor();
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
+      editor_.setTextInputAriaLabel("Ignored files");
       
+      ignoresCaption_ = new CaptionWithHelp("Ignore:",
+                                             "Specifying ignored files",
+                                             editor_.getWidget());
+      ignoresCaption_.setIncludeVersionInfo(false);
+      ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
+
       saveButton_ = new ThemedButton("Save", (ClickHandler)null); 
-      addButton(saveButton_);
+      addButton(saveButton_, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       
@@ -164,7 +169,7 @@ public class IgnoreDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       editor_.focus();
    }

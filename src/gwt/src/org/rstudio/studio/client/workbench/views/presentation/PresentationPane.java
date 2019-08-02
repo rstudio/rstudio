@@ -1,7 +1,7 @@
 /*
  * PresentationPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -76,76 +77,66 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
-      boolean isTutorial =
-                 session_.getSessionInfo().getPresentationState().isTutorial();
-      
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Presentation Tab");
       
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar); 
-      slideNavigationMenu_.setEditButtonVisible(!isTutorial);
+      slideNavigationMenu_.setEditButtonVisible(true);
       
       toolbar.addLeftSeparator();
       
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      
       // More
-      if (!isTutorial)
-      { 
-         ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-         moreMenu.addItem(commands_.clearPresentationCache().createMenuItem(false));
-         moreMenu.addSeparator();
-         moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
-         moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
-         
-         ToolbarButton moreButton = new ToolbarButton("More",
-                                                      new ImageResource2x(
-                                                         StandardIcons.INSTANCE.more_actions2x()),
-                                                      moreMenu);
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.clearPresentationCache().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
+      moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
 
-         toolbar.addRightWidget(moreButton);
+      ToolbarMenuButton moreButton = new ToolbarMenuButton("More",
+            "More presentation commands",
+            new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
+            moreMenu);
 
-         // Create the publish button and wire it to our HTML generator
-         publishButton_ = new RSConnectPublishButton(
-               RSConnectPublishButton.HOST_PRESENTATION,
-               RSConnect.CONTENT_TYPE_PRES, false, null);
-         publishButton_.setPublishHtmlSource(new PublishHtmlSource()
-         {
-            @Override
-            public void generatePublishHtml(
-                  final CommandWithArg<String> onCompleted)
-            {
-               server_.createPresentationRPubsSource(
-                  new SimpleRequestCallback<PresentationRPubsSource>() {
-                     
-                     @Override
-                     public void onResponseReceived(
-                           PresentationRPubsSource source)
-                     {
-                        onCompleted.execute(source.getSourceFilePath());
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        display_.showErrorMessage("Error Saving Presentation",
-                          Presentation.getErrorMessage(error));
-                     }
-               });
-            }
+      toolbar.addRightWidget(moreButton);
 
-            @Override
-            public String getTitle()
-            {
-               return "Presentation:\n" + getPresentationTitle();
-            }
-         });
-         toolbar.addRightSeparator();
-         toolbar.addRightWidget(publishButton_);
-      }
-      else
+      // Create the publish button and wire it to our HTML generator
+      publishButton_ = new RSConnectPublishButton(
+            RSConnectPublishButton.HOST_PRESENTATION,
+            RSConnect.CONTENT_TYPE_PRES, false, null);
+      publishButton_.setPublishHtmlSource(new PublishHtmlSource()
       {
-         toolbar.addRightWidget(commands_.tutorialFeedback().createToolbarButton());
-      }
+         @Override
+         public void generatePublishHtml(
+               final CommandWithArg<String> onCompleted)
+         {
+            server_.createPresentationRPubsSource(
+               new SimpleRequestCallback<PresentationRPubsSource>() {
+                  
+                  @Override
+                  public void onResponseReceived(
+                        PresentationRPubsSource source)
+                  {
+                     onCompleted.execute(source.getSourceFilePath());
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Error Saving Presentation",
+                       Presentation.getErrorMessage(error));
+                  }
+            });
+         }
+
+         @Override
+         public String getTitle()
+         {
+            return "Presentation:\n" + getPresentationTitle();
+         }
+      });
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(publishButton_);
       
       toolbar.addRightSeparator();
 
@@ -154,6 +145,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       toolbar.addRightWidget(refreshButton_);
 
       progressButton_ = new ToolbarButton(
+                              ToolbarButton.NoText,
+                              ToolbarButton.NoTitle,
                               CoreResources.INSTANCE.progress_gray(),
                               new ClickHandler() {
                                  @Override

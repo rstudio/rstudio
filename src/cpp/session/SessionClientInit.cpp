@@ -64,8 +64,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -272,7 +273,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                         "experience unexpected issues as a result.\n\n");
    }
 
-   sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+   sessionInfo["user_prefs"] = prefs::allPrefLayers();
+   sessionInfo["user_state"] = prefs::allStateLayers();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();
@@ -445,6 +447,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
 
+   sessionInfo["renv_available"] =
+         module_context::isRequiredRenvInstalled();
+
    // check rmarkdown package presence and capabilities
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
@@ -499,6 +504,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
          options.programMode() == kSessionProgramModeDesktop &&
          crash_handler::configSource() == crash_handler::ConfigSource::User;
    sessionInfo["crash_handler_settings_modifiable"] = canModifyCrashSettings;
+
+   bool promptForCrashHandlerPermission = canModifyCrashSettings && !crash_handler::hasUserBeenPromptedForPermission();
+   sessionInfo["prompt_for_crash_handler_permission"] = promptForCrashHandlerPermission;
 
    sessionInfo["project_id"] = session::options().sessionScope().project();
 

@@ -1,7 +1,7 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -33,6 +34,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -93,12 +96,12 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    public FindInFilesDialog(OperationWithInput<State> operation)
    {
-      super("Find in Files", operation);
+      super("Find in Files", Roles.getDialogRole(), operation);
 
       dirChooser_ = new DirectoryChooserTextBox("Search in:", null);
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-
+      labelFilePatterns_.setFor(listPresetFilePatterns_);
       setOkButtonCaption("Find");
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
@@ -111,8 +114,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
       manageFilePattern();
 
-      txtSearchPattern_.getElement().setAttribute("spellcheck", "false");
-      
       txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
       {
          @Override
@@ -195,10 +196,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    }
 
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
-
       txtSearchPattern_.setFocus(true);
       txtSearchPattern_.selectAll();
       updateOkButtonEnabled();
@@ -237,7 +236,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    }
 
    @UiField
-   TextBox txtSearchPattern_;
+   LabeledTextBox txtSearchPattern_;
    @UiField
    CheckBox checkboxRegex_;
    @UiField
@@ -246,6 +245,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    DirectoryChooserTextBox dirChooser_;
    @UiField
    TextBox txtFilePattern_;
+   @UiField
+   FormLabel labelFilePatterns_;
    @UiField
    ListBox listPresetFilePatterns_;
    @UiField

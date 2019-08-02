@@ -30,7 +30,6 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionPersistentState.hpp>
 
 #include "SessionPackages.hpp"
@@ -153,6 +152,9 @@ std::string packratActionName(PackratActionType action)
 static PackratActionType s_runningPackratAction = PACKRAT_ACTION_NONE;
 static bool s_autoSnapshotPending = false;
 static bool s_autoSnapshotRunning = false;
+static bool s_packageStateChanged = false;
+static bool s_pendingLibraryHash  = false;
+
 
 // Forward declarations ------------------------------------------------------
 
@@ -219,7 +221,7 @@ std::string updateHash(PackratHashType hashType, PackratHashState hashState,
 
 // adds content from the given file to the given file if it's a 
 // DESCRIPTION file (used to summarize library content for hashing)
-bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
+void addDescContent(const FilePath& path, std::string* pDescContent)
 {
    std::string newDescContent;
    if (path.filename() == "DESCRIPTION") 
@@ -230,21 +232,35 @@ bool addDescContent(int level, const FilePath& path, std::string* pDescContent)
       pDescContent->append(path.absolutePath());
       pDescContent->append(newDescContent);
    }
-   return true;
 }
 
 // computes a hash of the content of all DESCRIPTION files in the Packrat
 // private library
 std::string computeLibraryHash()
 {
-   FilePath libraryPath = 
-      projects::projectContext().directory().complete(kPackratLibPath);
+   // figure out what library paths are being used by Packrat
+   std::string libraryPath;
+   Error error = r::exec::RFunction("packrat:::libDir").call(&libraryPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "";
+   }
 
-   // find all DESCRIPTION files in the library and concatenate them to form
-   // a hashable state
+   // find DESCRIPTION files for the packages in these libraries
    std::string descFileContent;
-   libraryPath.childrenRecursive(
-         boost::bind(addDescContent, _1, _2, &descFileContent));
+
+   std::vector<FilePath> pkgPaths;
+   error = FilePath(libraryPath).children(&pkgPaths);
+   if (error)
+      LOG_ERROR(error);
+
+   for (auto& pkgPath : pkgPaths)
+   {
+      FilePath descPath = pkgPath.childPath("DESCRIPTION");
+      if (descPath.exists())
+         addDescContent(descPath, &descFileContent);
+   }
 
    if (descFileContent.empty())
       return "";
@@ -395,7 +411,7 @@ void pendingSnapshot(PendingSnapshotAction action)
             if (!resolveStateAfterAction(PACKRAT_ACTION_SNAPSHOT, 
                                          HASH_TYPE_LOCKFILE))
             {
-               packages::enquePackageStateChanged();
+               s_packageStateChanged = true;
             }
          }
       }
@@ -540,8 +556,8 @@ bool getPendingActions(PackratActionType action, bool useCached,
 
 void onLockfileUpdate(const std::string& oldHash, const std::string& newHash)
 {
-   // if the lockfile changed, refresh to show the new Packrat state 
-   packages::enquePackageStateChanged();
+   // if the lockfile changed, refresh to show the new Packrat state
+   s_packageStateChanged = true;
 }
 
 void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
@@ -562,7 +578,7 @@ void onLibraryUpdate(const std::string& oldHash, const std::string& newHash)
 
    // send the new state to the client if Packrat isn't busy
    if (s_runningPackratAction == PACKRAT_ACTION_NONE)
-      packages::enquePackageStateChanged();
+      s_packageStateChanged = true;
 }
 
 void onFileChanged(FilePath sourceFilePath)
@@ -595,7 +611,7 @@ void onFileChanged(FilePath sourceFilePath)
          return;
       }
       PACKRAT_TRACE("detected change to library file " << sourceFilePath);
-      checkHashes(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED, onLibraryUpdate);
+      s_pendingLibraryHash = true;
    }
 }
 
@@ -702,8 +718,10 @@ Error initPackratMonitoring()
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
-   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
-   module_context::events().onConsolePrompt.connect(onConsolePrompt);
+
+   using namespace module_context;
+   events().onSourceEditorFileSaved.connect(onFileChanged);
+   events().onConsolePrompt.connect(onConsolePrompt);
 
    return Success();
 }
@@ -746,7 +764,7 @@ bool resolveStateAfterAction(PackratActionType action,
    bool hashChangedState = 
       !hashStatesMatch(hashType, HASH_STATE_OBSERVED, HASH_STATE_COMPUTED);
    if (hashChangedState)
-      packages::enquePackageStateChanged();
+      s_packageStateChanged = true;
 
    return hashChangedState || !(hasPendingSnapshotActions ||
                                 hasPendingRestoreActions);
@@ -830,6 +848,20 @@ void onDetectChanges(module_context::ChangeSource source)
 {
    if (source == module_context::ChangeSourceREPL)
       detectReposChanges();
+
+   // Update hashes.
+   if (s_pendingLibraryHash)
+   {
+      s_pendingLibraryHash = false;
+      checkHashes(HASH_TYPE_LIBRARY, HASH_STATE_OBSERVED, onLibraryUpdate);
+   }
+
+   // If the package state has changed, report those changes to the client.
+   if (s_packageStateChanged)
+   {
+      s_packageStateChanged = false;
+      packages::enquePackageStateChanged();
+   }
 }
 
 void activatePackagesIfPendingActions()
@@ -972,11 +1004,7 @@ Error initialize()
    module_context::events().afterSessionInitHook.connect(afterSessionInitHook);
 
    // register packrat action hook
-   R_CallMethodDef onPackratActionMethodDef ;
-   onPackratActionMethodDef.name = "rs_onPackratAction" ;
-   onPackratActionMethodDef.fun = (DL_FUNC) rs_onPackratAction ;
-   onPackratActionMethodDef.numArgs = 3;
-   r::routines::addCallMethod(onPackratActionMethodDef);
+   RS_REGISTER_CALL_METHOD(rs_onPackratAction);
 
    using boost::bind;
    using namespace module_context;

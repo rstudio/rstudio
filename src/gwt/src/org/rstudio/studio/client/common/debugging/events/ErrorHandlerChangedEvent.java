@@ -1,7 +1,7 @@
 /*
  * ErrorHandlerChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,9 @@
  */
 package org.rstudio.studio.client.common.debugging.events;
 
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.core.client.JavaScriptObject;
 
 public class ErrorHandlerChangedEvent
         extends GwtEvent<ErrorHandlerChangedEvent.Handler>
@@ -26,15 +25,27 @@ public class ErrorHandlerChangedEvent
    {
       void onErrorHandlerChanged(ErrorHandlerChangedEvent event);
    }
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public final native String getType() /*-{
+         return this.type;
+      }-*/;
+      
+   }
 
-   public ErrorHandlerChangedEvent(ErrorHandlerType type)
+   public ErrorHandlerChangedEvent(Data type)
    {
       type_ = type;
    }
    
-   public ErrorHandlerType getHandlerType()
+   public String getHandlerType()
    {
-      return type_;
+      return type_.getType();
    }
    
    @Override
@@ -51,5 +62,5 @@ public class ErrorHandlerChangedEvent
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private ErrorHandlerType type_;
+   private Data type_;
 }

@@ -16,10 +16,6 @@
 #ifndef CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 #define CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP
 
-#ifdef _WIN32
-#error TcpIpAsyncClientSsl is not supported on Windows
-#endif
-
 #include <boost/scoped_ptr.hpp>
 
 #include <boost/asio/ip/tcp.hpp>
@@ -41,6 +37,7 @@ public:
                        const std::string& address,
                        const std::string& port,
                        bool verify,
+                       const std::string& certificateAuthority = std::string(),
                        const boost::posix_time::time_duration& connectionTimeout =
                           boost::posix_time::time_duration(boost::posix_time::pos_infin))
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
@@ -48,12 +45,22 @@ public:
        address_(address),
        port_(port),
        verify_(verify),
+       certificateAuthority_(certificateAuthority),
        connectionTimeout_(connectionTimeout)
    {
       if (verify_)
       {
          sslContext_.set_default_verify_paths();
          sslContext_.set_verify_mode(boost::asio::ssl::context::verify_peer);
+
+         if (!certificateAuthority_.empty())
+         {
+            boost::asio::const_buffer buff(certificateAuthority_.data(), certificateAuthority_.size());
+            boost::system::error_code ec;
+            sslContext_.add_certificate_authority(buff, ec);
+            if (ec)
+               LOG_ERROR(Error(ec, ERROR_LOCATION));
+         }
       }
       else
       {
@@ -143,6 +150,7 @@ private:
    std::string address_;
    std::string port_;
    bool verify_;
+   std::string certificateAuthority_;
    boost::posix_time::time_duration connectionTimeout_;
 };
    

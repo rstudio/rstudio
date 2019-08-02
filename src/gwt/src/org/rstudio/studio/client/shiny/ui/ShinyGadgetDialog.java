@@ -1,7 +1,7 @@
 /*
  * ShinyGadgetDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.shiny.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -45,6 +46,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
 {
    public ShinyGadgetDialog(String caption, String url, Size preferredSize)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       url_ = url;
       preferredSize_ = preferredSize;
@@ -81,7 +83,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
+      frame_ = new RStudioFrame("Shiny Gadget");
       frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
       
       // compute the widget size and set it
@@ -92,7 +94,7 @@ public class ShinyGadgetDialog extends ModalDialogBase
                                                  100); // client margin
       frame_.setSize(size.width + "px", size.height + "px");
       
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setShinyDialogUrl(StringUtil.notNull(url_));
       
       frame_.setUrl(url_);
@@ -100,9 +102,8 @@ public class ShinyGadgetDialog extends ModalDialogBase
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
-      super.onDialogShown();
       frame_.getWindow().focus();
    }
    

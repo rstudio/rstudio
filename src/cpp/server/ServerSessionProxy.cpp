@@ -37,6 +37,7 @@
 #include <core/WaitUtils.hpp>
 #include <core/RegexUtils.hpp>
 
+#include <core/http/CSRFToken.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketProxy.hpp>
 #include <core/http/Request.hpp>
@@ -51,6 +52,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <server_core/http/HeaderConstants.hpp>
 #include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
 #include <server_core/UrlPorts.hpp>
@@ -195,8 +197,9 @@ void handleProxyResponse(
    // if there was a launch pending then remove it
    sessionManager().removePendingLaunch(context);
 
-   // write the response
-   ptrConnection->writeResponse(response);
+   // ensure authorization cookies that were automatically refreshed as part of this
+   // request are stamped on the response
+   ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
 }
 
 void rewriteLocalhostAddressHeader(const std::string& headerName,
@@ -670,8 +673,32 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
 }
 
+bool shouldRefreshCredentials(const http::Request& request)
+{
+   // determines whether or not credentials should automatically
+   // be refreshed for the given RPC URI - in most cases, an RPC
+   // is the direct result of a user action so credentials should
+   // be refreshed, but in some cases RPCs are fired automatically
+   // on a timer, and thus should not renew credentials
+   //
+   // we will only not refresh credentials if explicitly told not to
+   return (request.headerValue(kRStudioRpcRefreshAuthCreds) != "0");
+}
+
 } // anonymous namespace
 
+http::Headers getAuthCookies(const http::Response& response)
+{
+   http::Headers authCookies;
+   for (const http::Header& cookie : response.getCookies())
+   {
+      if ((cookie.value.find(kUserIdCookie) != std::string::npos) ||
+          (cookie.value.find(kPersistAuthCookie) != std::string::npos) ||
+          (cookie.value.find(kCSRFTokenCookie) != std::string::npos))
+         authCookies.push_back(cookie);
+   }
+   return authCookies;
+}
 
 Error initialize()
 { 
@@ -728,6 +755,7 @@ void proxyContentRequest(
 
 void proxyRpcRequest(
       const std::string& username,
+      const std::string& userIdentifier,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
 {
    // validate the user if this is client_init
@@ -737,6 +765,15 @@ void proxyRpcRequest(
    {
       if (!validateUser(ptrConnection, username))
          return;
+   }
+
+   // refresh auth credentials automatically if this RPC is the result of a user action
+   bool refreshCredentials = shouldRefreshCredentials(ptrConnection->request());
+   if (refreshCredentials)
+   {
+      auth::handler::refreshAuthCookies(userIdentifier,
+                                        ptrConnection->request(),
+                                        &ptrConnection->response());
    }
 
    // get session context

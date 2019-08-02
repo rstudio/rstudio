@@ -57,6 +57,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    boolean isCursorAtEnd();
    
    Position getCursorPosition();
+   void setCursorPosition(Position position);
    String getLanguageMode(Position position);
    
    void goToLineStart();

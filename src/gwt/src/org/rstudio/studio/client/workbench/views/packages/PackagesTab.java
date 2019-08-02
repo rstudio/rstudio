@@ -21,7 +21,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
@@ -50,7 +50,7 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
                       Binder binder, 
                       EventBus events, 
                       Commands commands,
-                      UIPrefs uiPrefs,
+                      UserPrefs uiPrefs,
                       Session session)
    {
       super("Packages", shim);
@@ -69,6 +69,6 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
               !uiPrefs_.packagesPaneEnabled().getValue();
    }
    
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final Session session_;
 }

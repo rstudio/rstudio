@@ -1,137 +1,137 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget"
-	xmlns:rc="urn:import:org.rstudio.studio.client.common"
-	xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:rc="urn:import:org.rstudio.studio.client.common"
+   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
 
-	<ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
-	<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
-	@external .gwt-Label;
-	
-	.fillHeight
-	{
-	  height: 100%;
-	}
-	
-	.templatePanel
-	{
-	  margin-bottom: 15px;
-	}
-	
-	.templateList
-	{
-	  box-sizing: border-box;
-	  -moz-box-sizing: border-box;
-	  -webkit-box-sizing: border-box;
-	}
-	
-	.topLabel
-	{
-	  font-weight: bold;
-	  margin-right: 5px;
-	}
-	
-	.templateDetails
-	{
-	  margin-left: 20px;
-	  margin-right: 15px;
-	}
-	
-	.textBox
-	{
-	  width: 100%;
-	  padding: 2px;
-	  margin-bottom: 5px;
-	}
-	
-	.optionsIcon
-	{
-	  vertical-align: middle;
-	  float: left;
-	  margin-right: 20px;
-	}
-	
-	.defaultOutputLabel
-	{
-	  font-weight: bold;
+   <ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
+   <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
+   @external .gwt-Label;
+   
+   .fillHeight
+   {
+     height: 100%;
+   }
+   
+   .templatePanel
+   {
+     margin-bottom: 15px;
+   }
+   
+   .templateList
+   {
+     box-sizing: border-box;
+     -moz-box-sizing: border-box;
+     -webkit-box-sizing: border-box;
+   }
+   
+   .topLabel
+   {
+     font-weight: bold;
+     margin-right: 5px;
+   }
+   
+   .templateDetails
+   {
+     margin-left: 20px;
+     margin-right: 15px;
+   }
+   
+   .textBox
+   {
+     width: 100%;
+     padding: 2px;
+     margin-bottom: 5px;
+   }
+   
+   .optionsIcon
+   {
+     vertical-align: middle;
+     float: left;
+     margin-right: 20px;
+   }
+   
+   .defaultOutputLabel
+   {
+     font-weight: bold;
      margin-bottom: 7px;
      margin-top: 14px;
-	}
-	
-	.outputFormatChoice
-	{
+   }
+   
+   .outputFormatChoice
+   {
      font-size: 110%;
-	}
-	
-	.outputFormatDetails
-	{
+   }
+   
+   .outputFormatDetails
+   {
      margin-top: 3px;
      margin-left: 5px;
      color: #3c474d;
-	}
-	
-	.outputFormatIcon
-	{
-	  vertical-align: middle;
-	  margin-right: 15px;
-	  float: right;
-	}
-	
-	.outputFormat
-	{
-	  margin-bottom: 7px;
+   }
+   
+   .outputFormatIcon
+   {
+     vertical-align: middle;
+     margin-right: 15px;
+     float: right;
+   }
+   
+   .outputFormat
+   {
+     margin-bottom: 7px;
      padding-top: 5px;
      padding-bottom: 5px;
-	}
-	
-	.outputFormatName
-	{
-	  margin-left: 3px;
-	}
-	
-	.textCol
-	{
-	  width: 80%;
-	}
-	
-	.shinyInfoHeader
-	{
+   }
+   
+   .outputFormatName
+   {
+     margin-left: 3px;
+   }
+   
+   .textCol
+   {
+     width: 80%;
+   }
+   
+   .shinyInfoHeader
+   {
      margin-top: 25px;
      margin-bottom: 7px;
-	}
-	
-	.shinyInfoHeader .gwt-Label
+   }
+   
+   .shinyInfoHeader .gwt-Label
    {
-	  font-weight:bold;
-	}
-	
-	.shinyInfoPanel
-	{
-	  margin-bottom: 7px;
-	}
-	
-	</ui:style>
-	<g:HTMLPanel>
-	<g:HorizontalPanel height="375px" styleName="{style.templatePanel}">
+     font-weight:bold;
+   }
+   
+   .shinyInfoPanel
+   {
+     margin-bottom: 7px;
+   }
+   
+   </ui:style>
+   <g:HTMLPanel>
+   <g:HorizontalPanel height="375px" styleName="{style.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
                 styleName="{style.fillHeight} {style.templateList}" 
                 width="150px"></rw:WidgetListBox>
      <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
         <g:HTMLPanel ui:field="newTemplatePanel_">
-           <g:Grid width="100%" cellSpacing="0" cellPadding="0">
+           <g:Grid ui:field="formGrid_" width="100%" cellSpacing="0" cellPadding="0">
              <g:row>
-               <g:customCell><g:Label styleName="{style.topLabel}" 
-                              text="Title:"></g:Label></g:customCell>
+               <g:customCell><rw:FormLabel ui:field="lblTitle_" styleName="{style.topLabel}" 
+                              text="Title:"></rw:FormLabel></g:customCell>
                <g:customCell styleName="{style.textCol}">
                  <g:TextBox styleName="{style.textBox}" 
                             ui:field="txtTitle_"></g:TextBox>
                </g:customCell>
               </g:row>
               <g:row>
-                <g:customCell><g:Label styleName="{style.topLabel}" 
-                         text="Author:"></g:Label></g:customCell>
+                <g:customCell><rw:FormLabel ui:field="lblAuthor_" styleName="{style.topLabel}" 
+                         text="Author:"></rw:FormLabel></g:customCell>
                 <g:customCell><g:TextBox styleName="{style.textBox}"
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>
@@ -147,10 +147,10 @@
         </g:HTMLPanel>
         <g:HTMLPanel styleName="{style.shinyInfoPanel}"
                         ui:field="shinyInfoPanel_" visible="false">
-	        <rc:HelpLink styleName="{style.shinyInfoHeader}">
-	        </rc:HelpLink>
+           <rc:HelpLink styleName="{style.shinyInfoHeader}">
+           </rc:HelpLink>
         </g:HTMLPanel>
      </g:HTMLPanel>
-	</g:HorizontalPanel>
-	</g:HTMLPanel>
+   </g:HorizontalPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 

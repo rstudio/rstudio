@@ -40,7 +40,6 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
@@ -120,18 +119,39 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
+   // (we implement a poor man's shell arguments parser here:
+   // consider a true solution using e.g. a tokenizer)
    try
    {
-      boost::regex re("[ \\t]-(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
-      boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
-      boost::sregex_token_iterator end;
+      boost::regex re(
+               "([ \\t])"                           // look for preceding space
+               "(-(?:isysroot|isystem|std|[IDif]))" // find flags we care about
+               "([ \\t]+)?"                         // allow for optional whitespace
+               "(\\\"[^\\\"]+\\\"|[^ ]+)");         // parse the argument passed
+
+      boost::sregex_iterator it(line.begin(), line.end(), re);
+      boost::sregex_iterator end;
       for ( ; it != end; ++it)
       {
-         // remove quotes and add it to the compile args
-         std::string arg = *it;
-         boost::algorithm::trim_all(arg);
-         boost::algorithm::replace_all(arg, "\"", "");
-         compileArgs.push_back(arg);
+         boost::smatch match = *it;
+
+         std::string whitespace = match[3];
+         if (whitespace.empty())
+         {
+            std::string argument = match[2] + match[4];
+            boost::algorithm::replace_all(argument, "\"", "");
+            compileArgs.push_back(argument);
+         }
+         else
+         {
+            std::string first = match[2];
+            boost::algorithm::replace_all(first, "\"", "");
+            compileArgs.push_back(first);
+
+            std::string second = match[4];
+            boost::algorithm::replace_all(second, "\"", "");
+            compileArgs.push_back(second);
+         }
       }
    }
    CATCH_UNEXPECTED_EXCEPTION;
@@ -402,9 +422,29 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       }
    }
 
+   // try to generate an appropriate name for the C++ source file.
+   // if we have Makevars / Makevars.site, they may define OBJECT
+   // targets; if we pick a file name not matching any OBJECT target
+   // then R CMD SHLIB will fail. (technically this implies that we
+   // need OBJECT-specific compilation configs but in practice one
+   // often just enumerates each OBJECT explicitly and re-uses the
+   // same compilation config for each file)
+   std::string filename =
+         kCompilationDbPrefix + core::system::generateUuid() + ".cpp";
+
+   std::vector<FilePath> children;
+   srcDir.children(&children);
+   for (const FilePath& child : children)
+   {
+      if (child.extension() == ".cpp")
+      {
+         filename = child.filename();
+         break;
+      }
+   }
+
    // call R CMD SHLIB on a temp file to capture the compilation args
-   FilePath tempSrcFile = tempDir.childPath(
-          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
+   FilePath tempSrcFile = tempDir.childPath(filename);
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
    // remove the tempDir
@@ -699,6 +739,10 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
    return units;
 }
 
+void RCompilationDatabase::rebuildPackageCompilationDatabase()
+{
+   packageBuildFileHash_.clear();
+}
 
 bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 {
@@ -839,6 +883,7 @@ RCompilationDatabase::CompilationConfig
    // parse the compilation results
    std::vector<std::string> compileArgs = parseCompilationResults(
                                                            result.stdOut);
+
    std::copy(compileArgs.begin(),
              compileArgs.end(),
              std::back_inserter(args));
@@ -1037,10 +1082,6 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // start with base args
       std::vector<std::string> args = baseCompilationArgs(true);
 
-      // -std argument
-      if (!stdArg.empty())
-         args.push_back(stdArg);
-
       // run R CMD SHLIB
       core::system::Options env = compilationEnvironment();
       FilePath tempSrcFile = module_context::tempFile("clang", "cpp");
@@ -1050,6 +1091,15 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // add this package's path to the args
       std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
       std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));
+
+      // enforce compilation with requested standard
+      core::algorithm::expel_if(args, [](const std::string& arg) {
+         return arg.find("-std=") == 0;
+      });
+
+      // add in '-std' argument (if any)
+      if (!stdArg.empty())
+         args.push_back(stdArg);
 
       // create args array
       core::system::ProcessArgs argsArray(args);
@@ -1109,6 +1159,7 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    static RCompilationDatabase instance;
 
    CompilationDatabase compilationDatabase;
+
    compilationDatabase.hasTranslationUnit =
       boost::bind(&RCompilationDatabase::isProjectTranslationUnit,
                   &instance, _1);
@@ -1118,6 +1169,10 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1, _2);
+   compilationDatabase.rebuildPackageCompilationDatabase =
+         boost::bind(&RCompilationDatabase::rebuildPackageCompilationDatabase,
+                     &instance);
+
    return compilationDatabase;
 }
 

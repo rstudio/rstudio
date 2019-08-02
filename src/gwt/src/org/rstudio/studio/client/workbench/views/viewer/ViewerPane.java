@@ -26,6 +26,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -66,7 +67,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Viewer Tab");
       
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
@@ -82,10 +83,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
       
-      exportButton_ = new ToolbarButton(
-            "Export", new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+      exportButton_ = new ToolbarMenuButton(
+            "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
-      toolbar_.addLeftWidget(exportButton_);  
+      toolbar_.addLeftWidget(exportButton_);
       exportButton_.setVisible(false);
       exportButtonSeparator_.setVisible(false);
       
@@ -150,7 +151,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame();
+      frame_ = new RStudioFrame("Viewer Pane");
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
       navigate(ABOUT_BLANK, false);
@@ -191,7 +192,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setManuallyHidden(false);
       publishButton_.setShinyPreview(params);
       toolbar_.invalidateSeparators();
-   };
+   }
    
    @Override
    public void previewPlumber(PlumberAPIParams params) 
@@ -200,7 +201,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       publishButton_.setManuallyHidden(false);
       publishButton_.setPlumberPreview(params);
       toolbar_.invalidateSeparators();
-   };
+   }
     
    @Override
    public void setExportEnabled(boolean exportEnabled)
@@ -283,7 +284,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       // non-local; before changing the URL, set the iframe to be sandboxed
       // based on whether we're working with a local URL (note that prior to
       // RStudio 1.2 local URLs were forbidden entirely)
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          if (URIUtils.isLocalUrl(url))
          {
@@ -346,13 +347,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private RSConnectPublishButton publishButton_;
    
-   private ToolbarButton exportButton_;
+   private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
 
    public static final String ABOUT_BLANK = "about:blank";
 
-   private static boolean initializedMessageListeners_;
-   private static ViewerPane activeViewerPane_;
-   
    private HtmlMessageListener htmlMessageListener_;
 }

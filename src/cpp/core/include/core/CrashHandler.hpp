@@ -55,8 +55,19 @@ bool isHandlerEnabled();
 // explicitly enables/disables crash handling for this particular user
 // this overwrites the user settings file on disk
 // note: this does not actually start/stop the handler for this process
-// and does not take affect until the process is restarted
+// and does not take effect until the process is restarted
 Error setUserHandlerEnabled(bool handlerEnabled);
+
+// returns whether or not this user has been prompted for permission
+// to collect crash dumps
+// note: this does not say whether permission has been granted, only
+// whether or not the user has been prompted
+bool hasUserBeenPromptedForPermission();
+
+// marks a special file which indicates that the user has been prompted
+// for permission to collect crash dumps - subsequent calls to hasUserBeenPromptedForPermission
+// will return true
+Error setUserHasBeenPromptedForPermission();
 
 } // namespace crash_handler
 } // namespace core

@@ -1,7 +1,7 @@
 /*
  * FileTypeRegistry.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,8 +43,8 @@ public class FileTypeRegistry
    private static final FileIconResources ICONS = FileIconResources.INSTANCE;
 
    public static final TextFileType TEXT =
-         new TextFileType("text", "Text File", EditorLanguage.LANG_PLAIN, "",
-                          new ImageResource2x(ICONS.iconText2x()),
+         new TextFileType("text", FileIcon.TEXT_ICON.getDescription(), EditorLanguage.LANG_PLAIN, "",
+                          FileIcon.TEXT_ICON.getImageResource(),
                           true,
                           false, false, false, false, false, false, false, false, false, true, false, false);
 
@@ -433,18 +433,18 @@ public class FileTypeRegistry
       register("*.snippets", SNIPPETS, new ImageResource2x(icons.iconSnippets2x()));
       register("*.Rprofvis", PROFILER, new ImageResource2x(icons.iconRprofile2x()));
 
-      registerIcon(".jpg", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".jpeg", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".gif", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".bmp", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".tiff", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".tif", new ImageResource2x(icons.iconPng2x()));
-      registerIcon(".png", new ImageResource2x(icons.iconPng2x()));
+      registerIcon(".jpg", new FileIcon(new ImageResource2x(icons.iconPng2x()), "JPG"));
+      registerIcon(".jpeg", new FileIcon(new ImageResource2x(icons.iconPng2x()), "JPEG"));
+      registerIcon(".gif", new FileIcon(new ImageResource2x(icons.iconPng2x()), "GIF"));
+      registerIcon(".bmp", new FileIcon(new ImageResource2x(icons.iconPng2x()), "BMP"));
+      registerIcon(".tiff", new FileIcon(new ImageResource2x(icons.iconPng2x()), "TIFF"));
+      registerIcon(".tif", new FileIcon(new ImageResource2x(icons.iconPng2x()), "TIF"));
+      registerIcon(".png", new FileIcon(new ImageResource2x(icons.iconPng2x()), "PNG"));
 
-      registerIcon(".pdf", new ImageResource2x(icons.iconPdf2x()));
-      registerIcon(".csv", new ImageResource2x(icons.iconCsv2x()));
-      registerIcon(".docx", new ImageResource2x(icons.iconWord2x()));
-      registerIcon(".pptx", new ImageResource2x(icons.iconPowerpoint2x()));
+      registerIcon(".pdf", FileIcon.PDF_ICON);
+      registerIcon(".csv", FileIcon.CSV_ICON);
+      registerIcon(".docx", new FileIcon(new ImageResource2x(icons.iconWord2x()), "DOCX"));
+      registerIcon(".pptx", new FileIcon(new ImageResource2x(icons.iconPowerpoint2x()), "PPTX"));
 
       for (FileType fileType : FileType.ALL_FILE_TYPES)
       {
@@ -633,22 +633,22 @@ public class FileTypeRegistry
          return TEXT;
    }
 
-   public ImageResource getIconForFile(FileSystemItem file)
+   public FileIcon getIconForFile(FileSystemItem file)
    {
       if (file.isDirectory())
       {
          if (file.isPublicFolder())
-            return new ImageResource2x(ICONS.iconPublicFolder2x());
+            return FileIcon.PUBLIC_FOLDER_ICON;
          else
-            return new ImageResource2x(ICONS.iconFolder2x());
+            return FileIcon.FOLDER_ICON;
       }
 
       return getIconForFilename(file.getName());
    }
 
-   public ImageResource getIconForFilename(String filename)
+   public FileIcon getIconForFilename(String filename)
    {
-      ImageResource icon = iconsByFilename_.get(filename.toLowerCase());
+      FileIcon icon = iconsByFilename_.get(filename.toLowerCase());
       if (icon != null)
          return icon;
       String ext = FileSystemItem.getExtensionFromPath(filename);
@@ -656,7 +656,7 @@ public class FileTypeRegistry
       if (icon != null)
          return icon;
 
-      return new ImageResource2x(ICONS.iconText2x());
+      return TEXT.getDefaultFileIcon();
    }
 
    private void register(String filespec, FileType fileType, ImageResource icon)
@@ -665,42 +665,50 @@ public class FileTypeRegistry
       {
          String ext = filespec.substring(1).toLowerCase();
          if (ext.equals("."))
+         {
             ext = "";
-         fileTypesByFileExtension_.put(ext,
-                                       fileType);
+         }
+         fileTypesByFileExtension_.put(ext, fileType);
          if (icon != null)
-            iconsByFileExtension_.put(ext, icon);
+         {
+            iconsByFileExtension_.put(
+                  ext,
+                  new FileIcon(icon, fileType.getDefaultFileIcon().getDescription()));
+         }
       }
       else if (filespec.length() == 0)
       {
          fileTypesByFileExtension_.put("", fileType);
          if (icon != null)
-            iconsByFileExtension_.put("", icon);
+         {
+            iconsByFileExtension_.put(
+                  "",
+                  new FileIcon(icon, fileType.getDefaultFileIcon().getDescription()));
+         }
       }
       else
       {
          assert filespec.indexOf("*") < 0 : "Unexpected filespec format";
          fileTypesByFilename_.put(filespec.toLowerCase(), fileType);
          if (icon != null)
-            iconsByFilename_.put(filespec.toLowerCase(), icon);
+         {
+            iconsByFilename_.put(filespec.toLowerCase(),
+                  new FileIcon(icon,
+                        fileType.getDefaultFileIcon().getDescription()));
+         }
       }
    }
 
-   private void registerIcon(String extension, ImageResource icon)
+   private void registerIcon(String extension, FileIcon icon)
    {
       iconsByFileExtension_.put(extension, icon);
    }
 
-   private final HashMap<String, FileType> fileTypesByFileExtension_ =
-         new HashMap<String, FileType>();
-   private final HashMap<String, FileType> fileTypesByFilename_ =
-         new HashMap<String, FileType>();
-   private final HashMap<String, FileType> fileTypesByTypeName_ =
-         new HashMap<String, FileType>();
-   private final HashMap<String, ImageResource> iconsByFileExtension_ =
-         new HashMap<String, ImageResource>();
-   private final HashMap<String, ImageResource> iconsByFilename_ =
-         new HashMap<String, ImageResource>();
+   private final HashMap<String, FileType> fileTypesByFileExtension_ = new HashMap<>();
+   private final HashMap<String, FileType> fileTypesByFilename_ = new HashMap<>();
+   private final HashMap<String, FileType> fileTypesByTypeName_ = new HashMap<>();
+   private final HashMap<String, FileIcon> iconsByFileExtension_ = new HashMap<>();
+   private final HashMap<String, FileIcon> iconsByFilename_ = new HashMap<>();
    private final EventBus eventBus_;
    private final Satellite satellite_;
    private final Session session_;

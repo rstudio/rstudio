@@ -8,6 +8,7 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     cmake \
+    curl \
     expect \
     gcc \
     gcc-c++ \
@@ -32,7 +33,8 @@ RUN yum install -y \
     wget \
     xml-commons-apis \
     zlib-devel \
-    libuser-devel
+    libuser-devel \
+    valgrind
 
 # update gcc for C++11 support
 RUN wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo

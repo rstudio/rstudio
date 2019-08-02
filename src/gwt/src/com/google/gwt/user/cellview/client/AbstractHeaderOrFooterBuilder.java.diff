@@ -1,0 +1,22 @@
+433c433
+<         sortAscIconHtml = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+---
+>         sortAscIconHtml = addAltText(SafeHtmlUtils.fromTrustedString(proto.getHTML()), "Ascending sort");
+440c440
+<         sortDescIconHtml = SafeHtmlUtils.fromTrustedString(proto.getHTML());
+---
+>         sortDescIconHtml = addAltText(SafeHtmlUtils.fromTrustedString(proto.getHTML()), "Descending sort");
+444a445,457
+>   
+>   private static SafeHtml addAltText(SafeHtml html, String altText)
+>   {
+>     String orig = html.asString();
+>     if (!orig.startsWith("<img" ) && !orig.endsWith(">"))
+>       return html;
+> 
+>     String newStr = orig.substring(0, orig.length() - 1) + 
+>           "alt=\"" + 
+>           SafeHtmlUtils.htmlEscape(altText) + 
+>           "\">";
+>     return SafeHtmlUtils.fromTrustedString(newStr);
+>   }

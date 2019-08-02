@@ -20,7 +20,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -90,7 +90,7 @@ public class TextEditingTargetPackageDependencyHelper
    
    @Inject
    private void initialize(EventBus events,
-                           UIPrefs prefs,
+                           UserPrefs prefs,
                            SourceServerOperations server)
    {
       events_ = events;
@@ -154,7 +154,7 @@ public class TextEditingTargetPackageDependencyHelper
    
    // Injected ----
    EventBus events_;
-   UIPrefs prefs_;
+   UserPrefs prefs_;
    SourceServerOperations server_;
    
 }

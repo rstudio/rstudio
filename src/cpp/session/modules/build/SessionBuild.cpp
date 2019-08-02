@@ -49,8 +49,8 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
@@ -377,9 +377,8 @@ private:
       {
           // try to read package from /tests/testthat/filename.R,
           // but ignore errors if not within a package
-          FilePath maybePackage = FilePath::resolveAliasedPath(
-             packagePath.parent().parent().parent().absolutePath(),
-             core::system::userHomePath()
+          FilePath maybePackage = module_context::resolveAliasedPath(
+             packagePath.parent().parent().parent().absolutePath()
           );
 
           pkgInfo_.read(maybePackage);
@@ -941,14 +940,14 @@ private:
       successMessage_ = "R CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(
                   &Build::viewDirAfterFailedCheck,
@@ -1024,7 +1023,7 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!userSettings().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
@@ -1066,14 +1065,14 @@ private:
       successMessage_ = "\nR CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
                                         Build::shared_from_this(),
@@ -2140,35 +2139,12 @@ void onDeferredInit(bool newSession)
 
 Error initialize()
 {
-   R_CallMethodDef canBuildMethodDef ;
-   canBuildMethodDef.name = "rs_canBuildCpp" ;
-   canBuildMethodDef.fun = (DL_FUNC) rs_canBuildCpp ;
-   canBuildMethodDef.numArgs = 0;
-   r::routines::addCallMethod(canBuildMethodDef);
-
-   R_CallMethodDef addRToolsToPathMethodDef ;
-   addRToolsToPathMethodDef.name = "rs_addRToolsToPath" ;
-   addRToolsToPathMethodDef.fun = (DL_FUNC) rs_addRToolsToPath ;
-   addRToolsToPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(addRToolsToPathMethodDef);
-
-   R_CallMethodDef restorePreviousPathMethodDef ;
-   restorePreviousPathMethodDef.name = "rs_restorePreviousPath" ;
-   restorePreviousPathMethodDef.fun = (DL_FUNC) rs_restorePreviousPath ;
-   restorePreviousPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(restorePreviousPathMethodDef);
-
-   R_CallMethodDef installPackageMethodDef ;
-   installPackageMethodDef.name = "rs_installPackage" ;
-   installPackageMethodDef.fun = (DL_FUNC) rs_installPackage;
-   installPackageMethodDef.numArgs = 2;
-   r::routines::addCallMethod(installPackageMethodDef);
-
-   R_CallMethodDef installBuildToolsMethodDef;
-   installBuildToolsMethodDef.name = "rs_installBuildTools" ;
-   installBuildToolsMethodDef.fun = (DL_FUNC) rs_installBuildTools;
-   installBuildToolsMethodDef.numArgs = 0;
-   r::routines::addCallMethod(installBuildToolsMethodDef);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_canBuildCpp);
+   RS_REGISTER_CALL_METHOD(rs_addRToolsToPath);
+   RS_REGISTER_CALL_METHOD(rs_restorePreviousPath);
+   RS_REGISTER_CALL_METHOD(rs_installPackage);
+   RS_REGISTER_CALL_METHOD(rs_installBuildTools);
 
    // subscribe to deferredInit for build tools fixup
    module_context::events().onDeferredInit.connect(onDeferredInit);

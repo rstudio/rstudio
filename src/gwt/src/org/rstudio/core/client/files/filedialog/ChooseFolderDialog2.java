@@ -1,7 +1,7 @@
 /*
  * ChooseFolderDialog2.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -30,7 +31,7 @@ public class ChooseFolderDialog2 extends FileSystemDialog
                               boolean allowFolderCreation,
                               ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, label, context, "", allowFolderCreation, operation);
+      super(title, null, Roles.getDialogRole(), label, context, "", allowFolderCreation, operation);
    }
 
    @Override

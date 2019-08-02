@@ -98,6 +98,8 @@ target_link_libraries(rstudio-r
 )
 
 # install rules
-file(GLOB R_SRC_FILES "R/*.R")
-install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
+if (NOT RSTUDIO_SESSION_WIN32)
+   file(GLOB R_SRC_FILES "R/*.R")
+   install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
+endif()
 

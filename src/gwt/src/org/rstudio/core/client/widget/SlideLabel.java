@@ -1,7 +1,7 @@
 /*
  * SlideLabel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -131,6 +132,7 @@ public class SlideLabel extends Composite
                                           LayoutPanel panel)
    {
       final SlideLabel slideLabel = new SlideLabel(showProgressSpinner);
+      
       slideLabel.setText(label, asHtml);
       panel.add(slideLabel);
       panel.setWidgetLeftRight(slideLabel,
@@ -153,8 +155,11 @@ public class SlideLabel extends Composite
          progress_.getStyle().setDisplay(Style.Display.NONE);
       curtain_.setHeight("0px");
 
-      cancel_.setVisible(false);
-
+      setCancelVisible(false);
+      Roles.getPresentationRole().set(border_);
+      Roles.getProgressbarRole().set(innerTable_);
+      progress_.setAlt("Spinner");
+      innerTable_.setAttribute("aria-hidden", "true");
       cancel_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -211,6 +216,7 @@ public class SlideLabel extends Composite
                protected void onStart()
                {
                   setVisible(true);
+                  innerTable_.removeAttribute("aria-hidden");
                   curtain_.setHeight("0px");
                   height = content_.getOffsetHeight() + 14 + 14;
                   super.onStart();
@@ -278,6 +284,7 @@ public class SlideLabel extends Composite
             currentAnimation_ = null;
             super.onComplete();
             setVisible(false);
+            innerTable_.setAttribute("aria-hidden", "true");
             if (executeOnComplete != null)
                executeOnComplete.execute();
          }
@@ -288,7 +295,7 @@ public class SlideLabel extends Composite
    public void onCancel(final Operation onCancel)
    {
       onCancel_ = onCancel;
-      cancel_.setVisible(onCancel != null);
+      setCancelVisible(onCancel != null);
    }
 
    private void setHeight(double height)
@@ -311,6 +318,17 @@ public class SlideLabel extends Composite
       }
    }
 
+   private void setCancelVisible(boolean visible)
+   {
+      cancel_.setVisible(visible);
+      
+      // also disable so it isn't picked up as potentially focusable via Tab key
+      if (!visible)
+         cancel_.getElement().setAttribute("disabled", "");
+      else
+         cancel_.getElement().removeAttribute("disabled");
+   }
+
    @UiField
    HTMLPanel curtain_;
    @UiField
@@ -321,7 +339,8 @@ public class SlideLabel extends Composite
    ImageElement progress_;
    @UiField
    SmallButton cancel_;
-
+   @UiField
+   TableElement innerTable_;
    private Animation currentAnimation_;
    private Timer currentAutoHideTimer_;
    private Operation onCancel_;

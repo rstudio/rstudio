@@ -1,7 +1,7 @@
 #
 # SessionShinyViewer.R
 #
-# Copyright (C) 2009-15 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -14,41 +14,41 @@
 #
 
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), 2))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "pane"))
 }, attrs = list(shinyViewerType = 2))
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), 3))
-}, attrs = list(shinyViewerType = 3))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "window"))
+}, attrs = list(shinyViewerType = "window"))
 
 .rs.addFunction("invokeShinyWindowExternal", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), 4))
-}, attrs = list(shinyViewerType = 4))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "browser"))
+}, attrs = list(shinyViewerType = "browser"))
 
 .rs.addFunction("setShinyViewerType", function(type) {
-   if (type == 1)
+   if (identical(type, "none"))
       options(shiny.launch.browser = FALSE)
-   else if (type == 2)
+   else if (identical(type, "pane"))
       options(shiny.launch.browser = .rs.invokeShinyPaneViewer)
-   else if (type == 3)
+   else if (identical(type, "window"))
       options(shiny.launch.browser = .rs.invokeShinyWindowViewer)
-   else if (type == 4)
+   else if (identical(type, "browser"))
       options(shiny.launch.browser = .rs.invokeShinyWindowExternal)
 })
 
 .rs.addFunction("getShinyViewerType", function() {
    viewer <- getOption("shiny.launch.browser")
    if (identical(viewer, FALSE))
-      return(1)
+      return("none")
    else if (identical(viewer, TRUE))
-      return(4)
+      return("browser")
    else if (is.function(viewer) && is.numeric(attr(viewer, "shinyViewerType")))
       return(attr(viewer, "shinyViewerType"))
-   return(0)
+   return("user")
 })
 
 .rs.addJsonRpcHandler("get_shiny_viewer_type", function() {
-   list(viewerType = .rs.scalar(.rs.getShinyViewerType()))
+   .rs.scalar(.rs.getShinyViewerType())
 })
 
 .rs.addJsonRpcHandler("stop_shiny_app", function()

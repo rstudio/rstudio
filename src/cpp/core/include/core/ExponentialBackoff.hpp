@@ -61,7 +61,7 @@ private:
    boost::function<void(ExponentialBackoffPtr)> action_;
 
    boost::posix_time::time_duration lastWait_;
-   boost::mutex mutex_;
+   boost::recursive_mutex mutex_;
 };
 
 } // namespace core 

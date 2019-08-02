@@ -1,7 +1,7 @@
 /*
  * FileCommandToolbar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,18 +20,20 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.UIPrefMenuItem;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class FileCommandToolbar extends Toolbar
 {
    @Inject
-   public FileCommandToolbar(Commands commands, Session session, UIPrefs prefs)
+   public FileCommandToolbar(Commands commands, Session session, UserPrefs prefs)
    {
+      super("File Commands");
       StandardIcons icons = StandardIcons.INSTANCE;
 
       addLeftWidget(commands.newFolder().createToolbarButton());
@@ -55,14 +57,15 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(new UIPrefMenuItem<Boolean>(
+      moreMenu.addItem(new UserPrefMenuItem<Boolean>(
             prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
-      ToolbarButton moreButton = new ToolbarButton("More",
-                                                  new ImageResource2x(icons.more_actions2x()),
-                                                  moreMenu);
+      ToolbarMenuButton moreButton = new ToolbarMenuButton(
+            "More",
+            "More file commands",
+            new ImageResource2x(icons.more_actions2x()),
+            moreMenu);
       addLeftWidget(moreButton);
-      
 
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();

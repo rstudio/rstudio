@@ -134,7 +134,8 @@ core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8 = false);
-      
+core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
+
 // create SEXP from c++ type
 SEXP create(SEXP valueSEXP, Protect* pProtect);
 SEXP create(const core::json::Value& value, Protect* pProtect);

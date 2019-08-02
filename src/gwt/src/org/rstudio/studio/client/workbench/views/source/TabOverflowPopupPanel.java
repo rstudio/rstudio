@@ -1,7 +1,7 @@
 /*
  * TabOverflowPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,7 +115,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
       DockPanel dockPanel = new DockPanel();
 
-      search_ = new SearchWidget(new DocsOracle());
+      search_ = new SearchWidget("Search tabs", new DocsOracle());
       search_.addValueChangeHandler(this);
 
       search_.getElement().getStyle().setMarginRight(0, Unit.PX);

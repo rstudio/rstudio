@@ -1,7 +1,7 @@
 /*
  * TerminalPopupMenu.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -114,8 +115,9 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       {
          String buttonText = "Terminal";
          
-         toolbarButton_ = new ToolbarButton(
+         toolbarButton_ = new ToolbarMenuButton(
                 buttonText, 
+                ToolbarButton.NoTitle,
                 StandardIcons.INSTANCE.empty_command(),
                 this, 
                 false);
@@ -302,7 +304,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       return null;
    }
 
-   private ToolbarButton toolbarButton_;
+   private ToolbarMenuButton toolbarButton_;
    private String activeTerminalHandle_;
    private TerminalList terminals_;
 

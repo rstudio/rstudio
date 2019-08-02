@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -406,8 +407,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));
       menu.addItem(commands_.goToDefinition().createMenuItem(false));
-      ToolbarButton codeTools = new ToolbarButton("", icon, menu);
-      codeTools.setTitle("Code Tools");
+      ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
       toolbar.addLeftWidget(codeTools);
       
       toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
@@ -419,7 +419,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    
    private Toolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Code Browser Second");
       
       contextWidget_ = new CodeBrowserContextWidget(RES.styles());
       contextWidget_.addSelectionHandler(new SelectionHandler<String> () {

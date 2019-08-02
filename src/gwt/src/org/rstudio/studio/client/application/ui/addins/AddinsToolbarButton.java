@@ -1,7 +1,7 @@
 /*
  * AddinsToolbarButton.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -51,11 +52,12 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
-public class AddinsToolbarButton extends ToolbarButton
+public class AddinsToolbarButton extends ToolbarMenuButton
 {
    public AddinsToolbarButton()
    {
       super("Addins",
+            ToolbarButton.NoTitle,
             CoreResources.INSTANCE.iconEmpty(),
             new ScrollableToolbarPopupMenu() 
             {
@@ -98,7 +100,7 @@ public class AddinsToolbarButton extends ToolbarButton
          }
       });
       
-      searchWidget_ = new SearchWidget();
+      searchWidget_ = new SearchWidget("Search for addins");
       searchValueChangeTimer_ = new Timer()
       {
          @Override

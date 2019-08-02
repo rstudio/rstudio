@@ -13,6 +13,10 @@
  *
  */
 
+#ifndef RSTUDIO_VERSION
+#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
+#endif
+
 #cmakedefine HAVE_SA_NOCLDWAIT
 #cmakedefine HAVE_INOTIFY_INIT1
 #cmakedefine HAVE_SO_PEERCRED

@@ -1,7 +1,7 @@
 /*
  * BranchToolbarButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,13 +59,14 @@ import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
-public class BranchToolbarButton extends ToolbarButton
+public class BranchToolbarButton extends ToolbarMenuButton
                                  implements HasValueChangeHandlers<String>,
                                             VcsRefreshHandler
 {
@@ -91,13 +92,12 @@ public class BranchToolbarButton extends ToolbarButton
    @Inject
    public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
-      super("",
+      super(ToolbarButton.NoText,
+            "Switch branch",
             StandardIcons.INSTANCE.empty_command(),
             new ScrollableToolbarPopupMenu());
       
       pVcsState_ = pVcsState;
-
-      setTitle("Switch branch");
 
       new WidgetHandlerRegistration(this)
       {
@@ -155,7 +155,7 @@ public class BranchToolbarButton extends ToolbarButton
          }
       });
       
-      searchWidget_ = new SearchWidget();
+      searchWidget_ = new SearchWidget("Search by branch name");
       
       searchValueChangeTimer_ = new Timer()
       {

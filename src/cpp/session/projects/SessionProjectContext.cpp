@@ -21,6 +21,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
@@ -33,12 +34,14 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionScopes.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <sys/stat.h>
 
@@ -54,28 +57,31 @@ namespace projects {
 
 namespace {
 
-bool canWriteToProjectDir(const FilePath& projectDirPath)
+static std::unique_ptr<r_util::RPackageInfo> s_pIndexedPackageInfo = nullptr;
+
+void onDescriptionChanged()
 {
-   std::string prefix(
-#ifndef _WIN32
-   "."
-#endif 
-   "write-test-");
+   s_pIndexedPackageInfo.reset();
 
-   FilePath testFile = projectDirPath.complete(prefix +
-         core::system::generateUuid());
-   Error error = core::writeStringToFile(testFile, "test");
+   std::unique_ptr<r_util::RPackageInfo> pInfo(new r_util::RPackageInfo);
+   Error error = pInfo->read(projectContext().buildTargetPath());
    if (error)
-   {
-      return false;
-   }
-   else
-   {
-      error = testFile.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
+      LOG_ERROR(error);
 
-      return true;
+   pInfo.swap(s_pIndexedPackageInfo);
+}
+
+void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   FilePath descPath = projectContext().buildTargetPath().childPath("DESCRIPTION");
+   for (auto& event : events)
+   {
+      auto& info = event.fileInfo();
+      if (info.absolutePath() == descPath.absolutePath())
+      {
+         onDescriptionChanged();
+         break;
+      }
    }
 }
 
@@ -105,7 +111,7 @@ Error computeScratchPaths(const FilePath& projectFile,
    // now add context id to form scratch path
    if (pScratchPath)
    {
-      FilePath scratchPath = projectUserDir.complete(userSettings().contextId());
+      FilePath scratchPath = projectUserDir.complete(prefs::userState().contextId());
       Error error = scratchPath.ensureDirectory();
       if (error)
          return error;
@@ -146,13 +152,7 @@ FilePath ProjectContext::oldScratchPath() const
    if (!projectUserDir.exists())
       return FilePath();
 
-   // see if an old scratch path using the old contextId is present
-   // and if so return it
-   FilePath oldPath = projectUserDir.complete(userSettings().oldContextId());
-   if (oldPath.exists())
-      return oldPath;
-   else
-      return FilePath();
+   return FilePath();
 }
 
 FilePath ProjectContext::websitePath() const
@@ -179,7 +179,7 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 
 // NOTE: this function is called very early in the process lifetime (from
 // session::projects::startup) so can only have limited dependencies.
-// specifically, it can rely on userSettings() being available, but can
+// specifically, it can rely on userPrefs() being available, but can
 // definitely NOT rely on calling into R. For initialization related tasks
 // that need to run after R is available use the implementation of the
 // initialize method (below)
@@ -196,7 +196,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // test for writeabilty of parent
-   if (!canWriteToProjectDir(projectFile.parent()))
+   if (!file_utils::isDirectoryWriteable(projectFile.parent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
       return systemError(boost::system::errc::permission_denied,
@@ -207,7 +207,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
    FilePath projectUserPath = projectFile.parent().complete(".Rproj.user");
    if (projectUserPath.exists())
    {
-      FilePath contextPath = projectUserPath.complete(userSettings().contextId());
+      FilePath contextPath = projectUserPath.complete(prefs::userState().contextId());
       *pIsNewProject = !contextPath.exists();
    }
    else
@@ -274,7 +274,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 void ProjectContext::augmentRbuildignore()
 {
-   if (r_util::isPackageDirectory(directory()))
+   if (isPackageProject())
    {
       // constants
       const char * const kIgnoreRproj = R"(^.*\.Rproj$)";
@@ -404,15 +404,8 @@ Error ProjectContext::initialize()
 {
    using namespace module_context;
 
-   r::routines::registerCallMethod(
-            "rs_getProjectDirectory",
-            (DL_FUNC) rs_getProjectDirectory,
-            0);
-   
-   r::routines::registerCallMethod(
-            "rs_hasFileMonitor",
-            (DL_FUNC) rs_hasFileMonitor,
-            0);
+   RS_REGISTER_CALL_METHOD(rs_getProjectDirectory);
+   RS_REGISTER_CALL_METHOD(rs_hasFileMonitor);
 
    std::string projectId(kProjectNone);
 
@@ -466,6 +459,10 @@ Error ProjectContext::initialize()
 
 void ProjectContext::onDeferredInit(bool newSession)
 {
+   // update DESCRIPTION file index
+   if (projectContext().isPackageProject())
+      onDescriptionChanged();
+
    // kickoff file monitoring for this directory
    using boost::bind;
    core::system::file_monitor::Callbacks cb;
@@ -502,6 +499,9 @@ void ProjectContext::fileMonitorFilesChanged(
 {
    // notify client (gwt)
    module_context::enqueFileChangedEvents(directory(), events);
+
+   // own handler
+   onProjectFilesChanged(events);
 
    // notify subscribers
    onFilesChanged_(events);
@@ -652,15 +652,15 @@ void ProjectContext::updatePackageInfo()
 json::Object ProjectContext::uiPrefs() const
 {
    json::Object uiPrefs;
-   uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
-   uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
-   uiPrefs["auto_append_newline"] = config_.autoAppendNewline;
-   uiPrefs["strip_trailing_whitespace"] = config_.stripTrailingWhitespace;
-   uiPrefs["default_encoding"] = defaultEncoding();
-   uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
-   uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
-   uiPrefs["root_document"] = config_.rootDocument;
-   uiPrefs["use_roxygen"] = !config_.packageRoxygenize.empty();
+   uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
+   uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
+   uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
+   uiPrefs[kDefaultEncoding] = defaultEncoding();
+   uiPrefs[kDefaultSweaveEngine] = config_.defaultSweaveEngine;
+   uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
+   uiPrefs[kRootDocument] = config_.rootDocument;
+   uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
    return uiPrefs;
 }
 
@@ -679,7 +679,7 @@ json::Array ProjectContext::openDocs() const
 r_util::RProjectBuildDefaults ProjectContext::buildDefaults()
 {
    r_util::RProjectBuildDefaults buildDefaults;
-   buildDefaults.useDevtools = userSettings().useDevtools();
+   buildDefaults.useDevtools = prefs::userPrefs().useDevtools();
    return buildDefaults;
 }
 
@@ -688,21 +688,21 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    // setup defaults for project file
    r_util::RProjectConfig defaultConfig;
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
-   defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
-   defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
-   defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
+   defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
+   defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
+   defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
-                              userSettings().stripTrailingWhitespace();
-   if (!userSettings().defaultEncoding().empty())
-      defaultConfig.encoding = userSettings().defaultEncoding();
+                              prefs::userPrefs().stripTrailingWhitespace();
+   if (!prefs::userPrefs().defaultEncoding().empty())
+      defaultConfig.encoding = prefs::userPrefs().defaultEncoding();
    else
       defaultConfig.encoding = "UTF-8";
-   defaultConfig.defaultSweaveEngine = userSettings().defaultSweaveEngine();
-   defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
+   defaultConfig.defaultSweaveEngine = prefs::userPrefs().defaultSweaveEngine();
+   defaultConfig.defaultLatexProgram = prefs::userPrefs().defaultLatexProgram();
    defaultConfig.rootDocument = std::string();
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
-   defaultConfig.packageUseDevtools = userSettings().useDevtools();
+   defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
    return defaultConfig;
 }
 
@@ -824,6 +824,9 @@ void ProjectContext::setWebsiteOutputFormat(
 
 bool ProjectContext::isPackageProject()
 {
+   if (s_pIndexedPackageInfo != nullptr)
+      return s_pIndexedPackageInfo->type() == kPackageType;
+
    return r_util::isPackageDirectory(directory());
 }
 

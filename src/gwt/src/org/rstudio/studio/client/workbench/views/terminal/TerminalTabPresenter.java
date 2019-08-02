@@ -23,7 +23,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
@@ -130,12 +130,12 @@ public class TerminalTabPresenter extends BasePresenter
    @Inject
    public TerminalTabPresenter(final Display view,
                                TerminalHelper terminalHelper,
-                               UIPrefs uiPrefs)
+                               UserPrefs uiPrefs)
    {
       super(view);
       view_ = view;
       terminalHelper_ = terminalHelper;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
    }
 
    @Handler
@@ -259,7 +259,7 @@ public class TerminalTabPresenter extends BasePresenter
          onConfirmed.execute();
       }, caption, "Are you sure you want to close all terminals? Any running jobs " +
             "will be stopped",
-            uiPrefs_.terminalBusyMode().getValue());
+            userPrefs_.busyDetection().getValue());
    }
 
    private void shutDownTerminals()
@@ -270,5 +270,5 @@ public class TerminalTabPresenter extends BasePresenter
    // Injected ---- 
    private final Display view_;
    private final TerminalHelper terminalHelper_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
 }

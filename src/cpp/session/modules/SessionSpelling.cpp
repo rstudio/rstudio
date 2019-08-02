@@ -30,7 +30,7 @@
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
 
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -80,7 +80,7 @@ FilePath userDictionariesDir()
 
 void syncSpellingEngineDictionaries()
 {
-   s_pSpellingEngine->useDictionary(userSettings().spellingLanguage());
+   s_pSpellingEngine->useDictionary(prefs::userPrefs().spellingDictionaryLanguage());
 }
 
 
@@ -298,8 +298,11 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 }
 
 // reset dictionary on user settings changed
-void onUserSettingsChanged()
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
+   if (pref != kSpellingDictionaryLanguage)
+      return;
+
    syncSpellingEngineDictionaries();
 }
 
@@ -364,13 +367,13 @@ Error initialize()
    // initialize spelling engine
    using namespace rstudio::core::spelling;
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
-                                             userSettings().spellingLanguage(),
-                                             hunspellDictionaryManager(),
-                                             &r::util::iconvstr);
+      prefs::userPrefs().spellingDictionaryLanguage(),
+      hunspellDictionaryManager(),
+      &r::util::iconvstr);
    s_pSpellingEngine.reset(pHunspell);
 
    // connect to user settings changed
-   userSettings().onChanged.connect(onUserSettingsChanged);
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
    // register rpc methods
    using boost::bind;

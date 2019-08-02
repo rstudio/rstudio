@@ -1,7 +1,7 @@
 /*
  * LabelWithHelp.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,19 +22,31 @@ import com.google.gwt.user.client.ui.Label;
 
 public class LabelWithHelp extends Composite
 {
-   public LabelWithHelp(String text, String helpTopic)
+   /**
+    * @param text label text
+    * @param helpTopic help topic identifier
+    * @param title help button a11y title
+    */
+   public LabelWithHelp(String text, String helpTopic, String title)
    {
-      this(text, helpTopic, true);
+      this(text, helpTopic, true, title);
    }
-   
+
+   /**
+    * @param text label text
+    * @param helpTopic help topic identifier
+    * @param includeVersionInfo
+    * @param title help button a11y title
+    */
    public LabelWithHelp(String text, 
                         String helpTopic, 
-                        boolean includeVersionInfo)
+                        boolean includeVersionInfo,
+                        String title)
    {
       HorizontalPanel labelPanel = new HorizontalPanel();
       Label label = new Label(text);
       labelPanel.add(label);
-      HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo);
+      HelpButton helpButton =  new HelpButton(helpTopic, includeVersionInfo, title);
       helpButton.getElement().getStyle().setMarginLeft(3, Unit.PX);
       labelPanel.add(helpButton);
       initWidget(labelPanel);

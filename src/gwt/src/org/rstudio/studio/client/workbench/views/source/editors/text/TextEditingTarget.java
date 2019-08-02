@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -74,6 +73,7 @@ import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -95,7 +95,6 @@ import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -120,13 +119,12 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -185,6 +183,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequ
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 public class TextEditingTarget implements 
@@ -421,7 +420,8 @@ public class TextEditingTarget implements
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs, 
+                            UserPrefs prefs, 
+                            UserState state, 
                             BreakpointManager breakpointManager,
                             SourceBuildHelper sourceBuildHelper,
                             DependencyManager dependencyManager)
@@ -446,6 +446,7 @@ public class TextEditingTarget implements
       dirtyState_ = new DirtyState(docDisplay_, false);
       lintManager_ = new LintManager(this, cppCompletionContext_);
       prefs_ = prefs;
+      state_ = state;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
       cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
@@ -511,7 +512,7 @@ public class TextEditingTarget implements
                jumpToNextFunction();
             }
             else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
-                     !prefs_.useVimMode().getValue())
+                     prefs_.editorKeybindings().getValue() != UserPrefs.EDITOR_KEYBINDINGS_VIM)
             {
                event.preventDefault();
                event.stopPropagation();
@@ -643,9 +644,9 @@ public class TextEditingTarget implements
                   {
                      String state = event.getParams().getState();
                      if (event.getParams().getViewerType() != 
-                            ShinyViewerType.SHINY_VIEWER_PANE &&
+                            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
                          event.getParams().getViewerType() != 
-                            ShinyViewerType.SHINY_VIEWER_WINDOW)
+                            UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
                      {
                         // we can't control the state when it's not in an
                         // RStudio-owned window, so treat the app as stopped
@@ -671,9 +672,9 @@ public class TextEditingTarget implements
                   {
                      String state = event.getParams().getState();
                      if (event.getParams().getViewerType() != 
-                            PlumberViewerType.PLUMBER_VIEWER_PANE &&
+                            UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
                          event.getParams().getViewerType() != 
-                            PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+                            UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
                      {
                         // we can't control the state when it's not in an
                         // RStudio-owned window, so treat the app as stopped
@@ -1298,6 +1299,7 @@ public class TextEditingTarget implements
                                           docUpdateSentinel_,
                                           commands_,
                                           prefs_,
+                                          state_,
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
@@ -1569,7 +1571,7 @@ public class TextEditingTarget implements
          }
       }));
       
-      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_);
+      spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
 
       // show/hide the debug toolbar when the dirty state changes. (note:
@@ -2488,7 +2490,7 @@ public class TextEditingTarget implements
    private void withChooseEncoding(final String defaultEncoding,
                                    final CommandWithArg<String> command)
    {
-      view_.ensureVisible();;
+      view_.ensureVisible();
       
       server_.iconvlist(new SimpleRequestCallback<IconvListResult>()
       {
@@ -2514,7 +2516,7 @@ public class TextEditingTarget implements
                         if (d.getValue().isSaveAsDefault())
                         {
                            prefs_.defaultEncoding().setGlobalValue(newEncoding);
-                           prefs_.writeUIPrefs();
+                           prefs_.writeUserPrefs();
                         }
 
                         command.execute(newEncoding);
@@ -2831,9 +2833,9 @@ public class TextEditingTarget implements
       return null;
    }
 
-   public ImageResource getIcon()
+   public FileIcon getIcon()
    {
-      return fileType_.getDefaultIcon();
+      return fileType_.getDefaultFileIcon();
    }
 
    public String getTabTooltip()
@@ -2986,7 +2988,35 @@ public class TextEditingTarget implements
    {
       docUpdateSentinel_.withSavedDoc(onsaved);
    }
-   
+
+   @Handler
+   void onWordCount()
+   {
+      int totalWords = 0;
+      int selectionWords = 0;
+
+      Range selectionRange = docDisplay_.getSelectionRange();
+      TextFileType fileType = docDisplay_.getFileType();
+      Iterator<Range> wordIter = docDisplay_.getWords(
+         fileType.getTokenPredicate(),
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(0, 0),
+         null).iterator();
+
+      while (wordIter.hasNext())
+      {
+         Range r = wordIter.next();
+         totalWords++;
+         if (selectionRange.intersects(r))
+            selectionWords++;
+      }
+
+      String selectedWordsText = selectionWords == 0 ? "" : "\nSelected words: " + selectionWords;
+      globalDisplay_.showMessage(MessageDisplay.MSG_INFO,
+         "Word Count",
+         "Total words: " + totalWords + " " + selectedWordsText);
+   }
+
    @Handler
    void onCheckSpelling()
    {
@@ -3567,7 +3597,7 @@ public class TextEditingTarget implements
             // We want to strip out the leading comment prefix,
             // but preserve the indent.
             int startIdx = commentStartIdx + commentStart.length();
-            if (Character.isSpace(line.charAt(startIdx)))
+            if (Character.isSpace(StringUtil.charAt(line, startIdx)))
                startIdx++;
             
             int endIdx = commentEndIdx;
@@ -4049,7 +4079,7 @@ public class TextEditingTarget implements
                                                 cursorRowIndex, cursorColIndex);
 
       int maxLineLength =
-                        prefs_.printMarginColumn().getValue() - prefix.length();
+                        prefs_.marginColumn().getValue() - prefix.length();
 
       WordWrap wordWrap = new WordWrap(maxLineLength, false)
       {
@@ -4205,19 +4235,19 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentLine()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_LINE);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_LINE);
    }
 
    @Handler
    void onExecuteCurrentStatement()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_STATEMENT);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_STATEMENT);
    }
 
    @Handler
    void onExecuteCurrentParagraph()
    {
-      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
+      codeExecution_.executeBehavior(UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH);
    }
 
    @Handler
@@ -4637,7 +4667,7 @@ public class TextEditingTarget implements
                Position pos = moveCursorToNextInsertLocation();
                
                // truncate length to print margin - 5
-               int printMarginColumn = prefs_.printMarginColumn().getValue();
+               int printMarginColumn = prefs_.marginColumn().getValue();
                int length = printMarginColumn - 5;
                
                // truncate label to maxLength - 10 (but always allow at 
@@ -5254,7 +5284,7 @@ public class TextEditingTarget implements
       if (prefs_.sourceWithEcho().getValue() != echo)
       {
          prefs_.sourceWithEcho().setGlobalValue(echo, true);
-         prefs_.writeUIPrefs();
+         prefs_.writeUserPrefs();
       }
    }
    
@@ -5399,17 +5429,6 @@ public class TextEditingTarget implements
       } 
       
       PresentationState state = sessionInfo.getPresentationState();
-      
-      // if we are showing a tutorial then don't allow preview
-      if (state.isTutorial())
-      {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_WARNING,
-               "Unable to Preview",
-               "R Presentations cannot be previewed when a Tutorial " +
-               "is active");
-         return;
-      }
       
       // if this presentation is already showing then just activate 
       if (state.isActive() && 
@@ -5704,7 +5723,7 @@ public class TextEditingTarget implements
       String defaultAuthor = docUpdateSentinel_.getProperty(NOTEBOOK_AUTHOR);
       if (StringUtil.isNullOrEmpty(defaultAuthor))
       {
-         defaultAuthor = prefs_.compileNotebookOptions().getValue().getAuthor();
+         defaultAuthor = state_.compileRNotebookPrefs().getValue().getAuthor();
          if (StringUtil.isNullOrEmpty(defaultAuthor))
             defaultAuthor = session_.getSessionInfo().getUserIdentity();
       }
@@ -5713,7 +5732,7 @@ public class TextEditingTarget implements
       String defaultType = docUpdateSentinel_.getProperty(NOTEBOOK_TYPE);
       if (StringUtil.isNullOrEmpty(defaultType))
       {
-         defaultType = prefs_.compileNotebookOptions().getValue().getType();
+         defaultType = state_.compileRNotebookPrefs().getValue().getType();
          if (StringUtil.isNullOrEmpty(defaultType))
             defaultType = CompileNotebookOptions.TYPE_DEFAULT;
       }
@@ -5761,10 +5780,10 @@ public class TextEditingTarget implements
                                           input.getNotebookType());
             if (!CompileNotebookPrefs.areEqual(
                                   prefs, 
-                                  prefs_.compileNotebookOptions().getValue()))
+                                  state_.compileRNotebookPrefs().getValue().cast()))
             {
-               prefs_.compileNotebookOptions().setGlobalValue(prefs);
-               prefs_.writeUIPrefs();
+               state_.compileRNotebookPrefs().setGlobalValue(prefs.cast());
+               state_.writeState();
             }
          }
       }
@@ -5813,12 +5832,12 @@ public class TextEditingTarget implements
    @Handler
    void onCompilePDF()
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
-      boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
+      String pdfPreview = prefs_.pdfPreviewer().getValue();
+      boolean showPdf = !pdfPreview.equals(UserPrefs.PDF_PREVIEWER_NONE);
       boolean useInternalPreview = 
-            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+            pdfPreview.equals(UserPrefs.PDF_PREVIEWER_RSTUDIO);
       boolean useDesktopSynctexPreview = 
-            pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX) &&
+            pdfPreview.equals(UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX) &&
             Desktop.isDesktop();
       
       String action = new String();
@@ -6635,7 +6654,7 @@ public class TextEditingTarget implements
    
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UIPrefs prefs,
+                     UserPrefs prefs,
                      ProjectConfig projectConfig,
                      DocDisplay docDisplay,
                      final SourceDocument sourceDoc)
@@ -6659,7 +6678,7 @@ public class TextEditingTarget implements
    
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
-                     UIPrefs prefs,
+                     UserPrefs prefs,
                      final ProjectConfig projectConfig,
                      final DocDisplay docDisplay,
                      final PrefsContext context)
@@ -6714,7 +6733,7 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setBlinkingCursor(arg);
                }}));
-      releaseOnDismiss.add(prefs.printMarginColumn().bind(
+      releaseOnDismiss.add(prefs.marginColumn().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.setPrintMarginColumn(arg);
@@ -6739,27 +6758,27 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setHighlightRFunctionCalls(arg);
                }}));
-      releaseOnDismiss.add(prefs.useVimMode().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseVimMode(arg);
+      releaseOnDismiss.add(prefs.editorKeybindings().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.setUseVimMode(arg == UserPrefs.EDITOR_KEYBINDINGS_VIM);
                }}));
-      releaseOnDismiss.add(prefs.enableEmacsKeybindings().bind(
-            new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  docDisplay.setUseEmacsKeybindings(arg);
+      releaseOnDismiss.add(prefs.editorKeybindings().bind(
+            new CommandWithArg<String>() {
+               public void execute(String arg) {
+                  docDisplay.setUseEmacsKeybindings(arg == UserPrefs.EDITOR_KEYBINDINGS_EMACS);
                }}));
-      releaseOnDismiss.add(prefs.codeCompleteOther().bind(
+      releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             new CommandWithArg<String>() {
                public void execute(String arg) {
                   docDisplay.syncCompletionPrefs();
                }}));
-      releaseOnDismiss.add(prefs.alwaysCompleteCharacters().bind(
+      releaseOnDismiss.add(prefs.codeCompletionCharacters().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.syncCompletionPrefs();
                }}));
-      releaseOnDismiss.add(prefs.alwaysCompleteDelayMs().bind(
+      releaseOnDismiss.add(prefs.codeCompletionDelay().bind(
             new CommandWithArg<Integer>() {
                public void execute(Integer arg) {
                   docDisplay.syncCompletionPrefs();
@@ -6795,7 +6814,7 @@ public class TextEditingTarget implements
             new CommandWithArg<String>() {
                public void execute(String style)
                {
-                  docDisplay.setFoldStyle(style);
+                  docDisplay.setFoldStyle(FoldStyle.fromPref(style));
                }}));
       releaseOnDismiss.add(prefs.surroundSelection().bind(
             new CommandWithArg<String>() {
@@ -6913,8 +6932,8 @@ public class TextEditingTarget implements
    
    public void setPreferredOutlineWidgetSize(double size)
    {
-      prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
-      prefs_.writeUIPrefs();
+      state_.documentOutlineWidth().setGlobalValue((int) size);
+      state_.writeState();
       docUpdateSentinel_.setProperty(DOC_OUTLINE_SIZE, size + "");
    }
    
@@ -6922,7 +6941,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_SIZE);
       if (StringUtil.isNullOrEmpty(property))
-         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+         return state_.documentOutlineWidth().getGlobalValue();
       
       try {
          double value = Double.parseDouble(property);
@@ -6939,7 +6958,7 @@ public class TextEditingTarget implements
          
          return value;
       } catch (Exception e) {
-         return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
+         return state_.documentOutlineWidth().getGlobalValue();
       }
    }
    
@@ -6952,7 +6971,7 @@ public class TextEditingTarget implements
    {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
       return StringUtil.isNullOrEmpty(property)
-            ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
+            ? (getTextFileType().isRmd() && prefs_.showDocOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;
    }
    
@@ -7288,7 +7307,8 @@ public class TextEditingTarget implements
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
+   private final UserState state_;
    private Display view_;
    private final Commands commands_;
    private SourceServerOperations server_;

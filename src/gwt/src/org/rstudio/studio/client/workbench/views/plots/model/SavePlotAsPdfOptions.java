@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 
-public class SavePlotAsPdfOptions extends JavaScriptObject
+public class SavePlotAsPdfOptions extends UserStateAccessor.SavePlotAsPdfOptions
 {
    protected SavePlotAsPdfOptions()
    {   
@@ -70,26 +70,4 @@ public class SavePlotAsPdfOptions extends JavaScriptObject
              a.cairo_pdf === b.cairo_pdf &&
              a.viewAfterSave === b.viewAfterSave;    
    }-*/;
-   
-   public final native double getWidth() /*-{
-      return this.width;
-   }-*/;
-   
-   public final native double getHeight() /*-{
-      return this.height;
-   }-*/;
-   
-   public final native boolean getPortrait() /*-{
-      return this.portrait;
-   }-*/;
-   
-   public final native boolean getCairoPdf() /*-{
-      return this.cairo_pdf;
-   }-*/;
-
-   
-   public final native boolean getViewAfterSave() /*-{
-      return this.viewAfterSave;
-   }-*/;
-   
 }

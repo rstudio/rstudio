@@ -27,7 +27,6 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
 #include <core/text/CsvParser.hpp>
@@ -37,7 +36,6 @@
 #include <r/RExec.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include <map>

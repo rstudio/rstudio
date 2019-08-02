@@ -1,7 +1,7 @@
 /*
  * RVersionSelectWidget.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ public class RVersionSelectWidget extends SelectWidget
             false,
             fillContainer);
       if (includeHelpButton)
-         HelpButton.addHelpButton(this, "multiple_r_versions");
+         HelpButton.addHelpButton(this, "multiple_r_versions", "Help on R versions");
    }
    
    public void setRVersion(RVersionSpec version)
@@ -104,13 +104,14 @@ public class RVersionSelectWidget extends SelectWidget
    {
       if (str != null)
       {
-         int loc = str.indexOf(SEP);
-         if (loc != -1)
+         String[] values = str.split(SEP);
+         if (values.length == 3)
          {
-            String version = str.substring(0, loc);
-            String rHomeDir = str.substring(loc + SEP.length());
+            String version = values[0];
+            String rHomeDir = values[1];
+            String label = values[2];
             if (version.length() > 0 && rHomeDir.length() > 0)
-               return RVersionSpec.create(version, rHomeDir, "");
+               return RVersionSpec.create(version, rHomeDir, label);
          }
       }
       
@@ -123,7 +124,7 @@ public class RVersionSelectWidget extends SelectWidget
       if (version.getVersion().length() == 0)
          return "";
       else
-         return version.getVersion() + SEP + version.getRHome();
+         return version.getVersion() + SEP + version.getRHome() + SEP + version.getLabel();
    }
 
    private final static String USE_DEFAULT_VERSION = "(Use System Default)";

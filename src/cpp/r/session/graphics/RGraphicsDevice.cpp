@@ -445,7 +445,7 @@ void resizeGraphicsDevice()
 }   
    
 // routine which creates device  
-SEXP createGD()
+SEXP rs_createGD()
 {   
    // error if there is already an RStudio device
    if (s_pGEDevDesc != nullptr)
@@ -567,7 +567,7 @@ Error makeActive()
    if (s_pGEDevDesc == nullptr)
    {
       SEXP ignoredSEXP;
-      Error error = r::exec::executeSafely<SEXP>(boost::bind(createGD), 
+      Error error = r::exec::executeSafely<SEXP>(boost::bind(rs_createGD),
                                                  &ignoredSEXP);
       if (error)
          return error;
@@ -736,19 +736,8 @@ Error initialize(
    std::string message;
    if (graphics::validateRequirements(&message))
    {
-      // register device creation routine
-      R_CallMethodDef createGDMethodDef ;
-      createGDMethodDef.name = "rs_createGD" ;
-      createGDMethodDef.fun = (DL_FUNC) createGD ;
-      createGDMethodDef.numArgs = 0;
-      r::routines::addCallMethod(createGDMethodDef);
-
-      // regsiter device activiation routine
-      R_CallMethodDef activateGDMethodDef ;
-      activateGDMethodDef.name = "rs_activateGD" ;
-      activateGDMethodDef.fun = (DL_FUNC) rs_activateGD ;
-      activateGDMethodDef.numArgs = 0;
-      r::routines::addCallMethod(activateGDMethodDef);
+      RS_REGISTER_CALL_METHOD(rs_createGD);
+      RS_REGISTER_CALL_METHOD(rs_activateGD);
 
       // initialize
       return r::exec::RFunction(".rs.initGraphicsDevice").call();

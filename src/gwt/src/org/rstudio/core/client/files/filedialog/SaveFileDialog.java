@@ -1,7 +1,7 @@
 /*
  * SaveFileDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -30,7 +31,7 @@ public class SaveFileDialog extends FileDialog
                          boolean forceDefaultExtension,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
-      super(title, null, buttonLabel, true, true, true, context, "", operation);
+      super(title, null, Roles.getDialogRole(), buttonLabel, true, true, true, context, "", operation);
       defaultExtension_ = defaultExtension;
       forceDefaultExtension_ = forceDefaultExtension;
    }

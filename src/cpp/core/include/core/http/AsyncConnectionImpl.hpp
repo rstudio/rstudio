@@ -163,6 +163,11 @@ public:
       return request_;
    }
 
+   virtual const std::string& originalUri() const
+   {
+      return originalUri_;
+   }
+
    virtual http::Response& response()
    {
       return response_;
@@ -214,9 +219,11 @@ public:
       }
    }
 
-   virtual void writeResponse(const http::Response& response, bool close = true)
+   virtual void writeResponse(const http::Response& response,
+                              bool close = true,
+                              const Headers& additionalHeaders = Headers())
    {
-      response_.assign(response);
+      response_.assign(response, additionalHeaders);
       writeResponse(close);
    }
 

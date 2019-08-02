@@ -23,6 +23,6 @@ public interface TypoResources extends ClientBundle
 {
    TypoResources INSTANCE = GWT.create(TypoResources.class);
 
-   @Source("typo.js")
+   @Source("typo.min.js")
    StaticDataResource typojs();
 }
