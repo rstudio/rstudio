@@ -39,7 +39,7 @@ public class FormLabel extends Label
     */
    public FormLabel(String text)
    {
-      super(text, NoForId);
+      super(false, text, NoForId);
    }
 
   /**
@@ -62,7 +62,20 @@ public class FormLabel extends Label
     */
    public FormLabel(String text, String forId)
    {
-      super(text, forId);
+      this(false, text, forId);
+   }
+
+   /**
+    * Creates a label with the specified text, which is associated with
+    * the specified form control.
+    *
+    * @param inline true if inline display, false for block
+    * @param text the new label's text
+    * @param forId id of element associated with this label
+    */
+   public FormLabel(boolean inline, String text, String forId)
+   {
+      super(inline, text, forId);
    }
 
    /**
@@ -73,7 +86,7 @@ public class FormLabel extends Label
     */
    public FormLabel(String text, Widget w)
    {
-      super(text, NoForId);
+      super(false, text, NoForId);
       setFor(w);
    }
 
@@ -85,7 +98,7 @@ public class FormLabel extends Label
     */
    public FormLabel(String text, Element el)
    {
-      super(text, NoForId);
+      super(false, text, NoForId);
       setFor(el);
    }
 
@@ -105,7 +118,8 @@ public class FormLabel extends Label
     * Associate this label with the given element. If the element does not
     * have an id attribute, a unique one will be generated and assigned to it.
     * @param el
-    */   public void setFor(Element el)
+    */
+   public void setFor(Element el)
    {
       if (el == null)
          return;
