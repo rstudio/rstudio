@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -22,11 +23,16 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
@@ -88,7 +94,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       ModuleList()
       {
-         checkBoxes_ = new ArrayList<CheckBox>();
+         checkBoxes_ = new ArrayList<>();
          VerticalPanel panel = new VerticalPanel();
          for (String module : PaneConfig.getAllTabs())
          {
@@ -109,7 +115,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public ArrayList<Boolean> getSelectedIndices()
       {
-         ArrayList<Boolean> results = new ArrayList<Boolean>();
+         ArrayList<Boolean> results = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
             results.add(checkBox.getValue());
          return results;
@@ -123,7 +129,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public ArrayList<String> getValue()
       {
-         ArrayList<String> value = new ArrayList<String>();
+         ArrayList<String> value = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
          {
             if (checkBox.getValue())
@@ -160,9 +166,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       String[] allPanes = PaneConfig.getAllPanes();
 
       leftTop_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left quadrant");
       leftBottom_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left quadrant");
       rightTop_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right quadrant");
       rightBottom_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right quadrant");
       allPanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : allPanes_)
       {
@@ -200,7 +210,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             }
          });
 
-      Grid grid = new Grid(2, 2);
+      LayoutGrid grid = new LayoutGrid(2, 2);
       grid.addStyleName(res.styles().paneLayoutTable());
       grid.setCellSpacing(8);
       grid.setCellPadding(6);
@@ -246,7 +256,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             else
             {
                ArrayList<Boolean> indices = source.getSelectedIndices();
-               ArrayList<Boolean> otherIndices = new ArrayList<Boolean>();
+               ArrayList<Boolean> otherIndices = new ArrayList<>();
                for (Boolean b : indices)
                   otherIndices.add(!b);
                other.setSelectedIndices(otherIndices);
@@ -370,7 +380,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private ArrayList<String> toArrayList(JsArrayString strings)
    {
-      ArrayList<String> results = new ArrayList<String>();
+      ArrayList<String> results = new ArrayList<>();
       for (int i = 0; i < strings.length(); i++)
          results.add(strings.get(i));
       return results;

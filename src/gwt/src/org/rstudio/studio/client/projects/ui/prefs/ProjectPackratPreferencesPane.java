@@ -132,10 +132,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         add(chkUseCache_);
         
         panelExternalPackages_ = new VerticalPanel();
-        panelExternalPackages_.add(new LabelWithHelp(
-              "External packages (comma separated):",
-              "packrat_external_packages",
-              false, "Help on external packages"));
         taExternalPackages_ = new FixedTextArea(3);
         taExternalPackages_.addStyleName(styles.externalPackages());
         taExternalPackages_.setText(
@@ -147,6 +143,10 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                     ),
                     ", "));
         taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
+        panelExternalPackages_.add(new LabelWithHelp(
+            "External packages (comma separated):",
+            "packrat_external_packages",
+            false, "Help on external packages", taExternalPackages_));
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         

@@ -25,7 +25,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import java.util.ArrayList;
@@ -36,6 +35,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -50,7 +50,6 @@ import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -132,10 +131,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
 
-      Label secondaryReposLabel = new Label("Secondary repositories:");
-      secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
-      secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
-
       if (session.getSessionInfo().getAllowCRANReposEdit())
       {
          management.add(infoBar_);
@@ -143,6 +138,12 @@ public class PackagesPreferencesPane extends PreferencesPane
          lessSpaced(cranMirrorTextBox_);
          management.add(cranMirrorTextBox_);
 
+         FormLabel secondaryReposLabel = new FormLabel(
+               "Secondary repositories:",
+               secondaryReposWidget_.getLabeledWidget());
+         secondaryReposLabel.getElement().getStyle().setMarginLeft(2, Unit.PX);
+         secondaryReposLabel.getElement().getStyle().setMarginBottom(2, Unit.PX);
+         
          management.add(spacedBefore(secondaryReposLabel));
          management.add(secondaryReposWidget_);
       }

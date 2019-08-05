@@ -1,7 +1,7 @@
 /*
  * AppNameTextbox.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,6 +83,11 @@ public class AppNameTextbox extends Composite
    public String getTitle()
    {
       return appTitle_.getText().trim();
+   }
+   
+   public TextBox getTextBox()
+   {
+      return appTitle_;
    }
    
    public String getName()

@@ -70,13 +70,10 @@ public class PublishingPreferencesPane extends PreferencesPane
       deps_ = deps;
       
       VerticalPanel accountPanel = new VerticalPanel();
-      Label accountLabel = headerLabel("Publishing Accounts");
       HorizontalPanel hpanel = new HorizontalPanel();
       
-      accountPanel.add(accountLabel);
-      
-      accountList_ = new RSConnectAccountList(server, globalDisplay, true, 
-            true);
+      String accountListLabel = "Publishing Accounts";
+      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, accountListLabel);
       accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
@@ -149,6 +146,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       setButtonEnabledState();
 
+      Label accountLabel = headerLabel(accountListLabel);
+      accountPanel.add(accountLabel);
       accountPanel.add(hpanel);
       add(accountPanel);
       

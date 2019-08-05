@@ -1,7 +1,7 @@
 /*
  * SourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -100,30 +101,30 @@ public class SourceControlPreferencesPane extends PreferencesPane
          }
       };
       
-      gitExePathChooser_ = new FileChooserTextBox("",
+      gitExePathChooser_ = new FileChooserTextBox(null,
                                                   "(Not Found)",
                                                   null,
                                                   onGitExePathChosen);
-      gitExePathLabel_ = new Label("Git executable:");
+      gitExePathLabel_ = new FormLabel("Git executable:", gitExePathChooser_.getTextBox());
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
  
       // svn exe path chooser
-      svnExePathLabel_ = new Label("SVN executable:");
-      svnExePathChooser_ = new FileChooserTextBox("",
+      svnExePathChooser_ = new FileChooserTextBox(null,
                                                   "(Not Found)",
                                                   null,
                                                   null);
+      svnExePathLabel_ = new FormLabel("SVN executable:", svnExePathChooser_.getTextBox());
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
       
       // terminal path
-      terminalPathLabel_ = new Label("Terminal executable:");
-      terminalPathChooser_ = new FileChooserTextBox("", 
-                                                    "(Not Found)", 
+      terminalPathChooser_ = new FileChooserTextBox(null,
+                                                    "(Not Found)",
                                                     null, 
                                                     null);
+      terminalPathLabel_ = new FormLabel("Terminal executable:", terminalPathChooser_.getTextBox());
       if (haveTerminalPathPref())
          addTextBoxChooser(terminalPathLabel_, null, null, terminalPathChooser_);
      
@@ -250,11 +251,11 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
    private final CheckBox chkVcsEnabled_;
    
-   private Label svnExePathLabel_;
-   private Label gitExePathLabel_;
+   private FormLabel svnExePathLabel_;
+   private FormLabel gitExePathLabel_;
    private TextBoxWithButton gitExePathChooser_;
    private TextBoxWithButton svnExePathChooser_;
-   private Label terminalPathLabel_;
+   private FormLabel terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
    private SshKeyWidget sshKeyWidget_;
 }
