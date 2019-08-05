@@ -289,7 +289,7 @@ ProgramStatus Options::read(int argc,
         value<int>(&authStaySignedInDays_)->default_value(30),
        "number of days for stay signed in option")
       ("auth-timeout-minutes",
-        value<int>(&authTimeoutMinutes_)->default_value(30),
+        value<int>(&authTimeoutMinutes_)->default_value(60),
         "number of minutes users will stay logged in while idle before required to sign in again")
       ("auth-encrypt-password",
         value<bool>(&authEncryptPassword_)->default_value(true),
