@@ -1,7 +1,7 @@
 /*
  * BuildToolsPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,10 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -31,11 +33,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public abstract class BuildToolsPanel extends VerticalPanel
 {
@@ -183,26 +182,20 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       AdditionalArguments(String label)
       {
-         this(new Label(label));
-      }
-      
-      AdditionalArguments(SafeHtml label)
-      {
-         this(new HTML(label));
-      }
-      
-      AdditionalArguments(Widget captionWidget)
-      {
+         SafeHtml safeLabel = new SafeHtmlBuilder().appendHtmlConstant(label).toSafeHtml();
+
          VerticalPanel panel = new VerticalPanel();
          panel.addStyleName(RES.styles().buildToolsAdditionalArguments());
-         
-     
+
+         FormLabel captionWidget = new FormLabel();
+         captionWidget.getElement().setInnerSafeHtml(safeLabel);
          panel.add(captionWidget);
-         
+
          textBox_ = new TextBox();
          DomUtils.disableSpellcheck(textBox_);
          panel.add(textBox_);
-   
+         captionWidget.setFor(textBox_);
+
          initWidget(panel);
       }
       
