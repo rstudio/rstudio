@@ -109,17 +109,38 @@ elif [ "$EXT" == "rpm" ]; then
     fi
     touch "$RPM_MACROS"
     echo "%_signature gpg"  >> $RPM_MACROS
+
+    # define key name and directory where we installed temporaries
     echo "%_gpg_name $KEY_ID" >> $RPM_MACROS
     echo "%_gpg_path $TMP_KEYRING_DIR" >> $RPM_MACROS
-    cat $RPM_MACROS
 
-    # perform the actual signature
-    /usr/bin/expect << EOD
+    if [ -f /etc/fedora-release ]; then
+        # on Fedora, the expect-based approach doesn't work, so attempt to
+        # supply the passphrase by redefining the GPG signature command in the
+        # RPM macros definition to take a passphrase-file.
+        echo "%__gpg_sign_cmd %{__gpg} \\" >> $RPM_MACROS
+        echo "    gpg --no-verbose --no-armor --batch --pinentry-mode loopback \\" >> $RPM_MACROS
+        echo "    --passphrase-file $PASSFILE \\" >> $RPM_MACROS
+        echo "    %{?_gpg_sign_cmd_extra_args:%{_gpg_sign_cmd_extra_args}} \\" >> $RPM_MACROS
+        echo "    %{?_gpg_digest_algo:--digest-algo %{_gpg_digest_algo}} \\" >> $RPM_MACROS
+        echo "    --no-secmem-warning \\" >> $RPM_MACROS
+        echo "    -u "%{_gpg_name}" -sbo %{__signature_filename} %{__plaintext_filename}" >> $RPM_MACROS
+
+        rpmsign --addsign $INSTALLER
+    else
+        # on CentOS (and other RedHat platforms), use expect to supply the
+        # passphrase "manually"
+        /usr/bin/expect << EOD
 spawn bash -c "rpmsign --addsign $INSTALLER"
 expect "Enter pass phrase:"
 send "$PASSPHRASE\r"
 expect eof
 EOD
+    fi
+
+    # dump the contents of the RPM macro files to stdout so that they're
+    # visible in the build logs (this helps diagnose signing issues)
+    cat $RPM_MACROS
 
     # restore old rpmacros file if we touched it
     rm -f $RPM_MACROS

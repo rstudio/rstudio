@@ -6,7 +6,6 @@ RUN yum install -y \
     bzip2-devel \
     clang-devel \
     curl \
-    expect \
     fakeroot \
     fuse-libs \
     gcc \
@@ -32,7 +31,6 @@ RUN yum install -y \
     pam-devel \
     pango-devel \
     patchelf \
-    pinentry \
     postgresql-devel \
     procps \
     python \
