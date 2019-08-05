@@ -9,7 +9,7 @@ verifyInstallation() {
 }
 
 isServerRunning() {
- pgrep rserver &> /dev/null
+ pgrep -x rserver &> /dev/null
 }
 
 

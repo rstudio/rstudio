@@ -6,9 +6,7 @@
 - Fix pane configuration being reset after customization (#2101)
 - Fix issue where middle click failed to close editor tabs (#4379)
 - Fix incorrect application of C++ project compilation options to non-project files (#4404)
-- Fix issue where pressing Escape could cause RStudio to crash if tcltk was loaded (#5108)
 - Fix issue where C++ diagnostics failed to work on macOS in some system configurations
-- Fix issue on MacOS where cursor could get stuck and behave erratically (#5107)
 - Fix issues on MacOS with command line tool headers when `/usr/include` is missing (#4405)
 - Fix failure to start on R 3.6.0 when the `error` option is set in `.Rprofile` (#4441)
 - Fix issue where attempts to run R debugger in `.Rprofile` could hang RStudio (#4443)
@@ -37,6 +35,10 @@
 - Fix issue where deployments could fail with R 3.4.4 when using custom repositories (#4916)
 - Fix issue where Tablet clicks would be interpreted as double-clicks. (#4935)
 - Fix issue where keyboard shortcuts would not work in Data Viewer (#4944)
+- Allow expansion of objects containing `ALTREP` values in the Environment pane (#5032)
+- Fix `verify-installation` command on newer Linux distributions (#5040)
+- Fix issue on MacOS where cursor could get stuck and behave erratically (#5107)
+- Fix issue where pressing Escape could cause RStudio to crash if tcltk was loaded (#5108)
 
 ### Miscellaneous
 
@@ -48,3 +50,5 @@
 - Qt support libraries for Wayland are now bundled on Linux (#4686)
 - Set secure flag when clearing cookies for consistency (Pro #964)
 - Server Pro: Update to nginx 1.17 
+- Update to `rsconnect` package 0.8.15; uses `curl` package to publish to RPubs and RStudio Connect (#5136)
+
