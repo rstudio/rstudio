@@ -740,7 +740,7 @@ pre {
 }
 
 .mainMenu .gwt-MenuItem-selected, .mainMenu .subMenuIcon-selected {
-   background-color: #79B7F1;
+   background-color: #1E77BC;
    color: white;
    height: 3px;
 }
@@ -1447,7 +1447,7 @@ body.windows .toolbar {
 }
 
 .toolbarButtonInfoLabel {
-   color: #82868C;
+   color: #636363;
 }
 
 .toolbarButtonLatchable {

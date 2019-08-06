@@ -75,6 +75,7 @@ public class InfoBar extends Composite
       
       Roles.getAlertRole().setAriaLiveProperty(live_.getElement(), 
             mode == ERROR ? LiveValue.ASSERTIVE : LiveValue.POLITE);
+      Roles.getAlertRole().setAriaAtomicProperty(live_.getElement(), true);
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       
       if (dismissHandler != null)

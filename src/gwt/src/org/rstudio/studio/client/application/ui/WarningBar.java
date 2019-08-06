@@ -1,7 +1,7 @@
 /*
  * WarningBar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 import com.google.gwt.core.client.GWT;
@@ -77,13 +81,26 @@ public class WarningBar extends Composite
       moreButton_.setVisible(false);
       moreButton_.setText("Manage License...");
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
+      Roles.getAlertRole().setAriaLiveProperty(live_, LiveValue.ASSERTIVE);
+      Roles.getAlertRole().setAriaAtomicProperty(live_, true);
    }
 
    public void setText(String value)
    {
       label_.setInnerText(value);
+
+      // Give screen reader time to process page to improve chance it will notice the live region
+      Timer liveTimer = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            live_.setInnerText(value);
+         }
+      };
+      liveTimer.schedule(1500);
    }
-   
+
    public void showLicenseButton(boolean show)
    {
       // never show the license button in server mode
@@ -117,6 +134,8 @@ public class WarningBar extends Composite
 
    @UiField
    SpanElement label_;
+   @UiField
+   DivElement live_;
    @UiField
    Button moreButton_;
    @UiField
