@@ -3022,7 +3022,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
       std::vector<std::string> filesToIgnore;
 
-      if (!regex_utils::search(strIgnore, boost::regex(R"(^\.Rproj\.user/?$)")))
+      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.Rproj\.user/?$)")))
          filesToIgnore.push_back(".Rproj.user");
 
       if (session::options().packageOutputInPackageFolder())
