@@ -29,6 +29,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class SelectWidget extends Composite
 {
+   public static String ExternalLabel = null;
+
    public SelectWidget(String label)
    {
       this(label, null, false);
@@ -62,7 +64,17 @@ public class SelectWidget extends Composite
       this(label, options, values, isMultipleSelect, 
            horizontalLayout, listOnLeft, false);
    }
-   
+
+   /**
+    * @param label label text, or empty string (supplied later via setLabel), or ExternalLabel if
+    *              a label will be associated outside this control
+    * @param options
+    * @param values
+    * @param isMultipleSelect
+    * @param horizontalLayout
+    * @param listOnLeft
+    * @param fillContainer
+    */
    public SelectWidget(String label,
                        String[] options,
                        String[] values,
@@ -90,7 +102,14 @@ public class SelectWidget extends Composite
       if (horizontalLayout)
       {
          horizontalPanel_ = new HorizontalPanel();
-         label_ = new FormLabel(label, listBox_);
+         if (label != ExternalLabel)
+         {
+            label_ = new FormLabel(label, listBox_);
+         }
+         else
+         {
+            label_ = new FormLabel(""); // to maintain layout
+         }
          if (listOnLeft)
          {
             horizontalPanel_.add(listBox_);
@@ -101,15 +120,20 @@ public class SelectWidget extends Composite
             horizontalPanel_.add(label_);
             horizontalPanel_.add(listBox_);
          }
-        
-         horizontalPanel_.setCellVerticalAlignment(
-                                          label_, 
-                                          HasVerticalAlignment.ALIGN_MIDDLE);
+
+         horizontalPanel_.setCellVerticalAlignment(label_, HasVerticalAlignment.ALIGN_MIDDLE);
          panel = horizontalPanel_;
       }
       else
       {
-         label_ = new FormLabel(label, listBox_, true);
+         if (label != ExternalLabel)
+         {
+            label_ = new FormLabel(label, listBox_, true);
+         }
+         else
+         {
+            label_ = new FormLabel("", true); // to maintain layout
+         }
          flowPanel_ = new FlowPanel();
          flowPanel_.add(label_);
          panel = flowPanel_;

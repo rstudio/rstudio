@@ -17,6 +17,7 @@ jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/client/ui/LabelBase.java \
   com/google/gwt/user/client/ui/MenuBar.java \
   com/google/gwt/user/client/ui/MenuItem.java \
+  com/google/gwt/user/client/ui/RadioButton.java \
   com/google/gwt/user/client/ui/SplitLayoutPanel.java \
   com/google/gwt/user/client/ui/SplitPanel.java \
   com/google/gwt/user/client/ui/TabLayoutPanel.java
@@ -37,6 +38,7 @@ patch Label.java < Label.java.diff
 patch LabelBase.java < LabelBase.java.diff
 patch MenuBar.java < MenuBar.java.diff
 patch MenuItem.java < MenuItem.java.diff
+patch RadioButton.java < RadioButton.java.diff
 patch SplitLayoutPanel.java < SplitLayoutPanel.java.diff
 patch SplitPanel.java < SplitPanel.java.diff
 patch TabLayoutPanel.java < TabLayoutPanel.java.diff

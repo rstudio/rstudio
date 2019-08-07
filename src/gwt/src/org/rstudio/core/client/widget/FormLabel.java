@@ -56,6 +56,16 @@ public class FormLabel extends Label
    }
 
    /**
+    * Creates a label to associate with a form control via <code>setFor</code>
+    * @param text the new label's text
+    * @param wordWrap <code>false</code> to disable word wrapping
+    */
+   public FormLabel(String text, boolean wordWrap)
+   {
+      super(text, NoForId, wordWrap);
+   }
+
+   /**
     * Create a label to associate with an existing form control
     * @param text label text
     * @param forId the form controls id
