@@ -193,6 +193,11 @@ if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
    set(RSTUDIO_BOOST_REQUESTED_VERSION 1.69.0)
 endif()
 
+# disable system boost if we're not using it.
+if(NOT RSTUDIO_USE_SYSTEM_BOOST)
+   set(Boost_NO_SYSTEM_PATHS ON)
+endif()
+
 # disable Boost Signals deprecation warning
 add_definitions(-DBOOST_SIGNALS_NO_DEPRECATION_WARNING)
 
@@ -209,8 +214,6 @@ list(APPEND BOOST_LIBS
    thread
 )
 
-# tell cmake not to look for boost on system paths.
-set(Boost_NO_SYSTEM_PATHS ON)
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
