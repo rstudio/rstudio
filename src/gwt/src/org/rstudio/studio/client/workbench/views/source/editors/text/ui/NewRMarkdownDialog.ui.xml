@@ -52,11 +52,22 @@
      margin-right: 20px;
    }
    
-   .defaultOutputLabel
+   .defaultOutputLabel legend
    {
      font-weight: bold;
+     padding: 0;
      margin-bottom: 7px;
-     margin-top: 14px;
+   }
+   
+   fieldset.defaultOutputLabel
+   {
+      border: none;
+      padding: 0;
+      padding-block-end: 0;
+      padding-inline-end: 0;
+      margin-top: 14px;
+      margin-right: 0;
+      margin-left: 0;
    }
    
    .outputFormatChoice
@@ -97,7 +108,7 @@
    
    .shinyInfoHeader
    {
-     margin-top: 25px;
+     margin-top: 15px;
      margin-bottom: 7px;
    }
    
@@ -136,10 +147,10 @@
                            ui:field="txtAuthor_"></g:TextBox></g:customCell>
               </g:row>
            </g:Grid>
-           <g:Label styleName="{style.defaultOutputLabel}" 
-                    text="Default Output Format:"
-                    ui:field="outputFormatLabel_"></g:Label>
-           <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+           <rw:FieldSetPanel ui:field="formatFieldSet_" legend="Default Output Format:" 
+                             styleName="{style.defaultOutputLabel}">
+              <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+           </rw:FieldSetPanel>
         </g:HTMLPanel>
         <g:HTMLPanel ui:field="existingTemplatePanel_">
           <rmd:RmdTemplateChooser ui:field="templateChooser_">

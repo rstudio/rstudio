@@ -30,13 +30,23 @@ public class FieldSetPanel extends SimplePanel implements HasOneWidget
    {
       super(DOM.createFieldSet());
 
-      Element legendElement;
-      getElement().appendChild(legendElement = DOM.createLegend());
-      legendElement.setInnerText(legend);
+      getElement().appendChild(legendElement_ = DOM.createLegend());
+      legendElement_.setInnerText(legend);
 
       if (visuallyHideLegend)
       {
-         legendElement.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
+         legendElement_.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
       }
    }
+
+   public FieldSetPanel()
+   {
+      this("", false);
+   }
+
+   public void setLegend(String legend)
+   {
+      legendElement_.setInnerText(legend);
+   }
+   private Element legendElement_;
 }
