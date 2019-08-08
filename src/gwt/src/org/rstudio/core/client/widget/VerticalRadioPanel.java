@@ -1,5 +1,5 @@
 /*
- * HorizontalRadioPanel.java
+ * VerticalRadioPanel.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -14,28 +14,28 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.core.client.a11y.A11y;
 
 /**
- * A HorizontalPanel containing a group of radio buttons and a legend.
+ * A VerticalPanel containing a group of radio buttons and a legend.
  */
-public class HorizontalRadioPanel extends FieldSetPanel
+public class VerticalRadioPanel extends FieldSetPanel
 {
-   public HorizontalRadioPanel(String legend, boolean visuallyHideLegend)
+   public VerticalRadioPanel(String legend, boolean visuallyHideLegend)
    {
       super(legend, visuallyHideLegend);
-      super.add(panel_ = new HorizontalPanel());
+      super.add(panel_ = new VerticalPanel());
    }
-   
+
    /**
     * @param externalLabel existing visual label for the radio buttons; text of that label
     *                      will be applied to a hidden legend element for accessibility, and
     *                      the label itself will be marked aria-hidden
     */
-   public HorizontalRadioPanel(Label externalLabel)
+   public VerticalRadioPanel(Label externalLabel)
    {
       this(externalLabel.getText(), true);
       A11y.setARIAHidden(externalLabel);
@@ -46,5 +46,5 @@ public class HorizontalRadioPanel extends FieldSetPanel
       panel_.add(w);
    }
 
-   private HorizontalPanel panel_;
+   private VerticalPanel panel_;
 }
