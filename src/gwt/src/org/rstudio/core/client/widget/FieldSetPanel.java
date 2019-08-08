@@ -18,7 +18,9 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HasOneWidget;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
 /**
@@ -49,6 +51,18 @@ public class FieldSetPanel extends SimplePanel implements HasOneWidget
       this("", false);
    }
 
+
+   /**
+    * @param externalLabel existing visual label for the radio buttons; text of that label
+    *                      will be applied to a hidden legend element for accessibility, and
+    *                      the label itself will be marked aria-hidden
+    */
+   public FieldSetPanel(Label externalLabel)
+   {
+      this(externalLabel.getText(), true);
+      A11y.setARIAHidden(externalLabel);
+   }
+   
    public void setLegend(String legend)
    {
       legendElement_.setInnerText(legend);

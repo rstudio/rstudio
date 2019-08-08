@@ -17,7 +17,6 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
-import org.rstudio.core.client.a11y.A11y;
 
 /**
  * A HorizontalPanel containing a group of radio buttons and a legend.
@@ -37,8 +36,8 @@ public class HorizontalRadioPanel extends FieldSetPanel
     */
    public HorizontalRadioPanel(Label externalLabel)
    {
-      this(externalLabel.getText(), true);
-      A11y.setARIAHidden(externalLabel);
+      super(externalLabel);
+      super.add(panel_ = new HorizontalPanel());
    }
 
    public void add(RadioButton w)
