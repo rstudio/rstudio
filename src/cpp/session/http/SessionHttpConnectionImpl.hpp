@@ -52,14 +52,16 @@ class HttpConnectionImpl :
    boost::noncopyable
 {
 public:
+   typedef boost::function<void(boost::shared_ptr<HttpConnectionImpl<ProtocolType> >)> HeadersParsedHandler;
    typedef boost::function<void(
          boost::shared_ptr<HttpConnectionImpl<ProtocolType> >)> Handler;
 
 
 public:
    HttpConnectionImpl(boost::asio::io_service& ioService,
+                      const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
-      : socket_(ioService), handler_(handler)
+      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler)
    {
    }
 
@@ -148,6 +150,25 @@ public:
    // get the socket
    typename ProtocolType::socket& socket() { return socket_; }
 
+   virtual void setUploadHandler(const core::http::UriAsyncUploadHandlerFunction& uploadHandler)
+   {
+      auto me = HttpConnectionImpl<ProtocolType>::shared_from_this();
+      auto continuation = [=](core::http::Response* pResponse)
+      {
+         me->sendResponse(*pResponse);
+      };
+
+      // request_ guaranteed to stay alive with the duration of this object as continuation captures
+      // a shared pointer to this object
+      core::http::FormHandler formHandler = boost::bind(uploadHandler,
+                                                        boost::cref(request_),
+                                                        _1,
+                                                        _2,
+                                                        continuation);
+
+      requestParser_.setFormHandler(formHandler);
+   }
+
 
 private:
 
@@ -199,12 +220,32 @@ private:
                readSome();
             }
 
-            // got valid request -- handle it
-            else
+            // headers parsed - body parsing has not yet begun
+            else if (status == core::http::RequestParser::headers_parsed)
             {
+               headersParsedHandler_(HttpConnectionImpl<ProtocolType>::shared_from_this());
+
                // establish request id
                requestId_ = connection::rstudioRequestIdFromRequest(request_);
 
+               // we need to resume body parsing by recalling the parse
+               // method and providing the exact same buffer to continue
+               // from where we left off
+               handleRead(e, bytesTransferred);
+
+               return;
+            }
+
+            // form complete - do nothing since the form handler
+            // has been invoked by the request parser as appropriate
+            else if (status == core::http::RequestParser::form_complete)
+            {
+               return;
+            }
+
+            // got valid request -- handle it
+            else
+            {
                // call handler
                handler_(HttpConnectionImpl<ProtocolType>::shared_from_this());
 
@@ -248,6 +289,7 @@ private:
    core::http::RequestParser requestParser_ ;
    core::http::Request request_;
    std::string requestId_;
+   HeadersParsedHandler headersParsedHandler_;
    Handler handler_;
 };
 

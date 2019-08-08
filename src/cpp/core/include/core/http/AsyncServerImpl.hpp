@@ -22,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/variant/static_visitor.hpp>
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/placeholders.hpp>
@@ -48,6 +49,22 @@
 namespace rstudio {
 namespace core {
 namespace http {
+
+class UploadVisitor : public boost::static_visitor<AsyncUriUploadHandlerFunction>
+{
+public:
+   AsyncUriUploadHandlerFunction operator()(const AsyncUriHandlerFunction& func) const
+   {
+      // return empty function to signify that the func is not an upload handler
+      return AsyncUriUploadHandlerFunction();
+   }
+
+   AsyncUriUploadHandlerFunction operator()(const AsyncUriUploadHandlerFunction& func) const
+   {
+      // return the func itself so it can be invoked
+      return func;
+   }
+};
 
 template <typename ProtocolType>
 class AsyncServerImpl : public AsyncServer, boost::noncopyable
@@ -89,6 +106,13 @@ public:
    
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler)
+   {
+      BOOST_ASSERT(!running_);
+      uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler));
+   }
+
+   virtual void addUploadHandler(const std::string& prefix,
+                                 const AsyncUriUploadHandlerFunction& handler)
    {
       BOOST_ASSERT(!running_);
       uriHandlers_.add(AsyncUriHandler(baseUri_ + prefix, handler));
@@ -267,6 +291,10 @@ private:
          // optional ssl context - only used for SSL connections
          sslContext_,
 
+         // headers parsed handler
+         boost::bind(&AsyncServerImpl<ProtocolType>::onHeadersParsed,
+                     this, _1, _2),
+
          // connection handler
          boost::bind(&AsyncServerImpl<ProtocolType>::handleConnection,
                      this, _1, _2),
@@ -331,7 +359,7 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
-   void handleConnection(
+   void onHeadersParsed(
          boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > pConnection,
          http::Request* pRequest)
    {
@@ -348,14 +376,9 @@ private:
          if (notFoundHandler_)
             pAsyncConnection->response().setNotFoundHandler(notFoundHandler_);
 
-         // call the appropriate handler to generate a response
          std::string uri = pRequest->uri();
          AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
-         AsyncUriHandlerFunction handlerFunc = handler.function();
-
-         // if no handler was assigned but we have a default, use it instead
-         if (!handlerFunc && defaultHandler_)
-            handlerFunc = defaultHandler_;
+         boost::optional<AsyncUriHandlerFunctionVariant> handlerFunc = handler.function();
 
          if (!handler.isProxyHandler())
          {
@@ -375,9 +398,51 @@ private:
             }
          }
 
+         if (handlerFunc)
+         {
+            // determine if this is an upload handler
+            // if it is, we need to deliver the body in pieces instead of
+            // invoking one callback when the entire message has been parsed
+            AsyncUriUploadHandlerFunction func = boost::apply_visitor(UploadVisitor(), handlerFunc.get());
+            if (func)
+               pConnection->setUploadHandler(func);
+         }
+      }
+      catch(const boost::system::system_error& e)
+      {
+         // always log
+         LOG_ERROR_MESSAGE(std::string("Unexpected exception: ") + e.what());
+
+         // check for resource exhaustion
+         checkForResourceExhaustion(e.code(), ERROR_LOCATION);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void handleConnection(
+         boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > pConnection,
+         http::Request* pRequest)
+   {
+      try
+      {
+         // convert to cannonical HttpConnection
+         boost::shared_ptr<AsyncConnection> pAsyncConnection =
+             boost::static_pointer_cast<AsyncConnection>(pConnection);
+
+         // call the appropriate handler to generate a response
+         std::string uri = pRequest->uri();
+         AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
+         boost::optional<AsyncUriHandlerFunctionVariant> handlerFunc = handler.function();
+
+         // if no handler was assigned but we have a default, use it instead
+         if (!handlerFunc && defaultHandler_)
+            handlerFunc = defaultHandler_;
+
          // call handler if we have one
          if (handlerFunc)
-            handlerFunc(pAsyncConnection) ;
+         {
+            visitHandler(handlerFunc.get(), pAsyncConnection) ;
+         }
          else
          {
             // log error

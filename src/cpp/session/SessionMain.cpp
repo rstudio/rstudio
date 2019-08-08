@@ -685,6 +685,28 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       LOG_ERROR(error);
 #endif
 
+   // clear out stale uploaded tmp files
+   if (module_context::userUploadedFilesScratchPath().exists());
+   {
+      std::vector<FilePath> childPaths;
+      error = module_context::userUploadedFilesScratchPath().children(&childPaths);
+      if (error)
+         LOG_ERROR(error);
+
+      constexpr double secondsPerDay = 60*60*24;
+      for (const FilePath& childPath : childPaths)
+      {
+         double diffTime = std::difftime(std::time(nullptr),
+                                         childPath.lastWriteTime());
+         if (diffTime > secondsPerDay)
+         {
+            Error error = childPath.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+   }
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)

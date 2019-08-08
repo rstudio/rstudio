@@ -35,7 +35,7 @@
 namespace rstudio {
 namespace core {
 
-class Error ;
+class Error;
 
 class FilePath
 {
@@ -49,14 +49,14 @@ public:
 public:
    // special accessor which detects when the current path no longer exists
    // and switches to the specified alternate path if it doesn't
-   static FilePath safeCurrentPath(const FilePath& revertToPath) ;
+   static FilePath safeCurrentPath(const FilePath& revertToPath);
    
    static Error makeCurrent(const std::string& path);
 
    static std::string createAliasedPath(const core::FilePath& path,
                                         const FilePath& userHomePath);
    static FilePath resolveAliasedPath(const std::string& aliasedPath,
-                                      const FilePath& userHomePath) ;
+                                      const FilePath& userHomePath);
 
    static bool exists(const std::string& path);
 
@@ -65,16 +65,28 @@ public:
    // creates a randomly named file in the temp directory
    static Error tempFilePath(FilePath* pFilePath);
 
+   // creates a randomly named file in the temp directory with the given extension
+   // extension must inclide the leading "." (e.g. ".zip")
+   static Error tempFilePath(const std::string& extension,
+                             FilePath* pFilePath);
+
    // creates a randomly named file in the specified directory
-   static Error uniqueFilePath(const std::string& basePath, FilePath* pFilePath);
+   static Error uniqueFilePath(const std::string& basePath,
+                               FilePath* pFilePath);
+
+   // creates a randomly named file in the specified directory with the given extension
+   // extension must inclide the leading "." (e.g. ".zip")
+   static Error uniqueFilePath(const std::string& basePath,
+                               const std::string& extension,
+                               FilePath* pFilePath);
    
 public:
-   FilePath() ;
-   explicit FilePath(const std::string& absolutePath) ;
+   FilePath();
+   explicit FilePath(const std::string& absolutePath);
 #if _WIN32
-   explicit FilePath(const std::wstring& absolutePath) ;
+   explicit FilePath(const std::wstring& absolutePath);
 #endif
-   virtual ~FilePath() ;
+   virtual ~FilePath();
    // COPYING: via shared_ptr (immutable)
    
 public:
@@ -94,13 +106,14 @@ public:
    uintmax_t size() const;
   
    // filename only
-   std::string filename() const ;
+   std::string filename() const;
   
    // filename without extension
-   std::string stem() const ;
+   std::string stem() const;
 
    // file extensions
-   std::string extension() const ;
+   // extension string includes the leading "." (e.g. ".zip")
+   std::string extension() const;
    std::string extensionLowerCase() const;
    bool hasExtension(const std::string& ext) const;
    bool hasExtensionLowerCase(const std::string& ext) const;
@@ -118,10 +131,10 @@ public:
    std::time_t lastWriteTime() const;
   
    // full filesystem absolute path
-   std::string absolutePath() const ;
+   std::string absolutePath() const;
 
    // full filesystem absolute path in native format
-   std::string absolutePathNative() const ;
+   std::string absolutePathNative() const;
 
    // canonical path, which is the path with all symlinks
    // and dot elements resolved
@@ -133,14 +146,14 @@ public:
 
    // path relative to parent directory. returns empty string if this path
    // is not a child of the passed parent path
-   std::string relativePath(const FilePath& parentPath) const ;
+   std::string relativePath(const FilePath& parentPath) const;
    
    // is this path within the scope of the passed scopePath (returns true
    // if the two paths are equal)
    bool isWithin(const FilePath& scopePath) const;
 
    // delete file
-   Error remove() const ;
+   Error remove() const;
    Error removeIfExists() const;
    
    // move to path; optionally with resiliency for cross-device 
@@ -162,22 +175,22 @@ public:
    Error copy(const FilePath& targetPath) const;
 
    // is this a regular file?
-   bool isRegularFile() const ;
+   bool isRegularFile() const;
 
    // is this a hidden file?
-   bool isHidden() const ;
+   bool isHidden() const;
 
    // is this a Windows junction point?
-   bool isJunction() const ;
+   bool isJunction() const;
    
    // is this a directory?
-   bool isDirectory() const ;
+   bool isDirectory() const;
 
    // create this directory if it doesn't already exist
-   Error ensureDirectory() const ;
+   Error ensureDirectory() const;
 
    // create directory at relative path
-   Error createDirectory(const std::string& path) const ;
+   Error createDirectory(const std::string& path) const;
    
    // remove the directory (if it exists) and create a new one in its place
    Error resetDirectory() const;
@@ -193,13 +206,13 @@ public:
    FilePath complete(const std::string& path) const;
    
    // get child path relative to this one.
-   FilePath childPath(const std::string& path) const ;
+   FilePath childPath(const std::string& path) const;
    
    // get this path's parent
    FilePath parent() const;
 
    // list child paths
-   Error children(std::vector<FilePath>* pFilePaths) const ;  
+   Error children(std::vector<FilePath>* pFilePaths) const;
    
    // recursively iterate over child paths
    Error childrenRecursive(RecursiveIterationFunction iterationFunction) const;
@@ -208,7 +221,7 @@ public:
    uintmax_t sizeRecursive() const;
 
    // make this path the system current directory
-   Error makeCurrentPath(bool autoCreate = false) const ;
+   Error makeCurrentPath(bool autoCreate = false) const;
 
    Error open_r(boost::shared_ptr<std::istream>* pStream) const;
    Error open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate = true) const;
@@ -217,22 +230,22 @@ public:
    bool isEquivalentTo(const FilePath& filePath) const;
 
    // compare two instances (equal if absolutePath == absolutePath)
-   bool operator== (const FilePath& filePath) const ;
-   bool operator!= (const FilePath& filePath) const ;
+   bool operator== (const FilePath& filePath) const;
+   bool operator!= (const FilePath& filePath) const;
    
    // natural order is based on absolute path
-   bool operator < (const FilePath& other) const ;
+   bool operator < (const FilePath& other) const;
 
 private:
 
    friend class RecursiveDirectoryIterator;
 
 private:
-   struct Impl ;
-   boost::shared_ptr<const Impl> pImpl_ ;
+   struct Impl;
+   boost::shared_ptr<const Impl> pImpl_;
 };
    
-std::ostream& operator << (std::ostream& stream, const FilePath& fp) ;
+std::ostream& operator << (std::ostream& stream, const FilePath& fp);
 
 bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2);
 
@@ -257,7 +270,7 @@ public:
       }
    }
 private:
-   FilePath restorePath_ ;
+   FilePath restorePath_;
 };
 
 class RecursiveDirectoryIterator : boost::noncopyable

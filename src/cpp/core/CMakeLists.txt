@@ -90,6 +90,7 @@ set (CORE_SOURCE_FILES
    http/ChunkParser.cpp
    http/ChunkProxy.cpp
    http/CSRFToken.cpp
+   http/FormProxy.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp

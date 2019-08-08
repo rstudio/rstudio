@@ -194,7 +194,7 @@ void httpServerAddHandlers()
 
    // establish content handlers
    uri_handlers::add("/graphics", secureAsyncHttpHandler(proxyContentRequest));
-   uri_handlers::add("/upload", secureAsyncUploadHandler(proxyContentRequest));
+   uri_handlers::addUploadHandler("/upload", secureAsyncUploadHandler(proxyUploadRequest));
    uri_handlers::add("/export", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/source", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/content", secureAsyncHttpHandler(proxyContentRequest));
@@ -407,6 +407,12 @@ void add(const std::string& prefix,
          const http::AsyncUriHandlerFunction& handler)
 {
    s_pHttpServer->addHandler(prefix, handler);
+}
+
+void addUploadHandler(const std::string& prefix,
+         const http::AsyncUriUploadHandlerFunction& handler)
+{
+   s_pHttpServer->addUploadHandler(prefix, handler);
 }
 
 void addProxyHandler(const std::string& prefix,

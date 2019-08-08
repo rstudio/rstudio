@@ -20,7 +20,9 @@
 #include <vector>
 
 #include <boost/function.hpp>
+#include <boost/variant.hpp>
 
+#include <core/http/AsyncConnection.hpp>
 #include <core/http/Response.hpp>
 
 namespace rstudio {
@@ -42,25 +44,39 @@ typedef boost::function<void(const Request&,Response*)> UriHandlerFunction ;
 typedef boost::function<bool(const http::Request&, http::Response*)> 
                                                          UriFilterFunction; 
 
+typedef boost::function<bool(const Request&,
+                             const std::string&,
+                             bool,
+                             const UriHandlerFunctionContinuation&)> UriAsyncUploadHandlerFunction;
+
+typedef boost::variant<UriAsyncHandlerFunction,
+            UriAsyncUploadHandlerFunction> UriAsyncHandlerFunctionVariant;
+
 class UriHandler
 {
 public:
    UriHandler(const std::string& prefix, const UriAsyncHandlerFunction& function);
    UriHandler(const std::string& prefix, const UriHandlerFunction& function);
+   UriHandler(const std::string& prefix, const UriAsyncUploadHandlerFunction& function);
 
    // COPYING: via compiler
    
    bool matches(const std::string& uri) const;
    
-   UriAsyncHandlerFunction function() const;
+   UriAsyncHandlerFunctionVariant function() const;
   
    // implement UriHandlerFunction concept
    void operator()(const Request& request,
                    const UriHandlerFunctionContinuation& cont) const;
+
+   void operator()(const Request& request,
+                   const std::string& formData,
+                   bool complete,
+                   const UriHandlerFunctionContinuation& cont) const;
    
 private:
    std::string prefix_;
-   UriAsyncHandlerFunction function_ ;
+   UriAsyncHandlerFunctionVariant function_ ;
 };
 
 class UriHandlers
@@ -72,7 +88,7 @@ public:
    
    void add(const UriHandler& handler);
    
-   UriAsyncHandlerFunction handlerFor(const std::string& uri) const;
+   boost::optional<UriAsyncHandlerFunctionVariant> handlerFor(const std::string& uri) const;
    
 private:
    std::vector<UriHandler> uriHandlers_;
@@ -83,7 +99,10 @@ inline void notFoundHandler(const Request& request, Response* pResponse)
    pResponse->setNotFoundError(request);
 }
 
-   
+void visitHandler(const UriAsyncHandlerFunctionVariant& variant,
+                  const Request& request,
+                  const UriHandlerFunctionContinuation& cont);
+
 } // namespace http
 } // namespace core
 } // namespace rstudio

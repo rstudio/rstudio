@@ -67,8 +67,8 @@ public:
    std::string contentType() const ;
    void setContentType(const std::string& contentType) ;
    
-   std::size_t contentLength() const;
-   void setContentLength(int contentLength);
+   uintmax_t contentLength() const;
+   void setContentLength(uintmax_t contentLength);
   
    bool containsHeader(const std::string& name) const ;
    std::string headerValue(const std::string& name) const ;
@@ -86,6 +86,7 @@ public:
    void setHeader(const Header& header);
    void setHeader(const std::string& name, const std::string& value) ;
    void setHeader(const std::string& name, int value);
+   void setHeader(const std::string& name, uintmax_t value);
 
    void removeHeader(const std::string& name) ;
 

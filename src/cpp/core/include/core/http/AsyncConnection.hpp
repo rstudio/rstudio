@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_ASYNC_CONNECTION_HPP
 #define CORE_HTTP_ASYNC_CONNECTION_HPP
 
+#include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/io_service.hpp>
 
@@ -73,6 +74,13 @@ public:
    virtual void writeError(const Error& error) = 0;
 
    virtual void close() = 0;
+
+   // resume parsing the connection data if previously paused
+   virtual void continueParsing() = 0;
+
+   // set and get arbitrary connection-related data
+   virtual void setData(const boost::any& data) = 0;
+   virtual boost::any getData() = 0;
 };
 
 } // namespace http

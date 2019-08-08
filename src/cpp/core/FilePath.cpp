@@ -117,7 +117,7 @@ internal_string fromString(const std::string& value)
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const ErrorLocation& errorLocation);
-void addErrorProperties(path_t path, Error* pError) ;
+void addErrorProperties(path_t path, Error* pError);
 
 bool copySingleItem(const FilePath& from, const FilePath& to, 
                     const FilePath& path)
@@ -152,7 +152,7 @@ struct FilePath::Impl
       : path(path)
    {
    }
-   path_t path ;
+   path_t path;
 };
 
 FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
@@ -160,9 +160,9 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    try
    {
 #ifdef _WIN32
-      return FilePath(boost::filesystem::current_path().wstring()) ;
+      return FilePath(boost::filesystem::current_path().wstring());
 #else
-      return FilePath(boost::filesystem::current_path().string()) ;
+      return FilePath(boost::filesystem::current_path().string());
 #endif
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -247,8 +247,8 @@ bool FilePath::exists(const std::string& path)
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(p, e, ERROR_LOCATION) ;
-      return false ;
+      logError(p, e, ERROR_LOCATION);
+      return false;
    }
 }
 
@@ -264,18 +264,24 @@ bool FilePath::isRootPath(const std::string& path)
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(p, e, ERROR_LOCATION) ;
-      return false ;
+      logError(p, e, ERROR_LOCATION);
+      return false;
    }
 }
 
 Error FilePath::tempFilePath(FilePath* pFilePath)
 {
+   return tempFilePath(std::string(), pFilePath);
+}
+
+Error FilePath::tempFilePath(const std::string& extension,
+                             FilePath* pFilePath)
+{
    using namespace boost::filesystem;
    try
    {
       path_t path = temp_directory_path();
-      return uniqueFilePath(path.string(), pFilePath);
+      return uniqueFilePath(path.string(), extension, pFilePath);
    }
    catch (const filesystem_error& e)
    {
@@ -289,16 +295,26 @@ Error FilePath::tempFilePath(FilePath* pFilePath)
 Error FilePath::uniqueFilePath(const std::string& basePath,
                                FilePath* pFilePath)
 {
+   return uniqueFilePath(basePath, std::string(), pFilePath);
+}
+
+Error FilePath::uniqueFilePath(const std::string& basePath,
+                               const std::string& extension,
+                               FilePath* pFilePath)
+{
    using namespace boost::filesystem;
    try
    {
       path_t path = absolute(unique_path(), fromString(basePath));
-      *pFilePath = FilePath(BOOST_FS_PATH2STR(path));
+      std::string pathStr = BOOST_FS_PATH2STR(path);
+      if (!extension.empty())
+         pathStr += extension;
+      *pFilePath = FilePath(pathStr);
       return Success();
    }
    catch(const filesystem_error& e)
    {
-      return Error(e.code(), ERROR_LOCATION) ;
+      return Error(e.code(), ERROR_LOCATION);
    }
 
    // keep compiler happy
@@ -329,20 +345,20 @@ FilePath::~FilePath()
 
 bool FilePath::empty() const
 {
-   return pImpl_->path.empty() ;
+   return pImpl_->path.empty();
 }
 
 bool FilePath::exists() const
 {
     try
     {
-       return !empty() && boost::filesystem::exists(pImpl_->path) ;
+       return !empty() && boost::filesystem::exists(pImpl_->path);
     }
     catch(const boost::filesystem::filesystem_error& e)
     {
        if (e.code() != boost::system::errc::permission_denied)
-         logError(pImpl_->path, e, ERROR_LOCATION) ;
-       return false ;
+         logError(pImpl_->path, e, ERROR_LOCATION);
+       return false;
     }
 }
 
@@ -382,7 +398,7 @@ uintmax_t FilePath::size() const
       if (!exists() || !boost::filesystem::is_regular_file(pImpl_->path))
          return 0;
       else
-         return boost::filesystem::file_size(pImpl_->path) ;
+         return boost::filesystem::file_size(pImpl_->path);
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -390,14 +406,14 @@ uintmax_t FilePath::size() const
       if (e.code().value() == ERROR_NOT_SUPPORTED)
          return 0;
 #endif
-      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
       return 0;
    }
 }
 
 std::string FilePath::filename() const
 {
-   return BOOST_FS_STRING(pImpl_->path.filename()) ;
+   return BOOST_FS_STRING(pImpl_->path.filename());
 }
 
 std::string FilePath::stem() const
@@ -407,7 +423,7 @@ std::string FilePath::stem() const
 
 std::string FilePath::extension() const
 {
-   return BOOST_FS_STRING(pImpl_->path.extension()) ;
+   return BOOST_FS_STRING(pImpl_->path.extension());
 }
 
 std::string FilePath::extensionLowerCase() const
@@ -431,7 +447,7 @@ struct MimeType
 {
    const char* extension;
    const char* contentType;
-} ;
+};
 
 // NOTE: should be synced with mime type database in FileSystemItem.java
 MimeType s_mimeTypes[] =
@@ -603,7 +619,7 @@ void FilePath::setLastWriteTime(std::time_t time) const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
       return;
    }
 }
@@ -615,11 +631,11 @@ std::time_t FilePath::lastWriteTime() const
       if (!exists())
          return 0;
       else
-         return boost::filesystem::last_write_time(pImpl_->path) ;
+         return boost::filesystem::last_write_time(pImpl_->path);
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
       return 0;
    }
 }
@@ -649,7 +665,7 @@ std::string FilePath::absolutePath() const
    if (empty())
       return std::string();
    else
-      return BOOST_FS_PATH2STR(pImpl_->path) ;
+      return BOOST_FS_PATH2STR(pImpl_->path);
 }
 
 std::string FilePath::absolutePathNative() const
@@ -657,7 +673,7 @@ std::string FilePath::absolutePathNative() const
    if (empty())
       return std::string();
    else
-      return BOOST_FS_PATH2STRNATIVE(pImpl_->path) ;
+      return BOOST_FS_PATH2STRNATIVE(pImpl_->path);
 }
 
 std::string FilePath::canonicalPath() const
@@ -685,14 +701,14 @@ Error FilePath::remove() const
       if (isDirectory())
          boost::filesystem::remove_all(pImpl_->path);
       else
-         boost::filesystem::remove(pImpl_->path) ;
-      return Success() ;
+         boost::filesystem::remove(pImpl_->path);
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      return error;
    }
 }
 
@@ -708,8 +724,8 @@ Error FilePath::move(const FilePath& targetPath, MoveType type) const
 {
    try
    {
-      boost::filesystem::rename(pImpl_->path, targetPath.pImpl_->path) ;
-      return Success() ;
+      boost::filesystem::rename(pImpl_->path, targetPath.pImpl_->path);
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
@@ -720,10 +736,10 @@ Error FilePath::move(const FilePath& targetPath, MoveType type) const
          // device to another; in this case, fall back to copy/delete
          return moveIndirect(targetPath);
       }
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      error.addProperty("target-path", targetPath.absolutePath()) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      error.addProperty("target-path", targetPath.absolutePath());
+      return error;
    }
 }
 
@@ -753,15 +769,15 @@ Error FilePath::copy(const FilePath& targetPath) const
 {
    try
    {
-      boost::filesystem::copy_file(pImpl_->path, targetPath.pImpl_->path) ;
-      return Success() ;
+      boost::filesystem::copy_file(pImpl_->path, targetPath.pImpl_->path);
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      error.addProperty("target-path", targetPath.absolutePath()) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      error.addProperty("target-path", targetPath.absolutePath());
+      return error;
    }
 }
 
@@ -779,14 +795,14 @@ bool FilePath::isRegularFile() const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
       return false;
    }
 }
 
 bool FilePath::isHidden() const
 {
-   return system::isHiddenFile(*this) ;
+   return system::isHiddenFile(*this);
 }
 
 bool FilePath::isJunction() const
@@ -827,12 +843,12 @@ bool FilePath::isDirectory() const
       #ifdef _WIN32
                || isJunction()
       #endif
-               ;
+              ;
       }
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      logError(pImpl_->path, e, ERROR_LOCATION) ;
+      logError(pImpl_->path, e, ERROR_LOCATION);
       return false;
    }
 }
@@ -841,9 +857,9 @@ bool FilePath::isDirectory() const
 Error FilePath::ensureDirectory() const
 {
    if ( !exists() )
-      return createDirectory(std::string()) ;
+      return createDirectory(std::string());
    else
-      return Success() ;
+      return Success();
 }
 
 
@@ -851,20 +867,20 @@ Error FilePath::createDirectory(const std::string& name) const
 {
    try
    {
-      path_t targetDirectory ;
+      path_t targetDirectory;
       if (name.empty())
-         targetDirectory = pImpl_->path ;
+         targetDirectory = pImpl_->path;
       else
-         targetDirectory = BOOST_FS_COMPLETE(name, pImpl_->path) ;
-      boost::filesystem::create_directories(targetDirectory) ;
-      return Success() ;
+         targetDirectory = BOOST_FS_COMPLETE(name, pImpl_->path);
+      boost::filesystem::create_directories(targetDirectory);
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      error.addProperty("target-dir", name) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      error.addProperty("target-dir", name);
+      return error;
    }
 }
 
@@ -934,11 +950,11 @@ FilePath FilePath::complete(const std::string& path) const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      error.addProperty("path", path) ;
-      LOG_ERROR(error) ;
-      return *this ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      error.addProperty("path", path);
+      LOG_ERROR(error);
+      return *this;
    }
 }
 
@@ -952,10 +968,10 @@ FilePath FilePath::parent() const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
       LOG_ERROR(error);
-      return *this ;
+      return *this;
    }
 }
 
@@ -968,7 +984,7 @@ FilePath FilePath::childPath(const std::string& path) const
    {
       if (path.empty())
       {
-         return *this ;
+         return *this;
       }
       else
       {
@@ -988,11 +1004,11 @@ FilePath FilePath::childPath(const std::string& path) const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      error.addProperty("path", path) ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      error.addProperty("path", path);
       LOG_ERROR(error);
-      return *this ;
+      return *this;
    }
 
 }
@@ -1017,21 +1033,21 @@ Error FilePath::children(std::vector<FilePath>* pFilePaths) const
 
    try
    {
-      dir_iterator end ;
+      dir_iterator end;
       for (dir_iterator itr(pImpl_->path); itr != end; ++itr)
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
          std::string itemPath = BOOST_FS_PATH2STR(itr->path());
-         pFilePaths->push_back(FilePath(itemPath)) ;
+         pFilePaths->push_back(FilePath(itemPath));
       }
-      return Success() ;
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      return error;
    }
 }
 
@@ -1044,7 +1060,7 @@ Error FilePath::childrenRecursive(
 
    try
    {
-      recursive_dir_iterator end ;
+      recursive_dir_iterator end;
 
       for (recursive_dir_iterator itr(pImpl_->path); itr != end; ++itr)
       {
@@ -1058,13 +1074,13 @@ Error FilePath::childrenRecursive(
          }
       }
 
-      return Success() ;
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      return error;
    }
 }
 
@@ -1075,19 +1091,19 @@ Error FilePath::makeCurrentPath(bool autoCreate) const
    {
       Error autoCreateError = ensureDirectory();
       if (autoCreateError)
-         return autoCreateError ;
+         return autoCreateError;
    }
 
    try
    {
-      boost::filesystem::current_path(pImpl_->path) ;
-      return Success() ;
+      boost::filesystem::current_path(pImpl_->path);
+      return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
-      return error ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
+      return error;
    }
 }
 
@@ -1211,8 +1227,8 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
-      Error error(e.code(), ERROR_LOCATION) ;
-      addErrorProperties(pImpl_->path, &error) ;
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(pImpl_->path, &error);
       error.addProperty("equivilant-to", filePath);
       return false;
    }
@@ -1220,23 +1236,23 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
 
 bool FilePath::operator== (const FilePath& filePath) const
 {
-   return pImpl_->path == filePath.pImpl_->path ;
+   return pImpl_->path == filePath.pImpl_->path;
 }
 
 bool FilePath::operator!= (const FilePath& filePath) const
 {
-   return pImpl_->path != filePath.pImpl_->path ;
+   return pImpl_->path != filePath.pImpl_->path;
 }
 
 bool FilePath::operator < (const FilePath& other) const
 {
-   return pImpl_->path < other.pImpl_->path ;
+   return pImpl_->path < other.pImpl_->path;
 }
 
 std::ostream& operator << (std::ostream& stream, const FilePath& fp)
 {
    stream << fp.absolutePath();
-   return stream ;
+   return stream;
 }
 
 bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2)
@@ -1308,14 +1324,14 @@ void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
               const core::ErrorLocation& errorLocation)
 {
-   Error error(e.code(), errorLocation) ;
-   addErrorProperties(path, &error) ;
-   core::log::logError(error, errorLocation) ;
+   Error error(e.code(), errorLocation);
+   addErrorProperties(path, &error);
+   core::log::logError(error, errorLocation);
 }
 
 void addErrorProperties(path_t path, Error* pError)
 {
-   pError->addProperty("path", BOOST_FS_PATH2STR(path)) ;
+   pError->addProperty("path", BOOST_FS_PATH2STR(path));
 }
 }
 

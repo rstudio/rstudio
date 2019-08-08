@@ -46,10 +46,29 @@
 #include <session/SessionHttpConnectionListener.hpp>
 
 #include "SessionHttpConnectionImpl.hpp"
+#include "../SessionUriHandlers.hpp"
 
 
 namespace rstudio {
 namespace session {
+
+class UploadVisitor : public boost::static_visitor<core::http::UriAsyncUploadHandlerFunction>
+{
+public:
+   core::http::UriAsyncUploadHandlerFunction
+   operator()(const core::http::UriAsyncHandlerFunction& func) const
+   {
+      // return empty function to signify that the func is not an upload handler
+      return core::http::UriAsyncUploadHandlerFunction();
+   }
+
+   core::http::UriAsyncUploadHandlerFunction
+   operator()(const core::http::UriAsyncUploadHandlerFunction& func) const
+   {
+      // return the func itself so it can be invoked
+      return func;
+   }
+};
 
 template <typename ProtocolType>
 class HttpConnectionListenerImpl : public HttpConnectionListener,
@@ -180,6 +199,10 @@ private:
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
             ioService(),
             boost::bind(
+                 &HttpConnectionListenerImpl<ProtocolType>::onHeadersParsed,
+                 this,
+                 _1),
+            boost::bind(
                  &HttpConnectionListenerImpl<ProtocolType>::enqueConnection,
                  this,
                  _1))
@@ -233,6 +256,28 @@ private:
          acceptNextConnection() ;
       }
       CATCH_UNEXPECTED_EXCEPTION
+   }
+
+   void onHeadersParsed(boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection)
+   {
+      // convert to cannonical HttpConnection
+      boost::shared_ptr<HttpConnection> ptrHttpConnection =
+            boost::static_pointer_cast<HttpConnection>(ptrConnection);
+
+      // check if request handler is an upload handler
+      const core::http::Request& request = ptrConnection->request();
+      std::string uri = request.uri();
+      boost::optional<core::http::UriAsyncHandlerFunctionVariant> uriHandler =
+        uri_handlers::handlers().handlerFor(uri);
+
+      if (uriHandler)
+      {
+         core::http::UriAsyncUploadHandlerFunction func =
+               boost::apply_visitor(UploadVisitor(), uriHandler.get());
+
+         if (func)
+            ptrConnection->setUploadHandler(func);
+      }
    }
 
    // NOTE: this logic is duplicated btw here and NamedPipeConnectionListener

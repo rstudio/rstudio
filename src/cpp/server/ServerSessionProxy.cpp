@@ -46,6 +46,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/ChunkProxy.hpp>
+#include <core/http/FormProxy.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -83,7 +84,8 @@ bool proxyRequest(int requestType,
                   const boost::shared_ptr<http::Request>& pRequest,
                   const r_util::SessionContext& context,
                   boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-                  const http::ErrorHandler& errorHandler);
+                  const http::ErrorHandler& errorHandler,
+                  const ClientHandler& clientHandler);
 
 void proxyJupyterRequest(const r_util::SessionContext& context,
                          boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -562,12 +564,15 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    return Success();
 }
 
+
+
 void proxyRequest(
       int requestType,
       const r_util::SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const http::ErrorHandler& errorHandler,
-      const http::ConnectionRetryProfile& connectionRetryProfile)
+      const http::ConnectionRetryProfile& connectionRetryProfile,
+      const ClientHandler& clientHandler = ClientHandler())
 {
    // apply optional proxy filter
    if (applyProxyFilter(ptrConnection, context))
@@ -584,7 +589,7 @@ void proxyRequest(
    invokeRequestFilter(pRequest.get());
 
    // see if the request should be handled by the overlay
-   if (overlay::proxyRequest(requestType, pRequest, context, ptrConnection, errorHandler))
+   if (overlay::proxyRequest(requestType, pRequest, context, ptrConnection, errorHandler, clientHandler))
    {
       // request handled by the overlay
       return;
@@ -642,6 +647,13 @@ void proxyRequest(
    chunkProxy->proxy(pClient);
    pClient->execute(boost::bind(handleProxyResponse, ptrConnection, context, _1),
                     errorHandler);
+
+   if (clientHandler)
+   {
+      // invoke the client handler on the threadpool - we cannot do this
+      // from this thread because that will cause ordering issues for the caller
+      ptrConnection->ioService().post(boost::bind(clientHandler, pClient));
+   }
 }
 
 // function used to periodically validate that the user is valid (has an
@@ -751,6 +763,68 @@ void proxyContentRequest(
                 ptrConnection,
                 boost::bind(handleContentError, ptrConnection, context, _1),
                 sessionRetryProfile(ptrConnection, context));
+}
+
+bool proxyUploadRequest(
+      const std::string& username,
+      const std::string& userIdentifier,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const std::string& formData,
+      bool complete)
+{
+   // get session context
+   r_util::SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+   {
+      ptrConnection->close();
+      return true;
+   }
+
+   // see if we have a form proxy for this request already
+   boost::shared_ptr<http::FormProxy> proxy;
+   boost::any connectionData = ptrConnection->getData();
+   if (!connectionData.empty())
+   {
+      try
+      {
+         proxy = boost::any_cast<boost::shared_ptr<http::FormProxy>>(connectionData);
+      }
+      catch (boost::bad_any_cast&)
+      {
+      }
+   }
+
+   if (!proxy)
+   {
+      // no proxy yet - we need to proxy this request and create
+      // a form proxy to write form data to
+      auto onClientCreated = [=](const boost::shared_ptr<http::IAsyncClient>& proxyClient)
+      {
+         boost::shared_ptr<http::FormProxy> proxy =
+               boost::make_shared<http::FormProxy>(ptrConnection, proxyClient);
+
+         proxy->initialize();
+         ptrConnection->setData(proxy);
+
+         // continue handling form data
+         ptrConnection->continueParsing();
+      };
+
+      proxyRequest(RequestType::Content,
+                   context,
+                   ptrConnection,
+                   boost::bind(handleContentError, ptrConnection, context, _1),
+                   sessionRetryProfile(ptrConnection, context),
+                   onClientCreated);
+
+      // because the client creation is asynchronous, we need to stop handling form pieces
+      // until we actually have a client to write the data to
+      return false;
+   }
+   else
+   {
+      return proxy->queueData(formData);
+   }
 }
 
 void proxyRpcRequest(
@@ -871,7 +945,6 @@ void proxyLocalhostRequest(
    }
 
    std::string port = safe_convert::numberToString(portNum);
-
 
    // strip the port part of the uri
    using namespace boost::algorithm;

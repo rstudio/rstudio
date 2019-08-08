@@ -46,6 +46,9 @@ public:
    virtual void addHandler(const std::string& prefix,
                            const AsyncUriHandlerFunction& handler) = 0;
 
+   virtual void addUploadHandler(const std::string& prefix,
+                                 const AsyncUriUploadHandlerFunction& handler) = 0;
+
    virtual void addProxyHandler(const std::string& prefix,
                                 const AsyncUriHandlerFunction& handler) = 0;
 

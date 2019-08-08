@@ -56,6 +56,16 @@ typedef boost::function<void(
                      boost::shared_ptr<core::http::AsyncConnection>)>
                                           SecureAsyncUriHandlerFunctionEx;
 
+typedef boost::function<bool(
+                     const std::string& username,
+                     const std::string& userIdentifier,
+                     boost::shared_ptr<core::http::AsyncConnection>,
+                     const std::string&,
+                     bool)> SecureAsyncUriUploadHandlerFunctionEx;
+
+typedef boost::variant<SecureAsyncUriHandlerFunctionEx,
+                       SecureAsyncUriUploadHandlerFunctionEx> SecureAsyncUriHandlerFunctionExVariant;
+
       
 core::http::UriHandlerFunction secureHttpHandler(
                                     SecureUriHandlerFunction handler,
@@ -86,8 +96,9 @@ core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
 core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
                                     SecureAsyncUriHandlerFunctionEx handler);
 
-core::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
-                                    SecureAsyncUriHandlerFunction handler);
+core::http::AsyncUriUploadHandlerFunction secureAsyncUploadHandler(
+                                    SecureAsyncUriUploadHandlerFunctionEx handler);
+
 
 } // namespace auth
 } // namespace server

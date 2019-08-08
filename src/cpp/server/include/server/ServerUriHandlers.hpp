@@ -29,6 +29,9 @@ namespace uri_handlers {
 void add(const std::string& prefix,
          const core::http::AsyncUriHandlerFunction& handler);
 
+void addUploadHandler(const std::string& prefix,
+                      const core::http::AsyncUriUploadHandlerFunction& handler);
+
 // add proxy handler
 // proxy handlers have special behavior to allow them to route all traffic
 void addProxyHandler(const std::string& prefix,
