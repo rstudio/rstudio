@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.VerticalRadioPanel;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -210,7 +211,8 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
       
-      VerticalPanel radioPanel = new VerticalPanel();
+      VerticalRadioPanel radioPanel = new VerticalRadioPanel(appTypeLabel_);
+      radioPanel.setStylePrimaryName(RES.styles().shinyTypeGroup());
       appTypeSingleFileButton_ = new RadioButton("shiny", "Single File (app.R)");
       appTypeMultipleFileButton_ = new RadioButton("shiny", "Multiple File (ui.R/server.R)");
       radioPanel.add(appTypeSingleFileButton_);
@@ -364,6 +366,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       String invalidAppName();
       String appNameTextBox();
       String textBox();
+      String shinyTypeGroup();
    }
 
    public interface Resources extends ClientBundle
