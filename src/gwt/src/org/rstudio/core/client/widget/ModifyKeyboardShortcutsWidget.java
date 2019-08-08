@@ -66,6 +66,7 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
@@ -981,10 +982,22 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       Label radioLabel = new Label("Show:");
       radioLabel.getElement().getStyle().setFloat(Style.Float.LEFT);
       radioLabel.getElement().getStyle().setMarginRight(8, Unit.PX);
+
+      // The fieldset wrapping the radio buttons has a visually hidden legend which
+      // will be "seen" by screen readers, so hide this label to avoid duplication.
+      // Attempts to style the legend to match the current single-line visual layout
+      // proved too frail (browser-specific quirks).
+      A11y.setARIAHidden(radioLabel);
+
       headerPanel.add(radioLabel);
-      headerPanel.add(radioAll_);
+      FieldSetPanel showFieldsetPanel = new FieldSetPanel("Show:", true);
+      showFieldsetPanel.setStyleName(RES.dataGridStyle().showChoice());
+      FlowPanel radioPanel = new FlowPanel();
+      showFieldsetPanel.add(radioPanel);
+      headerPanel.add(showFieldsetPanel);
+      radioPanel.add(radioAll_);
       radioAll_.setValue(true);
-      headerPanel.add(radioCustomized_);
+      radioPanel.add(radioCustomized_);
       
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
       filterWidget_.getElement().getStyle().setMarginLeft(10, Unit.PX);
@@ -1474,6 +1487,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       String conflictRow();
       String shortcutInput();
       String icon();
+      String showChoice();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

@@ -91,4 +91,13 @@ public class A11y
    {
       setARIACurrent(widget.getElement(), value);
    }
+
+   /**
+    * Make a widget hidden to screen readers.
+    * @param widget
+    */
+   public static void setARIAHidden(Widget widget)
+   {
+      widget.getElement().setAttribute("aria-hidden", "true");
+   }
 }

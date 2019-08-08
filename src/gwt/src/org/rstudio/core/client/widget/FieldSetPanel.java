@@ -38,6 +38,11 @@ public class FieldSetPanel extends SimplePanel implements HasOneWidget
          legendElement_.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
       }
    }
+   
+   public FieldSetPanel(String legend)
+   {
+      this(legend, false);
+   }
 
    public FieldSetPanel()
    {
