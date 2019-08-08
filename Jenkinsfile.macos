@@ -57,7 +57,7 @@ pipeline {
         }
       }
     }
-    stage('upload') {
+    stage('notarize and upload') {
       steps {
         script {
           // extract name of package to publish
@@ -65,6 +65,10 @@ pipeline {
             script: "basename `ls package/osx/build/RStudio-*.dmg`",
             returnStdout: true
           ).trim()
+
+          withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
+            sh "docker/jenkins/notarize-release.sh ${packageFile}"
+          }
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
