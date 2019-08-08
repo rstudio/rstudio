@@ -67,7 +67,7 @@ pipeline {
           ).trim()
 
           withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
-            sh "docker/jenkins/notarize-release.sh ${packageFile}"
+            sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
           }
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
