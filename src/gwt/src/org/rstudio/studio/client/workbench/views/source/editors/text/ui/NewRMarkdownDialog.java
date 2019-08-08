@@ -24,6 +24,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FieldSetPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -392,8 +393,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       else 
       {
          
-         currentTemplate_ = RmdTemplate.getTemplate(templates_,
-                                                    selectedTemplate);
+         currentTemplate_ = RmdTemplate.getTemplate(templates_, selectedTemplate);
          if (currentTemplate_ == null)
             return;
          
@@ -470,12 +470,12 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
    @UiField NewRmdStyle style;
    @UiField Resources resources;
+   @UiField FieldSetPanel formatFieldSet_;
    @UiField HTMLPanel templateFormatPanel_;
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;
    @UiField(provided=true) RmdTemplateChooser templateChooser_;
    @UiField HTMLPanel shinyInfoPanel_;
-   @UiField Label outputFormatLabel_;
 
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
