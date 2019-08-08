@@ -625,13 +625,6 @@ if(APPLE)
          add_custom_command (TARGET rsession POST_BUILD
             COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
-
-      # also rewrite where rsession looks for libR.dylib
-      # (so we don't accidentally load the wrong version of R at launch)
-      get_filename_component(LIBR_HOME_REALPATH "${LIBR_HOME}" REALPATH)
-      add_custom_command(TARGET rsession POST_BUILD
-         COMMAND install_name_tool -change "${LIBR_HOME_REALPATH}/lib/libR.dylib" "@executable_path/libR.dylib" "${CMAKE_CURRENT_BINARY_DIR}/rsession")
-
    endif()
 
 endif()
