@@ -83,7 +83,7 @@ class AsyncUriHandler
 {
 public:
    AsyncUriHandler(
-            SecureAsyncUriHandlerFunctionEx handlerFunction,
+            SecureAsyncUriHandlerFunctionExVariant handlerFunction,
             http::AsyncUriHandlerFunction unauthorizedResponseFunction,
             bool refreshAuthCookies)
    : handlerFunction_(handlerFunction),
@@ -92,35 +92,131 @@ public:
    {
    }
 
-   // COPYING: via compiler (copyable members)
+   // COPYING - ensure that none of the cached user variables are copied over
+   // these values are cached so that form handlers can be invoked multiple times
+   // without having to recalculate username, which is expensive (as it involves crypto)
+   AsyncUriHandler(const AsyncUriHandler& other)
+   {
+      handlerFunction_ = other.handlerFunction_;
+      unauthorizedResponseFunction_ = other.unauthorizedResponseFunction_;
+      refreshAuthCookies_ = other.refreshAuthCookies_;
+
+      // do not copy cached user identifiers
+   }
 
    // provide http::AsyncUriHandlerFunction concept
    void operator()(boost::shared_ptr<http::AsyncConnection> pConnection)
    {
-      std::string userIdentifier = handler::getUserIdentifier(
-                                                   pConnection->request(),
-                                                   &pConnection->response());
-      if (userIdentifier.empty())
-      {
-         unauthorizedResponseFunction_(pConnection);
+      if (!getUser(pConnection))
          return;
-      }
-
-      if (refreshAuthCookies_)
-         handler::refreshAuthCookies(userIdentifier, pConnection->request(), &pConnection->response());
-
-      // convert to local username
-      std::string username = handler::userIdentifierToLocalUsername(
-                                                            userIdentifier);
 
       // call the handler
-      handlerFunction_(username, userIdentifier, pConnection);
+      invokeHandler(username_, userIdentifier_, pConnection);
+   }
+
+   // provide http::AsyncUriUploadHandlerFunction concept
+   bool operator()(boost::shared_ptr<http::AsyncConnection> pConnection,
+                   const std::string& formData,
+                   bool keepGoing)
+   {
+      if (!getUser(pConnection))
+         return false;
+
+      // call the handler
+      return invokeHandler(username_, userIdentifier_, pConnection, formData, keepGoing);
    }
 
 private:
-   SecureAsyncUriHandlerFunctionEx handlerFunction_;
+   class InvocationVisitor : public boost::static_visitor<bool>
+   {
+   public :
+      InvocationVisitor(const std::string& username,
+                        const std::string& userIdentifier,
+                        boost::shared_ptr<http::AsyncConnection> pConnection)
+         : username_(username),
+           userIdentifier_(userIdentifier),
+           pConnection_(pConnection)
+      {
+      }
+
+      InvocationVisitor(const std::string& username,
+                        const std::string& userIdentifier,
+                        boost::shared_ptr<http::AsyncConnection> pConnection,
+                        const std::string& formData,
+                        bool keepGoing)
+         : username_(username),
+           userIdentifier_(userIdentifier),
+           pConnection_(pConnection),
+           formData_(formData),
+           keepGoing_(keepGoing)
+      {
+      }
+
+      bool operator()(const SecureAsyncUriHandlerFunctionEx& func) const
+      {
+         func(username_, userIdentifier_, pConnection_);
+
+         // dummy return value
+         return true;
+      }
+
+      bool operator()(const SecureAsyncUriUploadHandlerFunctionEx& func) const
+      {
+         return func(username_, userIdentifier_, pConnection_, formData_, keepGoing_);
+      }
+
+   private:
+      std::string username_;
+      std::string userIdentifier_;
+      boost::shared_ptr<http::AsyncConnection> pConnection_;
+      std::string formData_;
+      bool keepGoing_;
+   };
+
+   bool getUser(boost::shared_ptr<http::AsyncConnection> pConnection)
+   {
+      if (!userIdentifier_.empty() && !username_.empty())
+         return true;
+
+      userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
+                                                   &pConnection->response());
+      if (userIdentifier_.empty())
+      {
+         unauthorizedResponseFunction_(pConnection);
+         return false;
+      }
+
+      if (refreshAuthCookies_)
+         handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response());
+
+      // convert to local username
+      username_ = handler::userIdentifierToLocalUsername(userIdentifier_);
+      return true;
+   }
+
+   void invokeHandler(const std::string& username,
+                      const std::string& userIdentifier,
+                      boost::shared_ptr<http::AsyncConnection> pConnection)
+   {
+      boost::apply_visitor(InvocationVisitor(username, userIdentifier, pConnection), handlerFunction_);
+   }
+
+   bool invokeHandler(const std::string& username,
+                      const std::string& userIdentifier,
+                      boost::shared_ptr<http::AsyncConnection> pConnection,
+                      const std::string& formData,
+                      bool keepGoing)
+   {
+      return boost::apply_visitor(
+               InvocationVisitor(username, userIdentifier, pConnection, formData, keepGoing),
+               handlerFunction_);
+   }
+
+   SecureAsyncUriHandlerFunctionExVariant handlerFunction_;
    http::AsyncUriHandlerFunction unauthorizedResponseFunction_;
    bool refreshAuthCookies_;
+   std::string username_;
+   std::string userIdentifier_;
 };
    
    
@@ -238,13 +334,15 @@ http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
                           false);
 }
 
-http::AsyncUriHandlerFunction secureAsyncUploadHandler(
-                                    SecureAsyncUriHandlerFunction handler)
+
+http::AsyncUriUploadHandlerFunction secureAsyncUploadHandler(
+                                    SecureAsyncUriUploadHandlerFunctionEx handler)
 {
-   return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
+   return AsyncUriHandler(handler,
                           boost::bind(asyncSetError, setFileUploadError, _1),
                           true);
 }
+
 
 } // namespace auth
 } // namespace server

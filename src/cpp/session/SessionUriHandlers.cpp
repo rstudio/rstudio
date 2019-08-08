@@ -50,6 +50,12 @@ Error registerUriHandler(const std::string& name,
    return Success();
 }
 
+Error registerUploadHandler(const std::string& name,
+                            const http::UriAsyncUploadHandlerFunction& handlerFunction)
+{
+   uri_handlers::handlers().add(http::UriHandler(name, handlerFunction));
+   return Success();
+}
 
 Error registerAsyncLocalUriHandler(
                          const std::string& name,

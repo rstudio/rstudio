@@ -981,10 +981,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       Label radioLabel = new Label("Show:");
       radioLabel.getElement().getStyle().setFloat(Style.Float.LEFT);
       radioLabel.getElement().getStyle().setMarginRight(8, Unit.PX);
+
       headerPanel.add(radioLabel);
-      headerPanel.add(radioAll_);
+      FieldSetPanel showFieldsetPanel = new FieldSetPanel(radioLabel);
+      showFieldsetPanel.setStyleName(RES.dataGridStyle().showChoice());
+      FlowPanel radioPanel = new FlowPanel();
+      showFieldsetPanel.add(radioPanel);
+      headerPanel.add(showFieldsetPanel);
+      radioPanel.add(radioAll_);
       radioAll_.setValue(true);
-      headerPanel.add(radioCustomized_);
+      radioPanel.add(radioCustomized_);
       
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
       filterWidget_.getElement().getStyle().setMarginLeft(10, Unit.PX);
@@ -1474,6 +1480,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       String conflictRow();
       String shortcutInput();
       String icon();
+      String showChoice();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

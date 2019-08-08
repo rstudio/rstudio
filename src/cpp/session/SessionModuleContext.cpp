@@ -974,6 +974,11 @@ FilePath userScratchPath()
    return session::options().userScratchPath();
 }
 
+FilePath userUploadedFilesScratchPath()
+{
+   return session::options().userScratchPath().childPath("uploaded-files");
+}
+
 FilePath scopedScratchPath()
 {
    if (projects::projectContext().hasProject())

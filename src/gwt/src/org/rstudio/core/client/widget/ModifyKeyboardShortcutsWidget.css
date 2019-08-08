@@ -92,6 +92,13 @@
 	box-shadow: 0 0 4px #8BF;
 }
 
+fieldset.showChoice {
+   float: left;
+   border: none;
+   padding: 0;
+   margin: 0;
+}
+
 .rstudio-themes-flat .dataGridWidget {
 	background: #FFF;
 }

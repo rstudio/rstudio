@@ -27,8 +27,6 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-#define defaultMaxBufferSize 1024*1024 // 1 MB
-
 class ChunkProxy : public boost::enable_shared_from_this<ChunkProxy>,
                    boost::noncopyable
 {
@@ -39,6 +37,7 @@ public:
    void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection);
 
 private:
+   static constexpr uint64_t defaultMaxBufferSize = 1024*1024; // 1MB
 
    bool queueChunk(const Response& response,
                    const std::string& chunk);

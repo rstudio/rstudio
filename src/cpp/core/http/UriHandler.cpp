@@ -28,6 +28,44 @@ namespace http {
 
 namespace {
 
+class UriAsyncHandlerFunctionVariantVisitor : public boost::static_visitor<void>
+{
+public:
+   UriAsyncHandlerFunctionVariantVisitor(const Request& request,
+                                         const UriHandlerFunctionContinuation& cont) :
+      cont_(cont)
+   {
+      request_.assign(request);
+   }
+
+   UriAsyncHandlerFunctionVariantVisitor(const Request& request,
+                                         const std::string& formData,
+                                         bool complete,
+                                         const UriHandlerFunctionContinuation& cont) :
+      cont_(cont),
+      formData_(formData),
+      isComplete_(complete)
+   {
+      request_.assign(request);
+   }
+
+   void operator()(const UriAsyncHandlerFunction& func)
+   {
+      func(request_, cont_);
+   }
+
+   void operator()(const UriAsyncUploadHandlerFunction& func)
+   {
+      func(request_, formData_, isComplete_, cont_);
+   }
+
+private:
+   Request request_;
+   UriHandlerFunctionContinuation cont_;
+   std::string formData_;
+   bool isComplete_;
+};
+
 void runSynchronousHandler(const UriHandlerFunction& function,
                            const Request& request,
                            const UriHandlerFunctionContinuation& cont)
@@ -56,12 +94,18 @@ UriHandler::UriHandler(const std::string& prefix,
 {
 }
 
+UriHandler::UriHandler(const std::string& prefix,
+                       const UriAsyncUploadHandlerFunction& function)
+   : prefix_(prefix), function_(function)
+{
+}
+
 bool UriHandler::matches(const std::string& uri) const
 {
    return boost::algorithm::starts_with(uri, prefix_);
 }
 
-UriAsyncHandlerFunction UriHandler::function() const
+UriAsyncHandlerFunctionVariant UriHandler::function() const
 {
    return function_;
 }
@@ -70,7 +114,17 @@ UriAsyncHandlerFunction UriHandler::function() const
 void UriHandler::operator()(const Request& request,
                             const UriHandlerFunctionContinuation& cont) const
 {
-   function_(request, cont);
+   UriAsyncHandlerFunctionVariantVisitor visitor(request, cont);
+   boost::apply_visitor(visitor, function_);
+}
+
+void UriHandler::operator()(const Request& request,
+                            const std::string& formData,
+                            bool complete,
+                            const UriHandlerFunctionContinuation& cont) const
+{
+   UriAsyncHandlerFunctionVariantVisitor visitor(request, formData, complete, cont);
+   boost::apply_visitor(visitor, function_);
 }
    
 void UriHandlers::add(const UriHandler& handler) 
@@ -78,7 +132,7 @@ void UriHandlers::add(const UriHandler& handler)
    uriHandlers_.push_back(handler);
 }
 
-UriAsyncHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
+boost::optional<UriAsyncHandlerFunctionVariant> UriHandlers::handlerFor(const std::string& uri) const
 {
    std::vector<UriHandler>::const_iterator handler = std::find_if(
                               uriHandlers_.begin(), 
@@ -90,8 +144,16 @@ UriAsyncHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
    }
    else
    {
-      return UriAsyncHandlerFunction();
+      return boost::optional<UriAsyncHandlerFunctionVariant>();
    }
+}
+
+void visitHandler(const UriAsyncHandlerFunctionVariant& variant,
+                  const Request& request,
+                  const UriHandlerFunctionContinuation& cont)
+{
+   UriAsyncHandlerFunctionVariantVisitor visitor(request, cont);
+   boost::apply_visitor(visitor, variant);
 }
    
 } // namespace http

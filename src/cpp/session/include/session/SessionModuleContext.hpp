@@ -87,6 +87,7 @@ std::string createAliasedPath(const core::FilePath& path);
 std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
+core::FilePath userUploadedFilesScratchPath();
 core::FilePath scopedScratchPath();
 core::FilePath sharedScratchPath();
 core::FilePath sharedProjectScratchPath();
@@ -189,6 +190,10 @@ core::Error registerAsyncUriHandler(
 core::Error registerUriHandler(
                         const std::string& name,
                         const core::http::UriHandlerFunction& handlerFunction);
+
+// register an inbound upload handler (include a leading slash)
+core::Error registerUploadHandler(const std::string& name,
+                                  const core::http::UriAsyncUploadHandlerFunction& handlerFunction);
 
 // register a local uri handler (scoped by a special prefix which indicates
 // a local scope)

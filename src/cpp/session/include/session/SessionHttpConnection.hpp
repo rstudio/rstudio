@@ -21,6 +21,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
+#include <core/http/UriHandler.hpp>
+
 /*
  HttpConnection plays two related roles in the system:
 
@@ -74,6 +76,8 @@ public:
 
    // other useful introspection methods
    virtual std::string requestId() const = 0;
+
+   virtual void setUploadHandler(const core::http::UriAsyncUploadHandlerFunction& uploadHandler) = 0;
 };
 
 

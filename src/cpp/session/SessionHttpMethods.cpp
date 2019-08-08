@@ -496,6 +496,7 @@ bool waitForMethod(const std::string& method,
          // ensure request signature is valid
          if (!verifyRequestSignature(ptrConnection->request()))
          {
+            LOG_ERROR_MESSAGE("Invalid signature for request URI " + ptrConnection->request().uri());
             core::http::Response response;
             response.setError(http::status::Unauthorized, "Invalid message signature");
             ptrConnection->sendResponse(response);
@@ -571,18 +572,20 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    // check for a uri handler registered by a module
    const core::http::Request& request = ptrConnection->request();
    std::string uri = request.uri();
-   core::http::UriAsyncHandlerFunction uriHandler = 
+   boost::optional<core::http::UriAsyncHandlerFunctionVariant> uriHandler =
      uri_handlers::handlers().handlerFor(uri);
 
    if (uriHandler) // uri handler
    {
+      core::http::visitHandler(uriHandler.get(),
+                               request,
+                               boost::bind(endHandleConnection,
+                                           ptrConnection,
+                                           connectionType,
+                                           _1));
+
       // r code may execute - ensure session is initialized
       init::ensureSessionInitialized();
-
-      uriHandler(request, boost::bind(endHandleConnection,
-                                      ptrConnection,
-                                      connectionType,
-                                      _1));
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
