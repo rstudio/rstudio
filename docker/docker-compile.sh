@@ -156,5 +156,3 @@ fi
 # stop the container
 docker stop "$CONTAINER_ID"
 echo "Container image saved in $CONTAINER_ID."
-
-

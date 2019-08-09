@@ -17,6 +17,9 @@
 # the signing key into a private, temporary keyring, uses it to sign the
 # release, and then destroys the keyring.
 
+# abort on error
+set -e
+
 if [[ "$#" -lt 2 ]]; then
     echo "Usage: sign-release.sh [installer-file] [key-file] [passphrase-file]"
     exit 1
@@ -151,5 +154,3 @@ else
     # not a deb or rpm; we don't know how to sign this
     echo "Unknown installer extension $EXT."
 fi
-
-
