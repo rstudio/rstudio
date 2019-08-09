@@ -152,4 +152,12 @@ public class FormLabel extends Label
    {
       getElement().setAttribute("for", controlId);
    }
+
+   /**
+    * @param display directly set display attribute of the label element
+    */
+   public void setDisplay(String display)
+   {
+      getElement().getStyle().setProperty("display", display);
+   }
 }
