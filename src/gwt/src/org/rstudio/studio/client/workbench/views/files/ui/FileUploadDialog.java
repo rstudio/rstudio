@@ -37,6 +37,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HtmlFormModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -52,13 +53,17 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          FileSystemItem targetDirectory,
          FileDialogs fileDialogs,
          RemoteFileSystemContext fileSystemContext,
-         OperationWithInput<PendingFileUpload> completedOperation)
+         Operation beginOperation,
+         OperationWithInput<PendingFileUpload> completedOperation,
+         Operation failedOperation)
    {
       super("Upload Files",
             Roles.getDialogRole(),
             "Uploading file...",
             actionURL,
-            completedOperation);
+            beginOperation,
+            completedOperation,
+            failedOperation);
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       targetDirectory_ = targetDirectory;

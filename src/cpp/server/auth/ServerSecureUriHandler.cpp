@@ -175,22 +175,26 @@ private:
 
    bool getUser(boost::shared_ptr<http::AsyncConnection> pConnection)
    {
-      if (!userIdentifier_.empty() && !username_.empty())
-         return true;
-
-      userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
-                                                   &pConnection->response());
-      if (userIdentifier_.empty())
+      // cache the username so we don't have to determine it every time this is invoked
+      // looking up the username and performing the secure cookie decode is expensive
+      // this optimization is important for large file uploads to prevent a lot of unnecessary work
+      if (userIdentifier_.empty() || username_.empty())
       {
-         unauthorizedResponseFunction_(pConnection);
-         return false;
+         userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
+                                                      &pConnection->response());
+         if (userIdentifier_.empty())
+         {
+            unauthorizedResponseFunction_(pConnection);
+            return false;
+         }
+
+         // convert to local username
+         username_ = handler::userIdentifierToLocalUsername(userIdentifier_);
       }
 
       if (refreshAuthCookies_)
          handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response());
 
-      // convert to local username
-      username_ = handler::userIdentifierToLocalUsername(userIdentifier_);
       return true;
    }
 

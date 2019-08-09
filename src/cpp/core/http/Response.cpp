@@ -396,6 +396,17 @@ void Response::addCookie(const Cookie& cookie)
     return headers;
  }
 
+ void Response::clearCookies()
+ {
+    for (auto iter = headers_.begin(); iter != headers_.end();)
+    {
+       if (iter->name == "Set-Cookie")
+          iter = headers_.erase(iter);
+       else
+          ++iter;
+    }
+ }
+
 Error Response::setBody(const std::string& content)
 {
    std::istringstream is(content);

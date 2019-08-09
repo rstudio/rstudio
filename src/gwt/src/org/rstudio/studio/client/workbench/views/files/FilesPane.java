@@ -31,6 +31,7 @@ import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
@@ -206,13 +207,17 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                      String targetURL,
                      FileSystemItem targetDirectory, 
                      RemoteFileSystemContext fileSystemContext,
-                     OperationWithInput<PendingFileUpload> completedOperation)
+                     Operation beginOperation,
+                     OperationWithInput<PendingFileUpload> completedOperation,
+                     Operation failedOperation)
    {
       FileUploadDialog dlg = new FileUploadDialog(targetURL, 
                                                   targetDirectory,
                                                   fileDialogs_,
                                                   fileSystemContext,
-                                                  completedOperation);
+                                                  beginOperation,
+                                                  completedOperation,
+                                                  failedOperation);
       dlg.showModal();
    } 
    

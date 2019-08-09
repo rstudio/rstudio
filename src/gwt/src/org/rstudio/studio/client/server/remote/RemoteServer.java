@@ -2961,10 +2961,6 @@ public class RemoteServer implements Server
 
    void handleUnauthorizedError()
    {
-      // disconnect
-      disconnect();
-
-      // fire event
       UnauthorizedEvent event = new UnauthorizedEvent();
       eventBus_.fireEvent(event);
    }

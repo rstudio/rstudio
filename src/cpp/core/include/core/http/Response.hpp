@@ -153,7 +153,8 @@ public:
    
    void setBrowserCompatible(const Request& request);
 
-   void addCookie(const Cookie& cookie) ;
+   void addCookie(const Cookie& cookie);
+   void clearCookies();
    Headers getCookies() const;
    
    Error setBody(const std::string& content);

@@ -116,7 +116,9 @@ public class Files
                      String targetURL,
                      FileSystemItem targetDirectory, 
                      RemoteFileSystemContext fileSystemContext,
-                     OperationWithInput<PendingFileUpload> completedOperation);
+                     Operation beginOperation,
+                     OperationWithInput<PendingFileUpload> completedOperation,
+                     Operation failedOperation);
 
 
       void showHtmlFileChoice(FileSystemItem file, 

@@ -32,6 +32,7 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   ServerOfflineHandler,
                                                   InvalidSessionEvent.Handler,
                                                   SessionInitHandler,
-                                                  RestartStatusEvent.Handler
+                                                  RestartStatusEvent.Handler,
+                                                  FileUploadHandler
 {
 }

@@ -309,6 +309,9 @@ void refreshAuthCookies(const std::string& userIdentifier,
    if (server::options().authTimeoutMinutes() > 0 &&
        !s_handler.refreshAuthCookies.empty())
    {
+      // clear any existing auth cookies first - this method can be invoked multiple
+      // times depending on the handler type (for example, an upload handler)
+      pResponse->clearCookies();
       bool persist = request.cookieValue(kPersistAuthCookie) == "1" ? true : false;
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
    }

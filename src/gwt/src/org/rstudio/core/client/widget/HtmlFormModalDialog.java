@@ -35,7 +35,9 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                               DialogRole role,
                               final String progressMessage, 
                               String actionURL,
-                              final OperationWithInput<T> operation)
+                              final Operation beginOperation,
+                              final OperationWithInput<T> completedOperation,
+                              final Operation failedOperation)
    {
       super(new FormPanel(), role);
       setText(title);
@@ -47,12 +49,42 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
       setFormPanelEncodingAndMethod(formPanel);
       
       final ProgressIndicator progressIndicator = addProgressIndicator();
+      final ProgressIndicator indicatorWrapper = new ProgressIndicator()
+      {
+         public void onProgress(String message)
+         {
+            progressIndicator.onProgress(message);
+         }
+
+         public void onProgress(String message, Operation onCancel)
+         {
+            progressIndicator.onProgress(message, onCancel);
+         }
+
+         public void onCompleted()
+         {
+            progressIndicator.onCompleted();
+         }
+
+         public void onError(String message)
+         {
+            progressIndicator.onError(message);
+            failedOperation.execute();
+         }
+
+         @Override
+         public void clearProgress()
+         {
+            progressIndicator.clearProgress();
+         }
+      };
       
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
          public void onClick(ClickEvent event) {
             try
             {
                formPanel.submit();
+               beginOperation.execute();
             }
             catch (final JavaScriptException e)
             {
@@ -63,13 +95,13 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                      if ("Access is denied.".equals(
                            StringUtil.notNull(e.getDescription()).trim()))
                      {
-                        progressIndicator.onError(
+                        indicatorWrapper.onError(
                               "Please use a complete file path.");
                      }
                      else
                      {
                         Debug.log(e.toString());
-                        progressIndicator.onError(e.getDescription());
+                        indicatorWrapper.onError(e.getDescription());
                      }
                   }
                });
@@ -81,7 +113,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                   public void execute()
                   {
                      Debug.log(e.toString());
-                     progressIndicator.onError(e.getMessage());
+                     indicatorWrapper.onError(e.getMessage());
                   }
                });
             }
@@ -105,7 +137,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
          public void onSubmit(SubmitEvent event) {           
             if (validate())
             { 
-               progressIndicator.onProgress(progressMessage);
+               indicatorWrapper.onProgress(progressMessage);
             }
             else
             {
@@ -123,18 +155,17 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                try
                {
                   T results = parseResults(resultsText);
-                  progressIndicator.onCompleted();
-                  operation.execute(results);
+                  indicatorWrapper.onCompleted();
+                  completedOperation.execute(results);
                }
                catch(Exception e)
                {
-                  progressIndicator.onError(e.getMessage());
+                  indicatorWrapper.onError(e.getMessage());
                }
             }
             else
             {
-               progressIndicator.onError(
-                                    "Unexpected empty response from server");
+               indicatorWrapper.onError("Unexpected empty response from server");
             }      
          }
       });

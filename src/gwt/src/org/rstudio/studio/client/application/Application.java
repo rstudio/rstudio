@@ -157,6 +157,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
       events.addHandler(SessionInitEvent.TYPE, this);
+      events.addHandler(FileUploadEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -326,8 +327,19 @@ public class Application implements ApplicationEventHandlers
    
    public void onUnauthorized(UnauthorizedEvent event)
    {
-      navigateToSignIn();
-   }   
+      // if the user is currently uploading a file (which potentially takes a long time)
+      // and we were to navigate them, they would be unable to complete the upload
+      if (!fileUploadInProgress_)
+      {
+         server_.disconnect();
+         navigateToSignIn();
+      }
+   }
+
+   public void onFileUpload(FileUploadEvent event)
+   {
+      fileUploadInProgress_ = event.inProgress();
+   }
    
    public void onServerOffline(ServerOfflineEvent event)
    {
@@ -1240,6 +1252,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
+
+   private boolean fileUploadInProgress_ = false;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 
