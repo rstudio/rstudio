@@ -14,15 +14,15 @@
 #
 
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "pane"))
-}, attrs = list(shinyViewerType = 2))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
+}, attrs = list(shinyViewerType = "pane"))
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "window"))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "window"))
 
 .rs.addFunction("invokeShinyWindowExternal", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "browser"))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "browser", PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "browser"))
 
 .rs.addFunction("setShinyViewerType", function(type) {
@@ -42,7 +42,7 @@
       return("none")
    else if (identical(viewer, TRUE))
       return("browser")
-   else if (is.function(viewer) && is.numeric(attr(viewer, "shinyViewerType")))
+   else if (is.function(viewer) && is.character(attr(viewer, "shinyViewerType")))
       return(attr(viewer, "shinyViewerType"))
    return("user")
 })

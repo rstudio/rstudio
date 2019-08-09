@@ -14,15 +14,15 @@
 #
 
 .rs.addFunction("invokePlumberPaneViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), "pane"))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
 }, attrs = list(plumberViewerType = "pane"))
 
 .rs.addFunction("invokePlumberWindowViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), "window"))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
 }, attrs = list(plumberViewerType = "window"))
 
 .rs.addFunction("invokePlumberWindowExternal", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), "browser"))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "browser", PACKAGE = "(embedding)"))
 }, attrs = list(plumberViewerType = "browser"))
 
 .rs.addFunction("setPlumberViewerType", function(type) {
@@ -42,9 +42,9 @@
       return("none")
    else if (identical(viewer, TRUE))
       return("browser")
-   else if (is.function(viewer) && is.numeric(attr(viewer, "plumberViewerType")))
+   else if (is.function(viewer) && is.character(attr(viewer, "plumberViewerType")))
       return(attr(viewer, "plumberViewerType"))
-   return(0)
+   return("user")
 })
 
 .rs.addJsonRpcHandler("get_plumber_viewer_type", function() {

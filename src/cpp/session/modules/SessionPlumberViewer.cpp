@@ -44,7 +44,7 @@ namespace plumber_viewer {
 namespace {
 
 void enqueueStartEvent(const std::string& url, const std::string& path,
-                       int viewerType, int options)
+                       const std::string& viewerType, int options)
 {
    FilePath plumberPath(path);
 
@@ -74,7 +74,7 @@ SEXP rs_plumberviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          throw r::exec::RErrorException(
             "path must be a single element character vector.");
       }
-      int viewertype = r::sexp::asInteger(viewerSEXP);
+      std::string viewertype = r::sexp::safeAsString(viewerSEXP, kPlumberViewerTypeWindow);
 
       // in desktop mode make sure we have the right version of httpuv
       if (options().programMode() == kSessionProgramModeDesktop)
