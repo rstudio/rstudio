@@ -325,6 +325,18 @@ public class GitReviewPanel extends ResizeComposite implements Display
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
       FontSizer.applyNormalFontSize(commitMessage_);
+      commitMessage_.addKeyUpHandler(e ->
+      {
+         // Update commit message whenever keys are pressed
+         updateCharCount();
+      });
+      commitMessage_.addChangeHandler(e ->
+      {
+         // Update commit message whenever the text content changes; catches
+         // e.g. changes on blur after a mouse paste
+         updateCharCount();
+      });
+
       new WidgetHandlerRegistration(this)
       {
          @Override
@@ -654,6 +666,19 @@ public class GitReviewPanel extends ResizeComposite implements Display
       });
    }
 
+   /**
+    * Update the character count for the commit message, or clear it if there
+    * are no longer any characters in the commit message.
+    */
+   private void updateCharCount()
+   {
+      int length = commitMessage_.getText().length();
+      if (length == 0)
+         lblCharCount_.setText("");
+      else
+         lblCharCount_.setText(commitMessage_.getText().length() + "");
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField(provided = true)
@@ -678,6 +703,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
    Toolbar diffToolbar_;
    @UiField
    FormLabel lblCommit_;
+   @UiField
+   Label lblCharCount_;
    @UiField
    TextArea commitMessage_;
    @UiField
