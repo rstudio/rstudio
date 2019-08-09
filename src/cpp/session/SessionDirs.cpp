@@ -1,7 +1,7 @@
 /*
  * SessionDirs.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,8 @@ namespace dirs {
 FilePath getDefaultWorkingDirectory()
 {
    // calculate using user settings
-   FilePath defaultWorkingDir = FilePath(prefs::userPrefs().initialWorkingDirectory());
+   FilePath defaultWorkingDir = module_context::resolveAliasedPath(
+         prefs::userPrefs().initialWorkingDirectory());
    FilePath sessionDefaultWorkingDir = FilePath(session::options().defaultWorkingDir());
 
    // return it if it exists, otherwise use the
