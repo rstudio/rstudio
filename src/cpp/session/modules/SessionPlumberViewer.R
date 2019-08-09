@@ -42,9 +42,9 @@
       return("none")
    else if (identical(viewer, TRUE))
       return("browser")
-   else if (is.function(viewer) && is.numeric(attr(viewer, "plumberViewerType")))
+   else if (is.function(viewer) && is.character(attr(viewer, "plumberViewerType")))
       return(attr(viewer, "plumberViewerType"))
-   return(0)
+   return("user")
 })
 
 .rs.addJsonRpcHandler("get_plumber_viewer_type", function() {
