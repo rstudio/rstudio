@@ -19,7 +19,14 @@
                   <g:east size="400">
                      <g:LayoutPanel>
                         <g:layer left="6px" right="6px" top="4px" height="20px">
-                           <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"/>
+                           <g:HorizontalPanel width="100%">
+                             <g:cell horizontalAlignment="ALIGN_LEFT">
+                               <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"/>
+                             </g:cell>
+                             <g:cell horizontalAlignment="ALIGN_RIGHT">
+                               <g:Label ui:field="lblCharCount_"/>
+                             </g:cell>
+                           </g:HorizontalPanel>
                         </g:layer>
                         <g:layer left="6px" right="6px" top="20px" bottom="34px">
                            <g:TextArea ui:field="commitMessage_" styleName="{res.styles.commitMessage}"/>
