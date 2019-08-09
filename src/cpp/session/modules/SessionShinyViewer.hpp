@@ -1,7 +1,7 @@
 /*
  * SessionShinyViewer.hpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,12 +26,6 @@ namespace rstudio {
 namespace session {
 namespace modules { 
 namespace shiny_viewer {
-
-const int SHINY_VIEWER_USER = 0;
-const int SHINY_VIEWER_NONE = 1;
-const int SHINY_VIEWER_PANE = 2;
-const int SHINY_VIEWER_WINDOW = 3;
-const int SHINY_VIEWER_BROWSER = 4;
 
 const int SHINY_VIEWER_OPTIONS_NONE = 0;
 const int SHINY_VIEWER_OPTIONS_NOTOOLS = 1;

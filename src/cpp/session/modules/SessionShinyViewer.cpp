@@ -48,7 +48,7 @@ namespace {
 FilePath s_pendingShinyPath;
 
 void enqueueStartEvent(const std::string& url, const std::string& path,
-                     int viewerType, int options)
+                     const std::string& viewerType, int options)
 {
    FilePath shinyPath(path);
    if (module_context::safeCurrentPath() == shinyPath &&
@@ -87,7 +87,7 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          throw r::exec::RErrorException(
             "path must be a single element character vector.");
       }
-      int viewertype = r::sexp::asInteger(viewerSEXP);
+      std::string viewertype = r::sexp::safeAsString(viewerSEXP, kShinyViewerTypeWindow);
 
       // in desktop mode make sure we have the right version of httpuv
       if (options().programMode() == kSessionProgramModeDesktop)
@@ -107,7 +107,7 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
       if (path.find("/shinytest/recorder") != std::string::npos ||
           path.find("/shinytest/diffviewerapp") != std::string::npos)
       {
-          viewertype = SHINY_VIEWER_WINDOW;
+          viewertype = kShinyViewerTypeWindow;
           options = SHINY_VIEWER_OPTIONS_NOTOOLS;
       }
       if (path.find("/shinytest/recorder") != std::string::npos)
