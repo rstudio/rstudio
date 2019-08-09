@@ -2,6 +2,9 @@
 
 # publish-daily-binary.sh
 
+# abort on error
+set -e
+
 if [[ "$#" -lt 2 ]]; then
     echo "Usage: publish-daily-binary.sh [https://url/to/binary/rstudio.deb] [identity.pem]"
     exit 1
@@ -32,4 +35,3 @@ scp -o StrictHostKeyChecking=no -i $IDENTITY $HTACCESS www-data@rstudio.org:/srv
 # clean up
 rm -f $HTACCESS
 rm -f $HTACCESS.bak
-
