@@ -117,11 +117,11 @@ public class UserStateAccessor extends Prefs
    {
       protected ExportPlotOptions() {} 
 
-      public final native Integer getWidth() /*-{
+      public final native int getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native Integer getHeight() /*-{
+      public final native int getHeight() /*-{
          return this.height;
       }-*/;
 
@@ -155,11 +155,11 @@ public class UserStateAccessor extends Prefs
    {
       protected ExportViewerOptions() {} 
 
-      public final native Integer getWidth() /*-{
+      public final native int getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native Integer getHeight() /*-{
+      public final native int getHeight() /*-{
          return this.height;
       }-*/;
 
@@ -193,11 +193,11 @@ public class UserStateAccessor extends Prefs
    {
       protected SavePlotAsPdfOptions() {} 
 
-      public final native Integer getWidth() /*-{
+      public final native int getWidth() /*-{
          return this.width;
       }-*/;
 
-      public final native Integer getHeight() /*-{
+      public final native int getHeight() /*-{
          return this.height;
       }-*/;
 

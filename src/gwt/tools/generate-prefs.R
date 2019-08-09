@@ -220,7 +220,7 @@ generate <- function (schemaPath, className) {
             } else if (identical(proptype, "string")) {
                proptype <- "String"
             } else if (identical(proptype, "integer")) {
-               proptype <- "Integer"
+               proptype <- "int"
             }
             java <- paste0(java,
               "      public final native ", proptype, " get",  propname, "() /*-{\n",
