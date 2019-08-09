@@ -676,7 +676,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       if (length == 0)
          lblCharCount_.setText("");
       else
-         lblCharCount_.setText(commitMessage_.getText().length() + "");
+         lblCharCount_.setText(length + "");
    }
 
    @UiField(provided = true)
