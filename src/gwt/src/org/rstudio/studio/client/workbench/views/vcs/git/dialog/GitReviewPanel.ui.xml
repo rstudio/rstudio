@@ -54,7 +54,7 @@
                                     text="Unstaged"
                                     checked="true"
                                     styleName="{res.styles.unstaged}"/>
-                     <rs_widget:FormLabel ui:field="lblContext_" text="Context" styleName="{res.styles.stagedLabel}"/>
+                     <rs_widget:FormLabel ui:field="lblContext_" display="inline" text="Context" styleName="{res.styles.stagedLabel}"/>
                      <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="0">
                         <g:item value="5">5 line</g:item>
                         <g:item value="10">10 line</g:item>
