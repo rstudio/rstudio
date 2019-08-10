@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rs="urn:import:org.rstudio.core.client.widget">
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
      @external .gwt-Label;
      @external .gwt-TextBox;
@@ -76,7 +77,8 @@
         This template contains multiple files. Create a new directory for
         these files:
      </g:HTML>
-     <rs:LabeledTextBox labelText="Name:" styleName="{style.controlLabel} {style.interiorControlLabel}" 
+     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:" 
+                        styleName="{style.controlLabel} {style.interiorControlLabel}" 
                         ui:field="txtName_" text="Untitled"></rs:LabeledTextBox>
 
      <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">

@@ -103,7 +103,6 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       });
 
       label_.setText(prompt);
-      label_.setFor(textbox_);
       Roles.getTextboxRole().setAriaRequiredProperty(textbox_.getElement(), true);
 
       install_.addClickHandler(new ClickHandler() {

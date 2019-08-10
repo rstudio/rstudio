@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Label;
@@ -159,5 +160,10 @@ public class FormLabel extends Label
    public void setDisplay(String display)
    {
       getElement().getStyle().setProperty("display", display);
+   }
+
+   public void setAriaHidden(boolean hidden)
+   {
+      Roles.getTextboxRole().setAriaHiddenState(getElement(), hidden);
    }
 }

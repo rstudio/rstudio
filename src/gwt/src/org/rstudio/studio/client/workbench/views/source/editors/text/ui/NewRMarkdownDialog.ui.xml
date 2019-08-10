@@ -6,6 +6,7 @@
    xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
 
    <ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
    @external .gwt-Label;
    
@@ -133,22 +134,25 @@
         <g:HTMLPanel ui:field="newTemplatePanel_">
            <g:Grid ui:field="formGrid_" width="100%" cellSpacing="0" cellPadding="0">
              <g:row>
-               <g:customCell><rw:FormLabel ui:field="lblTitle_" styleName="{style.topLabel}" 
-                              text="Title:"></rw:FormLabel></g:customCell>
+               <g:customCell>
+                  <rw:FormLabel for="{ElementIds.getNewRmdTitle}" styleName="{style.topLabel}">Title:</rw:FormLabel>
+               </g:customCell>
                <g:customCell styleName="{style.textCol}">
-                 <g:TextBox styleName="{style.textBox}" 
-                            ui:field="txtTitle_"></g:TextBox>
+                 <rw:FormTextBox elementId="{ElementIds.getNewRmdTitle}" styleName="{style.textBox}" 
+                                 ui:field="txtTitle_" />
                </g:customCell>
               </g:row>
               <g:row>
-                <g:customCell><rw:FormLabel ui:field="lblAuthor_" styleName="{style.topLabel}" 
-                         text="Author:"></rw:FormLabel></g:customCell>
-                <g:customCell><g:TextBox styleName="{style.textBox}"
-                           ui:field="txtAuthor_"></g:TextBox></g:customCell>
+                <g:customCell>
+                   <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{style.topLabel}">Author:</rw:FormLabel>
+                </g:customCell>
+                <g:customCell>
+                   <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{style.textBox}" 
+                                   ui:field="txtAuthor_"/>
+                </g:customCell>
               </g:row>
            </g:Grid>
-           <rw:FieldSetPanel ui:field="formatFieldSet_" legend="Default Output Format:" 
-                             styleName="{style.defaultOutputLabel}">
+           <rw:FieldSetPanel legend="Default Output Format:" styleName="{style.defaultOutputLabel}">
               <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
            </rw:FieldSetPanel>
         </g:HTMLPanel>

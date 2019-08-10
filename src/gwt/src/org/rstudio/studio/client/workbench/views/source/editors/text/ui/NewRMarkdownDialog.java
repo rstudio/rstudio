@@ -24,8 +24,6 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.FieldSetPanel;
-import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -203,9 +201,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       formatOptions_ = new ArrayList<>();
       style.ensureInjected();
       txtAuthor_.setText(author);
-      lblAuthor_.setFor(txtAuthor_);
       txtTitle_.setText("Untitled");
-      lblTitle_.setFor(txtTitle_);
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -463,14 +459,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    }
    
    @UiField Grid formGrid_;
-   @UiField FormLabel lblAuthor_;
    @UiField TextBox txtAuthor_;
-   @UiField FormLabel lblTitle_;
    @UiField TextBox txtTitle_;
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
    @UiField NewRmdStyle style;
    @UiField Resources resources;
-   @UiField FieldSetPanel formatFieldSet_;
    @UiField HTMLPanel templateFormatPanel_;
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;

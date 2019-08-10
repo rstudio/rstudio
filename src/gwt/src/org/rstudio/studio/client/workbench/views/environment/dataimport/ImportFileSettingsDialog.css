@@ -44,3 +44,10 @@
    font-family: proportionalFont;
    outline: none;
 }
+.leftPanel fieldset {
+   border: none;
+   padding: 0;
+   padding-block-end: 0;
+   padding-inline-end: 0;
+   margin: 0;
+}
