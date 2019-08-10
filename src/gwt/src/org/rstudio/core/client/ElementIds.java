@@ -130,15 +130,15 @@ public class ElementIds
    public static String getImportFileEncoding() { return getElementId(IMPORT_FILE_ENCODING); }
    public final static String IMPORT_FILE_ROW_NAMES = "import_file_row_names";
    public static String getImportFileRowNames() { return getElementId(IMPORT_FILE_ROW_NAMES); }
-   public final static String IMPORT_FILE_SEPARATOR = "ifs_separator";
+   public final static String IMPORT_FILE_SEPARATOR = "import_file_separator";
    public static String getImportFileSeparator() { return getElementId(IMPORT_FILE_SEPARATOR); }
-   public final static String IMPORT_FILE_DECIMAL = "ifs_decimal";
+   public final static String IMPORT_FILE_DECIMAL = "import_file_decimal";
    public static String getImportFileDecimal() { return getElementId(IMPORT_FILE_DECIMAL); }
-   public final static String IMPORT_FILE_QUOTE = "ifs_quote";
+   public final static String IMPORT_FILE_QUOTE = "import_file_quote";
    public static String getImportFileQuote() { return getElementId(IMPORT_FILE_QUOTE); }
-   public final static String IMPORT_FILE_COMMENT = "ifs_comment";
+   public final static String IMPORT_FILE_COMMENT = "import_file_comment";
    public static String getImportFileComment() { return getElementId(IMPORT_FILE_COMMENT); }
-   public final static String IMPORT_FILE_NA_STRINGS = "ifs_na_strings";
+   public final static String IMPORT_FILE_NA_STRINGS = "import_file_na_strings";
    public static String getImportFileNaStrings() { return getElementId(IMPORT_FILE_NA_STRINGS); }
 
    // NewRMarkdownDialog
