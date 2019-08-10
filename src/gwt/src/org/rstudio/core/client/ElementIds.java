@@ -114,4 +114,40 @@ public class ElementIds
    
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
+
+   // AskSecretDialog
+   public final static String ASK_SECRET_TEXT = "ask_secret_text";
+   public static String getAskSecretText() { return getElementId(ASK_SECRET_TEXT); }
+
+   // FindInFilesDialog
+   public final static String FIND_FILES_TEXT = "find_files_text";
+   public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
+
+   // ImportFileSettingsDialog
+   public final static String IMPORT_FILE_NAME = "import_file_name";
+   public static String getImportFileName() { return getElementId(IMPORT_FILE_NAME); }
+   public final static String IMPORT_FILE_ENCODING = "import_file_encoding";
+   public static String getImportFileEncoding() { return getElementId(IMPORT_FILE_ENCODING); }
+   public final static String IMPORT_FILE_ROW_NAMES = "import_file_row_names";
+   public static String getImportFileRowNames() { return getElementId(IMPORT_FILE_ROW_NAMES); }
+   public final static String IMPORT_FILE_SEPARATOR = "import_file_separator";
+   public static String getImportFileSeparator() { return getElementId(IMPORT_FILE_SEPARATOR); }
+   public final static String IMPORT_FILE_DECIMAL = "import_file_decimal";
+   public static String getImportFileDecimal() { return getElementId(IMPORT_FILE_DECIMAL); }
+   public final static String IMPORT_FILE_QUOTE = "import_file_quote";
+   public static String getImportFileQuote() { return getElementId(IMPORT_FILE_QUOTE); }
+   public final static String IMPORT_FILE_COMMENT = "import_file_comment";
+   public static String getImportFileComment() { return getElementId(IMPORT_FILE_COMMENT); }
+   public final static String IMPORT_FILE_NA_STRINGS = "import_file_na_strings";
+   public static String getImportFileNaStrings() { return getElementId(IMPORT_FILE_NA_STRINGS); }
+
+   // NewRMarkdownDialog
+   public final static String NEW_RMD_TITLE = "new_rmd_title";
+   public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
+   public final static String NEW_RMD_AUTHOR = "new_rmd_author";
+   public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+
+   // RmdTemplateChooser
+   public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";
+   public static String getRmdTemplateChooserName() { return getElementId(RMD_TEMPLATE_CHOOSER_NAME); }
 }
