@@ -25,7 +25,6 @@
    width: 250px;
    cursor: default;
 }
-}
 
 .imageOptionLabel {
    margin-right: 5px;
@@ -107,6 +106,14 @@
    margin-bottom: 15px;
 }
 
+.savePdfMainWidget fieldset {
+   border: none;
+   padding: 0;
+   padding-block-end: 0;
+   padding-inline-end: 0;
+   margin: 0;
+}
+
 .savePdfSizeListBox {
    width: 120px;
    margin-right: 10px;
@@ -121,13 +128,9 @@
 }
 
 
-.savePdfFileNameTextBox {
-	margin-left: 10px;
+.savePdfDirectoryTextBox, .savePdfFileNameTextBox {
+   margin-left: 10px;
    width: 280px;
-}
-
-.savePdfDirectoryLabel {
-	margin-left: 10px;
 }
 
 .savePdfViewAfterCheckbox {
@@ -146,5 +149,5 @@
    margin-top: 3px;
    margin-left: 5px;
    margin-right: 5px;
-   color: gray;
+   color: #6F6F6F;
 }
