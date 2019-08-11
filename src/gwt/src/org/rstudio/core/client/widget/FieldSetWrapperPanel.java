@@ -1,5 +1,5 @@
 /*
- * VerticalRadioPanel.java
+ * FieldSetWrapperPanel.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -15,18 +15,19 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Panel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
- * A VerticalPanel containing a group of radio buttons and a legend.
+ * A fieldset element containing a Panel of type T
  */
-public class VerticalRadioPanel extends FieldSetPanel
+public class FieldSetWrapperPanel<T extends Panel> extends FieldSetPanel
 {
-   public VerticalRadioPanel(String legend, boolean visuallyHideLegend)
+   public FieldSetWrapperPanel(T panel, String legend, boolean visuallyHideLegend)
    {
       super(legend, visuallyHideLegend);
-      super.add(panel_ = new VerticalPanel());
+      panel_ = panel;
+      super.add(panel_);
    }
 
    /**
@@ -34,16 +35,22 @@ public class VerticalRadioPanel extends FieldSetPanel
     *                      will be applied to a hidden legend element for accessibility, and
     *                      the label itself will be marked aria-hidden
     */
-   public VerticalRadioPanel(Label externalLabel)
+   public FieldSetWrapperPanel(T panel, Label externalLabel)
    {
       super(externalLabel);
-      super.add(panel_ = new VerticalPanel());
+      panel_ = panel;
+      super.add(panel_);
    }
 
-   public void add(RadioButton w)
+   public void add(Widget w)
    {
       panel_.add(w);
    }
 
-   private VerticalPanel panel_;
+   public T getPanel()
+   {
+      return panel_;
+   }
+
+   private T panel_;
 }

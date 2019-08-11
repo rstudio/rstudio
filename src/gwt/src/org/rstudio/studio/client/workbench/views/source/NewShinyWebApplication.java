@@ -22,11 +22,11 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.FieldSetWrapperPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.VerticalRadioPanel;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -211,7 +211,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
       
-      VerticalRadioPanel radioPanel = new VerticalRadioPanel(appTypeLabel_);
+      FieldSetWrapperPanel<VerticalPanel> radioPanel = new FieldSetWrapperPanel<>(new VerticalPanel(), appTypeLabel_);
       radioPanel.setStylePrimaryName(RES.styles().shinyTypeGroup());
       appTypeSingleFileButton_ = new RadioButton("shiny", "Single File (app.R)");
       appTypeMultipleFileButton_ = new RadioButton("shiny", "Multiple File (ui.R/server.R)");
