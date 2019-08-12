@@ -153,3 +153,12 @@
 .ignoreWhitespace label {
 	margin-left: 4px;
 }
+
+.charCountPanel {
+   position: absolute;
+   left: -10000px;
+   top: auto;
+   width: 1px;
+   height: 1px;
+   overflow: hidden;
+}
