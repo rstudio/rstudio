@@ -686,7 +686,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 #endif
 
    // clear out stale uploaded tmp files
-   if (module_context::userUploadedFilesScratchPath().exists());
+   if (module_context::userUploadedFilesScratchPath().exists())
    {
       std::vector<FilePath> childPaths;
       error = module_context::userUploadedFilesScratchPath().children(&childPaths);
