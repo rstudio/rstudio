@@ -734,6 +734,13 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+            
+            // stop file monitor (need to do this explicitly as otherwise we can
+            // run into issues during close where the runtime attempts to clean
+            // up its data structures at same time that monitor wants to exit)
+            //
+            // https://github.com/rstudio/rstudio/issues/5222
+            system::file_monitor::stop();
 
             // acknowledge request & quit session
             json::JsonRpcResponse response;
