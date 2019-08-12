@@ -17,8 +17,9 @@
 
 .rs.addJsonRpcHandler("renv_init", function(project)
 {
+   # ask renv not to restart since we'll do it ourselves
    .rs.ensureDirectory(project)
-   renv::init(project = project)
+   renv::init(project = project, restart = FALSE)
 })
 
 .rs.addFunction("renv.context", function()
