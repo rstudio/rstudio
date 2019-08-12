@@ -117,8 +117,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       String splitPanelCommit();
       String ignoreWhitespace();
-      
-      String charCountPanel();
    }
 
    @SuppressWarnings("unused")

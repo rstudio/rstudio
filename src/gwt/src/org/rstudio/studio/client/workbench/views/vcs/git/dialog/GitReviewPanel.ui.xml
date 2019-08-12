@@ -5,6 +5,7 @@
              xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPanel.Resources"/>
+   <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <g:SplitLayoutPanel ui:field="splitPanel_" styleName="{res.styles.splitPanel}">
       <g:north size="230">
@@ -26,7 +27,7 @@
                              <g:cell horizontalAlignment="ALIGN_RIGHT">
                                <g:HTMLPanel>
                                   <g:Label ui:field="lblCharCount_"/>
-                                  <g:HTMLPanel ui:field="panelCharCount_" styleName="{res.styles.charCountPanel}">
+                                  <g:HTMLPanel ui:field="panelCharCount_" styleName="{themeRes.themeStyles.visuallyHidden}">
                                      <g:Label ui:field="lblReaderCharCount_"/>
                                   </g:HTMLPanel>
                                </g:HTMLPanel>
