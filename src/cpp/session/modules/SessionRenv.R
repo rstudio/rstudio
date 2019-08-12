@@ -88,7 +88,7 @@
 {
    lockpath <- file.path(project, "renv.lock")
    lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- lockfile$R$Package
+   packages <- lockfile[["Packages"]]
    filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL
