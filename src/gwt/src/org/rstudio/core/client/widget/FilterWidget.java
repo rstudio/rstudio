@@ -47,5 +47,10 @@ public abstract class FilterWidget extends Composite
       return searchWidget_.getInputElement();
    }
 
+   public void speakResult(String message)
+   {
+      searchWidget_.speakResult(message);
+   }
+
    private final SearchWidget searchWidget_;
 }

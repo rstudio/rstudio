@@ -118,14 +118,14 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       
       addColumns();
       
-      dataProvider_ = new ListDataProvider<RAddin>();
+      dataProvider_ = new ListDataProvider<>();
       dataProvider_.addDataDisplay(table_);
       
-      originalData_ = new ArrayList<RAddin>();
+      originalData_ = new ArrayList<>();
       
       // sync to current addins
       addins_ = addinsCommandManager_.getRAddins();
-      List<RAddin> data = new ArrayList<RAddin>();
+      List<RAddin> data = new ArrayList<>();
       for (String key : JsUtil.asIterable(addins_.keys()))
          data.add(addins_.get(key));
       dataProvider_.setList(data);
@@ -287,6 +287,8 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       dataProvider_.setList(data);
+      filterWidget_.speakResult("Found " + data.size() + " addins matching " + 
+            StringUtil.spacedString(query));
    }
    
    @Override

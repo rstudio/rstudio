@@ -692,7 +692,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       // Debounce an update to the accessible character count
       if (updateCharCountTimer_.isRunning())
          updateCharCountTimer_.cancel();
-      updateCharCountTimer_.schedule(2000);
+      updateCharCountTimer_.schedule(A11y.TypingStatusDelayMs);
    }
 
    @UiField(provided = true)
