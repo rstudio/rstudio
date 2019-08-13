@@ -84,7 +84,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 install renv master rstudio
 
 # Packages needed to run tests
-Rscript -e "if(!require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
+sudo Rscript -e "if(!require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
 
 # back to install-dir
 cd $INSTALL_DIR
