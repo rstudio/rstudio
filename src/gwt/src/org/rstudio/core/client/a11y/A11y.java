@@ -98,6 +98,15 @@ public class A11y
     */
    public static void setARIAHidden(Widget widget)
    {
-      widget.getElement().setAttribute("aria-hidden", "true");
+      setARIAHidden(widget.getElement());
+   }
+
+   /**
+    * Make an element hidden to screen readers.
+    * @param el
+    */
+   public static void setARIAHidden(Element el)
+   {
+      el.setAttribute("aria-hidden", "true");
    }
 }

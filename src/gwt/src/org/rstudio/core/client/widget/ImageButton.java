@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -24,21 +25,38 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Image;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 /**
  * An image that behaves like a button.
  */
 public class ImageButton extends FocusWidget implements HasClickHandlers
 {
-   public ImageButton(String altText, ImageResource image)
+   public ImageButton()
+   {
+      this(null, null);
+   }
+
+   public ImageButton(String description, ImageResource image)
    {
       ButtonElement button = Document.get().createPushButtonElement();
       button.setClassName("rstudio-ImageButton");
-      
-      image_ = new Image(image);
+      button.setAttribute("type", "button");
+
+      if (image != null)
+         image_ = new DecorativeImage(image);
+      else
+         image_ = new DecorativeImage();
+
       image_.getElement().getStyle().setCursor(Cursor.POINTER);
-      image_.setAltText(altText);
       button.insertFirst(image_.getElement());
+
+      descriptionSpan_ = Document.get().createSpanElement();
+      descriptionSpan_.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
+      button.appendChild(descriptionSpan_);
+      setDescription(description);
+
       setElement(button);
    }
 
@@ -50,8 +68,19 @@ public class ImageButton extends FocusWidget implements HasClickHandlers
    public Image getImage()
    {
       return image_;
-      
    }
 
-   private Image image_;
+   public void setDescription(String description)
+   {
+      if (!StringUtil.isNullOrEmpty(description))
+         descriptionSpan_.setInnerText(description);
+   }
+
+   public void setResource(ImageResource resource)
+   {
+      image_.setResource(resource);
+   }
+
+   private SpanElement descriptionSpan_;
+   private DecorativeImage image_;
 }

@@ -31,7 +31,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionDisplay;
@@ -41,6 +40,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -130,14 +131,21 @@ public class SearchWidget extends Composite implements SearchDisplay
          suggestBox_ = new FocusSuggestBox(oracle, textBox);
       
       initWidget(uiBinder.createAndBindUi(this));
-      close_.setVisible(false);
-      close_.setAltText("Clear text");
-      hiddenLabel_.setInnerText(label);
-      hiddenLabel_.setHtmlFor(DomUtils.ensureHasId(textBox.getElement()));
+      clearFilter_.setVisible(false);
+      clearFilter_.setDescription("Clear text");
+      if (!StringUtil.isNullOrEmpty(label))
+      {
+         hiddenLabel_.setInnerText(label);
+         hiddenLabel_.setHtmlFor(DomUtils.ensureHasId(textBox.getElement()));
+      }
+      else
+      {
+         A11y.setARIAHidden(hiddenLabel_);
+      }
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       suggestBox_.setStylePrimaryName(styles.searchBox());
-      suggestBox_.setAutoSelectEnabled(false) ;
+      suggestBox_.setAutoSelectEnabled(false);
       addKeyDownHandler(new KeyDownHandler() {
          public void onKeyDown(KeyDownEvent event)
          {
@@ -148,10 +156,10 @@ public class SearchWidget extends Composite implements SearchDisplay
                   public void execute()
                   {
                      SelectionCommitEvent.fire(SearchWidget.this, 
-                                               suggestBox_.getText()) ;
+                                               suggestBox_.getText());
                   }
-               }) ;
-               break ;
+               });
+               break;
             case KeyCodes.KEY_ESCAPE:
                
                event.preventDefault();
@@ -177,10 +185,10 @@ public class SearchWidget extends Composite implements SearchDisplay
                   }   
                });
                    
-               break ;
+               break;
             }
          }
-      }) ;
+      });
 
       if (continuousSearch)
       {
@@ -210,15 +218,10 @@ public class SearchWidget extends Composite implements SearchDisplay
          }
       });
 
-      close_.addMouseDownHandler(new MouseDownHandler()
-      {
-         public void onMouseDown(MouseDownEvent event)
-         {
-            event.preventDefault();
-            
-            suggestBox_.setText("");
-            ValueChangeEvent.fire(suggestBox_, "");
-         }
+      clearFilter_.addClickHandler(event -> {
+         suggestBox_.setText("");
+         ValueChangeEvent.fire(suggestBox_, "");
+         focus();
       });
       
       focusTracker_ = new FocusTracker(suggestBox_);
@@ -243,7 +246,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public HandlerRegistration addSelectionCommitHandler(
                                        SelectionCommitHandler<String> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType()) ;
+      return addHandler(handler, SelectionCommitEvent.getType());
    }
 
    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler)
@@ -278,12 +281,12 @@ public class SearchWidget extends Composite implements SearchDisplay
    
    public String getText()
    {
-      return suggestBox_.getText() ;
+      return suggestBox_.getText();
    }
 
    public void setText(String text)
    {
-      suggestBox_.setText(text) ;
+      suggestBox_.setText(text);
    }
 
    public void setText(String text, boolean fireEvents)
@@ -322,7 +325,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    public void clear()
    {
       setText("", true);
-      close_.setVisible(false);
+      clearFilter_.setVisible(false);
    }
    
    // NOTE: only works if you are using the default display!
@@ -339,7 +342,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    private void updateLastValue(String value)
    {
       lastValueSent_ = value;
-      close_.setVisible(lastValueSent_.length() > 0);
+      clearFilter_.setVisible(lastValueSent_.length() > 0);
    }
    
    public String getLastValue()
@@ -368,7 +371,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
    @UiField
-   Image close_;
+   ImageButton clearFilter_;
    @UiField
    DecorativeImage icon_;
    @UiField
