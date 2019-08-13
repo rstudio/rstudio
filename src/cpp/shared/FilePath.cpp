@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/FilePath.hpp>
+#include <shared/FilePath.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -28,6 +28,7 @@
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/bind.hpp>
@@ -35,17 +36,14 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
-#include <core/StringUtils.hpp>
-#include <core/system/System.hpp>
-
-#include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared/Logger.hpp>
+#include <shared/Error.hpp>
 
 
 typedef boost::filesystem::path path_t;
 
 namespace rstudio {
-namespace core {
+namespace shared {
 
 namespace {
 
@@ -129,7 +127,7 @@ bool copySingleItem(const FilePath& from, const FilePath& to,
                      target.ensureDirectory() :
                      path.copy(target);
    if (error)
-      LOG_ERROR(error);
+      logError(error);
 
    return true;
 }
@@ -168,19 +166,19 @@ FilePath FilePath::safeCurrentPath(const FilePath& revertToPath)
    catch(const boost::filesystem::filesystem_error& e)
    {
       if (e.code() != boost::system::errc::no_such_file_or_directory)
-         LOG_ERROR(Error(e.code(), ERROR_LOCATION));
+         logError(Error(e.code(), ERROR_LOCATION));
    }
    CATCH_UNEXPECTED_EXCEPTION
 
    // revert to the specified path if it exists, otherwise
    // take the user home path from the system
    FilePath safePath = revertToPath;
-   if (!safePath.exists())
-      safePath = core::system::userHomePath();
+// TODO   if (!safePath.exists())
+// TODO      safePath = core::system::userHomePath();
 
    Error error = safePath.makeCurrentPath();
    if (error)
-      LOG_ERROR(error);
+      logError(error);
 
    return safePath;
 }
@@ -428,7 +426,7 @@ std::string FilePath::extension() const
 
 std::string FilePath::extensionLowerCase() const
 {
-   return string_utils::toLower(extension());
+   return boost::algorithm::to_lower_copy(extension());
 }
 
 bool FilePath::hasExtension(const std::string& ext) const
@@ -760,7 +758,7 @@ Error FilePath::moveIndirect(const FilePath& targetPath) const
    // error)
    error = remove();
    if (error)
-      LOG_ERROR(error);
+      logError(error);
 
    return Success();
 }
@@ -802,7 +800,7 @@ bool FilePath::isRegularFile() const
 
 bool FilePath::isHidden() const
 {
-   return system::isHiddenFile(*this);
+   return !filename().empty() && (filename()[0] == '.');
 }
 
 bool FilePath::isJunction() const
@@ -902,7 +900,7 @@ uintmax_t FilePath::sizeRecursive() const
    boost::shared_ptr<uintmax_t> pTotal = boost::make_shared<uintmax_t>(0);
    Error error = childrenRecursive(boost::bind(addItemSize, _2, pTotal)); 
    if (error)
-      LOG_ERROR(error);
+      logError(error);
    return *pTotal;
 }
 
@@ -953,7 +951,7 @@ FilePath FilePath::complete(const std::string& path) const
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(pImpl_->path, &error);
       error.addProperty("path", path);
-      LOG_ERROR(error);
+      logError(error);
       return *this;
    }
 }
@@ -970,7 +968,7 @@ FilePath FilePath::parent() const
    {
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(pImpl_->path, &error);
-      LOG_ERROR(error);
+      logError(error);
       return *this;
    }
 }
@@ -1007,7 +1005,7 @@ FilePath FilePath::childPath(const std::string& path) const
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(pImpl_->path, &error);
       error.addProperty("path", path);
-      LOG_ERROR(error);
+      logError(error);
       return *this;
    }
 
@@ -1257,8 +1255,8 @@ std::ostream& operator << (std::ostream& stream, const FilePath& fp)
 
 bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2)
 {
-   std::string file1Lower = string_utils::toLower(file1.absolutePath());
-   std::string file2Lower = string_utils::toLower(file2.absolutePath());
+   std::string file1Lower = boost::algorithm::to_lower_copy(file1.absolutePath());
+   std::string file2Lower = boost::algorithm::to_lower_copy(file2.absolutePath());
    return file1Lower < file2Lower;
 }
 
@@ -1322,11 +1320,11 @@ bool RecursiveDirectoryIterator::finished() const
 namespace {
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,
-              const core::ErrorLocation& errorLocation)
+              const ErrorLocation& errorLocation)
 {
    Error error(e.code(), errorLocation);
    addErrorProperties(path, &error);
-   core::log::logError(error, errorLocation);
+   logError(error, errorLocation);
 }
 
 void addErrorProperties(path_t path, Error* pError)
@@ -1335,5 +1333,5 @@ void addErrorProperties(path_t path, Error* pError)
 }
 }
 
-} // namespace core
+} // namespace shared
 } // namespace rstudio

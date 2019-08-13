@@ -3,18 +3,23 @@
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
- * this program is licensed to you under the terms of version 3 of the
- * GNU Affero General Public License. This program is distributed WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
- * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
- * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifndef CORE_JSON_HPP
-#define CORE_JSON_HPP
+#ifndef SHARED_JSON_HPP
+#define SHARED_JSON_HPP
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
@@ -24,31 +29,32 @@
 #include <vector>
 #include <iosfwd>
 
-#include <core/Error.hpp>
-#include <core/Log.hpp>
-#include <core/type_traits/TypeTraits.hpp>
+#include <shared/Error.hpp>
+#include <shared/Logger.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/system/error_code.hpp>
 
-#include <core/json/rapidjson/document.h>
-#include <core/json/rapidjson/rapidjson.h>
+#include <shared/rapidjson/document.h>
+#include <shared/rapidjson/rapidjson.h>
 
 namespace RSTUDIO_BOOST_NAMESPACE {
-   namespace system {
-      template <>
-      struct is_error_code_enum<rapidjson::ParseErrorCode>
-      {
-         static const bool value = true;
-      };
+namespace system {
 
-   } // namespace system
+template<>
+struct is_error_code_enum<rapidjson::ParseErrorCode>
+{
+   static const bool value = true;
+};
+
+} // namespace system
 } // namespace boost
 
 namespace rstudio {
-namespace core {
+namespace shared {
 namespace json {
 
 enum Type
@@ -818,7 +824,7 @@ int asJsonType(const T& object,
    else if (boost::is_same<T, std::string>::value)
       return StringType;
    
-   LOG_ERROR_MESSAGE("Unexpected type");
+   logErrorMessage("Unexpected type");
    return NullType;
 }
 
@@ -850,10 +856,10 @@ inline void logIncompatibleTypes(const Value& value,
 {
    if (value.type() != expectedType)
    {
-      log::logErrorMessage("Invalid JSON type: expected '" +
-                           typeAsString(expectedType) + "', got '" +
-                           typeAsString(value.type()) + "'",
-                           location);
+      logErrorMessage("Invalid JSON type: expected '" +
+                      typeAsString(expectedType) + "', got '" +
+                      typeAsString(value.type()) + "'",
+                      location);
    }
 }
 
@@ -963,11 +969,11 @@ const boost::system::error_category& jsonParseCategory();
 
 namespace rapidjson {
    inline boost::system::error_code make_error_code(ParseErrorCode e) {
-      return boost::system::error_code(e, rstudio::core::json::jsonParseCategory());
+      return boost::system::error_code(e, rstudio::shared::json::jsonParseCategory());
    }
 
    inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
-      return boost::system::error_condition(e, rstudio::core::json::jsonParseCategory());
+      return boost::system::error_condition(e, rstudio::shared::json::jsonParseCategory());
    }
 }
 

@@ -410,6 +410,9 @@ add_subdirectory(ext)
 # core library
 add_subdirectory(core)
 
+# shared library
+add_subdirectory(shared)
+
 # server core library
 if (RSTUDIO_SERVER)
    add_subdirectory(server_core)

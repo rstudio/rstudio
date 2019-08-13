@@ -3,20 +3,25 @@
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
- * this program is licensed to you under the terms of version 3 of the
- * GNU Affero General Public License. This program is distributed WITHOUT
- * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
- * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
- * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifndef CORE_FILE_PATH_HPP
-#define CORE_FILE_PATH_HPP
+#ifndef SHARED_FILE_PATH_HPP
+#define SHARED_FILE_PATH_HPP
 
-#include <stdint.h>
+#include <cstdint>
 #include <ctime>
 
 #include <string>
@@ -29,11 +34,11 @@
 
 #include <boost/utility.hpp>
 
-#include <core/Error.hpp>
-#include <core/Log.hpp>
+#include <shared/Error.hpp>
+#include <shared/Logger.hpp>
 
 namespace rstudio {
-namespace core {
+namespace shared {
 
 class Error;
 
@@ -46,14 +51,13 @@ public:
    typedef boost::function<bool(int, const FilePath&)>  
                                                 RecursiveIterationFunction;
 
-public:
    // special accessor which detects when the current path no longer exists
    // and switches to the specified alternate path if it doesn't
    static FilePath safeCurrentPath(const FilePath& revertToPath);
    
    static Error makeCurrent(const std::string& path);
 
-   static std::string createAliasedPath(const core::FilePath& path,
+   static std::string createAliasedPath(const FilePath& path,
                                         const FilePath& userHomePath);
    static FilePath resolveAliasedPath(const std::string& aliasedPath,
                                       const FilePath& userHomePath);
@@ -223,6 +227,28 @@ public:
    // make this path the system current directory
    Error makeCurrentPath(bool autoCreate = false) const;
 
+
+   /**
+    * @brief Opens this file for read.
+    *
+    * @param out_stream     The input stream for this open file.
+    *
+    * @return Success if the file was opened; system error otherwise (e.g. EPERM, ENOENT, etc.)
+    */
+   Error openForRead(std::shared_ptr<std::istream>& out_stream) const;
+
+
+   /**
+    * @brief Opens this file for write.
+    *
+    * @param out_stream     The output stream for this open file.
+    * @param in_truncate    Whether to truncate the existing contents of the file. Default: true.
+    *
+    * @return Success if the file was opened; system error otherwise (e.g. EPERM, ENOENT, etc.)
+    */
+   Error openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_truncate = true) const;
+
+
    Error open_r(boost::shared_ptr<std::istream>* pStream) const;
    Error open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate = true) const;
 
@@ -252,7 +278,7 @@ bool compareAbsolutePathNoCase(const FilePath& file1, const FilePath& file2);
 class RestoreCurrentPathScope : boost::noncopyable
 {
 public:
-   RestoreCurrentPathScope(const FilePath& restorePath)
+   explicit RestoreCurrentPathScope(const FilePath& restorePath)
       : restorePath_(restorePath) 
    {
    }
@@ -263,7 +289,7 @@ public:
       {
          Error error = restorePath_.makeCurrentPath();
          if (error)
-            LOG_ERROR(error);
+            logError(error);
       }
       catch(...)
       {
@@ -301,7 +327,7 @@ public:
       {
          Error error = filePath_.removeIfExists();
          if (error)
-            core::log::logError(error, errorLocation_);
+            logError(error, errorLocation_);
       }
       catch(...)
       {

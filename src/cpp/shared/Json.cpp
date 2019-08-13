@@ -13,19 +13,19 @@
  *
  */
 
-#include <core/json/Json.hpp>
+#include <shared/Json.hpp>
 
-#include <core/json/rapidjson/stringbuffer.h>
-#include <core/json/rapidjson/prettywriter.h>
-#include <core/json/rapidjson/writer.h>
+#include <shared/rapidjson/stringbuffer.h>
+#include <shared/rapidjson/prettywriter.h>
+#include <shared/rapidjson/writer.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-#include <core/json/rapidjson/error/en.h>
-#include <core/json/rapidjson/schema.h>
+#include <shared/rapidjson/error/en.h>
+#include <shared/rapidjson/schema.h>
 
 namespace rstudio {
-namespace core {
+namespace shared {
 namespace json {
 
 Object Value::get_obj() const
@@ -473,8 +473,5 @@ std::string JsonParseErrorCategory::message(int ev) const
 }
 
 } // namespace json
-} // namespace core
+} // namespace shared
 } // namespace rstudio
-
-
-

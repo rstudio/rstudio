@@ -13,11 +13,10 @@
  *
  */
 
-#include <core/SafeConvert.hpp>
-
+#include <shared/SafeConvert.hpp>
 
 namespace rstudio {
-namespace core {
+namespace shared {
 namespace safe_convert {   
 
    
