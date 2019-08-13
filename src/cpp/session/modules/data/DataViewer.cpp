@@ -663,7 +663,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
          if (columnSEXP != nullptr &&
-             TYPEOF(columnSEXP) != NILSXP &&
+             TYPEOF(columnSEXP) == STRSXP &&
              !Rf_isNull(columnSEXP))
          {
             SEXP stringSEXP = STRING_ELT(columnSEXP, row);
