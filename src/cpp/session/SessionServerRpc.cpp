@@ -28,7 +28,6 @@
 #include "SessionRpc.hpp"
 
 using namespace rstudio::core;
-using namespace rstudio::server_core;
 
 namespace rstudio {
 namespace session {

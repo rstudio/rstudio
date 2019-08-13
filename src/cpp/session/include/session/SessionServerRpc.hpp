@@ -18,7 +18,7 @@
 
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
-#include <server_core/SocketRpc.hpp>
+#include <core/SocketRpc.hpp>
 
 namespace rstudio {
 namespace session {
@@ -32,8 +32,8 @@ core::Error invokeServerRpc(const std::string& endpoint,
 // callbacks are run on a background thread (not the main thread!)
 void invokeServerRpcAsync(const std::string& endpoint,
                           const core::json::Object& request,
-                          const server_core::socket_rpc::RpcResultHandler& onResult,
-                          const server_core::socket_rpc::RpcErrorHandler& onError);
+                          const core::socket_rpc::RpcResultHandler& onResult,
+                          const core::socket_rpc::RpcErrorHandler& onError);
 
 core::Error initialize();
 
