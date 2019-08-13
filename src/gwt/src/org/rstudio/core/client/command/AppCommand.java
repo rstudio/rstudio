@@ -283,7 +283,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public enum Context
    {
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
-      Markdown, Sweave, Help, VCS, Packrat, RPresentation, Addin;
+      Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
+      Addin;
       
       @Override
       public String toString()
@@ -325,6 +326,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          context_ = Context.Help;
       else if (lower.equals("packrat"))
          context_ = Context.Packrat;
+      else if (lower.equals("renv"))
+         context_ = Context.Renv;
       else if (lower.equals("presentation"))
          context_ = Context.RPresentation;
       else

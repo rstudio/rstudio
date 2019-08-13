@@ -146,6 +146,7 @@ import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -5351,6 +5352,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void renvActions(String action,
+                           ServerRequestCallback<JsArray<RenvAction>> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(action)
+            .get();
+      
+      sendRequest(RPC_SCOPE, RENV_ACTIONS, params, requestCallback);
+   }
+   
+   @Override
    public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -6349,6 +6361,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_ACTIONS = "get_packrat_actions";
    
    private static final String RENV_INIT = "renv_init";
+   private static final String RENV_ACTIONS = "renv_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

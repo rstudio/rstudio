@@ -383,6 +383,11 @@ public abstract class
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
    public abstract AppCommand packratCheckStatus();
+   
+   // renv
+   public abstract AppCommand renvHelp();
+   public abstract AppCommand renvSnapshot();
+   public abstract AppCommand renvRestore();
 
    // Version control
    public abstract AppCommand versionControlHelp();

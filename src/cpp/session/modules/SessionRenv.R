@@ -22,6 +22,86 @@
    renv::init(project = project, restart = FALSE)
 })
 
+.rs.addJsonRpcHandler("renv_actions", function(action)
+{
+   switch(
+      tolower(action),
+      snapshot = .rs.renv.snapshotActions(),
+      restore  = .rs.renv.restoreActions(),
+      stop("unrecognized action '", action, "'")
+   )
+})
+
+.rs.addFunction("renv.snapshotActions", function()
+{
+   project <- .rs.getProjectDirectory()
+   before <- renv:::renv_lockfile_load(project)
+   after <- renv:::snapshot(project = project, lockfile = NULL)
+   diff <- .rs.renv.diff("lockfile", before, "library", after)
+   data <- lapply(seq_len(NROW(diff)), function(i) as.list(diff[i, ]))
+   .rs.scalarListFromList(data)
+})
+
+.rs.addFunction("renv.restoreActions", function()
+{
+   project <- .rs.getProjectDirectory()
+   library <- renv::paths$library(project = project)
+   before <- renv:::snapshot(project = project, library = library, lockfile = NULL, type = "simple")
+   after <- renv:::renv_lockfile_load(project)
+   diff <- .rs.renv.diff("library", before, "lockfile", after)
+   diff <- diff[diff$action != "remove", ]
+   data <- lapply(seq_len(NROW(diff)), function(i) as.list(diff[i, ]))
+   .rs.scalarListFromList(data)
+})
+
+.rs.addFunction("renv.records", function(lockfile)
+{
+   records <- renv:::renv_records(lockfile)
+   if (is.null(records)) list() else records
+})
+
+.rs.addFunction("renv.diff", function(before.prefix, before,
+                                      after.prefix, after)
+{
+   # wrangle into data frames
+   fields <- c("Package", "Version", "Source")
+   
+   default <- data.frame(
+      Package = character(),
+      Version = character(),
+      Source  = character(),
+      stringsAsFactors = FALSE
+   )
+   
+   lhs <- renv:::bapply(unname(.rs.renv.records(before)), `[`, fields)
+   if (is.null(lhs))
+      lhs <- default
+   
+   rhs <- renv:::bapply(unname(.rs.renv.records(after)),  `[`, fields)
+   if (is.null(rhs))
+      rhs <- default
+   
+   names(lhs) <- c("packageName", paste(before.prefix, names(lhs)[-1L], sep = ""))
+   names(rhs) <- c("packageName", paste(after.prefix, names(rhs)[-1L], sep = ""))
+   
+   # merge together
+   data <- merge(lhs, rhs, by = "packageName", all = TRUE)
+   
+   # add in actions
+   actions <- renv:::renv_lockfile_diff_packages(before, after)
+   adf <- data.frame(
+      packageName = names(actions),
+      action = as.character(actions),
+      stringsAsFactors = FALSE
+   )
+   
+   # merge together
+   all <- merge(data, adf, by = "packageName", all = TRUE)
+   
+   # drop empty actions
+   all[!is.na(all$action), ]
+})
+
 .rs.addFunction("renv.context", function()
 {
    context <- list()
@@ -88,7 +168,7 @@
 {
    lockpath <- file.path(project, "renv.lock")
    lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- lockfile[["Packages"]]
+   packages <- renv:::renv_records(lockfile)
    filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL
