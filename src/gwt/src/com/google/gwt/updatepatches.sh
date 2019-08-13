@@ -12,6 +12,7 @@ TEMPDIR=`pwd`
 
 jar xvf ${SRCBASE}/../lib/gwt/${GWTVER}/gwt-user.jar \
   com/google/gwt/user/cellview/client/AbstractHeaderOrFooterBuilder.java \
+  com/google/gwt/user/cellview/client/DataGrid.java \
   com/google/gwt/user/client/ui/CellPanel.java \
   com/google/gwt/user/client/ui/DecoratorPanel.java \
   com/google/gwt/user/client/ui/FormPanel.java \
