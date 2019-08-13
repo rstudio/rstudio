@@ -49,9 +49,9 @@ trap cleanup EXIT
 # if the gpg1 binary is present on this machine, then presume that it exists as
 # an alternative to a future, incompatible version, and use it for the "gpg"
 # command by manipulating $PATH.
-GPG1=$(which gpg1)
-if [ "$?" == "0" ]; then 
+if [ hash gpg1 2>/dev/null ]; then 
     # emit notice
+    GPG1=$(which gpg1)
     GPG2=$(which gpg)
     echo "Note: Using $GPG1 to provide GnuPG (was $GPG2)"
     # softlink gpg into our temporary work folder
