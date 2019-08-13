@@ -1418,7 +1418,8 @@ public class StringUtil
     */
    public static native String spacedString(String str) /*-{
       return str.split('').join(' ');
-   }-*/;   
+   }-*/;
+
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT
