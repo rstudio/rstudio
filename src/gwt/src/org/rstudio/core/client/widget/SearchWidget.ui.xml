@@ -16,9 +16,9 @@
                <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'
                           styleName='{res.themeStyles.searchBox}'/>
             </div>
-            <g:Image ui:field='close_'
-                     resource='{res.clearSearch2x}'
-                     styleName='{res.themeStyles.clearSearch}'/>
+            <f:ImageButton ui:field='clearFilter_'
+                           resource='{res.clearSearch2x}'
+                           addStyleNames='{res.themeStyles.clearSearch}'/>
          </div>
          <div class="{res.themeStyles.right}"></div>
       </div>

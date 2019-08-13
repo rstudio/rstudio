@@ -45,6 +45,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.FilterWidget;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -71,7 +72,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       
       setOkButtonCaption("Execute");
       
-      filterWidget_ = new FilterWidget("Filter by addin name")
+      filterWidget_ = new FilterWidget()
       {
          @Override
          public void filter(String query)
@@ -142,6 +143,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       }));
       
       FlowPanel headerPanel = new FlowPanel();
+      FormLabel filterLabel = new FormLabel(true, "Filter addins:", filterWidget_.getInputElement());
+      filterLabel.addStyleName(RES.dataGridStyle().filterLabel());
+      headerPanel.add(filterLabel);
       headerPanel.add(filterWidget_);
       headerPanel.add(helpLink_);
       
@@ -368,6 +372,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    
    public interface Styles extends RStudioDataGridStyle
    {
+      String filterLabel();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

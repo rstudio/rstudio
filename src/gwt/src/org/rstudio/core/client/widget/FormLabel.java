@@ -90,6 +90,21 @@ public class FormLabel extends Label
    }
 
    /**
+    * Creates a label with the specified text, which is associated with
+    * the specified form control.
+    *
+    * @param inline true if inline display, false for block
+    * @param text the new label's text
+    * @param el labeled element; if the element does not already have an id attribute,
+    *           one will be generated and assigned to it
+    */
+   public FormLabel(boolean inline, String text, Element el)
+   {
+      super(inline, text, NoForId);
+      setFor(el);
+   }
+
+   /**
     * Create a label to associate with an existing widget.
     * @param text label text
     * @param w labeled widget; if the widget's element does not already have an id attribute,

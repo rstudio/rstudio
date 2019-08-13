@@ -15,6 +15,7 @@
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
 @external gwt-PopupPanelGlass;
 @external gwt-Label;
+@external gwt-Image;
 @external gwt-MenuItem, gwt-MenuItem-selected, subMenuIcon, subMenuIcon-selected, gwt-MenuBarPopup;
 @external gwt-MenuItemSeparator, menuSeparatorInner, menuPopupMiddleCenter;
 @external gwt-MenuBar, gwt-MenuBar-vertical;
@@ -1649,6 +1650,11 @@ body.windows table.webGlobalToolbar {
    width: 11px;
    height: 11px;
 }
+.clearSearch .gwt-Image {
+   float: left;
+   width: 11px;
+   height: 11px;
+}
 .searchBoxContainer {
    position: absolute;
    top: 0;
@@ -2408,14 +2414,6 @@ body.ubuntu_mono .searchBox {
 
 .rstudio-themes-flat.rstudio-themes-dark-menus .search input::placeholder {
    color: #CCC;
-}
-
-.rstudio-themes-flat .searchMagGlass {
-   top: 2px;
-}
-
-.rstudio-themes-flat .clearSearch {
-   top: 3px;
 }
 
 .rstudio-themes-flat .dataGridSortedHeaderAscending img {

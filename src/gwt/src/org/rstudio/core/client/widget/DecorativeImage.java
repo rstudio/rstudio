@@ -33,7 +33,7 @@ public class DecorativeImage extends Image
    public DecorativeImage()
    {
       super();
-      A11y.setDecorativeImage(getElement());
+      setDecorative();
    }
 
    /**
@@ -44,8 +44,7 @@ public class DecorativeImage extends Image
    public DecorativeImage(ImageResource resource)
    {
       super(resource);
-      A11y.setDecorativeImage(getElement());
-
+      setDecorative();
    }
 
    /**
@@ -57,7 +56,7 @@ public class DecorativeImage extends Image
    public DecorativeImage(String url)
    {
      super(url);
-      A11y.setDecorativeImage(getElement());
+     setDecorative(); 
    }
 
    /**
@@ -69,7 +68,7 @@ public class DecorativeImage extends Image
    public DecorativeImage(SafeUri url)
    {
       super(url);
-      A11y.setDecorativeImage(getElement());
+      setDecorative();
    }
 
    /**
@@ -93,7 +92,7 @@ public class DecorativeImage extends Image
    public DecorativeImage(String url, int left, int top, int width, int height)
    {
       super(url, left, top, width, height);
-      A11y.setDecorativeImage(getElement());
+      setDecorative();
    }
 
    /**
@@ -117,7 +116,7 @@ public class DecorativeImage extends Image
    public DecorativeImage(SafeUri url, int left, int top, int width, int height)
    {
       super(url, left, top, width, height);
-      A11y.setDecorativeImage(getElement());
+      setDecorative();
    }
 
    /**
@@ -129,7 +128,17 @@ public class DecorativeImage extends Image
    protected DecorativeImage(Element element)
    {
       super(element);
+      setDecorative();
+   }
+
+   private void setDecorative()
+   {
       A11y.setDecorativeImage(getElement());
+
+      // aria-hidden shouldn't be needed, but have seen macOS VoiceOver
+      // putting screen-reader cursor onto the decorative image (and reading nothing) in
+      // some situations, and this prevents it
+      A11y.setARIAHidden(getElement());
    }
 
    /**
