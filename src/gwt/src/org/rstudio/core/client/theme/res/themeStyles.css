@@ -1652,8 +1652,8 @@ body.windows table.webGlobalToolbar {
 }
 .clearSearch .gwt-Image {
    float: left;
-   width: 10px;
-   height: 10px;
+   width: 11px;
+   height: 11px;
 }
 .searchBoxContainer {
    position: absolute;
