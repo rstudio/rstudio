@@ -1214,6 +1214,13 @@ void rCleanup(bool terminatedNormally)
       // clean up locks
       FileLock::cleanUp();
 
+      // stop file monitor (need to do this explicitly as otherwise we can
+      // run into issues during close where the runtime attempts to clean
+      // up its data structures at same time that monitor wants to exit)
+      //
+      // https://github.com/rstudio/rstudio/issues/5222
+      system::file_monitor::stop();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
