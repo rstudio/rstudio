@@ -12,6 +12,7 @@
 * PowerShell Core option in terminal (Windows-only)
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 * Keyboard shortcuts for main menu items on RStudio Server (e.g. Ctrl+Alt+F for File menu)
+* Show number of characters when entering version control commit messages (#5192)
 
 ### Bugfixes
 
