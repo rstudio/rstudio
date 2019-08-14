@@ -18,15 +18,15 @@
  *
  */
 
-#include <shared/SyslogDestination.hpp>
+#include <shared_core/SyslogDestination.hpp>
 
 #include <cassert>
 #include <syslog.h>
 
-#include <shared/Logger.hpp>
+#include <shared_core/Logger.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 namespace {
 
@@ -87,6 +87,6 @@ void SyslogDestination::writeLog(LogLevel in_logLevel, const std::string& in_mes
    ::syslog(logLevelToLogPriority(in_logLevel), "%s", in_message.c_str());
 }
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 

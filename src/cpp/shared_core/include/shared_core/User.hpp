@@ -18,15 +18,15 @@
  *
  */
 
-#ifndef SHARED_USER_HPP
-#define SHARED_USER_HPP
+#ifndef SHARED_CORE_USER_HPP
+#define SHARED_CORE_USER_HPP
 
 #include <string>
 
 #include "PImpl.hpp"
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 /**
  * @brief Class which represents a system user.
@@ -84,7 +84,7 @@ private:
    PRIVATE_IMPL(m_impl);
 };
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_LOGGER_HPP
-#define SHARED_LOGGER_HPP
+#ifndef SHARED_CORE_LOGGER_HPP
+#define SHARED_CORE_LOGGER_HPP
 
 #include <boost/noncopyable.hpp>
 
@@ -29,7 +29,7 @@
 #include "Error.hpp"
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 class ILogDestination;
 
@@ -180,7 +180,7 @@ void logInfoMessage(const std::string& in_message);
  */
 void logDebugMessage(const std::string& in_message);
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

@@ -18,15 +18,15 @@
  *
  */
 
-#ifndef SHARED_DATE_TIME_HPP
-#define SHARED_DATE_TIME_HPP
+#ifndef SHARED_CORE_DATE_TIME_HPP
+#define SHARED_CORE_DATE_TIME_HPP
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <string>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 namespace system {
 namespace date_time {
 
@@ -49,7 +49,7 @@ std::string format(const TimeType& time,
 
 } // namespace date_time
 } // namespace system
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

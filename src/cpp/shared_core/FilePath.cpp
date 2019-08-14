@@ -13,7 +13,7 @@
  *
  */
 
-#include <shared/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -43,7 +43,7 @@
 typedef boost::filesystem::path path_t;
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 namespace {
 
@@ -1333,5 +1333,5 @@ void addErrorProperties(path_t path, Error* pError)
 }
 }
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio

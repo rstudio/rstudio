@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_ERROR_HPP
-#define SHARED_ERROR_HPP
+#ifndef SHARED_CORE_ERROR_HPP
+#define SHARED_CORE_ERROR_HPP
 
 #include <iosfwd>
 #include <string>
@@ -32,7 +32,7 @@
 #include <boost/current_function.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 class FilePath;
 class ErrorLocation ;
@@ -195,7 +195,7 @@ private:
    
 std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
    
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #define ERROR_LOCATION rstudio::shared::ErrorLocation( \
@@ -213,5 +213,5 @@ std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
    } 
 
 
-#endif // CORE_ERROR_HPP
+#endif
 

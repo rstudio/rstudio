@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_FILE_LOG_DESTINATION_HPP
-#define SHARED_FILE_LOG_DESTINATION_HPP
+#ifndef SHARED_CORE_FILE_LOG_DESTINATION_HPP
+#define SHARED_CORE_FILE_LOG_DESTINATION_HPP
 
 #include "ILogDestination.hpp"
 
@@ -29,7 +29,7 @@
 #include "FilePath.hpp"
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 /**
  * @brief Class which represents the options for a file logger.
@@ -148,7 +148,7 @@ private:
    PRIVATE_IMPL_SHARED(m_impl);
 };
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

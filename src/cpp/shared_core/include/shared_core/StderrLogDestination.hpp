@@ -1,5 +1,5 @@
 /*
- * SyslogDestination.hpp
+ * StdErrLogDestination.hpp
  * 
  * Copyright (C) 2019 by RStudio, Inc.
  *
@@ -18,60 +18,54 @@
  *
  */
 
-#ifndef SHARED_SYS_LOG_DESTINATION_HPP
-#define SHARED_SYS_LOG_DESTINATION_HPP
+#ifndef SHARED_CORE_STD_ERR_LOG_DESTINATION_HPP
+#define SHARED_CORE_STD_ERR_LOG_DESTINATION_HPP
 
 #include "ILogDestination.hpp"
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 /**
- * @brief A class which logs messages to syslog.
+ * @brief A class which logs messages to stderr.
  *
+ * If stderr is not a TTY, no logs will be written. In that case, it is better not to register the destination.
  * Only one of these should be created per program.
  */
-class SyslogDestination : public ILogDestination
+class StderrDestination : public ILogDestination
 {
 public:
    /**
-    * @brief Constructor.
-    *
-    * @param in_programId       The ID of this program.
+    * @brief Checks whether stderr is a TTY
     */
-   explicit SyslogDestination(const std::string& in_programId);
+   static bool isStderrTty();
 
    /**
-    * @brief Destructor.
-    */
-   ~SyslogDestination() override;
-
-   /**
-    * @brief Gets the unique ID for the syslog destination. There should only be one syslog destination for the whole
+    * @brief Gets the unique ID for the stderr destination. There should only be one stderr destination for the whole
     *        program.
     *
-    * @return The unique ID of the syslog destination.
+    * @return The unique ID of the stderr destination.
     */
-   static unsigned int getSyslogId();
+   static unsigned int getStderrId();
 
    /**
-    * @brief Gets the unique ID of the syslog destination.
+    * @brief Gets the unique ID of the stderr destination.
     *
-    * @return The unique ID of the syslog destination.
+    * @return The unique ID of the stderr destination.
     */
    unsigned int getId() const override;
 
    /**
-    * @brief Writes a message to syslog.
+    * @brief Writes a message to stderr.
     *
     * @param in_logLevel    The log level of the message to write. Filtering is done prior to this call. This is for
     *                       informational purposes only.
-    * @param in_message     The message to write to syslog.
+    * @param in_message     The message to write to stderr.
     */
    void writeLog(LogLevel in_logLevel, const std::string& in_message) override;
 };
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

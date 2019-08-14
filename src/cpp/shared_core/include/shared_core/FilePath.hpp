@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_FILE_PATH_HPP
-#define SHARED_FILE_PATH_HPP
+#ifndef SHARED_CORE_FILE_PATH_HPP
+#define SHARED_CORE_FILE_PATH_HPP
 
 #include <cstdint>
 #include <ctime>
@@ -34,11 +34,11 @@
 
 #include <boost/utility.hpp>
 
-#include <shared/Error.hpp>
-#include <shared/Logger.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/Logger.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 class Error;
 
@@ -339,8 +339,8 @@ private:
    ErrorLocation errorLocation_;
 };
 
-}
-}
+} // namespace core
+} // namespace rstudio
 
 #endif // CORE_FILE_PATH_HPP
 

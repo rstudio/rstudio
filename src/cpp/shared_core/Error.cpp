@@ -20,10 +20,10 @@
 
 #include <ostream>
 
-#include <shared/Error.hpp>
+#include <shared_core/Error.hpp>
 
-#include <shared/FilePath.hpp>
-#include <shared/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <boost/lexical_cast.hpp>
 
@@ -32,7 +32,7 @@
 #endif
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 struct Error::Impl
 {
@@ -374,10 +374,6 @@ std::ostream& operator<<(std::ostream& os, const ErrorLocation& location)
    
    return os;
 }
-   
-   
 
 } // namespace core 
 } // namespace rstudio
-
-

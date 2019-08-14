@@ -18,7 +18,7 @@
  *
  */
 
-#include <shared/Logger.hpp>
+#include <shared_core/Logger.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -26,12 +26,12 @@
 #include <sstream>
 
 // We do a little special handling for syslog because it does its own formatting.
-#include <shared/SyslogDestination.hpp>
-#include <shared/ILogDestination.hpp>
-#include <shared/DateTime.hpp>
+#include <shared_core/SyslogDestination.hpp>
+#include <shared_core/ILogDestination.hpp>
+#include <shared_core/DateTime.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 namespace {
 
@@ -266,6 +266,6 @@ void logDebugMessage(const std::string& in_message)
       log.writeMessageToAllDestinations(LogLevel::DEBUG, in_message);
 }
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 

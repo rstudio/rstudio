@@ -38,11 +38,9 @@ set (CORE_SOURCE_FILES
    CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
-   Error.cpp
    Exec.cpp
    FileInfo.cpp
    FileLogWriter.cpp
-   FilePath.cpp
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
@@ -55,7 +53,6 @@ set (CORE_SOURCE_FILES
    ProgramOptions.cpp
    RegexUtils.cpp
    RecursionGuard.cpp
-   SafeConvert.cpp
    Settings.cpp
    StderrLogWriter.cpp
    StringUtils.cpp
@@ -81,7 +78,6 @@ set (CORE_SOURCE_FILES
    libclang/TranslationUnit.cpp
    libclang/UnsavedFiles.cpp
    libclang/Utils.cpp
-   json/Json.cpp
    json/JsonRpc.cpp
    http/Cookie.cpp
    http/Header.cpp
@@ -327,9 +323,13 @@ if(RSTUDIO_ADDINS_PATH)
    endif()
 endif()
 
+set(SHARED_CORE_INCLUDE_DIRS
+   ${SHARED_CORE_SOURCE_DIR}/include)
+
 # include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
+   ${SHARED_INCLUDE_DIRS}
    ${EXT_SOURCE_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
@@ -342,7 +342,7 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 target_link_libraries(
    rstudio-core
    rstudio-core-hunspell
-   ${Boost_LIBRARIES}
+   rstudio-shared-core
    ${CRASHPAD_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )

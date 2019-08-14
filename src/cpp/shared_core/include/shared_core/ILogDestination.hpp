@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_I_LOG_DESTINATION_HPP
-#define SHARED_I_LOG_DESTINATION_HPP
+#ifndef SHARED_CORE_I_LOG_DESTINATION_HPP
+#define SHARED_CORE_I_LOG_DESTINATION_HPP
 
 #include <boost/noncopyable.hpp>
 
@@ -29,7 +29,7 @@
 
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 /**
  * @brief Interface which allows a logger to write a log message to a destination.
@@ -61,7 +61,7 @@ public:
    virtual void writeLog(LogLevel in_level, const std::string& in_message) = 0;
 };
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 
 #endif

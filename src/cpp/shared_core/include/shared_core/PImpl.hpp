@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_P_IMPL_HPP
-#define SHARED_P_IMPL_HPP
+#ifndef SHARED_CORE_P_IMPL_HPP
+#define SHARED_CORE_P_IMPL_HPP
 
 #include <memory>
 

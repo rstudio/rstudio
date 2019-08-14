@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_JSON_HPP
-#define SHARED_JSON_HPP
+#ifndef SHARED_CORE_JSON_HPP
+#define SHARED_CORE_JSON_HPP
 
 #define RAPIDJSON_HAS_STDSTRING 1
 
@@ -29,8 +29,8 @@
 #include <vector>
 #include <iosfwd>
 
-#include <shared/Error.hpp>
-#include <shared/Logger.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/Logger.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/thread.hpp>
@@ -38,8 +38,8 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/system/error_code.hpp>
 
-#include <shared/rapidjson/document.h>
-#include <shared/rapidjson/rapidjson.h>
+#include <shared_core/rapidjson/document.h>
+#include <shared_core/rapidjson/rapidjson.h>
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace system {
@@ -54,7 +54,7 @@ struct is_error_code_enum<rapidjson::ParseErrorCode>
 } // namespace boost
 
 namespace rstudio {
-namespace shared {
+namespace core {
 namespace json {
 
 enum Type

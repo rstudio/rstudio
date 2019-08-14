@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SHARED_SAFE_CONVERT_HPP
-#define SHARED_SAFE_CONVERT_HPP
+#ifndef SHARED_CORE_SAFE_CONVERT_HPP
+#define SHARED_CORE_SAFE_CONVERT_HPP
 
 #include <string>
 #include <ios>
@@ -30,11 +30,11 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
-#include <shared/Logger.hpp>
-#include <shared/Error.hpp>
+#include <shared_core/Logger.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 namespace safe_convert {
    
 template <typename T>
@@ -146,6 +146,4 @@ boost::optional<TOutput> numberTo(TInput input)
 } // namespace core 
 } // namespace rstudio
 
-
 #endif // CORE_SAFE_CONVERT_HPP
-

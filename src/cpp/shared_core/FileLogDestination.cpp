@@ -18,16 +18,16 @@
  *
  */
 
-#include <shared/FileLogDestination.hpp>
+#include <shared_core/FileLogDestination.hpp>
 
 #include <boost/thread.hpp>
 
 #include <vector>
 
-#include <shared/Logger.hpp>
+#include <shared_core/Logger.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
 // FileLogOptions ======================================================================================================
 FileLogOptions::FileLogOptions(FilePath in_directory) :
@@ -190,6 +190,6 @@ void FileLogDestination::writeLog(LogLevel, const std::string& in_message)
    (*m_impl->LogOutputStream) << in_message;
 }
 
-} // namespace shared
+} // namespace core
 } // namespace rstudio
 

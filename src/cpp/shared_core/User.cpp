@@ -1,5 +1,5 @@
 /*
- * StderrDestination.cpp
+ * User.cpp
  * 
  * Copyright (C) 2019 by RStudio, Inc.
  *
@@ -18,35 +18,52 @@
  *
  */
 
-#include <shared/StderrLogDestination.hpp>
-
-#include <iostream>
-#include <unistd.h>
+#include <shared_core/User.hpp>
 
 namespace rstudio {
-namespace shared {
+namespace core {
 
-bool StderrDestination::isStderrTty()
+struct User::Impl
 {
-   return ::isatty(STDERR_FILENO) == 1;
+   explicit Impl(std::string in_name) : Name(std::move(in_name)) {};
+
+   std::string Name;
+};
+
+PRIVATE_IMPL_DELETER_IMPL(User)
+
+User::User() :
+   m_impl(new Impl("*"))
+{
 }
 
-unsigned int StderrDestination::getStderrId()
+User::User(const User& in_other) :
+   m_impl(new Impl(in_other.m_impl->Name))
 {
-   return 0;
+
 }
 
-unsigned int StderrDestination::getId() const
+User::User(std::string in_username) :
+   m_impl(new Impl(std::move(in_username)))
 {
-   return getStderrId();
 }
 
-void StderrDestination::writeLog(LogLevel, const std::string& in_message)
+bool User::isAllUsers() const
 {
-   if (isStderrTty())
-      std::cerr << in_message;
+   return m_impl->Name == "*";
 }
 
-} // namespace shared
+const std::string& User::getUsername() const
+{
+   return m_impl->Name;
+}
+
+User& User::operator=(const User& in_other)
+{
+   m_impl->Name = in_other.m_impl->Name;
+   return *this;
+}
+
+} // namespace core
 } // namespace rstudio
 

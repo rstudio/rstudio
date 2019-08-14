@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2019 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,19 +13,18 @@
 #
 #
 
-project(SHARED)
+project(SHARED_CORE)
 
 # include files
-file(GLOB_RECURSE SHARED_HEADER_FILES "*.h*")
+file(GLOB_RECURSE SHARED_CORE_HEADER_FILES "*.h*")
 
 # source files
-set (SHARED_SOURCE_FILES
+set (SHARED_CORE_SOURCE_FILES
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
    Json.cpp
    Logger.cpp
-   SafeConvert.cpp
    StderrDestination.cpp
    SyslogDestination.cpp
    User.cpp
@@ -38,7 +37,7 @@ set (SHARED_INCLUDE_DIRS
 
 include_directories(${SHARED_INCLUDE_DIRS})
 
-add_library(rstudio-shared STATIC ${SHARED_SOURCE_FILES} ${SHARED_HEADER_FILES})
+add_library(rstudio-shared-core STATIC ${SHARED_CORE_HEADER_FILES} ${SHARED_CORE_SOURCE_FILES})
 
-target_link_libraries(rstudio-shared
+target_link_libraries(rstudio-shared-core
    ${Boost_LIBRARIES})
