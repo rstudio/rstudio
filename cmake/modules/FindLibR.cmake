@@ -41,6 +41,8 @@ if(APPLE)
       set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
    endif()
 
+   set(LIBR_LIBRARIES "-undefined dynamic_lookup" CACHE INTERNAL "R libraries (dynamic lookup)")
+
 # detection for UNIX & Win32
 else()
 
