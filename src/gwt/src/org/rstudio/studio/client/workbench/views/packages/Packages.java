@@ -674,7 +674,7 @@ public class Packages
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            indicator.onError(errorMessage);
+            indicator.onError(error.getUserMessage());
          }
       });
    }

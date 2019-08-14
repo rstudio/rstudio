@@ -81,6 +81,9 @@
    if (is.null(rhs))
       rhs <- default
    
+   if (nrow(lhs) == 0 && nrow(rhs) == 0)
+      return(default)
+   
    names(lhs) <- c("packageName", paste(before.prefix, names(lhs)[-1L], sep = ""))
    names(rhs) <- c("packageName", paste(after.prefix, names(rhs)[-1L], sep = ""))
    

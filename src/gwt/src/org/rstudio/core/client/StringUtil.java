@@ -1431,9 +1431,9 @@ public class StringUtil
       String result = fmt;
       for (int i = 0; i < strings.size(); i += 2)
       {
-         String pattern = "{" + strings.get(i) + "}";
+         String target = "{" + strings.get(i) + "}";
          String replacement = strings.get(i + 1);
-         result = result.replaceAll(pattern, replacement);
+         result = result.replace(target, replacement);
       }
       
       return result;
