@@ -969,11 +969,11 @@ const boost::system::error_category& jsonParseCategory();
 
 namespace rapidjson {
    inline boost::system::error_code make_error_code(ParseErrorCode e) {
-      return boost::system::error_code(e, rstudio::shared::json::jsonParseCategory());
+      return boost::system::error_code(e, rstudio::core::json::jsonParseCategory());
    }
 
    inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
-      return boost::system::error_condition(e, rstudio::shared::json::jsonParseCategory());
+      return boost::system::error_condition(e, rstudio::core::json::jsonParseCategory());
    }
 }
 

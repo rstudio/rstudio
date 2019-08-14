@@ -36,8 +36,8 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
-#include <shared/Logger.hpp>
-#include <shared/Error.hpp>
+#include <shared_core/Logger.hpp>
+#include <shared_core/Error.hpp>
 
 
 typedef boost::filesystem::path path_t;
