@@ -20,7 +20,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/json/Json.hpp>
 #include <server_core/SecureKeyFile.hpp>
-#include <server_core/SocketRpc.hpp>
+#include <core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <core/system/PosixUser.hpp>
