@@ -48,9 +48,9 @@ FilePath userLogPath()
    return logPath;
 }
 
-void writeFile(const std::string& fileName, const core::FilePath& path, std::ostream& ostr)
+void writeFile(const std::string& description, const core::FilePath& path, std::ostream& ostr)
 {
-   ostr << fileName << ": " << path << std::endl;
+   ostr << description << ": " << path << std::endl;
    ostr << "--------------------------------------------------" << std::endl;
    ostr << std::endl;
 
