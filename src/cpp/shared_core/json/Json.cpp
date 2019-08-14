@@ -13,16 +13,16 @@
  *
  */
 
-#include <shared_core/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
-#include <shared_core/rapidjson/stringbuffer.h>
-#include <shared_core/rapidjson/prettywriter.h>
-#include <shared_core/rapidjson/writer.h>
-#include <shared_core/rapidjson/error/en.h>
-#include <shared_core/rapidjson/schema.h>
+#include <shared_core/json/rapidjson/stringbuffer.h>
+#include <shared_core/json/rapidjson/prettywriter.h>
+#include <shared_core/json/rapidjson/writer.h>
+#include <shared_core/json/rapidjson/error/en.h>
+#include <shared_core/json/rapidjson/schema.h>
 
 namespace rstudio {
 namespace core {

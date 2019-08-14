@@ -38,8 +38,8 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/system/error_code.hpp>
 
-#include <shared_core/rapidjson/document.h>
-#include <shared_core/rapidjson/rapidjson.h>
+#include <shared_core/json/rapidjson/document.h>
+#include <shared_core/json/rapidjson/rapidjson.h>
 
 namespace RSTUDIO_BOOST_NAMESPACE {
 namespace system {
