@@ -32,19 +32,19 @@ public:
    {
    }
 
-   virtual void log(core::system::LogLevel level, const std::string& message)
+   virtual void log(core::LogLevel level, const std::string& message)
    {
       log(programIdentity_, level, message);
    }
 
    virtual void log(const std::string& programIdentity,
-                    core::system::LogLevel level,
+                    core::LogLevel level,
                     const std::string& message)
    {
       client().logMessage(programIdentity, level, message);
    }
 
-   virtual int logLevel() { return core::system::kLogLevelDebug; }
+   virtual core::LogLevel logLevel() { return core::LogLevel::DEBUG; }
 
 private:
    std::string programIdentity_;

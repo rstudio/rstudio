@@ -19,12 +19,12 @@
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <gsl/gsl>
 
 using namespace rstudio::core;

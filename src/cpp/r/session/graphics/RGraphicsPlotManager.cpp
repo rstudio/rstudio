@@ -24,7 +24,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 

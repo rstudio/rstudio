@@ -62,9 +62,9 @@
 #include <core/RegexUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/DateTime.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -72,7 +72,7 @@
 #include <core/LogOptions.hpp>
 #include <core/SyslogLogWriter.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Thread.hpp>
 
@@ -192,7 +192,7 @@ extern boost::recursive_mutex s_loggingMutex;
 extern std::string s_programIdentity;
 
 Error initializeSystemLog(const std::string& programIdentity,
-                          int logLevel,
+                          LogLevel logLevel,
                           bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)

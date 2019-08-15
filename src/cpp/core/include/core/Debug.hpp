@@ -17,7 +17,7 @@
 #define CORE_DEBUG_HPP
 
 #include <iostream>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <vector>
 #include <map>
 

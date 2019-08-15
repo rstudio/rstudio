@@ -22,7 +22,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 
 using namespace rstudio::core;

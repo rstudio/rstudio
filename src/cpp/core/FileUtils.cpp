@@ -20,7 +20,7 @@
 
 #include <core/FileUtils.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/system/System.hpp>

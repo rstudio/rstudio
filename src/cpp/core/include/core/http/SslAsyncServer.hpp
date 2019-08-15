@@ -19,7 +19,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ssl.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 

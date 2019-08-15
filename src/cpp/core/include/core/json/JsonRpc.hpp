@@ -19,7 +19,7 @@
 #include <core/type_traits/TypeTraits.hpp>
 #include <core/json/JsonRpc.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -88,8 +88,8 @@ struct is_error_code_enum<rstudio::core::json::errc::errc_t>
 #include <boost/optional.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

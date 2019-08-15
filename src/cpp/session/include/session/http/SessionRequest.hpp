@@ -16,7 +16,7 @@
 #ifndef SESSION_REQUEST_HPP
 #define SESSION_REQUEST_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/http/SessionRequest.hpp>

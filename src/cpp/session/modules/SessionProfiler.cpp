@@ -20,7 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>

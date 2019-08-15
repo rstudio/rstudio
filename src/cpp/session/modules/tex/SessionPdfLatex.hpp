@@ -16,9 +16,9 @@
 #ifndef SESSION_MODULES_TEX_PDFLATEX_HPP
 #define SESSION_MODULES_TEX_PDFLATEX_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/tex/TexMagicComment.hpp>
 

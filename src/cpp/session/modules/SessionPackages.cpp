@@ -24,7 +24,7 @@
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>

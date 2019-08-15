@@ -29,8 +29,8 @@
 #include <boost/function.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {

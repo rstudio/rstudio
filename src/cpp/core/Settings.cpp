@@ -16,8 +16,8 @@
 #include <core/Settings.hpp>
 
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 namespace rstudio {

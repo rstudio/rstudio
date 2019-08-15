@@ -18,7 +18,7 @@
 
 #include <boost/test/minimal.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 

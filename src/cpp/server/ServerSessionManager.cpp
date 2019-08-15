@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>

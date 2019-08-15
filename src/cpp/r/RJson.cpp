@@ -52,7 +52,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RJson.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/RSexp.hpp>

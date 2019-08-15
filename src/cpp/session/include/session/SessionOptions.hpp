@@ -20,8 +20,8 @@
 
 #include <boost/utility.hpp>
 
-#include <core/SafeConvert.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 #include <core/ProgramOptions.hpp>

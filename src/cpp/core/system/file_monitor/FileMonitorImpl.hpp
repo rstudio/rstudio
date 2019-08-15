@@ -22,7 +22,7 @@
 
 #include <boost/bind.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/collection/Tree.hpp>
 
 #include <core/system/FileChangeEvent.hpp>

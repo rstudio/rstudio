@@ -28,7 +28,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/HtmlUtils.hpp>

@@ -18,8 +18,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"

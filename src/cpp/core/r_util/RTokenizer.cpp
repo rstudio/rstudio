@@ -34,7 +34,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 

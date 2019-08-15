@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include "Diagnostic.hpp"
 #include "SourceIndex.hpp"

@@ -15,8 +15,8 @@
 
 #include "SessionViewPdf.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/http/Util.hpp>

@@ -21,7 +21,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <core/system/Process.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <winpty/winpty.h>

@@ -19,8 +19,8 @@
 
 #include <sys/wait.h>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>

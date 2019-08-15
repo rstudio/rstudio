@@ -19,7 +19,7 @@
 #include <core/Macros.hpp>
 
 #include <core/Settings.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/SocketUtils.hpp>

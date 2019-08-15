@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_DIAGNOSTICS_HPP
 #define SESSION_MODULES_CLANG_DIAGNOSTICS_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <core/json/JsonRpc.hpp>
 

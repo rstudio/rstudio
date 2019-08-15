@@ -17,9 +17,9 @@
 
 #include <boost/system/windows_error.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
 namespace rstudio {

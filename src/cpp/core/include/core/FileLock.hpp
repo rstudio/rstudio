@@ -27,6 +27,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>
 
+#include <core/Log.hpp>
 #include <core/Settings.hpp>
 
 // env var to enable distributed locking mode

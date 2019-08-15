@@ -36,7 +36,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Algorithm.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>

@@ -43,11 +43,11 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
 #include <core/ConfigUtils.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileLock.hpp>
 #include <core/Exec.hpp>
 #include <core/Scope.hpp>
@@ -1668,8 +1668,8 @@ int main (int argc, char * const argv[])
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
-      initializeSystemLog("rsession-" + core::system::username(),
-                          core::system::kLogLevelWarning);
+      core::system::initializeSystemLog("rsession-" + core::system::username(),
+                                        core::LogLevel::WARNING);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1740,14 +1740,14 @@ int main (int argc, char * const argv[])
       {
          if (options.verifyInstallation())
          {
-            initializeStderrLog(options.programIdentity(),
-                                core::system::kLogLevelWarning);
+            core::system::initializeStderrLog(options.programIdentity(),
+                                core::LogLevel::WARNING);
          }
          else
          {
-            initializeLog(options.programIdentity(),
-                          core::system::kLogLevelWarning,
-                          options.userLogPath());
+            core::system::initializeLog(options.programIdentity(),
+                                        core::LogLevel::WARNING,
+                                        options.userLogPath());
          }
       }
 

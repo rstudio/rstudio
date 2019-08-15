@@ -19,7 +19,7 @@
 #include "RSexp.hpp"
 #include "RCntxtInterface.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <boost/iterator/iterator_facade.hpp>
 

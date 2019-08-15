@@ -17,7 +17,7 @@
 
 #include <boost/range/adaptor/map.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

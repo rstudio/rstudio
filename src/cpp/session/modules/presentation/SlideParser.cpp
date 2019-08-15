@@ -21,10 +21,10 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/DcfParser.hpp>
 

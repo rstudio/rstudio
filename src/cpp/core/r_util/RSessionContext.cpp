@@ -23,7 +23,7 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -42,7 +42,7 @@
 #include <core/system/PosixUser.hpp>
 #endif
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "config.h"

@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>

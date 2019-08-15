@@ -16,7 +16,7 @@
 #ifdef _WIN32
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES

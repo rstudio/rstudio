@@ -17,7 +17,7 @@
 
 #include <ostream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/json/JsonRpc.hpp>

@@ -20,7 +20,7 @@
 #endif
 
 #include <core/Algorithm.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>

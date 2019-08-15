@@ -23,11 +23,11 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/range/adaptor/map.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #ifndef _WIN32

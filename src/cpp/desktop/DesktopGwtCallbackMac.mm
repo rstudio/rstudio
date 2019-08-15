@@ -25,7 +25,7 @@
 #import <AppKit/NSImage.h>
 #import <Cocoa/Cocoa.h>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Macros.hpp>
 
 using namespace rstudio;

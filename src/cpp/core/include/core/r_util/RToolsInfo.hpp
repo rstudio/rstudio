@@ -22,7 +22,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
 namespace rstudio {

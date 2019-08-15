@@ -24,11 +24,11 @@
 #include <core/Algorithm.hpp>
 #include <core/Base64.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/text/CsvParser.hpp>
 
 #include <r/RSexp.hpp>

@@ -37,8 +37,8 @@ typedef uid_t UidType;
 #include <boost/function.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -48,14 +48,6 @@ namespace core {
 class FileInfo;
 
 namespace system {
-
-enum LogLevel 
-{
-   kLogLevelDebug = 0,
-   kLogLevelInfo = 1,
-   kLogLevelWarning = 2,
-   kLogLevelError = 3
-};
 
 // portable realPath
 Error realPath(const FilePath& filePath, FilePath* pRealPath);
@@ -200,15 +192,15 @@ void initHook();
 
 // initialization
 Error initializeSystemLog(const std::string& programIdentity,
-                          int logLevel,
+                          LogLevel logLevel,
                           bool enableConfigReload = true);
 
 Error initializeStderrLog(const std::string& programIdentity,
-                          int logLevel,
+                          LogLevel logLevel,
                           bool enableConfigReload = true);
 
 Error initializeLog(const std::string& programIdentity,
-                    int logLevel,
+                    LogLevel logLevel,
                     const FilePath& logDir,
                     bool enableConfigReload = true);
 

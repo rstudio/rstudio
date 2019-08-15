@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>

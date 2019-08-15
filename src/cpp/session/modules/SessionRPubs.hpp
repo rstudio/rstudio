@@ -17,7 +17,7 @@
 #define SESSION_SESSION_RPUBS_HPP
 
 #include <string>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

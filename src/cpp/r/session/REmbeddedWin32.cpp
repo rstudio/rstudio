@@ -29,7 +29,7 @@
 #include <boost/format.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 

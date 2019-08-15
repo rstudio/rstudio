@@ -17,7 +17,7 @@
 
 #include <core/BrowserUtils.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 using namespace boost::algorithm;
 

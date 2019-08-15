@@ -18,7 +18,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileUtils.hpp>
 #include <core/system/System.hpp>
 

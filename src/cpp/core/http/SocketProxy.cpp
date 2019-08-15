@@ -31,7 +31,7 @@
 
 #include <boost/asio/placeholders.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <core/http/SocketUtils.hpp>

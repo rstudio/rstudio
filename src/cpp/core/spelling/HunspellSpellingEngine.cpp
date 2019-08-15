@@ -17,12 +17,14 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/StringUtils.hpp>
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the

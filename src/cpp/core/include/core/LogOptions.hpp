@@ -19,7 +19,7 @@
 #include <boost/variant.hpp>
 
 #include <core/ConfigProfile.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 
@@ -78,7 +78,7 @@ public:
    LogOptions(const std::string& executableName);
 
    LogOptions(const std::string& executableName,
-              int defaultLogLevel,
+              LogLevel defaultLogLevel,
               int defaultLoggerType,
               const LoggerOptions& defaultLoggerOptions);
 
@@ -87,10 +87,10 @@ public:
    core::Error read();
 
    // gets the current log level
-   int logLevel(const std::string& loggerName = std::string()) const;
+   LogLevel logLevel(const std::string& loggerName = std::string()) const;
 
    // gets the lowest log level defined
-   int lowestLogLevel() const;
+   LogLevel lowestLogLevel() const;
 
    // gets the current logger type
    int loggerType(const std::string& loggerName = std::string()) const;
@@ -112,7 +112,7 @@ private:
    std::string defaultLoggerType_;
    LoggerOptions defaultLoggerOptions_;
 
-   int lowestLogLevel_;
+   LogLevel lowestLogLevel_;
 
    ConfigProfile profile_;
 };

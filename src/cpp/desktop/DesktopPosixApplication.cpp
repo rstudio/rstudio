@@ -15,7 +15,7 @@
 
 #include "DesktopPosixApplication.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <QFileOpenEvent>
 

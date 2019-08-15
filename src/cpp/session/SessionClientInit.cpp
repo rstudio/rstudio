@@ -49,7 +49,7 @@
 #include <r/ROptions.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>

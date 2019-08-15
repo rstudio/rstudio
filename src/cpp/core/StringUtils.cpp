@@ -29,8 +29,8 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
-#include <core/SafeConvert.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 #ifdef _WIN32
 #include <windows.h>

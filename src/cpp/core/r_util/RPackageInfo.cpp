@@ -17,9 +17,10 @@
 
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
-
+#include <core/Log.hpp>
 #include <core/text/DcfParser.hpp>
+
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

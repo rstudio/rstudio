@@ -15,9 +15,10 @@
 
 #include <monitor/audit/ConsoleAction.hpp>
 
-#include <core/SafeConvert.hpp>
-
+#include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
+
+#include <shared_core/SafeConvert.hpp>
 
 using namespace rstudio::core;
 

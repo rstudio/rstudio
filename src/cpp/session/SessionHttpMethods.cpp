@@ -31,7 +31,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Crypto.hpp>

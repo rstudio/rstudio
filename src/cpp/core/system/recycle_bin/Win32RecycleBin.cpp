@@ -13,8 +13,8 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <windows.h>
 #include <shellapi.h>

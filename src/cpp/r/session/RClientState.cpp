@@ -21,8 +21,8 @@
 #include <boost/function.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 using namespace rstudio::core;

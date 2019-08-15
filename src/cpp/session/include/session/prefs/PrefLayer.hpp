@@ -16,7 +16,7 @@
 #ifndef SESSION_PREF_LAYER_HPP
 #define SESSION_PREF_LAYER_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/FileMonitor.hpp>

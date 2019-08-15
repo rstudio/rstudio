@@ -37,6 +37,7 @@ include_directories(
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
    ${CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # define shared library

@@ -18,8 +18,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

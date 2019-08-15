@@ -22,7 +22,7 @@
 #include <boost/bind.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Thread.hpp>
 

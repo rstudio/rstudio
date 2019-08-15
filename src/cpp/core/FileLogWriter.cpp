@@ -30,7 +30,7 @@ namespace rstudio {
 namespace core {
 
 FileLogWriter::FileLogWriter(const std::string& programIdentity,
-                             int logLevel,
+                             LogLevel logLevel,
                              const FileLoggerOptions& options,
                              const std::string& logSection)
                                 : programIdentity_(programIdentity),
@@ -76,17 +76,17 @@ void FileLogWriter::createFile()
 #endif
 }
 
-void FileLogWriter::log(core::system::LogLevel logLevel,
+void FileLogWriter::log(core::LogLevel logLevel,
                         const std::string& message)
 {
    log(programIdentity_, logLevel, message);
 }
 
 void FileLogWriter::log(const std::string& programIdentity,
-                        core::system::LogLevel logLevel,
+                        core::LogLevel logLevel,
                         const std::string& message)
 {
-   if (logLevel < logLevel_)
+   if (logLevel > logLevel_)
       return;
 
    LOCK_MUTEX(mutex_)

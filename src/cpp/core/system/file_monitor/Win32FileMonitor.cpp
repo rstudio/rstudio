@@ -23,7 +23,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>

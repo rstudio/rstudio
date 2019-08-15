@@ -16,7 +16,7 @@
 #ifndef SESSION_CONSOLE_INPUT_HPP
 #define SESSION_CONSOLE_INPUT_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 namespace rstudio {

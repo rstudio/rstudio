@@ -16,7 +16,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RExec.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>

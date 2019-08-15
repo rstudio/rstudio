@@ -150,6 +150,7 @@ include_directories(
    ${CORE_INCLUDE_DIRS}
    ${MONITOR_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # define executable

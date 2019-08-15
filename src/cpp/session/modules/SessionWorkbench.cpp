@@ -21,7 +21,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>

@@ -17,7 +17,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>

@@ -14,7 +14,7 @@
  */
 #include "SessionVCSCore.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 using namespace rstudio::core;
 

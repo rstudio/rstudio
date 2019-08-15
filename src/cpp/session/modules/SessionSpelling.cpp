@@ -19,7 +19,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <core/Algorithm.hpp>

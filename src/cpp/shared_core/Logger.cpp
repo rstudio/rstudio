@@ -26,9 +26,10 @@
 #include <sstream>
 
 // We do a little special handling for syslog because it does its own formatting.
-#include <shared_core/SyslogDestination.hpp>
-#include <shared_core/ILogDestination.hpp>
+#include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
+#include <shared_core/ILogDestination.hpp>
+#include <shared_core/SyslogDestination.hpp>
 
 namespace rstudio {
 namespace core {
@@ -36,10 +37,10 @@ namespace core {
 namespace {
 
 std::string formatLogMessage(
-   LogLevel in_logLevel,
-   const std::string& in_message,
-   const std::string& in_programId,
-   bool in_formatForSyslog = false)
+      LogLevel in_logLevel,
+      const std::string& in_message,
+      const std::string& in_programId,
+      bool in_formatForSyslog = false)
 {
    std::string levelPrefix;
    switch (in_logLevel)
@@ -115,9 +116,9 @@ public:
     * @brief Constructor to prevent multiple instances of Logger.
     */
    Logger() :
-      MaxLogLevel(LogLevel::OFF),
-      ProgramId(""),
-      LogDestinations()
+         MaxLogLevel(LogLevel::OFF),
+         ProgramId(""),
+         LogDestinations()
    { };
 
    // The maximum level of message to write.
@@ -181,8 +182,8 @@ void addLogDestination(std::unique_ptr<ILogDestination> in_destination)
    else
    {
       logDebugMessage(
-         "Attempted to register a log destination that has already been registered with id" +
-         std::to_string(in_destination->getId()));
+            "Attempted to register a log destination that has already been registered with id" +
+            std::to_string(in_destination->getId()));
    }
 }
 
@@ -197,8 +198,8 @@ void removeLogDestination(unsigned int in_destinationId)
    else
    {
       logDebugMessage(
-         "Attempted to unregister a log destination that has not been registered with id" +
-         std::to_string(in_destinationId));
+            "Attempted to unregister a log destination that has not been registered with id" +
+            std::to_string(in_destinationId));
    }
 }
 
@@ -208,6 +209,17 @@ void logError(const Error& in_error)
    if (log.MaxLogLevel >= LogLevel::ERROR)
    {
       log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.summary());
+   }
+}
+
+void logError(const Error& in_error, const ErrorLocation& in_location)
+{
+   Logger& log = logger();
+   if (log.MaxLogLevel >= LogLevel::ERROR)
+   {
+      std::string loggedFromStr = "LOGGED FROM: " + in_location.asString();
+      std::replace(loggedFromStr.begin(), loggedFromStr.end(), ';', ' ');
+      log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.summary() + "; " + loggedFromStr);
    }
 }
 

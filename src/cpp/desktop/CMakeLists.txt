@@ -278,6 +278,7 @@ endif()
 include_directories(
   include
   ${CORE_SOURCE_DIR}/include
+  ${SHARED_CORE_SOURCE_DIR}/include
   ${OPENSSL_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}

@@ -20,7 +20,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -172,7 +172,7 @@ void handleLogExceptionRequest(const std::string& username,
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(core::system::kLogLevelError, logEntry);
+   core::system::log(core::LogLevel::ERROR, logEntry);
 
 
    // set void result
@@ -196,27 +196,27 @@ void handleLogMessageRequest(const std::string& username,
    }
    
    // convert level to appropriate enum and str
-   using namespace rstudio::core::system;
+   using namespace rstudio::core;
    LogLevel logLevel;
    std::string logLevelStr;
    switch(level)
    {
       case 0:
-         logLevel = kLogLevelError; 
+         logLevel = LogLevel::ERROR;
          logLevelStr = "ERROR";
          break;
       case 1:
-         logLevel = kLogLevelWarning;
+         logLevel = LogLevel::WARNING;
          logLevelStr = "WARNING";
          break;
       case 2:
-         logLevel = kLogLevelInfo;
+         logLevel = LogLevel::INFO;
          logLevelStr = "INFO";
          break;
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " + 
                              safe_convert::numberToString(level));
-         logLevel = kLogLevelError; 
+         logLevel = LogLevel::ERROR;
          logLevelStr = "ERROR";
          break;
    }

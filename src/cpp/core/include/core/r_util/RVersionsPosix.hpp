@@ -21,9 +21,9 @@
 #include <vector>
 #include <iosfwd>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/system/Environment.hpp>
 

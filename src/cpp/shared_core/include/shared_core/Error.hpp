@@ -31,6 +31,8 @@
 
 #include <boost/current_function.hpp>
 
+#include "Logger.hpp"
+
 namespace rstudio {
 namespace core {
 
@@ -204,14 +206,12 @@ std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
 #define CATCH_UNEXPECTED_EXCEPTION \
    catch(const std::exception& e) \
    { \
-      logErrorMessage(std::string("Unexpected exception: ") + \
+      rstudio::core::logErrorMessage(std::string("Unexpected exception: ") + \
                         e.what()) ;  \
    } \
    catch(...) \
    { \
-      logErrorMessage("Unknown exception"); \
-   } 
-
+      rstudio::core::logErrorMessage("Unknown exception"); \
+   }
 
 #endif
-

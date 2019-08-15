@@ -16,7 +16,7 @@
 #ifndef SESSION_HTTP_METHODS_HPP
 #define SESSION_HTTP_METHODS_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/WaitUtils.hpp>
 #include <session/SessionHttpConnection.hpp>

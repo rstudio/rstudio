@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #define kPackageType "Package"
 

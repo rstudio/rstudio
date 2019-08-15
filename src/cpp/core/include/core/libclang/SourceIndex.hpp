@@ -23,7 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "clang-c/Index.h"
 

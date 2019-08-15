@@ -18,7 +18,7 @@
 
 #include <r/RExec.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>

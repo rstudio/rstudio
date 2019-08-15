@@ -63,7 +63,7 @@ public:
    virtual ~Client() {}
 
    virtual void logMessage(const std::string& programIdentity,
-                           core::system::LogLevel level,
+                           core::LogLevel level,
                            const std::string& message) = 0;
 
    boost::shared_ptr<core::LogWriter> createLogWriter(

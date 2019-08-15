@@ -35,7 +35,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>

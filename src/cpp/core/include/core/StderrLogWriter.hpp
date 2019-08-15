@@ -24,21 +24,21 @@ namespace core {
 class StderrLogWriter : public LogWriter
 {
 public:
-    StderrLogWriter(const std::string& programIdentity, int logLevel);
+    StderrLogWriter(const std::string& programIdentity, LogLevel logLevel);
     virtual ~StderrLogWriter();
 
-    virtual void log(core::system::LogLevel level,
+    virtual void log(core::LogLevel level,
                      const std::string& message);
 
     virtual void log(const std::string& programIdentity,
-                     core::system::LogLevel level,
+                     core::LogLevel level,
                      const std::string& message);
 
-    virtual int logLevel() { return logLevel_; }
+    virtual LogLevel logLevel() { return logLevel_; }
 
 private:
     std::string programIdentity_;
-    int logLevel_;
+    LogLevel logLevel_;
 };
 
 } // namespace core

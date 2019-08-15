@@ -16,8 +16,8 @@
 #ifndef SESSION_FIND_HPP
 #define SESSION_FIND_HPP
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace session {

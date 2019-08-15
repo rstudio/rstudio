@@ -15,8 +15,8 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/StringUtils.hpp>
 

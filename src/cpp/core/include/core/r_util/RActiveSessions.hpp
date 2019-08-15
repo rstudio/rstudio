@@ -19,12 +19,12 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>

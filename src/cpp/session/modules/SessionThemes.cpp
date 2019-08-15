@@ -22,9 +22,9 @@
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/http/Request.hpp>

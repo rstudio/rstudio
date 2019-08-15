@@ -19,7 +19,7 @@
 #include <string>
 #include <iosfwd>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/libclang/LibClang.hpp>
 
 namespace rstudio {

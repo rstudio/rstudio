@@ -15,10 +15,10 @@
 
 #include "SessionSnippets.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <boost/bind.hpp>

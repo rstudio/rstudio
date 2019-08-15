@@ -15,7 +15,7 @@
 
 #include "SessionUpdates.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>

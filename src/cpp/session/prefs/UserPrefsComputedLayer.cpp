@@ -22,7 +22,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/RVersionSettings.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/CrashHandler.hpp>
 
 #include "../modules/SessionVCS.hpp"

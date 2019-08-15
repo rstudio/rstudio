@@ -16,7 +16,7 @@
 #include <core/Macros.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>

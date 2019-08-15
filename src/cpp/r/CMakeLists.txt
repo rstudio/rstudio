@@ -86,6 +86,7 @@ include_directories(
    ${CORE_SOURCE_DIR}/include
    ${EXT_SOURCE_DIR}
    ${LIBR_INCLUDE_DIRS}
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # define library

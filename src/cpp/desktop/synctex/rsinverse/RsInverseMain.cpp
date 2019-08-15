@@ -18,9 +18,9 @@
 #include <string>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/system/System.hpp>

@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include <core/Debug.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Process.hpp>
 #include <core/RegexUtils.hpp>

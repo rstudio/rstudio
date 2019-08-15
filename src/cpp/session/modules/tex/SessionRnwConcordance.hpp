@@ -22,8 +22,8 @@
 
 #include <boost/utility.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/tex/TexLogParser.hpp>
 
 namespace rstudio {

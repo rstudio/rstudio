@@ -15,7 +15,7 @@
 
 #include "SessionProjectFirstRun.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>

@@ -16,8 +16,8 @@
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

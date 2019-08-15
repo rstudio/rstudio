@@ -17,7 +17,7 @@
 
 #include <gsl/gsl>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/libclang/Utils.hpp>
 #include <core/libclang/LibClang.hpp>

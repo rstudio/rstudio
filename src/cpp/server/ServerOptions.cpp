@@ -21,7 +21,7 @@
 
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RSessionContext.hpp>
 

@@ -26,13 +26,13 @@ class LogWriter
 public:
    virtual ~LogWriter() {}
 
-   virtual int logLevel() = 0;
+   virtual LogLevel logLevel() = 0;
 
-   virtual void log(core::system::LogLevel level,
+   virtual void log(core::LogLevel level,
                     const std::string& message) = 0;
 
    virtual void log(const std::string& programIdentity,
-                    core::system::LogLevel level,
+                    core::LogLevel level,
                     const std::string& message) = 0;
 
    // for subclasses that can do automatic chaining to stderr

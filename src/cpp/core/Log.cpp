@@ -19,7 +19,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -41,7 +41,7 @@ const char * const OCCURRED_AT = "OCCURRED AT";
 const char * const LOGGED_FROM = "LOGGED FROM";
 const char * const CAUSED_BY = "CAUSED BY";
 
-void logMessage(system::LogLevel logLevel,
+void logMessage(LogLevel logLevel,
                 const std::string& message,
                 const ErrorLocation& loggedFromLocation = ErrorLocation(),
                 const std::string& logSection = std::string())
@@ -49,7 +49,7 @@ void logMessage(system::LogLevel logLevel,
    if (logLevel < system::lowestLogLevel())
       return;
 
-   std::string levelStr = logLevelToStr(logLevel);
+   std::string levelStr = system::logLevelToStr(logLevel);
 
    try
    {
@@ -69,16 +69,16 @@ void logMessage(system::LogLevel logLevel,
    }
    catch(...)
    {
-      system::log(system::kLogLevelError, "ERROR unexpected error while logging", logSection);
+      system::log(LogLevel::ERROR, "ERROR unexpected error while logging", logSection);
    }
 }
 
-void logAction(system::LogLevel logLevel,
+void logAction(LogLevel logLevel,
                const boost::function<std::string()>& action,
                const ErrorLocation& loggedFromLocation = ErrorLocation(),
                const std::string& logSection = std::string())
 {
-   if (logLevel < system::lowestLogLevel())
+   if (logLevel <= LogLevel::OFF)
       return;
 
    return logMessage(logLevel, action(), loggedFromLocation, logSection);
@@ -146,11 +146,11 @@ void logError(const std::string& logSection,
       os << DELIM << " " << LOGGED_FROM << ": "
          << cleanDelims(loggedFromLocation.asString());
 
-      system::log(system::kLogLevelError, os.str(), logSection);
+      system::log(LogLevel::ERROR, os.str(), logSection);
    }
    catch(...)
    {
-      system::log(system::kLogLevelError,
+      system::log(LogLevel::ERROR,
                   "ERROR unexpected error while logging",
                   logSection);
    }
@@ -159,7 +159,7 @@ void logError(const std::string& logSection,
 void logErrorMessage(const std::string& message, 
                      const ErrorLocation& loggedFromLocation) 
 {
-   logMessage(system::kLogLevelError,
+   logMessage(LogLevel::ERROR,
               message,
               loggedFromLocation);
 }
@@ -168,7 +168,7 @@ void logErrorMessage(const std::string& logSection,
                      const std::string& message,
                      const ErrorLocation& loggedFromLocation)
 {
-  logMessage(system::kLogLevelError,
+  logMessage(LogLevel::ERROR,
              message,
              loggedFromLocation,
              logSection);
@@ -177,7 +177,7 @@ void logErrorMessage(const std::string& logSection,
 void logWarningMessage(const std::string& message,
                        const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelWarning,
+   logMessage(LogLevel::WARNING,
               message,
               loggedFromLocation);
 }
@@ -186,7 +186,7 @@ void logWarningMessage(const std::string& logSection,
                        const std::string& message,
                        const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelWarning,
+   logMessage(LogLevel::WARNING,
               message,
               loggedFromLocation,
               logSection);
@@ -195,7 +195,7 @@ void logWarningMessage(const std::string& logSection,
 void logInfoMessage(const std::string& message,
                     const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelInfo,
+   logMessage(LogLevel::INFO,
               message,
               loggedFromLocation);
 }
@@ -204,7 +204,7 @@ void logInfoMessage(const std::string& logSection,
                     const std::string& message,
                     const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelInfo,
+   logMessage(LogLevel::INFO,
               message,
               loggedFromLocation,
               logSection);
@@ -213,7 +213,7 @@ void logInfoMessage(const std::string& logSection,
 void logDebugMessage(const std::string& message,
                      const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelDebug,
+   logMessage(LogLevel::DEBUG,
               message,
               loggedFromLocation);
 }
@@ -222,7 +222,7 @@ void logDebugMessage(const std::string& logSection,
                      const std::string& message,
                      const ErrorLocation& loggedFromLocation)
 {
-   logMessage(system::kLogLevelDebug,
+   logMessage(LogLevel::DEBUG,
               message,
               loggedFromLocation,
               logSection);
@@ -231,7 +231,7 @@ void logDebugMessage(const std::string& logSection,
 void logDebugAction(const boost::function<std::string()>& action,
                     const ErrorLocation& loggedFromLocation)
 {
-   logAction(system::kLogLevelDebug,
+   logAction(LogLevel::DEBUG,
              action,
              loggedFromLocation);
 }
@@ -240,7 +240,7 @@ void logDebugAction(const std::string& logSection,
                     const boost::function<std::string ()>& action,
                     const ErrorLocation& loggedFromLocation)
 {
-   logAction(system::kLogLevelDebug,
+   logAction(LogLevel::DEBUG,
              action,
              loggedFromLocation,
              logSection);

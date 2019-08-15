@@ -16,8 +16,8 @@
 #ifndef R_GRAPHICS_HANDLER_HPP
 #define R_GRAPHICS_HANDLER_HPP
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "RGraphicsDevDesc.hpp"
 

@@ -24,12 +24,12 @@ namespace core {
 class SyslogLogWriter : public LogWriter
 {
 public:
-    SyslogLogWriter(const std::string& programIdentity, int logLevel);
+    SyslogLogWriter(const std::string& programIdentity, LogLevel logLevel);
     virtual ~SyslogLogWriter();
-    virtual void log(core::system::LogLevel level,
+    virtual void log(core::LogLevel level,
                      const std::string& message);
     virtual void log(const std::string& programIdentity,
-                     core::system::LogLevel level,
+                     core::LogLevel level,
                      const std::string& message);
 
     virtual void setLogToStderr(bool logToStderr)
@@ -37,12 +37,12 @@ public:
        logToStderr_ = logToStderr;
     }
 
-    virtual int logLevel() { return logLevel_; }
+    virtual LogLevel logLevel() { return logLevel_; }
 
 private:
     std::string programIdentity_;
     bool logToStderr_;
-    int logLevel_;
+    LogLevel logLevel_;
 };
 
 } // namespace core

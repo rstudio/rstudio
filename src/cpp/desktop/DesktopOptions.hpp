@@ -23,7 +23,7 @@
 #include <QSettings>
 #include <QStringList>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #define kRunDiagnosticsOption    "--run-diagnostics"
 #define kSessionServerOption     "--session-server"

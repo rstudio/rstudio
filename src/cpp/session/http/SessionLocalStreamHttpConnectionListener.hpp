@@ -16,8 +16,8 @@
 
 #include <vector>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>

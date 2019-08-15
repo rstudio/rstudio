@@ -24,7 +24,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp> 

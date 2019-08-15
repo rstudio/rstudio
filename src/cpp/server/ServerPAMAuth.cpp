@@ -14,7 +14,7 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>

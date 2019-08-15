@@ -19,7 +19,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>

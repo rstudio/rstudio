@@ -23,7 +23,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Thread.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Socket.hpp>
 
 namespace rstudio {

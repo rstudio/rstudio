@@ -25,23 +25,23 @@
 
 namespace {
 
-int logPriority(int logLevel)
+int logPriority(rstudio::core::LogLevel logLevel)
 {
-   using namespace rstudio::core::system;
+   using namespace rstudio::core;
 
    // map universal log entry type to posix constant
    switch(logLevel)
    {
-      case kLogLevelError:
+      case LogLevel::ERROR:
          return LOG_ERR;
 
-      case kLogLevelWarning:
+      case LogLevel::WARNING:
          return LOG_WARNING ;
 
-      case kLogLevelInfo:
+      case LogLevel::INFO:
          return LOG_INFO ;
 
-      case kLogLevelDebug:
+      case LogLevel::DEBUG:
          return LOG_DEBUG ;
 
       default:
@@ -66,7 +66,7 @@ SyslogLogWriter::~SyslogLogWriter()
 }
 
 SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
-                                 int logLevel)
+                                 LogLevel logLevel)
    : programIdentity_(programIdentity),
      logToStderr_(core::system::stderrIsTerminal()),
      logLevel_(logLevel)
@@ -84,7 +84,7 @@ SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
    ::setlogmask(LOG_UPTO(logPriority(logLevel)));
 }
 
-void SyslogLogWriter::log(core::system::LogLevel logLevel,
+void SyslogLogWriter::log(core::LogLevel logLevel,
                           const std::string& message)
 {
    if (logToStderr_)
@@ -101,7 +101,7 @@ void SyslogLogWriter::log(core::system::LogLevel logLevel,
 }
 
 void SyslogLogWriter::log(const std::string&,
-                          core::system::LogLevel logLevel,
+                          core::LogLevel logLevel,
                           const std::string& message)
 {
    log(logLevel, message);

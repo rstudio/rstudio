@@ -28,7 +28,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 

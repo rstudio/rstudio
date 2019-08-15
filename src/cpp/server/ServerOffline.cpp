@@ -15,7 +15,7 @@
 
 #include "ServerOffline.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>

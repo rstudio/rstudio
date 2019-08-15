@@ -24,13 +24,14 @@
 #include <boost/noncopyable.hpp>
 
 #include <map>
+#include <memory>
 #include <string>
-
-#include "Error.hpp"
 
 namespace rstudio {
 namespace core {
 
+class Error;
+class ErrorLocation;
 class ILogDestination;
 
 /**

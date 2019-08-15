@@ -17,12 +17,12 @@
 
 #include <core/system/System.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileLogWriter.hpp>
 #include <core/Hash.hpp>
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StderrLogWriter.hpp>
 
 #include <core/system/Environment.hpp>
@@ -128,7 +128,7 @@ LogWriter* initializeLogWriter(const std::string& logSection = std::string())
 {
    // requires prior synchronization
 
-   int logLevel = s_logOptions->logLevel(logSection);
+   LogLevel logLevel = s_logOptions->logLevel(logSection);
    int loggerType = s_logOptions->loggerType(logSection);
 
    // options currently only used for file logging
@@ -182,12 +182,12 @@ LogLevel lowestLogLevel()
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       if (!s_logOptions)
-         return kLogLevelWarning;
+         return LogLevel::WARNING;
 
-      int lowestLevel = s_logOptions->lowestLogLevel();
+      LogLevel lowestLevel = s_logOptions->lowestLogLevel();
       for (const boost::shared_ptr<LogWriter>& logWriter : s_additionalLogWriters)
       {
-         if (logWriter->logLevel() < lowestLevel)
+         if (logWriter->logLevel() > lowestLevel)
             lowestLevel = logWriter->logLevel();
       }
       return static_cast<LogLevel>(lowestLevel);
@@ -195,7 +195,7 @@ LogLevel lowestLogLevel()
    END_LOCK_MUTEX
 
    // default return - only occurs if we fail to lock mutex
-   return kLogLevelWarning;
+   return LogLevel::WARNING;
 }
 
 Error initLog()
@@ -224,7 +224,7 @@ Error reinitLog()
 }
 
 Error initializeStderrLog(const std::string& programIdentity,
-                          int logLevel,
+                          LogLevel logLevel,
                           bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
@@ -247,7 +247,7 @@ Error initializeStderrLog(const std::string& programIdentity,
 }
 
 Error initializeLog(const std::string& programIdentity,
-                    int logLevel,
+                    LogLevel logLevel,
                     const FilePath& logDir,
                     bool enableConfigReload)
 {
@@ -329,17 +329,19 @@ const char* logLevelToStr(LogLevel level)
 {
    switch(level)
    {
-      case kLogLevelError:
+      case LogLevel::ERROR:
          return "ERROR";
-      case kLogLevelWarning:
+      case LogLevel::WARNING:
          return "WARNING";
-      case kLogLevelInfo:
+      case LogLevel::INFO:
          return "INFO";
-      case kLogLevelDebug:
+      case LogLevel::DEBUG:
          return "DEBUG";
+      case LogLevel::OFF:
+         return "OFF";
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " +
-                             safe_convert::numberToString(level));
+                             safe_convert::numberToString(static_cast<int>(level)));
          return "ERROR";
    }
 }

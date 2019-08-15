@@ -28,9 +28,9 @@
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/r_util/RUserData.hpp>

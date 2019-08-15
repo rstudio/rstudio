@@ -19,7 +19,7 @@
 #include <map>
 #include <deque>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
 namespace rstudio {

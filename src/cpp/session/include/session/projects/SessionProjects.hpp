@@ -24,13 +24,13 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/collection/Tree.hpp>
 

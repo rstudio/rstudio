@@ -22,8 +22,8 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>

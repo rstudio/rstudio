@@ -19,7 +19,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 

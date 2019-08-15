@@ -17,7 +17,7 @@
 
 #include <sched.h>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

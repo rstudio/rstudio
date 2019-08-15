@@ -21,7 +21,7 @@
 
 #include "clang-c/Index.h"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

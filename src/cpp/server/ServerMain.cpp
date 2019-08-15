@@ -18,7 +18,7 @@
 #include <signal.h>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileLock.hpp>
 #include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
@@ -266,7 +266,7 @@ void httpServerAddHandlers()
 
 Error initLog()
 {
-   return initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning, false);
+   return core::system::initializeSystemLog(kProgramIdentity, core::LogLevel::WARNING, false);
 }
 
 bool reloadLoggingConfiguration()

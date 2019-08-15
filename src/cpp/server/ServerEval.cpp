@@ -17,9 +17,9 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/http/Request.hpp>

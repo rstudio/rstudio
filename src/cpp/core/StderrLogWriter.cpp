@@ -27,7 +27,7 @@ namespace rstudio {
 namespace core {
 
 StderrLogWriter::StderrLogWriter(const std::string& programIdentity,
-                                 int logLevel)
+                                 LogLevel logLevel)
    : programIdentity_(programIdentity), logLevel_(logLevel)
 {
 }
@@ -42,17 +42,17 @@ StderrLogWriter::~StderrLogWriter()
    }
 }
 
-void StderrLogWriter::log(core::system::LogLevel logLevel,
+void StderrLogWriter::log(core::LogLevel logLevel,
                           const std::string& message)
 {
    log(programIdentity_, logLevel, message);
 }
 
 void StderrLogWriter::log(const std::string& programIdentity,
-                          core::system::LogLevel logLevel,
+                          core::LogLevel logLevel,
                           const std::string& message)
 {
-   if (logLevel < logLevel_)
+   if (logLevel > logLevel_)
       return;
 
    std::cerr << formatLogEntry(programIdentity, message, false);

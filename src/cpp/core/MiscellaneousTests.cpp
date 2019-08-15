@@ -24,7 +24,7 @@
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 #include <core/http/Request.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/system/Types.hpp>
 

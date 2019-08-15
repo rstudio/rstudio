@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

@@ -18,7 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/REnvironment.hpp>

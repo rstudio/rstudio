@@ -18,7 +18,7 @@
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Environment.hpp>
 

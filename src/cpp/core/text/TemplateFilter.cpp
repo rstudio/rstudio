@@ -15,7 +15,7 @@
 
 #include <core/text/TemplateFilter.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>

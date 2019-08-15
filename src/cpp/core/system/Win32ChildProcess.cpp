@@ -26,7 +26,7 @@
 #include <core/system/ChildProcess.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include "CriticalSection.hpp"

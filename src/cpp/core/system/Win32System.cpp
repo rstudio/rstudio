@@ -39,14 +39,14 @@
 
 #include <core/Log.hpp>
 #include <core/LogWriter.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileLogWriter.hpp>
 #include <core/StderrLogWriter.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE

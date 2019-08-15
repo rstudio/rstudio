@@ -19,7 +19,7 @@
 
 #include <core/BoostThread.hpp>
 #include <core/Thread.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/session/RConsoleActions.hpp>

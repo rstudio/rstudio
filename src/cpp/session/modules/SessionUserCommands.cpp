@@ -21,7 +21,7 @@
 
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>

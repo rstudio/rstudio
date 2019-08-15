@@ -16,7 +16,7 @@
 
 #include "PresentationState.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 
 #include <session/SessionModuleContext.hpp>

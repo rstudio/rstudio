@@ -25,7 +25,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {

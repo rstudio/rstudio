@@ -22,10 +22,10 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>

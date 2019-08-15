@@ -24,7 +24,7 @@
 
 #define BOOST_THREAD_USE_LIB
 #include <core/BoostThread.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 using namespace rstudio;
 using namespace rstudio::core;

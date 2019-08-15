@@ -20,12 +20,12 @@
 
 #include <iostream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/CrashHandler.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
 
@@ -53,7 +53,7 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      initializeSystemLog("rpostback", core::system::kLogLevelWarning);
+      core::system::initializeSystemLog("rpostback", core::LogLevel::WARNING);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

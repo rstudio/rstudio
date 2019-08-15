@@ -28,7 +28,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 

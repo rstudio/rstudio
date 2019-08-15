@@ -28,7 +28,7 @@
 #include <core/Log.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -486,7 +486,7 @@ int main(int argc, char* argv[])
 
       // initialize log
       core::system::initializeLog("rdesktop",
-                                  core::system::kLogLevelWarning,
+                                  core::LogLevel::WARNING,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
@@ -740,7 +740,7 @@ int main(int argc, char* argv[])
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+         core::system::initializeStderrLog("rdesktop", core::LogLevel::WARNING);
       }
 
       initializeSharedSecret();

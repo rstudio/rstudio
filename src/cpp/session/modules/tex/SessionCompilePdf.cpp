@@ -20,7 +20,7 @@
 #include <boost/format.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
 #include <core/Algorithm.hpp>

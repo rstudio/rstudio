@@ -18,6 +18,7 @@
 #include <boost/bind.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
 namespace rstudio {
 namespace core {

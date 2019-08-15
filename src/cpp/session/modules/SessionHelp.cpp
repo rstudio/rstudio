@@ -27,7 +27,7 @@
 #include <boost/iostreams/filter/aggregate.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 

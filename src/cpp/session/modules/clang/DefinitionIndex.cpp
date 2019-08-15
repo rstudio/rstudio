@@ -18,7 +18,7 @@
 #include <deque>
 #include <gsl/gsl>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>

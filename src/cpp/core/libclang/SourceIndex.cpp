@@ -18,13 +18,15 @@
 #include <gsl/gsl>
 
 #include <core/Debug.hpp>
-#include <core/FilePath.hpp>
+#include <core/Log.hpp>
 #include <core/PerformanceTimer.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 
 #include <core/libclang/LibClang.hpp>
 #include <core/libclang/UnsavedFiles.hpp>
+
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

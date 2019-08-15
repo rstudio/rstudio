@@ -19,7 +19,7 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>

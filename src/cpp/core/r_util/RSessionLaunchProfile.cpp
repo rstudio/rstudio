@@ -15,7 +15,7 @@
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/PosixSched.hpp>
 

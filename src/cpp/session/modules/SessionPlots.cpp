@@ -18,11 +18,11 @@
 #include <boost/format.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/Predicate.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/FileSerializer.hpp>
 

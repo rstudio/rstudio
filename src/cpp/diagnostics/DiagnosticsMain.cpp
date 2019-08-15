@@ -18,9 +18,9 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -78,7 +78,7 @@ void writeLogFile(const std::string& logFileName, std::ostream& ostr)
 int main(int argc, char** argv)
 {
   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::system::kLogLevelWarning);
+                                    core::LogLevel::WARNING);
 
   // ignore SIGPIPE
   Error error = core::system::ignoreSignal(core::system::SigPipe);

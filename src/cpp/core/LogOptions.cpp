@@ -44,18 +44,19 @@ namespace core {
 
 namespace {
 
-std::string logLevelToString(int logLevel)
+std::string logLevelToString(LogLevel logLevel)
 {
    switch (logLevel)
    {
-      case core::system::kLogLevelDebug:
+      case core::LogLevel::DEBUG:
          return "debug";
-      case core::system::kLogLevelInfo:
+      case core::LogLevel::INFO:
          return "info";
-      case core::system::kLogLevelWarning:
+      case core::LogLevel::WARNING:
          return "warn";
-      case core::system::kLogLevelError:
+      case core::LogLevel::ERROR:
          return "error";
+      case core::LogLevel::OFF:
       default:
          return "warn";
    }
@@ -76,18 +77,18 @@ std::string loggerTypeToString(int loggerType)
    }
 }
 
-int strToLogLevel(const std::string& logLevelStr)
+LogLevel strToLogLevel(const std::string& logLevelStr)
 {
    if (logLevelStr == "warn")
-      return core::system::kLogLevelWarning;
+      return LogLevel::WARNING;
    else if (logLevelStr == "error")
-      return core::system::kLogLevelError;
+      return LogLevel::ERROR;
    else if (logLevelStr == "info")
-      return core::system::kLogLevelInfo;
+      return LogLevel::INFO;
    else if (logLevelStr == "debug")
-      return core::system::kLogLevelDebug;
+      return LogLevel::DEBUG;
    else
-      return core::system::kLogLevelWarning;
+      return LogLevel::WARNING;
 }
 
 int strToLoggerType(const std::string& loggerTypeStr)
@@ -164,16 +165,16 @@ FileLoggerOptions::FileLoggerOptions()
 
 LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
-   defaultLogLevel_(logLevelToString(core::system::kLogLevelWarning)),
+   defaultLogLevel_(logLevelToString(LogLevel::WARNING)),
    defaultLoggerType_(loggerTypeToString(kLoggerTypeSysLog)),
    defaultLoggerOptions_(SysLoggerOptions()),
-   lowestLogLevel_(core::system::kLogLevelWarning)
+   lowestLogLevel_(LogLevel::WARNING)
 {
    initProfile();
 }
 
 LogOptions::LogOptions(const std::string& executableName,
-                       int logLevel,
+                       LogLevel logLevel,
                        int loggerType,
                        const LoggerOptions& options) :
    executableName_(executableName),
@@ -241,7 +242,7 @@ void LogOptions::setLowestLogLevel()
    lowestLogLevel_ = strToLogLevel(logLevel);
 
    // break out early if we are already at debug level (since we cannot go lower)
-   if (lowestLogLevel_ == core::system::kLogLevelDebug)
+   if (lowestLogLevel_ == LogLevel::DEBUG)
       return;
 
    // now, override it with the lowest log level specified for named loggers
@@ -251,16 +252,16 @@ void LogOptions::setLowestLogLevel()
       profile_.getParam(kLogLevel, &logLevel, {{kBaseLevel, std::string()},
                                                {kBinaryLevel, executableName_},
                                                {kLogSectionLevel, name}});
-      int level = strToLogLevel(logLevel);
-      if (level < lowestLogLevel_)
+      LogLevel level = strToLogLevel(logLevel);
+      if (level > lowestLogLevel_)
          lowestLogLevel_ = level;
 
-      if (lowestLogLevel_ == core::system::kLogLevelDebug)
+      if (lowestLogLevel_ == LogLevel::DEBUG)
          return;
    }
 }
 
-int LogOptions::logLevel(const std::string& loggerName) const
+LogLevel LogOptions::logLevel(const std::string& loggerName) const
 {
    std::vector<ConfigProfile::Level> levels = getLevels(loggerName);
 
@@ -271,7 +272,7 @@ int LogOptions::logLevel(const std::string& loggerName) const
    return strToLogLevel(logLevel);
 }
 
-int LogOptions::lowestLogLevel() const
+LogLevel LogOptions::lowestLogLevel() const
 {
    return lowestLogLevel_;
 }

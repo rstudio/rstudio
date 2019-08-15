@@ -31,7 +31,7 @@
 #include <boost/multi_index/member.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/system/FileScanner.hpp>

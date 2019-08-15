@@ -25,12 +25,12 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>

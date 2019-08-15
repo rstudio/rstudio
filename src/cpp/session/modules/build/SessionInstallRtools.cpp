@@ -17,7 +17,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>

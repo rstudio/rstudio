@@ -49,8 +49,8 @@
 
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSourceManager.hpp>

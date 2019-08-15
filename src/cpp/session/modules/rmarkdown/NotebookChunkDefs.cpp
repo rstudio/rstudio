@@ -17,10 +17,10 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>

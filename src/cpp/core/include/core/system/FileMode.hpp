@@ -24,9 +24,9 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {

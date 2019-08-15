@@ -33,9 +33,9 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #define R_INTERNAL_FUNCTIONS

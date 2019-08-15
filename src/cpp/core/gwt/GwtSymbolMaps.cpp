@@ -27,7 +27,7 @@
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 // NOTE: this is a port of the following GWT class:

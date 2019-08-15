@@ -21,7 +21,7 @@
 #include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {

@@ -16,7 +16,7 @@
 #include "SessionRmdNotebook.hpp"
 #include "NotebookConditions.hpp"
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>

@@ -24,7 +24,7 @@
 #include "NotebookWorkingDir.hpp"
 #include "NotebookConditions.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 

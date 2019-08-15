@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <core/system/PosixSystem.hpp>
