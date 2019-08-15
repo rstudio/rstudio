@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -72,7 +73,8 @@ public class InfoBar extends Composite
      
       labelRight_ = new HorizontalPanel();
       initWidget(binder.createAndBindUi(this));
-      
+
+      A11y.setARIAHidden(label_);
       Roles.getAlertRole().setAriaLiveProperty(live_.getElement(), 
             mode == ERROR ? LiveValue.ASSERTIVE : LiveValue.POLITE);
       Roles.getAlertRole().setAriaAtomicProperty(live_.getElement(), true);
