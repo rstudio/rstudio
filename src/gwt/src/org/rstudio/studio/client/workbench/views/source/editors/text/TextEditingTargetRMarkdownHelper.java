@@ -73,7 +73,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
@@ -107,6 +106,7 @@ public class TextEditingTargetRMarkdownHelper
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
                           UserPrefs prefs,
+                          UserState state,
                           ConsoleDispatcher consoleDispatcher,
                           WorkbenchContext workbenchContext,
                           FileTypeCommands fileTypeCommands,
@@ -119,6 +119,7 @@ public class TextEditingTargetRMarkdownHelper
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       prefs_ = prefs;
+      state_ = state;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
       dependencyManager_ = dependencyManager;
