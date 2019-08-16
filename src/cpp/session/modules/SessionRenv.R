@@ -24,85 +24,28 @@
 
 .rs.addJsonRpcHandler("renv_actions", function(action)
 {
-   switch(
-      tolower(action),
-      snapshot = .rs.renv.snapshotActions(),
-      restore  = .rs.renv.restoreActions(),
-      stop("unrecognized action '", action, "'")
-   )
-})
-
-.rs.addFunction("renv.snapshotActions", function()
-{
    project <- .rs.getProjectDirectory()
-   before <- renv:::renv_lockfile_load(project)
-   after <- renv:::snapshot(project = project, lockfile = NULL)
-   diff <- .rs.renv.diff("lockfile", before, "library", after)
-   data <- lapply(seq_len(NROW(diff)), function(i) as.list(diff[i, ]))
-   .rs.scalarListFromList(data)
-})
-
-.rs.addFunction("renv.restoreActions", function()
-{
-   project <- .rs.getProjectDirectory()
-   library <- renv::paths$library(project = project)
-   before <- renv:::snapshot(project = project, library = library, lockfile = NULL, type = "simple")
-   after <- renv:::renv_lockfile_load(project)
-   diff <- .rs.renv.diff("library", before, "lockfile", after)
-   diff <- diff[diff$action != "remove", ]
-   data <- lapply(seq_len(NROW(diff)), function(i) as.list(diff[i, ]))
-   .rs.scalarListFromList(data)
-})
-
-.rs.addFunction("renv.records", function(lockfile)
-{
-   records <- renv:::renv_records(lockfile)
-   if (is.null(records)) list() else records
-})
-
-.rs.addFunction("renv.diff", function(before.prefix, before,
-                                      after.prefix, after)
-{
-   # wrangle into data frames
-   fields <- c("Package", "Version", "Source")
+   actions <- renv:::actions(tolower(action), project = project)
+   if (length(actions) == 0)
+      return(list())
    
-   default <- data.frame(
-      Package = character(),
-      Version = character(),
-      Source  = character(),
-      stringsAsFactors = FALSE
+   remap <- c(
+      "Package"          = "packageName",
+      "Library Version"  = "libraryVersion",
+      "Library Source"   = "librarySource",
+      "Lockfile Version" = "lockfileVersion",
+      "Lockfile Source"  = "lockfileSource",
+      "Action"           = "action"
    )
    
-   lhs <- renv:::bapply(unname(.rs.renv.records(before)), `[`, fields)
-   if (is.null(lhs))
-      lhs <- default
+   matches <- match(names(actions), names(remap), nomatch = 0L)
+   names(actions)[matches] <- remap[matches]
    
-   rhs <- renv:::bapply(unname(.rs.renv.records(after)),  `[`, fields)
-   if (is.null(rhs))
-      rhs <- default
+   data <- lapply(seq_len(nrow(actions)), function(i) {
+      as.list(actions[i, ])
+   })
    
-   if (nrow(lhs) == 0 && nrow(rhs) == 0)
-      return(default)
-   
-   names(lhs) <- c("packageName", paste(before.prefix, names(lhs)[-1L], sep = ""))
-   names(rhs) <- c("packageName", paste(after.prefix, names(rhs)[-1L], sep = ""))
-   
-   # merge together
-   data <- merge(lhs, rhs, by = "packageName", all = TRUE)
-   
-   # add in actions
-   actions <- renv:::renv_lockfile_diff_packages(before, after)
-   adf <- data.frame(
-      packageName = names(actions),
-      action = as.character(actions),
-      stringsAsFactors = FALSE
-   )
-   
-   # merge together
-   all <- merge(data, adf, by = "packageName", all = TRUE)
-   
-   # drop empty actions
-   all[!is.na(all$action), ]
+   .rs.scalarListFromList(data)
 })
 
 .rs.addFunction("renv.context", function()
