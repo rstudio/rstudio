@@ -162,6 +162,9 @@ public class TypoSpellChecker
    {
       @Source("./typo.min.js")
       TextResource typoJsCode();
+
+      @Source("./domain_specific_words.csv")
+      TextResource domainSpecificWords();
    }
 
    public TypoSpellChecker(Context context)
@@ -208,6 +211,14 @@ public class TypoSpellChecker
          ).addCallback(loadSpellingWorker);
       }
 
+      if (domainSpecificWords_.isEmpty())
+      {
+         String[] words = RES.domainSpecificWords().getText().split("[\\r\\n]+");
+         for (String w : words) {
+            if (w.length() > 0)
+               domainSpecificWords_.add(w);
+         }
+      }
       loadDictionary();
    }
 
@@ -216,7 +227,7 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return allIgnoredWords_.contains(word) || typoNative_.check(word);
+      return domainSpecificWords_.contains(word) || allIgnoredWords_.contains(word) || typoNative_.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
@@ -364,6 +375,7 @@ public class TypoSpellChecker
    private ArrayList<String> userDictionaryWords_;
    private ArrayList<String> contextDictionary_;
    private final HashSet<String> allIgnoredWords_ = new HashSet<>();
+   private final HashSet<String> domainSpecificWords_ = new HashSet<>();
    private final ExternalJavaScriptLoader typoLoader_ =
          new ExternalJavaScriptLoader(TypoResources.INSTANCE.typojs().getSafeUri().asString());
 
