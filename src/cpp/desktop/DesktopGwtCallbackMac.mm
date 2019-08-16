@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallbackMac.mm
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -167,7 +167,7 @@ bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
                     &kCFTypeArrayCallBacks);
       
       // ask the OS to open the doc for us in an appropriate viewer
-      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, nullptr, nullptr, nullptr, 0);
       if (status != noErr)
       {
          return false;
@@ -284,12 +284,20 @@ int GwtCallback::showMessageBox(int type,
    }
 
    // Make Enter invoke the default button, and ESC the cancel button.
-   // If there's only one button, make sure Enter is the button used to
+   // If there's only one button, allow both Enter and ESC to
    // dismiss the dialog. If there's multiple dialogs, accommodate the
    // case where the default button may be the cancel button.
    if ([dialogButtons count] == 1)
    {
       [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
+
+      // a single button can't have multiple key equivalents, so create a second
+      // hidden button to respond to ESC
+      NSButton* otherButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+      otherButton.target = alert.buttons.lastObject;
+      otherButton.action = @selector(performClick:);
+      otherButton.keyEquivalent = @"\e"; // Escape
+      [alert setAccessoryView:otherButton];
    }
    else
    {
