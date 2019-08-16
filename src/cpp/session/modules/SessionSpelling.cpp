@@ -21,6 +21,7 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/spelling/HunspellSpellingEngine.hpp>
@@ -92,16 +93,33 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
    return dictManager;
 }
 
+/*
+ * \deprecated
+ * For getting all languages from pre-1.3 RStudio
+ * */
+FilePath old_allLanguagesDir()
+{
+   return module_context::userScratchPath().childPath( "dictionaries/languages-system");
+}
+
+/*
+ * \deprecated
+ * For getting custom languages from pre-1.3 RStudio
+ * */
+FilePath old_customDictionariesDir()
+{
+   return module_context::userScratchPath().childPath( "dictionaries/custom");
+}
+
 FilePath allLanguagesDir()
 {
-   return module_context::userScratchPath().childPath(
-                                          "dictionaries/languages-system");
+   return core::system::xdg::userConfigDir().childPath("dictionaries/languages-system");
 }
 
 FilePath customDictionariesDir()
 {
-   return module_context::userScratchPath().childPath(
-                                          "dictionaries/custom");
+
+   return core::system::xdg::userConfigDir().childPath("dictionaries/custom");
 }
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
@@ -119,7 +137,7 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
       return;
    }
 
-   // preference order: custom -> user -> system -> pre-installed
+   // preference order: custom -> system -> pre-installed
    if (customDictionariesDir().complete(splat[1]).exists())
    {
       pResponse->setCacheableFile(customDictionariesDir().complete(splat[1]), request);
@@ -127,6 +145,19 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    else if (allLanguagesDir().complete(splat[1]).exists())
    {
       pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+   }
+
+   /*
+    * \deprecated
+    * Calls to old deprecated dictionary locations for RStudio 1.2 and earlier
+    */
+   if (old_customDictionariesDir().complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(old_customDictionariesDir().complete(splat[1]), request);
+   }
+   else if (old_allLanguagesDir().complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(old_allLanguagesDir().complete(splat[1]), request);
    }
    else if (options().hunspellDictionariesPath().complete(splat[1]).exists())
    {
