@@ -22,7 +22,7 @@ public class TerminalDiagnostics
    {
       if (diagnostic_ == null)
          diagnostic_ = new StringBuilder();
-     
+
       diagnostic_.append(StringUtil.getTimestamp());
       diagnostic_.append(": ");
       diagnostic_.append(msg);
@@ -36,7 +36,7 @@ public class TerminalDiagnostics
       else
          return diagnostic_.toString();
    }
-   
+
    public void resetLog()
    {
       diagnostic_ = null;

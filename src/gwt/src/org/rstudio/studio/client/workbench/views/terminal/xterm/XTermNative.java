@@ -1,7 +1,7 @@
 /*
  * XTermNative.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
 
 /**
  * <code>JavaScriptObject</code> wrapper for xterm.js
- * 
+ *
  * Reliance on xterm.js implementation details is marked with XTERM_IMP.
  * Be careful of these when updating to a newer xterm.js build.
  * The rest uses documented APIs: https://xtermjs.org/docs/api/terminal/
@@ -33,14 +33,14 @@ public class XTermNative extends JavaScriptObject
    protected XTermNative()
    {
    }
-   
+
    /**
     * Remove event handlers and detach from parent node.
     */
    public final native void destroy() /*-{
       this.destroy();
    }-*/;
-   
+
    /**
     * Fit the terminal to available space.
     */
@@ -55,7 +55,7 @@ public class XTermNative extends JavaScriptObject
    public final native void writeln(String data) /*-{
       this.writeln(data);
    }-*/;
-   
+
    /**
     * Write text to the terminal.
     * @param data String to write
@@ -63,7 +63,7 @@ public class XTermNative extends JavaScriptObject
    public final native void write(String data) /*-{
       this.write(data);
    }-*/;
-  
+
    /**
     * Compute and return available dimensions for terminal.
     * @return Visible number of columns and rows
@@ -71,27 +71,27 @@ public class XTermNative extends JavaScriptObject
    public final native XTermDimensions proposeGeometry() /*-{
       return this.proposeGeometry();
    }-*/;
-   
+
    public final native void focus() /*-{
-      this.focus(); 
-   }-*/; 
-  
+      this.focus();
+   }-*/;
+
    public final native void blur() /*-{
-      this.blur(); 
-   }-*/; 
-  
+      this.blur();
+   }-*/;
+
    public final native void scrollDisp(int lineCount) /*-{
       this.scrollDisp(lineCount, false);
    }-*/;
-  
+
    public final native void scrollPages(int pageCount) /*-{
       this.scrollPages(pageCount);
    }-*/;
-   
+
    public final native void scrollToTop() /*-{
       this.scrollToTop();
    }-*/;
-   
+
    public final native void scrollToBottom() /*-{
       this.scrollToBottom();
    }-*/;
@@ -107,22 +107,22 @@ public class XTermNative extends JavaScriptObject
    public final native void addClass(String classStr) /*-{
       this.element.classList.add(classStr);
    }-*/;
-   
+
    // XTERM_IMP
    public final native int cursorX() /*-{
       return this.buffer.x;
    }-*/;
-   
+
    // XTERM_IMP
    public final native int cursorY() /*-{
       return this.buffer.y;
    }-*/;
- 
+
    // XTERM_IMP
    public final native boolean altBufferActive() /*-{
       return this.buffers.active == this.buffers.alt;
    }-*/;
-   
+
    public final native void showPrimaryBuffer() /*-{
       this.write("\x1b[?1047l"); // show primary buffer
       this.write("\x1b[m"); // reset all visual attributes
@@ -132,7 +132,7 @@ public class XTermNative extends JavaScriptObject
    public final native void showAltBuffer() /*-{
       this.write("\x1b[?1047h"); // show alt buffer
    }-*/;
-    
+
    // XTERM_IMP
    public final native String currentLine() /*-{
       lineBuf = this.buffer.lines.get(this.y + this.ybase);
@@ -154,7 +154,7 @@ public class XTermNative extends JavaScriptObject
          lineBuf = this.buffer.lines.get(row);
          if (!lineBuf) // resize may be in progress
             return null;
-      
+
          for (col = 0; col < this.cols; col++) {
             if (!lineBuf[col])
                return null;
@@ -163,14 +163,14 @@ public class XTermNative extends JavaScriptObject
       }
       return buffer;
    }-*/;
-    
+
    /**
-    * Install a handler for user input (typing). Only one handler at a 
+    * Install a handler for user input (typing). Only one handler at a
     * time may be installed. Previous handler will be overwritten.
     * @param command handler for data typed by the user
     */
    public final native void onTerminalData(CommandWithArg<String> command) /*-{
-      this.handler = 
+      this.handler =
          $entry(function(data) {
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
          });
@@ -181,7 +181,7 @@ public class XTermNative extends JavaScriptObject
     * @param command handler for title text
     */
    public final native void onTitleData(CommandWithArg<String> command) /*-{
-      this.handleTitle = 
+      this.handleTitle =
          $entry(function(title) {
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(title);
          });
@@ -189,15 +189,15 @@ public class XTermNative extends JavaScriptObject
 
    /**
     * Factory to create a native Javascript terminal object.
-    *  
+    *
     * @param container HTML element to attach to
     * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
     * @param focus <code>true</code> to give terminal focus by default
     * @param supportMousewheel <code>true</code> to handle legacy mousewheel event
-    * 
+    *
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container, 
+   public static native XTermNative createTerminal(Element container,
                                                    boolean blink,
                                                    boolean focus,
                                                    boolean supportMousewheel) /*-{

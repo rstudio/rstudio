@@ -47,27 +47,27 @@ import java.util.function.Consumer;
 /**
  * Xterm-compatible terminal emulator widget. This widget does no network
  * communication.
- * 
+ *
  * To receive input (user typing), subscribe to TerminalDataInputEvent, or
- * use addDataEventHandler, which stops TerminalDataInputEvent from being 
+ * use addDataEventHandler, which stops TerminalDataInputEvent from being
  * fired and makes a direct callback.
- * 
+ *
  * To send output to the terminal, use write() or writeln().
- * 
+ *
  * To receive notice of terminal resizes, subscribe to ResizeTerminalEvent.
- * 
+ *
  * For title changes (via escape sequences sent to terminal), subscribe to
  * XTermTitleEvent.
  */
-public class XTermWidget extends Widget 
+public class XTermWidget extends Widget
                          implements RequiresResize,
                                     ResizeTerminalEvent.HasHandlers,
                                     TerminalDataInputEvent.HasHandlers,
                                     XTermTitleEvent.HasHandlers,
-                                    Consumer<String> 
+                                    Consumer<String>
 {
-  /**
-    *  Creates an XTermWidget.
+   /**
+    * Creates an XTermWidget.
     */
    public XTermWidget(boolean cursorBlink, boolean focus)
    {
@@ -90,11 +90,11 @@ public class XTermWidget extends Widget
 
       // Handle keystrokes from the xterm and dispatch them
       addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
-      
+
       // Handle title events from the xterm and dispatch them
       addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
    }
-   
+
    /**
     * Perform actions when the terminal is ready.
     */
@@ -111,7 +111,7 @@ public class XTermWidget extends Widget
       terminal_.scrollToBottom();
       terminal_.writeln(str);
    }
-   
+
    /**
     * Write text to the terminal.
     * @param str Text to write
@@ -146,7 +146,7 @@ public class XTermWidget extends Widget
       currentStyleEl_.setHref(cssResource.getSafeUri().asString());
       Document.get().getBody().appendChild(currentStyleEl_);
    }
-  
+
    @Override
    protected void onLoad()
    {
@@ -161,7 +161,7 @@ public class XTermWidget extends Widget
          });
       }
    }
-   
+
    @Override
    protected void onUnload()
    {
@@ -172,7 +172,7 @@ public class XTermWidget extends Widget
          Scheduler.get().scheduleDeferred(() -> terminal_.blur());
       }
    }
-   
+
    @Override
    public void onResize()
    {
@@ -180,17 +180,17 @@ public class XTermWidget extends Widget
       {
          return;
       }
-      
+
       // Notify the local terminal UI that it has resized so it computes new
       // dimensions; debounce this slightly as it is somewhat expensive
       resizeTerminalLocal_.schedule(50);
-      
+
       // Notify the remote pseudo-terminal that it has resized; this is quite
       // expensive so debounce more heavily; e.g. dragging the pane
       // splitters or resizing the entire window
       resizeTerminalRemote_.schedule(150);
    }
-   
+
    private Timer resizeTerminalLocal_ = new Timer()
    {
       @Override
@@ -199,17 +199,17 @@ public class XTermWidget extends Widget
          terminal_.fit();
       }
    };
-   
+
    private Timer resizeTerminalRemote_ = new Timer()
    {
       @Override
       public void run()
       {
          XTermDimensions size = getTerminalSize();
-         
+
          int cols = size.getCols();
          int rows = size.getRows();
-         
+
          // ignore if a reasonable size couldn't be computed
          if (cols < 1 || rows < 1)
          {
@@ -221,37 +221,37 @@ public class XTermWidget extends Widget
          {
             return;
          }
-         
+
          previousCols_ = cols;
          previousRows_ = rows;
-         
-         fireEvent(new ResizeTerminalEvent(cols, rows)); 
+
+         fireEvent(new ResizeTerminalEvent(cols, rows));
       }
    };
-   
+
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onTerminalData(handler);
    }
-   
+
    private void addTitleEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onTitleData(handler);
    }
-   
+
    private XTermDimensions getTerminalSize()
    {
-      return terminal_.proposeGeometry(); 
+      return terminal_.proposeGeometry();
    }
-   
+
    public void setFocus(boolean focused)
    {
       if (focused)
          terminal_.focus();
       else
-         terminal_.blur(); 
+         terminal_.blur();
    }
-   
+
    /**
     * @return Current cursor column
     */
@@ -267,7 +267,7 @@ public class XTermWidget extends Widget
    {
       return terminal_.cursorY();
    }
-   
+
    /**
     * @return true if cursor at end of current line, false if not at EOL or
     * terminal is showing alternate buffer
@@ -278,13 +278,13 @@ public class XTermWidget extends Widget
       {
          return false;
       }
-      
+
       String line = currentLine();
       if (line == null)
       {
          return false;
       }
-      
+
       for (int i = getCursorX(); i < line.length(); i++)
       {
          if (line.charAt(i) != ' ')
@@ -294,7 +294,7 @@ public class XTermWidget extends Widget
       }
       return true;
    }
-   
+
    /**
     * @return Text of current line buffer
     */
@@ -302,7 +302,7 @@ public class XTermWidget extends Widget
    {
       return terminal_.currentLine();
    }
-   
+
    /**
     * @return Local terminal buffer
     */
@@ -310,7 +310,7 @@ public class XTermWidget extends Widget
    {
       return terminal_.getLocalBuffer();
    }
-   
+
    /**
     * Is the terminal showing the alternate full-screen buffer?
     * @return true if full-screen buffer is active
@@ -319,7 +319,7 @@ public class XTermWidget extends Widget
    {
       return terminal_.altBufferActive();
    }
-   
+
    /**
     * Switch terminal to primary buffer.
     */
@@ -335,7 +335,7 @@ public class XTermWidget extends Widget
    {
       terminal_.showAltBuffer();
    }
-    
+
    /**
     * @param el Element to test, may be null
     * @return If element is part of an XTermWidget, return that widget, otherwise null.
@@ -374,13 +374,13 @@ public class XTermWidget extends Widget
       else
          return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
    }
-   
+
    @Override
    public HandlerRegistration addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
    {
       return addHandler(handler, ResizeTerminalEvent.TYPE);
    }
-   
+
    @Override
    public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
    {
@@ -395,7 +395,7 @@ public class XTermWidget extends Widget
 
    /**
     * Load resources for XTermWidget.
-    * 
+    *
     * @param command Command to execute after resources are loaded
     */
    public static void load(final Command command)
@@ -407,7 +407,7 @@ public class XTermWidget extends Widget
    }
 
    private static final ExternalJavaScriptLoader xtermLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermjs(), 
+         getLoader(XTermResources.INSTANCE.xtermjs(),
                    XTermResources.INSTANCE.xtermjsUncompressed());
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
@@ -421,5 +421,4 @@ public class XTermWidget extends Widget
    private int previousRows_ = -1;
    private int previousCols_ = -1;
    private final static String XTERM_CLASS = "xterm-rstudio";
-
 }

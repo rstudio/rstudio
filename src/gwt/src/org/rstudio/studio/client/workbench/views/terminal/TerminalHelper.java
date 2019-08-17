@@ -1,7 +1,7 @@
 /*
  * TerminalHelper.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 
@@ -35,12 +34,12 @@ public class TerminalHelper
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
-      
+
       // track busy terminals
       events_.addHandler(TerminalBusyEvent.TYPE,
             event -> warnBeforeClosing_ = event.isBusy());
    }
-   
+
    public boolean warnBeforeClosing(String busyMode)
    {
       if (busyMode == UserPrefs.BUSY_DETECTION_NEVER)
@@ -59,7 +58,7 @@ public class TerminalHelper
          command.execute();
          return;
       }
-      
+
       globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
             caption, 
@@ -67,7 +66,7 @@ public class TerminalHelper
             command::execute,
             true);
    }
-   
+
    private boolean warnBeforeClosing_;
 
    // Injected ----  

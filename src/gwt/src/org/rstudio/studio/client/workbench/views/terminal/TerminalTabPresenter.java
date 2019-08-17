@@ -87,12 +87,12 @@ public class TerminalTabPresenter extends BasePresenter
       void nextTerminal();
       void showTerminalInfo();
       void sendToTerminal(String text, boolean setFocus);
-      
+
       /**
        * Send SIGINT to child process of the terminal shell.
        */
       void interruptTerminal();
-      
+
       /**
        * Add a terminal to the list.
        * @param cpi information on the terminal
@@ -100,7 +100,7 @@ public class TerminalTabPresenter extends BasePresenter
        * caption
        */
       void addTerminal(ConsoleProcessInfo cpi, boolean hasSession);
-      
+
       /**
        * Remove a terminal that was killed via rstudioapi::terminalKill.
        * @param handle terminal to remove
@@ -115,7 +115,7 @@ public class TerminalTabPresenter extends BasePresenter
        * @param createdByApi terminal just created via rstudioapi?
        */
       void activateNamedTerminal(String caption, boolean createdByApi);
-      
+
       /**
        * Send current terminal's buffer to a new editor buffer.
        */
@@ -187,13 +187,13 @@ public class TerminalTabPresenter extends BasePresenter
    {
       view_.showTerminalInfo();
    }
-   
+
    @Handler
    public void onInterruptTerminal()
    {
       view_.interruptTerminal();
    }
-   
+
    @Handler
    public void onSendTerminalToEditor()
    {
@@ -222,7 +222,7 @@ public class TerminalTabPresenter extends BasePresenter
       {
          // And optionally bring tab forward and select the requested terminal
          view_.activateTerminal(
-               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption(), 
+               () -> view_.activateNamedTerminal(event.getProcessInfo().getCaption(),
                                                  true /*createdByApi*/));
       }
    }
