@@ -28,8 +28,8 @@ public class TerminalShellInfo extends JavaScriptObject
 
    public final native String getShellName() /*-{
       return this.name;
-   }-*/; 
-   
+   }-*/;
+
    public static String getShellName(String shell)
    {
       switch (shell)

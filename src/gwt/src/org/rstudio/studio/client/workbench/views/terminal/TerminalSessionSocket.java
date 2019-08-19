@@ -44,7 +44,7 @@ import com.sksamuel.gwt.websockets.WebsocketListenerExt;
  * Manages input and output for the terminal session.
  */
 public class TerminalSessionSocket
-   implements ConsoleOutputEvent.Handler, 
+   implements ConsoleOutputEvent.Handler,
               TerminalDataInputEvent.Handler
 {
    public interface Session
@@ -54,34 +54,33 @@ public class TerminalSessionSocket
        * @param input user input
        */
       void receivedInput(String input);
-      
+
       /**
        * Called when there is output from the server.
        * @param output output from server
        */
       void receivedOutput(String output);
-   
+
       /**
        * Called to disconnect the terminal
        */
       void connectionDisconnected();
    }
-   
+
    public interface ConnectCallback
    {
       /**
        * Callback when connection has been made.
        */
       void onConnected();
-   
-   
+
       /**
        * Callback when connection failed
        * @param message additional info about the connect failure, may be null
        */
       void onError(String message);
    }
-   
+
    // Monitor and report input/display lag to console
    private class InputEchoTimeMonitor
    {
@@ -104,33 +103,33 @@ public class TerminalSessionSocket
             }
             return false;
          }
-         
+
          long duration()
          {
             return duration_;
          }
-         
+
          private final String input_;
          private final Stopwatch stopWatch_ = new Stopwatch(false);
          private long duration_;
       }
-      
+
       InputEchoTimeMonitor()
       {
          pending_ = new LinkedList<>();
       }
-      
+
       void inputReceived(String input)
       {
          pending_.add(new InputDatapoint(input));
       }
-      
+
       void outputReceived(String output)
       {
          InputDatapoint item = pending_.poll();
          if (item == null)
             return;
-         
+
          if (!item.matches(output, average()))
          {
             // output not what we expected, reset the whole list
@@ -142,7 +141,7 @@ public class TerminalSessionSocket
             accumulatedTime_ += item.duration();
          }
       }
-      
+
       long average()
       {
          if (accumulatedPoints_ > 0)
@@ -156,18 +155,18 @@ public class TerminalSessionSocket
       {
          return average() + "ms";
       }
-      
+
       private final LinkedList<InputDatapoint> pending_;
       private long accumulatedPoints_;
       private long accumulatedTime_;
    }
-   
+
    /**
     * Constructor
     * @param session Session to callback with user input and server output.
     * @param xterm Terminal emulator that provides user input, and displays output.
     * @param webSocketPingInterval (seconds) how often to send a keep-alive, or zero for none
-    * @param webSocketConnectTimeout (seconds) how long to wait for websocket connection before 
+    * @param webSocketConnectTimeout (seconds) how long to wait for websocket connection before
     *                                switching to RPC, or zero for no timeout (in seconds)
     */
    public TerminalSessionSocket(Session session,
@@ -185,7 +184,7 @@ public class TerminalSessionSocket
       // terminal emulator; for diagnostics on laggy typing.
       // Time between input/display shown in terminal diagnostics dialog.
       inputEchoTiming_ = new InputEchoTimeMonitor();
-   
+
       // Keep WebSocket connections alive by sending and receiving a small message
       keepAliveTimer_ = new Timer()
       {
@@ -202,7 +201,7 @@ public class TerminalSessionSocket
             }
          }
       };
-   
+
       // Underlying WebSocket object (JavaScript) can take up to 2 minutes to timeout
       // for certain issues with the server; shorten that via this timer
       connectWebSocketTimer_ = new Timer()
@@ -213,22 +212,22 @@ public class TerminalSessionSocket
             diagnosticError("Timeout connecting via WebSockets, switching to RPC");
             switchToRPC();
          }
-      };   
+      };
    }
 
    /**
     * Connect the input/output channel to the server. This requires that
     * an rsession has already been started via RPC and the consoleProcess
     * received.
-    * @param consoleProcess 
+    * @param consoleProcess
     * @param callback result of connect attempt
     */
-   public void connect(ConsoleProcess consoleProcess, 
+   public void connect(ConsoleProcess consoleProcess,
                        final ConnectCallback callback)
    {
       consoleProcess_ = consoleProcess;
       connectCallback_ = callback;
-      
+
       if (consoleProcess.getProcessInfo().getZombie())
       {
          diagnostic_.log("Zombie, not reconnecting");
@@ -249,12 +248,12 @@ public class TerminalSessionSocket
          diagnostic_.log("Connected with RPC");
          callback.onConnected();
          break;
-         
+
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
-              
-         // For desktop IDE, talk directly to the websocket, anything else, go 
+
+         // For desktop IDE, talk directly to the websocket, anything else, go
          // through the server via the /p proxy.
-         String urlSuffix = consoleProcess_.getProcessInfo().getChannelId() + "/terminal/" + 
+         String urlSuffix = consoleProcess_.getProcessInfo().getChannelId() + "/terminal/" +
                consoleProcess_.getProcessInfo().getHandle() + "/";
          String url;
          if (Desktop.isDesktop())
@@ -267,7 +266,7 @@ public class TerminalSessionSocket
             if (url.startsWith("https:"))
             {
                url = "wss:" + url.substring(6) + "p/" + urlSuffix;
-            } 
+            }
             else if (url.startsWith("http:"))
             {
                url = "ws:" + url.substring(5) + "p/" + urlSuffix;
@@ -281,7 +280,7 @@ public class TerminalSessionSocket
 
          diagnostic_.log("Connect WebSocket: '" + url + "'");
          socket_ = new Websocket(url);
-         socket_.addListener(new WebsocketListenerExt() 
+         socket_.addListener(new WebsocketListenerExt()
          {
             @Override
             public void onClose(CloseEvent event)
@@ -331,27 +330,27 @@ public class TerminalSessionSocket
                switchToRPC();
             }
          });
-         
+
          if (webSocketConnectTimeout_ > 0)
          {
             connectWebSocketTimer_.schedule(webSocketConnectTimeout_ * 1000);
          }
          socket_.open();
          break;
-         
+
       case ConsoleProcessInfo.CHANNEL_PIPE:
       default:
          callback.onError("Channel type not implemented");
          break;
       }
    }
-   
+
    private void switchToRPC()
    {
       socket_ = null;
       keepAliveTimer_.cancel();
       connectWebSocketTimer_.cancel();
-   
+
       // Unable to connect client to server via websocket; let server
       // know we'll be using rpc, instead
       consoleProcess_.useRpcMode(new ServerRequestCallback<Void>()
@@ -362,7 +361,7 @@ public class TerminalSessionSocket
             diagnostic_.log("Switched to RPC");
             connectCallback_.onConnected();
          }
-      
+
          @Override
          public void onError(ServerError error)
          {
@@ -370,8 +369,8 @@ public class TerminalSessionSocket
             connectCallback_.onError("Terminal failed to connect. Please try again.");
          }
       });
-   }      
-   
+   }
+
    /**
     * Send user input to the server.
     * @param inputSequence used to fix out-of-order RPC calls
@@ -393,7 +392,7 @@ public class TerminalSessionSocket
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
          consoleProcess_.writeStandardInput(
-               ShellInput.create(inputSequence, input,  true /*echo input*/), 
+               ShellInput.create(inputSequence, input,  true /*echo input*/),
                requestCallback);
          break;
       case ConsoleProcessInfo.CHANNEL_WEBSOCKET:
@@ -403,7 +402,7 @@ public class TerminalSessionSocket
          }
          else
             diagnosticError("Tried to send user input over null websocket");
-            
+
          requestCallback.onResponseReceived(null);
          break;
       case ConsoleProcessInfo.CHANNEL_PIPE:
@@ -411,7 +410,7 @@ public class TerminalSessionSocket
          break;
       }
    }
-   
+
    /**
     * Send output to the terminal emulator.
     * @param output text to send to the terminal
@@ -429,17 +428,17 @@ public class TerminalSessionSocket
          // by the server, those characters will local-echo. Still, between
          // the two mechanisms this reduces the chances of most or all of
          // their typed password characters being echoed.
-          localEcho_.pause(1000);
+         localEcho_.pause(1000);
       }
       if (!detectLocalEcho || localEcho_.isEmpty())
       {
          xterm_.accept(output);
          return;
       }
-      
+
       localEcho_.write(output);
    }
-   
+
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
@@ -481,38 +480,38 @@ public class TerminalSessionSocket
          unregisterHandlers(); // gets rid of keyboard handler
       }
    }
-   
+
    public void resetDiagnostics()
    {
       diagnostic_.resetLog();
       localEcho_.resetDiagnostics();
    }
-   
+
    public String getConnectionDiagnostics()
    {
       return diagnostic_.getLog();
    }
-   
+
    public String getLocalEchoDiagnostics()
    {
       return localEcho_.getDiagnostics();
    }
-   
+
    private void diagnosticError(String msg)
    {
       Debug.log(msg);
       diagnostic_.log(msg);
    }
-   
+
    public String getTypingLagMsg()
    {
       return inputEchoTiming_.averageTimeMsg();
    }
-   
+
    private void receivedKeepAlive()
    {
    }
- 
+
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final Session session_;
    private final XTermWidget xterm_;
@@ -523,14 +522,12 @@ public class TerminalSessionSocket
    private Websocket socket_;
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
-   
+
    // RegEx to match common password prompts
-   private static final String PASSWORD_REGEX = 
-         "(?:password:)|(?:passphrase:)";
-   
-   public static final Pattern PASSWORD_PATTERN =
-         Pattern.create(PASSWORD_REGEX, "im");
-   
+   private static final String PASSWORD_REGEX = "(?:password:)|(?:passphrase:)";
+
+   public static final Pattern PASSWORD_PATTERN = Pattern.create(PASSWORD_REGEX, "im");
+
    private final Timer keepAliveTimer_;
    private final int webSocketPingInterval_;
    private final Timer connectWebSocketTimer_;

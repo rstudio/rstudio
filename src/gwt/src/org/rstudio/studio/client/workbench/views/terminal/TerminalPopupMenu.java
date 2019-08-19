@@ -37,7 +37,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 /**
- * Drop-down menu used in terminal pane. Has commands, and a list of 
+ * Drop-down menu used in terminal pane. Has commands, and a list of
  * terminal sessions.
  */
 public class TerminalPopupMenu extends ToolbarPopupMenu
@@ -60,12 +60,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       eventBus_ = events;
       server_ = server;
    }
-   
+
    @Override
    public void getDynamicPopupMenu(final DynamicPopupMenuCallback callback)
-   { 
+   {
       // clean out existing entries
-      clearItems(); 
+      clearItems();
       addItem(commands_.newTerminal().createMenuItem(false));
       addSeparator();
 
@@ -108,27 +108,26 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
       callback.onPopupMenu(this);
    }
-   
+
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
          String buttonText = "Terminal";
-         
+
          toolbarButton_ = new ToolbarMenuButton(
-                buttonText, 
+                buttonText,
                 ToolbarButton.NoTitle,
                 StandardIcons.INSTANCE.empty_command(),
-                this, 
+                this,
                 false);
 
          setNoActiveTerminal();
       }
       return toolbarButton_;
    }
-   
+
    /**
-    *       
     * @param caption caption of the active terminal
     * @param handle handle of the active terminal
     */
@@ -151,7 +150,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
       commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
       commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
-      
+
       // inform server of the selection
       server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
 
@@ -162,7 +161,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          }
       });
    }
-   
+
    public void setActiveTerminalByCaption(String caption, boolean createdByApi)
    {
       String handle = terminals_.handleForCaption(caption);
@@ -182,11 +181,11 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String caption = terminals_.getCaption(activeTerminalHandle_);
       if (caption == null)
          return;
-      
-      toolbarButton_.setText(addBusyIndicator(trimCaption(caption), 
+
+      toolbarButton_.setText(addBusyIndicator(trimCaption(caption),
             terminals_.getHasSubprocs(activeTerminalHandle_)));
    }
-    
+
    /**
     * set state to indicate no active terminals
     */
@@ -308,7 +307,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private String activeTerminalHandle_;
    private TerminalList terminals_;
 
-   // Injected ----  
+   // Injected ----
    private Commands commands_;
    private EventBus eventBus_;
    private WorkbenchServerOperations server_;

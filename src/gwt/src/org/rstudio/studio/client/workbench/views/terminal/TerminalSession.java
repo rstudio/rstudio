@@ -72,21 +72,21 @@ public class TerminalSession extends XTermWidget
     * @param focus should terminal automatically get focus
     * @param createdByApi was this terminal just created by the rstudioapi
     */
-   public TerminalSession(ConsoleProcessInfo info, 
-                          boolean cursorBlink, 
+   public TerminalSession(ConsoleProcessInfo info,
+                          boolean cursorBlink,
                           boolean focus,
                           boolean createdByApi)
    {
       super(cursorBlink, focus);
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
       createdByApi_ = createdByApi;
       hasChildProcs_ = new Value<>(info.getHasChildProcs());
-      
+
       setTitle(info.getTitle());
       socket_ = new TerminalSessionSocket(
-            this, this, 
+            this, this,
             sessionInfo_.getWebSocketPingInterval(),
             sessionInfo_.getWebSocketConnectTimeout());
 
@@ -101,15 +101,15 @@ public class TerminalSession extends XTermWidget
                            GlobalDisplay globalDisplay)
    {
       server_ = server;
-      eventBus_ = events; 
+      eventBus_ = events;
       uiPrefs_ = uiPrefs;
       sessionInfo_ = session.getSessionInfo();
       globalDisplay_ = globalDisplay;
-   } 
+   }
 
    /**
     * Create a terminal process and connect to it. Multiple async stages:
-    * 
+    *
     * (1) get a ConsoleProcess from the server; this tracks the terminal
     *     session and process on the server
     * (2) get a TerminalSessionSocket which supplies input/output channel
@@ -126,7 +126,7 @@ public class TerminalSession extends XTermWidget
 
       connecting_ = true;
       setNewTerminal(StringUtil.isNullOrEmpty(getHandle()));
-      
+
       socket_.resetDiagnostics();
 
       server_.startTerminal(
@@ -149,15 +149,15 @@ public class TerminalSession extends XTermWidget
                disconnect(false);
                callback.onFailure("Empty Terminal caption");
                return;
-            } 
+            }
 
             if (consoleProcess_.getProcessInfo().getTerminalSequence() <= ConsoleProcessInfo.SEQUENCE_NO_TERMINAL)
             {
                disconnect(false);
                callback.onFailure("Undetermined Terminal sequence");
                return;
-            } 
-              
+            }
+
             // Keep an instance of the ProcessInfo so it is available even if the terminal
             // goes offline, which causes consoleProcess_ to become null.
             procInfo_ = consoleProcess_.getProcessInfo();
@@ -165,7 +165,7 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
-            
+
             showAltAfterReload_ = false;
             if (!getProcInfo().getAltBufferActive() && xtermAltBufferActive())
             {
@@ -182,7 +182,7 @@ public class TerminalSession extends XTermWidget
                // Switch to alt-buffer after we reload the cache from the server.
                showAltAfterReload_ = true;
             }
-            
+
             socket_.connect(consoleProcess_, new TerminalSessionSocket.ConnectCallback()
             {
                @Override
@@ -231,7 +231,7 @@ public class TerminalSession extends XTermWidget
          }
       });
    }
-   
+
    /**
     * Disconnect a terminal.
     * @param permanent If true, the connection cannot be reopened.
@@ -256,7 +256,7 @@ public class TerminalSession extends XTermWidget
       procInfo_.setDimensions(event.getCols(), event.getRows());
       consoleProcess_.resizeTerminal(
             event.getCols(), event.getRows(),
-            new VoidServerRequestCallback() 
+            new VoidServerRequestCallback()
             {
                @Override
                public void onError(ServerError error)
@@ -277,13 +277,13 @@ public class TerminalSession extends XTermWidget
       }
       socket_.dispatchOutput(output, doLocalEcho());
    }
-   
+
    @Override
    public void connectionDisconnected()
    {
       disconnect(false);
    }
-   
+
    public void receivedSendToTerminal(String input)
    {
       // tweak line endings 
@@ -301,7 +301,7 @@ public class TerminalSession extends XTermWidget
       }
       receivedInput(inputText);
    }
-   
+
    @Override
    public void receivedInput(String input)
    {
@@ -316,14 +316,14 @@ public class TerminalSession extends XTermWidget
          connect(new ResultCallback<Boolean, String>()
          {
             @Override
-            public void onSuccess(Boolean connected) 
+            public void onSuccess(Boolean connected)
             {
                if (connected)
                {
                   sendUserInput();
                }
             }
-            
+
             @Override
             public void onFailure(String msg)
             {
@@ -354,7 +354,7 @@ public class TerminalSession extends XTermWidget
       if (inputQueue_.length() > MAXCHUNK)
       {
          userInput = inputQueue_.substring(0, MAXCHUNK);
-         inputQueue_.delete(0,  MAXCHUNK);
+         inputQueue_.delete(0, MAXCHUNK);
       }
       else
       {
@@ -391,7 +391,7 @@ public class TerminalSession extends XTermWidget
             inputSequence_++;
          }
       }
-      
+
       socket_.dispatchInput(inputSequence_, userInput, doLocalEcho(),
             new VoidServerRequestCallback() {
 
@@ -409,7 +409,7 @@ public class TerminalSession extends XTermWidget
                }
             });
    }
-   
+
    /**
     * Should we do local-echo at this time?
     * @return true if local-echo should be active
@@ -439,9 +439,9 @@ public class TerminalSession extends XTermWidget
       // Finally, only local-echo if typing at the end of the current line to
       // avoid issues with line-editing, such as inserting characters in the
       // middle of a line.
-      return 
+      return
             uiPrefs_.terminalLocalEcho().getValue() &&
-            !BrowseCap.isWindowsDesktop() && 
+            !BrowseCap.isWindowsDesktop() &&
             !getHasChildProcs() &&
             !xtermAltBufferActive() &&
             cursorAtEOL();
@@ -482,11 +482,11 @@ public class TerminalSession extends XTermWidget
    public void clearBuffer()
    {
       clear();
-      
+
       // talk directly to the server so it will wake up if suspended and
       // clear its buffer cache
       server_.processEraseBuffer(
-            getHandle(), 
+            getHandle(),
             false /*lastLineOnly*/,
             new SimpleRequestCallback<>("Clearing Buffer"));
    }
@@ -499,7 +499,7 @@ public class TerminalSession extends XTermWidget
       server_.processInterruptChild(getHandle(),
             new SimpleRequestCallback<>("Interrupting child"));
    }
-   
+
    protected void addHandlerRegistration(HandlerRegistration reg)
    {
       registrations_.add(reg);
@@ -523,7 +523,7 @@ public class TerminalSession extends XTermWidget
       connect(new ResultCallback<Boolean, String>()
       {
          @Override
-         public void onSuccess(Boolean connected) 
+         public void onSuccess(Boolean connected)
          {
          }
 
@@ -553,7 +553,7 @@ public class TerminalSession extends XTermWidget
          connect(new ResultCallback<Boolean, String>()
          {
             @Override
-            public void onSuccess(Boolean connected) 
+            public void onSuccess(Boolean connected)
             {
                if (connected)
                {
@@ -576,16 +576,16 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * A unique handle for this terminal instance. Corresponds to the 
+    * A unique handle for this terminal instance. Corresponds to the
     * server-side ConsoleProcess handle.
     * @return Opaque string handle for this terminal instance, or null if
     * terminal has never been attached to a server ConsoleProcess.
     */
    public String getHandle()
    {
-      return procInfo_.getHandle(); 
+      return procInfo_.getHandle();
    }
-   
+
    /**
     * Does this terminal's shell program (i.e. bash) have any child processes?
     * @return true if it has child processes, or it hasn't been determined yet
@@ -639,7 +639,7 @@ public class TerminalSession extends XTermWidget
          }
       });
    }
-   
+
    private void cleanupAfterTerminate()
    {
       // Forcefully kill this session on the client instead of waiting 
@@ -691,7 +691,7 @@ public class TerminalSession extends XTermWidget
    {
       if (consoleProcess_ == null)
          return false;
-      
+
       switch (consoleProcess_.getProcessInfo().getShellType())
       {
       // Windows command-prompt and PowerShell don't support buffer reloading
@@ -716,7 +716,7 @@ public class TerminalSession extends XTermWidget
          return true;
       }
    }
-   
+
    private void fetchNextChunk(final int chunkToFetch)
    {
       if (!shellSupportsReload())
@@ -766,7 +766,7 @@ public class TerminalSession extends XTermWidget
          }
       });
    }
-   
+
    public void showZombieMessage()
    {
       writeln("[Process completed]");
@@ -782,12 +782,12 @@ public class TerminalSession extends XTermWidget
     * Write to terminal after a terminal has restarted (on the server). We
     * use this to cleanup the current line, as a new prompt is typically
     * output by the server upon reconnect.
-    * 
+    *
     * For a full-screen program, switch the terminal back into the alt-buffer.
     */
    public void writeRestartSequence()
    {
-      if (consoleProcess_ != null && 
+      if (consoleProcess_ != null &&
             consoleProcess_.getProcessInfo().getRestarted() &&
             !restartSequenceWritten_)
       {
@@ -796,11 +796,11 @@ public class TerminalSession extends XTermWidget
 
          // immediately clear line locally
          accept(sequence);
-         
+
          // ask server to delete last line of saved buffer to prevent
          // accumulation of prompts
          server_.processEraseBuffer(
-               getHandle(), 
+               getHandle(),
                true /*lastLineOnly*/,
                new SimpleRequestCallback<>("Clearing Final Line of Buffer"));
 
@@ -813,7 +813,7 @@ public class TerminalSession extends XTermWidget
          showAltAfterReload_ = false;
       }
    }
-   
+
    /**
     * Set if connecting to a new terminal session.
     * @param isNew true if a new connection, false if a reconnect
@@ -822,12 +822,12 @@ public class TerminalSession extends XTermWidget
    {
       newTerminal_ = isNew;
    }
-   
+
    public ConsoleProcessInfo getProcInfo()
    {
       return procInfo_;
    }
-   
+
    public void getBuffer(final boolean stripAnsiCodes, final ResultCallback<String, String> callback)
    {
       consoleProcess_.getTerminalBuffer(stripAnsiCodes, new ServerRequestCallback<ProcessBufferChunk>()
@@ -846,7 +846,7 @@ public class TerminalSession extends XTermWidget
          }
       });
    }
-   
+
    public TerminalSessionSocket getSocket()
    {
       return socket_;
@@ -870,8 +870,8 @@ public class TerminalSession extends XTermWidget
    private boolean showAltAfterReload_;
    private final boolean createdByApi_;
 
-   // Injected ---- 
-   private WorkbenchServerOperations server_; 
+   // Injected ----
+   private WorkbenchServerOperations server_;
    private EventBus eventBus_;
    private UserPrefs uiPrefs_;
    private SessionInfo sessionInfo_;

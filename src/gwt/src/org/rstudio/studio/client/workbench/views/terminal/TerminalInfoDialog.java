@@ -43,11 +43,11 @@ public class TerminalInfoDialog extends ModalDialogBase
 
       setText("Terminal Diagnostics");
 
-      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() && 
+      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop();
-      
+
       final StringBuilder diagnostics = new StringBuilder();
-      
+
       diagnostics.append("Global Terminal Information\n---------------------------\n");
       diagnostics.append(globalInfo);
       if (session != null)
@@ -100,7 +100,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setText(diagnostics.toString());
 
       addOkButton(new ThemedButton("Close", event -> closeDialog()));
-      
+
       if (session != null)
       {
          appendBufferButton_ = new ThemedButton("Append Buffer", event -> {
@@ -137,15 +137,14 @@ public class TerminalInfoDialog extends ModalDialogBase
    private void initialize(UserPrefs uiPrefs)
    {
       userPrefs_ = uiPrefs;
-   } 
+   }
 
-   
    @Override
    protected Widget createMainWidget()
    {
       return textArea_;
    }
-   
+
    private TextArea textArea_;
    private ThemedButton appendBufferButton_;
 
