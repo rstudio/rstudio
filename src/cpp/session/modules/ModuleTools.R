@@ -321,7 +321,7 @@
 .rs.addFunction("readUserPref", .rs.readUiPref)
 
 .rs.addFunction("writeUiPref", function(prefName, value) {
-  .rs.writerefInternal("rs_writeUserPref", prefName, value)
+  .rs.writePrefInternal("rs_writeUserPref", prefName, value)
 })
 .rs.addFunction("writeUserPref", .rs.writeUiPref)
 
