@@ -236,6 +236,23 @@ FilePath getGlobalCustomThemePath()
 }
 
 /**
+ * @brief Gets the location of custom themes from an environment variable.
+ *
+ * @return The location of custom themes defined by the environment variable, or an empty path if
+ * the variable is not set.
+ */
+FilePath getEnvCustomThemePath()
+{
+   const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
+   if (kLocalPathAlt)
+   {
+      return FilePath(kLocalPathAlt);
+   }
+
+   return FilePath();
+}
+
+/**
  * @brief Gets the location of custom themes that are installed for the current user (legacy RStudio
  * 1.2 version)
  *
@@ -243,13 +260,6 @@ FilePath getGlobalCustomThemePath()
  */
 FilePath getLegacyLocalCustomThemePath()
 {
-   using rstudio::core::FilePath;
-   const char* kLocalPathAlt = std::getenv("RS_THEME_LOCAL_HOME");
-   if (kLocalPathAlt)
-   {
-      return FilePath(kLocalPathAlt);
-   }
-
    return module_context::userHomePath().childPath(".R/rstudio/themes/");
 }
 
@@ -277,8 +287,21 @@ ThemeMap getAllThemes()
    ThemeMap themeMap;
    getThemesInLocation(getDefaultThemePath(), kDefaultThemeLocation, &themeMap);
    getThemesInLocation(getGlobalCustomThemePath(), kGlobalCustomThemeLocation, &themeMap);
-   getThemesInLocation(getLegacyLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
-   getThemesInLocation(getLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
+
+   // Check for an explicit path set from an environment variable. If set, this overrides the
+   // less specific built-in/XDG defaults.
+   FilePath envPath = getEnvCustomThemePath();
+   if (envPath.empty())
+   {
+      // No specific theme path set from environment variable, use defaults
+      getThemesInLocation(getLegacyLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
+      getThemesInLocation(getLocalCustomThemePath(), kLocalCustomThemeLocation, &themeMap);
+   }
+   else
+   {
+      // Use the specific theme path set from the environment variable
+      getThemesInLocation(envPath, kLocalCustomThemeLocation, &themeMap);
+   }
 
    return themeMap;
 }
