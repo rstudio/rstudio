@@ -478,11 +478,20 @@
 })
 
 .rs.addApiFunction("writePreference", function(name, value) {
-  .rs.writeUiPref(paste("rstudioapi", name, sep = "_"), value)
+  .rs.writeApiPref(name, value)
 })
 
 .rs.addApiFunction("readPreference", function(name, default = NULL) {
-  value <- .rs.readUiPref(paste("rstudioapi", name, sep = "_"))
+  value <- .rs.readApiPref(name)
+  if (is.null(value)) default else value
+})
+
+.rs.addApiFunction("writeRStudioPreference", function(name, value) {
+  .rs.writeUiPref(name, value)
+})
+
+.rs.addApiFunction("readRStudioPreference", function(name, default = NULL) {
+  value <- .rs.readUiPref(name)
   if (is.null(value)) default else value
 })
 

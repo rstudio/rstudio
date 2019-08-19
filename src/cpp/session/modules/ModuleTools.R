@@ -293,19 +293,35 @@
    .Call("rs_markdownToHTML", content, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("readUiPref", function(prefName) {
+.rs.addFunction("readPrefInternal", function(method, prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readUserPref", prefName, PACKAGE = "(embedding)")
+  .Call(method, prefName, PACKAGE = "(embedding)")
 })
-.rs.addFunction("readUserPref", .rs.readUiPref)
 
-.rs.addFunction("writeUiPref", function(prefName, value) {
+.rs.addFunction("writePrefInternal", function(method, prefName, value) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writeUserPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+  invisible(.Call(method, prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+})
+
+.rs.addFunction("readApiPref", function(prefName) {
+  .rs.readPrefInternal("rs_readApiPref", prefName)
+})
+
+.rs.addFunction("writeApiPref", function(prefName, value) {
+  .rs.writePrefInternal("rs_writeApiPref", prefName, value)
+})
+
+.rs.addFunction("readUiPref", function(prefName) {
+  .rs.readPrefInternal("rs_readUserPref", prefName)
+})
+.rs.addFunction("readUserPref", .rs.readUiPref)
+
+.rs.addFunction("writeUiPref", function(prefName, value) {
+  .rs.writerefInternal("rs_writeUserPref", prefName, value)
 })
 .rs.addFunction("writeUserPref", .rs.writeUiPref)
 
