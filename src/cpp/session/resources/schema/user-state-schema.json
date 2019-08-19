@@ -74,7 +74,14 @@
                     "type": "boolean"
                 }
             },
-            "default": {},
+            "default": {
+                "width": 550,
+                "height": 450,
+                "keepRatio": false,
+                "format": "PNG",
+                "viewAfterSave": false,
+                "copyAsMetafile": false
+            },
             "description": "The most recently used plot export options."
         },
         "export_viewer_options": {
