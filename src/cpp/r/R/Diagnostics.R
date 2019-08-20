@@ -21,6 +21,14 @@ diagnosticsFile <- suppressWarnings(normalizePath("~/rstudio-diagnostics/diagnos
 
 capture.output({
 
+  cat("RStudio Diagnostics Report\n",
+      "-----------------------------------------------------------------------------\n",
+      "Generated ", date(), "\n\n",
+      "WARNING: This report may contain sensitive security information and/or\n",
+      "personally identifiable information. Please audit the below and redact any\n",
+      "sensitive information before submitting your diagnostics report, then remove\n",
+      "this notice.\n\n", sep = "")
+
   # version
   versionFile <- "../VERSION"
   if (file.exists(versionFile)) {
@@ -40,7 +48,14 @@ capture.output({
   print(Sys.info())
   cat("\nR Version:\n")
   print(version)
-  print(as.list(Sys.getenv()))
+
+  # attempt to automatically sanitize environment variables that obviously contain sensitive data
+  envVars <- Sys.getenv()
+  matches <- grepl("KEY|TOKEN|PASSWORD|API|HOST|USER|SECRET|AUTH|GITHUB", 
+                   names(envVars), ignore.case = TRUE)
+  envVars[matches] <- "*** redacted ***"
+
+  print(as.list(envVars))
   print(search())
   
   # locate diagnostics binary and run it
@@ -65,6 +80,7 @@ capture.output({
   
 }, file=diagnosticsFile)
 
-cat("Diagnostics report written to:", diagnosticsFile, "\n")
+cat("Diagnostics report written to:", diagnosticsFile, "\n\n",
+    "Please audit the report and remove any sensitive information before submitting.\n", sep = "")
 
 

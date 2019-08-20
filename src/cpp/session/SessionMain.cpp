@@ -622,7 +622,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          if (!diagFile.empty())
          {
             std::cout << "Diagnostics report written to: "
-                      << diagFile << std::endl << std::endl;
+                      << diagFile << std::endl 
+                      << "Please audit the report and remove any sensitive information "
+                      << "before submitting." << std::endl << std::endl;
 
             Error error = rstudio::r::exec::RFunction(".rs.showDiagnostics").call();
             if (error)
