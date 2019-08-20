@@ -14,6 +14,7 @@
  */
 
 #include "SessionUserPrefs.hpp"
+#include "SessionApiPrefs.hpp"
 
 #include <boost/bind/bind.hpp>
 
@@ -36,6 +37,12 @@ namespace session {
 namespace modules {
 namespace prefs {
 namespace {
+
+ApiPrefs& apiPrefs()
+{
+   static ApiPrefs instance;
+   return instance;
+}
 
 Error setPreferences(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
@@ -161,6 +168,17 @@ SEXP rs_writeUserPref(SEXP prefName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_readApiPref(SEXP prefName)
+{
+   return rs_readPref(apiPrefs(), prefName);
+}
+
+SEXP rs_writeApiPref(SEXP prefName, SEXP value)
+{
+   writePref(apiPrefs(), prefName, value);
+   return R_NilValue;
+}
+
 SEXP rs_readUserState(SEXP stateName)
 {
    return rs_readPref(userState(), stateName);
@@ -230,13 +248,21 @@ SEXP rs_allPrefs()
 
 core::Error initialize()
 {
+   // Initialize computed preference layers
    using namespace module_context;
    Error error = initializeSessionPrefs();
+   if (error)
+      return error;
+
+   // Initialize prefs for the RStudio API
+   error = apiPrefs().initialize();
    if (error)
       return error;
    
    RS_REGISTER_CALL_METHOD(rs_readUserPref);
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
+   RS_REGISTER_CALL_METHOD(rs_readApiPref);
+   RS_REGISTER_CALL_METHOD(rs_writeApiPref);
    RS_REGISTER_CALL_METHOD(rs_readUserState);
    RS_REGISTER_CALL_METHOD(rs_writeUserState);
    RS_REGISTER_CALL_METHOD(rs_allPrefs);
