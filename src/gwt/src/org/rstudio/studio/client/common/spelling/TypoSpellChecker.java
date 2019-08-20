@@ -33,6 +33,7 @@ import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RequestLog;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -40,6 +41,10 @@ import org.rstudio.studio.client.workbench.WorkbenchList;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -214,9 +219,9 @@ public class TypoSpellChecker
       if (domainSpecificWords_.isEmpty())
       {
          String[] words = RES.domainSpecificWords().getText().split("[\\r\\n]+");
-         for (String w : words) {
+         for (String w : words){
             if (w.length() > 0)
-               domainSpecificWords_.add(w);
+               domainSpecificWords_.add(w.toLowerCase());
          }
       }
       loadDictionary();
@@ -227,7 +232,7 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return domainSpecificWords_.contains(word) || allIgnoredWords_.contains(word) || typoNative_.check(word);
+      return domainSpecificWords_.contains(word.toLowerCase()) || allIgnoredWords_.contains(word) || typoNative_.check(word);
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
@@ -356,6 +361,27 @@ public class TypoSpellChecker
       {
          spellingPrefetcherNative_.prefetch(String.join(",", words), typoNative_);
       }
+   }
+
+   public boolean shouldCheckSpelling(DocDisplay dd, Range r)
+   {
+      String word = dd.getTextForRange(r);
+      // Don't worry about pathologically long words
+      if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+         return false;
+
+      // Don't spellcheck yaml
+      Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
+      if (s.isYaml())
+         return false;
+
+      // Don't spellcheck untokenized words inside a keyword scope
+      String line = dd.getLine(r.getStart().getRow());
+      Pattern p =  Pattern.create("\\\\(?:documentclass|usepackage|newcounter|setcounter|addtocounter|value|arabic|stepcounter|newenvironment|renewenvironment|ref|vref|eqref|pageref|label|cite[a-zA-Z]*|tag|begin|end|bibitem).*{.*" + word + ".*}");
+      if (p.test(line))
+         return false;
+
+      return true;
    }
 
    public static boolean isLoaded() { return typoLoaded_; }

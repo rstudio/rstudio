@@ -68,6 +68,7 @@ config
 cpp
 cran
 csl
+css
 csv
 ctrl
 cy
@@ -222,6 +223,7 @@ makefiles
 mandreyel
 mathfont
 md
+metadata
 microtype
 minimise
 mio
@@ -366,6 +368,7 @@ stdout
 strftime
 stringi
 styler
+stylesheet
 subcommand
 subprocess
 subprocesses
@@ -379,6 +382,7 @@ sw
 symlink
 symlinks
 synchronised
+sys
 templated
 templating
 testthat
@@ -415,6 +419,7 @@ user
 usethis
 usethis's
 ushey's
+utf
 valgrind
 vctrs
 vectorised
