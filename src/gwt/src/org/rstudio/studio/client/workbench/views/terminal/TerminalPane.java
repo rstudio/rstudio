@@ -1037,6 +1037,8 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
+      // need a lag to ensure the new css has been applied, otherwise we pick up the
+      // the original and the terminal stays in the previous style until reloaded
       new Timer()
       {
          @Override
@@ -1049,7 +1051,7 @@ public class TerminalPane extends WorkbenchPane
                getLoadedTerminalAtIndex(i).updateTheme(newTheme);
             }
          }
-      }.schedule(1);
+      }.schedule(250);
    }
 
    private void showTerminalWidget(TerminalSession terminal)
