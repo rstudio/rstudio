@@ -94,8 +94,8 @@ public:
 private:
    core::FilePath allLanguagesDir() const;
    core::FilePath customLanguagesDir() const;
-   core::FilePath old_allLanguagesDir() const;
-   core::FilePath old_customLanguagesDir() const;
+   core::FilePath legacyAllLanguagesDir() const;
+   core::FilePath legacyCustomLanguagesDir() const;
 
 private:
    core::FilePath coreLanguagesDir_;

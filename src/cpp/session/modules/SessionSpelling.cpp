@@ -97,7 +97,7 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
  * \deprecated
  * For getting all languages from pre-1.3 RStudio
  * */
-FilePath old_allLanguagesDir()
+FilePath legacyAllLanguagesDir()
 {
    return module_context::userScratchPath().childPath( "dictionaries/languages-system");
 }
@@ -106,7 +106,7 @@ FilePath old_allLanguagesDir()
  * \deprecated
  * For getting custom languages from pre-1.3 RStudio
  * */
-FilePath old_customDictionariesDir()
+FilePath legacyCustomDictionariesDir()
 {
    return module_context::userScratchPath().childPath( "dictionaries/custom");
 }
@@ -146,18 +146,17 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    {
       pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
    }
-
    /*
     * \deprecated
     * Calls to old deprecated dictionary locations for RStudio 1.2 and earlier
     */
-   if (old_customDictionariesDir().complete(splat[1]).exists())
+   else if (legacyCustomDictionariesDir().complete(splat[1]).exists())
    {
-      pResponse->setCacheableFile(old_customDictionariesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(legacyCustomDictionariesDir().complete(splat[1]), request);
    }
-   else if (old_allLanguagesDir().complete(splat[1]).exists())
+   else if (legacyAllLanguagesDir().complete(splat[1]).exists())
    {
-      pResponse->setCacheableFile(old_allLanguagesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(legacyAllLanguagesDir().complete(splat[1]), request);
    }
    else if (options().hunspellDictionariesPath().complete(splat[1]).exists())
    {

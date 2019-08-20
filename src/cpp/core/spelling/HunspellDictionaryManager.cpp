@@ -195,7 +195,7 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
  * \deprecated
  * For getting all languages from pre-1.3 RStudio
  * */
-FilePath HunspellDictionaryManager::old_allLanguagesDir() const
+FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
 {
    return userDir_.childPath("languages-system");
 }
@@ -204,7 +204,7 @@ FilePath HunspellDictionaryManager::old_allLanguagesDir() const
  * \deprecated
  * For getting user languages from pre-1.3 RStudio
  * */
-FilePath HunspellDictionaryManager::old_customLanguagesDir() const
+FilePath HunspellDictionaryManager::legacyCustomLanguagesDir() const
 {
    return userDir_.childPath("custom");
 }

@@ -219,7 +219,8 @@ public class TypoSpellChecker
       if (domainSpecificWords_.isEmpty())
       {
          String[] words = RES.domainSpecificWords().getText().split("[\\r\\n]+");
-         for (String w : words){
+         for (String w : words)
+         {
             if (w.length() > 0)
                domainSpecificWords_.add(w.toLowerCase());
          }
@@ -375,9 +376,10 @@ public class TypoSpellChecker
       if (s.isYaml())
          return false;
 
-      // Don't spellcheck untokenized words inside a keyword scope
+      // This will capture all blocked text in a way that the highlight rules
+      // don't and shouldn't
       String line = dd.getLine(r.getStart().getRow());
-      Pattern p =  Pattern.create("\\\\(?:documentclass|usepackage|newcounter|setcounter|addtocounter|value|arabic|stepcounter|newenvironment|renewenvironment|ref|vref|eqref|pageref|label|cite[a-zA-Z]*|tag|begin|end|bibitem).*{.*" + word + ".*}");
+      Pattern p =  Pattern.create("\\{.*" + word + ".*\\}");
       if (p.test(line))
          return false;
 
