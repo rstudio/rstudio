@@ -921,6 +921,11 @@
                 }
             },
             "description": "The R version to use by default."
+        },
+        "data_viewer_max_columns": {
+            "type": "integer",
+            "default": 50,
+            "description": "The maximum number of columns to show at once in the data viewer."
         }
     }
 }

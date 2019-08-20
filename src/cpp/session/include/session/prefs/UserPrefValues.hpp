@@ -288,6 +288,7 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDataViewerMaxColumns "data_viewer_max_columns"
 
 class UserPrefValues: public Preferences
 {
@@ -1258,6 +1259,12 @@ public:
     */
    core::json::Object defaultRVersion();
    core::Error setDefaultRVersion(core::json::Object val);
+
+   /**
+    * The maximum number of columns to show at once in the data viewer.
+    */
+   int dataViewerMaxColumns();
+   core::Error setDataViewerMaxColumns(int val);
 
 };
 

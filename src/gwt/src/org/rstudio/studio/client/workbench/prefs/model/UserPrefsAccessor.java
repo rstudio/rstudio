@@ -1517,6 +1517,14 @@ public class UserPrefsAccessor extends Prefs
 
    }
 
+   /**
+    * The maximum number of columns to show at once in the data viewer.
+    */
+   public PrefValue<Integer> dataViewerMaxColumns()
+   {
+      return integer("data_viewer_max_columns", 50);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1841,6 +1849,8 @@ public class UserPrefsAccessor extends Prefs
          submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
       if (source.hasKey("default_r_version"))
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
+      if (source.hasKey("data_viewer_max_columns"))
+         dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
    }
    
 
