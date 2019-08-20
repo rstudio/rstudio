@@ -172,6 +172,14 @@ public class XTermNative extends JavaScriptObject
       this.setOption("theme", theme);
    }-*/;
 
+   public final native void updateBooleanOption(String option, boolean value) /*-{
+      this.setOption(option, value);
+   }-*/;
+
+   public final native void updateStringOption(String option, String value) /*-{
+      this.setOption(option, value);
+   }-*/;
+
    public final native void refresh() /*-{
       this.refresh();
    }-*/;

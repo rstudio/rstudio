@@ -114,6 +114,10 @@ public class TerminalPane extends WorkbenchPane
                }
             });
 
+      uiPrefs.blinkingCursor().bind(arg -> updateTerminalOption("cursorBlink", arg));
+      uiPrefs.terminalBellStyle().bind(arg -> updateTerminalOption("bellStyle", arg));
+      uiPrefs.terminalRenderer().bind(arg -> updateTerminalOption("rendererType", arg));
+
       ensureWidget();
    }
 
@@ -854,6 +858,8 @@ public class TerminalPane extends WorkbenchPane
     */
    private int getLoadedTerminalCount()
    {
+      if (terminalSessionsPanel_ == null)
+         return 0;
       return terminalSessionsPanel_.getWidgetCount();
    }
 
@@ -1044,14 +1050,23 @@ public class TerminalPane extends WorkbenchPane
          @Override
          public void run()
          {
-            int total = getLoadedTerminalCount();
             XTermTheme newTheme = XTermTheme.terminalThemeFromEditorTheme();
-            for (int i = 0; i < total; i++)
-            {
+            for (int i = 0; i < getLoadedTerminalCount(); i++)
                getLoadedTerminalAtIndex(i).updateTheme(newTheme);
-            }
          }
       }.schedule(250);
+   }
+
+   private void updateTerminalOption(String option, boolean value)
+   {
+      for (int i = 0; i < getLoadedTerminalCount(); i++)
+         getLoadedTerminalAtIndex(i).updateBooleanOption(option, value);
+   }
+
+   private void updateTerminalOption(String option, String value)
+   {
+      for (int i = 0; i < getLoadedTerminalCount(); i++)
+         getLoadedTerminalAtIndex(i).updateStringOption(option, value);
    }
 
    private void showTerminalWidget(TerminalSession terminal)

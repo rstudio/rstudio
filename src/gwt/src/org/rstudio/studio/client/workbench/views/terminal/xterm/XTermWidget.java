@@ -404,6 +404,18 @@ public class XTermWidget extends Widget
          terminal_.updateTheme(theme);
    }
 
+   public void updateBooleanOption(String option, boolean value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateBooleanOption(option, value);
+   }
+
+   public void updateStringOption(String option, String value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateStringOption(option, value);
+   }
+
    /**
     * Load resources for XTermWidget.
     *
