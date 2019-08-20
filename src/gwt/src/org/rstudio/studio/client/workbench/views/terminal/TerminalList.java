@@ -442,7 +442,8 @@ public class TerminalList implements Iterable<String>,
             uiPrefs_.blinkingCursor().getValue(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
-            XTermTheme.terminalThemeFromEditorTheme());
+            XTermTheme.terminalThemeFromEditorTheme(),
+            XTermTheme.getFontFamily());
 
       TerminalSession newSession = new TerminalSession(info, options, createdByApi);
 

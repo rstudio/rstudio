@@ -43,13 +43,15 @@ public class XTermOptions extends JavaScriptObject
          boolean cursorBlink,
          String rendererType,
          boolean windowsMode,
-         XTermTheme theme) /*-{
+         XTermTheme theme,
+         String fontFamily) /*-{
       return {
          "bellStyle": bellStyle,
          "cursorBlink": cursorBlink,
          "rendererType": rendererType,
          "windowsMode": windowsMode,
-         "theme": theme
+         "theme": theme,
+         "fontFamily": fontFamily
      };
    }-*/;
 }

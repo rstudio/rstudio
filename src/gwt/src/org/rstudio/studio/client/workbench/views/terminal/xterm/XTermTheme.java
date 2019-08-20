@@ -78,6 +78,11 @@ public class XTermTheme extends JavaScriptObject
       );
    }
 
+   public static String getFontFamily()
+   {
+      return DomUtils.extractCssValue("ace_editor", "font-family");
+   }
+
    public final native static XTermTheme create(
          String background, // default background color
          String foreground, // default foreground color
