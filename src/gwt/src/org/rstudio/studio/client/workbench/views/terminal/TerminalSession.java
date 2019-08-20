@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
@@ -68,16 +69,14 @@ public class TerminalSession extends XTermWidget
 {
    /**
     * @param info terminal metadata
-    * @param cursorBlink should terminal cursor blink
-    * @param focus should terminal automatically get focus
+    * @param options terminal emulator options
     * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
-                          boolean cursorBlink,
-                          boolean focus,
+                          XTermOptions options,
                           boolean createdByApi)
    {
-      super(cursorBlink, focus);
+      super(options);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
@@ -550,6 +549,7 @@ public class TerminalSession extends XTermWidget
       super.setVisible(isVisible);
       if (isVisible)
       {
+         refresh();
          connect(new ResultCallback<Boolean, String>()
          {
             @Override

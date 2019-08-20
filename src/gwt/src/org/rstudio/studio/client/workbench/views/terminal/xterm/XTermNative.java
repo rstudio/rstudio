@@ -37,8 +37,8 @@ public class XTermNative extends JavaScriptObject
    /**
     * Remove event handlers and detach from parent node.
     */
-   public final native void destroy() /*-{
-      this.destroy();
+   public final native void dispose() /*-{
+      this.dispose();
    }-*/;
 
    /**
@@ -80,16 +80,8 @@ public class XTermNative extends JavaScriptObject
       this.blur();
    }-*/;
 
-   public final native void scrollDisp(int lineCount) /*-{
-      this.scrollDisp(lineCount, false);
-   }-*/;
-
-   public final native void scrollPages(int pageCount) /*-{
-      this.scrollPages(pageCount);
-   }-*/;
-
-   public final native void scrollToTop() /*-{
-      this.scrollToTop();
+   public final native void scrollLines(int lineCount) /*-{
+      this.scrollLines(lineCount);
    }-*/;
 
    public final native void scrollToBottom() /*-{
@@ -120,7 +112,7 @@ public class XTermNative extends JavaScriptObject
 
    // XTERM_IMP
    public final native boolean altBufferActive() /*-{
-      return this.buffers.active == this.buffers.alt;
+      return this._core.buffers.active == this._core.buffers.alt;
    }-*/;
 
    public final native void showPrimaryBuffer() /*-{
@@ -135,33 +127,10 @@ public class XTermNative extends JavaScriptObject
 
    // XTERM_IMP
    public final native String currentLine() /*-{
-      lineBuf = this.buffer.lines.get(this.y + this.ybase);
+      var lineBuf = this._core.buffer.lines.get(this.y + this.ybase);
       if (!lineBuf) // resize may be in progress
          return null;
-      current = "";
-      for (i = 0; i < this.cols; i++) {
-         if (!lineBuf[i])
-            return null;
-         current += lineBuf[i][1];
-      }
-      return current;
-   }-*/;
-
-   // XTERM_IMP
-   public final native String getLocalBuffer() /*-{
-      buffer = "";
-      for (row = 0; row < this.rows; row++) {
-         lineBuf = this.buffer.lines.get(row);
-         if (!lineBuf) // resize may be in progress
-            return null;
-
-         for (col = 0; col < this.cols; col++) {
-            if (!lineBuf[col])
-               return null;
-            buffer += lineBuf[col][1];
-         }
-      }
-      return buffer;
+      return lineBuf.translateToString();
    }-*/;
 
    /**
@@ -170,10 +139,10 @@ public class XTermNative extends JavaScriptObject
     * @param command handler for data typed by the user
     */
    public final native void onTerminalData(CommandWithArg<String> command) /*-{
-      this.handler =
+      this.dataHandler = this.onData(
          $entry(function(data) {
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
-         });
+         }));
    }-*/;
 
    /**
@@ -181,66 +150,45 @@ public class XTermNative extends JavaScriptObject
     * @param command handler for title text
     */
    public final native void onTitleData(CommandWithArg<String> command) /*-{
-      this.handleTitle =
+      this.handleTitle = this.onTitleChange(
          $entry(function(title) {
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(title);
-         });
+         }));
+   }-*/;
+
+   public final native String getStringOption(String optionName) /*-{
+      return this.getOption(optionName);
+   }-*/;
+
+   public final native boolean getBoolOption(String optionName) /*-{
+      return this.getOption(optionName);
+   }-*/;
+
+   public final native double getNumberOption(String optionName) /*-{
+      return this.getOption(optionName);
+   }-*/;
+
+   public final native void updateTheme(XTermTheme theme) /*-{
+      this.setOption("theme", theme);
+   }-*/;
+
+   public final native void refresh() /*-{
+      this.refresh();
    }-*/;
 
    /**
     * Factory to create a native Javascript terminal object.
     *
     * @param container HTML element to attach to
-    * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
-    * @param focus <code>true</code> to give terminal focus by default
-    * @param supportMousewheel <code>true</code> to handle legacy mousewheel event
+    * @param options xterm.js settings
     *
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container,
-                                                   boolean blink,
-                                                   boolean focus,
-                                                   boolean supportMousewheel) /*-{
-      var nativeTerm_ = new $wnd.Terminal({cursorBlink: blink});
-      nativeTerm_.open(container, focus);
-
-      // XTERM_IMP
-      if (supportMousewheel) {
-         // older browsers sent 'mousewheel' but xterm only handles 'wheel'
-         // logic to translate from mousewheel event to wheel event taken from:
-         // https://developer.mozilla.org/en-US/docs/Web/Events/wheel#Listening_to_this_event_across_browser
-         self = nativeTerm_;
-         nativeTerm_.element.addEventListener('mousewheel', function (ev) {
-            if (self.mouseEvents)
-               return;
-
-            // create a normalized 'wheel' event object
-            var event = {
-               // keep a ref to the original event object
-               ev: ev,
-               target: ev.target || ev.srcElement,
-               type: "wheel",
-               deltaMode: ev.type == "MozMousePixelScroll" ? 0 : 1,
-               deltaX: 0,
-               deltaY: 0,
-               deltaZ: 0,
-               preventDefault: function() {
-                  ev.preventDefault ?
-                  ev.preventDefault() :
-                  ev.returnValue = false;
-               }
-            };
-
-            // calculate deltaY (and deltaX) according to the event
-            event.deltaY = - 1/40 * ev.wheelDelta;
-
-            // Webkit also support wheelDeltaX
-            ev.wheelDeltaX && ( event.deltaX = - 1/40 * ev.wheelDeltaX );
-
-            self.viewport.onWheel(event);
-            return self.cancel(ev);
-         });
-      }
+   public static native XTermNative createTerminal(Element container, XTermOptions options) /*-{
+      $wnd.Terminal.applyAddon($wnd.fit);
+      var nativeTerm_ = new $wnd.Terminal(options);
+      nativeTerm_.open(container);
+      nativeTerm_.focus();
       return nativeTerm_;
    }-*/;
-} 
+}

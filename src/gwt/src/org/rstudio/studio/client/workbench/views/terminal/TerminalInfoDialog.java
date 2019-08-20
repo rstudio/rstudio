@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 public class TerminalInfoDialog extends ModalDialogBase
 {
@@ -77,6 +78,14 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
          diagnostics.append("Typing lag:  '").append(session.getSocket().getTypingLagMsg()).append("'\n");
 
+         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
+         for (String optionName : XTermOptions.stringOptions)
+            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.boolOptions)
+            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.numberOptions)
+            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
+
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
          diagnostics.append("Remote:     '").append(Desktop.isRemoteDesktop()).append("'\n");
@@ -115,10 +124,6 @@ public class TerminalInfoDialog extends ModalDialogBase
                   textArea_.setText(diagnostics.toString());
                   textArea_.setCursorPos(diagnostics.toString().length());
                   textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
-
-                  diagnostics.append("\n\nTerminal Buffer (Client)\n---------------\n");
-                  diagnostics.append(AnsiCode.prettyPrint(session.getLocalBuffer()));
-                  textArea_.setText(diagnostics.toString());
                }
 
                @Override

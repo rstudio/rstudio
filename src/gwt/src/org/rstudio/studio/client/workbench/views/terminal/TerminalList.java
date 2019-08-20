@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -31,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubproc
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 
 /**
  * List of terminals, with sufficient metadata to display a list of
@@ -430,8 +433,14 @@ public class TerminalList implements Iterable<String>,
          return;
       }
 
-      TerminalSession newSession = new TerminalSession(
-            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, createdByApi);
+      XTermOptions options = XTermOptions.create(
+            XTermOptions.BELL_STYLE_SOUND,
+            uiPrefs_.blinkingCursor().getValue(),
+            XTermOptions.RENDERER_CANVAS,
+            BrowseCap.isWindowsDesktop(),
+            XTermTheme.terminalThemeFromEditorTheme());
+
+      TerminalSession newSession = new TerminalSession(info, options, createdByApi);
 
       if (existing != null)
       {
@@ -492,8 +501,7 @@ public class TerminalList implements Iterable<String>,
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, TerminalListData> terminals_ =
-         new LinkedHashMap<>();
+   private LinkedHashMap<String, TerminalListData> terminals_ = new LinkedHashMap<>();
 
    // Injected ----
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

@@ -2,40 +2,30 @@
 
 set -e
 
-# Get the xterm.js repo and checkout specific commit
-if [ ! -d "./xterm.js" ]; then
-    git clone git@github.com:rstudio/xterm.js.git xterm.js
-fi
-
-cd xterm.js
-git clean -dfx
-
-# xterm version 2.9.2; with RStudio patches
-git checkout fd873c86
-
-XTERM_DIST_DIR=./dist
-XTERM_ADDONS_DIR=./dist/addons
-XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
-
-# stylesheet
-cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm-orig.css
-
-# uncompressed js
-cp ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm-uncompressed.js
-cp ${XTERM_ADDONS_DIR}/fit/fit.js ${XTERM_TARGET_DIR}/fit-uncompressed.js
+command -v npm >/dev/null 2>&1 || { echo >&2 "npm required but not found: exiting."; exit 1; }
 
 # minified js using closure
 minify () {
   echo "Minifying $1 to $2"
-  CC_OPTS="--compilation_level SIMPLE_OPTIMIZATIONS --language_in ECMASCRIPT5"
+  CC_OPTS="--compilation_level SIMPLE --language_in ECMASCRIPT6 --language_out ECMASCRIPT5 --warning_level QUIET"
   java -Xmx128M -jar "../compiler/compiler.jar" $CC_OPTS --js $1 --js_output_file $2
 }
 
+if [ -d "./xterm.js" ]; then
+  rm -rf xterm.js
+fi
+
+mkdir xterm.js
+cd xterm.js
+
+npm install xterm@3.14.5
+
+XTERM_DIST_DIR=./node_modules/xterm/dist
+XTERM_ADDONS_DIR=${XTERM_DIST_DIR}/addons
+XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
+
+cp ${XTERM_DIST_DIR}/xterm.css ${XTERM_TARGET_DIR}/xterm.css
 minify ${XTERM_DIST_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm.js
 minify ${XTERM_ADDONS_DIR}/fit/fit.js ${XTERM_TARGET_DIR}/fit.js
 
-echo "Tweaking CSS"
-cd src
-../../tweak-xterm-css.R
-echo "xterm.css adjusted. Be sure to rebuild Ace themes if necessary (compile-themes.R)."
 echo Done!

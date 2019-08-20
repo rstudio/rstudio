@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -54,6 +55,7 @@ import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 
 /**
  * Holds the contents of the Terminal pane, including the toolbar and
@@ -75,7 +77,8 @@ public class TerminalPane extends WorkbenchPane
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
-                                     TerminalSubprocEvent.Handler
+                                     TerminalSubprocEvent.Handler,
+                                     ThemeChangedEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -97,6 +100,7 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
+      events_.addHandler(ThemeChangedEvent.TYPE, this);
 
       events.addHandler(RestartStatusEvent.TYPE,
             event -> {
@@ -1028,6 +1032,24 @@ public class TerminalPane extends WorkbenchPane
          terminal.setHasChildProcs(event.hasSubprocs());
       }
       updateTerminalToolbar();
+   }
+
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            int total = getLoadedTerminalCount();
+            XTermTheme newTheme = XTermTheme.terminalThemeFromEditorTheme();
+            for (int i = 0; i < total; i++)
+            {
+               getLoadedTerminalAtIndex(i).updateTheme(newTheme);
+            }
+         }
+      }.schedule(1);
    }
 
    private void showTerminalWidget(TerminalSession terminal)
