@@ -1610,6 +1610,32 @@ core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 }
 
 /**
+ * Terminal bell style
+ */
+std::string UserPrefValues::terminalBellStyle()
+{
+   return readPref<std::string>("terminal_bell_style");
+}
+
+core::Error UserPrefValues::setTerminalBellStyle(std::string val)
+{
+   return writePref("terminal_bell_style", val);
+}
+
+/**
+ * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+ */
+std::string UserPrefValues::terminalRenderer()
+{
+   return readPref<std::string>("terminal_renderer");
+}
+
+core::Error UserPrefValues::setTerminalRenderer(std::string val)
+{
+   return writePref("terminal_renderer", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2215,6 +2241,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalWebsockets,
       kTerminalAutoClose,
       kTerminalTrackEnvironment,
+      kTerminalBellStyle,
+      kTerminalRenderer,
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,

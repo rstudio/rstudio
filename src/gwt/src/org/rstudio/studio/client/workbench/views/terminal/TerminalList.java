@@ -434,9 +434,9 @@ public class TerminalList implements Iterable<String>,
       }
 
       XTermOptions options = XTermOptions.create(
-            XTermOptions.BELL_STYLE_SOUND,
+            uiPrefs_.terminalBellStyle().getValue(),
             uiPrefs_.blinkingCursor().getValue(),
-            XTermOptions.RENDERER_CANVAS,
+            uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme());
 

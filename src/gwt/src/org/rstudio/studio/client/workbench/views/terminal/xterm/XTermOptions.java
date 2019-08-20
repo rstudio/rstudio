@@ -22,26 +22,18 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class XTermOptions extends JavaScriptObject
 {
    public static final String[] stringOptions = {
-         "bellSound", "bellStyle", "cursorStyle",
-         "fontFamily", "fontWeight", "fontWeightBold",
-         "rendererType", "termName"
+         "bellStyle", "cursorStyle", "fontFamily", "fontWeight", "fontWeightBold", "rendererType"
    };
 
    public static final String[] boolOptions = {
-         "allowTransparency", "cancelEvents", "convertEol", "cursorBlink",
-         "disableStdin", "drawBoldTextInBrightColors", "enableBold",
-         "macOptionClickForcesSelection", "macOptionIsMeta",
-         "rightClickSelectsWord", "screenKeys", "screenReaderMode", "useFlowControl", "windowsMode"
+         "allowTransparency", "cancelEvents", "convertEol", "cursorBlink", "disableStdin",
+         "drawBoldTextInBrightColors", "macOptionClickForcesSelection", "macOptionIsMeta",
+         "rightClickSelectsWord", "screenReaderMode", "windowsMode"
    };
 
    public static final String[] numberOptions = {
          "fontSize", "letterSpacing", "lineHeight", "tabStopWidth", "scrollback"
    };
-
-   public static final String BELL_STYLE_NONE = "none";
-   public static final String BELL_STYLE_SOUND = "sound";
-   public static final String RENDERER_DOM = "dom";
-   public static final String RENDERER_CANVAS = "canvas";
 
    // Required by JavaScriptObject subclasses
    protected XTermOptions() {}
