@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -245,7 +246,7 @@ public class TerminalSession extends XTermWidget
       connected_ = false;
       connecting_ = false;
       restartSequenceWritten_ = false;
-      reloading_ = false;
+      setNotReloading();
       deferredOutput_.clear();
    }
 
@@ -677,12 +678,12 @@ public class TerminalSession extends XTermWidget
       deferredOutput_.clear();
       if (newTerminal_)
       {
-         reloading_ = false;
+         setNotReloading();
          setNewTerminal(false);
       }
       else
       {
-         reloading_ = true;
+         setReloading();
          fetchNextChunk(0);
       }
    }
@@ -721,7 +722,7 @@ public class TerminalSession extends XTermWidget
    {
       if (!shellSupportsReload())
       {
-         reloading_ = false;
+         setNotReloading();
          return;
       }
 
@@ -745,7 +746,7 @@ public class TerminalSession extends XTermWidget
                      writeRestartSequence();
                      if (procInfo_.getZombie())
                         showZombieMessage();
-                     reloading_ = false;
+                     setNotReloading();
                      for (String outputStr : deferredOutput_)
                      {
                         socket_.dispatchOutput(outputStr, doLocalEcho());
@@ -759,7 +760,7 @@ public class TerminalSession extends XTermWidget
                {
                   Debug.logError(error);
                   writeError(error.getUserMessage());
-                  reloading_ = false;
+                  setNotReloading();
                   deferredOutput_.clear();
                }
             });
@@ -850,6 +851,26 @@ public class TerminalSession extends XTermWidget
    public TerminalSessionSocket getSocket()
    {
       return socket_;
+   }
+
+   private void setReloading()
+   {
+      reloading_ = true;
+   }
+
+   private void setNotReloading()
+   {
+      // Always start terminal emulator with BEL support off to avoid playing back previous
+      // "\a" when reloading, then set it to desired value when done reloading. Slight delay
+      // needed to ensure terminal has completed rendering the output.
+      new Timer() {
+         @Override
+         public void run()
+         {
+            updateStringOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
+         }
+      }.schedule(500);
+      reloading_ = false;
    }
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();

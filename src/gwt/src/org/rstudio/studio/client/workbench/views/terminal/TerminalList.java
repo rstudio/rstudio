@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
@@ -433,8 +434,11 @@ public class TerminalList implements Iterable<String>,
          return;
       }
 
+      // Always start terminals with BEL disabled, in case we are playing back previous output
+      // that contains BEL characters. We turn on the bell (if pref enabled) once playback
+      // is complete.
       XTermOptions options = XTermOptions.create(
-            uiPrefs_.terminalBellStyle().getValue(),
+            UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
