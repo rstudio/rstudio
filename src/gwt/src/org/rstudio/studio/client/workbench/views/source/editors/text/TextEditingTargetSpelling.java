@@ -81,44 +81,39 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          Position.create(docDisplay_.getFirstVisibleRow(), 0),
          Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow())));
 
-      final ArrayList<String> words = new ArrayList<>();
       final ArrayList<Range> wordRanges = new ArrayList<>();
+      JsArray<LintItem> lint = JsArray.createArray().cast();
+      ArrayList<String> prefetchWords = new ArrayList<>();
 
       for (Range r : wordSource)
       {
-         // Don't worry about pathologically long words
-         if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+         if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
             continue;
 
          wordRanges.add(r);
-         words.add(docDisplay_.getTextForRange(r));
 
          // only check a certain number of words at once to not overwhelm the system
          if (wordRanges.size() > prefs_.maxSpellcheckWords().getValue())
             break;
+
+         String word = docDisplay_.getTextForRange(r);
+         if (!typoSpellChecker_.checkSpelling(word)) {
+            if (prefetchWords.size() < prefs_.maxSpellcheckPrefetch().getValue())
+               prefetchWords.add(word);
+
+            lint.push(LintItem.create(
+               r.getStart().getRow(),
+               r.getStart().getColumn(),
+               r.getEnd().getRow(),
+               r.getEnd().getColumn(),
+               "Spellcheck",
+               "spelling"));
+         }
       }
 
-      JsArray<LintItem> lint = JsArray.createArray().cast();
-      if (wordRanges.size() > 0)
-      {
-         ArrayList<String> prefetchWords = new ArrayList<>();
-         for (int i = 0; i < words.size(); i++) {
-            String word = words.get(i);
-            if (!typoSpellChecker_.checkSpelling(word)) {
-               if (prefetchWords.size() < prefs_.maxSpellcheckPrefetch().getValue())
-                  prefetchWords.add(word);
-               Range range = wordRanges.get(i);
-               lint.push(LintItem.create(
-                  range.getStart().getRow(),
-                  range.getStart().getColumn(),
-                  range.getEnd().getRow(),
-                  range.getEnd().getColumn(),
-                  "Spellcheck",
-                  "spelling"));
-            }
-         }
+      if (prefetchWords.size() > 0)
          typoSpellChecker_.prefetchWords(prefetchWords);
-      }
+
       return lint;
    }
 
@@ -244,8 +239,12 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          }
          word = docDisplay_.getTextForRange(wordRange);
 
-         if (word == null || typoSpellChecker_.checkSpelling(word))
+         if (word == null ||
+             !typoSpellChecker_.shouldCheckSpelling(docDisplay_, wordRange) ||
+             typoSpellChecker_.checkSpelling(word))
+         {
             return;
+         }
 
          // final variables for lambdas
          final String replaceWord = word;
