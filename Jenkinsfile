@@ -241,10 +241,10 @@ try {
           trigger_external_build('IDE/session')
         }
 
-        slackSend channel: params.SLACK_CHANNEL, color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
+        slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
 
 } catch(err) {
-   slackSend channel: params.SLACK_CHANNEL, color: 'bad', message: "${messagePrefix} failed: ${err}"
+   slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'bad', message: "${messagePrefix} failed: ${err}"
    error("failed: ${err}")
 }
