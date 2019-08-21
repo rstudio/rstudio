@@ -2214,6 +2214,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSaveAllSourceDocs()
    {
+      // Save all documents in the main window
       cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
       {
          @Override
@@ -2229,6 +2230,9 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+
+      // Save all documents in satellite windows
+      windowManager_.saveUnsavedDocuments(null, null);
    }
    
    
@@ -3923,7 +3927,15 @@ public class Source implements InsertSourceHandler,
    
    
    private void manageSaveAllCommand()
-   {      
+   {
+      // if source windows are open, managing state of the command becomes
+      // complicated, so leave it enabled
+      if (windowManager_.areSourceWindowsOpen())
+      {
+         commands_.saveAllSourceDocs().setEnabled(true);
+         return;
+      }
+
       // if one document is dirty then we are enabled
       for (EditingTarget target : editors_)
       {

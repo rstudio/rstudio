@@ -1016,7 +1016,8 @@ well as menu structures (for main menu and popup menus).
         label="Save All Source Documents"
         menuLabel="Sa_ve All"
         buttonLabel=""
-        desc="Save all open documents"/>
+        desc="Save all open documents"
+        windowMode="main"/>
         
    <cmd id="saveSourceDocWithEncoding"
         label="Save Current Document with Encoding..."
