@@ -77,8 +77,7 @@ public class TerminalPane extends WorkbenchPane
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
                                      SessionSerializationHandler,
-                                     TerminalSubprocEvent.Handler,
-                                     ThemeChangedEvent.Handler
+                                     TerminalSubprocEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -100,7 +99,6 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
-      events_.addHandler(ThemeChangedEvent.TYPE, this);
 
       events.addHandler(RestartStatusEvent.TYPE,
             event -> {
@@ -113,10 +111,6 @@ public class TerminalPane extends WorkbenchPane
                   isRestartInProgress_ = false;
                }
             });
-
-      uiPrefs.blinkingCursor().bind(arg -> updateTerminalOption("cursorBlink", arg));
-      uiPrefs.terminalBellStyle().bind(arg -> updateTerminalOption("bellStyle", arg));
-      uiPrefs.terminalRenderer().bind(arg -> updateTerminalOption("rendererType", arg));
 
       ensureWidget();
    }
@@ -1038,35 +1032,6 @@ public class TerminalPane extends WorkbenchPane
          terminal.setHasChildProcs(event.hasSubprocs());
       }
       updateTerminalToolbar();
-   }
-
-   @Override
-   public void onThemeChanged(ThemeChangedEvent event)
-   {
-      // need a lag to ensure the new css has been applied, otherwise we pick up the
-      // the original and the terminal stays in the previous style until reloaded
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            XTermTheme newTheme = XTermTheme.terminalThemeFromEditorTheme();
-            for (int i = 0; i < getLoadedTerminalCount(); i++)
-               getLoadedTerminalAtIndex(i).updateTheme(newTheme);
-         }
-      }.schedule(250);
-   }
-
-   private void updateTerminalOption(String option, boolean value)
-   {
-      for (int i = 0; i < getLoadedTerminalCount(); i++)
-         getLoadedTerminalAtIndex(i).updateBooleanOption(option, value);
-   }
-
-   private void updateTerminalOption(String option, String value)
-   {
-      for (int i = 0; i < getLoadedTerminalCount(); i++)
-         getLoadedTerminalAtIndex(i).updateStringOption(option, value);
    }
 
    private void showTerminalWidget(TerminalSession terminal)

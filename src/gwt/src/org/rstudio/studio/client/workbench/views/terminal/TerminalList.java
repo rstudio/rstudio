@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFac
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
@@ -81,10 +82,12 @@ public class TerminalList implements Iterable<String>,
    @Inject
    private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                            EventBus events,
+                           Provider<FontSizeManager> pFontSizeManager,
                            UserPrefs uiPrefs)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       eventBus_ = events;
+      pFontSizeManager_ = pFontSizeManager;
       uiPrefs_ = uiPrefs;
    }
 
@@ -435,15 +438,15 @@ public class TerminalList implements Iterable<String>,
       }
 
       // Always start terminals with BEL disabled, in case we are playing back previous output
-      // that contains BEL characters. We turn on the bell (if pref enabled) once playback
-      // is complete.
+      // that contains BEL characters. We turn on the bell once playback is complete.
       XTermOptions options = XTermOptions.create(
             UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),
-            XTermTheme.getFontFamily());
+            XTermTheme.getFontFamily(),
+            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()));
 
       TerminalSession newSession = new TerminalSession(info, options, createdByApi);
 
@@ -511,5 +514,6 @@ public class TerminalList implements Iterable<String>,
    // Injected ----
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private EventBus eventBus_;
+   private Provider<FontSizeManager> pFontSizeManager_;
    private UserPrefs uiPrefs_;
 }

@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -51,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
@@ -66,7 +68,8 @@ public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
                                         ResizeTerminalEvent.Handler,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler
+                                        SessionSerializationHandler,
+                                        ThemeChangedEvent.Handler
 {
    /**
     * @param info terminal metadata
@@ -165,6 +168,14 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
+            uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg));
+            uiPrefs_.terminalBellStyle().bind(arg -> updateStringOption("bellStyle", arg));
+            uiPrefs_.terminalRenderer().bind(arg -> updateStringOption("rendererType", arg));
+            uiPrefs_.fontSizePoints().bind(arg -> {
+               updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
+               onResize();
+            });
 
             showAltAfterReload_ = false;
             if (!getProcInfo().getAltBufferActive() && xtermAltBufferActive())
@@ -265,6 +276,21 @@ public class TerminalSession extends XTermWidget
                   writeError(error.getUserMessage());
                }
             });
+   }
+
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      // need a lag to ensure the new css has been applied, otherwise we pick up the
+      // the original and the terminal stays in the previous style until reloaded
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            updateTheme(XTermTheme.terminalThemeFromEditorTheme());
+         }
+      }.schedule(250);
    }
 
    @Override

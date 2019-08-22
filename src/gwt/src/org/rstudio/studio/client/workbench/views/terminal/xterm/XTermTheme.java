@@ -83,6 +83,42 @@ public class XTermTheme extends JavaScriptObject
       return DomUtils.extractCssValue("ace_editor", "font-family");
    }
 
+   private static boolean doubleEqualish(double d1, double d2)
+   {
+      return Math.abs(d1 - d2) < 0.0001;
+   }
+
+   public static double adjustFontSize(double size)
+   {
+      // standard values for sizes we expose in preferences
+      if (doubleEqualish(size, 7.0))
+         return 9.0;
+      else if (doubleEqualish(size, 8.0))
+         return 11.0;
+      else if (doubleEqualish(size, 9.0))
+         return 12.0;
+      else if (doubleEqualish(size, 10.0))
+         return 13.0;
+      else if (doubleEqualish(size, 11.0))
+         return 15.0;
+      else if (doubleEqualish(size, 12.0))
+         return 16.0;
+      else if (doubleEqualish(size, 13.0))
+         return 17.0;
+      else if (doubleEqualish(size, 14.0))
+         return 19.0;
+      else if (doubleEqualish(size, 16.0))
+         return 22.0;
+      else if (doubleEqualish(size, 18.0))
+         return 24.0;
+      else if (doubleEqualish(size, 24.0))
+         return 32.0;
+      else if (doubleEqualish(size, 36.0))
+         return 48.0;
+      else
+         return Math.round(size * 1.3333333);
+   }
+
    public final native static XTermTheme create(
          String background, // default background color
          String foreground, // default foreground color

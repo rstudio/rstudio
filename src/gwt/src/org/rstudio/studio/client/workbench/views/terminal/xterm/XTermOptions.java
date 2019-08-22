@@ -44,14 +44,16 @@ public class XTermOptions extends JavaScriptObject
          String rendererType,
          boolean windowsMode,
          XTermTheme theme,
-         String fontFamily) /*-{
+         String fontFamily,
+         double fontSize) /*-{
       return {
          "bellStyle": bellStyle,
          "cursorBlink": cursorBlink,
          "rendererType": rendererType,
          "windowsMode": windowsMode,
          "theme": theme,
-         "fontFamily": fontFamily
+         "fontFamily": fontFamily,
+         "fontSize": fontSize
      };
    }-*/;
 }

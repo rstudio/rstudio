@@ -416,6 +416,12 @@ public class XTermWidget extends Widget
          terminal_.updateStringOption(option, value);
    }
 
+   public void updateDoubleOption(String option, double value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateDoubleOption(option, value);
+   }
+
    /**
     * Load resources for XTermWidget.
     *

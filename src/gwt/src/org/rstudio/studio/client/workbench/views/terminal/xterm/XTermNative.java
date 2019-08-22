@@ -180,6 +180,10 @@ public class XTermNative extends JavaScriptObject
       this.setOption(option, value);
    }-*/;
 
+   public final native void updateDoubleOption(String option, double value) /*-{
+      this.setOption(option, value);
+   }-*/;
+
    public final native void refresh() /*-{
       this.refresh();
    }-*/;
