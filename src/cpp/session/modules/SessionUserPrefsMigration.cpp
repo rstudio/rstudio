@@ -85,7 +85,11 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
                key == kJobsTabVisibility ||
                key == kLauncherJobsSort ||
                key == kBusyDetection ||
-               key == kDocOutlineShow)
+               key == kDocOutlineShow ||
+               key == kRmdViewerType ||
+               key == kShinyViewerType ||
+               key == kPlumberViewerType ||
+               key == kAnsiConsoleMode)
       {
          // These preferences don't migrate
          continue;
@@ -153,7 +157,13 @@ core::Error migratePrefs(const FilePath& src)
       }
       else if (val.type() == json::ObjectType)
       {
-         migrateUiPrefs(val.get_obj(), &destPrefs);
+         // Migrate UI prefs; guard against JSON exceptions (there's a lot of potential for these
+         // due to malformed or invalid prefs files from the wild)
+         try
+         {
+            migrateUiPrefs(val.get_obj(), &destPrefs);
+         }
+         CATCH_UNEXPECTED_EXCEPTION
       }
    }
 
