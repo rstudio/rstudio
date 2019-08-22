@@ -32,6 +32,11 @@ namespace modules {
 namespace prefs {
 namespace {
 
+/**
+ * Migrates the "UI prefs" from RStudio 1.2 (and older) to the RStudio 1.3+. Both are JSON objects,
+ * so most values are just copied as-is, but a number of preferences require special treatment since
+ * they were reworded or reorganized to be more user-friendly in RStudio 1.3.
+ */
 void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
 {
    std::vector<std::string> keys = userPrefs().allKeys();
@@ -134,6 +139,12 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
 } // anonymous namespace
 
 
+/**
+ * Migrates RStudio 1.2 (or older) preferences from a user-settings file into the new RStudio 1.3+
+ * preferences system. This is a one-time operation, performed only when we detect that no
+ * preferences exist yet. We can remove this code if RStudio 1.2 and below usage ever drops below a
+ * significant threshold.
+ */
 core::Error migratePrefs(const FilePath& src)
 {
    json::Object srcPrefs;
@@ -236,6 +247,7 @@ core::Error migratePrefs(const FilePath& src)
    destPrefs[kCleanTexi2dviOutput] = settings.getBool("cleanTexi2DviOutput", true);
    destPrefs[kUseSecureDownload] = settings.getBool("securePackageDownload", true);
 
+   // Write the accumulated preferences to our user prefs layer
    return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs); 
 }
 

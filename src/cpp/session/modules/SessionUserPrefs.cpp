@@ -248,6 +248,10 @@ SEXP rs_allPrefs()
    return list;
 }
 
+/**
+ * One-time migration of user preferences from the user-settings file used in RStudio 1.2 and below
+ * to the formal preferences system in RStudio 1.3.
+ */
 Error migrateUserPrefs()
 {
    // Check to see whether there's a preferences file at the new location
@@ -289,7 +293,8 @@ core::Error initialize()
    if (error)
       return error;
 
-   // Migrate user preferences from older versions of RStudio. 
+   // Migrate user preferences from older versions of RStudio if they exist (and we don't have prefs
+   // yet)
    error = migrateUserPrefs();
    if (error)
    {
