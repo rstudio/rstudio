@@ -18,7 +18,10 @@
 #include <core/json/Json.hpp>
 #include <core/Settings.hpp>
 
+#include <session/SessionOptions.hpp>
 #include <session/prefs/UserPrefs.hpp>
+
+#include <r/session/RSession.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::session::prefs;
@@ -112,6 +115,15 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
             (*dest)[key] = theme;
          }
       }
+      else
+      {
+         // Most UI prefs can just be copied to the new system without modification.
+         json::Object::iterator it = uiPrefs.find(key);
+         if (it != uiPrefs.end())
+         {
+            (*dest)[key] = (*it).value();
+         }
+      }
    }
 }
 
@@ -145,8 +157,74 @@ core::Error migratePrefs(const FilePath& src)
       }
    }
 
-   std::stringstream oss;
-   json::writeFormatted(destPrefs, oss);
+   // Migrate .rprofile execution
+   bool rprofileOnResume = settings.getBool("rprofileOnResume",
+         session::options().rProfileOnResumeDefault());
+   userPrefs().setRunRprofileOnResume(rprofileOnResume);
+
+   // Migrate save action
+   int saveAction = settings.getInt("saveAction", 
+         session::options().saveActionDefault());
+   if (saveAction == r::session::kSaveActionSave)
+      destPrefs[kSaveWorkspace] = kSaveWorkspaceAlways;
+   else if (saveAction == r::session::kSaveActionNoSave)
+      destPrefs[kSaveWorkspace] = kSaveWorkspaceNever;
+   else if (saveAction == r::session::kSaveActionAsk)
+      destPrefs[kSaveWorkspace] = kSaveWorkspaceAsk;
+
+   // Migrate profile run setting
+   destPrefs[kRunRprofileOnResume] = settings.getBool("rprofileOnResume",
+         session::options().rProfileOnResumeDefault());
+
+   // Migrate line options
+   int endings = settings.getInt("lineEndingConversion", string_utils::LineEndingNative);
+   switch (endings)
+   {
+      case string_utils::LineEndingWindows:
+         destPrefs[kLineEndingConversion] = kLineEndingConversionWindows;
+         break;
+      case string_utils::LineEndingPosix:
+         destPrefs[kLineEndingConversion] = kLineEndingConversionPosix;
+         break;
+      case string_utils::LineEndingNative:
+         destPrefs[kLineEndingConversion] = kLineEndingConversionNative;
+         break;
+      case string_utils::LineEndingPassthrough:
+         destPrefs[kLineEndingConversion] = kLineEndingConversionPassthrough;
+         break;
+   }
+   destPrefs[kUseNewlinesInMakefiles] = settings.getBool("newlineInMakefiles", true);
+
+   // Migrate history options
+   destPrefs[kAlwaysSaveHistory] = settings.getBool("alwaysSaveHistory", true);
+   destPrefs[kRemoveHistoryDuplicates] = settings.getBool("removeHistoryDuplicates", false);
+
+   // Migrate RStudio Server Pro options
+   destPrefs[kShowUserHomePage] = settings.get("showUserHomePage", kShowUserHomePageSessions);
+   destPrefs[kReuseSessionsForProjectLinks] = 
+      settings.getBool("reuseSessionsForProjectLinks", true);
+
+   // Migrate version control settings
+   std::string terminalPath = settings.get("vcsTerminalPath");
+   if (!terminalPath.empty())
+      destPrefs[kTerminalPath] = terminalPath;
+   std::string gitPath = settings.get("vcsGitExePath");
+   if (!gitPath.empty())
+      destPrefs[kGitExePath] = gitPath;
+   std::string svnPath = settings.get("vcsSvnExePath");
+   if (!svnPath.empty())
+      destPrefs[kSvnExePath] = svnPath;
+   destPrefs[kVcsEnabled] = settings.getBool("vcsEnabled", true);
+
+   // Migrate other settings
+   destPrefs[kUseDevtools] = settings.getBool("useDevtools", true);
+   destPrefs[kClangVerbose] = settings.getInt("clangVerbose", 0);
+   destPrefs[kHideObjectFiles] = settings.getBool("hideObjectFiles", true);
+   destPrefs[kViewDirAfterRCmdCheck] = settings.getBool("viewDirAfterRCmdCheck", false);
+   destPrefs[kUseInternet2] = settings.getBool("useInternet2", true);
+   destPrefs[kLatexShellEscape] = settings.getBool("enableLaTeXShellEscape", false);
+   destPrefs[kCleanTexi2dviOutput] = settings.getBool("cleanTexi2DviOutput", true);
+   destPrefs[kUseSecureDownload] = settings.getBool("securePackageDownload", true);
 
    return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs); 
 }
