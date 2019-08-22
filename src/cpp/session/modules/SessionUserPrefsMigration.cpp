@@ -18,6 +18,8 @@
 #include <core/json/Json.hpp>
 #include <core/Settings.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 using namespace rstudio::core;
 using namespace rstudio::session::prefs;
 
@@ -30,14 +32,13 @@ namespace {
 void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
 {
    std::vector<std::string> keys = userPrefs().allKeys();
-   json::Object iterator it;
    json::Value val;
    for (const auto &key: keys)
    {
       // Migrate pane locations
       if (key == kPanes)
       {
-         it = uiPrefs.find("pane_config");
+         json::Object::iterator it = uiPrefs.find("pane_config");
          if (it != uiPrefs.end())
          {
             json::Object old = (*it).value().get_obj();

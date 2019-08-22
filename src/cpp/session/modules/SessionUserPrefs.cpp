@@ -20,6 +20,9 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
+
+#include <core/system/Xdg.hpp>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -256,7 +259,7 @@ Error migrateUserPrefs()
    }
 
    // Check to see whether there's a preferences file at the old location
-   FilePath userSettings = userScratchPath()
+   FilePath userSettings = module_context::userScratchPath()
       .complete(kMonitoredPath)
       .complete("user-settings")
       .complete("user-settings");

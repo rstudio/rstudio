@@ -30,7 +30,7 @@ namespace modules {
 namespace prefs {
 
 // Migrates preferences from RStudio 1.2 and prior into the new RStudio 1.3 system
-core::Error migratePrefs(const core::FilePath& src, const core::FilePath& dest);
+core::Error migratePrefs(const core::FilePath& src);
 
 } // namespace prefs
 } // namespace modules
