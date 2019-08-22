@@ -35,9 +35,9 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
    json::Value val;
    for (const auto &key: keys)
    {
-      // Migrate pane locations
       if (key == kPanes)
       {
+         // Migrate pane locations
          json::Object::iterator it = uiPrefs.find("pane_config");
          if (it != uiPrefs.end())
          {
@@ -49,7 +49,67 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
             panes[kPanesConsoleLeftOnTop] = old["consoleLeftOnTop"];
             panes[kPanesConsoleRightOnTop] = old["consoleRightOnTop"];
 
-            (*dest)[kPanes] = panes;
+            (*dest)[key] = panes;
+         }
+      }
+      else if (key == kEditorKeybindings)
+      {
+         // Migrate editor keybindings (was a bunch of booleans)
+         std::string keybindings;
+         bool vim, emacs, sublime;
+         json::getOptionalParam(uiPrefs, "use_vim_mode", false, &vim);
+         json::getOptionalParam(uiPrefs, "enable_emacs_keybindings", false, &emacs);
+         json::getOptionalParam(uiPrefs, "enable_sublime_keybindings", false, &sublime);
+         if (vim)
+         {
+            keybindings = kEditorKeybindingsVim;
+         }
+         else if (emacs)
+         {
+            keybindings = kEditorKeybindingsEmacs;
+         }
+         else if (sublime)
+         {
+            keybindings = kEditorKeybindingsSublime;
+         }
+
+         if (!keybindings.empty())
+         {
+            (*dest)[key] = keybindings;
+         }
+      }
+      else if (key == kFoldStyle ||
+               key == kJobsTabVisibility ||
+               key == kLauncherJobsSort ||
+               key == kBusyDetection ||
+               key == kDocOutlineShow)
+      {
+         // These preferences don't migrate
+         continue;
+      }
+      else if (key == kEditorTheme)
+      {
+         json::Object::iterator it = uiPrefs.find("rstheme");
+         if (it != uiPrefs.end())
+         {
+            std::string theme;
+            json::getOptionalParam((*it).value().get_obj(), "name", std::string(), &theme);
+            if (!theme.empty())
+            {
+               // We only need to preserve the name of the theme; the other theme properties will be
+               // automatically derived
+               (*dest)[key] = theme;
+            }
+         }
+      }
+      else if (key == kGlobalTheme)
+      {
+         // Migrate the global theme (formerly called "flat theme")
+         std::string theme;
+         json::getOptionalParam(uiPrefs, "flat_theme", std::string(), &theme);
+         if (!theme.empty())
+         {
+            (*dest)[key] = theme;
          }
       }
    }
