@@ -333,6 +333,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return sourceWindows_.containsKey(windowId);
    }
    
+   public boolean areSourceWindowsOpen()
+   {
+      return !sourceWindows_.isEmpty();
+   }
+   
    public String getWindowIdOfDocPath(String path)
    {
       SourceDocument doc = getDocFromPath(path);
@@ -379,7 +384,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public void saveUnsavedDocuments(final Set<String> ids,
                                     final Command onCompleted)
    {
-      
       doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override

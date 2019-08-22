@@ -28,6 +28,7 @@
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
+   z-index: 99999;
 }
 
 @sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {

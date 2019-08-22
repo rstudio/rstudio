@@ -15,6 +15,7 @@
 package org.rstudio.core.client;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
 
 public class ElementIds
@@ -33,12 +34,17 @@ public class ElementIds
       }
       ele.setId(elementId);
    }
-   
+
+   public static void assignElementId(Widget widget, String id)
+   {
+      assignElementId(widget.getElement(), id);
+   }
+
    public static String getElementId(String id)
    {
       return ID_PREFIX + id;
    }
-   
+
    public static String idSafeString(String text)
    {
       // replace all non-alphanumerics with underscores
@@ -46,7 +52,7 @@ public class ElementIds
       
       // collapse multiple underscores to a single underscore
       id = id.replaceAll("_+", "_");
-      
+
       // clean up leading/trailing underscores
       id = id.replaceAll("^_+", "");
       id = id.replaceAll("_+$", "");
@@ -54,14 +60,14 @@ public class ElementIds
       // convert to lowercase and return
       return id.toLowerCase();
    }
-   
+
    public static String idFromLabel(String label)
    {
       return ID_PREFIX + "label_" + idSafeString(label);
    }
-   
+
    public final static String ID_PREFIX = "rstudio_";
-   
+
    // global list of specific IDs we assign -- we keep this list centralized in this class as a
    // so that we can be sure an ID is not used elsewhere in the product
    public final static String CONSOLE_INPUT = "console_input";
@@ -102,16 +108,16 @@ public class ElementIds
    public final static String TEXT_SOURCE_BUTTON = "text_source";
    public final static String TEXT_SOURCE_BUTTON_DROPDOWN = "text_source_dropdown";
    public final static String EMPTY_DOC_BUTTON = "empty_doc";
-   
+
    public final static String EDIT_EDITING_PREFS = "edit_editing_prefs";
    public final static String EDIT_DISPLAY_PREFS = "edit_display_prefs";
    public final static String EDIT_SAVING_PREFS = "edit_saving_prefs";
    public final static String EDIT_COMPLETION_PREFS = "editing_completion_prefs";
    public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";
-   
+
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
-   
+
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
 
@@ -150,4 +156,14 @@ public class ElementIds
    // RmdTemplateChooser
    public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";
    public static String getRmdTemplateChooserName() { return getElementId(RMD_TEMPLATE_CHOOSER_NAME); }
+
+   // NewShinyWebApplication
+   public final static String NEW_SHINY_APP_NAME = "new_shiny_app_name";
+   public final static String NEW_SHINY_APP_SINGLE_FILE = "new_shiny_app_single_file";
+   public final static String NEW_SHINY_APP_MULTI_FILE = "new_shiny_app_multi_file";
+
+   // TextBoxWithButton
+   public final static String TEXTBOXBUTTON_TEXT = "textboxbutton_text";
+   public final static String TEXTBOXBUTTON_BUTTON = "textboxbutton_button";
+   public final static String TEXTBOXBUTTON_HELP = "textboxbutton_help";
 }

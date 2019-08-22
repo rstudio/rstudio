@@ -1,12 +1,9 @@
-
-
 .captionLabel {
    margin-bottom: 4px;
    width: 400px;
 }
 
 .targetName {
-	
 }
 
 .targetPath {
@@ -20,14 +17,12 @@
   height: 4.4ex; /* 2.2ex for each visible line */
   vertical-align: middle;
   display: table-cell;
-  
 }
-
 
 .targetScrollPanel {
    width: 400px;
    height: 170px;
-   border: 1px solid #BBB;  
+   border: 1px solid #BBB;
    background-color: white;
 }
 
