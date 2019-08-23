@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.common.mirrors.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 

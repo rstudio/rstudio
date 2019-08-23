@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.model;
 
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor.DefaultRVersion;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
 public class RVersionSpec extends DefaultRVersion

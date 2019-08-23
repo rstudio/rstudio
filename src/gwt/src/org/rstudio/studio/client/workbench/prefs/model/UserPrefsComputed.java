@@ -13,7 +13,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JsArray;
