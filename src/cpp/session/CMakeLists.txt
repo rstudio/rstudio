@@ -156,6 +156,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionUserPrefs.cpp
+   modules/SessionUserPrefsMigration.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp

@@ -15,10 +15,14 @@
 
 #include "SessionUserPrefs.hpp"
 #include "SessionApiPrefs.hpp"
+#include "SessionUserPrefsMigration.hpp"
 
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
+
+#include <core/system/Xdg.hpp>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -244,6 +248,36 @@ SEXP rs_allPrefs()
    return list;
 }
 
+/**
+ * One-time migration of user preferences from the user-settings file used in RStudio 1.2 and below
+ * to the formal preferences system in RStudio 1.3.
+ */
+Error migrateUserPrefs()
+{
+   // Check to see whether there's a preferences file at the new location
+   FilePath prefsFile = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+   if (prefsFile.exists())
+   {
+      // We already have prefs; don't try to overwrite them
+      return Success();
+   }
+
+   // Check to see whether there's a preferences file at the old location
+   FilePath userSettings = module_context::userScratchPath()
+      .complete(kMonitoredPath)
+      .complete("user-settings")
+      .complete("user-settings");
+
+   if (userSettings.exists())
+   {
+      // There are no new prefs, but there are old prefs. Migrate!
+      return migratePrefs(userSettings);
+   }
+
+   // No work to do
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -258,6 +292,15 @@ core::Error initialize()
    error = apiPrefs().initialize();
    if (error)
       return error;
+
+   // Migrate user preferences from older versions of RStudio if they exist (and we don't have prefs
+   // yet)
+   error = migrateUserPrefs();
+   if (error)
+   {
+      // This error is non-fatal (we'll just start with clean prefs if we cannot migrate)
+      LOG_ERROR(error);
+   }
    
    RS_REGISTER_CALL_METHOD(rs_readUserPref);
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
