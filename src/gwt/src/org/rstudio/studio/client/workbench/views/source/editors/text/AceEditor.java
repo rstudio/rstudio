@@ -972,7 +972,7 @@ public class AceEditor implements DocDisplay,
          return;
 
       // We originally observed that large word-wrapped documents
-      // would cause Chrome on Liunx to freeze (bug #3207), eventually
+      // would cause Chrome on Linux to freeze (bug #3207), eventually
       // running of of memory. Running the profiler indicated that the
       // time was being spent inside wrap width calculations in Ace.
       // Looking at the Ace bug database there were other wrapping problems
@@ -991,7 +991,7 @@ public class AceEditor implements DocDisplay,
       // column, essentially allowing users to opt-in to the behavior
       // we used to fix the bug. So the net is:
       //
-      // (1) To fix the horizontal scrollbar problem we revereted
+      // (1) To fix the horizontal scrollbar problem we reverted
       //     the wrap mode behavior we added from Chrome (under the
       //     assumption that the issue has been fixed in Chrome)
       //
@@ -1006,7 +1006,7 @@ public class AceEditor implements DocDisplay,
       // exceed the horizontal threshold)
 
       // NOTE: we no longer do this at all since we observed the
-      // scollbar problem on desktop as well
+      // scrollbar problem on desktop as well
    }
 
    private void updateKeyboardHandlers()

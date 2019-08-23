@@ -226,11 +226,11 @@ select {
    where select inputs and radio buttons are not rendered correctly. */
 .macintosh select,
 .macintosh input[type="radio"] {
-	background-color: white;
+   background-color: white;
 }
 
 .macintosh input[type="radio"] {
-	zoom: 1.000001;
+   zoom: 1.000001;
 }
 
 }
@@ -259,14 +259,14 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 
 /* hide something from sighted users but remain visible to screen readers */
 .visuallyHidden {
-    position: absolute;
-    clip: rect(0 0 0 0);
-    border: 0;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    padding: 0;
+   position: absolute;
+   clip: rect(0 0 0 0);
+   border: 0;
+   width: 1px;
+   height: 1px;
+   margin: -1px;
+   overflow: hidden;
+   padding: 0;
 }
 
 .gwt-Label {
@@ -274,11 +274,11 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 }
 
 .selectableText {
-  -ms-user-select: text;
-  -moz-user-select: text;
-  -webkit-user-select: text;
-  user-select: text;
-  cursor: text;
+   -ms-user-select: text;
+   -moz-user-select: text;
+   -webkit-user-select: text;
+   user-select: text;
+   cursor: text;
 }
 
 @if rstudio.desktop false {
@@ -296,8 +296,8 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
    -webkit-box-shadow: 0 1px 0 0 rgba(255,255,255,0.35);
    -webkit-border-radius: 5px;
 }   
-   
-.macintosh .forceMacScrollbars ::-webkit-scrollbar-thumb { 
+
+.macintosh .forceMacScrollbars ::-webkit-scrollbar-thumb {
   
    border: 2px solid rgb(251,251,251);
    background: rgba(0,0,0,.22);
@@ -306,7 +306,7 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 }
 }
 @else {
-.forceMacScrollbars {}	
+.forceMacScrollbars {}
 }
 }
 @else {
@@ -331,7 +331,7 @@ button {
 }
 
 .rstudio-themes-flat.rstudio-themes-dark-menus hr {
-	border-color: THEME_DARK_CONTROL_BACKGROUND;
+   border-color: THEME_DARK_CONTROL_BACKGROUND;
 }
 
 .handCursor {
@@ -353,8 +353,8 @@ textarea {
 }
 
 pre {
-  font-family: fixedWidthFont;
-  font-size: 12px;
+   font-family: fixedWidthFont;
+   font-size: 12px;
 }
 
 .ace_editor {
@@ -362,53 +362,47 @@ pre {
 }
 
 .ace_editor, .ace_text-layer {
-  font-family: fixedWidthFont !important;
+   font-family: fixedWidthFont !important;
 }
 
 .ace_tooltip {
-	max-width: 400px;
-	max-height: 300px;
-	overflow: hidden;
-	white-space: pre-wrap;
+   max-width: 400px;
+   max-height: 300px;
+   overflow: hidden;
+   white-space: pre-wrap;
 }
 
 .ace_breakpoint,
 .ace_pending-breakpoint,
 .ace_inactive-breakpoint,
-.ace_executing-line
-{
+.ace_executing-line {
    background-position: 12% center !important;
    background-repeat: no-repeat !important;
 }
 
-.ace_breakpoint
-{
+.ace_breakpoint {
    background-image: ACTIVEBREAKPOINT !important;
    background-size: 10px 10px;
 }
 
-.ace_pending-breakpoint
-{
-	background-image: PENDINGBREAKPOINT !important;
+.ace_pending-breakpoint {
+   background-image: PENDINGBREAKPOINT !important;
    background-size: 10px 10px;
 }
 
-.ace_inactive-breakpoint
-{
-	background-image: INACTIVEBREAKPOINT !important;
+.ace_inactive-breakpoint {
+   background-image: INACTIVEBREAKPOINT !important;
    background-size: 10px 10px;
 }
 
-.ace_executing-line
-{
-	background-image: EXECUTINGLINE !important;
+.ace_executing-line {
+   background-image: EXECUTINGLINE !important;
    background-size: 10px 10px;
 }
 
 
 .ace_chunk-queued-line:before,
-.ace_chunk-error-line:before
-{
+.ace_chunk-error-line:before {
    position: absolute;
    top: 0;
    right: 3px;
@@ -419,33 +413,28 @@ pre {
    z-index: -100;
 }
 
-.ace_chunk-queued-line:before
-{
+.ace_chunk-queued-line:before {
    background-color: rgb(24, 163, 82);
    opacity: 0.3;
 }
 
-.ace_chunk-error-line:before
-{
+.ace_chunk-error-line:before {
    background-color: rgb(201, 90, 96);
 }
 
 .ace_chunk-error-line:before,
-.ace_chunk-executed-line:before
-{
+.ace_chunk-executed-line:before {
    opacity: 1;
 }
 
-.ace_chunk-resting-line:before
-{
+.ace_chunk-resting-line:before {
    transition: opacity 500ms ease;
    opacity: 0;
 }
 
 
-.ace_sb
-{
-	z-index: 6;
+.ace_sb {
+   z-index: 6;
 }
 
 .gwt-MenuBar {
@@ -479,13 +468,13 @@ pre {
    opacity: 0.3;
 }
 
-.gwt-MenuItemSeparator .menuSeparatorInner{
+.gwt-MenuItemSeparator .menuSeparatorInner {
    border-top: #BABABA 1px solid;
    margin-top: 1px;
    margin-bottom: 2px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItemSeparator .menuSeparatorInner{
+.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-MenuItemSeparator .menuSeparatorInner {
    border-color: THEME_DARKGREY_MENU_BORDER;
 }
 
@@ -549,7 +538,7 @@ pre {
 }
 
 .miniDialogPopupPanel .miniDialogCaption {
-	font-weight: normal;
+   font-weight: normal;
    font-size: 11px;
    cursor: default;
    margin-bottom: 10px;
@@ -558,9 +547,9 @@ pre {
 }
 
 .miniDialogPopupPanel .miniDialogTools {
-	position: relative;
-	top: -2px;
-	right: -12px;
+   position: relative;
+   top: -2px;
+   right: -12px;
 }
 
 .rstudio-themes-flat .miniDialogPopupPanel.gwt-DecoratedPopupPanel {
@@ -609,7 +598,7 @@ pre {
 }
 
 .gwt-SuggestBoxPopup {
-   z-index: 1000;	
+   z-index: 1000;
    cursor: default;
 }
 
@@ -999,14 +988,12 @@ pre {
    margin-right: -1px;
 }
 
-
-
 .gwt-SplitLayoutPanel-HDragger, .gwt-SplitLayoutPanel-VDragger {
    border: 0px;
    cursor: move;
 }
 body.avoid-move-cursor .gwt-SplitLayoutPanel-HDragger {
-	cursor: e-resize;
+   cursor: e-resize;
 }
 body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    cursor: n-resize;
@@ -1285,9 +1272,9 @@ body.windows .toolbar {
  * non-zero number seems to work as expected.
  */
 @if user.agent safari {
-	.toolbar td {
-		padding: 0.0001px;
-	}
+   .toolbar td {
+      padding: 0.0001px;
+   }
 }
 
 .rstheme_toolbarWrapper {
@@ -1326,7 +1313,7 @@ body.windows .toolbar {
 }
 
 .toolbarButton:focus {
-   outline:none;
+   outline: none;
 }
 
 .toolbarButton.noLabel {
@@ -1396,12 +1383,12 @@ body.windows .toolbar {
 }
 
 .secondaryToolbarPanel {
-  background: rgb(240,241,241);
-  border-bottom: 1px solid rgb(169,169,169);
+   background: rgb(240,241,241);
+   border-bottom: 1px solid rgb(169,169,169);
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .secondaryToolbarPanel {
-  background: #6c7a86;
+   background: #6c7a86;
 }
 
 .rstudio-themes-flat .rstheme_secondaryToolbar {
@@ -1418,7 +1405,7 @@ body.windows .toolbar {
 
 .rstudio-themes-flat .tallerToolbarWrapper {
    border-bottom: solid 1px #d6dadc;
-   height: 23px !important;  
+   height: 23px !important;
    padding-top: 1px;
 }
 
@@ -1452,14 +1439,14 @@ body.windows .toolbar {
 }
 
 .toolbarButtonLatchable {
-  padding-right: 6px;
-  padding-left: 4px;
-  height: 16px;
+   padding-right: 6px;
+   padding-left: 4px;
+   height: 16px;
 }
 
 .rstudio-themes-flat .toolbarButtonLatchable {
-  height: 17px;
-  background: none;
+   height: 17px;
+   background: none;
 }
 
 .rstudio-themes-flat .toolbarButtonLatchable {
@@ -1471,8 +1458,8 @@ body.windows .toolbar {
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
-  margin-top: 1px;
-  margin-left: 3px;
+   margin-top: 1px;
+   margin-left: 3px;
 }
 
 .toolbarButtonLatched {
@@ -1489,7 +1476,7 @@ body.windows .toolbar {
 }
 
 .globalToolbar {
-   height:27px;
+   height: 27px;
    z-index: 1;
 }
 
@@ -1507,11 +1494,11 @@ body.windows .toolbar {
 }
 
 .emptyProjectMenu .toolbarButtonRightImage {
-	margin-left: 4px;
+   margin-left: 4px;
 }
 
 .emptyProjectMenu .toolbarButtonLabel {
-	color: #494949;
+   color: #494949;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark .emptyProjectMenu .toolbarButtonLabel,
@@ -1577,7 +1564,6 @@ body.windows table.webGlobalToolbar {
 }
 
 .desktopGlobalToolbarWrapper {
-   
 }
 
 .rstudio-themes-flat .desktopGlobalToolbarWrapper {
@@ -1733,13 +1719,11 @@ body.ubuntu_mono .searchBox {
    background-size: 32px 15px;
 }
 
-.filterMatch
-{
-	background-color: #e8e8ff;
+.filterMatch {
+   background-color: #e8e8ff;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .filterMatch
-{
+.rstudio-themes-flat .rstudio-themes-dark .filterMatch {
    background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
 
@@ -1748,36 +1732,36 @@ body.ubuntu_mono .searchBox {
 }
 
 .EditDialog {
-   border: 1px solid #BBB;  
+   border: 1px solid #BBB;
    background-color: white;
 }
 
 .showFile {
-  font-size: 12px;
-  padding-left: 5px; 
-  border: 1px solid #BBB; 
-  background-color: white;
+   font-size: 12px;
+   padding-left: 5px;
+   border: 1px solid #BBB;
+   background-color: white;
 }
 
 .showFileFixed {
-  font-size: 12px;
-  padding-left: 5px;
-  border: 1px solid #BBB;  
-  background-color: white;
+   font-size: 12px;
+   padding-left: 5px;
+   border: 1px solid #BBB;
+   background-color: white;
 }
 
 .fileUploadPanel {
-  width: 350px;
+   width: 350px;
 }
 
 .fileUploadPanel .fileUploadField {
-  margin-left: 7px;
-  margin-top: 10px;
-  margin-bottom: 8px;
+   margin-left: 7px;
+   margin-top: 10px;
+   margin-bottom: 8px;
 }
 
 .fileUploadPanel .fileUploadTipLabel {
-   border: 1px solid #BBB; 
+   border: 1px solid #BBB;
    padding: 5px;
    font-size: 11px;
 }
@@ -1823,8 +1807,8 @@ body.ubuntu_mono .searchBox {
 }
 
 .selectWidget .gwt-Label {
-   margin-right: 4px;  
-   margin-left: 4px; 
+   margin-right: 4px;
+   margin-left: 4px;
 }
 
 .textBoxWithButton input[type=text] {
@@ -1835,35 +1819,35 @@ body.ubuntu_mono .searchBox {
 }
 
 .textBoxWithButton .gwt-Label {
-   margin-bottom: 1px;	
+   margin-bottom: 1px;
 }
 
 
 .fullscreenCaptionIcon {
-  margin-top: -1px;
-  margin-right: 5px;
+   margin-top: -1px;
+   margin-right: 5px;
 }
- 
+
 .fullscreenCaptionLabel {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  font-size: 11px;
-  cursor: default;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   overflow: hidden;
+   font-size: 11px;
+   cursor: default;
 }
 
 .presentationNavigatorLabel {
-  white-space: nowrap;  
-  text-overflow: ellipsis;
-  overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   overflow: hidden;
 }
 
 .notResizable {
-  resize: none;
+   resize: none;
 }
 
 .linux .gwt-CheckBox {
-  margin-bottom: 4px;
+   margin-bottom: 4px;
 }
 
 /* checkboxes on the Cocoa (Mac) desktop client and checks/radio buttons on the
@@ -1876,25 +1860,25 @@ body.ubuntu_mono .searchBox {
 .windows-highdpi .gwt-CheckBox input[type="checkbox"],
 .windows-highdpi .gwt-RadioButton input[type="radio"],
 .rstudio-themes-flat input[type="checkbox"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  outline: none;
-  width: 13px;
-  height: 13px;
-  border: 1px solid #b0b0b0;
-  background: #ffffff;
-  vertical-align: middle;
-  margin: 3px 3px 5px 3px;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   outline: none;
+   width: 13px;
+   height: 13px;
+   border: 1px solid #b0b0b0;
+   background: #ffffff;
+   vertical-align: middle;
+   margin: 3px 3px 5px 3px;
 }
 
 .rstudio-themes-flat input[type="checkbox"] {
-  margin: 0px;
-  margin-bottom: 2px;
+   margin: 0px;
+   margin-bottom: 2px;
 }
 
 .windows.rstudio-themes-flat input[type="checkbox"] {
-  margin-right: 3px;
-  vertical-align: middle;
+   margin-right: 3px;
+   vertical-align: middle;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark input[type="checkbox"] {
@@ -1906,12 +1890,12 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-CheckBox input[type="checkbox"],
 .windows-highdpi .gwt-CheckBox input[type="checkbox"],
 .rstudio-themes-flat input[type="checkbox"] {
-  -webkit-border-radius: 3px;
+   -webkit-border-radius: 3px;
 }
 
 .linux .gwt-RadioButton input[type="radio"],
 .windows-highdpi .gwt-RadioButton input[type="radio"] {
-  -webkit-border-radius: 7px;
+   -webkit-border-radius: 7px;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:focus,
@@ -1925,9 +1909,8 @@ body.ubuntu_mono .searchBox {
 .windows-highdpi .gwt-RadioButton input[type="radio"]:focus,
 .windows-highdpi .gwt-RadioButton input[type="radio"]:active,
 .rstudio-themes-flat input[type="checkbox"]:focus,
-.rstudio-themes-flat input[type="checkbox"]:active
-{
-  border-color: #707070;
+.rstudio-themes-flat input[type="checkbox"]:active {
+   border-color: #707070;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked,
@@ -1935,23 +1918,22 @@ body.ubuntu_mono .searchBox {
 .linux .gwt-RadioButton input[type="radio"]:checked,
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked,
 .windows-highdpi .gwt-RadioButton input[type="radio"]:checked,
-.rstudio-themes-flat input[type="checkbox"]:checked
-{
-  position: relative;
+.rstudio-themes-flat input[type="checkbox"]:checked {
+   position: relative;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
-.linux .gwt-CheckBox input[type="checkbox"]:checked:before, 
+.linux .gwt-CheckBox input[type="checkbox"]:checked:before,
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before,
 .rstudio-themes-flat input[type="checkbox"]:checked:before {
-  background: MACCHECK;
-  background-size: 10px 9px;
+   background: MACCHECK;
+   background-size: 10px 9px;
 }
 
 .linux .gwt-RadioButton input[type="radio"]:checked:before,
 .windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before {
-  background: RADIOBUTTONON;
-  background-size: 9px 9px;
+   background: RADIOBUTTONON;
+   background-size: 9px 9px;
 }
 
 .macintosh .gwt-CheckBox input[type="checkbox"]:checked:before,
@@ -1960,81 +1942,74 @@ body.ubuntu_mono .searchBox {
 .windows-highdpi .gwt-CheckBox input[type="checkbox"]:checked:before,
 .windows-highdpi .gwt-RadioButton input[type="radio"]:checked:before,
 .rstudio-themes-flat input[type="checkbox"]:checked:before {
-  content: '';
-  display: block;
-  position: absolute;
-  top: 0px; 
-  left: 0px;
-  width: 13px;
-  height: 13px;
-  background-repeat: no-repeat;
-  background-position-x: 1px;
-  background-position-y: 1px;
+   content: '';
+   display: block;
+   position: absolute;
+   top: 0px;
+   left: 0px;
+   width: 13px;
+   height: 13px;
+   background-repeat: no-repeat;
+   background-position-x: 1px;
+   background-position-y: 1px;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelTab
-{
-  background: #f5f5f5 -moz-linear-gradient(top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 17%, rgba(255,255,255,0) 50%); 
-  background: #f5f5f5 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.9)), color-stop(17%,rgba(255,255,255,0.9)), color-stop(50%,rgba(255,255,255,0)));
-  background: #f5f5f5 -webkit-linear-gradient(top, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%);
-  background: #f5f5f5 linear-gradient(to bottom, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%); 
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 12px;
-  padding-right: 12px;
-  border: 1px solid #c0c0c0;
-  border-left: none;
-  float: none;
+.dialogTabPanel .gwt-TabLayoutPanelTab {
+   background: #f5f5f5 -moz-linear-gradient(top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 17%, rgba(255,255,255,0) 50%);
+   background: #f5f5f5 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.9)), color-stop(17%,rgba(255,255,255,0.9)), color-stop(50%,rgba(255,255,255,0)));
+   background: #f5f5f5 -webkit-linear-gradient(top, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%);
+   background: #f5f5f5 linear-gradient(to bottom, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%);
+   padding-top: 4px;
+   padding-bottom: 4px;
+   padding-left: 12px;
+   padding-right: 12px;
+   border: 1px solid #c0c0c0;
+   border-left: none;
+   float: none;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelTabs
-{
-  text-align: center;
-  z-index: 10; 
-  margin-bottom: -12px;
+.dialogTabPanel .gwt-TabLayoutPanelTabs {
+   text-align: center;
+   z-index: 10;
+   margin-bottom: -12px;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelTab-selected
-{
-  background: #9c9c9c -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%); 
-  background: #9c9c9c -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1))); 
-  background: #9c9c9c -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%); 
-  background: #9c9c9c linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%); 
-  color: #ffffff; 
+.dialogTabPanel .gwt-TabLayoutPanelTab-selected {
+   background: #9c9c9c -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%);
+   background: #9c9c9c -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1)));
+   background: #9c9c9c -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   background: #9c9c9c linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%);
+   color: #ffffff;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelContentContainer
-{
-  border: 1px solid #c0c0c0;
+.dialogTabPanel .gwt-TabLayoutPanelContentContainer {
+   border: 1px solid #c0c0c0;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelContent
-{
-  padding-top: 25px;
-  padding-right: 10px;
-  padding-left: 10px;
-  padding-bottom : 5px;
+.dialogTabPanel .gwt-TabLayoutPanelContent {
+   padding-top: 25px;
+   padding-right: 10px;
+   padding-left: 10px;
+   padding-bottom: 5px;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelTab:first-child
-{
-  -webkit-border-top-left-radius: 4px;
-  -webkit-border-bottom-left-radius: 4px;
-  -moz-border-radius-topleft: 4px;
-  -moz-border-radius-bottomleft: 4px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  border-left: 1px solid #c0c0c0;
+.dialogTabPanel .gwt-TabLayoutPanelTab:first-child {
+   -webkit-border-top-left-radius: 4px;
+   -webkit-border-bottom-left-radius: 4px;
+   -moz-border-radius-topleft: 4px;
+   -moz-border-radius-bottomleft: 4px;
+   border-top-left-radius: 4px;
+   border-bottom-left-radius: 4px;
+   border-left: 1px solid #c0c0c0;
 }
 
-.dialogTabPanel .gwt-TabLayoutPanelTab:last-child
-{
-  -webkit-border-top-right-radius: 4px;
-  -webkit-border-bottom-right-radius: 4px;
-  -moz-border-radius-topright: 4px;
-  -moz-border-radius-bottomright: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
+.dialogTabPanel .gwt-TabLayoutPanelTab:last-child {
+   -webkit-border-top-right-radius: 4px;
+   -webkit-border-bottom-right-radius: 4px;
+   -moz-border-radius-topright: 4px;
+   -moz-border-radius-bottomright: 4px;
+   border-top-right-radius: 4px;
+   border-bottom-right-radius: 4px;
 }
 
 .ace_gutter-cell.ace_info {
@@ -2098,7 +2073,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .borderedIFrame {
-   border: 1px solid #BBB;    
+   border: 1px solid #BBB;
 }
 
 .toolbarInfoLabel {
@@ -2112,7 +2087,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .displayNone {
-	display: none !important;
+   display: none !important;
 }
 
 .windowFrameObject {
@@ -2209,7 +2184,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .gwt-TabLayoutPanelTabs .tabLayoutRight,
-.rstudio-themes-flat .rstheme_minimizedWindowObject .tabLayoutRight  {
+.rstudio-themes-flat .rstheme_minimizedWindowObject .tabLayoutRight {
    display: none;
 }
 
@@ -2248,7 +2223,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogTopCenter {
-   height: 24px;  
+   height: 24px;
 }
 
 .rstudio-themes-flat .gwt-DialogBox .dialogTopCenterInner .Caption {
@@ -2313,7 +2288,7 @@ body.ubuntu_mono .searchBox {
    padding-top: 0px;
 }
 
-.rstudio-themes-flat .rstheme_minimizedWindowObject  > div:last-child {
+.rstudio-themes-flat .rstheme_minimizedWindowObject > div:last-child {
    left: 1px !important;
    top: 0px !important;
    right: 1px !important;
@@ -2417,25 +2392,25 @@ body.ubuntu_mono .searchBox {
 }
 
 .rstudio-themes-flat .dataGridSortedHeaderAscending img {
-  width: 0px !important;
-  height: 0px !important;
-  background: none !important;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-bottom: 7px solid #818a98;
-  margin-left: 3px;
-  margin-right: 3px;
+   width: 0px !important;
+   height: 0px !important;
+   background: none !important;
+   border-left: 5px solid transparent;
+   border-right: 5px solid transparent;
+   border-bottom: 7px solid #818a98;
+   margin-left: 3px;
+   margin-right: 3px;
 }
 
 .rstudio-themes-flat .dataGridSortedHeaderDescending img {
-  width: 0px !important;
-  height: 0px !important;
-  background: none !important;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 7px solid #818a98;
-  margin-left: 3px;
-  margin-right: 3px;
+   width: 0px !important;
+   height: 0px !important;
+   background: none !important;
+   border-left: 5px solid transparent;
+   border-right: 5px solid transparent;
+   border-top: 7px solid #818a98;
+   margin-left: 3px;
+   margin-right: 3px;
 }
 
 .editor_dark img.rstudio-classic-inverts,
@@ -2523,7 +2498,7 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-default .rstheme_minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat .rstudio-themes-default .rstheme_minimizedWindowObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-default .rstheme_toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-default .windowFrameObject.consoleOnlyWindowFrame {
@@ -2580,7 +2555,7 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_minimizedWindowObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-dark-grey .windowFrameObject.consoleOnlyWindowFrame {
@@ -2640,7 +2615,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanel > div > div.gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter,
-.rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject  > div:last-child,
+.rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject > div:last-child,
 .rstudio-themes-flat .rstudio-themes-alternate .rstheme_toolbarWrapper,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame div.consoleHeaderLayout .primaryWindowFrameHeader,
 .rstudio-themes-flat .rstudio-themes-alternate .windowFrameObject.consoleOnlyWindowFrame {
@@ -2653,7 +2628,7 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
-.rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject .rstheme_center {  
+.rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject .rstheme_center {
    background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 

@@ -733,9 +733,9 @@ public class HelpPane extends WorkbenchPane
    }
    
    private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{
-   	 frame.contentWindow.setTimeout(function() {
-   	  	this.location.replace(url);
-   	 }, 0);
+      frame.contentWindow.setTimeout(function() {
+         this.location.replace(url);
+      }, 0);
    }-*/;
 
    public interface Styles extends CssResource

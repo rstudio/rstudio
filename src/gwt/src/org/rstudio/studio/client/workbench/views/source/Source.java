@@ -535,7 +535,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(CollabEditEndedEvent.TYPE, 
-    		  new CollabEditEndedEvent.Handler() 
+            new CollabEditEndedEvent.Handler()
       {
          @Override
          public void onCollabEditEnded(final CollabEditEndedEvent collab) 

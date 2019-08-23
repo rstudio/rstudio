@@ -28,16 +28,16 @@ public class AceInfoBar extends Composite
 {
    public AceInfoBar(AceEditorWidget parent)
    {
-   	container_ = new FlowPanel();
-   	container_.addStyleName(RES.styles().container());
-   	
-   	label_ = new Label();
-   	label_.addStyleName(RES.styles().label());
-   	
-   	container_.add(label_);
-   	
-   	initWidget(container_);
-   	attachTo(parent);
+      container_ = new FlowPanel();
+      container_.addStyleName(RES.styles().container());
+
+      label_ = new Label();
+      label_.addStyleName(RES.styles().label());
+
+      container_.add(label_);
+
+      initWidget(container_);
+      attachTo(parent);
    }
    
    public void setText(String text)
@@ -80,13 +80,13 @@ public class AceInfoBar extends Composite
 
    public interface Resources extends ClientBundle
    {
-   	@Source("AceInfoBar.css")
-   	Styles styles();
+      @Source("AceInfoBar.css")
+      Styles styles();
    }
 
    private static Resources RES = GWT.create(Resources.class);
    static {
-   	RES.styles().ensureInjected();
+      RES.styles().ensureInjected();
    }
 
 }

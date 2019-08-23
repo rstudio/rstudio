@@ -28,5 +28,5 @@ public interface MirrorsServerOperations
          String cranRepoUrl);
 
    void getCRANActives(
-   		 ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
+         ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
 }

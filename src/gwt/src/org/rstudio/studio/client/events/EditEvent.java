@@ -42,7 +42,7 @@ public class EditEvent extends GwtEvent<EditEvent.Handler>
    public static final int TYPE_CUT   = 1;
    public static final int TYPE_COPY  = 2;
    public static final int TYPE_PASTE = 4;
-	
+
    // Boilerplate ----
    public interface Handler extends EventHandler
    {

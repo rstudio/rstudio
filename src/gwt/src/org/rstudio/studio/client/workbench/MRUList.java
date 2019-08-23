@@ -95,9 +95,9 @@ public class MRUList
    }
    
    protected ArrayList<String> generateLabels(
-		   ArrayList<String> entries, boolean includeExt)
+         ArrayList<String> entries, boolean includeExt)
    {
-	   return DuplicateHelper.getPathLabels(entries, includeExt);
+      return DuplicateHelper.getPathLabels(entries, includeExt);
    }
    
    public String getQualifiedLabel(String mruEntry)

@@ -137,12 +137,12 @@
 }
 
 .packageName {
-	font-weight: bold;
-	font-size: 14px;
+   font-weight: bold;
+   font-size: 14px;
 }
 
 .packageDescription {
-	color: black;
+   color: black;
 }
 
 .promptFullHelp {
@@ -161,15 +161,15 @@
 }
 
 .paddedOutput {
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
-	width: 100%;
-	padding: 6px;
+   box-sizing: border-box;
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   width: 100%;
+   padding: 6px;
 }
 
 .truncatedLabel {
-	padding: 4px;
-	font-style: italic;
-	color: #888888;
+   padding: 4px;
+   font-style: italic;
+   color: #888888;
 }

@@ -41,7 +41,7 @@ public class ZoomUtils
       {
          final int PADDING = 20;
    
-         // calculate ideal heigh and width. try to be as large as possible
+         // calculate ideal height and width. try to be as large as possible
          // within the bounds of the current client size
          Size bounds = new Size(Window.getClientWidth() - PADDING,
                                 Window.getClientHeight() - PADDING);

@@ -12,12 +12,12 @@
 }
 
 .wizardSpacer {
-   height: 7px;	
+   height: 7px;
 }
 
 
 .newProjectDirectoryName {
-   width: 100%;	
+   width: 100%;
 }
 
 .codeFilesListButton {
@@ -35,7 +35,7 @@
 }
 
 @if user.agent gecko1_8 { .wizardCheckbox {
-   margin-left: -3px;   
+   margin-left: -3px;
    }
 }
 @else { .wizardCheckbox  {

@@ -1,19 +1,19 @@
 .headerLabel {
-	padding: 2px 4px;
-	font-weight: bold;
-	font-size: 1em;
+   padding: 2px 4px;
+   font-weight: bold;
+   font-size: 1em;
 }
 
 .textBox {
-	width: 97%;
-    border: 1px solid #999;
-    border-radius: 3px;
-    padding-left: 3px !important;
+   width: 97%;
+   border: 1px solid #999;
+   border-radius: 3px;
+   padding-left: 3px !important;
 }
 
 .textBox:focus {
-    outline: 0;
-    box-shadow: 0 0 5px rgb(50, 100, 150);
+   outline: 0;
+   box-shadow: 0 0 5px rgb(50, 100, 150);
 }
 
 .chunkLabel {
@@ -23,13 +23,13 @@
 }
 
 .labelPanel {
-	margin-bottom: 12px;
+   margin-bottom: 12px;
 }
 
 .buttonPanel {
-	margin-bottom: 2px;
+   margin-bottom: 2px;
 }
 
 .checkBox {
-	margin: 2px;
+   margin: 2px;
 }
