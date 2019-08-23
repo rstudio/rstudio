@@ -449,7 +449,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       }
       catch (JavaScriptException ex)
       {
-    	  	 return;
+         return;
       }
 
       boolean isCurrentlySelected = isSelected(row);

@@ -204,7 +204,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
                RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                      MessageDialog.INFO,
                      "Find in Page", 
-                     "No occurences found",
+                     "No occurrences found",
                      findInputSource);
             }     
          }

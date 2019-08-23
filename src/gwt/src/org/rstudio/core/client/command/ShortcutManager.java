@@ -129,7 +129,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private native final void addNativeEditHandlers() /*-{
       var self = this;
       var callback = $entry(function(event) {
-      	self.@org.rstudio.core.client.command.ShortcutManager::onNativeEditEvent(Ljava/lang/Object;)(event);
+         self.@org.rstudio.core.client.command.ShortcutManager::onNativeEditEvent(Ljava/lang/Object;)(event);
       });
       
       $doc.body.addEventListener("copy",  callback);

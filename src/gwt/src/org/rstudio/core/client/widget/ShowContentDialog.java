@@ -69,7 +69,7 @@ public class ShowContentDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {
-     // main widget is scroll panel with embeddeed html 
+     // main widget is scroll panel with embedded html
      ScrollPanel scrollPanel = new ScrollPanel();  
      scrollPanel.setStylePrimaryName(styleName_);
      HTML htmlContent = new HTML(content_);

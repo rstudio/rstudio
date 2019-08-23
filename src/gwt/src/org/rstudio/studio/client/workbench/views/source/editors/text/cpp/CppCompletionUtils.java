@@ -82,7 +82,7 @@ public class CppCompletionUtils
       // determine the column right before this one
       int inputCol = position.getColumn() - 1;
                
-      // walk backwards across C++ identifer symbols 
+      // walk backwards across C++ identifier symbols
       int col = inputCol;
       if (isInclude)
       {

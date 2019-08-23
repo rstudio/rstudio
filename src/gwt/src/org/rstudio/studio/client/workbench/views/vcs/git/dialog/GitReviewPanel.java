@@ -426,7 +426,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private int getPageScroll(ScrollPanel panel)
    {
       // Return slightly less than the client height (so there's overlap between
-      // one screen and the next) but never less than the line scoll height.
+      // one screen and the next) but never less than the line scroll height.
       return Math.max(
             getLineScroll(panel),
             panel.getElement().getClientHeight() - getLineScroll(panel));

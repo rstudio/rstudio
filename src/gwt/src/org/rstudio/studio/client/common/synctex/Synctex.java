@@ -69,7 +69,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       prefs_ = prefs;
       satellite_ = satellite;
       
-      // main window and satellite export callbacks to eachother
+      // main window and satellite export callbacks to each other
       if (!Satellite.isCurrentWindowSatellite())
       {
          registerMainWindowCallbacks();
@@ -77,7 +77,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          eventBus_.addHandler(SynctexEditFileEvent.TYPE, this);
       }
       
-      // fixup synctex tooltips for macos
+      // fixup synctex tooltips for macOS
       if (BrowseCap.isMacintosh())
          fixupSynctexCommandDescription(commands_.synctexSearch());
       
@@ -154,13 +154,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    // confident that it was always correct. we were also globally managing
    // the state of the synctex command based on any external viewer closing.
    // now that we optionally support desktop viewers for synctex this 
-   // assumption may not hold -- specfically there might be multiple active
+   // assumption may not hold -- specifically there might be multiple active
    // PDF viewers for different document or we might not know that the 
    // external viewer has closed . we have explicitly chosen to 
    // avoid the complexity of tracking distinct viewer states. if we want
    // to do this we probably should do the following:
    //
-   //    - always keep the the syncex command available in all editors
+   //    - always keep the the synctex command available in all editors
    //      so long as there is at least one preview window alive; OR
    //
    //    - for cases where we do know whether the window is still alive
@@ -172,7 +172,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       if (handleDesktopSynctex())
       {
-         // apply concordane
+         // apply concordance
          final ProgressIndicator indicator = getSyncProgress();  
          server_.applyForwardConcordance(
                                  pdfFile, 

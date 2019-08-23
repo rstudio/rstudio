@@ -61,7 +61,7 @@ public abstract class ModalDialogBase extends DialogBox
    protected ModalDialogBase(SimplePanel containerPanel, DialogRole role)
    {
       // core initialization. passing false for modal works around
-      // modal PopupPanel supressing global keyboard accelerators (like
+      // modal PopupPanel suppressing global keyboard accelerators (like
       // Ctrl-N or Ctrl-T). modality is achieved via setGlassEnabled(true)
       super(false, false);
       setGlassEnabled(true);

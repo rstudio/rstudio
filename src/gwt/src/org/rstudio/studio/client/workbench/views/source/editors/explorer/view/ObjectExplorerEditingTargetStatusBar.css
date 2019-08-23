@@ -1,11 +1,11 @@
 @CHARSET "UTF-8";
 
 .panel {
-	padding: 0 4px 0 4px;
+   padding: 0 4px 0 4px;
 }
 
 .label {
-	user-select: text;
-	font-size: 11px;
-	margin-top: 1px;
+   user-select: text;
+   font-size: 11px;
+   margin-top: 1px;
 }

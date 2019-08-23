@@ -29,7 +29,7 @@
 }
 
 .wizardBodyPanel {
-   width: 533px; 
+   width: 533px;
    height: 244px;
    margin-left: -10px;
    margin-right: -13px;
@@ -41,7 +41,6 @@
 }
 
 .wizardPageSelector {
-   
 }
 
 @sprite .wizardBackButton {
@@ -81,7 +80,7 @@
 }
 
 .wizardPageSelectorItem:hover {
-   background: #DAE7F6;	
+   background: #DAE7F6;
 }
 
 .wizardPageSelectorItem:focus {
@@ -115,5 +114,5 @@
 }
 
 .helpLink {
-  margin-top: 6px;
+   margin-top: 6px;
 }

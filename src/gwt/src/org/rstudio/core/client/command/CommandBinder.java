@@ -17,7 +17,7 @@ package org.rstudio.core.client.command;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * Provides a mechanism for declaritively hooking up command handler methods
+ * Provides a mechanism for declaratively hooking up command handler methods
  * to the relevant commands.
  *
  * 1) Create a method for each command to be handled. It should have a return

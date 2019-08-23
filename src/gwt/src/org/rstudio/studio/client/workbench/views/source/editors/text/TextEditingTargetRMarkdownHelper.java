@@ -865,7 +865,7 @@ public class TextEditingTargetRMarkdownHelper
                      public void execute()
                      {  
                         // subscribe to notification of params ready
-                        // (ensure only one handler at a time is sucscribed)
+                        // (ensure only one handler at a time is subscribed)
                         rmdParamsReadyUnsubscribe();
                         rmdParamsReadyRegistration_ = eventBus_.addHandler(
                               RmdParamsReadyEvent.TYPE, 

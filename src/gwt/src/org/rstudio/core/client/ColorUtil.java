@@ -120,7 +120,7 @@ public class ColorUtil
          
          if (pattern == null)
          {
-            Debug.logToConsole("Non-conformat RGB color string: '" + cssString + "'");
+            Debug.logToConsole("Non-conformant RGB color string: '" + cssString + "'");
             return new RGBColor();
          }
          

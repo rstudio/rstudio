@@ -1,5 +1,5 @@
 @external gwt-SplitLayoutPanel-HDragger;
 
 .disableSplitter .gwt-SplitLayoutPanel-HDragger {
-	width: 0px !important;
+   width: 0px !important;
 }

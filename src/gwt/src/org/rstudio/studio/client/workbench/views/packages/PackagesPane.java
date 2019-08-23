@@ -167,7 +167,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    
    private int packageRow(String packageName, String packageLib)
    {
-      // if we haven't retreived packages yet then return not found
+      // if we haven't retrieved packages yet then return not found
       if (packagesDataProvider_ == null)
          return -1;
       
@@ -537,7 +537,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTableContainer_.add(packagesTable_);
       layoutPackagesTable();
       
-      // unbind old table from data provider incase we've re-generated the pane
+      // unbind old table from data provider in case we've re-generated the pane
       for (HasData<PackageInfo> display : packagesDataProvider_.getDataDisplays())
          packagesDataProvider_.removeDataDisplay(display);
       

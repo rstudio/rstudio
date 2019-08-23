@@ -13,10 +13,10 @@
 }
 
 .targetUntitled {
-  line-height: 2.2ex;
-  height: 4.4ex; /* 2.2ex for each visible line */
-  vertical-align: middle;
-  display: table-cell;
+   line-height: 2.2ex;
+   height: 4.4ex; /* 2.2ex for each visible line */
+   vertical-align: middle;
+   display: table-cell;
 }
 
 .targetScrollPanel {

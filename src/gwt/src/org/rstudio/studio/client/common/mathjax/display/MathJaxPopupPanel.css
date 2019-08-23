@@ -1,14 +1,14 @@
 @CHARSET "UTF-8";
 
 .popupPanel {
-	background-color: white;
-	border: 1px solid rgb(150, 159, 167);
-	border-radius: 5px;
-	padding: 5px;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-	cursor: default;
+   background-color: white;
+   border: 1px solid rgb(150, 159, 167);
+   border-radius: 5px;
+   padding: 5px;
+   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+   cursor: default;
 }
 
 .popupPanelWindows {
-	font-size: 200% !important;
+   font-size: 200% !important;
 }

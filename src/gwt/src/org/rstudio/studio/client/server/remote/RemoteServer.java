@@ -552,7 +552,7 @@ public class RemoteServer implements Server
    public void getTerminalShells(
          ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback)
    {
-	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
+      sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
    }
 
    @Override
@@ -3624,7 +3624,7 @@ public class RemoteServer implements Server
       final ResponseHandler responseHandler = new ResponseHandler();
       
       // setup a retry handler which will call back the second time with
-      // the same args (but no retryHandler, ensurin at most 1 retry)
+      // the same args (but no retryHandler, ensuring at most 1 retry)
       RetryHandler retryHandler = new RetryHandler() {
         
          public void onRetry()

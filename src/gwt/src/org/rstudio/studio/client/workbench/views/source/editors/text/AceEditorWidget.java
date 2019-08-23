@@ -904,14 +904,14 @@ public class AceEditorWidget extends Composite
    
    private int getBreakpointIdxById(int breakpointId)
    {
-	   for (int idx = 0; idx < breakpoints_.size(); idx++)
-	   {
-	      if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
-	      {
-	         return idx;
-	      }
-	   }
-	   return -1;
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
+      {
+         if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
+         {
+            return idx;
+         }
+      }
+      return -1;
    }
    
    private int getBreakpointIdxByLine(int lineNumber)

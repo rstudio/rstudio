@@ -891,7 +891,7 @@ public class DomUtils
    {
       Element[] elements = getElementsByClassName(parent, classes);
       if (elements.length == 0)
-   	   return null;
+         return null;
       return elements[0];
    }
    
@@ -972,7 +972,7 @@ public class DomUtils
    
    public static Element findParentElement(Element el,
                                            boolean includeSelf,
-   	                                     ElementPredicate predicate)
+                                           ElementPredicate predicate)
    {
       Element parent = includeSelf ? el : el.getParentElement();
       while (parent != null)

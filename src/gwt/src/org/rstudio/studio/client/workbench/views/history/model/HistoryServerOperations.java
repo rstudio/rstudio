@@ -74,7 +74,7 @@ public interface HistoryServerOperations
    /*
     *  searchHistoryDatabase - search the history archive for the query 
     *  (return up to maxEntries). the search is conducted beginning with the
-    *  most recent history items and returned in index decsending order i.e. newest
+    *  most recent history items and returned in index descending order i.e. newest
     *  ones first)
     */
    void searchHistoryArchive(

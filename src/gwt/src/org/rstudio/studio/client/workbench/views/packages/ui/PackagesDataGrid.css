@@ -10,23 +10,23 @@
 
 .dataGridFirstColumn
 {
-	text-align: center;
+   text-align: center;
 }
 
 .dataGridLastColumn
 {
-	padding-top: 3px;
-	padding-left: 3px;
+   padding-top: 3px;
+   padding-left: 3px;
 }
 
 .packageOutOfSyncRow
 {
-   background-color: #fff9e2;	
+   background-color: #fff9e2;
 }
 
 .packageNotApplicableColumn
 {
-	color: #b0b0b0;
+   color: #b0b0b0;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
