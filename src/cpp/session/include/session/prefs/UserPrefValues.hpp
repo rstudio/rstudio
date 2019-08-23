@@ -219,6 +219,12 @@ namespace prefs {
 #define kTerminalWebsockets "terminal_websockets"
 #define kTerminalAutoClose "terminal_auto_close"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalBellStyle "terminal_bell_style"
+#define kTerminalBellStyleNone "none"
+#define kTerminalBellStyleSound "sound"
+#define kTerminalRenderer "terminal_renderer"
+#define kTerminalRendererCanvas "canvas"
+#define kTerminalRendererDom "dom"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
@@ -1019,6 +1025,18 @@ public:
     */
    bool terminalTrackEnvironment();
    core::Error setTerminalTrackEnvironment(bool val);
+
+   /**
+    * Terminal bell style
+    */
+   std::string terminalBellStyle();
+   core::Error setTerminalBellStyle(std::string val);
+
+   /**
+    * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+    */
+   std::string terminalRenderer();
+   core::Error setTerminalRenderer(std::string val);
 
    /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.

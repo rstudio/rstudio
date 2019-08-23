@@ -1151,6 +1151,28 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Terminal bell style
+    */
+   public PrefValue<String> terminalBellStyle()
+   {
+      return string("terminal_bell_style", "sound");
+   }
+
+   public final static String TERMINAL_BELL_STYLE_NONE = "none";
+   public final static String TERMINAL_BELL_STYLE_SOUND = "sound";
+
+   /**
+    * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+    */
+   public PrefValue<String> terminalRenderer()
+   {
+      return string("terminal_renderer", "canvas");
+   }
+
+   public final static String TERMINAL_RENDERER_CANVAS = "canvas";
+   public final static String TERMINAL_RENDERER_DOM = "dom";
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    public PrefValue<Boolean> showRmdRenderCommand()
@@ -1749,6 +1771,10 @@ public class UserPrefsAccessor extends Prefs
          terminalAutoClose().setValue(layer, source.getBool("terminal_auto_close"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
+      if (source.hasKey("terminal_bell_style"))
+         terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
+      if (source.hasKey("terminal_renderer"))
+         terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("enable_text_drag"))

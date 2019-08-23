@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -25,12 +26,16 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 
 /**
  * List of terminals, with sufficient metadata to display a list of
@@ -77,10 +82,12 @@ public class TerminalList implements Iterable<String>,
    @Inject
    private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                            EventBus events,
+                           Provider<FontSizeManager> pFontSizeManager,
                            UserPrefs uiPrefs)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
       eventBus_ = events;
+      pFontSizeManager_ = pFontSizeManager;
       uiPrefs_ = uiPrefs;
    }
 
@@ -430,8 +437,18 @@ public class TerminalList implements Iterable<String>,
          return;
       }
 
-      TerminalSession newSession = new TerminalSession(
-            info, uiPrefs_.blinkingCursor().getValue(), true /*focus*/, createdByApi);
+      // Always start terminals with BEL disabled, in case we are playing back previous output
+      // that contains BEL characters. We turn on the bell once playback is complete.
+      XTermOptions options = XTermOptions.create(
+            UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
+            uiPrefs_.blinkingCursor().getValue(),
+            uiPrefs_.terminalRenderer().getValue(),
+            BrowseCap.isWindowsDesktop(),
+            XTermTheme.terminalThemeFromEditorTheme(),
+            XTermTheme.getFontFamily(),
+            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()));
+
+      TerminalSession newSession = new TerminalSession(info, options, createdByApi);
 
       if (existing != null)
       {
@@ -492,11 +509,11 @@ public class TerminalList implements Iterable<String>,
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
     */
-   private LinkedHashMap<String, TerminalListData> terminals_ =
-         new LinkedHashMap<>();
+   private LinkedHashMap<String, TerminalListData> terminals_ = new LinkedHashMap<>();
 
    // Injected ----
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private EventBus eventBus_;
+   private Provider<FontSizeManager> pFontSizeManager_;
    private UserPrefs uiPrefs_;
 }

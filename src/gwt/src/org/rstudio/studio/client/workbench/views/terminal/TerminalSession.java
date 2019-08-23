@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -49,6 +51,8 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
@@ -64,20 +68,19 @@ public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
                                         ResizeTerminalEvent.Handler,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler
+                                        SessionSerializationHandler,
+                                        ThemeChangedEvent.Handler
 {
    /**
     * @param info terminal metadata
-    * @param cursorBlink should terminal cursor blink
-    * @param focus should terminal automatically get focus
+    * @param options terminal emulator options
     * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
-                          boolean cursorBlink,
-                          boolean focus,
+                          XTermOptions options,
                           boolean createdByApi)
    {
-      super(cursorBlink, focus);
+      super(options);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
@@ -165,6 +168,14 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
+            uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg));
+            uiPrefs_.terminalBellStyle().bind(arg -> updateStringOption("bellStyle", arg));
+            uiPrefs_.terminalRenderer().bind(arg -> updateStringOption("rendererType", arg));
+            uiPrefs_.fontSizePoints().bind(arg -> {
+               updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
+               onResize();
+            });
 
             showAltAfterReload_ = false;
             if (!getProcInfo().getAltBufferActive() && xtermAltBufferActive())
@@ -246,7 +257,7 @@ public class TerminalSession extends XTermWidget
       connected_ = false;
       connecting_ = false;
       restartSequenceWritten_ = false;
-      reloading_ = false;
+      setNotReloading();
       deferredOutput_.clear();
    }
 
@@ -265,6 +276,21 @@ public class TerminalSession extends XTermWidget
                   writeError(error.getUserMessage());
                }
             });
+   }
+
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      // need a lag to ensure the new css has been applied, otherwise we pick up the
+      // the original and the terminal stays in the previous style until reloaded
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            updateTheme(XTermTheme.terminalThemeFromEditorTheme());
+         }
+      }.schedule(250);
    }
 
    @Override
@@ -550,6 +576,7 @@ public class TerminalSession extends XTermWidget
       super.setVisible(isVisible);
       if (isVisible)
       {
+         refresh();
          connect(new ResultCallback<Boolean, String>()
          {
             @Override
@@ -677,12 +704,12 @@ public class TerminalSession extends XTermWidget
       deferredOutput_.clear();
       if (newTerminal_)
       {
-         reloading_ = false;
+         setNotReloading();
          setNewTerminal(false);
       }
       else
       {
-         reloading_ = true;
+         setReloading();
          fetchNextChunk(0);
       }
    }
@@ -721,7 +748,7 @@ public class TerminalSession extends XTermWidget
    {
       if (!shellSupportsReload())
       {
-         reloading_ = false;
+         setNotReloading();
          return;
       }
 
@@ -745,7 +772,7 @@ public class TerminalSession extends XTermWidget
                      writeRestartSequence();
                      if (procInfo_.getZombie())
                         showZombieMessage();
-                     reloading_ = false;
+                     setNotReloading();
                      for (String outputStr : deferredOutput_)
                      {
                         socket_.dispatchOutput(outputStr, doLocalEcho());
@@ -759,7 +786,7 @@ public class TerminalSession extends XTermWidget
                {
                   Debug.logError(error);
                   writeError(error.getUserMessage());
-                  reloading_ = false;
+                  setNotReloading();
                   deferredOutput_.clear();
                }
             });
@@ -850,6 +877,26 @@ public class TerminalSession extends XTermWidget
    public TerminalSessionSocket getSocket()
    {
       return socket_;
+   }
+
+   private void setReloading()
+   {
+      reloading_ = true;
+   }
+
+   private void setNotReloading()
+   {
+      // Always start terminal emulator with BEL support off to avoid playing back previous
+      // "\a" when reloading, then set it to desired value when done reloading. Slight delay
+      // needed to ensure terminal has completed rendering the output.
+      new Timer() {
+         @Override
+         public void run()
+         {
+            updateStringOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
+         }
+      }.schedule(500);
+      reloading_ = false;
    }
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();

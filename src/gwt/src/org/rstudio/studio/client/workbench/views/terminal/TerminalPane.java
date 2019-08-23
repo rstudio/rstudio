@@ -850,6 +850,8 @@ public class TerminalPane extends WorkbenchPane
     */
    private int getLoadedTerminalCount()
    {
+      if (terminalSessionsPanel_ == null)
+         return 0;
       return terminalSessionsPanel_.getWidgetCount();
    }
 

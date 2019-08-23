@@ -45,11 +45,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
 {
-   public enum TerminalType {
-      DUMB, // simple canonical (line-by-line) terminal
-      XTERM // xterm-compatible non-canonical terminal
-   }
-   
    @Singleton
    public static class ConsoleProcessFactory
    {

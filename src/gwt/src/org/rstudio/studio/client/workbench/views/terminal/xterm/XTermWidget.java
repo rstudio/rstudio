@@ -15,14 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
-import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
@@ -69,8 +67,10 @@ public class XTermWidget extends Widget
    /**
     * Creates an XTermWidget.
     */
-   public XTermWidget(boolean cursorBlink, boolean focus)
+   public XTermWidget(XTermOptions options)
    {
+      options_ = options;
+
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
       setStyleName(ConsoleResources.INSTANCE.consoleStyles().console());
@@ -79,20 +79,6 @@ public class XTermWidget extends Widget
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       getElement().addClassName(XTERM_CLASS);
       getElement().addClassName("ace_editor");
-
-      boolean legacyMouseWheel = BrowseCap.isWindowsDesktop() || BrowseCap.isLinuxDesktop();
-
-      // Create and attach the native terminal object to this Widget
-      attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-      terminal_ = XTermNative.createTerminal(getElement(), cursorBlink, focus, legacyMouseWheel);
-      terminal_.addClass("ace_editor");
-      terminal_.addClass(FontSizer.getNormalFontSizeClass());
-
-      // Handle keystrokes from the xterm and dispatch them
-      addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
-
-      // Handle title events from the xterm and dispatch them
-      addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
    }
 
    /**
@@ -100,6 +86,14 @@ public class XTermWidget extends Widget
     */
    protected void terminalReady()
    {
+   }
+
+   /**
+    * Has the underlying terminal emulator UI (xterm) been loaded?
+    */
+   public boolean terminalEmulatorLoaded()
+   {
+      return terminal_ != null;
    }
 
    /**
@@ -155,6 +149,19 @@ public class XTermWidget extends Widget
       {
          initialized_ = true;
          Scheduler.get().scheduleDeferred(() -> {
+            // Create and attach the native terminal object to this Widget
+            attachTheme(XTermThemeResources.INSTANCE.xtermcss());
+            Element el = getElement();
+            terminal_ = XTermNative.createTerminal(el, options_);
+            terminal_.addClass("ace_editor");
+            terminal_.addClass(FontSizer.getNormalFontSizeClass());
+
+            // Handle keystrokes from the xterm and dispatch them
+            addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
+
+            // Handle title events from the xterm and dispatch them
+            addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
+
             terminal_.fit();
             terminal_.focus();
             terminalReady();
@@ -304,20 +311,12 @@ public class XTermWidget extends Widget
    }
 
    /**
-    * @return Local terminal buffer
-    */
-   public String getLocalBuffer()
-   {
-      return terminal_.getLocalBuffer();
-   }
-
-   /**
     * Is the terminal showing the alternate full-screen buffer?
     * @return true if full-screen buffer is active
     */
    public boolean xtermAltBufferActive()
    {
-      return terminal_.altBufferActive();
+      return terminalEmulatorLoaded() && terminal_.altBufferActive();
    }
 
    /**
@@ -366,15 +365,6 @@ public class XTermWidget extends Widget
       return null;
    }
 
-   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
-                                                           StaticDataResource debug)
-   {
-      if (debug == null || !SuperDevMode.isActive())
-         return new ExternalJavaScriptLoader(release.getSafeUri().asString());
-      else
-         return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
-   }
-
    @Override
    public HandlerRegistration addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
    {
@@ -393,6 +383,45 @@ public class XTermWidget extends Widget
       return addHandler(handler, XTermTitleEvent.TYPE);
    }
 
+   public String getStringOption(String option)
+   {
+      return terminal_.getStringOption(option);
+   }
+
+   public boolean getBoolOption(String option)
+   {
+      return terminal_.getBoolOption(option);
+   }
+
+   public double getNumberOption(String option)
+   {
+      return terminal_.getNumberOption(option);
+   }
+
+   public void updateTheme(XTermTheme theme)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateTheme(theme);
+   }
+
+   public void updateBooleanOption(String option, boolean value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateBooleanOption(option, value);
+   }
+
+   public void updateStringOption(String option, String value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateStringOption(option, value);
+   }
+
+   public void updateDoubleOption(String option, double value)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.updateDoubleOption(option, value);
+   }
+
    /**
     * Load resources for XTermWidget.
     *
@@ -406,17 +435,22 @@ public class XTermWidget extends Widget
       }));
    }
 
+   public void refresh()
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.refresh();
+   }
+
    private static final ExternalJavaScriptLoader xtermLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermjs(),
-                   XTermResources.INSTANCE.xtermjsUncompressed());
+         new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermjs().getSafeUri().asString());
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermfitjs(),
-                   XTermResources.INSTANCE.xtermfitjsUncompressed());
+         new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
 
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
+   private XTermOptions options_;
 
    private int previousRows_ = -1;
    private int previousCols_ = -1;

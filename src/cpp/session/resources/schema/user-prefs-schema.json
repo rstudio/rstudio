@@ -704,6 +704,18 @@
             "default": true,
             "description": "Whether to track and save changes to system environment variables in the Terminal."
         },
+        "terminal_bell_style": {
+            "type": "string",
+            "enum": ["none", "sound"],
+            "default": "sound",
+            "description": "Terminal bell style"
+        },
+        "terminal_renderer": {
+            "type": "string",
+            "enum": ["canvas", "dom"],
+            "default": "canvas",
+            "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
+        },
         "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
