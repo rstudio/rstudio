@@ -80,7 +80,8 @@ void applyForwardConcordance(const FilePath& mainFile,
                              core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
-   if (pLoc->file().extensionLowerCase() != ".rnw")
+   if (pLoc->file().extensionLowerCase() != ".rnw" && 
+       pLoc->file().extensionLowerCase() != ".rtex")
       return;
 
    // try to read concordance
