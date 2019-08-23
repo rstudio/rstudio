@@ -65,7 +65,7 @@ public class AskPassManager
                 !satelliteManager.satelliteWindowExists(targetWindow))
                return true;
             
-            // othewise don't handle
+            // otherwise don't handle
             else
                return false;
          }

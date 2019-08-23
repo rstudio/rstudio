@@ -272,7 +272,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onNewConnection()
    {
-      // if r session bussy, fail
+      // if r session busy, fail
       if (commands_.interruptR().isEnabled()) {
          showError(
             "The R session is currently busy. Wait for completion or " +

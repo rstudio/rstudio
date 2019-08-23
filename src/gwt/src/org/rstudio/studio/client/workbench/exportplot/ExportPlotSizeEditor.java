@@ -294,7 +294,7 @@ public class ExportPlotSizeEditor extends Composite
       initialWidth = constrainWidth(initialWidth);
       initialHeight = constrainHeight(initialHeight);
             
-      // initialie text boxes
+      // initialize text boxes
       setWidthTextBox(initialWidth);
       setHeightTextBox(initialHeight);
  

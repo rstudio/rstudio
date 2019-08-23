@@ -63,7 +63,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       double step = slider.getStep();
       if (step == -1)
       {        
-         // short range or decimals means continous decimal
+         // short range or decimals means continuous decimal
          if (range < 2 || hasDecimals(max) || hasDecimals(min) )
             step = range / 250; // ~ one step per pixel
          else

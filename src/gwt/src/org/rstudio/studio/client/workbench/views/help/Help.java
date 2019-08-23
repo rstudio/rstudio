@@ -124,7 +124,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
             final LinkMenu history = view_.getHistory() ;
             history.clearLinks();
             
-            // intialize from the list
+            // initialize from the list
             ArrayList<String> list = event.getList();
             for (int i=0; i<list.size(); i++)
             {

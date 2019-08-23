@@ -837,7 +837,7 @@ pre {
    right: 0px !important;
    bottom: 0px !important;
 
-   /* overflow-hidden with border-radius degrates under windows */
+   /* overflow-hidden with border-radius degrades under windows */
    overflow: visible !important;
 }
 

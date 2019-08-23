@@ -293,7 +293,7 @@ public class RCompletionManager implements CompletionManager
          if (cursor.moveToPosition(editor.getCursorPosition(), true))
          {
             // if the cursor is 'on' a left bracket, move back to the associated
-            // token (obstensibly a funciton name)
+            // token (ostensibly a function name)
             if (cursor.isLeftBracket())
                cursor.moveToPreviousToken();
             

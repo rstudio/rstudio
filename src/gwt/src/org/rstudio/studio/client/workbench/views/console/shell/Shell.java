@@ -425,7 +425,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          }
       };
       
-      // do standrd finish if we aren't animating
+      // do standard finish if we aren't animating
       if (!event.shouldAnimate())
       {
          display.clear();

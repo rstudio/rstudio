@@ -1037,7 +1037,7 @@ public class ClientEventDispatcher
       }
       catch(Throwable e)
       {
-         GWT.log("WARNING: Exception occured dispatching event: " + type, e);
+         GWT.log("WARNING: Exception occurred dispatching event: " + type, e);
       }
    }
    

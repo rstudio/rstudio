@@ -334,7 +334,7 @@ public class TextEditingTarget implements
 
       public void onError(final String message)
       {
-         // in case the error occured saving a document that wasn't 
+         // in case the error occurred saving a document that wasn't
          // in the foreground
          view_.ensureVisible();
          
@@ -6992,7 +6992,7 @@ public class TextEditingTarget implements
    
    /**
     * Updates the path of the file loaded in the editor, as though the user
-    * had just saved the file at the new paht.
+    * had just saved the file at the new path.
     * 
     * @param path New path for the editor
     */

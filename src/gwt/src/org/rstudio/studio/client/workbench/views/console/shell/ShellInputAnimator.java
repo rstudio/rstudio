@@ -67,7 +67,7 @@ public class ShellInputAnimator
    {      
       if (pendingAnimatedInput_.size() > 0)
       {
-         // get the input animaator
+         // get the input animator
          InputAnimator inputAnimator = pendingAnimatedInput_.get(0);
          
          // calculate the period (make sure the command takes no longer

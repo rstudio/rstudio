@@ -591,7 +591,7 @@ public class DualWindowLayoutPanel extends SimplePanel
                            chromeHeight - 
                            targetHeight;
          
-         // see if we need to offset to acheive minimum other height
+         // see if we need to offset to achieve minimum other height
          int offset = 0;
          if (otherHeight < MINIMUM)
             offset = MINIMUM - otherHeight;
