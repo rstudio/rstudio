@@ -21,13 +21,7 @@ endif()
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 # flags to pass to codesign executable
-set(CODESIGN_FLAGS 
-    "--options" "runtime" 
-    "--timestamp" 
-    "--entitlements" "${CMAKE_CURRENT_SOURCE_DIR}/entitlements.plist" 
-    "--deep" 
-    "-s" "8A388E005EF927A09B952C6E71B0E8F2F467AB26" 
-    "-i" "org.rstudio.RStudio")
+set(CODESIGN_FLAGS "-s" "8A388E005EF927A09B952C6E71B0E8F2F467AB26" "-i" "org.rstudio.RStudio")
 
 # include overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
@@ -55,7 +49,7 @@ if (RSTUDIO_PACKAGE_BUILD)
      # deep sign all targets
      foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
          message(\"Signing \${CODESIGN_TARGET}...\")
-         execute_process(COMMAND codesign ${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
+         execute_process(COMMAND codesign \"--deep\" ${CODESIGN_FLAGS} \"\${CODESIGN_TARGET}\")
      endforeach()
      ")
 endif()
