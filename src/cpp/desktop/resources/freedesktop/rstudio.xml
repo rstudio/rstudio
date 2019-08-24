@@ -20,8 +20,6 @@
     <comment>R Sweave File</comment>
     <glob pattern="*.Rnw"/>
     <glob pattern="*.rnw"/>
-    <glob pattern="*.Rtex"/>
-    <glob pattern="*.rtex"/>
   </mime-type>
 
   <mime-type type="text/x-r-markdown">
