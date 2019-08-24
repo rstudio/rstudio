@@ -393,7 +393,6 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "q",     "text/x-r-source");
       MIME_TYPES.put( "rd",    "text/x-r-doc");
       MIME_TYPES.put( "rnw",   "text/x-r-sweave");
-      MIME_TYPES.put( "rtex",  "text/x-r-sweave");
       MIME_TYPES.put( "rmd",   "text/x-r-markdown");
       MIME_TYPES.put( "rhtml", "text/x-r-html");
       MIME_TYPES.put( "rpres", "text/x-r-presentation");

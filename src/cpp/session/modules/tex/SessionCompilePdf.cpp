@@ -608,7 +608,7 @@ private:
 
       // see if we need to weave
       std::string ext = targetFilePath_.extensionLowerCase();
-      bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw" || ext == ".rtex";
+      bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw";
       if (isRnw)
       {
          // remove existing ancillary files + concordance
@@ -805,8 +805,7 @@ private:
 
    bool isTargetRnw() const
    {
-      return targetFilePath_.extensionLowerCase() == ".rnw" ||
-             targetFilePath_.extensionLowerCase() == ".rtex";
+      return targetFilePath_.extensionLowerCase() == ".rnw";
    }
 
 private:

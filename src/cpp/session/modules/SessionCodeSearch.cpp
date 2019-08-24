@@ -909,7 +909,7 @@ private:
       std::string ext = filePath.extensionLowerCase();
       std::string filename = filePath.filename();
       return !filePath.isDirectory() &&
-              (ext == ".r" || ext == ".rnw" || ext == ".rtex" ||
+              (ext == ".r" || ext == ".rnw" ||
                ext == ".rmd" || ext == ".rmarkdown" ||
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||

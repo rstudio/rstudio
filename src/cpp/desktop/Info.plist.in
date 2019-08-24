@@ -110,21 +110,6 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
-             <string>Rtex</string>
-             <string>rtex</string>
-         </array>
-         <key>CFBundleTypeIconFile</key>
-         <string>RSweave.icns</string>
-         <key>CFBundleTypeName</key>
-         <string>Sweave File</string>
-         <key>CFBundleTypeRole</key>
-         <string>Editor</string>
-         <key>LSIsAppleDefaultForType</key>
-         <true/>
-      </dict>
-      <dict>
-         <key>CFBundleTypeExtensions</key>
-         <array>
              <string>Rmd</string>
              <string>rmd</string>
              <string>Rmarkdown</string>
