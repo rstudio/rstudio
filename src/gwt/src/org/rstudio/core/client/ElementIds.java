@@ -121,6 +121,9 @@ public class ElementIds
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
 
+   public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
+   public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
+
    // AskSecretDialog
    public final static String ASK_SECRET_TEXT = "ask_secret_text";
    public static String getAskSecretText() { return getElementId(ASK_SECRET_TEXT); }

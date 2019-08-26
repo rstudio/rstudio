@@ -171,7 +171,10 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
             uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg));
             uiPrefs_.terminalBellStyle().bind(arg -> updateStringOption("bellStyle", arg));
-            uiPrefs_.terminalRenderer().bind(arg -> updateStringOption("rendererType", arg));
+            uiPrefs_.terminalRenderer().bind(arg -> {
+               updateStringOption("rendererType", arg);
+               onResize();
+            });
             uiPrefs_.fontSizePoints().bind(arg -> {
                updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
                onResize();
