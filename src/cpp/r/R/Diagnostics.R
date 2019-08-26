@@ -49,10 +49,37 @@ capture.output({
   cat("\nR Version:\n")
   print(version)
 
-  # attempt to automatically sanitize environment variables that obviously contain sensitive data
   envVars <- Sys.getenv()
-  matches <- grepl("KEY|TOKEN|PASSWORD|API|HOST|USER|SECRET|AUTH|GITHUB", 
-                   names(envVars), ignore.case = TRUE)
+  
+  # create a list of words that are likely to appear in environment variables
+  # that we shouldn't capture in a diagnostics report
+  redactWords <- c(
+     "API",
+     "AUTH",
+     "GITHUB",
+     "HOST",
+     "HOST",
+     "KEY",
+     "LOGNAME",
+     "PASSWORD",
+     "PAT",
+     "SECRET",
+     "TOKEN",
+     "USERNAME"
+  )
+  
+  # form each into a regex that matches the word exactly
+  redactRegexes <- vapply(redactWords, function(word) { 
+     paste0("\\b(?:", word, ")\\b")
+  }, "")
+  
+  # collapse all of the regexes into a mega-regex that matches any banned word,
+  # then match it on the list of environment variable names with _ converted to
+  # a space (so that e.g. GITHUB_PAT becomes GITHUB PAT and matches the banned
+  # word PAT)
+  matches <- grepl(paste0(redactRegexes, collapse = "|"), 
+                   gsub("_", " ", names(envVars), fixed = TRUE), 
+                   ignore.case = TRUE)
   envVars[matches] <- "*** redacted ***"
 
   print(as.list(envVars))
