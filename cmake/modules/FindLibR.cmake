@@ -21,12 +21,14 @@
 if(APPLE)
 
    find_library(LIBR_LIBRARIES R)
-
+   
    if(LIBR_LIBRARIES MATCHES ".*\\.framework")
-      set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")
+      set(_LIBR_RESOURCES "${LIBR_LIBRARIES}/Resources")
+      get_filename_component(_LIBR_HOME "${_LIBR_RESOURCES}" REALPATH)
+      set(LIBR_HOME "${_LIBR_HOME}" CACHE PATH "R home directory")
       set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
       set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
-      set(LIBR_EXECUTABLE "${LIBR_HOME}/R" CACHE PATH "R executable")
+      set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
    else()
       get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
       get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
