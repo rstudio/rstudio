@@ -76,23 +76,6 @@ CRANMirror UserPrefValuesNative::getCRANMirror()
       mirror.url = parts.at(1);
    }
 
-   // if there is no URL then return the default RStudio mirror
-   // (return the insecure version so we can rely on probing for
-   // the secure version). also check for "/" to cleanup from
-   // a previous bug/regression
-   if (mirror.url.empty() || (mirror.url == "/"))
-   {
-      // But only if not changed by the user
-      if (!prefs::userState().cranMirrorChanged())
-      {
-         mirror.name = "Global (CDN)";
-         mirror.host = "RStudio";
-         mirror.url = "http://cran.rstudio.com/";
-         mirror.secondary = "";
-         mirror.country = "us";
-      }
-   }
-
    // re-map cran.rstudio.org to cran.rstudio.com
    if (boost::algorithm::starts_with(mirror.url, "http://cran.rstudio.org"))
       mirror.url = "http://cran.rstudio.com/";

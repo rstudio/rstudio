@@ -26,6 +26,8 @@
 require(jsonlite)
 require(stringi)
 
+cat("Generating preferences...")
+
 # Helper to capitalize a string
 capitalize <- function(s) {
    paste0(toupper(substring(s, 1, 1)), substring(s, 2))
@@ -281,3 +283,6 @@ writeLines(gsub("%STATE%", result$hpp, template),
 template <- readLines("prefs/UserStateValues.cpp")
 writeLines(gsub("%STATE%", result$cpp, template), 
            con = "../../cpp/session/prefs/UserStateValues.cpp")
+
+cat("Preference generation complete.\n")
+

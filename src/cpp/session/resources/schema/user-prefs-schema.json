@@ -57,7 +57,7 @@
             "default": {
                 "name": "Global (CDN)",
                 "host": "RStudio",
-                "url": "http://cran.rstudio.com/",
+                "url": "https://cran.rstudio.com/",
                 "repos": "",
                 "country": "us",
                 "secondary": ""

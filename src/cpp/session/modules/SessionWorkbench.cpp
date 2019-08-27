@@ -485,10 +485,6 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 
    if (pref == kCranMirror)
    {
-      Error error = prefs::userState().setCranMirrorChanged(true);
-      if (error)
-         LOG_ERROR(error);
-
       // verify cran mirror security (will either update to https or
       // will print a warning)
       module_context::reconcileSecureDownloadConfiguration();

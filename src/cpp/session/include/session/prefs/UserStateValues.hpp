@@ -71,7 +71,6 @@ namespace prefs {
 #define kConnectViaConnectNewRScript "connect-new-r-script"
 #define kConnectViaConnectNewRNotebook "connect-new-r-notebook"
 #define kConnectViaConnectCopyToClipboard "connect-copy-to-clipboard"
-#define kCranMirrorChanged "cran_mirror_changed"
 #define kErrorHandlerType "error_handler_type"
 #define kErrorHandlerTypeMessage "message"
 #define kErrorHandlerTypeTraceback "traceback"
@@ -179,12 +178,6 @@ public:
     */
    std::string connectVia();
    core::Error setConnectVia(std::string val);
-
-   /**
-    * Whether the CRAN mirror has been changed from its default.
-    */
-   bool cranMirrorChanged();
-   core::Error setCranMirrorChanged(bool val);
 
    /**
     * The kind of handler to invoke when errors occur.

@@ -23,7 +23,9 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.JsArrayUtil;
 
 
 /**
@@ -313,14 +315,6 @@ public class UserStateAccessor extends Prefs
    public final static String CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
 
    /**
-    * Whether the CRAN mirror has been changed from its default.
-    */
-   public PrefValue<Boolean> cranMirrorChanged()
-   {
-      return bool("cran_mirror_changed", false);
-   }
-
-   /**
     * The kind of handler to invoke when errors occur.
     */
    public PrefValue<String> errorHandlerType()
@@ -376,8 +370,6 @@ public class UserStateAccessor extends Prefs
          documentOutlineWidth().setValue(layer, source.getInteger("document_outline_width"));
       if (source.hasKey("connect_via"))
          connectVia().setValue(layer, source.getString("connect_via"));
-      if (source.hasKey("cran_mirror_changed"))
-         cranMirrorChanged().setValue(layer, source.getBool("cran_mirror_changed"));
       if (source.hasKey("error_handler_type"))
          errorHandlerType().setValue(layer, source.getString("error_handler_type"));
       if (source.hasKey("using_mingw_gcc49"))

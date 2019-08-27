@@ -582,7 +582,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically discover and offer to install missing R package dependencies.
+    * Whether to automatically discover and offer to install missing R package dependenices.
     */
    public PrefValue<Boolean> autoDiscoverPackageDependencies()
    {
