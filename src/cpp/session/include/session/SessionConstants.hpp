@@ -91,6 +91,8 @@
 #define kListsPath          "lists"
 #define kProjectMruList     "project_mru"
 
+#define kUserSettingsDir       "user-settings"	
+#define kUserSettingsFile      kUserSettingsDir
 #define kContextIdentifier     "contextIdentifier"
 
 #define kServerHomeSetting     "showUserHomePage"
