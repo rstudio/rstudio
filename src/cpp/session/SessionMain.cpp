@@ -1980,14 +1980,16 @@ int main (int argc, char * const argv[])
 
       // CRAN repos configuration follows; order of precedence is:
       //
-      // 1. The user's personal preferences file (rstudio-prefs.json)
+      // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
+      //    same
       // 2. The session's repo settings (in rsession.conf/repos.conf)
       // 3. The server's repo settings
       // 4. The default repo settings from the preferences schema (user-prefs-schema.json)
       // 5. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
-      if (val && layerName == kUserPrefsUserLayer)
+      if (val && (layerName == kUserPrefsUserLayer ||
+                  layerName == kUserPrefsSystemLayer))
       {
          // There is a user-scoped value, so use it
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
@@ -2002,7 +2004,8 @@ int main (int argc, char * const argv[])
          rOptions.rCRANSecondary = "";
 
          std::vector<std::string> secondary;
-         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2) {
+         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
+         {
             if (string_utils::toLower(parts[idxParts]) == "cran")
                rOptions.rCRANUrl = parts[idxParts + 1];
             else

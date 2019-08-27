@@ -62,6 +62,7 @@ CRANMirror UserPrefValuesNative::getCRANMirror()
    // get the settings
    struct CRANMirror mirror;
    json::readObject(cranMirror(), 
+         kCranMirrorUrl, &mirror.url,
          kCranMirrorName, &mirror.name,
          kCranMirrorHost, &mirror.host,
          kCranMirrorSecondary, &mirror.secondary,
