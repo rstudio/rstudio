@@ -40,6 +40,7 @@
 
 namespace rstudio {
 namespace core {
+   class DistributedEvent;
    class Error;
    class Success;
    class FilePath;
@@ -52,9 +53,6 @@ namespace core {
    namespace shell_utils {
       class ShellCommand;
    }
-}
-namespace server_core {
-   class DistributedEvent;
 }
 }
 
@@ -349,7 +347,7 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void (const std::string&)>  onPackageLoaded;
    RSTUDIO_BOOST_SIGNAL<void ()>                    onPackageLibraryMutated;
    RSTUDIO_BOOST_SIGNAL<void ()>                    onPreferencesSaved;
-   RSTUDIO_BOOST_SIGNAL<void (const server_core::DistributedEvent&)>
+   RSTUDIO_BOOST_SIGNAL<void (const core::DistributedEvent&)>
                                              onDistributedEvent;
    RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onPermissionsChanged;
 

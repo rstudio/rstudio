@@ -80,6 +80,24 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebEngineView(parent),
     baseUrl_(baseUrl)
 {
+
+   pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
+   init();
+}
+
+WebView::WebView(QWebEngineProfile *profile,
+                 QUrl baseUrl,
+                 QWidget *parent,
+                 bool allowExternalNavigate) :
+   QWebEngineView(parent),
+   baseUrl_(baseUrl)
+{
+   pWebPage_ = new WebPage(profile, baseUrl, parent, allowExternalNavigate);
+   init();
+}
+
+void WebView::init()
+{
 #ifdef Q_OS_LINUX
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
    {
@@ -88,7 +106,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
          setStyle(QStyleFactory::create(fusion));
    }
 #endif
-   pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
+
    setPage(pWebPage_);
 }
 
@@ -191,6 +209,7 @@ bool WebView::event(QEvent* event)
 
 void WebView::closeEvent(QCloseEvent*)
 {
+   onClose();
 }
 
 namespace {

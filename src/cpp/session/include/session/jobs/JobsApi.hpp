@@ -77,6 +77,8 @@ void removeAllJobs();
 
 void removeAllLocalJobs();
 
+void removeAllLauncherJobs();
+
 void removeCompletedLocalJobs();
 
 void endAllJobStreaming();

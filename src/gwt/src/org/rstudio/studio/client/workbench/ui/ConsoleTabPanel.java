@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -368,10 +370,10 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       
       // Determine initial visibility of local jobs and launcher jobs tabs
       String jobsTabVisibilitySetting = userPrefs_.jobsTabVisibility().getValue();
-      if (session_.getSessionInfo().getLauncherJobsEnabled())
+      Command showLauncherTab = () ->
       {
          launcherJobsTabVisible_ = userPrefs_.showLauncherJobsTab().getValue();
-         
+
          // By default, we don't show the Jobs tab when Launcher tab is visible.
          // However, if user has explicitly shown or hidden Jobs, we'll
          // honor that independent of Launcher tabs visibility.
@@ -390,21 +392,51 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                jobsTabVisible_ = true;
                break;
          }
+      };
+
+
+      if (session_.getSessionInfo().getLauncherJobsEnabled())
+      {
+         showLauncherTab.execute();
       }
       else
       {
-         launcherJobsTabVisible_ = false;
-         switch (jobsTabVisibilitySetting)
+         Command hideLauncherTab = () ->
          {
-            default:
-            case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
-            case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
-               jobsTabVisible_ = true;
-               break;
+            launcherJobsTabVisible_ = false;
+            switch (jobsTabVisibilitySetting)
+            {
+               default:
+               case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
+               case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
+                  jobsTabVisible_ = true;
+                  break;
 
-            case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
-               jobsTabVisible_ = false;
-               break;
+               case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
+                  jobsTabVisible_ = false;
+                  break;
+            }
+         };
+
+         if (Desktop.hasDesktopFrame())
+         {
+            // if there are session servers defined, we will show the launcher tab
+            Desktop.getFrame().getSessionServers(servers -> {
+               if (servers.length() > 0)
+               {
+                  showLauncherTab.execute();
+                  managePanels();
+               }
+               else
+               {
+                  hideLauncherTab.execute();
+                  managePanels();
+               }
+            });
+         }
+         else
+         {
+            hideLauncherTab.execute();
          }
       }
 

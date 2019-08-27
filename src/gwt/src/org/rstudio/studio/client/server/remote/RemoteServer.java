@@ -5807,12 +5807,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setJobListening(String id, boolean listening,
+   public void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                                ServerRequestCallback<JsArray<JobOutput>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, JSONBoolean.getInstance(listening));
+      params.set(2, JSONBoolean.getInstance(bypassLauncherCall));
       sendRequest(RPC_SCOPE, "set_job_listening", params, callback);
    }
    

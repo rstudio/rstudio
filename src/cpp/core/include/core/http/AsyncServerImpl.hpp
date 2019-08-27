@@ -359,7 +359,7 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
    
-   void onHeadersParsed(
+   bool onHeadersParsed(
          boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > pConnection,
          http::Request* pRequest)
    {
@@ -389,12 +389,13 @@ private:
             if (method != "GET" &&
                 method != "POST" &&
                 method != "HEAD" &&
-                method != "PUT")
+                method != "PUT" &&
+                method != "OPTIONS")
             {
                // invalid method - fail out
                LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
                pConnection->response().setStatusCode(http::status::MethodNotAllowed);
-               return;
+               return false;
             }
          }
 
@@ -407,6 +408,8 @@ private:
             if (func)
                pConnection->setUploadHandler(func);
          }
+
+         return true;
       }
       catch(const boost::system::system_error& e)
       {
@@ -417,6 +420,8 @@ private:
          checkForResourceExhaustion(e.code(), ERROR_LOCATION);
       }
       CATCH_UNEXPECTED_EXCEPTION
+
+      return false;
    }
 
    void handleConnection(

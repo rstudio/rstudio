@@ -198,6 +198,20 @@ void removeAllLocalJobs()
    }
 }
 
+void removeAllLauncherJobs()
+{
+   for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
+   {
+      if (it->second->type() == JobType::JobTypeLauncher)
+      {
+         it->second->cleanup();
+         it = s_jobs.erase(it);
+      }
+      else
+         ++it;
+   }
+}
+
 void removeCompletedLocalJobs()
 {
    // collect completed jobs

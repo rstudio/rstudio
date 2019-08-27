@@ -23,6 +23,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopMainWindow.hpp"
@@ -67,6 +68,11 @@ FilePath userLogPath()
          userHomePath,
          "RStudio-Desktop").childPath("log");
    return logPath;
+}
+
+FilePath userWebCachePath()
+{
+   return core::system::xdg::userDataDir().childPath("web-cache");
 }
 
 bool isWindows()

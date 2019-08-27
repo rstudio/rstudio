@@ -45,6 +45,7 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopSynctex.hpp"
+#include "DesktopJobLauncherOverlay.hpp"
 #include "RemoteDesktopSessionLauncherOverlay.hpp"
 
 #ifdef __APPLE__
@@ -71,11 +72,23 @@ extern QString scratchPath;
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner, bool isRemoteDesktop)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
+     pLauncher_(new JobLauncher(pMainWindow)),
      isRemoteDesktop_(isRemoteDesktop),
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
    initialize();
+
+   Error error = pLauncher_->initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      showError(nullptr,
+                QStringLiteral("Initialization error"),
+                QStringLiteral("Could not initialize Job Launcher"),
+                QString());
+      ::_exit(EXIT_FAILURE);
+   }
    
 #ifdef Q_OS_LINUX
    // assume light theme on startup (theme will be dynamically updated
@@ -1567,9 +1580,103 @@ void GwtCallback::onSessionQuit()
    sessionQuit();
 }
 
-QString GwtCallback::getSessionServer()
+QJsonObject GwtCallback::getSessionServer()
 {
-   return QString::fromStdString(pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer().label());
+   if (pMainWindow_->getRemoteDesktopSessionLauncher() != nullptr)
+      return pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer().toJson();
+   else
+      return QJsonObject();
+}
+
+QJsonArray GwtCallback::getSessionServers()
+{
+   QJsonArray serversArray;
+   for (const SessionServer& server : sessionServerSettings().servers())
+   {
+      serversArray.append(server.toJson());
+   }
+
+   return serversArray;
+}
+
+bool GwtCallback::setLauncherServer(const QJsonObject& sessionServerJson)
+{
+   SessionServer server = SessionServer::fromJson(sessionServerJson);
+   return pLauncher_->setSessionServer(server);
+}
+
+void GwtCallback::connectToLauncherServer()
+{
+   pLauncher_->signIn();
+}
+
+void GwtCallback::startLauncherJobStatusStream(QString jobId)
+{
+   pLauncher_->startLauncherJobStatusStream(jobId.toStdString());
+}
+
+void GwtCallback::stopLauncherJobStatusStream(QString jobId)
+{
+   pLauncher_->stopLauncherJobStatusStream(jobId.toStdString());
+}
+
+void GwtCallback::startLauncherJobOutputStream(QString jobId)
+{
+   pLauncher_->startLauncherJobOutputStream(jobId.toStdString());
+}
+
+void GwtCallback::stopLauncherJobOutputStream(QString jobId)
+{
+   pLauncher_->stopLauncherJobOutputStream(jobId.toStdString());
+}
+
+void GwtCallback::controlLauncherJob(QString jobId, QString operation)
+{
+   pLauncher_->controlLauncherJob(jobId.toStdString(), operation.toStdString());
+}
+
+void GwtCallback::submitLauncherJob(const QJsonObject& job)
+{
+   // convert qt json object to core json object
+   QJsonDocument doc(job);
+   std::string jsonStr = doc.toJson().toStdString();
+
+   json::Value val;
+   Error error = json::parse(jsonStr, ERROR_LOCATION, &val);
+   if (error)
+   {
+      // a parse error should not occur here - if it does it indicates a programmer
+      // error while invoking this method - as such, forward on the invalid job
+      // so the appropriate error event is eventually delivered
+      LOG_ERROR(error);
+   }
+
+   json::Object obj;
+   if (val.type() == json::ObjectType)
+      obj = val.get_obj();
+
+   if (obj.empty())
+   {
+      // same as above - if this is not a valid object, it indicates a programmer error
+      LOG_ERROR_MESSAGE("Empty job object submitted");
+   }
+
+   pLauncher_->submitLauncherJob(obj);
+}
+
+void GwtCallback::getJobContainerUser()
+{
+   pLauncher_->getJobContainerUser();
+}
+
+void GwtCallback::validateJobsConfig()
+{
+   pLauncher_->validateJobsConfig();
+}
+
+int GwtCallback::getProxyPortNumber()
+{
+   return pLauncher_->getProxyPortNumber();
 }
 
 } // namespace desktop

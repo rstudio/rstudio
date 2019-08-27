@@ -46,6 +46,16 @@ const std::string& SessionServer::label() const
       return url();
 }
 
+QJsonObject SessionServer::toJson() const
+{
+   return QJsonObject();
+}
+
+SessionServer SessionServer::fromJson(const QJsonObject& sessionServerJson)
+{
+   return SessionServer();
+}
+
 Error SessionServer::test()
 {
    return Success();

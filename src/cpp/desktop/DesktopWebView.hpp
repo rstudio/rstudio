@@ -35,6 +35,11 @@ public:
                     QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
+   explicit WebView(QWebEngineProfile *profile,
+                    QUrl baseUrl = QUrl(),
+                    QWidget *parent = nullptr,
+                    bool allowExternalNavigate = false);
+
    void setBaseUrl(const QUrl& baseUrl);
    QUrl baseUrl();
 
@@ -49,6 +54,7 @@ public:
 
 Q_SIGNALS:
   void onCloseWindowShortcut();
+  void onClose();
 
 public Q_SLOTS:
 
@@ -62,6 +68,8 @@ protected Q_SLOTS:
    void openFile(QString file);
 
 private:
+   void init();
+
    QUrl baseUrl_;
    WebPage* pWebPage_;
 };

@@ -103,10 +103,14 @@ public:
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
          http::Request*)> Handler;
 
+   typedef boost::function<bool(
+         boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
+         http::Request*)> HeadersParsedHandler;
+
 public:
    AsyncConnectionImpl(boost::asio::io_service& ioService,
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
-                       const Handler& onHeadersParsed,
+                       const HeadersParsedHandler& onHeadersParsed,
                        const Handler& onRequestParsed,
                        const RequestFilter& requestFilter = RequestFilter(),
                        const ResponseFilter& responseFilter = ResponseFilter())
@@ -392,7 +396,11 @@ private:
                }
                else
                {
-                  callHeadersParsedHandler();
+                  if (!callHeadersParsedHandler())
+                  {
+                     writeResponse();
+                     return;
+                  }
 
                   // we need to resume body parsing by recalling the parse
                   // method and providing the exact same buffer to continue
@@ -455,7 +463,11 @@ private:
       }
       else
       {
-         callHeadersParsedHandler();
+         if (!callHeadersParsedHandler())
+         {
+            writeResponse();
+            return;
+         }
 
          // we need to resume body parsing by recalling the parse
          // method and providing the exact same buffer to continue
@@ -464,10 +476,10 @@ private:
       }
    }
 
-   void callHeadersParsedHandler()
+   bool callHeadersParsedHandler()
    {
-      onHeadersParsed_(AsyncConnectionImpl<SocketType>::shared_from_this(),
-                       &request_);
+      return onHeadersParsed_(AsyncConnectionImpl<SocketType>::shared_from_this(),
+                              &request_);
    }
 
    void callHandler()
@@ -553,7 +565,7 @@ private:
    // depending on whether or not SSL is enabled
    boost::shared_ptr<ISocketOperations> socketOperations_;
 
-   Handler onHeadersParsed_;
+   HeadersParsedHandler onHeadersParsed_;
    Handler onRequestParsed_;
    FormHandler formHandler_;
    RequestFilter requestFilter_;

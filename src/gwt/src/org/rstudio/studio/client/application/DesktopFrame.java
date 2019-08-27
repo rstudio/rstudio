@@ -16,9 +16,11 @@ package org.rstudio.studio.client.application;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.SessionServer;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.Command;
 
@@ -207,5 +209,18 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void onSessionQuit();
 
-   void getSessionServer(CommandWithArg<String> callback);
+   void getSessionServer(CommandWithArg<SessionServer> callback);
+   void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);
+
+   void setLauncherServer(SessionServer server, CommandWithArg<Boolean> callback);
+   void connectToLauncherServer();
+
+   void startLauncherJobStatusStream(String jobId);
+   void stopLauncherJobStatusStream(String jobId);
+   void startLauncherJobOutputStream(String jobId);
+   void stopLauncherJobOutputStream(String jobId);
+   void controlLauncherJob(String jobId, String operation);
+   void getJobContainerUser();
+   void validateJobsConfig();
+   void getProxyPortNumber(CommandWithArg<Integer> callback);
 }

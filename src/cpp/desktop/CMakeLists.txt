@@ -223,6 +223,7 @@ set(DESKTOP_SOURCE_FILES
   DesktopSlotBinders.cpp
   DesktopSubMenu.cpp
   DesktopSynctex.cpp
+  DesktopJobLauncherOverlay.cpp
   RemoteDesktopSessionLauncherOverlay.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp

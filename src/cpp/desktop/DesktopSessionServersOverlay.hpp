@@ -16,10 +16,13 @@
 #ifndef DESKTOP_SESSION_SERVERS_OVERLAY_HPP
 #define DESKTOP_SESSION_SERVERS_OVERLAY_HPP
 
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QObject>
+
 #include <boost/optional.hpp>
 
 #include <core/FilePath.hpp>
-#include <QObject>
 
 namespace rstudio {
 namespace core {
@@ -55,6 +58,10 @@ public:
    const std::string& label() const;
    bool isDefault() const { return isDefault_; }
 
+   QJsonObject toJson() const;
+
+   static SessionServer fromJson(const QJsonObject& sessionServerJson);
+
    void setName(const std::string& name) { name_ = name; }
    void setUrl(const std::string& url) { url_ = url; }
    void setIsDefault(bool isDefault) { isDefault_ = isDefault; }
@@ -68,6 +75,9 @@ public:
    }
 
 private:
+   SessionServer() :
+      isDefault_(false) {}
+
    std::string name_;
    std::string url_;
    bool isDefault_;

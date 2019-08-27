@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.jobs.model;
 
+import org.rstudio.core.client.SessionServer;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class LauncherJobManager
@@ -29,5 +30,18 @@ public class LauncherJobManager
    
    public void controlLauncherJob(String jobId, String operation, ServerRequestCallback<Boolean> callback)
    {
+   }
+
+   public void reset(SessionServer server)
+   {
+      // resets the state of this launcher object and its dependencies
+      // in preparation for connecting to a different launcher server
+   }
+
+   public SessionServer getSessionServer()
+   {
+      // return the currently active Jobs session server
+      // or null if not in effect
+      return null;
    }
 }
