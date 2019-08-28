@@ -1646,6 +1646,12 @@ int main (int argc, char * const argv[])
 #endif
       s_printCharsetWarning = !ensureUtf8Charset();
       
+      // remove DYLD_INSERT_LIBRARIES variable (injected on macOS Desktop
+      // to support restrictions with hardened runtime)
+#ifdef __APPLE__
+      core::system::unsetenv("DYLD_INSERT_LIBRARIES");
+#endif
+      
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
