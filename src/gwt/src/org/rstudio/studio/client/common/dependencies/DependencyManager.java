@@ -128,6 +128,18 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                        onComplete);
    }
    
+   public void withRoxygen(String progressCaption, String userAction, final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userAction,
+            new Dependency[] {
+                  Dependency.cranPackage("roxygen2", "6.0.1")
+            },
+            false,
+            succeeded -> { if (succeeded) command.execute(); });
+   }
+   
    public void withThemes(String userAction, final Command command)
    {
       withDependencies(
