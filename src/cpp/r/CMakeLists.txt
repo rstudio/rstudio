@@ -92,10 +92,13 @@ include_directories(
 add_library(rstudio-r STATIC ${R_SOURCE_FILES} ${R_HEADER_FILES})
 
 # link dependencies
-target_link_libraries(rstudio-r
-   ${LIBR_LIBRARIES}
-   rstudio-core
-)
+target_link_libraries(rstudio-r rstudio-core)
+
+if(APPLE)
+   target_link_libraries(rstudio-r "-undefined dynamic_lookup")
+else()
+   target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")
+endif()
 
 # install rules
 if (NOT RSTUDIO_SESSION_WIN32)
