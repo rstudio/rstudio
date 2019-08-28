@@ -34,6 +34,10 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#define kDictionariesPath "dictionaries/"
+#define kSystemLanguages kDictionariesPath "languages-system"
+#define kCustomDictionaries kDictionariesPath "custom"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -99,7 +103,7 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
  * */
 FilePath legacyAllLanguagesDir()
 {
-   return module_context::userScratchPath().childPath( "dictionaries/languages-system");
+   return module_context::userScratchPath().childPath(kSystemLanguages);
 }
 
 /*
@@ -108,18 +112,17 @@ FilePath legacyAllLanguagesDir()
  * */
 FilePath legacyCustomDictionariesDir()
 {
-   return module_context::userScratchPath().childPath( "dictionaries/custom");
+   return module_context::userScratchPath().childPath(kCustomDictionaries);
 }
 
 FilePath allLanguagesDir()
 {
-   return core::system::xdg::userConfigDir().childPath("dictionaries/languages-system");
+   return core::system::xdg::userConfigDir().childPath(kSystemLanguages);
 }
 
 FilePath customDictionariesDir()
 {
-
-   return core::system::xdg::userConfigDir().childPath("dictionaries/custom");
+   return core::system::xdg::userConfigDir().childPath(kCustomDictionaries);
 }
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
@@ -145,6 +148,18 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    else if (allLanguagesDir().complete(splat[1]).exists())
    {
       pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+   }
+   else if (core::system::xdg::systemConfigDir()
+               .complete(kCustomDictionaries).complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().complete(
+               kCustomDictionaries).complete(splat[1]), request);
+   }
+   else if (core::system::xdg::systemConfigDir()
+               .complete(kSystemLanguages).complete(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().complete(
+               kSystemLanguages).complete(splat[1]), request);
    }
    /*
     * \deprecated
