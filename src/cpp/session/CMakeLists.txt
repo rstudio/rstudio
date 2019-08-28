@@ -400,14 +400,10 @@ target_link_libraries(rsession
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
-<<<<<<< HEAD
-   ${LIBR_LIBRARIES}
-=======
    ${CRASHPAD_LIBRARIES}
->>>>>>> f5ae4d67af... use DYLD_INSERT_LIBRARIES to force requested libR
 )
 
-if(APPLE)
+if(RSTUDIO_PACKAGE_BUILD AND APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
