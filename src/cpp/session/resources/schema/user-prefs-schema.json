@@ -365,7 +365,7 @@
         "auto_discover_package_dependencies": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to automatically discover and offer to install missing R package dependenices."
+            "description": "Whether to automatically discover and offer to install missing R package dependencies."
         },
         "auto_append_newline": {
             "type": "boolean",
