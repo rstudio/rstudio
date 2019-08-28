@@ -33,11 +33,6 @@ cleanup()
 }
 trap cleanup SIGINT
 
-# ensure libR is injected when rsession is launched
-if [ "$(uname)" = "Darwin" ]; then
-   export DYLD_INSERT_LIBRARIES="@LIBR_HOME@/lib/libR.dylib"
-fi
-
 RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-proxy" \
 RS_CRASHPAD_HANDLER_PATH="/opt/rstudio-tools/crashpad/crashpad/out/Default/crashpad_handler" \
    server/rserver --config-file conf/rserver-dev.conf "$@"
