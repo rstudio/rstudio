@@ -739,7 +739,7 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
- * Whether to automatically discover and offer to install missing R package dependenices.
+ * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
 {

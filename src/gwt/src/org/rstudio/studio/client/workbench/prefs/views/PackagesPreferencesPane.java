@@ -384,18 +384,12 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
-      if (!mirrorTextValue.equals(cranMirrorStored_))
-      {
-         state.cranMirrorChanged().setGlobalValue(true);
-      }
-
       boolean cranRepoChanged = !mirrorTextValue.equals(cranMirrorStored_);
       boolean cranRepoChangedToUrl = cranRepoChanged && 
                                       mirrorTextValue.startsWith("http");
    
       if (cranRepoChanged || secondaryReposHasChanged())
       {
-         state.cranMirrorChanged().setGlobalValue(true);
          if (cranRepoChangedToUrl)
          {
             cranMirror_.setURL(mirrorTextValue);

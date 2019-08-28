@@ -62,6 +62,7 @@ CRANMirror UserPrefValuesNative::getCRANMirror()
    // get the settings
    struct CRANMirror mirror;
    json::readObject(cranMirror(), 
+         kCranMirrorUrl, &mirror.url,
          kCranMirrorName, &mirror.name,
          kCranMirrorHost, &mirror.host,
          kCranMirrorSecondary, &mirror.secondary,
@@ -74,23 +75,6 @@ CRANMirror UserPrefValuesNative::getCRANMirror()
    {
       mirror.secondary = mirror.url;
       mirror.url = parts.at(1);
-   }
-
-   // if there is no URL then return the default RStudio mirror
-   // (return the insecure version so we can rely on probing for
-   // the secure version). also check for "/" to cleanup from
-   // a previous bug/regression
-   if (mirror.url.empty() || (mirror.url == "/"))
-   {
-      // But only if not changed by the user
-      if (!prefs::userState().cranMirrorChanged())
-      {
-         mirror.name = "Global (CDN)";
-         mirror.host = "RStudio";
-         mirror.url = "http://cran.rstudio.com/";
-         mirror.secondary = "";
-         mirror.country = "us";
-      }
    }
 
    // re-map cran.rstudio.org to cran.rstudio.com

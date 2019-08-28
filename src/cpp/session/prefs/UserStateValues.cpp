@@ -232,19 +232,6 @@ core::Error UserStateValues::setConnectVia(std::string val)
 }
 
 /**
- * Whether the CRAN mirror has been changed from its default.
- */
-bool UserStateValues::cranMirrorChanged()
-{
-   return readPref<bool>("cran_mirror_changed");
-}
-
-core::Error UserStateValues::setCranMirrorChanged(bool val)
-{
-   return writePref("cran_mirror_changed", val);
-}
-
-/**
  * The kind of handler to invoke when errors occur.
  */
 std::string UserStateValues::errorHandlerType()
@@ -289,7 +276,6 @@ std::vector<std::string> UserStateValues::allKeys()
       kPublishAccount,
       kDocumentOutlineWidth,
       kConnectVia,
-      kCranMirrorChanged,
       kErrorHandlerType,
       kUsingMingwGcc49,
    });
