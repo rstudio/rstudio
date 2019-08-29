@@ -19,11 +19,11 @@ body, td {
 }
 
 body.macintosh, body.macintosh td {
-   font-family: Helvetica, sans-serif;
+   font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body.macintosh code,
-body.macintosh pre{
+body.macintosh pre {
    font-family: Courier, monospace;
 }
 
