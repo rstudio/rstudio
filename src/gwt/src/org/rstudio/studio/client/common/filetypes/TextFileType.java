@@ -454,7 +454,8 @@ public class TextFileType extends EditableFileType
 
          return reTextType_.match(token.getType(), 0) != null ||
             reStringType_.match(token.getType(), 0) != null ||
-            reHeaderType_.match(token.getType(), 0) != null;
+            reHeaderType_.match(token.getType(), 0) != null ||
+            reCommentType_.match(token.getType(), 0) != null;
       };
    }
 
