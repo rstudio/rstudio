@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
@@ -138,6 +139,10 @@ public class RStudioThemedFrame extends RStudioFrame
               document, document.getBody());
             
             body.addClassName("ace_editor_theme");
+            
+            // Add OS tag to the frame so that it can apply OS-specific CSS if
+            // needed.
+            body.addClassName(BrowseCap.operatingSystem());
          }
       }
    }
