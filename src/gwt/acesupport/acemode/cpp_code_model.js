@@ -1625,12 +1625,12 @@ var CppCodeModel = function(session, tokenizer,
 
    this.$onDocChange = function(evt)
    {
-      this.$tokenUtils.$invalidateRow(evt.start.row);
       if (evt.action === "insert")
          this.$tokenUtils.$insertNewRows(evt.start.row, evt.end.row - evt.start.row);
       else
          this.$tokenUtils.$removeRows(evt.start.row, evt.end.row - evt.start.row);
 
+      this.$tokenUtils.$invalidateRow(evt.start.row);
       this.$scopes.invalidateFrom(evt.start);
    };
 
