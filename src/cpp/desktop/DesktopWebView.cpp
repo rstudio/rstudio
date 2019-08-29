@@ -159,23 +159,26 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
+   
 #ifdef Q_OS_MAC
-   if (pEvent->key() == Qt::Key_W &&
-       pEvent->modifiers() == Qt::CTRL)
+   // on macOS, intercept Cmd+W and emit the window close signal
+   if (pEvent->key() == Qt::Key_W && pEvent->modifiers() == Qt::CTRL)
    {
-      // on macOS, intercept Cmd+W and emit the window close signal
       onCloseWindowShortcut();
+      return;
    }
-   else
+#endif
+   
+   // allow Ctrl + Shift + V to act as a paste action
+   if (pEvent->key() == Qt::Key_V && pEvent->modifiers() == Qt::CTRL + Qt::SHIFT)
    {
-      // pass other key events through to WebEngine
-      QWebEngineView::keyPressEvent(pEvent);
+      triggerPageAction(QWebEnginePage::Paste);
+      return;
    }
-#else
-
+   
+   // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);
    
-#endif
 }
 
 void WebView::openFile(QString fileName)

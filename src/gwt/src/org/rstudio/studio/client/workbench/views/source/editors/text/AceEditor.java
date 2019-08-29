@@ -58,6 +58,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
@@ -404,7 +405,8 @@ public class AceEditor implements DocDisplay,
                public void execute()
                {
                   Range range = Range.fromPoints(start, getSelectionEnd());
-                  indentPastedRange(range);
+                  if (shouldIndentOnPaste())
+                     indentPastedRange(range);
                }
             });
          }
@@ -691,16 +693,18 @@ public class AceEditor implements DocDisplay,
       else
          insertCode(" %>% ", false);
    }
+   
+   private boolean shouldIndentOnPaste()
+   {
+      if (fileType_ == null || !fileType_.canAutoIndent())
+         return false;
+      
+      boolean indentPref = RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue();
+      return indentPref != keyboard_.isShiftKeyDown();
+   }
 
    private void indentPastedRange(Range range)
    {
-      if (fileType_ == null ||
-          !fileType_.canAutoIndent() ||
-          !RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue())
-      {
-         return;
-      }
-
       String firstLinePrefix = getSession().getTextRange(
             Range.fromPoints(Position.create(range.getStart().getRow(), 0),
                              range.getStart()));
@@ -742,12 +746,14 @@ public class AceEditor implements DocDisplay,
    void initialize(CodeToolsServerOperations server,
                    UserPrefs uiPrefs,
                    CollabEditor collab,
+                   KeyboardTracker keyboard,
                    Commands commands,
                    EventBus events)
    {
       server_ = server;
       userPrefs_ = uiPrefs;
       collab_ = collab;
+      keyboard_ = keyboard;
       commands_ = commands;
       events_ = events;
    }
@@ -4199,6 +4205,7 @@ public class AceEditor implements DocDisplay,
    private ScopeTreeManager scopes_;
    private CodeToolsServerOperations server_;
    private UserPrefs userPrefs_;
+   private KeyboardTracker keyboard_;
    private CollabEditor collab_;
    private Commands commands_;
    private EventBus events_;
