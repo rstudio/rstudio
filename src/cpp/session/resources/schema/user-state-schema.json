@@ -195,11 +195,6 @@
             "default": "connect-r-console",
             "description": "How to create new connections to data sources."
         },
-        "cran_mirror_changed": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether the CRAN mirror has been changed from its default."
-        },
         "error_handler_type": {
             "type": "string",
             "enum": ["message", "traceback", "break", "notebook", "custom"],

@@ -337,7 +337,10 @@ public class BuildPresenter extends BasePresenter
    
    void onRoxygenizePackage()
    {
-      startBuild("roxygenize-package");
+      dependencyManager_.withRoxygen(
+            "Building package documentation",
+            "Building package documentation",
+            () -> startBuild("roxygenize-package"));
    }
    
    void onCheckPackage()

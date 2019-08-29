@@ -94,7 +94,7 @@ add_library(rstudio-r STATIC ${R_SOURCE_FILES} ${R_HEADER_FILES})
 # link dependencies
 target_link_libraries(rstudio-r rstudio-core)
 
-if(APPLE)
+if(RSTUDIO_PACKAGE_BUILD AND APPLE)
    target_link_libraries(rstudio-r "-undefined dynamic_lookup")
 else()
    target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")

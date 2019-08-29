@@ -1,5 +1,7 @@
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# SessionUserCommands.R
+#
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -82,13 +84,20 @@ assign(".rs.userCommands", new.env(parent = emptyenv()), envir = .rs.toolsEnv())
    TRUE
 })
 
-.rs.addFunction("loadUserCommands", function()
+.rs.addFunction("loadUserCommands", function(keybindingPath)
 {
    env <- new.env(parent = globalenv())
    env$registerUserCommand <- .rs.registerUserCommand
    
-   files <- list.files("~/.R/keybindings/R", full.names = TRUE)
-   lapply(files, function(file) {
-      source(file, local = env)
-   })
+   # load user commands from pre-1.3 RStudio folder if present, then from the configured user
+   # command folder
+   paths <- c("~/.R/keybindings", keybindingPath)
+   for (path in paths)
+   {
+      files <- list.files(file.path(path, "R"), full.names = TRUE)
+      lapply(files, function(file)
+      {
+         source(file, local = env)
+      })
+   }
 })
