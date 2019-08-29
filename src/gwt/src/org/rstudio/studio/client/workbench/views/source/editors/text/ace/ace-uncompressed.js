@@ -66565,16 +66565,17 @@ function LineWidgets(session) {
 
 (function() {
     this.getRowLength = function(row) {
-        var h;
-        if (this.lineWidgets)
-            h = this.lineWidgets[row] && this.lineWidgets[row].rowCount || 0;
-        else 
-            h = 0;
-        if (!this.$useWrapMode || !this.$wrapData[row]) {
-            return 1 + h;
-        } else {
-            return this.$wrapData[row].length + 1 + h;
-        }
+
+        var height =
+            this.lineWidgets &&
+            this.lineWidgets[row] &&
+            this.lineWidgets[row].rowCount || 0;
+
+        if (this.$useWrapMode && this.$wrapData[row])
+            height += this.$wrapData[row].length;
+
+        return Math.ceil(height + 1);
+
     };
 
     this.$getWidgetScreenLength = function() {
