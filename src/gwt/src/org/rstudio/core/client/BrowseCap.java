@@ -187,6 +187,11 @@ public class BrowseCap
          return "Unknown";
    }
    
+   public static String operatingSystem()
+   {
+      return OPERATING_SYSTEM;
+   }
+   
    private static native final double getDevicePixelRatio() /*-{
       try
       {
