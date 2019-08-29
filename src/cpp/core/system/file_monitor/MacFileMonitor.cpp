@@ -131,8 +131,12 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    // against this by also double-checking whether the original path
    // monitored and the path reported by the file handle match up
    //
+   // We check for filesystem equivalence (not path equivalence) since macOS 
+   // Catalina can issue a RootChanged event for conversion to/from a 
+   // canonicalized /System/Volumes/Data path.
+   //
    // https://github.com/rstudio/rstudio/issues/4755
-   if (pContext->rootPath != pContext->rootHandle.currentPath())
+   if (!pContext->rootPath.isEquivalentTo(pContext->rootHandle.currentPath()))
    {
       // propagate error to client
       Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
