@@ -352,11 +352,11 @@ public class TerminalList implements Iterable<String>,
    /**
     * Initiate startup of a new terminal
     */
-   public void createNewTerminal(final ResultCallback<Boolean, String> callback)
+   public void createNewTerminal(TerminalPanel panel, final ResultCallback<Boolean, String> callback)
    {
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
             uiPrefs_.terminalTrackEnvironment().getValue());
-      startTerminal(info, false /*createdByApi*/, callback);
+      startTerminal(panel, info, false /*createdByApi*/, callback);
    }
 
    /**
@@ -365,7 +365,8 @@ public class TerminalList implements Iterable<String>,
     * @param callback result of reconnect attempt
     * @return true if terminal was known and reconnect initiated
     */
-   public void reconnectTerminal(String handle,
+   public void reconnectTerminal(TerminalPanel panel,
+                                 String handle,
                                  boolean createdByApi,
                                  final ResultCallback<Boolean, String> callback)
    {
@@ -377,7 +378,7 @@ public class TerminalList implements Iterable<String>,
       }
 
       existing.setHandle(handle);
-      startTerminal(existing, createdByApi, callback);
+      startTerminal(panel, existing, createdByApi, callback);
    }
 
    /**
@@ -423,7 +424,17 @@ public class TerminalList implements Iterable<String>,
       return false;
    }
 
-   private void startTerminal(ConsoleProcessInfo info,
+   /**
+    * Orchestrates the creation of a terminal pane, then connects to it. This is
+    * the only place in the code that creates new TerminalSession Widgets.
+    *
+    * @param panel parent element to server as the parent of xtermjs' widget
+    * @param info initial process metadata
+    * @param createdByApi true if created via R Api vs UI action
+    * @param callback done, Boolean if successful, String if failed
+    */
+   private void startTerminal(TerminalPanel panel,
+                              ConsoleProcessInfo info,
                               boolean createdByApi,
                               final ResultCallback<Boolean, String> callback)
    {
@@ -448,14 +459,36 @@ public class TerminalList implements Iterable<String>,
             XTermTheme.getFontFamily(),
             XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()));
 
+      // create terminal emulator widget
       TerminalSession newSession = new TerminalSession(info, options, createdByApi);
 
-      if (existing != null)
-      {
-         existing.setSessionCreated();
-      }
-      newSession.connect(callback);
-      updateTerminalBusyStatus();
+      // attach it to the already-visible panel
+      panel.setTerminalSession(newSession);
+
+      //initialize xterm.js
+      newSession.open(() -> {
+         if (existing != null)
+         {
+            existing.setSessionCreated();
+         }
+
+         // connect the emulator to server-side process
+         newSession.connect(new ResultCallback<Boolean, String>()
+         {
+            @Override
+            public void onSuccess(Boolean connected)
+            {
+               updateTerminalBusyStatus();
+               callback.onSuccess(connected);
+            }
+
+            @Override
+            public void onFailure(String msg)
+            {
+               callback.onFailure(msg);
+            }
+         });
+      });
    }
 
    private void updateTerminalBusyStatus()

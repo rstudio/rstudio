@@ -50,7 +50,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEv
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -116,7 +115,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      terminalSessionsPanel_ = new DeckLayoutPanel();
+      terminalSessionsPanel_ = new TerminalDeckPanel();
       terminalSessionsPanel_.getElement().addClassName("ace_editor");
       return terminalSessionsPanel_;
    }
@@ -305,27 +304,29 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      terminals_.createNewTerminal(new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected)
-         {
-            TerminalSession terminal = getSelectedTerminal();
-            if (terminal == null)
+      terminalSessionsPanel_.addNewTerminalPanel(arg -> {
+         terminals_.createNewTerminal(arg, new ResultCallback<Boolean, String>()
             {
-               Debug.log("No selected terminal after creation");
-               return;
-            }
-            terminal.receivedSendToTerminal(postCreateText);
-         }
+               @Override
+               public void onSuccess(Boolean connected)
+               {
+                  TerminalSession terminal = getSelectedTerminal();
+                  if (terminal == null)
+                  {
+                     Debug.log("No selected terminal after creation");
+                     return;
+                  }
+                  terminal.receivedSendToTerminal(postCreateText);
+               }
 
-         @Override
-         public void onFailure(String msg)
-         {
-            globalDisplay_.showErrorMessage("Terminal Creation Failure", msg);
-            Debug.log(msg);
-            creatingTerminal_ = false;
-         }
+               @Override
+               public void onFailure(String msg)
+               {
+                  globalDisplay_.showErrorMessage("Terminal Creation Failure", msg);
+                  Debug.log(msg);
+                  creatingTerminal_ = false;
+               }
+            });
       });
    }
 
@@ -363,7 +364,7 @@ public class TerminalPane extends WorkbenchPane
       // If terminal was loaded, remove its pane.
       if (killedTerminalWidget != null)
       {
-         terminalSessionsPanel_.remove(killedTerminalWidget);
+         terminalSessionsPanel_.removeTerminal(killedTerminalWidget);
       }
 
       if (newTerminalHandle == null && didCloseCurrent)
@@ -388,7 +389,7 @@ public class TerminalPane extends WorkbenchPane
    {
       // Expect to receive this after a browser reset, so if we already have
       // terminals in the cache, something is, to be technical, busted.
-      if (terminals_.terminalCount() > 0 || getLoadedTerminalCount() > 0)
+      if (terminals_.terminalCount() > 0 || terminalSessionsPanel_.getTerminalCount() > 0)
       {
          Debug.logWarning("Received terminal list from server when terminals " +
                           "already loaded. Ignoring.");
@@ -452,10 +453,8 @@ public class TerminalPane extends WorkbenchPane
       setTerminalTitle("");
 
       // remove all widgets
-      while (terminalSessionsPanel_.getWidgetCount() > 0)
-      {
-         terminalSessionsPanel_.remove(0);
-      }
+      terminalSessionsPanel_.removeAllTerminals();
+
       updateTerminalToolbar();
    }
 
@@ -591,13 +590,13 @@ public class TerminalPane extends WorkbenchPane
 
       if (terminalSessionsPanel_ != null)
       {
-         int total = getLoadedTerminalCount();
+         int total = terminalSessionsPanel_.getTerminalCount();
          dump.append("Loaded TerminalSessions: ");
          dump.append(total);
          dump.append("\n");
          for (int i = 0; i < total; i++)
          {
-            TerminalSession session = getLoadedTerminalAtIndex(i);
+            TerminalSession session = terminalSessionsPanel_.getTerminalAtIndex(i);
             if (session == null)
             {
                dump.append("null\n");
@@ -663,15 +662,15 @@ public class TerminalPane extends WorkbenchPane
 
       // Check if this is a reconnect of an already displayed terminal, such
       // as after a session suspend/resume.
-      if (terminalSessionsPanel_.getWidgetIndex(terminal) == -1)
+      if (terminal.haveLoadedBuffer())
       {
-         terminalSessionsPanel_.add(terminal);
-         showTerminalWidget(terminal);
-         setFocusOnVisible();
+         terminal.writeRestartSequence();
       }
       else
       {
-         terminal.writeRestartSequence();
+         showTerminalWidget(terminal);
+         setFocusOnVisible();
+         terminal.reloadBuffer();
       }
       creatingTerminal_ = false;
       updateTerminalToolbar();
@@ -747,7 +746,7 @@ public class TerminalPane extends WorkbenchPane
       TerminalSession currentTerminal = loadedTerminalWithHandle(handle);
       if (currentTerminal != null)
       {
-         terminalSessionsPanel_.remove(currentTerminal);
+         terminalSessionsPanel_.removeTerminal(currentTerminal);
       }
 
       if (newTerminalHandle == null)
@@ -787,25 +786,28 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      terminals_.reconnectTerminal(event.getTerminalHandle(), event.createdByApi(),
+      terminalSessionsPanel_.addNewTerminalPanel(arg -> {
+         terminals_.reconnectTerminal(arg, event.getTerminalHandle(), event.createdByApi(),
             new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected)
-         {
-            TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
-            if (terminal == null)
             {
-               Debug.log("Terminal not found after switching");
-               return;
-            }
-            terminal.receivedSendToTerminal(event.getInputText());
-         }
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.log(msg);
-         }
+               @Override
+               public void onSuccess(Boolean connected)
+               {
+                  TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
+                  if (terminal == null)
+                  {
+                     Debug.log("Terminal not found after switching");
+                     return;
+                  }
+                  terminal.receivedSendToTerminal(event.getInputText());
+               }
+
+               @Override
+               public void onFailure(String msg)
+               {
+                  Debug.log(msg);
+               }
+            });
       });
    }
 
@@ -846,40 +848,16 @@ public class TerminalPane extends WorkbenchPane
    }
 
    /**
-    * @return number of terminals loaded into panes
-    */
-   private int getLoadedTerminalCount()
-   {
-      if (terminalSessionsPanel_ == null)
-         return 0;
-      return terminalSessionsPanel_.getWidgetCount();
-   }
-
-   /**
-    * @param i index of terminal to return
-    * @return terminal at index, or null
-    */
-   private TerminalSession getLoadedTerminalAtIndex(int i)
-   {
-      Widget widget = terminalSessionsPanel_.getWidget(i);
-      if (widget instanceof TerminalSession)
-      {
-         return (TerminalSession)widget;
-      }
-      return null;
-   }
-
-   /**
     * Find loaded terminal session for a given handle
     * @param handle of TerminalSession to return
     * @return TerminalSession with that handle, or null
     */
    private TerminalSession loadedTerminalWithHandle(String handle)
    {
-      int total = getLoadedTerminalCount();
+      int total = terminalSessionsPanel_.getTerminalCount();
       for (int i = 0; i < total; i++)
       {
-         TerminalSession t = getLoadedTerminalAtIndex(i);
+         TerminalSession t = terminalSessionsPanel_.getTerminalAtIndex(i);
          if (t != null && StringUtil.equals(t.getHandle(), handle))
          {
             return t;
@@ -887,26 +865,6 @@ public class TerminalPane extends WorkbenchPane
       }
       return null;
    }
-
-   /**
-    * Find loaded terminal session for a given caption
-    * @param caption of TerminalSession to return
-    * @return TerminalSession with that caption, or null
-    */
-   private TerminalSession loadedTerminalWithCaption(String caption)
-   {
-      int total = getLoadedTerminalCount();
-      for (int i = 0; i < total; i++)
-      {
-         TerminalSession t = getLoadedTerminalAtIndex(i);
-         if (t != null && StringUtil.equals(t.getCaption(), caption))
-         {
-            return t;
-         }
-      }
-      return null;
-   }
-
 
    /**
     * @return Selected terminal, or null if there is no selected terminal.
@@ -926,18 +884,9 @@ public class TerminalPane extends WorkbenchPane
    {
       if (StringUtil.isNullOrEmpty(caption))
       {
-         if (terminalSessionsPanel_ == null)
-            return null;
-
-         Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
-         if (visibleWidget instanceof TerminalSession)
-         {
-            return (TerminalSession)visibleWidget;
-         }
-         return null;
+         return terminalSessionsPanel_.getVisibleTerminal();
       }
-
-      return loadedTerminalWithCaption(caption);
+      return terminalSessionsPanel_.getTerminalWithCaption(caption);
    }
 
 
@@ -1035,7 +984,8 @@ public class TerminalPane extends WorkbenchPane
    private void showTerminalWidget(TerminalSession terminal)
    {
       registerChildProcsHandler(terminal);
-      terminalSessionsPanel_.showWidget(terminal);
+      terminalSessionsPanel_.showTerminal(terminal);
+      terminalSessionsPanel_.getVisibleTerminal().refresh();
       updateTerminalToolbar();
    }
 
@@ -1082,7 +1032,7 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
-   private DeckLayoutPanel terminalSessionsPanel_;
+   private TerminalDeckPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
