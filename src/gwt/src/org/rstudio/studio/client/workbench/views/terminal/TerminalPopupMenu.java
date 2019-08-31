@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -46,9 +45,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       terminals_ = terminals;
-
-      eventBus_.addHandler(TerminalBusyEvent.TYPE,
-            event -> refreshActiveTerminal());
    }
 
    @Inject
@@ -173,7 +169,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    /**
     * Refresh caption of active terminal based on busy status.
     */
-   private void refreshActiveTerminal()
+   public void refreshActiveTerminal()
    {
       if (toolbarButton_ == null || activeTerminalHandle_ == null)
          return;

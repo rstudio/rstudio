@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalReceivedConsoleProcessInfoEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
@@ -42,8 +43,8 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
  * available terminals and reconnect to them.
  */
 public class TerminalList implements Iterable<String>,
-                                     TerminalSubprocEvent.Handler,
-                                     TerminalCwdEvent.Handler
+                                     TerminalCwdEvent.Handler,
+                                     TerminalReceivedConsoleProcessInfoEvent.Handler
 {
    private static class TerminalListData
    {
@@ -75,8 +76,8 @@ public class TerminalList implements Iterable<String>,
    protected TerminalList()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      eventBus_.addHandler(TerminalSubprocEvent.TYPE, this);
       eventBus_.addHandler(TerminalCwdEvent.TYPE, this);
+      eventBus_.addHandler(TerminalReceivedConsoleProcessInfoEvent.TYPE, this);
    }
 
    @Inject
@@ -478,8 +479,11 @@ public class TerminalList implements Iterable<String>,
             @Override
             public void onSuccess(Boolean connected)
             {
-               updateTerminalBusyStatus();
-               callback.onSuccess(connected);
+               if (connected)
+               {
+                  updateTerminalBusyStatus();
+                  callback.onSuccess(connected);
+               }
             }
 
             @Override
@@ -491,6 +495,9 @@ public class TerminalList implements Iterable<String>,
       });
    }
 
+   /**
+    * Broadcast event which indicates if any terminals are busy.
+    */
    private void updateTerminalBusyStatus()
    {
       eventBus_.fireEvent(new TerminalBusyEvent(haveSubprocs()));
@@ -502,8 +509,7 @@ public class TerminalList implements Iterable<String>,
       return terminals_.keySet().iterator();
    }
 
-   @Override
-   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   public void updateTerminalSubprocsStatus(TerminalSubprocEvent event)
    {
       setChildProcs(event.getHandle(), event.hasSubprocs());
       updateTerminalBusyStatus();
@@ -513,6 +519,12 @@ public class TerminalList implements Iterable<String>,
    public void onTerminalCwd(TerminalCwdEvent event)
    {
       setCwd(event.getHandle(), event.getCwd());
+   }
+
+   @Override
+   public void onTerminalReceivedConsoleProcessInfo(TerminalReceivedConsoleProcessInfoEvent event)
+   {
+      addTerminal(event.getData(), true);
    }
 
    public String debug_dumpTerminalList()

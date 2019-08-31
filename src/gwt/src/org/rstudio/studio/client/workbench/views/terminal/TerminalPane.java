@@ -673,6 +673,7 @@ public class TerminalPane extends WorkbenchPane
          terminal.reloadBuffer();
       }
       creatingTerminal_ = false;
+      activeTerminalToolbarButton_.refreshActiveTerminal();
       updateTerminalToolbar();
    }
 
@@ -895,17 +896,15 @@ public class TerminalPane extends WorkbenchPane
     */
    private void setFocusOnVisible()
    {
-      Scheduler.get().scheduleDeferred(() -> {
-         TerminalSession visibleTerminal = getSelectedTerminal();
-         if (visibleTerminal != null)
-         {
-            if (!suppressAutoFocus_)
-               visibleTerminal.setFocus(true);
-            activeTerminalToolbarButton_.setActiveTerminal(
-                  visibleTerminal.getCaption(), visibleTerminal.getHandle());
-            setTerminalTitle(visibleTerminal.getTitle());
-         }
-      });
+      TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal != null)
+      {
+         if (!suppressAutoFocus_)
+            Scheduler.get().scheduleDeferred(() -> visibleTerminal.setFocus(true));
+         activeTerminalToolbarButton_.setActiveTerminal(
+               visibleTerminal.getCaption(), visibleTerminal.getHandle());
+         setTerminalTitle(visibleTerminal.getTitle());
+      }
    }
 
    /**
@@ -978,6 +977,8 @@ public class TerminalPane extends WorkbenchPane
       {
          terminal.setHasChildProcs(event.hasSubprocs());
       }
+      terminals_.updateTerminalSubprocsStatus(event);
+      activeTerminalToolbarButton_.refreshActiveTerminal();
       updateTerminalToolbar();
    }
 

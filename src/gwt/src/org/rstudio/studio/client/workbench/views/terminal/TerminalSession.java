@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalReceivedConsoleProcessInfoEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
@@ -162,6 +163,7 @@ public class TerminalSession extends XTermWidget
             // Keep an instance of the ProcessInfo so it is available even if the terminal
             // goes offline, which causes consoleProcess_ to become null.
             procInfo_ = consoleProcess_.getProcessInfo();
+            eventBus_.fireEvent(new TerminalReceivedConsoleProcessInfoEvent(procInfo_));
 
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
