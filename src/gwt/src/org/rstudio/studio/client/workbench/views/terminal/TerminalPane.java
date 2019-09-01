@@ -310,13 +310,16 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onSuccess(Boolean connected)
                {
-                  TerminalSession terminal = getSelectedTerminal();
-                  if (terminal == null)
+                  if (connected)
                   {
-                     Debug.log("No selected terminal after creation");
-                     return;
+                     TerminalSession terminal = getSelectedTerminal();
+                     if (terminal == null)
+                     {
+                        Debug.log("No selected terminal after creation");
+                        return;
+                     }
+                     terminal.receivedSendToTerminal(postCreateText);
                   }
-                  terminal.receivedSendToTerminal(postCreateText);
                }
 
                @Override
@@ -794,13 +797,16 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onSuccess(Boolean connected)
                {
-                  TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
-                  if (terminal == null)
+                  if (connected)
                   {
-                     Debug.log("Terminal not found after switching");
-                     return;
+                     TerminalSession terminal = loadedTerminalWithHandle(event.getTerminalHandle());
+                     if (terminal == null)
+                     {
+                        Debug.log("Terminal not found after switching");
+                        return;
+                     }
+                     terminal.receivedSendToTerminal(event.getInputText());
                   }
-                  terminal.receivedSendToTerminal(event.getInputText());
                }
 
                @Override

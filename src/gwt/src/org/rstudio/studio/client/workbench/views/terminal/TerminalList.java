@@ -466,7 +466,7 @@ public class TerminalList implements Iterable<String>,
       // attach it to the already-visible panel
       panel.setTerminalSession(newSession);
 
-      //initialize xterm.js
+      // initialize xterm.js
       newSession.open(() -> {
          if (existing != null)
          {
