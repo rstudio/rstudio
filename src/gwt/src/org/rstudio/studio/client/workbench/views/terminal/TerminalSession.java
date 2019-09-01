@@ -120,7 +120,7 @@ public class TerminalSession extends XTermWidget
     */
    public void connect(final ResultCallback<Boolean, String> callback)
    {
-      if (connected_ || connecting_ || terminating_)
+      if (connected_ || connecting_ || terminating_ || !terminalEmulatorLoaded())
       {
          callback.onSuccess(connected_ && !terminating_);
          return;
