@@ -85,23 +85,25 @@ public class XTermWidget extends Widget
     */
    public void open(Operation callback)
    {
-      Scheduler.get().scheduleDeferred(() -> {
-         // Create and attach the native terminal object to this Widget
-         attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-         terminal_ = XTermNative.createTerminal(getElement(), options_);
-         terminal_.addClass("ace_editor");
-         terminal_.addClass(FontSizer.getNormalFontSizeClass());
+      load(() -> {
+         Scheduler.get().scheduleDeferred(() -> {
+            // Create and attach the native terminal object to this Widget
+            attachTheme(XTermThemeResources.INSTANCE.xtermcss());
+            terminal_ = XTermNative.createTerminal(getElement(), options_);
+            terminal_.addClass("ace_editor");
+            terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
-         // Handle keystrokes from the xterm and dispatch them
-         addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
+            // Handle keystrokes from the xterm and dispatch them
+            addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
 
-         // Handle title events from the xterm and dispatch them
-         addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
+            // Handle title events from the xterm and dispatch them
+            addTitleEventHandler(title -> fireEvent(new XTermTitleEvent(title)));
 
-         initialized_ = true;
-         terminal_.fit();
-         terminal_.focus();
-         callback.execute();
+            initialized_ = true;
+            terminal_.fit();
+            terminal_.focus();
+            callback.execute();
+         });
       });
    }
 
