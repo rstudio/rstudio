@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal.xterm;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ExternalStyleSheetLoader;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
@@ -88,7 +89,6 @@ public class XTermWidget extends Widget
       load(() -> {
          Scheduler.get().scheduleDeferred(() -> {
             // Create and attach the native terminal object to this Widget
-            attachTheme(XTermThemeResources.INSTANCE.xtermcss());
             terminal_ = XTermNative.createTerminal(getElement(), options_);
             terminal_.addClass("ace_editor");
             terminal_.addClass(FontSizer.getNormalFontSizeClass());
@@ -413,10 +413,12 @@ public class XTermWidget extends Widget
     */
    public static void load(final Command command)
    {
-      xtermLoader_.addCallback(() -> xtermFitLoader_.addCallback(() -> {
+      xtermCssLoader_.addCallback(() ->
+            xtermLoader_.addCallback(() ->
+                  xtermFitLoader_.addCallback(() -> {
          if (command != null)
             command.execute();
-      }));
+      })));
    }
 
    public void refresh()
@@ -424,6 +426,9 @@ public class XTermWidget extends Widget
       if (terminalEmulatorLoaded())
          terminal_.refresh();
    }
+
+   private static final ExternalStyleSheetLoader xtermCssLoader_ =
+         new ExternalStyleSheetLoader(XTermThemeResources.INSTANCE.xtermcss().getSafeUri().asString());
 
    private static final ExternalJavaScriptLoader xtermLoader_ =
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermjs().getSafeUri().asString());
