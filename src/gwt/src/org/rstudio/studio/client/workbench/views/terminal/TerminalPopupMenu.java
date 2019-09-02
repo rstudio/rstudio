@@ -137,15 +137,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       }
       toolbarButton_.setText(trimmed);
 
-      // Update terminal commands based on current selection
-      boolean haveActiveTerminal = activeTerminalHandle_ != null;
-      commands_.closeTerminal().setEnabled(haveActiveTerminal);
-      commands_.renameTerminal().setEnabled(haveActiveTerminal);
-      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
-      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
-      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
-      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
-      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
+      updateTerminalCommands();
 
       // inform server of the selection
       server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
@@ -156,6 +148,21 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             Debug.logError(error);
          }
       });
+   }
+
+   /**
+    * Update terminal commands based on current selection
+    */
+   public void updateTerminalCommands()
+   {
+      boolean haveActiveTerminal = activeTerminalHandle_ != null;
+      commands_.closeTerminal().setEnabled(haveActiveTerminal);
+      commands_.renameTerminal().setEnabled(haveActiveTerminal);
+      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
+      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
+      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
+      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
    }
 
    public void setActiveTerminalByCaption(String caption, boolean createdByApi)

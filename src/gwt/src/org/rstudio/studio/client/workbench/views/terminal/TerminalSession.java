@@ -558,11 +558,6 @@ public class TerminalSession extends XTermWidget
       connect(new ResultCallback<Boolean, String>()
       {
          @Override
-         public void onSuccess(Boolean connected)
-         {
-         }
-
-         @Override
          public void onFailure(String msg)
          {
             Debug.log(msg);

@@ -195,6 +195,7 @@ public class TerminalPane extends WorkbenchPane
          interruptButton_.setVisible(interruptable);
          closeButton_.setVisible(closable);
          clearButton_.setVisible(clearable);
+         activeTerminalToolbarButton_.updateTerminalCommands();
       });
    }
 
@@ -784,8 +785,25 @@ public class TerminalPane extends WorkbenchPane
       {
          showTerminalWidget(terminal);
          setFocusOnVisible();
-         ensureConnected(terminal); // needed after session suspend/resume
-         terminal.receivedSendToTerminal(event.getInputText());
+         ensureConnected(terminal, new ResultCallback<Boolean, String>()
+         {
+            @Override
+            public void onSuccess(Boolean connected)
+            {
+               if (connected)
+               {
+                  // needed after session suspend/resume
+                  terminal.receivedSendToTerminal(event.getInputText());
+               }
+            }
+
+            @Override
+            public void onFailure(String msg)
+            {
+               globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+               Debug.log(msg);
+            }
+         });
          return;
       }
 
@@ -812,6 +830,7 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onFailure(String msg)
                {
+                  globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
                   Debug.log(msg);
                }
             });
@@ -943,7 +962,20 @@ public class TerminalPane extends WorkbenchPane
          final TerminalSession currentTerminal = getSelectedTerminal();
          if (currentTerminal != null)
          {
-            ensureConnected(currentTerminal);
+            ensureConnected(currentTerminal, new ResultCallback<Boolean, String>()
+            {
+               @Override
+               public void onSuccess(Boolean connected)
+               {
+               }
+
+               @Override
+               public void onFailure(String msg)
+               {
+                  globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+                  Debug.log(msg);
+               }
+            });
          }
          break;
       }
@@ -953,26 +985,14 @@ public class TerminalPane extends WorkbenchPane
     * Reconnect an existing terminal, if currently disconnected
     * @param terminal terminal to reconnect
     */
-   private void ensureConnected(final TerminalSession terminal)
+   private void ensureConnected(final TerminalSession terminal, ResultCallback<Boolean, String> callback)
    {
       if (terminal.isConnected())
       {
          return;
       }
 
-      Scheduler.get().scheduleDeferred(() -> terminal.connect(new ResultCallback<Boolean, String>()
-      {
-         @Override
-         public void onSuccess(Boolean connected)
-         {
-         }
-
-         @Override
-         public void onFailure(String msg)
-         {
-            Debug.log(msg);
-         }
-      }));
+      Scheduler.get().scheduleDeferred(() -> terminal.connect(callback));
    }
 
    @Override
