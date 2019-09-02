@@ -271,7 +271,7 @@ public class TerminalSession extends XTermWidget
    @Override
    public void resizePTY(int cols, int rows)
    {
-      if (consoleProcess_ == null | (procInfo_.getCols() == cols && procInfo_.getRows() == rows))
+      if (consoleProcess_ == null || (procInfo_.getCols() == cols && procInfo_.getRows() == rows))
          return;
 
       procInfo_.setDimensions(cols, rows);
@@ -840,6 +840,9 @@ public class TerminalSession extends XTermWidget
       if (showAltAfterReload_)
       {
          showAltBuffer();
+
+         // Ctrl+L causes most ncurses program to refresh themselves
+         receivedInput("\f");
          showAltAfterReload_ = false;
       }
    }

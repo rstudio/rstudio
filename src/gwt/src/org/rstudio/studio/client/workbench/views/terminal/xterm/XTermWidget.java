@@ -19,7 +19,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalStyleSheetLoader;
-import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
@@ -31,7 +30,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -52,6 +50,8 @@ import java.util.function.Consumer;
  * fired and makes a direct callback.
  *
  * To send output to the terminal, use write() or writeln().
+ *
+ * To receive notice of terminal resizes, override resizePTY().
  *
  * For title changes (via escape sequences sent to terminal), subscribe to
  * XTermTitleEvent.
@@ -144,22 +144,6 @@ public class XTermWidget extends Widget
       terminal_.clear();
    }
 
-   /**
-    * Inject the xterm.js styles into the page.
-    * @param cssResource
-    */
-   private void attachTheme(StaticDataResource cssResource)
-   {
-      if (currentStyleEl_ != null)
-         currentStyleEl_.removeFromParent();
-
-      currentStyleEl_ = Document.get().createLinkElement();
-      currentStyleEl_.setType("text/css");
-      currentStyleEl_.setRel("stylesheet");
-      currentStyleEl_.setHref(cssResource.getSafeUri().asString());
-      Document.get().getBody().appendChild(currentStyleEl_);
-   }
-
    @Override
    protected void onUnload()
    {
@@ -183,7 +167,7 @@ public class XTermWidget extends Widget
       // dimensions; debounce this slightly as it is somewhat expensive
       if (resizeTerminalLocal_.isRunning())
          resizeTerminalLocal_.cancel();
-      resizeTerminalLocal_.schedule(50);
+      resizeTerminalLocal_.schedule(RESIZE_DELAY);
    }
 
    public void resizePTY(int cols, int rows)
@@ -195,6 +179,13 @@ public class XTermWidget extends Widget
       @Override
       public void run()
       {
+         // if resize was invoked before terminal emulator loaded, delay again
+         if (!terminalEmulatorLoaded())
+         {
+            resizeTerminalLocal_.schedule(RESIZE_DELAY);
+            return;
+         }
+
          terminal_.fit();
 
          // Notify the remote pseudo-terminal that it has resized; this is quite
@@ -202,7 +193,7 @@ public class XTermWidget extends Widget
          // resizing the entire window
          if (resizeTerminalRemote_.isRunning())
             resizeTerminalRemote_.cancel();
-         resizeTerminalRemote_.schedule(50);
+         resizeTerminalRemote_.schedule(RESIZE_DELAY);
       }
    };
 
@@ -427,6 +418,8 @@ public class XTermWidget extends Widget
          terminal_.refresh();
    }
 
+   private static int RESIZE_DELAY = 50;
+
    private static final ExternalStyleSheetLoader xtermCssLoader_ =
          new ExternalStyleSheetLoader(XTermThemeResources.INSTANCE.xtermcss().getSafeUri().asString());
 
@@ -437,7 +430,6 @@ public class XTermWidget extends Widget
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
 
    private XTermNative terminal_;
-   private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
    private XTermOptions options_;
 

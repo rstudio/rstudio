@@ -254,6 +254,9 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void activateTerminal(Command displaySelected)
    {
+      if (selectedCallback_ != null)
+         return;
+
       selectedCallback_ = displaySelected;
       setShowTerminalPref(true);
       closingAll_ = false;

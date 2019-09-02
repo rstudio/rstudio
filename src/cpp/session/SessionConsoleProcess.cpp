@@ -829,15 +829,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       {
          cp = proc;
          cp->procInfo_->setRestarted(false);
-
-         if (proc->procInfo_->getAltBufferActive())
-         {
-            // Jiggle the size of the pseudo-terminal, this will force the app
-            // to refresh itself; this does rely on the host performing a second
-            // resize to the actual available size. Clumsy, but so far this is
-            // the best I've come up with.
-            cp->resize(core::system::kDefaultCols / 2, core::system::kDefaultRows / 2);
-         }
       }
       else
       {
