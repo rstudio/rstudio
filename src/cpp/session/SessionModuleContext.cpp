@@ -1825,6 +1825,10 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
+   else if (name == ".build.yml")
+   {
+      return true;
+   }
    else if (prefs::userPrefs().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.parent().filename() == "src")
