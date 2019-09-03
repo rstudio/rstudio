@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.Command;
+import com.google.inject.Provider;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -39,6 +41,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
@@ -53,6 +57,8 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermTheme;
 
 /**
  * Holds the contents of the Terminal pane, including the toolbar and
@@ -81,6 +87,7 @@ public class TerminalPane extends WorkbenchPane
                           GlobalDisplay globalDisplay,
                           Commands commands,
                           UserPrefs uiPrefs,
+                          Provider<FontSizeManager> pFontSizeManager,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
@@ -88,6 +95,7 @@ public class TerminalPane extends WorkbenchPane
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
+      pFontSizeManager_ = pFontSizeManager;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -308,8 +316,11 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      terminalSessionsPanel_.addNewTerminalPanel(arg -> {
-         terminals_.createNewTerminal(arg, new ResultCallback<Boolean, String>()
+      ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
+            uiPrefs_.terminalTrackEnvironment().getValue());
+      terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
+                                                 false /*createdByApi*/, arg -> {
+         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -811,9 +822,16 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      terminalSessionsPanel_.addNewTerminalPanel(arg -> {
-         terminals_.reconnectTerminal(arg, event.getTerminalHandle(), event.createdByApi(),
-            new ResultCallback<Boolean, String>()
+      ConsoleProcessInfo existing = terminals_.getMetadataForHandle(event.getTerminalHandle());
+      if (existing == null)
+      {
+         globalDisplay_.showErrorMessage("Error", "Tried to switch to unknown terminal handle.");
+         return;
+      }
+
+      terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
+                                                 event.createdByApi(), arg -> {
+         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -959,28 +977,26 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
-      switch (event.getAction().getType())
-      {
-      case SessionSerializationAction.RESUME_SESSION:
-         final TerminalSession currentTerminal = getSelectedTerminal();
-         if (currentTerminal != null)
-         {
-            ensureConnected(currentTerminal, new ResultCallback<Boolean, String>()
-            {
-               @Override
-               public void onSuccess(Boolean connected)
-               {
-               }
+      if (event.getAction().getType() != SessionSerializationAction.RESUME_SESSION)
+         return;
 
-               @Override
-               public void onFailure(String msg)
-               {
-                  globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
-                  Debug.log(msg);
-               }
-            });
-         }
-         break;
+      final TerminalSession currentTerminal = getSelectedTerminal();
+      if (currentTerminal != null)
+      {
+         ensureConnected(currentTerminal, new ResultCallback<Boolean, String>()
+         {
+            @Override
+            public void onSuccess(Boolean connected)
+            {
+            }
+
+            @Override
+            public void onFailure(String msg)
+            {
+               globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+               Debug.log(msg);
+            }
+         });
       }
    }
 
@@ -1062,6 +1078,20 @@ public class TerminalPane extends WorkbenchPane
       }
    }
 
+   private XTermOptions defaultTerminalOptions()
+   {
+      // Always start terminals with BEL disabled, in case we are playing back previous output
+      // that contains BEL characters. We turn on the bell once playback is complete.
+      return XTermOptions.create(
+            UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
+            uiPrefs_.blinkingCursor().getValue(),
+            uiPrefs_.terminalRenderer().getValue(),
+            BrowseCap.isWindowsDesktop(),
+            XTermTheme.terminalThemeFromEditorTheme(),
+            XTermTheme.getFontFamily(),
+            XTermTheme.adjustFontSize(pFontSizeManager_.get().getSize()));
+   }
+
    private TerminalDeckPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
@@ -1077,9 +1107,10 @@ public class TerminalPane extends WorkbenchPane
    private Command selectedCallback_;
 
    // Injected ----
-   private GlobalDisplay globalDisplay_;
-   private EventBus events_;
-   private Commands commands_;
-   private WorkbenchServerOperations server_;
-   private UserPrefs uiPrefs_;
+   private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
+   private final Commands commands_;
+   private final WorkbenchServerOperations server_;
+   private final Provider<FontSizeManager> pFontSizeManager_;
+   private final UserPrefs uiPrefs_;
 }

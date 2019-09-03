@@ -19,30 +19,30 @@ import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 /**
- * DeckPanel that shows one terminal at a time. It holds TerminalPanel widgets, which in
- * turn contain TerminalSession (xterm) widgets.
+ * DeckPanel that shows one terminal at a time. It holds TerminalSession widgets, which in
+ * turn contain xterm terminal emulator.
  *
- * The extra layer (TerminalPanel widgets) is necessary because xterm.js requires a visible
- * parent element when calling Terminal.open. We first create an empty TerminalPanel
- * and make that visible in the DeckLayoutPanel, then pass that element along to Terminal.open.
- *
- * This code assumes only TerminalPanel widgets are added to the Deck.
+ * This code assumes only TerminalSession widgets are added to the Deck.
  */
 public class TerminalDeckPanel extends DeckLayoutPanel
 {
    /**
     * Create, add, and display a new panel to host a terminal
     */
-   public void addNewTerminalPanel(CommandWithArg<TerminalPanel> callback)
+   public void addNewTerminalPanel(
+         ConsoleProcessInfo procInfo,
+         XTermOptions options,
+         boolean createdByApi,
+         CommandWithArg<TerminalSession> callback)
    {
-      TerminalPanel panel = new TerminalPanel();
-      add(panel);
-      showWidget(panel);
-      Scheduler.get().scheduleDeferred(() -> {
-         callback.execute(panel);
-      });
+      TerminalSession session = new TerminalSession(procInfo, options, createdByApi);
+      add(session);
+      showWidget(session);
+      Scheduler.get().scheduleDeferred(() ->  callback.execute(session));
    }
 
    /**
@@ -75,7 +75,7 @@ public class TerminalDeckPanel extends DeckLayoutPanel
     */
    public TerminalSession getTerminalAtIndex(int i)
    {
-      return ((TerminalPanel) getWidget(i)).getTerminalSession();
+      return (TerminalSession) getWidget(i);
    }
 
    /**
@@ -121,7 +121,7 @@ public class TerminalDeckPanel extends DeckLayoutPanel
       Widget visibleWidget = getVisibleWidget();
       if (visibleWidget != null)
       {
-         return ((TerminalPanel) visibleWidget).getTerminalSession();
+         return (TerminalSession) visibleWidget;
       }
       return null;
    }
