@@ -986,11 +986,6 @@ public class TerminalPane extends WorkbenchPane
          ensureConnected(currentTerminal, new ResultCallback<Boolean, String>()
          {
             @Override
-            public void onSuccess(Boolean connected)
-            {
-            }
-
-            @Override
             public void onFailure(String msg)
             {
                globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
