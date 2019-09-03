@@ -76,7 +76,6 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
-         diagnostics.append("Typing lag:  '").append(session.getSocket().getTypingLagMsg()).append("'\n");
 
          diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
          for (String optionName : XTermOptions.stringOptions)

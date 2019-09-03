@@ -21,7 +21,7 @@ import org.rstudio.core.client.resources.StaticDataResource;
 
 public interface XTermThemeResources extends ClientBundle
 {
-   public static final XTermThemeResources INSTANCE = GWT.create(XTermThemeResources.class);
+   XTermThemeResources INSTANCE = GWT.create(XTermThemeResources.class);
 
    @Source("xterm.css")
    StaticDataResource xtermcss();

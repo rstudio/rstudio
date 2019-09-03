@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -46,9 +45,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       terminals_ = terminals;
-
-      eventBus_.addHandler(TerminalBusyEvent.TYPE,
-            event -> refreshActiveTerminal());
    }
 
    @Inject
@@ -141,15 +137,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       }
       toolbarButton_.setText(trimmed);
 
-      // Update terminal commands based on current selection
-      boolean haveActiveTerminal = activeTerminalHandle_ != null;
-      commands_.closeTerminal().setEnabled(haveActiveTerminal);
-      commands_.renameTerminal().setEnabled(haveActiveTerminal);
-      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
-      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
-      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
-      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
-      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
+      updateTerminalCommands();
 
       // inform server of the selection
       server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
@@ -160,6 +148,21 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             Debug.logError(error);
          }
       });
+   }
+
+   /**
+    * Update terminal commands based on current selection
+    */
+   public void updateTerminalCommands()
+   {
+      boolean haveActiveTerminal = activeTerminalHandle_ != null;
+      commands_.closeTerminal().setEnabled(haveActiveTerminal);
+      commands_.renameTerminal().setEnabled(haveActiveTerminal);
+      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
+      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
+      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
+      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
    }
 
    public void setActiveTerminalByCaption(String caption, boolean createdByApi)
@@ -173,7 +176,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    /**
     * Refresh caption of active terminal based on busy status.
     */
-   private void refreshActiveTerminal()
+   public void refreshActiveTerminal()
    {
       if (toolbarButton_ == null || activeTerminalHandle_ == null)
          return;

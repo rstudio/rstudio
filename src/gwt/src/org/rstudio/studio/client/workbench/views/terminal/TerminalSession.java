@@ -46,7 +46,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
-import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalReceivedConsoleProcessInfoEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
@@ -66,7 +66,6 @@ import com.google.inject.Inject;
  */
 public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
-                                        ResizeTerminalEvent.Handler,
                                         XTermTitleEvent.Handler,
                                         SessionSerializationHandler,
                                         ThemeChangedEvent.Handler
@@ -121,7 +120,7 @@ public class TerminalSession extends XTermWidget
     */
    public void connect(final ResultCallback<Boolean, String> callback)
    {
-      if (connected_ || connecting_ || terminating_)
+      if (connected_ || connecting_ || terminating_ || !terminalEmulatorLoaded())
       {
          callback.onSuccess(connected_ && !terminating_);
          return;
@@ -164,21 +163,26 @@ public class TerminalSession extends XTermWidget
             // Keep an instance of the ProcessInfo so it is available even if the terminal
             // goes offline, which causes consoleProcess_ to become null.
             procInfo_ = consoleProcess_.getProcessInfo();
+            eventBus_.fireEvent(new TerminalReceivedConsoleProcessInfoEvent(procInfo_));
 
-            addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
-            uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg));
-            uiPrefs_.terminalBellStyle().bind(arg -> updateStringOption("bellStyle", arg));
-            uiPrefs_.terminalRenderer().bind(arg -> {
+            addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
+            addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg -> {
+               // don't enable bell if we aren't done loading, don't want beeps if reloading
+               // previous output containing '\a'
+               if (haveLoadedBuffer_)
+                  updateStringOption("bellStyle", arg);
+            }));
+            addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg -> {
                updateStringOption("rendererType", arg);
                onResize();
-            });
-            uiPrefs_.fontSizePoints().bind(arg -> {
+            }));
+            addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg -> {
                updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
                onResize();
-            });
+            }));
 
             showAltAfterReload_ = false;
             if (!getProcInfo().getAltBufferActive() && xtermAltBufferActive())
@@ -265,11 +269,13 @@ public class TerminalSession extends XTermWidget
    }
 
    @Override
-   public void onResizeTerminal(ResizeTerminalEvent event)
+   public void resizePTY(int cols, int rows)
    {
-      procInfo_.setDimensions(event.getCols(), event.getRows());
-      consoleProcess_.resizeTerminal(
-            event.getCols(), event.getRows(),
+      if (consoleProcess_ == null || (procInfo_.getCols() == cols && procInfo_.getRows() == rows))
+         return;
+
+      procInfo_.setDimensions(cols, rows);
+      consoleProcess_.resizeTerminal(cols, rows,
             new VoidServerRequestCallback()
             {
                @Override
@@ -552,11 +558,6 @@ public class TerminalSession extends XTermWidget
       connect(new ResultCallback<Boolean, String>()
       {
          @Override
-         public void onSuccess(Boolean connected)
-         {
-         }
-
-         @Override
          public void onFailure(String msg)
          {
             Debug.log(msg);
@@ -699,10 +700,9 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Perform actions when the terminal is ready.
+    * Reload terminal buffer.
     */
-   @Override
-   protected void terminalReady()
+   public void reloadBuffer()
    {
       deferredOutput_.clear();
       if (newTerminal_)
@@ -840,13 +840,16 @@ public class TerminalSession extends XTermWidget
       if (showAltAfterReload_)
       {
          showAltBuffer();
+
+         // Ctrl+L causes most ncurses program to refresh themselves
+         receivedInput("\f");
          showAltAfterReload_ = false;
       }
    }
 
    /**
-    * Set if connecting to a new terminal session.
-    * @param isNew true if a new connection, false if a reconnect
+    * Set true if connecting to a newly created terminal session; i.e. one that won't have
+    * any previous output to reload. False if this is a previous terminal session.
     */
    private void setNewTerminal(boolean isNew)
    {
@@ -887,6 +890,14 @@ public class TerminalSession extends XTermWidget
       reloading_ = true;
    }
 
+   /**
+    * Has this terminal loaded the buffer (e.g. upon reconnecting to an existing session)?
+    */
+   public boolean haveLoadedBuffer()
+   {
+      return haveLoadedBuffer_;
+   }
+
    private void setNotReloading()
    {
       // Always start terminal emulator with BEL support off to avoid playing back previous
@@ -900,6 +911,7 @@ public class TerminalSession extends XTermWidget
          }
       }.schedule(500);
       reloading_ = false;
+      haveLoadedBuffer_ = true;
    }
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
@@ -912,6 +924,7 @@ public class TerminalSession extends XTermWidget
    private boolean connecting_;
    private boolean terminating_;
    private boolean reloading_;
+   private boolean haveLoadedBuffer_;
    private final ArrayList<String> deferredOutput_ = new ArrayList<>();
    private boolean restartSequenceWritten_;
    private final StringBuilder inputQueue_ = new StringBuilder();

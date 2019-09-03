@@ -15,12 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.LinkedList;
-
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.Stopwatch;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
@@ -81,86 +78,6 @@ public class TerminalSessionSocket
       void onError(String message);
    }
 
-   // Monitor and report input/display lag to console
-   private class InputEchoTimeMonitor
-   {
-      class InputDatapoint
-      {
-         InputDatapoint(String input)
-         {
-            input_ = input;
-            stopWatch_.reset();
-         }
-
-         boolean matches(String input, long runningAverage)
-         {
-            // startsWith allows better chance of matching on Windows, where 
-            // winpty often follows each typed character with an escape sequence
-            if (input != null && input.startsWith(input_))
-            {
-               duration_ = stopWatch_.mark("Average " + runningAverage);
-               return true;
-            }
-            return false;
-         }
-
-         long duration()
-         {
-            return duration_;
-         }
-
-         private final String input_;
-         private final Stopwatch stopWatch_ = new Stopwatch(false);
-         private long duration_;
-      }
-
-      InputEchoTimeMonitor()
-      {
-         pending_ = new LinkedList<>();
-      }
-
-      void inputReceived(String input)
-      {
-         pending_.add(new InputDatapoint(input));
-      }
-
-      void outputReceived(String output)
-      {
-         InputDatapoint item = pending_.poll();
-         if (item == null)
-            return;
-
-         if (!item.matches(output, average()))
-         {
-            // output not what we expected, reset the whole list
-            pending_.clear();
-         }
-         else
-         {
-            accumulatedPoints_++;
-            accumulatedTime_ += item.duration();
-         }
-      }
-
-      long average()
-      {
-         if (accumulatedPoints_ > 0)
-         {
-            return accumulatedTime_ / accumulatedPoints_;
-         }
-         return 0;
-      }
-
-      String averageTimeMsg()
-      {
-         return average() + "ms";
-      }
-
-      private final LinkedList<InputDatapoint> pending_;
-      private long accumulatedPoints_;
-      private long accumulatedTime_;
-   }
-
    /**
     * Constructor
     * @param session Session to callback with user input and server output.
@@ -179,11 +96,6 @@ public class TerminalSessionSocket
       localEcho_ = new TerminalLocalEcho(xterm_);
       webSocketPingInterval_ = webSocketPingInterval;
       webSocketConnectTimeout_ = webSocketConnectTimeout;
-
-      // Show delay between receiving a keystroke and sending it to the 
-      // terminal emulator; for diagnostics on laggy typing.
-      // Time between input/display shown in terminal diagnostics dialog.
-      inputEchoTiming_ = new InputEchoTimeMonitor();
 
       // Keep WebSocket connections alive by sending and receiving a small message
       keepAliveTimer_ = new Timer()
@@ -442,14 +354,12 @@ public class TerminalSessionSocket
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
-      inputEchoTiming_.inputReceived(event.getData());
       session_.receivedInput(event.getData());
    }
 
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      inputEchoTiming_.outputReceived(event.getOutput());
       session_.receivedOutput(event.getOutput());
    }
 
@@ -503,11 +413,6 @@ public class TerminalSessionSocket
       diagnostic_.log(msg);
    }
 
-   public String getTypingLagMsg()
-   {
-      return inputEchoTiming_.averageTimeMsg();
-   }
-
    private void receivedKeepAlive()
    {
    }
@@ -518,7 +423,6 @@ public class TerminalSessionSocket
    private ConsoleProcess consoleProcess_;
    private ConnectCallback connectCallback_;
    private HandlerRegistration terminalInputHandler_;
-   private final InputEchoTimeMonitor inputEchoTiming_;
    private Websocket socket_;
    private final TerminalLocalEcho localEcho_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
