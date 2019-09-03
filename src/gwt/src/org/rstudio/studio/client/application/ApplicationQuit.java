@@ -106,9 +106,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // bind to commands
       binder.bind(commands, this);
       
-      // only enable suspendSession() in devmode
-      commands.suspendSession().setVisible(SuperDevMode.isActive());
-      
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);

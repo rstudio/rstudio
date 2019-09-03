@@ -804,6 +804,9 @@ public class Application implements ApplicationEventHandlers
          removeJobLauncherCommands();
       }
 
+      // only enable suspendSession() in devmode
+      commands_.suspendSession().setVisible(SuperDevMode.isActive());
+
       if (!sessionInfo.getAllowPackageInstallation())
       {
          commands_.installPackage().remove();
