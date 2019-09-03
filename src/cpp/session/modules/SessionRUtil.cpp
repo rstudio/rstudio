@@ -56,7 +56,7 @@ Error extractRCode(const std::string& contents,
    extract.addParam(contents);
    extract.addParam(reOpen);
    extract.addParam(reClose);
-   Error error = extract.call(pContent);
+   Error error = extract.callUtf8(pContent);
    return error;
 }
 

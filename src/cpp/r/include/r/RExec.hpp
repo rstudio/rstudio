@@ -237,6 +237,20 @@ public:
       // convert result to c++ accessible type
       return sexp::extract(resultSEXP, pValue) ;
    }
+
+   template <typename T>
+   core::Error callUtf8(T* pValue)
+   {
+      // call the function
+      sexp::Protect rProtect;
+      SEXP resultSEXP ;
+      core::Error error = call(R_GlobalEnv, &resultSEXP, &rProtect);
+      if (error)
+         return error ;
+
+      // convert result to c++ accessible type
+      return sexp::extract(resultSEXP, pValue, true);
+   }
    
 private:
    void commonInit(const std::string& functionName);
