@@ -485,7 +485,17 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onXTermTitle(XTermTitleEvent event)
    {
-      setTitle(event.getTitle());
+      String title = event.getTitle();
+
+      // On default configuration of git-bash (Windows), the title is reported by the shell
+      // with a leading colon character; this makes sense if $TITLEPREFIX is set, as that
+      // will be put before the colon, such as "MINGW64:/c/Users/foo", but strip the colon
+      // if there's nothing before it
+      if (BrowseCap.isWindows() && !StringUtil.isNullOrEmpty(title) && title.startsWith(":/"))
+      {
+         title = title.substring(1);
+      }
+      setTitle(title);
       eventBus_.fireEvent(new TerminalTitleEvent(this));
    }
 
