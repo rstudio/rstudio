@@ -3506,9 +3506,34 @@ public class TextEditingTarget implements
       // First, figure out whether we're commenting or uncommenting.
       // If we discover any line that doesn't start with the comment sequence,
       // then we'll comment the whole selection.
-      boolean isCommentAction = false;
-      for (String line : lines)
+      
+      // ignore empty lines at start, end of selection when detecting comments
+      // https://github.com/rstudio/rstudio/issues/4163
+      
+      int start = 0;
+      for (int i = 0; i < lines.length; i++)
       {
+         if (lines[i].trim().isEmpty())
+            continue;
+         
+         start = i;
+         break;
+      }
+      
+      int end = lines.length;
+      for (int i = lines.length; i > 0; i--)
+      {
+         if (lines[i - 1].trim().isEmpty())
+            continue;
+         
+         end = i;
+         break;
+      }
+      
+      boolean isCommentAction = false;
+      for (int i = start; i < end; i++)
+      {
+         String line = lines[i];
          String trimmed = line.trim();
          
          // Ignore lines that are just whitespace.
