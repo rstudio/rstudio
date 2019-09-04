@@ -60,6 +60,7 @@ public class JobsPresenter extends BasePresenter
       display_ = display;
       globalDisplay_ = globalDisplay;
       pJobManager_ = pJobManager;
+      commands_ = commands;
       binder.bind(commands, this);
     }
 
@@ -128,6 +129,8 @@ public class JobsPresenter extends BasePresenter
    @Handler
    public void onActivateJobs()
    {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
       display_.bringToFront();
    }
   
@@ -136,5 +139,6 @@ public class JobsPresenter extends BasePresenter
    // injected
    private final Display display_;
    private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
    private final Provider<JobManager> pJobManager_;
 }

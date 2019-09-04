@@ -268,6 +268,9 @@ public class TerminalPane extends WorkbenchPane
       selectedCallback_ = displaySelected;
       setShowTerminalPref(true);
       closingAll_ = false;
+
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
       bringToFront();
    }
 

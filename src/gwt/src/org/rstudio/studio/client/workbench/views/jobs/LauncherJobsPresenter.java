@@ -51,6 +51,7 @@ public class LauncherJobsPresenter extends BasePresenter
       jobEventHandler_ = new JobsPresenterEventHandlersImpl(JobConstants.JOB_TYPE_LAUNCHER, display);
       
       display_ = display;
+      commands_ = commands;
       launcherJobManager_ = launcherJobManager;
       binder.bind(commands, this);
     }
@@ -109,6 +110,8 @@ public class LauncherJobsPresenter extends BasePresenter
    @Handler
    public void onActivateLauncherJobs()
    {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
       display_.bringToFront();
    }
    
@@ -118,5 +121,6 @@ public class LauncherJobsPresenter extends BasePresenter
    
    // injected
    private final Display display_;
+   private final Commands commands_;
    private final LauncherJobManager launcherJobManager_;
 }
