@@ -74,6 +74,58 @@ Error setState(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error editPreferences(const json::JsonRpcRequest& ,
+                      json::JsonRpcResponse*)
+{
+   // Invoke an editor on the user-level config file
+   r::exec::RFunction editor(".rs.editor");
+   editor.addParam("file",
+         core::system::xdg::userConfigDir().complete(kUserPrefsFile).absolutePath());
+   return editor.call();
+}
+
+Error clearPreferences(const json::JsonRpcRequest& ,
+                       json::JsonRpcResponse* pResponse)
+{
+   json::Value result;
+   FilePath prefsFile = 
+      core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+   if (!prefsFile.exists())
+   {
+      // No prefs file = no work to do
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // Create a backup path for the old prefs so they can be restored
+   FilePath backup;
+   Error error = FilePath::uniqueFilePath(prefsFile.parent().absolutePath(), ".json", &backup);
+   if (error)
+   {
+      pResponse->setResult(result);
+      return error;
+   }
+
+   // Move the prefs to the backup location
+   error = prefsFile.move(backup);
+   if (error)
+   {
+      pResponse->setResult(result);
+      return error;
+   }
+
+   // Return the backup filename to the client
+   result = backup.absolutePath();
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error viewPreferences(const json::JsonRpcRequest&,
+                       json::JsonRpcResponse*)
+{
+    return r::exec::executeString("View(.rs.allPrefs())");
+}
+
 bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
 {
    json::Value prefValue = json::Value();
@@ -320,7 +372,10 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
-      (bind(registerRpcMethod, "set_user_state", setState));
+      (bind(registerRpcMethod, "set_user_state", setState))
+      (bind(registerRpcMethod, "edit_user_prefs", editPreferences))
+      (bind(registerRpcMethod, "clear_user_prefs", clearPreferences))
+      (bind(registerRpcMethod, "view_all_prefs", viewPreferences));
    return initBlock.execute();
 }
 

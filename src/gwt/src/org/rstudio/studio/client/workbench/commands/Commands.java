@@ -448,6 +448,9 @@ public abstract class
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
    public abstract AppCommand viewShortcuts();
+   public abstract AppCommand editUserPrefs();
+   public abstract AppCommand viewAllPrefs();
+   public abstract AppCommand clearUserPrefs();
    
    // Viewer
    public abstract AppCommand activateViewer();
@@ -594,9 +597,6 @@ public abstract class
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand toggleEditorTokenInfo();
    
-   public static final String KEYBINDINGS_PATH =
-         "~/.R/keybindings/rstudio_commands.json";
-
    // Main menu (server)
    public abstract AppCommand showFileMenu();
    public abstract AppCommand showEditMenu();

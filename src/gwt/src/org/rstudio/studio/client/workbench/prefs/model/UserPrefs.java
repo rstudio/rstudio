@@ -20,25 +20,39 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 @Singleton
-public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHandler
+public class UserPrefs extends UserPrefsComputed 
+   implements UserPrefsChangedHandler, DeferredInitCompletedEvent.Handler
 {
+   public interface Binder
+           extends CommandBinder<Commands, UserPrefs> {}
+
    @Inject
    public UserPrefs(Session session, 
                   EventBus eventBus,
                   PrefsServerOperations server,
-                  SatelliteManager satelliteManager)
+                  SatelliteManager satelliteManager,
+                  Commands commands,
+                  Binder binder,
+                  GlobalDisplay display)
    {
       super(session.getSessionInfo(),
             (session.getSessionInfo() == null ? 
@@ -48,8 +62,14 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
       session_ = session;
       server_ = server;
       satelliteManager_ = satelliteManager;
+      display_ = display;
+      commands_ = commands;
+      reloadAfterInit_ = false;
+      
+      binder.bind(commands_, this);
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
+      eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
    }
    
    public void writeUserPrefs()
@@ -102,6 +122,75 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
    {
       syncPrefs(e.getName(), e.getValues());
    }
+   
+   @Handler
+   public void onEditUserPrefs()
+   {
+      server_.editPreferences(new VoidServerRequestCallback());
+   }
+
+   @Handler
+   public void onClearUserPrefs()
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+         "Confirm Clear Preferences",
+         "Are you sure you want to clear your preferences? All RStudio settings " +
+         "will be restored to their defaults, and your R session will be " +
+         "restarted.",
+         false,
+         (indicator) ->
+         {
+            server_.clearPreferences(new ServerRequestCallback<String>()
+            {
+               public void onResponseReceived(String path)
+               {
+                  indicator.onCompleted();
+                  display_.showMessage(
+                        GlobalDisplay.MSG_INFO,
+                        "Preferences Cleared",
+                        "Your preferences have been cleared, and your R session " +
+                        "will now be restarted. A backup copy of your preferences " +
+                        "can be found at: \n\n" + path,
+                        () ->
+                        {
+                           // Restart R, then reload the UI when done
+                           reloadAfterInit_ = true;
+                           commands_.restartR().execute();
+                        },
+                        "Restart R",
+                        false);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  indicator.onError(error.getMessage());
+               }
+            });
+         },
+         null,
+         "Clear Preferences",
+         "Cancel",
+         false);
+   }
+
+   @Override
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
+   {
+      // Called when R is finished initializing; if we have just cleared prefs,
+      // we also reload the UI when R's done restarting
+      if (reloadAfterInit_)
+      {
+         reloadAfterInit_ = false;
+         WindowEx.get().reload();
+      }
+   }
+   
+   @Handler
+   public void onViewAllPrefs()
+   {
+      server_.viewPreferences(new VoidServerRequestCallback());
+   }
 
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
@@ -112,4 +201,7 @@ public class UserPrefs extends UserPrefsComputed implements UserPrefsChangedHand
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;
+   private final GlobalDisplay display_;
+   private final Commands commands_;
+   private boolean reloadAfterInit_;
 }
