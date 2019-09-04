@@ -489,6 +489,7 @@ public class RemoteServer implements Server
                                requestCallback);
    }
 
+   @Override
    public void setUserPrefs(JavaScriptObject userPrefs,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -498,7 +499,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-
    @Override
    public void setUserState(JavaScriptObject userState,
                             ServerRequestCallback<Void> requestCallback)
@@ -506,6 +506,30 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   SET_USER_STATE,
                   userState,
+                  requestCallback);
+   }
+
+   @Override
+   public void editPreferences(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "edit_user_prefs",
+                  requestCallback);
+   }
+
+   @Override
+   public void viewPreferences(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "view_all_prefs",
+                  requestCallback);
+   }
+
+   @Override
+   public void clearPreferences(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "clear_user_prefs",
                   requestCallback);
    }
 

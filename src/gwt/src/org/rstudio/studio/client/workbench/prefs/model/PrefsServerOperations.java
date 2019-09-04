@@ -26,4 +26,10 @@ public interface PrefsServerOperations
    
    void setUserState(JavaScriptObject userState,
                      ServerRequestCallback<Void> requestCallback);
+   
+   void editPreferences(ServerRequestCallback<Void> requestCallback);
+
+   void clearPreferences(ServerRequestCallback<String> requestCallback);
+   
+   void viewPreferences(ServerRequestCallback<Void> requestCallback);
 }

@@ -530,6 +530,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="openDeveloperConsole"/>
             <cmd refid="reloadUi"/>
             <separator/>
+            <cmd refid="editUserPrefs"/>
+            <cmd refid="clearUserPrefs"/>
+            <cmd refid="viewAllPrefs"/>
+            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
@@ -3455,4 +3459,18 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show Help Menu"
         windowMode="main"/>
 
+   <cmd id="editUserPrefs"
+        menuLabel="Edit User Prefs File"
+        windowMode="main"
+        rebindable="false"/>
+
+   <cmd id="clearUserPrefs"
+        menuLabel="Clear User Prefs"
+        windowMode="main"
+        rebindable="false"/>
+
+   <cmd id="viewAllPrefs"
+        menuLabel="View All Prefs"
+        windowMode="main"
+        rebindable="false"/>
 </commands>
