@@ -28,33 +28,89 @@
 namespace rstudio {
 namespace core {
 
+#ifndef _WIN32
+
+typedef uid_t  UidType;
+typedef gid_t  GidType;
+
+#endif
+
+class Error;
+class FilePath;
+
 /**
  * @brief Class which represents a system user.
  */
 class User
 {
 public:
+
+#ifndef _WIN32
    /**
-    * @brief Default Constructor.
+    * @brief Creates a user by user ID.
     *
-    * Creates a user object which represents all users. It should be used for Launcher requests that apply to all users
-    * (e.g. get jobs for all users). Username == "*".
+    * @param in_userId      The ID of the user to create.
     */
-   User();
+   explicit User(UidType in_userId);
+
+   /**
+    * @brief Gets the ID of this user's primary group.
+    *
+    * @return The ID of this user's primary group.
+    */
+   GidType getGroupId() const;
+
+   /**
+    * @brief Gets the ID of this user.
+    *
+    * @return The ID of this user.
+    */
+   UidType getUserId() const;
+
+#endif
 
    /**
     * @brief Copy constructor.
     *
     * @param in_other   The user to copy.
     */
-    User(const User& in_other);
+   User(const User& in_other);
+
+   /**
+    * @brief Creates either an empty user or a user object which represents all users. Either way, a user object
+    *        constructed this way does not have a user ID, user name, or group ID.
+    *
+    * @param in_isAllUsers      True if this user should represent all users; false if it should be an empty user.
+    *                           Default: false.
+    */
+   explicit User(bool in_isAllUsers = false);
 
    /**
     * @brief Creates a user by username.
     *
     * @param in_username    The name of the user.
     */
-   explicit User(std::string in_username);
+   explicit User(const std::string& in_username);
+
+   /**
+    * @brief Gets the current user.
+    *
+    * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
+    *                           user if this function returns an error.
+    *
+    * @return Success if the user could be retrieved; Error otherwise.
+    */
+   static Error getCurrentUser(User& out_currentUser);
+
+   /**
+    * @brief Checks whether the user represented by this object exists.
+    *
+    * If this is an empty user, or is a user object which represents all users, this method will return false as it does
+    * not represent a user which exists on the system.
+    *
+    * @return True if this user exists; false otherwise.
+    */
+   bool exists() const;
 
    /**
     * @brief Returns whether this object represents all users or not. See the default constructor for more details.
@@ -62,6 +118,19 @@ public:
     * @return True if this object represents all users; false otherwise.
     */
    bool isAllUsers() const;
+
+   /**
+    * @brief Checks whether this user is empty or not.
+    * @return
+    */
+   bool isEmpty() const;
+
+   /**
+    * @brief Gets the user home path, if it exists.
+    *
+    * @return The user's home path, if it exists; empty path otherwise.
+    */
+   const FilePath& getHomePath() const;
 
    /**
     * @brief Returns the name of this user.
