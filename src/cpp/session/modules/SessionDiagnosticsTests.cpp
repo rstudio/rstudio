@@ -277,6 +277,8 @@ test_context("Diagnostics")
       EXPECT_LINT("list(a <- 1, b <- 2)");
       
       EXPECT_ERRORS("{\nx\n<- 1\n}");
+      
+      EXPECT_ERRORS("%a\nb%");
    }
    
    lintRStudioRFiles();
