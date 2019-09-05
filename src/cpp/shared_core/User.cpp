@@ -22,12 +22,28 @@
 
 #include <pwd.h>
 
+#include <boost/algorithm/string.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
+
+namespace
+{
+
+inline std::string getEnvVariable(const std::string& in_name)
+{
+   char* value = ::getenv(in_name.c_str());
+   if (value)
+      return std::string(value);
+
+   return std::string();
+}
+
+}
 
 struct User::Impl
 {
@@ -115,6 +131,31 @@ Error User::getCurrentUser(User& out_currentUser)
 {
    out_currentUser = User(::geteuid());
    return out_currentUser.m_impl->UserRetrievalError;
+}
+
+FilePath User::getUserHomePath(const std::string& in_envOverride)
+{
+   // use environment override if specified
+   if (!in_envOverride.empty())
+   {
+      using namespace boost::algorithm;
+      for (split_iterator<std::string::const_iterator> it =
+         make_split_iterator(in_envOverride, first_finder("|", is_iequal()));
+           it != split_iterator<std::string::const_iterator>();
+           ++it)
+      {
+         std::string envHomePath = getEnvVariable(boost::copy_range<std::string>(*it));
+         if (!envHomePath.empty())
+         {
+            FilePath userHomePath(envHomePath);
+            if (userHomePath.exists())
+               return userHomePath;
+         }
+      }
+   }
+
+   // otherwise use standard unix HOME
+   return FilePath(getEnvVariable("HOME"));
 }
 
 bool User::exists() const

@@ -103,6 +103,16 @@ public:
    static Error getCurrentUser(User& out_currentUser);
 
    /**
+    * @brief Gets the user home path, as set in the environment.
+    *
+    * @param in_envOverride     If set, overrides the name of the environment variable to use as the user's home path.
+    *                           Multiple overrides may be specified by delimiting them with '|' in order of precedence.
+    *
+    * @return The user home path, as set in the environment.
+    */
+   static FilePath getUserHomePath(const std::string& in_envOverride = std::string());
+
+   /**
     * @brief Checks whether the user represented by this object exists.
     *
     * If this is an empty user, or is a user object which represents all users, this method will return false as it does

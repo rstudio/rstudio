@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include <shared_core/User.hpp>
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -438,8 +440,8 @@ FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
    // revert to the specified path if it exists, otherwise
    // take the user home path from the system
    FilePath safePath = in_revertToPath;
-// TODO   if (!safePath.exists())
-// TODO      safePath = core::system::userHomePath();
+   if (!safePath.exists())
+      safePath = User::getUserHomePath();
 
    Error error = safePath.makeCurrentPath();
    if (error)
