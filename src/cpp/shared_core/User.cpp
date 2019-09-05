@@ -30,9 +30,10 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
+namespace user {
 
-namespace
-{
+namespace {
 
 inline std::string getEnvVariable(const std::string& in_name)
 {
@@ -47,12 +48,13 @@ inline std::string getEnvVariable(const std::string& in_name)
 
 struct User::Impl
 {
-   template <class T>
+   template<class T>
    using GetPasswdFunc = std::function<int(T, struct passwd*, char*, size_t, struct passwd**)>;
 
-   Impl() : UserId(0), GroupId(0) {};
+   Impl() : UserId(0), GroupId(0)
+   { };
 
-   template <typename T>
+   template<typename T>
    void populateUser(const GetPasswdFunc<T>& in_getPasswdFunc, T in_value)
    {
       struct passwd pwd;
@@ -202,6 +204,8 @@ User& User::operator=(const User& in_other)
    return *this;
 }
 
+} // namespace user
+} // namespace system
 } // namespace core
 } // namespace rstudio
 

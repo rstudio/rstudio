@@ -27,6 +27,9 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
+namespace user {
+
 
 #ifndef _WIN32
 
@@ -163,6 +166,8 @@ private:
    PRIVATE_IMPL(m_impl);
 };
 
+} // namespace user
+} // namesapce system
 } // namespace core
 } // namespace rstudio
 
