@@ -18,7 +18,7 @@
  *
  */
 
-#include <shared_core/User.hpp>
+#include <shared_core/system/User.hpp>
 
 #include <pwd.h>
 
@@ -31,7 +31,6 @@
 namespace rstudio {
 namespace core {
 namespace system {
-namespace user {
 
 namespace {
 
@@ -204,7 +203,6 @@ User& User::operator=(const User& in_other)
    return *this;
 }
 
-} // namespace user
 } // namespace system
 } // namespace core
 } // namespace rstudio

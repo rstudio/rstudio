@@ -26,9 +26,26 @@ set (SHARED_CORE_SOURCE_FILES
    Logger.cpp
    StderrDestination.cpp
    SyslogDestination.cpp
-   User.cpp
    json/Json.cpp
 )
+
+# UNIX specific
+if (UNIX)
+
+   set (SHARED_CORE_SOURCE_FILES
+      ${SHARED_CORE_SOURCE_FILES}
+      system/PosixUser.cpp
+   )
+
+# Windows specific
+else()
+
+   set(SHARED_CORE_SOURCE_FILES
+      ${SHARED_CORE_SOURCE_FILES}
+      system/Win32User.cpp
+   )
+
+endif()
 
 set (SHARED_INCLUDE_DIRS
    include

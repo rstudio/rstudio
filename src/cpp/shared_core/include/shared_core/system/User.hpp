@@ -23,23 +23,26 @@
 
 #include <string>
 
-#include "PImpl.hpp"
+#include <shared_core/PImpl.hpp>
+
+namespace rstudio {
+namespace core {
+
+class Error;
+class FilePath;
+
+} // namespace core
+} // namespace rstudio
+
 
 namespace rstudio {
 namespace core {
 namespace system {
-namespace user {
-
 
 #ifndef _WIN32
-
 typedef uid_t  UidType;
 typedef gid_t  GidType;
-
 #endif
-
-class Error;
-class FilePath;
 
 /**
  * @brief Class which represents a system user.
@@ -166,7 +169,6 @@ private:
    PRIVATE_IMPL(m_impl);
 };
 
-} // namespace user
 } // namesapce system
 } // namespace core
 } // namespace rstudio
