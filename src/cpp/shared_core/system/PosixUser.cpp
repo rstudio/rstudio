@@ -71,8 +71,8 @@ struct User::Impl
          if (result == 0) // will happen if user is simply not found. Return EACCES (not found error).
             result = EACCES;
 
-         UserRetrievalError = systemError(result, "Failed to get user details.", ERROR_LOCATION);
-         UserRetrievalError.addProperty("user-value", safe_convert::numberToString(in_value));
+         RetrievalError = systemError(result, "Failed to get user details.", ERROR_LOCATION);
+         RetrievalError.addProperty("user-value", safe_convert::numberToString(in_value));
       }
       else
       {
@@ -87,7 +87,7 @@ struct User::Impl
    GidType GroupId;
    std::string Name;
    FilePath HomeDirectory;
-   Error UserRetrievalError;
+   Error RetrievalError;
 };
 
 PRIVATE_IMPL_DELETER_IMPL(User)
@@ -108,10 +108,10 @@ User::User(const std::string& in_username) :
    User()
 {
    m_impl->populateUser<const char*>(::getpwnam_r, in_username.c_str());
-   if (m_impl->UserRetrievalError)
+   if (m_impl->RetrievalError)
    {
       // Log the error an ensure that the username is set.
-      logError(m_impl->UserRetrievalError);
+      logError(m_impl->RetrievalError);
       m_impl->Name = in_username;
    }
 }
@@ -120,10 +120,10 @@ User::User(UidType in_userId) :
    User()
 {
    m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
-   if (m_impl->UserRetrievalError)
+   if (m_impl->RetrievalError)
    {
       // Log the error an ensure that the user ID is set.
-      logError(m_impl->UserRetrievalError);
+      logError(m_impl->RetrievalError);
       m_impl->UserId = in_userId;
    }
 }
@@ -131,7 +131,7 @@ User::User(UidType in_userId) :
 Error User::getCurrentUser(User& out_currentUser)
 {
    out_currentUser = User(::geteuid());
-   return out_currentUser.m_impl->UserRetrievalError;
+   return out_currentUser.m_impl->RetrievalError;
 }
 
 FilePath User::getUserHomePath(const std::string& in_envOverride)
@@ -161,7 +161,7 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
 
 bool User::exists() const
 {
-   return !m_impl->UserRetrievalError && !isEmpty() && !isAllUsers();
+   return !m_impl->RetrievalError && !isEmpty() && !isAllUsers();
 }
 
 bool User::isAllUsers() const
@@ -182,6 +182,11 @@ GidType User::getGroupId() const
 const FilePath& User::getHomePath() const
 {
    return m_impl->HomeDirectory;
+}
+
+const Error& User::getRetrievalError() const
+{
+   return m_impl->RetrievalError;
 }
 
 const std::string& User::getUsername() const

@@ -149,6 +149,13 @@ public:
    const FilePath& getHomePath() const;
 
    /**
+    * @brief Gets the error that occurred while retrieving this user, or Success if there was none.
+    *
+    * @return Success if the user was able to be retrieved; error that occurred during retrieval otherwise.
+    */
+   const Error& getRetrievalError() const;
+
+   /**
     * @brief Returns the name of this user.
     *
     * @return The name of this user ("*" for all users).
