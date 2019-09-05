@@ -15,6 +15,8 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
+#include <boost/scoped_ptr.hpp>
+
 #include <gsl/gsl>
 
 #include <core/Debug.hpp>
@@ -49,7 +51,7 @@ bool isHeaderExtension(const std::string& ex)
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
-   std::string ex = filePath.extensionLowerCase();
+   std::string ex = filePath.getExtensionLowerCase();
    return  isHeaderExtension(ex) ||
            ex == ".c" || ex == ".cc" || ex == ".cpp" ||
            ex == ".m" || ex == ".mm";
@@ -62,7 +64,7 @@ bool SourceIndex::isSourceFile(const std::string& filename)
 
 bool SourceIndex::isHeaderFile(const FilePath& filePath)
 {
-   return isHeaderExtension(filePath.extensionLowerCase());
+   return isHeaderExtension(filePath.getExtensionLowerCase());
 }
 
 SourceIndex::SourceIndex(CompilationDatabase compilationDB, int verbose)
@@ -160,8 +162,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
-      std::cerr << "CLANG INDEXING: " << filePath.absolutePath() << std::endl;
-      pTimer.reset(new core::PerformanceTimer(filePath.filename()));
+      std::cerr << "CLANG INDEXING: " << filePath.getAbsolutePath() << std::endl;
+      pTimer.reset(new core::PerformanceTimer(filePath.getFilename()));
    }
 
    // get the arguments and last write time for this file
@@ -172,7 +174,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       if (args.empty())
          return TranslationUnit();
    }
-   std::time_t lastWriteTime = filePath.lastWriteTime();
+   std::time_t lastWriteTime = filePath.getLastWriteTime();
 
    // look it up
    TranslationUnits::iterator it = translationUnits_.find(filename);
@@ -285,7 +287,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 Cursor SourceIndex::referencedCursorForFileLocation(const FileLocation &loc)
 {
    // get the translation unit
-   std::string filename = loc.filePath.absolutePath();
+   std::string filename = loc.filePath.getAbsolutePath();
    TranslationUnit tu = getTranslationUnit(filename, true);
    if (tu.empty())
       return Cursor();

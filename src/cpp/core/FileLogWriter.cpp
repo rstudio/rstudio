@@ -52,8 +52,8 @@ FileLogWriter::FileLogWriter(const std::string& programIdentity,
       logFileName += (pidStr + ".");
    }
 
-   logFile_ = options.logDir.childPath(logFileName + "log");
-   rotatedLogFile_ = options.logDir.childPath(logFileName + "rotated.log");
+   logFile_ = options.logDir.getChildPath(logFileName + "log");
+   rotatedLogFile_ = options.logDir.getChildPath(logFileName + "rotated.log");
 
    createFile();
 }
@@ -104,7 +104,7 @@ bool FileLogWriter::rotateLogFile()
    if (!options_.rotate)
       return false;
 
-   if (logFile_.exists() && logFile_.size() > (1048576.0 * options_.maxSizeMb))
+   if (logFile_.exists() && logFile_.getSize() > (1048576.0 * options_.maxSizeMb))
    {
       Error error = rotatedLogFile_.removeIfExists();
       if (error)
@@ -129,8 +129,8 @@ void FileLogWriter::rotateLogFilePrivileged()
    // note: on posix, when renaming a file to one that already exists
    // the existing file is replaced atomically, so no prior delete is required
 #ifndef _WIN32
-   std::string fromFile = logFile_.absolutePath();
-   std::string toFile = rotatedLogFile_.absolutePath();
+   std::string fromFile = logFile_.getAbsolutePath();
+   std::string toFile = rotatedLogFile_.getAbsolutePath();
 
    auto moveFunc = [=]()
    {

@@ -67,9 +67,9 @@ void addToSystemPath(const FilePath& path, bool prepend)
 {
    std::string systemPath = system::getenv("PATH");
    if (prepend)
-      systemPath = path.absolutePath() + kPathSeparator + systemPath;
+      systemPath = path.getAbsolutePath() + kPathSeparator + systemPath;
    else
-      systemPath = systemPath + kPathSeparator + path.absolutePath();
+      systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
    system::setenv("PATH", systemPath);
 }
 

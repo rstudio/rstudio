@@ -495,12 +495,12 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
 Error generateRsaKeyFiles(const FilePath& publicKeyPath,
                           const FilePath& privateKeyPath)
 {
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.absolutePath().c_str(), "w"),
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPub)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
 
-   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.absolutePath().c_str(), "w"),
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPem)
       return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);

@@ -35,7 +35,7 @@ std::vector<std::string> HunspellCustomDictionaries::dictionaries() const
    }
 
    std::vector<FilePath> children;
-   error = customDictionariesDir_.children(&children);
+   error = customDictionariesDir_.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -47,7 +47,7 @@ std::vector<std::string> HunspellCustomDictionaries::dictionaries() const
          children.end(),
          std::back_inserter(dictionaries),
          boost::bind(&FilePath::hasExtensionLowerCase, _1, ".dic"),
-         boost::bind(&FilePath::stem, _1));
+         boost::bind(&FilePath::getStem, _1));
 
    return dictionaries;
 }
@@ -55,7 +55,7 @@ std::vector<std::string> HunspellCustomDictionaries::dictionaries() const
 FilePath HunspellCustomDictionaries::dictionaryPath(
                                           const std::string& name) const
 {
-   return customDictionariesDir_.childPath(name + ".dic");
+   return customDictionariesDir_.getChildPath(name + ".dic");
 }
 
 Error HunspellCustomDictionaries::add(const FilePath& dicPath) const
@@ -68,7 +68,7 @@ Error HunspellCustomDictionaries::add(const FilePath& dicPath) const
    }
 
    // remove existing with same name
-   std::string name = dicPath.stem();
+   std::string name = dicPath.getStem();
    Error error = remove(name);
    if (error)
       LOG_ERROR(error);

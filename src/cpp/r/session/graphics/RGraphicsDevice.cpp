@@ -644,7 +644,7 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    
    // save snaphot file
    error = r::exec::RFunction(".rs.saveGraphics",
-                              string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                              string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
       return error;
 
@@ -662,7 +662,7 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    
    // restore
    return r::exec::RFunction(".rs.restoreGraphics",
-                             string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                             string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
 }
     
 void copyToActiveDevice()

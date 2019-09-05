@@ -118,8 +118,8 @@ public:
    
    void saveToFile(const core::FilePath& filePath) const
    {
-      boost::shared_ptr<std::ostream> pStream;
-      Error error = filePath.open_w(&pStream);
+      std::shared_ptr<std::ostream> pStream;
+      Error error = filePath.openForWrite(pStream);
       if (error)
       {
          LOG_ERROR(error);
@@ -306,7 +306,7 @@ boost::shared_ptr<AddinRegistry> s_pCurrentRegistry =
 
 FilePath addinRegistryPath()
 {
-   return module_context::userScratchPath().childPath("addin_registry");
+   return module_context::userScratchPath().getChildPath("addin_registry");
 }
 
 void updateAddinRegistry(boost::shared_ptr<AddinRegistry> pRegistry)
@@ -349,7 +349,7 @@ class AddinWorker : public ppe::Worker
       if (isDevtoolsLoadAllActive())
       {
          FilePath pkgPath = projects::projectContext().buildTargetPath();
-         FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+         FilePath addinPath = pkgPath.getChildPath("inst/rstudio/addins.dcf");
          if (addinPath.exists())
          {
             std::string pkgName = projects::projectContext().packageInfo().name();

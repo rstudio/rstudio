@@ -36,7 +36,7 @@ namespace utils {
 
 struct RTexmfPaths
 {
-   bool empty() const { return texInputsPath.empty(); }
+   bool empty() const { return texInputsPath.isEmpty(); }
 
    core::FilePath texInputsPath;
    core::FilePath bibInputsPath;

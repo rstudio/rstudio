@@ -64,7 +64,7 @@ public:
    explicit ShellCommand(const core::FilePath& filePath)
       : escapeMode_(EscapeAll)
    {
-      output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));
+      output_ = escape(string_utils::utf8ToSystem(filePath.getAbsolutePath()));
    }
 
    explicit ShellCommand(const std::string& program)

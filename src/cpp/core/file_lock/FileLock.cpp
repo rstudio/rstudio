@@ -112,7 +112,7 @@ bool FileLock::verifyInitialized()
 
 void FileLock::initialize(FilePath locksConfPath)
 {
-   if (locksConfPath.empty())
+   if (locksConfPath.isEmpty())
       locksConfPath = FilePath(kLocksConfPath);
    
    Settings settings;
@@ -168,7 +168,7 @@ void FileLock::initialize(const Settings& settings)
 
 void FileLock::log(const std::string& message)
 {
-   if (s_logFile.empty() || !isLoggingEnabled())
+   if (s_logFile.isEmpty() || !isLoggingEnabled())
    {
       // if we were constructed without a path, or file lock logging was not explicitly enabled
       // (legacy option), then debug log to the in-proc logger

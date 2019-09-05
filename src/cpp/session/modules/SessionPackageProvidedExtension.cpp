@@ -110,10 +110,10 @@ bool Indexer::work()
 
    // invoke workers with package name + path
    FilePath pkgPath = pkgDirs_[index];
-   std::string pkgName = pkgPath.filename();
+   std::string pkgName = pkgPath.getFilename();
    for (boost::shared_ptr<Worker> pWorker : workers_)
    {
-      FilePath resourcePath = pkgPath.childPath(pWorker->resourcePath());
+      FilePath resourcePath = pkgPath.getChildPath(pWorker->resourcePath());
       if (!resourcePath.exists())
          continue;
       
@@ -140,7 +140,7 @@ void Indexer::beginIndexing()
          continue;
 
       std::vector<core::FilePath> pkgPaths;
-      core::Error error = libPath.children(&pkgPaths);
+      core::Error error = libPath.getChildren(pkgPaths);
       if (error)
          LOG_ERROR(error);
 

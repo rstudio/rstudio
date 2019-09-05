@@ -160,7 +160,7 @@ bool isSharedPath(const std::string& projectPath,
       return false;
 
    struct stat st;
-   if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
+   if (::stat(projectDir.getAbsolutePath().c_str(), &st) == 0)
    {
       // not shared if we own the directory
       if (st.st_uid == ::geteuid())
@@ -197,7 +197,7 @@ bool isSharedPath(const std::string& projectPath,
    else
    {
       error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", projectDir.absolutePath());
+      error.addProperty("path", projectDir.getAbsolutePath());
       LOG_ERROR(error);
    }
 
@@ -245,7 +245,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
          return ScopeMissingProject;
 
       // record path to project file
-      *pProjectFilePath = projectPath.absolutePath();
+      *pProjectFilePath = projectPath.getAbsolutePath();
    }
    else
    {

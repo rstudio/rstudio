@@ -98,11 +98,11 @@ FilePath getProjectUserDataDir(const ErrorLocation& location)
    // for a .Ruserdata directory as an alternative
    FilePath dataDir = projectDir;
 
-   FilePath ruserdataDir = projectDir.childPath(".Ruserdata");
+   FilePath ruserdataDir = projectDir.getChildPath(".Ruserdata");
    if (ruserdataDir.exists())
    {
       // create user-specific subdirectory if necessary
-      FilePath userDir = ruserdataDir.childPath(core::system::username());
+      FilePath userDir = ruserdataDir.getChildPath(core::system::username());
       Error error = userDir.ensureDirectory();
       if (!error)
       {

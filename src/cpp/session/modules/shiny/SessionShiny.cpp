@@ -69,13 +69,13 @@ void onPackageLoaded(const std::string& pkgname)
 
 bool isShinyAppDir(const FilePath& filePath)
 {
-   bool hasServer = filePath.childPath("server.R").exists() ||
-                    filePath.childPath("server.r").exists();
+   bool hasServer = filePath.getChildPath("server.R").exists() ||
+                    filePath.getChildPath("server.r").exists();
    if (hasServer)
    {
-      bool hasUI = filePath.childPath("ui.R").exists() ||
-                   filePath.childPath("ui.r").exists() ||
-                   filePath.childPath("www").exists();
+      bool hasUI = filePath.getChildPath("ui.R").exists() ||
+                   filePath.getChildPath("ui.r").exists() ||
+                   filePath.getChildPath("www").exists();
 
       return hasUI;
    }
@@ -223,7 +223,7 @@ const char * const kShinyAppTypeMultiFile =  "type_multi_file";
 
 FilePath shinyTemplatePath(const std::string& name)
 {
-   return session::options().rResourcesPath().childPath("templates/shiny/" + name);
+   return session::options().rResourcesPath().getChildPath("templates/shiny/" + name);
 }
 
 Error copyTemplateFile(const std::string& templateFileName,
@@ -259,7 +259,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    }
    
    FilePath appDir = module_context::resolveAliasedPath(appDirString);
-   FilePath shinyDir = appDir.complete(appName);
+   FilePath shinyDir = appDir.completePath(appName);
    
    // if shinyDir exists and is not an empty directory, bail
    if (shinyDir.exists())
@@ -274,7 +274,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       }
       
       std::vector<FilePath> children;
-      Error error = shinyDir.children(&children);
+      Error error = shinyDir.getChildren(children);
       if (error)
          LOG_ERROR(error);
       
@@ -313,8 +313,8 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    std::vector<std::string> existingFiles;
    for (const std::string& fileName : templateFiles)
    {
-      FilePath filePath = shinyDir.complete(fileName);
-      std::string aliasedPath = module_context::createAliasedPath(shinyDir.complete(fileName));
+      FilePath filePath = shinyDir.completePath(fileName);
+      std::string aliasedPath = module_context::createAliasedPath(shinyDir.completePath(fileName));
       
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
@@ -346,7 +346,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
    // copy the files (updates success in 'result')
    for (const std::string& fileName : templateFiles)
    {
-      FilePath target = shinyDir.complete(fileName);
+      FilePath target = shinyDir.completePath(fileName);
       Error error = copyTemplateFile(fileName, target);
       if (error)
       {
@@ -414,7 +414,7 @@ ShinyFileType getShinyFileType(const FilePath& filePath,
    if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
       return ShinyDocument;
    
-   std::string filename = filePath.filename();
+   std::string filename = filePath.getFilename();
 
    if (boost::algorithm::iequals(filename, "ui.r") &&
        boost::algorithm::icontains(contents, "shinyUI"))
@@ -434,7 +434,7 @@ ShinyFileType getShinyFileType(const FilePath& filePath,
    else if ((boost::algorithm::iequals(filename, "global.r") ||
              boost::algorithm::iequals(filename, "ui.r") ||
              boost::algorithm::iequals(filename, "server.r")) &&
-            isShinyAppDir(filePath.parent()))
+            isShinyAppDir(filePath.getParent()))
    {
       return ShinyDirectory;
    }

@@ -213,7 +213,7 @@ Error addWatch(const FileInfo& fileInfo,
    // add IN_DONT_FOLLOW unless we are explicitly allowing root symlinks
    // and this is a watch for the root path
    if (!allowRootSymlink ||
-       (fileInfo.absolutePath() != rootPath.absolutePath()))
+       (fileInfo.absolutePath() != rootPath.getAbsolutePath()))
    {
       mask |= IN_DONT_FOLLOW;
    }
@@ -323,8 +323,8 @@ Error processEvent(FileEventContext* pContext,
          return Success();
 
       // get file info
-      FilePath filePath = FilePath(parentIt->absolutePath()).complete(
-                                                                 pEvent->name);
+      FilePath filePath = FilePath(parentIt->absolutePath()).completePath(
+         pEvent->name);
 
 
       // if the file exists then collect as many extended attributes
@@ -336,7 +336,7 @@ Error processEvent(FileEventContext* pContext,
       }
       else
       {
-         fileInfo = FileInfo(filePath.absolutePath(), pEvent->mask & IN_ISDIR);
+         fileInfo = FileInfo(filePath.getAbsolutePath(), pEvent->mask & IN_ISDIR);
       }
 
       // if this doesn't meet the filter then ignore
@@ -549,7 +549,8 @@ void run(const boost::function<void()>& checkForInput)
          // check for context root directory deleted
          if (!pContext->rootPath.exists())
          {
-            Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+            Error error = fileNotFoundError(
+               pContext->rootPath.getAbsolutePath(),
                                             ERROR_LOCATION);
             terminateWithMonitoringError(pContext, error);
             continue;

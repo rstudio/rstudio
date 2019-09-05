@@ -41,7 +41,7 @@ struct FileLocation
    {
    }
 
-   bool empty() const { return filePath.empty(); }
+   bool empty() const { return filePath.isEmpty(); }
 
    bool operator==(const FileLocation& other) const
    {

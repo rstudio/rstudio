@@ -26,7 +26,7 @@ namespace {
 
 bool prefsFileFilter(const core::FilePath& prefsFile, const core::FileInfo& fileInfo)
 {
-   return prefsFile.absolutePath() == fileInfo.absolutePath();
+   return prefsFile.getAbsolutePath() == fileInfo.absolutePath();
 }
 
 } // anonymous namespace
@@ -132,7 +132,7 @@ Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::F
    // If the preferences file doesn't exist, ensure its directory does.
    if (!prefsFile.exists())
    {
-      error = prefsFile.parent().ensureDirectory();
+      error = prefsFile.getParent().ensureDirectory();
       if (error)
          return error;
    }
@@ -229,7 +229,7 @@ void PrefLayer::monitorPrefsFile(const core::FilePath& prefsFile)
    cb.onMonitoringError = bind(&PrefLayer::fileMonitorTermination, this, _1);
    cb.onFilesChanged = bind(&PrefLayer::fileMonitorFilesChanged, this, _1);
    cb.onUnregistered = bind(&PrefLayer::fileMonitorTermination, this, Success());
-   core::system::file_monitor::registerMonitor(prefsFile.parent(), 
+   core::system::file_monitor::registerMonitor(prefsFile.getParent(),
          false /* recursive */, 
          bind(prefsFileFilter, prefsFile, _1),
          cb);

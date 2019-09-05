@@ -50,7 +50,7 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return file().empty(); }
+   bool empty() const { return file().isEmpty(); }
 
    const FilePath& file() const { return file_; }
 

@@ -153,7 +153,7 @@ private:
 
    FilePath pidFilePath()
    {
-      return FilePath(localStreamPath_.absolutePath() + ".pid");
+      return FilePath(localStreamPath_.getAbsolutePath() + ".pid");
    }
 
 private:

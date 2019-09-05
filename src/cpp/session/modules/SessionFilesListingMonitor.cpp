@@ -189,7 +189,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 {
    // enumerate the files
    pFiles->clear();
-   core::Error error = rootPath.children(pFiles);
+   core::Error error = rootPath.getChildren(*pFiles);
    if (error)
       return error;
 
@@ -198,7 +198,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
                   source_control::fileDecorationContext(rootPath);
 
    // sort the files by name
-   std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
+   std::sort(pFiles->begin(), pFiles->end(), FilePath::isEqualCaseInsensitive);
 
    // produce json listing
    for (core::FilePath& filePath : *pFiles)

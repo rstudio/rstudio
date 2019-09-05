@@ -69,7 +69,7 @@ FilePath resolveXdgDir(const std::string& envVar,
       }
 
 #endif
-      if (xdgHome.empty())
+      if (xdgHome.isEmpty())
       {
          // Use the default subdir for POSIX. We also use it a fallback on Windows if we couldn't
          // read the app settings path.
@@ -82,11 +82,11 @@ FilePath resolveXdgDir(const std::string& envVar,
       xdgHome = FilePath(env);
    }
 
-   return xdgHome.complete(
+   return xdgHome.completePath(
 #ifdef _WIN32
-         "RStudio"
+      "RStudio"
 #else
-         "rstudio"
+      "rstudio"
 #endif
    );
 }
@@ -125,7 +125,7 @@ FilePath systemConfigDir()
       std::vector<std::string> dirs = algorithm::split(env, ":");
       for (const std::string& dir: dirs)
       {
-         FilePath resolved = FilePath(dir).complete("rstudio");
+         FilePath resolved = FilePath(dir).completePath("rstudio");
          if (resolved.exists())
          {
             return resolved;

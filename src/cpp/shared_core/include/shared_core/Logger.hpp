@@ -21,8 +21,6 @@
 #ifndef SHARED_CORE_LOGGER_HPP
 #define SHARED_CORE_LOGGER_HPP
 
-#include <boost/noncopyable.hpp>
-
 #include <map>
 #include <memory>
 #include <string>
@@ -129,17 +127,6 @@ void logErrorAsInfo(const Error& in_error);
  * @param in_error      The error to log as a debug message.
  */
 void logErrorAsDebug(const Error& in_error);
-
-/**
- * @brief Logs an error message to all registered destinations.
- *
- * If no destinations are registered, no log will be written.
- * If the log level is below LogLevel::ERROR, no log will be written.
- *
- * @param in_message      The message to log as an error.
- */
-void logErrorMessage(const std::string& in_message);
-
 /**
  * @brief Logs an error to all registered destinations.
  *
@@ -147,9 +134,18 @@ void logErrorMessage(const std::string& in_message);
  * If the log level is below LogLevel::ERROR, no log will be written.
  *
  * @param in_error              The message to log as an error.
- * @param in_errorLocation      The location where the error message was logged.
  */
-void logErrorMessage(const std::string& in_message, const ErrorLocation& in_location);
+void logErrorMessage(const std::string& in_message);
+/**
+ * @brief Logs an error to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the log level is below LogLevel::ERROR, no log will be written.
+ *
+ * @param in_error              The message to log as an error.
+ * @param in_loggedFrom         The location from which the error message was logged.
+ */
+void logErrorMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom);
 
 /**
  * @brief Logs a warning message to all registered destinations.

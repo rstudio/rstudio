@@ -211,7 +211,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (workingDir.empty())
    {
       // default working dir to parent directory of script
-      workingDir = scriptPath.parent().absolutePath();
+      workingDir = scriptPath.getParent().getAbsolutePath();
    }
 
    FilePath workingDirPath(workingDir);
@@ -226,7 +226,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (jobName.empty())
    {
       // no name was supplied for the job, so derive one from the filename
-      jobName = scriptFilePath.filename();
+      jobName = scriptFilePath.getFilename();
    }
 
    std::string id;

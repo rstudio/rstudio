@@ -310,11 +310,11 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
-   error = sshKeyPath.parent().ensureDirectory();
+   error = sshKeyPath.getParent().ensureDirectory();
    if (error)
       return error;
-   FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
-                                             sshKeyPath.stem() + ".pub");
+   FilePath sshPublicKeyPath = sshKeyPath.getParent().completePath(
+                                             sshKeyPath.getStem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
    {
       if (!overwrite)

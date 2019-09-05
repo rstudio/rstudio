@@ -67,7 +67,7 @@ std::size_t listSize(const char* const name)
 
 FilePath listPath(const std::string& name)
 {
-   return s_listsPath.complete(name);
+   return s_listsPath.completePath(name);
 }
 
 Error readList(const std::string& name,
@@ -105,12 +105,12 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
       return;
 
    // ignore if it is the lists directory
-   if (fileChange.fileInfo().absolutePath() == s_listsPath.absolutePath())
+   if (fileChange.fileInfo().absolutePath() == s_listsPath.getAbsolutePath())
       return;
 
    // get the name of the list
    FilePath filePath(fileChange.fileInfo().absolutePath());
-   std::string name = filePath.filename();
+   std::string name = filePath.getFilename();
 
    // read it
    boost::shared_ptr<MruList> list;

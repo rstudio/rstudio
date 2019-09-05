@@ -419,13 +419,13 @@ Error runPreflightScript()
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       FilePath preflightScriptPath = options.preflightScriptPath();
-      if (!preflightScriptPath.empty())
+      if (!preflightScriptPath.isEmpty())
       {
          if (preflightScriptPath.exists())
          {
             // run the script (ignore errors and continue no matter what
             // the outcome of the script is)
-            std::string script = preflightScriptPath.absolutePath();
+            std::string script = preflightScriptPath.getAbsolutePath();
             core::system::ProcessResult result;
             Error error = runCommand(script,
                                      core::system::ProcessOptions(),
@@ -439,7 +439,7 @@ Error runPreflightScript()
          else
          {
             LOG_WARNING_MESSAGE("preflight script does not exist: " +
-                                preflightScriptPath.absolutePath());
+                                   preflightScriptPath.getAbsolutePath());
          }
       }
    }
@@ -619,7 +619,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          std::cout << "Successfully initialized R session."
                    << std::endl << std::endl;
          FilePath diagFile = module_context::sourceDiagnostics();
-         if (!diagFile.empty())
+         if (!diagFile.isEmpty())
          {
             std::cout << "Diagnostics report written to: "
                       << diagFile << std::endl << std::endl;
@@ -689,7 +689,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    if (module_context::userUploadedFilesScratchPath().exists())
    {
       std::vector<FilePath> childPaths;
-      error = module_context::userUploadedFilesScratchPath().children(&childPaths);
+      error = module_context::userUploadedFilesScratchPath().getChildren(childPaths);
       if (error)
          LOG_ERROR(error);
 
@@ -697,7 +697,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       for (const FilePath& childPath : childPaths)
       {
          double diffTime = std::difftime(std::time(nullptr),
-                                         childPath.lastWriteTime());
+                                         childPath.getLastWriteTime());
          if (diffTime > secondsPerDay)
          {
             Error error = childPath.remove();
@@ -966,7 +966,7 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
       
       // for files in the user's home directory and pdfs use an external browser
       else if (module_context::isVisibleUserFile(filePath) ||
-          (filePath.extensionLowerCase() == ".pdf"))
+          (filePath.getExtensionLowerCase() == ".pdf"))
       {
          module_context::showFile(filePath);
       }
@@ -1032,11 +1032,11 @@ void rBrowseFile(const core::FilePath& filePath)
 
    // see if this is an html file in the session temporary directory (in which
    // case we can serve it over http)
-   if ((filePath.mimeContentType() == "text/html") &&
+   if ((filePath.getMimeContentType() == "text/html") &&
        filePath.isWithin(module_context::tempDir()) &&
        rstudio::r::util::hasRequiredVersion("2.14"))
    {
-      std::string path = filePath.relativePath(module_context::tempDir());
+      std::string path = filePath.getRelativePath(module_context::tempDir());
       std::string url = module_context::sessionTempDirUrl(path);
       rsession::clientEventQueue().add(browseUrlEvent(url));
    }
@@ -1247,7 +1247,7 @@ void rSerialization(int action, const FilePath& targetPath)
 {
    json::Object serializationActionObject ;
    serializationActionObject["type"] = action;
-   if (!targetPath.empty())
+   if (!targetPath.isEmpty())
    {
       serializationActionObject["targetPath"] =
                            module_context::createAliasedPath(targetPath);
@@ -1265,7 +1265,7 @@ void ensureRProfile()
    if (!options.createProfile())
       return;
 
-   FilePath rProfilePath = options.userHomePath().complete(".Rprofile");
+   FilePath rProfilePath = options.userHomePath().completePath(".Rprofile");
    if (!rProfilePath.exists() && !prefs::userState().autoCreatedProfile())
    {
       prefs::userState().setAutoCreatedProfile(true);
@@ -1292,7 +1292,7 @@ void ensurePublicFolder()
    if (!options.createPublicFolder())
       return;
 
-   FilePath publicPath = options.userHomePath().complete("Public");
+   FilePath publicPath = options.userHomePath().completePath("Public");
    if (!publicPath.exists())
    {
       // create directory
@@ -1330,7 +1330,7 @@ void ensurePublicFolder()
       );
       std::string notice = boost::str(fmt % options.userIdentity());
 
-      FilePath noticePath = publicPath.complete("AboutPublic.txt");
+      FilePath noticePath = publicPath.completePath("AboutPublic.txt");
       error = writeStringToFile(noticePath, notice);
       if (error)
          LOG_ERROR(error);
@@ -1429,7 +1429,7 @@ bool restoreWorkspaceOption()
 
    // no project override
    return prefs::userPrefs().loadWorkspace() ||
-          !rsession::options().initialEnvironmentFileOverride().empty();
+          !rsession::options().initialEnvironmentFileOverride().isEmpty();
 }
 
 bool alwaysSaveHistoryOption()
@@ -1440,10 +1440,10 @@ bool alwaysSaveHistoryOption()
 FilePath getStartupEnvironmentFilePath()
 {
    FilePath envFile = rsession::options().initialEnvironmentFileOverride();
-   if (!envFile.empty())
+   if (!envFile.isEmpty())
       return envFile;
    else
-      return dirs::rEnvironmentDir().complete(".RData");
+      return dirs::rEnvironmentDir().completePath(".RData");
 }
 
 } // anonymous namespace
@@ -1828,11 +1828,11 @@ int main (int argc, char * const argv[])
 
       // set the rpostback absolute path
       FilePath rpostback = options.rpostbackPath()
-                           .parent().parent()
-                           .childPath("rpostback");
+                           .getParent().getParent()
+                           .getChildPath("rpostback");
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
-            string_utils::utf8ToSystem(rpostback.absolutePath()));
+            string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
 
       // determine if this is a new user and get the first project path if so
       std::string firstProjectPath = "";
@@ -1842,7 +1842,7 @@ int main (int argc, char * const argv[])
       if (userScratchPath.exists())
       {
          std::vector<FilePath> scratchChildren;
-         userScratchPath.children(&scratchChildren);
+         userScratchPath.getChildren(scratchChildren);
 
          if (scratchChildren.size() == 0)
             newUser = true;
@@ -1867,18 +1867,18 @@ int main (int argc, char * const argv[])
             FilePath templatePath = FilePath(options.firstProjectTemplatePath());
             if (templatePath.exists())
             {
-               error = templatePath.copyDirectoryRecursive(options.userHomePath().childPath(
-                                                              templatePath.filename()));
+               error = templatePath.copyDirectoryRecursive(options.userHomePath().getChildPath(
+                                                              templatePath.getFilename()));
                if (error)
                   LOG_ERROR(error);
                else
                {
-                  FilePath firstProjPath = options.userHomePath().childPath(templatePath.filename())
-                        .childPath(templatePath.filename() + ".Rproj");
+                  FilePath firstProjPath = options.userHomePath().getChildPath(templatePath.getFilename())
+                        .getChildPath(templatePath.getFilename() + ".Rproj");
                   if (firstProjPath.exists())
-                     firstProjectPath = firstProjPath.absolutePath();
+                     firstProjectPath = firstProjPath.getAbsolutePath();
                   else
-                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.absolutePath() +
+                     LOG_WARNING_MESSAGE("Could not find first project path " + firstProjPath.getAbsolutePath() +
                                          ". Please ensure the template contains an Rproj file.");
                }
             }
@@ -1912,7 +1912,7 @@ int main (int argc, char * const argv[])
       // it is created with the default value of ~, so if our session options
       // have specified that a different directory should be used, we should
       // persist the value to the session state as soon as possible
-      module_context::activeSession().setWorkingDir(workingDir.absolutePath());
+      module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
 
       // start http connection listener
       error = waitWithTimeout(

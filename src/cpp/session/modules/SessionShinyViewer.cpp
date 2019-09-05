@@ -52,7 +52,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
 {
    FilePath shinyPath(path);
    if (module_context::safeCurrentPath() == shinyPath &&
-       !s_pendingShinyPath.empty())
+       !s_pendingShinyPath.isEmpty())
    {
       // when Shiny starts an app from a anonymous expr (e.g. shinyApp(foo)),
       // it reports the working directory as the app's "path". We sometimes
@@ -181,7 +181,7 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    // Shiny directory, use the parent
    FilePath shinyPath = module_context::resolveAliasedPath(targetPath); 
    if (shinyType == modules::shiny::ShinyDirectory)
-      shinyPath = shinyPath.parent();
+      shinyPath = shinyPath.getParent();
 
    std::string shinyRunPath = module_context::pathRelativeTo(
             module_context::safeCurrentPath(),

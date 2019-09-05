@@ -52,7 +52,7 @@ core::shell_utils::ShellCommand shellCommandForEngine(
    if (options.count("engine.path"))
    {
       std::string path = options.at("engine.path");
-      enginePath = module_context::resolveAliasedPath(path).absolutePath();
+      enginePath = module_context::resolveAliasedPath(path).getAbsolutePath();
    }
    
    ShellCommand command(enginePath);
@@ -72,7 +72,7 @@ std::string scriptPathForShellCommand(
    using namespace core;
 
    auto defaultPath = [&]() {
-       return string_utils::utf8ToSystem(scriptPath.absolutePathNative());
+       return string_utils::utf8ToSystem(scriptPath.getAbsolutePathNative());
    };
 
 #ifndef _WIN32
@@ -89,7 +89,7 @@ std::string scriptPathForShellCommand(
       }
 
       system::ProcessOptions options;
-      options.workingDir = scriptPath.parent();
+      options.workingDir = scriptPath.getParent();
 
       system::ProcessResult result;
       Error error = system::runCommand(
@@ -400,13 +400,13 @@ core::Error runChunk(const std::string& docId,
       // in the same directory -- if it exists, this is a virtual env
       if (enginePath.exists())
       {
-         FilePath activatePath = enginePath.parent().childPath("activate");
+         FilePath activatePath = enginePath.getParent().getChildPath("activate");
          if (activatePath.exists())
          {
-            FilePath binPath = enginePath.parent();
-            FilePath venvPath = binPath.parent();
-            core::system::setenv(&env, "VIRTUAL_ENV", venvPath.absolutePath());
-            core::system::addToPath(&env, binPath.absolutePath(), true);
+            FilePath binPath = enginePath.getParent();
+            FilePath venvPath = binPath.getParent();
+            core::system::setenv(&env, "VIRTUAL_ENV", venvPath.getAbsolutePath());
+            core::system::addToPath(&env, binPath.getAbsolutePath(), true);
          }
       }
    }

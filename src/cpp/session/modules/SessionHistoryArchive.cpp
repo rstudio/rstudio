@@ -42,18 +42,18 @@ namespace {
 
 FilePath historyDatabaseFilePath()
 {
-   return module_context::userScratchPath().complete(kHistoryDatabase);
+   return module_context::userScratchPath().completePath(kHistoryDatabase);
 }
 
 FilePath historyDatabaseRotatedFilePath()
 {
-   return module_context::userScratchPath().complete(kHistoryDatabase ".1");
+   return module_context::userScratchPath().completePath(kHistoryDatabase ".1");
 }
 
 void rotateHistoryDatabase()
 {
    FilePath historyDB = historyDatabaseFilePath();
-   if (historyDB.exists() && (historyDB.size() > kHistoryMaxBytes))
+   if (historyDB.exists() && (historyDB.getSize() > kHistoryMaxBytes))
    {
       // first remove the rotated file if it exists (ignore errors because
       // there's nothing we can do with them at this level)
@@ -158,7 +158,7 @@ const std::vector<HistoryEntry>& HistoryArchive::entries() const
 
    // otherwise check for divergent lastWriteTime and read the file
    // if our internal list isn't up to date
-   else if (historyDBPath.lastWriteTime() != entryCacheLastWriteTime_)
+   else if (historyDBPath.getLastWriteTime() != entryCacheLastWriteTime_)
    {
       entries_.clear();
 
@@ -194,7 +194,7 @@ const std::vector<HistoryEntry>& HistoryArchive::entries() const
                    entries.end(),
                    std::back_inserter(entries_));
 
-         entryCacheLastWriteTime_ = historyDBPath.lastWriteTime();
+         entryCacheLastWriteTime_ = historyDBPath.getLastWriteTime();
       }
 
    }

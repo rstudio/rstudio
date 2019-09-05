@@ -73,11 +73,11 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().buildTargetPath().childPath("DESCRIPTION");
+   FilePath descPath = projectContext().buildTargetPath().getChildPath("DESCRIPTION");
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
-      if (info.absolutePath() == descPath.absolutePath())
+      if (info.absolutePath() == descPath.getAbsolutePath())
       {
          onDescriptionChanged();
          break;
@@ -92,7 +92,7 @@ Error computeScratchPaths(const FilePath& projectFile,
       FilePath* pScratchPath, FilePath* pSharedScratchPath)
 {
    // ensure project user dir
-   FilePath projectUserDir = projectFile.parent().complete(".Rproj.user");
+   FilePath projectUserDir = projectFile.getParent().completePath(".Rproj.user");
    if (!projectUserDir.exists())
    {
       // create
@@ -111,7 +111,7 @@ Error computeScratchPaths(const FilePath& projectFile,
    // now add context id to form scratch path
    if (pScratchPath)
    {
-      FilePath scratchPath = projectUserDir.complete(prefs::userState().contextId());
+      FilePath scratchPath = projectUserDir.completePath(prefs::userState().contextId());
       Error error = scratchPath.ensureDirectory();
       if (error)
          return error;
@@ -124,7 +124,7 @@ Error computeScratchPaths(const FilePath& projectFile,
    // this project open)
    if (pSharedScratchPath)
    {
-      FilePath sharedScratchPath = projectUserDir.complete("shared");
+      FilePath sharedScratchPath = projectUserDir.completePath("shared");
       Error error = sharedScratchPath.ensureDirectory();
       if (error)
          return error;
@@ -139,14 +139,14 @@ Error computeScratchPaths(const FilePath& projectFile,
 FilePath ProjectContext::oldScratchPath() const
 {
    // start from the standard .Rproj.user dir
-   FilePath projectUserDir = directory().complete(".Rproj.user");
+   FilePath projectUserDir = directory().completePath(".Rproj.user");
    if (!projectUserDir.exists())
       return FilePath();
 
    // add username if we can get one
    std::string username = core::system::username();
    if (!username.empty())
-      projectUserDir = projectUserDir.complete(username);
+      projectUserDir = projectUserDir.completePath(username);
 
    // if this path doesn't exist then bail
    if (!projectUserDir.exists())
@@ -157,7 +157,7 @@ FilePath ProjectContext::oldScratchPath() const
 
 FilePath ProjectContext::websitePath() const
 {
-   if (hasProject() && !buildTargetPath().empty() && r_util::isWebsiteDirectory(buildTargetPath()))
+   if (hasProject() && !buildTargetPath().isEmpty() && r_util::isWebsiteDirectory(buildTargetPath()))
       return buildTargetPath();
    else
       return FilePath();
@@ -167,11 +167,11 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 {
    // first check same folder; this will catch building simple R Markdown websites 
    // even without an RStudio project in play
-   if (r_util::isWebsiteDirectory(file.parent()))
-      return file.parent();
+   if (r_util::isWebsiteDirectory(file.getParent()))
+      return file.getParent();
    
    // otherwise see if this file is under a website project
-   if (!websitePath().empty() && file.isWithin(websitePath()))
+   if (!websitePath().isEmpty() && file.isWithin(websitePath()))
       return websitePath();            
    
    return FilePath();
@@ -192,11 +192,11 @@ Error ProjectContext::startup(const FilePath& projectFile,
    {
       *pUserErrMsg = "the project file does not exist";
       *pIsNewProject = true;
-      return pathNotFoundError(projectFile.absolutePath(), ERROR_LOCATION);
+      return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
    // test for writeabilty of parent
-   if (!file_utils::isDirectoryWriteable(projectFile.parent()))
+   if (!file_utils::isDirectoryWriteable(projectFile.getParent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
       return systemError(boost::system::errc::permission_denied,
@@ -204,10 +204,10 @@ Error ProjectContext::startup(const FilePath& projectFile,
    }
 
    // check to see whether or not this project has been opened before
-   FilePath projectUserPath = projectFile.parent().complete(".Rproj.user");
+   FilePath projectUserPath = projectFile.getParent().completePath(".Rproj.user");
    if (projectUserPath.exists())
    {
-      FilePath contextPath = projectUserPath.complete(prefs::userState().contextId());
+      FilePath contextPath = projectUserPath.completePath(prefs::userState().contextId());
       *pIsNewProject = !contextPath.exists();
    }
    else
@@ -257,7 +257,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
    // initialize members
    file_ = projectFile;
-   directory_ = file_.parent();
+   directory_ = file_.getParent();
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = config;
@@ -302,7 +302,7 @@ void ProjectContext::augmentRbuildignore()
       }
 
       // create the file if it doesn't exists
-      FilePath rbuildIgnorePath = directory().childPath(".Rbuildignore");
+      FilePath rbuildIgnorePath = directory().getChildPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
@@ -389,7 +389,7 @@ SEXP rs_getProjectDirectory()
    {
       r::sexp::Protect protect;
       absolutePathSEXP = r::sexp::create(
-               projectContext().directory().absolutePath(), &protect);
+         projectContext().directory().getAbsolutePath(), &protect);
    }
    return absolutePathSEXP;
 }
@@ -441,7 +441,7 @@ Error ProjectContext::initialize()
 
       // compute project ID
       projectId = projectToProjectId(module_context::userScratchPath(), FilePath(),
-            directory().absolutePath()).id();
+                                     directory().getAbsolutePath()).id();
    }
    else
    {
@@ -450,7 +450,7 @@ Error ProjectContext::initialize()
    }
 
    // compute storage path from project ID
-   storagePath_ = module_context::userScratchPath().complete(kStorageFolder).complete(projectId);
+   storagePath_ = module_context::userScratchPath().completePath(kStorageFolder).completePath(projectId);
    
    return Success();
 }
@@ -632,7 +632,7 @@ void ProjectContext::updateBuildTargetPath()
       }
       else
       {
-         buildTargetPath_=  projects::projectContext().directory().childPath(
+         buildTargetPath_=  projects::projectContext().directory().getChildPath(
                                                                   buildTarget);
       }
    }
@@ -669,7 +669,7 @@ json::Array ProjectContext::openDocs() const
    std::vector<std::string> docs = projects::collectFirstRunDocs(file());
    for (const std::string& doc : docs)
    {
-      FilePath docPath = directory().childPath(doc);
+      FilePath docPath = directory().getChildPath(doc);
       openDocsJson.push_back(module_context::createAliasedPath(docPath));
    }
    return openDocsJson;
@@ -714,12 +714,12 @@ const char * const kVcsOverride = "activeVcsOverride";
 
 FilePath ProjectContext::vcsOptionsFilePath() const
 {
-   return scratchPath().childPath("vcs_options");
+   return scratchPath().getChildPath("vcs_options");
 }
 
 Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
 {
-   return pOptionsFile->initialize(scratchPath().childPath("build_options"));
+   return pOptionsFile->initialize(scratchPath().getChildPath("build_options"));
 }
 
 
@@ -848,7 +848,7 @@ bool ProjectContext::parentBrowseable()
    return true;
 #else
    bool browse = true;
-   Error error = core::system::isFileReadable(directory().parent(), &browse);
+   Error error = core::system::isFileReadable(directory().getParent(), &browse);
    if (error)
    {
       // if we can't figure it out, presume it to be browseable (this preserves

@@ -110,7 +110,7 @@ public:
       : ChildProcess()
    {
       init(exe, args, options);
-      if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+      if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
       {
          LOG_ERROR_MESSAGE(
                   "stdOutFile/stdErrFile options cannot be used with runProgram");

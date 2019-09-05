@@ -48,14 +48,14 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return affPath_.empty(); }
+   bool empty() const { return affPath_.isEmpty(); }
 
    bool operator==(const HunspellDictionary& other) const
    {
       return affPath_ == other.affPath_;
    }
 
-   std::string id() const { return affPath_.stem(); }
+   std::string id() const { return affPath_.getStem(); }
    std::string name() const;
 
    FilePath dicPath() const;
@@ -72,7 +72,7 @@ public:
                              const FilePath& userDir)
       : coreLanguagesDir_(coreLanguagesDir),
         userDir_(userDir),
-        customDicts_(userDir_.childPath("custom"))
+        customDicts_(userDir_.getChildPath("custom"))
    {
    }
 

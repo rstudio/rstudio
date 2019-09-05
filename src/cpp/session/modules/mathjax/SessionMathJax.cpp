@@ -41,7 +41,7 @@ void handleMathJax(const http::Request& request, http::Response* pResponse)
    
    // construct path to resource
    FilePath mathjaxPath = options().mathjaxPath();
-   FilePath resourcePath = mathjaxPath.complete(path);
+   FilePath resourcePath = mathjaxPath.completePath(path);
    pResponse->setCacheableFile(resourcePath, request);
 }
 

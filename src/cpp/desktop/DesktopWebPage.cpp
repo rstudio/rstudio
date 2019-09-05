@@ -81,7 +81,7 @@ void handlePdfDownload(QWebEngineDownloadItem* downloadItem,
 void onPdfDownloadRequested(QWebEngineDownloadItem* downloadItem)
 {
    QString scratchDir =
-         QString::fromStdString(options().scratchTempDir().absolutePath());
+         QString::fromStdString(options().scratchTempDir().getAbsolutePath());
    
    // if we're requesting the download of a file with a '.pdf' extension,
    // re-use that file name (since most desktop applications will display the

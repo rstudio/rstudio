@@ -56,8 +56,8 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    }
    
    // Compute the user config directory path, and ensure it exists.
-   FilePath filePath = core::system::xdg::userConfigDir().complete(path);
-   error = filePath.parent().ensureDirectory();
+   FilePath filePath = core::system::xdg::userConfigDir().completePath(path);
+   error = filePath.getParent().ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
@@ -93,16 +93,16 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
    }
 
    // First, check for the user config file at the XDG location
-   FilePath userConfig = core::system::xdg::userConfigDir().complete(path);
+   FilePath userConfig = core::system::xdg::userConfigDir().completePath(path);
    if (!userConfig.exists())
    {
       // If it's not there, check the legacy location (RStudio 1.2 and prior stored per-user data in
       // this hardcoded location)
-      userConfig = module_context::resolveAliasedPath("~/.R/rstudio").complete(path);
+      userConfig = module_context::resolveAliasedPath("~/.R/rstudio").completePath(path);
    }
 
    // System config is always in the XDG location (if it exists at all)
-   FilePath systemConfig = core::system::xdg::systemConfigDir().complete(path);
+   FilePath systemConfig = core::system::xdg::systemConfigDir().completePath(path);
 
    // If neither config file exists, no work to do; raise an error if requested.
    if (!userConfig.exists() && !systemConfig.exists())

@@ -152,7 +152,7 @@ core::system::ProcessConfig sessionProcessConfig(
                         rVersion.number());
    core::system::setenv(&environment,
                         kRStudioDefaultRVersionHome,
-                        rVersion.homeDir().absolutePath());
+                        rVersion.homeDir().getAbsolutePath());
 
    // forward the auth options
    core::system::setenv(&environment,

@@ -55,7 +55,7 @@ public:
 
    void setHomeDir(const FilePath& filePath)
    {
-      core::system::setenv(&environment_, "R_HOME", filePath.absolutePath());
+      core::system::setenv(&environment_, "R_HOME", filePath.getAbsolutePath());
    }
 
    const std::string& number() const { return number_; }
@@ -91,7 +91,7 @@ public:
       RVersionNumber otherVer = RVersionNumber::parse(other.number());
 
       if (ver == otherVer)
-         return homeDir().absolutePath() < other.homeDir().absolutePath();
+         return homeDir().getAbsolutePath() < other.homeDir().getAbsolutePath();
       else
          return ver < otherVer;
    }
@@ -99,7 +99,7 @@ public:
    bool operator==(const RVersion& other) const
    {
       return number() == other.number() &&
-             homeDir().absolutePath() == other.homeDir().absolutePath() &&
+         homeDir().getAbsolutePath() == other.homeDir().getAbsolutePath() &&
              (label() == other.label() || (label().empty() || other.label().empty()));
    }
 

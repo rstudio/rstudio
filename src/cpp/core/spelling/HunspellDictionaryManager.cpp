@@ -72,12 +72,12 @@ KnownDictionary s_knownDictionaries[] =
 
 FilePath dicPathForAffPath(const FilePath& affPath)
 {
-   return affPath.parent().childPath(affPath.stem() + ".dic");
+   return affPath.getParent().getChildPath(affPath.getStem() + ".dic");
 }
 
 bool isDictionaryAff(const FilePath& filePath)
 {
-   return (filePath.extensionLowerCase() == ".aff") &&
+   return (filePath.getExtensionLowerCase() == ".aff") &&
           dicPathForAffPath(filePath).exists();
 }
 
@@ -92,7 +92,7 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
       return Success();
 
    std::vector<FilePath> children;
-   Error error = baseDir.children(&children);
+   Error error = baseDir.getChildren(children);
    if (error)
       return error;
 
@@ -177,13 +177,13 @@ HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
    std::string affFile = langId + ".aff";
 
    // first check to see whether it exists in the user languages directory
-   FilePath userLangsAff = userLanguagesDir().complete(affFile);
+   FilePath userLangsAff = userLanguagesDir().completePath(affFile);
    if (userLangsAff.exists())
       return HunspellDictionary(userLangsAff);
    else if (allLanguagesInstalled())
-      return HunspellDictionary(allLanguagesDir().complete(affFile));
+      return HunspellDictionary(allLanguagesDir().completePath(affFile));
    else
-      return HunspellDictionary(coreLanguagesDir_.complete(affFile));
+      return HunspellDictionary(coreLanguagesDir_.completePath(affFile));
 }
 
 const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
@@ -193,12 +193,12 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
 
 FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
-   return userDir_.childPath("languages-system");
+   return userDir_.getChildPath("languages-system");
 }
 
 FilePath HunspellDictionaryManager::userLanguagesDir() const
 {
-   return userDir_.childPath("languages-user");
+   return userDir_.getChildPath("languages-user");
 }
 
 

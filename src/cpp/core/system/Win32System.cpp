@@ -212,7 +212,7 @@ unsigned int effectiveUserId()
    return 0; // no concept of this on Win32
 }
 
-bool effectiveUserIsRoot()
+bool effectivedIsRoot()
 {
    // on Windows, treat built-in administrator account, or elevation to it, to be the
    // equivalent of Posix "root"
@@ -524,7 +524,7 @@ Error captureCommand(const std::string& command, std::string* pOutput)
 
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
 {
-   std::wstring wPath = filePath.absolutePathW();
+   std::wstring wPath = filePath.getAbsolutePathW();
    std::vector<wchar_t> buffer(512);
    DWORD res = ::GetFullPathNameW(wPath.c_str(),
                                   static_cast<DWORD>(buffer.size()),
@@ -580,7 +580,7 @@ bool isReadOnly(const FilePath& filePath)
 
 Error makeFileHidden(const FilePath& path)
 {
-   std::wstring filePath = path.absolutePathW();
+   std::wstring filePath = path.getAbsolutePathW();
    LPCWSTR lpszPath = filePath.c_str();
 
    DWORD attribs = ::GetFileAttributesW(lpszPath);
@@ -812,7 +812,7 @@ public:
 
    Error open(const FilePath& path)
    {
-      hMF_ = ::GetEnhMetaFileW(path.absolutePathW().c_str());
+      hMF_ = ::GetEnhMetaFileW(path.getAbsolutePathW().c_str());
       if (hMF_ == nullptr)
       {
          return LAST_SYSTEM_ERROR();

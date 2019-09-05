@@ -70,7 +70,7 @@ std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceD
 
 FilePath plumberTemplatePath(const std::string& name)
 {
-   return session::options().rResourcesPath().childPath("templates/plumber/" + name);
+   return session::options().rResourcesPath().getChildPath("templates/plumber/" + name);
 }
 
 Error copyTemplateFile(const std::string& templateFileName, const FilePath& target)
@@ -102,7 +102,7 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
    }
    
    FilePath apiDir = module_context::resolveAliasedPath(apiDirString);
-   FilePath plumberDir = apiDir.complete(apiName);
+   FilePath plumberDir = apiDir.completePath(apiName);
    
    // if plumberDir exists and is not an empty directory, bail
    if (plumberDir.exists())
@@ -117,7 +117,7 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
       }
       
       std::vector<FilePath> children;
-      error = plumberDir.children(&children);
+      error = plumberDir.getChildren(children);
       if (error)
          LOG_ERROR(error);
       
@@ -143,8 +143,8 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
    const std::string templateFile = "plumber.R";
    
    // if file already exists, report that as an error
-   FilePath target = plumberDir.complete(templateFile);
-   std::string aliasedPath = module_context::createAliasedPath(plumberDir.complete(templateFile));
+   FilePath target = plumberDir.completePath(templateFile);
+   std::string aliasedPath = module_context::createAliasedPath(plumberDir.completePath(templateFile));
    result.push_back(aliasedPath);
    if (target.exists())
    {

@@ -57,7 +57,7 @@ inline Error changeFileMode(const FilePath& filePath, mode_t mode)
 {
    // change the mode
    errno = 0;
-   if (::chmod(filePath.absolutePath().c_str(), mode) < 0)
+   if (::chmod(filePath.getAbsolutePath().c_str(), mode) < 0)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", filePath);
@@ -131,7 +131,7 @@ inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)
 inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
 {
    struct stat st;
-   if (::stat(filePath.absolutePath().c_str(), &st) == -1)
+   if (::stat(filePath.getAbsolutePath().c_str(), &st) == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", filePath);
@@ -176,7 +176,7 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
 
 inline Error isFileReadable(const FilePath& filePath, bool* pReadable)
 {
-   int result = ::access(filePath.absolutePath().c_str(), R_OK);
+   int result = ::access(filePath.getAbsolutePath().c_str(), R_OK);
    if (result == 0) 
    {
       // user has access
@@ -197,7 +197,7 @@ inline Error isFileReadable(const FilePath& filePath, bool* pReadable)
 
 inline Error isFileWriteable(const FilePath& filePath, bool* pWriteable)
 {
-   int result = ::access(filePath.absolutePath().c_str(), W_OK);
+   int result = ::access(filePath.getAbsolutePath().c_str(), W_OK);
    if (result == 0)
    {
       // user has access

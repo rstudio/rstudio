@@ -65,7 +65,7 @@ FilePath userLogPath()
    FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
    FilePath logPath = core::system::userSettingsPath(
          userHomePath,
-         "RStudio-Desktop").childPath("log");
+         "RStudio-Desktop").getChildPath("log");
    return logPath;
 }
 
@@ -140,8 +140,8 @@ void applyDesktopTheme(QWidget* window, bool isDark)
          : "rstudio-gnome-dark.qss";
 
    FilePath stylePath = isDark
-         ? options().resourcesPath().complete("stylesheets").complete(darkSheetName)
-         : options().resourcesPath().complete("stylesheets").complete(lightSheetName);
+         ? options().resourcesPath().completePath("stylesheets").completePath(darkSheetName)
+         : options().resourcesPath().completePath("stylesheets").completePath(lightSheetName);
 
    std::string stylesheet;
    Error error = core::readStringFromFile(stylePath, &stylesheet);

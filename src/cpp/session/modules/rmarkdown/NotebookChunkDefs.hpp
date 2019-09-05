@@ -135,7 +135,7 @@ core::Error setChunkValue(const std::string& docPath,
    if (!defFile.exists())
    {
       defFile = chunkDefinitionsPath(docPath, docId, notebookCtxId());
-      error = defFile.parent().ensureDirectory();
+      error = defFile.getParent().ensureDirectory();
       if (error)
          return error;
    }

@@ -42,13 +42,12 @@ const char * const kExplorerCacheDir = "explorer-cache";
 
 FilePath explorerCacheDir() 
 {
-   return module_context::sessionScratchPath()
-         .childPath(kExplorerCacheDir);
+   return module_context::sessionScratchPath().getChildPath(kExplorerCacheDir);
 }
 
 std::string explorerCacheDirSystem()
 {
-   return string_utils::utf8ToSystem(explorerCacheDir().absolutePath());
+   return string_utils::utf8ToSystem(explorerCacheDir().getAbsolutePath());
 }
 
 void removeOrphanedCacheItems()
@@ -76,7 +75,7 @@ void removeOrphanedCacheItems()
    for (const FilePath& docPath : docPaths)
    {
       Document pDoc(new SourceDocument());
-      Error error = source_database::get(docPath.filename(), false, pDoc);
+      Error error = source_database::get(docPath.getFilename(), false, pDoc);
       if (error)
       {
          LOG_ERROR(error);
@@ -87,7 +86,7 @@ void removeOrphanedCacheItems()
    
    // list objects in explorer cache
    std::vector<FilePath> cachedFiles;
-   error = explorerCacheDir().children(&cachedFiles);
+   error = explorerCacheDir().getChildren(cachedFiles);
    if (error)
    {
       LOG_ERROR(error);
@@ -98,7 +97,7 @@ void removeOrphanedCacheItems()
    // source document available
    for (const FilePath& cacheFile : cachedFiles)
    {
-      std::string id = cacheFile.filename();
+      std::string id = cacheFile.getFilename();
       
       bool foundId = false;
       for (Document pDoc : documents)
@@ -153,7 +152,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (id.empty())
       return;
    
-   FilePath cachePath = explorerCacheDir().childPath(id);
+   FilePath cachePath = explorerCacheDir().getChildPath(id);
    error = cachePath.removeIfExists();
    if (error)
    {

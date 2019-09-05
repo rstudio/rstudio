@@ -111,7 +111,7 @@ unsigned int resolveMinimumUserId(std::string minimumUserId,
       if (loginDefs.exists())
       {
          const char uidMin[] = "UID_MIN";
-         std::ifstream defStream(loginDefs.absolutePath().c_str());
+         std::ifstream defStream(loginDefs.getAbsolutePath().c_str());
          std::string line;
          while (std::getline(defStream, line))
          {
@@ -158,7 +158,7 @@ ProgramStatus Options::read(int argc,
 
    // compute the resource and binary paths
    FilePath resourcePath = installPath_;
-   FilePath binaryPath = installPath_.childPath("bin");
+   FilePath binaryPath = installPath_.getChildPath("bin");
 
    // detect running in OSX bundle and tweak paths
 #ifdef __APPLE__
@@ -326,7 +326,7 @@ ProgramStatus Options::read(int argc,
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
-                                 defaultConfigPath.absolutePath() : "";
+                            defaultConfigPath.getAbsolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook
@@ -426,7 +426,7 @@ void Options::resolvePath(const FilePath& basePath,
                           std::string* pPath) const
 {
    if (!pPath->empty())
-      *pPath = basePath.complete(*pPath).absolutePath();
+      *pPath = basePath.completePath(*pPath).getAbsolutePath();
 }
 
 } // namespace server

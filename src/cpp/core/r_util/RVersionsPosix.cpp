@@ -45,7 +45,7 @@ std::vector<FilePath> realPaths(const std::vector<FilePath>& paths)
    for (const FilePath& path : paths)
    {
       FilePath realPath;
-      Error error = core::system::realPath(path.absolutePath(), &realPath);
+      Error error = core::system::realPath(path.getAbsolutePath(), &realPath);
       if (!error)
          realPaths.push_back(realPath);
       else
@@ -71,12 +71,12 @@ void scanForRHomePaths(const core::FilePath& rootDir,
    if (rootDir.exists())
    {
       std::vector<FilePath> rDirs;
-      Error error = rootDir.children(&rDirs);
+      Error error = rootDir.getChildren(rDirs);
       if (error)
          LOG_ERROR(error);
       for (const FilePath& rDir : rDirs)
       {
-         if (rDir.childPath("bin/R").exists())
+         if (rDir.getChildPath("bin/R").exists())
             pHomePaths->push_back(rDir);
       }
    }
@@ -141,7 +141,7 @@ std::vector<RVersion> enumerateRVersions(
    for (r_util::RVersion& rEntry : rEntries)
    {
       // compute R script path
-      FilePath rScriptPath = rEntry.homeDir().childPath("bin/R");
+      FilePath rScriptPath = rEntry.homeDir().getChildPath("bin/R");
       if (!rScriptPath.exists())
          continue;
 
@@ -196,7 +196,7 @@ std::vector<RVersion> enumerateRVersions(
       else
       {
          LOG_ERROR_MESSAGE("Error scanning R version at " +
-                           rScriptPath.absolutePath() + ": " +
+                              rScriptPath.getAbsolutePath() + ": " +
                            errMsg);
       }
    }
@@ -205,7 +205,7 @@ std::vector<RVersion> enumerateRVersions(
    for (const FilePath& rHomePath : rHomePaths)
    {
       // compute R script path
-      FilePath rScriptPath = rHomePath.childPath("bin/R");
+      FilePath rScriptPath = rHomePath.getChildPath("bin/R");
       if (!rScriptPath.exists())
          continue;
 
@@ -225,7 +225,7 @@ std::vector<RVersion> enumerateRVersions(
       else
       {
          LOG_ERROR_MESSAGE("Error scanning R version at " +
-                           rScriptPath.absolutePath() + ": " +
+                              rScriptPath.getAbsolutePath() + ": " +
                            errMsg);
       }
    }
@@ -311,7 +311,7 @@ bool isVersion(const RVersionNumber& number,
                const RVersion& item)
 {
    return number == RVersionNumber::parse(item.number()) &&
-          rHomeDir == item.homeDir().absolutePath();
+          rHomeDir == item.homeDir().getAbsolutePath();
 }
 
 bool isLabelVersion(const RVersionNumber& number,
@@ -528,7 +528,7 @@ Error validatedReadRVersionsFromFile(const FilePath& filePath,
       else
       {
          LOG_WARNING_MESSAGE("R version home directory not found: " +
-                             version.homeDir().absolutePath());
+                                version.homeDir().getAbsolutePath());
       }
    }
 

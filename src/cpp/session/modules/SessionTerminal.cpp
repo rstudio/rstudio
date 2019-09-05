@@ -80,9 +80,9 @@ Error getTerminalOptions(const json::JsonRpcRequest& request,
    std::string extraPathEntries;
    session::modules::workbench::ammendShellPaths(&extraPathEntries);
 
-   optionsJson["terminal_path"] = terminalPath.absolutePath();
+   optionsJson["terminal_path"] = terminalPath.getAbsolutePath();
    optionsJson["working_directory"] =
-                  module_context::shellWorkingDirectory().absolutePath();
+      module_context::shellWorkingDirectory().getAbsolutePath();
    optionsJson["extra_path_entries"] = extraPathEntries;
    optionsJson["shell_type"] = console_process::TerminalShell::getShellId(shellType);
    pResponse->setResult(optionsJson);

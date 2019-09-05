@@ -165,8 +165,8 @@ SEXP rs_readIniFile(SEXP iniPathSEXP)
     if (!iniFile.exists())
       return R_NilValue;
 
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = FilePath(iniFile).open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(iniFile).openForRead(pIfs);
    if (error)
    {
       return R_NilValue;
@@ -175,15 +175,15 @@ SEXP rs_readIniFile(SEXP iniPathSEXP)
    try
    {
       ptree pt;
-      ini_parser::read_ini(iniFile.absolutePath(), pt);
+      ini_parser::read_ini(iniFile.getAbsolutePath(), pt);
 
       r::sexp::Protect protect;
       return readInitFileLevel(pt, protect);
    }
    catch(const std::exception& e)
    {
-      LOG_ERROR_MESSAGE("Error reading " + iniFile.absolutePath() +
-        ": " + std::string(e.what()));
+      LOG_ERROR_MESSAGE("Error reading " + iniFile.getAbsolutePath() +
+                        ": " + std::string(e.what()));
 
       return R_NilValue;
    }
@@ -192,7 +192,7 @@ SEXP rs_readIniFile(SEXP iniPathSEXP)
 SEXP rs_rResourcesPath()
 {
    r::sexp::Protect protect;
-   return r::sexp::create(session::options().rResourcesPath().absolutePath(), &protect);
+   return r::sexp::create(session::options().rResourcesPath().getAbsolutePath(), &protect);
 }
 
 class Process;

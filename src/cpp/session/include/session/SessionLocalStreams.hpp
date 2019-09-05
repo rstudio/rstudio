@@ -38,8 +38,8 @@ inline core::Error ensureStreamsDir()
    
 inline core::FilePath streamPath(const std::string& file)
 {
-   core::FilePath path = core::FilePath(kSessionLocalStreamsDir).complete(file);
-   core::Error error = core::http::initializeStreamDir(path.parent());
+   core::FilePath path = core::FilePath(kSessionLocalStreamsDir).completePath(file);
+   core::Error error = core::http::initializeStreamDir(path.getParent());
    if (error)
       LOG_ERROR(error);
    return path;

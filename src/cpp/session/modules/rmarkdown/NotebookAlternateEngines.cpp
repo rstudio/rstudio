@@ -336,7 +336,7 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
-      fStanEngine.addParam("file", string_utils::utf8ToSystem(tempFile.absolutePath()));
+      fStanEngine.addParam("file", string_utils::utf8ToSystem(tempFile.getAbsolutePath()));
    
    // evaluate stan_model call
    SEXP stanModelSEXP = R_NilValue;
@@ -428,7 +428,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    error = r::exec::RFunction(
                ".rs.runSqlForDataCapture",
                code,
-               string_utils::utf8ToSystem(dataPath.absolutePath()),
+               string_utils::utf8ToSystem(dataPath.getAbsolutePath()),
                options).call();
    if (error)
    {
@@ -520,7 +520,7 @@ Error runUserDefinedEngine(const std::string& docId,
                nbCtxId,
                ChunkOutputText);
       
-      error = targetPath.parent().ensureDirectory();
+      error = targetPath.getParent().ensureDirectory();
       if (error)
          return error;
 
@@ -555,7 +555,7 @@ Error runUserDefinedEngine(const std::string& docId,
                nbCtxId,
                ChunkOutputPlot);
 
-      error = targetPath.parent().ensureDirectory();
+      error = targetPath.getParent().ensureDirectory();
       if (error)
          return error;
 

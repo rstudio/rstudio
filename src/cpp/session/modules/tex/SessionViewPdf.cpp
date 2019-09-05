@@ -66,7 +66,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
+   core::FilePath pdfJsResource = options().rResourcesPath().getChildPath(path);
    if (pdfJsResource.exists())
    {
       pResponse->setCacheableFile(pdfJsResource, request);
@@ -78,7 +78,8 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
 
 std::string createViewPdfUrl(const core::FilePath& filePath)
 {
-   return "view_pdf?path=" + http::util::urlEncode(filePath.absolutePath(),
+   return "view_pdf?path=" + http::util::urlEncode(
+      filePath.getAbsolutePath(),
                                                    true);
 }
 

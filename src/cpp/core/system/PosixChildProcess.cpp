@@ -250,9 +250,9 @@ void ChildProcess::init(const std::string& command,
    args.push_back("-c");
 
    std::string realCommand = command;
-   if (!options.stdOutFile.empty())
+   if (!options.stdOutFile.isEmpty())
       realCommand += " > " + shell_utils::escape(options.stdOutFile);
-   if (!options.stdErrFile.empty())
+   if (!options.stdErrFile.isEmpty())
       realCommand += " 2> " + shell_utils::escape(options.stdErrFile);
    args.push_back(realCommand);
 
@@ -262,14 +262,14 @@ void ChildProcess::init(const std::string& command,
 // Initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
    {
       LOG_ERROR_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with interactive terminal");
    }
 
    options_ = options;
-   exe_ = options_.shellPath.absolutePath();
+   exe_ = options_.shellPath.getAbsolutePath();
    args_ = options_.args;
 }
 
@@ -710,12 +710,12 @@ Error ChildProcess::run()
             // intentionally fail forward (see note above)
          }
 
-         if (!options_.workingDir.empty())
+         if (!options_.workingDir.isEmpty())
          {
-            if (::chdir(options_.workingDir.absolutePath().c_str()))
+            if (::chdir(options_.workingDir.getAbsolutePath().c_str()))
             {
                std::string message = "Error changing directory: '";
-               message += options_.workingDir.absolutePath().c_str();
+               message += options_.workingDir.getAbsolutePath().c_str();
                message += "'";
                LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
             }
@@ -918,7 +918,7 @@ AsyncChildProcess::AsyncChildProcess(const std::string& exe,
    : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(exe, args, options);
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
    {
       LOG_WARNING_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with runProgram");

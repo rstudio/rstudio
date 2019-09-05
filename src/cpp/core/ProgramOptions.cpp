@@ -104,8 +104,8 @@ bool parseConfigFile(variables_map& vm,
    // open the config file
    if (!configFile.empty())
    {
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = FilePath(configFile).open_r(&pIfs);
+      std::shared_ptr<std::istream> pIfs;
+      Error error = FilePath(configFile).openForRead(pIfs);
       if (error)
       {
          reportError("Unable to open config file: " + configFile,

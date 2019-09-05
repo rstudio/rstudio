@@ -191,7 +191,7 @@ FilePath getTrueHomeDir()
 
 FilePath defaultSshKeyDir()
 {
-   return getTrueHomeDir().childPath(".ssh");
+   return getTrueHomeDir().getChildPath(".ssh");
 }
 
 void enqueueRefreshEvent()
@@ -220,7 +220,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!session::options().allowVcs() || !prefs::userPrefs().vcsEnabled() || workingDir.empty())
+   if (!session::options().allowVcs() || !prefs::userPrefs().vcsEnabled() || workingDir.isEmpty())
       return Success();
 
 

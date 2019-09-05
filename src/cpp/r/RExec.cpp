@@ -431,11 +431,11 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
 
 FilePath rBinaryPath()
 {
-   FilePath binPath = FilePath(R_HomeDir()).complete("bin");
+   FilePath binPath = FilePath(R_HomeDir()).completePath("bin");
 #ifdef _WIN32
    return binPath.complete("Rterm.exe");
 #else
-   return binPath.complete("R");
+   return binPath.completePath("R");
 #endif
 }
    

@@ -351,12 +351,12 @@ bool Job::saveOutput() const
 
 FilePath Job::jobCacheFolder()
 {
-   return module_context::sessionScratchPath().complete("jobs");
+   return module_context::sessionScratchPath().completePath("jobs");
 }
 
 FilePath Job::outputCacheFile()
 {
-   return jobCacheFolder().complete(id_ + "-output.json");
+   return jobCacheFolder().completePath(id_ + "-output.json");
 }
 
 void Job::addOutput(const std::string& output, bool asError)
@@ -390,9 +390,9 @@ void Job::addOutput(const std::string& output, bool asError)
    FilePath outputFile = outputCacheFile();
 
    // create parent folder if necessary
-   if (!outputFile.parent().exists())
+   if (!outputFile.getParent().exists())
    {
-      error = outputFile.parent().ensureDirectory();
+      error = outputFile.getParent().ensureDirectory();
       if (error)
       {
          LOG_ERROR(error);
@@ -401,8 +401,8 @@ void Job::addOutput(const std::string& output, bool asError)
    }
 
    // open output file for writing
-   boost::shared_ptr<std::ostream> file;
-   error = outputFile.open_w(&file, false /* don't truncate */);
+   std::shared_ptr<std::ostream> file;
+   error = outputFile.openForWrite(file, false /* don't truncate */);
    if (error)
    {
       LOG_ERROR(error);
@@ -424,8 +424,8 @@ json::Array Job::output(int position)
    // read the lines from the file
    json::Array output;
    FilePath outputFile = outputCacheFile();
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = outputFile.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = outputFile.openForRead(pIfs);
    if (error)
    {
       // path not found is expected if the job hasn't produced any output yet
@@ -462,7 +462,7 @@ json::Array Job::output(int position)
       error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", outputFile.absolutePath());
+      error.addProperty("path", outputFile.getAbsolutePath());
       LOG_ERROR(error);
    }
 

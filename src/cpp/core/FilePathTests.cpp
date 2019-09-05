@@ -36,7 +36,7 @@ TEST_CASE("file paths")
       CHECK(bPath.isWithin(pPath));
       CHECK(!aPath.isWithin(bPath));
 
-      CHECK(aPath.relativePath(pPath) == "a");
+      CHECK(aPath.getRelativePath(pPath) == "a");
    }
 }
 

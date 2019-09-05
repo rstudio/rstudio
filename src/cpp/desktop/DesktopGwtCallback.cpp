@@ -261,7 +261,7 @@ QString resolveAliasedPath(const QString& path)
 {
    FilePath resolved(FilePath::resolveAliasedPath(path.toUtf8().constData(),
                                                   userHomePath()));
-   return QString::fromUtf8(resolved.absolutePath().c_str());
+   return QString::fromUtf8(resolved.getAbsolutePath().c_str());
 }
 
 } // anonymous namespace
@@ -351,15 +351,15 @@ QString GwtCallback::getSaveFileName(const QString& caption,
       if (!defaultExtension.isEmpty())
       {
          FilePath fp(result.toUtf8().constData());
-         if (fp.extension().empty() ||
+         if (fp.getExtension().empty() ||
             (forceDefaultExtension &&
-            (fp.extension() != defaultExtension.toStdString())))
+            (fp.getExtension() != defaultExtension.toStdString())))
          {
             result += defaultExtension;
             FilePath newExtPath(result.toUtf8().constData());
             if (newExtPath.exists())
             {
-               std::string message = "\"" + newExtPath.filename() + "\" already "
+               std::string message = "\"" + newExtPath.getFilename() + "\" already "
                                      "exists. Do you want to overwrite it?";
                if (QMessageBox::Cancel == QMessageBox::warning(
                                         pOwner_->asWidget(),
@@ -974,8 +974,8 @@ void GwtCallback::toggleFullscreenMode()
 
 void GwtCallback::showKeyboardShortcutHelp()
 {
-   FilePath keyboardHelpPath = options().wwwDocsPath().complete("keyboard.htm");
-   QString file = QString::fromUtf8(keyboardHelpPath.absolutePath().c_str());
+   FilePath keyboardHelpPath = options().wwwDocsPath().completePath("keyboard.htm");
+   QString file = QString::fromUtf8(keyboardHelpPath.getAbsolutePath().c_str());
    QUrl url = QUrl::fromLocalFile(file);
    desktop::openUrl(url);
 }

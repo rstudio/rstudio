@@ -88,13 +88,13 @@ private:
       if (spec_.importEnv())
       {
          // create temporary file to save/load the data
-         FilePath::tempFilePath(&import_);
-         importRdata = "'" + string_utils::utf8ToSystem(import_.absolutePath()) + "'";
+         FilePath::tempFilePath(import_);
+         importRdata = "'" + string_utils::utf8ToSystem(import_.getAbsolutePath()) + "'";
 
          // prepare the environment for the script by exporting the current env
          setJobStatus(job_, "Preparing environment");
          r::exec::RFunction save("save.image");
-         save.addParam("file", string_utils::utf8ToSystem(import_.absolutePath()));
+         save.addParam("file", string_utils::utf8ToSystem(import_.getAbsolutePath()));
          save.addParam("safe", false); // no need to write a temp file
          error = save.call();
          if (error)
@@ -109,20 +109,20 @@ private:
       if (!spec_.exportEnv().empty())
       {
          // if exporting, create a file to host the exported values
-         FilePath::tempFilePath(&export_);
-         exportRdata = "'" + string_utils::utf8ToSystem(export_.absolutePath()) + "'";
+         FilePath::tempFilePath(export_);
+         exportRdata = "'" + string_utils::utf8ToSystem(export_.getAbsolutePath()) + "'";
       }
 
       std::string path;
       if (spec_.code().empty())
       {
          // no code specified to run, so we're running an R script
-         path = spec_.path().absolutePath();
+         path = spec_.path().getAbsolutePath();
       }
       else
       {
          // code specified; inject it into a temporary file
-         error = FilePath::tempFilePath(&tempCode_);
+         error = FilePath::tempFilePath(tempCode_);
          if (!error)
          {
             error = writeStringToFile(tempCode_, spec_.code());
@@ -132,10 +132,10 @@ private:
          {
             // emit the error to the job, and allow it to run with no code (so the only result
             // will be this error)
-            job_->addOutput("Error writing code to file " + tempCode_.absolutePath() + ": " +
+            job_->addOutput("Error writing code to file " + tempCode_.getAbsolutePath() + ": " +
                             error.getSummary() + "\n", true);
          }
-         path = tempCode_.absolutePath();
+         path = tempCode_.getAbsolutePath();
       }
 
       // determine encoding
@@ -145,12 +145,12 @@ private:
       
       // form the command to send to R
       std::string cmd = "source('" +
-         string_utils::utf8ToSystem(
+                        string_utils::utf8ToSystem(
             string_utils::singleQuotedStrEscape(
-                  session::options().modulesRSourcePath()
-                                    .complete("SourceWithProgress.R").absolutePath())) + 
-         "'); sourceWithProgress(script = '" +
-         string_utils::utf8ToSystem(
+               session::options().modulesRSourcePath()
+                                 .completePath("SourceWithProgress.R").getAbsolutePath())) +
+                        "'); sourceWithProgress(script = '" +
+                        string_utils::utf8ToSystem(
                string_utils::singleQuotedStrEscape(path)) + "', "
          "encoding = '" + encoding + "', "
          "con = stdout(), "
@@ -252,7 +252,7 @@ private:
       {
          setJobStatus(job_, "Loading results");
          r::exec::RFunction load("load");
-         load.addParam("file", string_utils::utf8ToSystem(export_.absolutePath()));
+         load.addParam("file", string_utils::utf8ToSystem(export_.getAbsolutePath()));
          if (spec_.exportEnv() == "R_GlobalEnv")
          {
             // user requested that results be loaded into the global environment

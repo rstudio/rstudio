@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/function.hpp>
 #include <boost/optional.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/make_shared.hpp>
@@ -113,7 +114,7 @@ public:
    virtual ~StreamResponse() {}
 
    virtual Error initialize() = 0;
-   virtual boost::shared_ptr<StreamBuffer> nextBuffer() = 0;
+   virtual std::shared_ptr<StreamBuffer> nextBuffer() = 0;
 };
 
 class Response : public Message
@@ -278,8 +279,8 @@ public:
                  bool padding = false)
    {
       // open the file
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = filePath.open_r(&pIfs);
+      std::shared_ptr<std::istream> pIfs;
+      Error error = filePath.openForRead(pIfs);
       if (error)
          return error;
       
@@ -293,7 +294,7 @@ public:
          Error error = systemError(boost::system::errc::io_error,
                                    ERROR_LOCATION);
          error.addProperty("what", e.what());
-         error.addProperty("path", filePath.absolutePath());
+         error.addProperty("path", filePath.getAbsolutePath());
          return error;
       }
    }
@@ -319,7 +320,7 @@ public:
       }
       
       // set content type
-      setContentType(filePath.mimeContentType());
+      setContentType(filePath.getMimeContentType());
       
       // gzip if possible
       if (request.acceptsEncoding(kGzipEncoding))
@@ -334,7 +335,7 @@ public:
                    const FilePath& filePath) const
    {
       return browser_utils::isQt(request.headerValue("User-Agent")) &&
-             filePath.mimeContentType() == "text/html";
+             filePath.getMimeContentType() == "text/html";
    }
    
    void setCacheableFile(const FilePath& filePath, const Request& request)
@@ -357,7 +358,7 @@ public:
       
       // set Last-Modified
       using namespace boost::posix_time;
-      ptime lastModifiedDate = from_time_t(filePath.lastWriteTime());
+      ptime lastModifiedDate = from_time_t(filePath.getLastWriteTime());
       setHeader("Last-Modified", util::httpDate(lastModifiedDate));
       
       // compare file modified time to If-Modified-Since

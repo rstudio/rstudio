@@ -308,8 +308,8 @@ void AsyncPackageInformationProcess::update()
 
    std::vector<core::FilePath> sources;
    FilePath modulesPath = session::options().modulesRSourcePath();
-   sources.push_back(modulesPath.complete("SessionCodeTools.R"));
-   sources.push_back(modulesPath.complete("SessionRCompletions.R"));
+   sources.push_back(modulesPath.completePath("SessionCodeTools.R"));
+   sources.push_back(modulesPath.completePath("SessionRCompletions.R"));
    
    pProcess->start(
             finalCmd.c_str(),

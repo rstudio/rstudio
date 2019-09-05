@@ -634,7 +634,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                if (switchToProject != kProjectNone)
                {
                   FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                  if (projFile.parent().exists() && !projFile.exists())
+                  if (projFile.getParent().exists() && !projFile.exists())
                   {
                      Error error = r_util::writeProjectFile(
                               projFile,
@@ -657,7 +657,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                else
                {
                   FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                  std::string projDir = createAliasedPath(projFile.parent());
+                  std::string projDir = createAliasedPath(projFile.getParent());
                   activeSession().setProject(projDir);
                   activeSession().setWorkingDir(projDir);
                }
@@ -675,7 +675,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      // extract the directory (aliased)
                      using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                     std::string projDir = createAliasedPath(projFile.parent());
+                     std::string projDir = createAliasedPath(projFile.getParent());
                      scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),
@@ -715,7 +715,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      if (switchToProject != kProjectNone)
                      {
                         FilePath projFile = resolveAliasedPath(switchToProject);
-                        std::string projDir = createAliasedPath(projFile.parent());
+                        std::string projDir = createAliasedPath(projFile.getParent());
                         RVersionSettings verSettings(
                                             options().userScratchPath(),
                                             FilePath(options().getOverlayOption(
@@ -828,7 +828,7 @@ void registerGwtHandlers()
 
    // establish progress handler
    FilePath wwwPath(options.wwwLocalPath());
-   FilePath progressPagePath = wwwPath.complete("progress.htm");
+   FilePath progressPagePath = wwwPath.completePath("progress.htm");
    module_context::registerUriHandler(
          "/progress",
           boost::bind(text::handleTemplateRequest, progressPagePath, _1, _2));

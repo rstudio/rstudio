@@ -430,14 +430,14 @@ Error getPackageStateJson(json::Object* pJson)
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.listPackagesPackrat",
                                  string_utils::utf8ToSystem(
-                                    projectDir.absolutePath()))
+                                    projectDir.getAbsolutePath()))
               .call(&packageList, &protect);
    }
    else if (renvActive)
    {
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.renv.listPackages")
-            .addParam(string_utils::utf8ToSystem(projectDir.absolutePath()))
+            .addParam(string_utils::utf8ToSystem(projectDir.getAbsolutePath()))
             .call(&packageList, &protect);
    }
    else

@@ -328,7 +328,7 @@ SEXP rs_rstudioVersion()
 SEXP rs_rstudioCitation()
 {
    FilePath resPath = session::options().rResourcesPath();
-   FilePath citationPath = resPath.childPath("CITATION");
+   FilePath citationPath = resPath.getChildPath("CITATION");
 
    // the citation file may not exist when working in e.g.
    // development configurations so just ignore if it's missing
@@ -338,7 +338,7 @@ SEXP rs_rstudioCitation()
    SEXP citationSEXP;
    r::sexp::Protect rProtect;
    Error error = r::exec::RFunction("utils:::readCitationFile",
-                                    citationPath.absolutePath())
+                                    citationPath.getAbsolutePath())
                                                    .call(&citationSEXP,
                                                          &rProtect);
 
@@ -510,7 +510,7 @@ bool s_monitorByScanning = false;
 
 FilePath monitoredParentPath()
 {
-   FilePath monitoredPath = userScratchPath().complete(kMonitoredPath);
+   FilePath monitoredPath = userScratchPath().completePath(kMonitoredPath);
    Error error = monitoredPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -616,7 +616,7 @@ FilePath registerMonitoredUserScratchDir(const std::string& dirName,
                                          const OnFileChange& onFileChange)
 {
    // create the subdir
-   FilePath dirPath = monitoredParentPath().complete(dirName);
+   FilePath dirPath = monitoredParentPath().completePath(dirName);
    Error error = dirPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -807,15 +807,15 @@ bool isPackagePosixMakefile(const FilePath& srcPath)
    if (context.config().buildType != r_util::kBuildTypePackage)
       return false;
 
-   FilePath parentDir = srcPath.parent();
-   if (parentDir.filename() != "src")
+   FilePath parentDir = srcPath.getParent();
+   if (parentDir.getFilename() != "src")
       return false;
 
    FilePath packagePath = context.buildTargetPath();
-   if (parentDir.parent() != packagePath)
+   if (parentDir.getParent() != packagePath)
       return false;
 
-   std::string filename = srcPath.filename();
+   std::string filename = srcPath.getFilename();
    return (filename == "Makevars" ||
            filename == "Makevars.in" ||
            filename == "Makefile" ||
@@ -976,7 +976,7 @@ FilePath userScratchPath()
 
 FilePath userUploadedFilesScratchPath()
 {
-   return session::options().userScratchPath().childPath("uploaded-files");
+   return session::options().userScratchPath().getChildPath("uploaded-files");
 }
 
 FilePath scopedScratchPath()
@@ -1069,14 +1069,14 @@ FilePath findProgram(const std::string& name)
 
 bool isPdfLatexInstalled()
 {
-   return !module_context::findProgram("pdflatex").empty();
+   return !module_context::findProgram("pdflatex").isEmpty();
 }
 
 namespace {
 
 bool hasTextMimeType(const FilePath& filePath)
 {
-   std::string mimeType = filePath.mimeContentType("");
+   std::string mimeType = filePath.getMimeContentType("");
    if (mimeType.empty())
       return false;
 
@@ -1091,7 +1091,7 @@ bool hasBinaryMimeType(const FilePath& filePath)
    if (hasTextMimeType(filePath))
       return false;
 
-   std::string mimeType = filePath.mimeContentType("");
+   std::string mimeType = filePath.getMimeContentType("");
    if (mimeType.empty())
       return false;
 
@@ -1103,7 +1103,7 @@ bool hasBinaryMimeType(const FilePath& filePath)
 
 bool isJsonFile(const FilePath& filePath)
 {
-   std::string mimeType = filePath.mimeContentType();
+   std::string mimeType = filePath.getMimeContentType();
    return boost::algorithm::ends_with(mimeType, "json");
 }
 
@@ -1120,7 +1120,7 @@ bool isTextFile(const FilePath& targetPath)
    if (hasBinaryMimeType(targetPath))
       return false;
    
-   if (targetPath.size() == 0)
+   if (targetPath.getSize() == 0)
       return true;
 
 #ifndef _WIN32
@@ -1203,7 +1203,7 @@ Error rScriptPath(FilePath* pRScriptPath)
 #ifdef _WIN32
 *pRScriptPath = rHomeBinPath.complete("Rterm.exe");
 #else
-*pRScriptPath = rHomeBinPath.complete("R");
+*pRScriptPath = rHomeBinPath.completePath("R");
 #endif
    return Success();
 }
@@ -1213,7 +1213,7 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #ifdef _WIN32
       return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
 #else
-      shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+      shell_utils::ShellCommand rCmd(rBinDir.getChildPath("R"));
       rCmd << "CMD";
       return rCmd;
 #endif
@@ -1342,7 +1342,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 #ifdef _WIN32
    shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
 #else
-   shell_utils::ShellCommand installCommand(rBinDir.childPath("R"));
+   shell_utils::ShellCommand installCommand(rBinDir.getChildPath("R"));
 #endif
 
    installCommand << core::shell_utils::EscapeFilesOnly;
@@ -1400,12 +1400,12 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package
-   FilePath sourceDir = sourceFilePath.parent();
-   if (sourceDir.filename() == "R" &&
-       r_util::isPackageDirectory(sourceDir.parent()))
+   FilePath sourceDir = sourceFilePath.getParent();
+   if (sourceDir.getFilename() == "R" &&
+       r_util::isPackageDirectory(sourceDir.getParent()))
    {
       r_util::RPackageInfo pkgInfo;
-      Error error = pkgInfo.read(sourceDir.parent());
+      Error error = pkgInfo.read(sourceDir.getParent());
       if (error)
       {
          LOG_ERROR(error);
@@ -1434,16 +1434,16 @@ bool isUnmonitoredPackageSourceFile(const FilePath& filePath)
    // ensure we are dealing with a directory
    FilePath dir = filePath;
    if (!dir.isDirectory())
-      dir = filePath.parent();
+      dir = filePath.getParent();
 
    // see if one the file's parent directories has a DESCRIPTION
-   while (!dir.empty())
+   while (!dir.isEmpty())
    {
-      FilePath descPath = dir.childPath("DESCRIPTION");
+      FilePath descPath = dir.getChildPath("DESCRIPTION");
       if (descPath.exists())
       {
          // get path relative to package dir
-         std::string relative = filePath.relativePath(dir);
+         std::string relative = filePath.getRelativePath(dir);
          if (boost::algorithm::starts_with(relative, "R/") ||
              boost::algorithm::starts_with(relative, "src/") ||
              boost::algorithm::starts_with(relative, "inst/include/"))
@@ -1456,7 +1456,7 @@ bool isUnmonitoredPackageSourceFile(const FilePath& filePath)
          }
       }
 
-      dir = dir.parent();
+      dir = dir.getParent();
    }
 
    return false;
@@ -1559,14 +1559,14 @@ SEXP rs_resolveAliasedPath(SEXP pathSEXP)
    std::string path = r::sexp::asString(pathSEXP);
    FilePath resolved = module_context::resolveAliasedPath(path);
    r::sexp::Protect protect;
-   return r::sexp::create(resolved.absolutePath(), &protect);
+   return r::sexp::create(resolved.getAbsolutePath(), &protect);
 }
 
 SEXP rs_sessionModulePath()
 {
    r::sexp::Protect protect;
    return r::sexp::create(
-         session::options().modulesRSourcePath().absolutePath(), &protect);
+      session::options().modulesRSourcePath().getAbsolutePath(), &protect);
 }
 
 json::Object createFileSystemItem(const FileInfo& fileInfo)
@@ -1575,7 +1575,7 @@ json::Object createFileSystemItem(const FileInfo& fileInfo)
 
    std::string aliasedPath = module_context::createAliasedPath(fileInfo);
    std::string rawPath =
-         module_context::resolveAliasedPath(aliasedPath).absolutePath();
+      module_context::resolveAliasedPath(aliasedPath).getAbsolutePath();
 
    entry["path"] = aliasedPath;
    if (aliasedPath != rawPath)
@@ -1713,7 +1713,7 @@ std::string libPathsString()
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
    FilePath modulesPath = session::options().modulesRSourcePath();
-   FilePath srcPath = modulesPath.complete(rSourceFile);
+   FilePath srcPath = modulesPath.completePath(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);
 }
 
@@ -1726,7 +1726,7 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
    Error error = module_context::rScriptPath(&rProgramPath);
    if (error)
       return error;
-   std::string rBin = string_utils::utf8ToSystem(rProgramPath.absolutePath());
+   std::string rBin = string_utils::utf8ToSystem(rProgramPath.getAbsolutePath());
 
    // vanilla execution of a single expression
    std::vector<std::string> args;
@@ -1737,9 +1737,9 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
    // build source command
    boost::format fmt("source('%1%')");
    FilePath modulesPath = session::options().modulesRSourcePath();
-   FilePath srcFilePath = modulesPath.complete(rSourceFile);
+   FilePath srcFilePath = modulesPath.completePath(rSourceFile);
    std::string srcPath = core::string_utils::utf8ToSystem(
-                                                srcFilePath.absolutePath());
+      srcFilePath.getAbsolutePath());
    std::string escapedSrcPath = string_utils::jsLiteralEscape(srcPath);
    std::string cmd = boost::str(fmt % escapedSrcPath);
    args.push_back(cmd);
@@ -1780,7 +1780,7 @@ bool isRScriptInPackageBuildTarget(const FilePath &filePath)
    if (projectContext().config().buildType == r_util::kBuildTypePackage)
    {
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      std::string pkgRelative = filePath.relativePath(pkgPath);
+      std::string pkgRelative = filePath.getRelativePath(pkgPath);
       return boost::algorithm::starts_with(pkgRelative, "R/");
    }
    else
@@ -1800,8 +1800,8 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 {
    // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
-   std::string ext = filePath.extensionLowerCase();
-   std::string name = filePath.filename();
+   std::string ext = filePath.getExtensionLowerCase();
+   std::string name = filePath.getFilename();
    if (ext == ".r" ||
        ext == ".rprofile" ||
        ext == ".rbuildignore" ||
@@ -1827,7 +1827,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    }
    else if (prefs::userPrefs().hideObjectFiles() &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
-            filePath.parent().filename() == "src")
+            filePath.getParent().getFilename() == "src")
    {
       return false;
    }
@@ -1879,7 +1879,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
       return;
 
    // try to find the common parent of the events
-   FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).parent();
+   FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).getParent();
    for (const core::system::FileChangeEvent& event : events)
    {
       // if not within the common parent then revert to the vcs status root
@@ -1975,16 +1975,16 @@ void showFile(const FilePath& filePath, const std::string& window)
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       // for pdfs handle specially for each platform
-      if (filePath.extensionLowerCase() == ".pdf")
+      if (filePath.getExtensionLowerCase() == ".pdf")
       {
-         std::string path = filePath.absolutePath();
+         std::string path = filePath.getAbsolutePath();
          Error error = r::exec::RFunction(".rs.shellViewPdf", path).call();
          if (error)
             LOG_ERROR(error);
       }
       else
       {
-         ClientEvent event = browseUrlEvent("file:///" + filePath.absolutePath());
+         ClientEvent event = browseUrlEvent("file:///" + filePath.getAbsolutePath());
          module_context::enqueClientEvent(event);
       }
    }
@@ -2012,14 +2012,14 @@ std::string createFileUrl(const core::FilePath& filePath)
     std::string url ;
     if (isVisibleUserFile(filePath))
     {
-       std::string relPath = filePath.relativePath(
-                                    module_context::userHomePath());
+       std::string relPath = filePath.getRelativePath(
+          module_context::userHomePath());
        url = "files/" + relPath;
     }
     else
     {
        url = "file_show?path=" + core::http::util::urlEncode(
-                                filePath.absolutePath(), true);
+          filePath.getAbsolutePath(), true);
     }
     return url;
 }
@@ -2042,7 +2042,7 @@ void showContent(const std::string& title, const core::FilePath& filePath)
 std::string resourceFileAsString(const std::string& fileName)
 {
    FilePath resPath = session::options().rResourcesPath();
-   FilePath filePath = resPath.complete(fileName);
+   FilePath filePath = resPath.completePath(fileName);
    std::string fileContents;
    Error error = readStringFromFile(filePath, &fileContents);
    if (error)
@@ -2065,7 +2065,7 @@ std::string pathRelativeTo(const FilePath& sourcePath,
    }
    else if (targetPath.isWithin(sourcePath))
    {
-      relative = targetPath.relativePath(sourcePath);
+      relative = targetPath.getRelativePath(sourcePath);
    }
    else
    {
@@ -2105,7 +2105,7 @@ FilePath sourceDiagnostics()
 {
    r::exec::RFunction sourceFx("source");
    sourceFx.addParam(string_utils::utf8ToSystem(
-       options().coreRSourcePath().childPath("Diagnostics.R").absolutePath()));
+      options().coreRSourcePath().getChildPath("Diagnostics.R").getAbsolutePath()));
    sourceFx.addParam("chdir", true);
    Error error = sourceFx.call();
    if (error)
@@ -2229,7 +2229,7 @@ shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 #if defined(_WIN32)
    shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
 #else
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("R"));
+   shell_utils::ShellCommand rCmd(rBinDir.getChildPath("R"));
    rCmd << "CMD";
 #endif
    return rCmd;
@@ -2240,8 +2240,8 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
 {
    using namespace string_utils;
    r::exec::RFunction fileCopy("file.copy");
-   fileCopy.addParam("from", utf8ToSystem(fromDir.absolutePath()));
-   fileCopy.addParam("to", utf8ToSystem(toDir.absolutePath()));
+   fileCopy.addParam("from", utf8ToSystem(fromDir.getAbsolutePath()));
+   fileCopy.addParam("to", utf8ToSystem(toDir.getAbsolutePath()));
    fileCopy.addParam("recursive", true);
    return fileCopy.call();
 }
@@ -2282,7 +2282,7 @@ namespace {
 
 bool hasStem(const FilePath& filePath, const std::string& stem)
 {
-   return filePath.stem() == stem;
+   return filePath.getStem() == stem;
 }
 
 } // anonymous namespace
@@ -2293,7 +2293,7 @@ Error uniqueSaveStem(const FilePath& directoryPath,
 {
    // determine unique file name
    std::vector<FilePath> children;
-   Error error = directoryPath.children(&children);
+   Error error = directoryPath.getChildren(children);
    if (error)
       return error;
 
@@ -2334,10 +2334,10 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
                               const FilePath& targetFilePath)
 {
    r::exec::RFunction func(".rs.pandocSelfContainedHtml");
-   func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
+   func.addParam(string_utils::utf8ToSystem(sourceFilePath.getAbsolutePath()));
    func.addParam(string_utils::utf8ToSystem(
-            session::options().rResourcesPath().complete("pandoc_template.html").absolutePath()));
-   func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
+      session::options().rResourcesPath().completePath("pandoc_template.html").getAbsolutePath()));
+   func.addParam(string_utils::utf8ToSystem(targetFilePath.getAbsolutePath()));
    return func.call();
 }
 
@@ -2350,7 +2350,7 @@ bool isUserFile(const FilePath& filePath)
                                               r_util::kBuildTypePackage)
       {
           FilePath pkgPath = projects::projectContext().buildTargetPath();
-          std::string pkgRelative = filePath.relativePath(pkgPath);
+          std::string pkgRelative = filePath.getRelativePath(pkgPath);
           if (boost::algorithm::starts_with(pkgRelative, "src-"))
              return false;
       }
@@ -2359,7 +2359,7 @@ bool isUserFile(const FilePath& filePath)
       if (!module_context::websiteOutputDir().empty())
       {
          FilePath sitePath = projects::projectContext().buildTargetPath();
-         std::string siteRelative = filePath.relativePath(sitePath);
+         std::string siteRelative = filePath.getRelativePath(sitePath);
          if (boost::algorithm::starts_with(
                 siteRelative, module_context::websiteOutputDir() + "/"))
             return false;
@@ -2367,7 +2367,7 @@ bool isUserFile(const FilePath& filePath)
 
       // screen the packrat directory
       FilePath projPath = projects::projectContext().directory();
-      std::string pkgRelative = filePath.relativePath(projPath);
+      std::string pkgRelative = filePath.getRelativePath(projPath);
       if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
          return false;
    }
@@ -2490,7 +2490,7 @@ Error initialize()
 
    // source the ModuleTools.R file
    FilePath modulesPath = session::options().modulesRSourcePath();
-   return r::sourceManager().sourceTools(modulesPath.complete("ModuleTools.R"));
+   return r::sourceManager().sourceTools(modulesPath.completePath("ModuleTools.R"));
 }
 
 

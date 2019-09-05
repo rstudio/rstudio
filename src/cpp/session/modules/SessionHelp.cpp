@@ -258,7 +258,7 @@ bool handleLocalHttpUrl(const std::string& url)
 // displaying the manual. Redirect these to the appropriate help event
 bool handleRShowDocFile(const core::FilePath& filePath)
 {
-   std::string absPath = filePath.absolutePath();
+   std::string absPath = filePath.getAbsolutePath();
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
    if (regex_utils::match(absPath, match, manualRegx))
@@ -672,9 +672,9 @@ SEXP callHandler(const std::string& path,
 
 r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 {
-   FilePath packageDir = rdFilePath.parent().parent();
+   FilePath packageDir = rdFilePath.getParent().getParent();
 
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.getChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return r_util::RPackageInfo();
 
@@ -763,7 +763,7 @@ void handleHttpdRequest(const std::string& location,
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
+      core::FilePath cssFile = options().rResourcesPath().getChildPath("R.css");
       if (cssFile.exists())
       {
          pResponse->setFile(cssFile, request, filter);
@@ -788,7 +788,7 @@ void handleHttpdRequest(const std::string& location,
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath(
+      core::FilePath helpFile = options().rResourcesPath().getChildPath(
                                                       "markdown_help.html");
       if (helpFile.exists())
       {
@@ -800,7 +800,7 @@ void handleHttpdRequest(const std::string& location,
    // roxygen help
    if (path == "/doc/roxygen_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath("roxygen_help.html");
+      core::FilePath helpFile = options().rResourcesPath().getChildPath("roxygen_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -924,7 +924,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    }
 
    // form a path to the temporary file
-   FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
+   FilePath tempFilePath = r::session::utils::tempDir().getChildPath(uri);
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();

@@ -113,17 +113,17 @@ public:
          if (caBundleFile.exists())
          {
             // if a valid bundle path was specified, use it
-            cmd += "options(rsconnect.ca.bundle = '" + 
-               string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
-                        caBundleFile.absolutePath())) +
-               "'); ";
+            cmd += "options(rsconnect.ca.bundle = '" +
+                   string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
+                      caBundleFile.getAbsolutePath())) +
+                   "'); ";
          }
       }
 
       // create temporary file to host file manifest
       if (!fileList.empty())
       {
-         Error error = FilePath::tempFilePath(&pDeploy->manifestPath_);
+         Error error = FilePath::tempFilePath(pDeploy->manifestPath_);
          if (error)
             return error;
 
@@ -148,7 +148,7 @@ public:
       if (!file.empty() && contentCategory != "site")
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
-         std::string extension = docFile.extensionLowerCase();
+         std::string extension = docFile.getExtensionLowerCase();
          if (extension == ".rmd" || extension == ".html" || extension == ".r" ||
              extension == ".pdf" || extension == ".docx" || extension == ".rtf" || 
              extension == ".odt" || extension == ".pptx") 
@@ -175,14 +175,14 @@ public:
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
              (recordDir.empty() ? "" : "recordDir = '" + 
-                string_utils::singleQuotedStrEscape(recordDir) + "',") + 
-             (pDeploy->manifestPath_.empty() ? "" : "appFileManifest = '" + 
-                string_utils::singleQuotedStrEscape(
-                   pDeploy->manifestPath_.absolutePath()) + "', ") +
+                string_utils::singleQuotedStrEscape(recordDir) + "',") +
+             (pDeploy->manifestPath_.isEmpty() ? "" : "appFileManifest = '" +
+                                                    string_utils::singleQuotedStrEscape(
+                                                       pDeploy->manifestPath_.getAbsolutePath()) + "', ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
-                string_utils::singleQuotedStrEscape(primaryDoc) + "', ") + 
+                string_utils::singleQuotedStrEscape(primaryDoc) + "', ") +
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
-                string_utils::singleQuotedStrEscape(sourceDoc) + "', ") + 
+                string_utils::singleQuotedStrEscape(sourceDoc) + "', ") +
              "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
              "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
@@ -429,10 +429,10 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
    else
    {
       std::vector<FilePath> shinyPaths;
-      shinyPaths.push_back(appPath.childPath("app.R"));
-      shinyPaths.push_back(appPath.childPath("ui.R"));
-      shinyPaths.push_back(appPath.childPath("server.R"));
-      shinyPaths.push_back(appPath.childPath("www/index.html"));
+      shinyPaths.push_back(appPath.getChildPath("app.R"));
+      shinyPaths.push_back(appPath.getChildPath("ui.R"));
+      shinyPaths.push_back(appPath.getChildPath("server.R"));
+      shinyPaths.push_back(appPath.getChildPath("www/index.html"));
       for (const FilePath& filePath : shinyPaths)
       {
          if (filePath.exists())
@@ -495,16 +495,16 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
                          path.hasExtensionLowerCase(".md")))
    {
       FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(path);
-      if (!webPath.empty())
+      if (!webPath.isEmpty())
       {
-         websiteDir = webPath.absolutePath();
+         websiteDir = webPath.getAbsolutePath();
          
          // also get build output dir
          if (!module_context::websiteOutputDir().empty())
          {
             FilePath websiteOutputPath = 
                   module_context::resolveAliasedPath(module_context::websiteOutputDir());
-            websiteOutputDir = websiteOutputPath.absolutePath();
+            websiteOutputDir = websiteOutputPath.getAbsolutePath();
          }
       }
    }

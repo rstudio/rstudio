@@ -455,7 +455,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
       if (!cwd.exists() || !cwd.isDirectory())
       {
          std::string message = "Invalid directory: '";
-         message += cwd.absolutePathNative();
+         message += cwd.getAbsolutePathNative();
          message += "'";
          r::exec::error(message);
          return R_NilValue;

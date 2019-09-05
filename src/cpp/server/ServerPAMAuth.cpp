@@ -260,7 +260,7 @@ void signIn(const http::Request& request,
    // get the path to the JS file
    Options& options = server::options();
    FilePath wwwPath(options.wwwLocalPath());
-   FilePath signInPath = wwwPath.complete("templates/encrypted-sign-in.htm");
+   FilePath signInPath = wwwPath.completePath("templates/encrypted-sign-in.htm");
 
    text::TemplateFilter filter(variables);
 
@@ -508,7 +508,7 @@ bool pamLogin(const std::string& username, const std::string& password)
    if (!pamHelperPath.exists())
    {
       LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
+                           pamHelperPath.getAbsolutePath());
       return false;
    }
 
@@ -529,7 +529,8 @@ bool pamLogin(const std::string& username, const std::string& password)
 
    // run pam helper
    core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
+   Error error = core::system::runProgram(
+      pamHelperPath.getAbsolutePath(),
                                           args,
                                           password,
                                           options,

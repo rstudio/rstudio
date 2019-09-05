@@ -129,7 +129,7 @@ void deferredRestoreNewSession()
       // what they intended
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
-      std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+      std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
       std::string aliasedPath = createAliasedPath(globalEnvPath);
       
       std::string errMessage;
@@ -225,13 +225,13 @@ Error initialize()
    r::session::consoleHistory().setCapacityFromRHistsize();
 
    // install R tools
-   FilePath toolsFilePath = utils::rSourcePath().complete("Tools.R");
+   FilePath toolsFilePath = utils::rSourcePath().completePath("Tools.R");
    Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
       return error ;
 
    // install RStudio API
-   FilePath apiFilePath = utils::rSourcePath().complete("Api.R");
+   FilePath apiFilePath = utils::rSourcePath().completePath("Api.R");
    error = r::sourceManager().sourceTools(apiFilePath);
    if (error)
       return error;
@@ -245,12 +245,12 @@ Error initialize()
       std::string path = kGraphicsPath;
       if (utils::isR3())
          path += "-r3";
-      graphicsPath = utils::sessionScratchPath().complete(path);
+      graphicsPath = utils::sessionScratchPath().completePath(path);
    }
    else
    {
-      graphicsPath = r::session::utils::tempDir().complete(
-                              "rs-graphics-" + core::system::generateUuid());
+      graphicsPath = r::session::utils::tempDir().completePath(
+         "rs-graphics-" + core::system::generateUuid());
    }
 
    error = graphics::device::initialize(graphicsPath,
@@ -341,7 +341,7 @@ Error initialize()
       return error;
 
    // set global R options
-   FilePath optionsFilePath = utils::rSourcePath().complete("Options.R");
+   FilePath optionsFilePath = utils::rSourcePath().completePath("Options.R");
    error = r::sourceManager().sourceLocal(optionsFilePath);
    if (error)
       return error;
@@ -350,8 +350,8 @@ Error initialize()
    if (utils::isServerMode())
    {
 #ifndef __APPLE__
-      FilePath serverOptionsFilePath =  utils::rSourcePath().complete(
-                                                         "ServerOptions.R");
+      FilePath serverOptionsFilePath = utils::rSourcePath().completePath(
+         "ServerOptions.R");
       return r::sourceManager().sourceLocal(serverOptionsFilePath);
 #else
       return Success();
@@ -380,7 +380,7 @@ FilePath rHistoryFilePath()
    if (histFile.empty())
       histFile = ".Rhistory";
 
-   return utils::rHistoryDir().complete(histFile);
+   return utils::rHistoryDir().completePath(histFile);
 }
 
 void reportHistoryAccessError(const std::string& context,

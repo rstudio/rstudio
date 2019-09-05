@@ -255,7 +255,7 @@ void processFileChanges(FileEventContext* pContext,
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      FilePath filePath(pContext->rootPath.absolutePathW() + L"\\" + name);
+      FilePath filePath(pContext->rootPath.getAbsolutePathW() + L"\\" + name);
 
       // ensure this is a long file name (docs say it could be short or long!)
       // (note that the call to GetLongFileNameW will fail if the file has
@@ -534,14 +534,14 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // save the wide absolute path (notifications only come in wide strings)
    // strip any trailing slash for predictable append semantics
-   std::wstring wpath = filePath.absolutePathW();
+   std::wstring wpath = filePath.getAbsolutePathW();
    removeTrailingSlash(&wpath);
    pContext->rootPath = FilePath(wpath);
    pContext->recursive = recursive;
 
    // open the directory
    pContext->hDirectory = ::CreateFileW(
-                     filePath.absolutePathW().c_str(),
+                     filePath.getAbsolutePathW().c_str(),
                      FILE_LIST_DIRECTORY,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      nullptr,

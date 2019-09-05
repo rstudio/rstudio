@@ -75,12 +75,12 @@ core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 #else
          path += ":";
 #endif
-         path += pathDir.absolutePathNative();
+         path += pathDir.getAbsolutePathNative();
       }
       core::system::setenv(&envOpts, "PATH", path);
    }
 
-   if (!workingDir_.empty())
+   if (!workingDir_.isEmpty())
    {
       options.workingDir = workingDir_;
    }

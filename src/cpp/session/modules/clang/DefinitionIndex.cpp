@@ -292,7 +292,7 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
    os << definition.name << " ";
 
    // file location
-   os << "(" << definition.location.filePath.filename() << ":"
+   os << "(" << definition.location.filePath.getFilename() << ":"
       << definition.location.line << ":" << definition.location.column << ") ";
 
    // USR
@@ -381,7 +381,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    // return the location
    SourceLocation loc = cursor.getSourceLocation();
    unsigned line, column;
-   std::string filename = location.filePath.absolutePath();
+   std::string filename = location.filePath.getAbsolutePath();
    loc.getSpellingLocation(&filename, &line, &column);
    return FileLocation(FilePath(filename), line, column);
 }
@@ -417,7 +417,7 @@ json::Object cppDefinitionToJson(const CppDefinition& definition)
    definitionJson["kind"] = numberTo<int>(definition.kind, 0);
    definitionJson["parent_name"] = definition.parentName;
    definitionJson["name"] = definition.name;
-   definitionJson["file"] = definition.location.filePath.absolutePath();
+   definitionJson["file"] = definition.location.filePath.getAbsolutePath();
    definitionJson["line"] = numberTo<int>(definition.location.line, 1);
    definitionJson["column"] = numberTo<int>(definition.location.column, 1);
    return definitionJson;
@@ -457,7 +457,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().childPath("cpp-definition-cache");
+   return module_context::scopedScratchPath().getChildPath("cpp-definition-cache");
 }
 
 void loadDefinitionIndex()
@@ -622,8 +622,8 @@ Error initializeDefinitionIndex()
 
       // check for src and inst/include dirs
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      FilePath srcPath = pkgPath.childPath("src");
-      FilePath includePath = pkgPath.childPath("inst/include");
+      FilePath srcPath = pkgPath.getChildPath("src");
+      FilePath includePath = pkgPath.getChildPath("inst/include");
       if (srcPath.exists() || includePath.exists())
       {
          // create an incremental file change handler (on the heap so that it

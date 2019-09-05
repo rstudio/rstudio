@@ -707,7 +707,7 @@ public:
 
    RCommand& operator<<(const core::FilePath& arg)
    {
-      cmdString_ += " " + arg.absolutePath();
+      cmdString_ += " " + arg.getAbsolutePath();
       shellCmd_ << arg;
       return *this;
    }

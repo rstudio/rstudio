@@ -53,8 +53,8 @@ class Worker : public ppe::Worker
    void onWork(const std::string& pkgName, const FilePath& pkgPath)
    {
       // form the path to the template folder
-      FilePath templateRoot = pkgPath.complete("rmarkdown")
-                                     .complete("templates");
+      FilePath templateRoot = pkgPath.completePath("rmarkdown")
+                                     .completePath("templates");
 
       // skip if this folder doesn't exist or isn't a directory
       if (!templateRoot.exists() || !templateRoot.isDirectory())
@@ -62,7 +62,7 @@ class Worker : public ppe::Worker
 
       // get a list of all template folders under the root
       std::vector<FilePath> templateDirs;
-      Error error = templateRoot.children(&templateDirs);
+      Error error = templateRoot.getChildren(templateDirs);
       if (error)
       {
          LOG_ERROR(error);
@@ -92,7 +92,7 @@ class Worker : public ppe::Worker
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(
          ".rs.getTemplateYamlFile", 
-           string_utils::utf8ToSystem(templateDir.absolutePath()))
+           string_utils::utf8ToSystem(templateDir.getAbsolutePath()))
          .call(&templateFile, &protect);
 
       // .rs.getTemplateDetails may return null if the template is not
@@ -106,7 +106,7 @@ class Worker : public ppe::Worker
                                    "multi_file", &multiFile);
 
       dataJson["package_name"] = pkgName;
-      dataJson["path"] = templateDir.absolutePath();
+      dataJson["path"] = templateDir.getAbsolutePath();
       dataJson["template_yaml"] = templateYaml;
       dataJson["multi_file"] = multiFile;
 

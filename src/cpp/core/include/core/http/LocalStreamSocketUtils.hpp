@@ -54,7 +54,7 @@ inline Error initLocalStreamAcceptor(
 {
    // initialize endpoint
    using boost::asio::local::stream_protocol;
-   stream_protocol::endpoint endpoint(localStreamPath.absolutePath());
+   stream_protocol::endpoint endpoint(localStreamPath.getAbsolutePath());
    
    // get acceptor
    stream_protocol::acceptor& acceptor = acceptorService.acceptor();

@@ -120,7 +120,7 @@ Error runProgram(const core::FilePath& programFilePath,
 {
    // get system program file path
    std::string programPath = string_utils::utf8ToSystem(
-                                          programFilePath.absolutePath());
+      programFilePath.getAbsolutePath());
 
    // setup options
    core::system::ProcessOptions options;

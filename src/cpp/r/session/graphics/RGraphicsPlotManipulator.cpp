@@ -59,7 +59,7 @@ Error PlotManipulator::save(const FilePath& filePath) const
    // call manipulator save
    r::exec::RFunction manipSave("manipulate:::manipulatorSave");
    manipSave.addParam(sexp_.get());
-   manipSave.addParam(filePath.absolutePath());
+   manipSave.addParam(filePath.getAbsolutePath());
    return manipSave.call();
 }
 
@@ -67,7 +67,7 @@ Error PlotManipulator::load(const FilePath& filePath)
 {
    // call manipulator load
    r::exec::RFunction manipLoad("manipulate:::manipulatorLoad");
-   manipLoad.addParam(filePath.absolutePath());
+   manipLoad.addParam(filePath.getAbsolutePath());
    r::sexp::Protect rProtect;
    SEXP manipSEXP;
    Error error = manipLoad.call(&manipSEXP, &rProtect);

@@ -176,7 +176,7 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
 {
    std::vector<std::string> args =
          rCompilationDatabase().compileArgsForTranslationUnit(
-            filePath.absolutePathNative(), false);
+            filePath.getAbsolutePathNative(), false);
    
    for (const std::string& arg : args)
    {
@@ -356,11 +356,11 @@ void discoverRelativeIncludePaths(const FilePath& filePath,
                                   std::vector<std::string>* pIncludePaths)
 {
    // Construct the directory in which to search for includes
-   FilePath targetPath = filePath.parent().complete(parentDir);
+   FilePath targetPath = filePath.getParent().completePath(parentDir);
    if (!targetPath.exists())
       return;
    
-   pIncludePaths->push_back(targetPath.absolutePath());
+   pIncludePaths->push_back(targetPath.getAbsolutePath());
 }
 
 json::Object jsonHeaderCompletionResult(const std::string& name,
@@ -416,22 +416,22 @@ Error getHeaderCompletionsImpl(const std::string& token,
       if (!includePath.exists())
          continue;
       
-      FilePath targetPath = includePath.complete(parentDir);
+      FilePath targetPath = includePath.completePath(parentDir);
       if (!targetPath.exists())
          continue;
       
       std::vector<FilePath> children;
-      Error error = targetPath.children(&children);
+      Error error = targetPath.getChildren(children);
       if (error)
          LOG_ERROR(error);
       
       for (const FilePath& childPath : children)
       {
-         std::string name = childPath.filename();
+         std::string name = childPath.getFilename();
          if (discoveredEntries.count(name))
             continue;
          
-         std::string extension = childPath.extensionLowerCase();
+         std::string extension = childPath.getExtensionLowerCase();
          if (!(extension == ".h" || extension == ".hpp" || extension == ""))
             continue;
          
@@ -439,7 +439,7 @@ Error getHeaderCompletionsImpl(const std::string& token,
          {
             int type = childPath.isDirectory() ? kCompletionDirectory : kCompletionFile;
             completionsJson.push_back(jsonHeaderCompletionResult(name,
-                                                                 childPath.absolutePath(),
+                                                                 childPath.getAbsolutePath(),
                                                                  type));
          }
          
@@ -526,7 +526,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       return getHeaderCompletions(line, filePath, docId, request, pResponse);
 
    // get the translation unit and do the code completion
-   std::string filename = filePath.absolutePath();
+   std::string filename = filePath.getAbsolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
 
    if (!tu.empty())

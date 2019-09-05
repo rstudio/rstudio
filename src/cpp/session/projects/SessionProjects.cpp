@@ -51,7 +51,7 @@ void onSuspend(Settings*)
    // the onResume handler) because we need it very early in the
    // processes lifetime and onResume happens too late
    projects::ProjectsSettings(options().userScratchPath()).
-         setNextSessionProject(s_projectContext.file().absolutePath());
+         setNextSessionProject(s_projectContext.file().getAbsolutePath());
 }
 
 void onResume(const Settings&) {}
@@ -78,7 +78,7 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
 
       if (writeable)
       {
-         error = core::system::isFileWriteable(projectFilePath.parent(), &writeable);
+         error = core::system::isFileWriteable(projectFilePath.getParent(), &writeable);
          if (error)
             return error;
       }
@@ -155,7 +155,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
    if (!projectFilePath.isDirectory())
    {
       // handle being passed full path to an existing .Rproj file
-      if (projectFilePath.extensionLowerCase() == ".rproj")
+      if (projectFilePath.getExtensionLowerCase() == ".rproj")
       {
          *pResult = folder;
          return true;
@@ -219,11 +219,11 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
    if (error)
       return error;
    
-   FilePath projectPath = projectFilePath.parent();
+   FilePath projectPath = projectFilePath.getParent();
    
    return r::exec::RFunction(".rs.initializeProjectFromTemplate")
-         .addParam(string_utils::utf8ToSystem(projectFilePath.absolutePath()))
-         .addParam(string_utils::utf8ToSystem(projectPath.absolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectPath.getAbsolutePath()))
          .addParam(descriptionJson)
          .addParam(inputsJson)
          .call();
@@ -251,7 +251,7 @@ Error createProject(const json::JsonRpcRequest& request,
    if (!newShinyAppJson.is_null())
    {
       // error if the shiny app dir already exists
-      FilePath appDir = projectFilePath.parent();
+      FilePath appDir = projectFilePath.getParent();
       if (appDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
 
@@ -262,9 +262,9 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // copy app.R into the project
       FilePath shinyDir = session::options().rResourcesPath()
-            .childPath("templates/shiny");
+            .getChildPath("templates/shiny");
       
-      error = shinyDir.childPath("app.R").copy(appDir.childPath("app.R"));
+      error = shinyDir.getChildPath("app.R").copy(appDir.getChildPath("app.R"));
       if (error)
          LOG_ERROR(error);
 
@@ -272,7 +272,7 @@ Error createProject(const json::JsonRpcRequest& request,
       addFirstRunDoc(projectFilePath, "app.R");
 
       std::string existingProjectFilePath;
-      if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
+      if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
       {
          // create the project file
          return r_util::writeProjectFile(projectFilePath,
@@ -297,12 +297,12 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    
    // default project scaffolding
-   error = projectFilePath.parent().ensureDirectory();
+   error = projectFilePath.getParent().ensureDirectory();
    if (error)
       return error;
 
    std::string existingProjectFilePath;
-   if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
+   if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
    {
       // create the project file
       error = r_util::writeProjectFile(projectFilePath,
@@ -341,11 +341,11 @@ Error createProjectFile(const json::JsonRpcRequest& request,
    // Check for an existing project file in the directory
    projFilePath = r_util::projectFromDirectory(projDirPath);
 
-   if (projFilePath.empty())
+   if (projFilePath.isEmpty())
    {
       // We didn't find a project file, so we need to make one. Use the name of the project
       // directory as the filename.
-      projFilePath = projDirPath.complete(projDirPath.filename() + ".Rproj");
+      projFilePath = projDirPath.completePath(projDirPath.getFilename() + ".Rproj");
       error = r_util::writeProjectFile(
                projFilePath,
                ProjectContext::buildDefaults(),
@@ -714,7 +714,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
    {
       // if the project file changed then sync its changes
       if (event.fileInfo().absolutePath() ==
-          s_projectContext.file().absolutePath())
+         s_projectContext.file().getAbsolutePath())
       {
          // update project context
          syncProjectFileChanges();
@@ -796,14 +796,14 @@ void startup(const std::string& firstProjectPath)
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope().isProjectNone() || 
-       session::options().initialProjectPath().absolutePath() == kProjectNone)
+   if (session::options().sessionScope().isProjectNone() ||
+      session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }
 
    // check for explicit request for a project (file association or url based)
-   else if (!session::options().initialProjectPath().empty())
+   else if (!session::options().initialProjectPath().isEmpty())
    {
       projectFilePath = session::options().initialProjectPath();
    }
@@ -827,14 +827,14 @@ void startup(const std::string& firstProjectPath)
    // check for other working dir override (implies a launch of a file
    // but not of a project). this code path is here to prevent
    // the next code path from executing
-   else if (!session::options().initialWorkingDirOverride().empty())
+   else if (!session::options().initialWorkingDirOverride().isEmpty())
    {
       projectFilePath = FilePath();
    }
 
    // check for restore last project
    else if (prefs::userPrefs().restoreLastProject() &&
-            !lastProjectPath.empty())
+            !lastProjectPath.isEmpty())
    {
 
       // get last project path
@@ -855,14 +855,14 @@ void startup(const std::string& firstProjectPath)
    // if we have a project file path then try to initialize the
    // project context (show a warning to the user if we can't)
    bool isNewProject = false;
-   if (!projectFilePath.empty())
+   if (!projectFilePath.isEmpty())
    {
       std::string userErrMsg;
       Error error = s_projectContext.startup(projectFilePath, &userErrMsg, &isNewProject);
       if (error)
       {
          // log the error
-         error.addProperty("project-file", projectFilePath.absolutePath());
+         error.addProperty("project-file", projectFilePath.getAbsolutePath());
          error.addProperty("user-msg", userErrMsg);
          LOG_ERROR(error);
 
@@ -887,7 +887,7 @@ void startup(const std::string& firstProjectPath)
       {
          boost::algorithm::trim(doc);
 
-         FilePath docPath = projectContext().directory().complete(doc);
+         FilePath docPath = projectContext().directory().completePath(doc);
          if (docPath.exists())
          {
             addFirstRunDoc(projectFilePath, doc);
@@ -1011,7 +1011,7 @@ json::Array websiteOutputFormatsJson()
    {
       r::exec::RFunction getFormats(".rs.getAllOutputFormats");
       getFormats.addParam(string_utils::utf8ToSystem(
-              projectContext().buildTargetPath().absolutePath()));
+         projectContext().buildTargetPath().getAbsolutePath()));
       getFormats.addParam(projectContext().defaultEncoding());
       std::vector<std::string> formats;
       Error error = getFormats.call(&formats);

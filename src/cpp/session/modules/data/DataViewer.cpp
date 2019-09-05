@@ -300,8 +300,8 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::sessionScratchPath().childPath(kViewerCacheDir)
-      .absolutePath();
+   return module_context::sessionScratchPath().getChildPath(kViewerCacheDir)
+      .getAbsolutePath();
 }
 
 SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
@@ -438,7 +438,7 @@ void handleGridResReq(const http::Request& request,
 
    // setCacheableFile is responsible for emitting a 404 when the file doesn't
    // exist.
-   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   core::FilePath gridResource = options().rResourcesPath().getChildPath(path);
    pResponse->setCacheableFile(gridResource, request);
 }
 
@@ -972,7 +972,7 @@ void onDeferredInit(bool newSession)
    std::vector<FilePath> cacheFiles;
    if (cache.exists())
    {
-      Error error = cache.children(&cacheFiles);
+      Error error = cache.getChildren(cacheFiles);
       if (error)
       {
          LOG_ERROR(error);
@@ -983,7 +983,7 @@ void onDeferredInit(bool newSession)
    std::vector<std::string> cacheKeys;
    for (const FilePath& cacheFile : cacheFiles)
    {
-      cacheKeys.push_back(cacheFile.stem());
+      cacheKeys.push_back(cacheFile.getStem());
    }
 
    // sort each set of keys (so we can diff the sets below)
@@ -998,7 +998,7 @@ void onDeferredInit(bool newSession)
    // remove each key no longer bound to a source file
    for (const std::string& orphanKey : orphanKeys)
    {
-      error = cache.complete(orphanKey + ".Rdata").removeIfExists();
+      error = cache.completePath(orphanKey + ".Rdata").removeIfExists();
       if (error)
          LOG_ERROR(error);
    }

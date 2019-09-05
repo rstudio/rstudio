@@ -82,14 +82,14 @@ test_context("default validation")
    test_that("all user preferences have defaults")
    {
       std::string err = findMissingDefaults(
-         options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
+         options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
       expect_equal(err, "");
    }
  
    test_that("all user state values have defaults")
    {
       std::string err = findMissingDefaults(
-         options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+         options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
       expect_equal(err, "");
    }
  
@@ -100,7 +100,7 @@ test_context("default validation")
       expect_true(error == Success());
 
       error = defaults.validatePrefsFromSchema(
-         options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
+         options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
       INFO(error.asString());
       expect_true(error == Success());
    }
@@ -112,7 +112,7 @@ test_context("default validation")
       expect_true(error == Success());
 
       error = defaults.validatePrefsFromSchema(
-         options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+         options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
       INFO(error.asString());
       expect_true(error == Success());
    }

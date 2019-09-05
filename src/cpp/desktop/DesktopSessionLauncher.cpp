@@ -70,7 +70,7 @@ void launchProcess(const std::string& absPath,
 
 FilePath abendLogPath()
 {
-   return desktop::userLogPath().complete("rsession_abort_msg.log");
+   return desktop::userLogPath().completePath("rsession_abort_msg.log");
 }
 
 void logEnvVar(const std::string& name)
@@ -371,7 +371,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
 
    return  parent_process_monitor::wrapFork(
          boost::bind(launchProcess,
-                     sessionPath_.absolutePath(),
+                     sessionPath_.getAbsolutePath(),
                      argList,
                      ppRSessionProcess));
 }
@@ -461,10 +461,10 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
    *pUrl = QUrl(QString::fromUtf8("http://") + *pHost +
                 QString::fromUtf8(":") + *pPort + QString::fromUtf8("/"));
 
-   if (!confPath_.empty())
+   if (!confPath_.isEmpty())
    {
       *pArgList << QString::fromUtf8("--config-file") <<
-                   QString::fromUtf8(confPath_.absolutePath().c_str());
+                   QString::fromUtf8(confPath_.getAbsolutePath().c_str());
    }
    else
    {

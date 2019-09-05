@@ -36,7 +36,7 @@ const char * const kContext = "ctx-";
 
 FilePath restartContextsPath(const FilePath& scopePath)
 {
-   FilePath contextsPath = scopePath.complete("ctx");
+   FilePath contextsPath = scopePath.completePath("ctx");
    Error error = contextsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -60,14 +60,14 @@ void RestartContext::initialize(const FilePath& scopePath,
                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.complete(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kContext + contextId);
    if (statePath.exists())
       sessionStatePath_ = statePath;
 }
 
 bool RestartContext::hasSessionState() const
 {
-   return !sessionStatePath().empty();
+   return !sessionStatePath().isEmpty();
 }
 
 bool RestartContext::rProfileOnRestore() const
@@ -95,7 +95,7 @@ FilePath RestartContext::createSessionStatePath(const FilePath& scopePath,
                                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.complete(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kContext + contextId);
 
    Error error = statePath.ensureDirectory();
    if (error)

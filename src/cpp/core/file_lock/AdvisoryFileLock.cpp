@@ -65,7 +65,7 @@ bool AdvisoryFileLock::isLocked(const FilePath& lockFilePath) const
    // check if it is locked
    try
    {
-      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.getAbsolutePath()).c_str());
 
       if (lock.try_lock())
       {
@@ -112,11 +112,11 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
    // try to acquire the lock
    try
    {
-      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.absolutePath()).c_str());
+      BoostFileLock lock(string_utils::utf8ToSystem(lockFilePath.getAbsolutePath()).c_str());
 
       if (lock.try_lock())
       {
-         LOG("Acquired lock: " << lockFilePath.absolutePath());
+         LOG("Acquired lock: " << lockFilePath.getAbsolutePath());
          // set members
          pImpl_->lockFilePath = lockFilePath;
          pImpl_->lock.swap(lock);
@@ -125,7 +125,7 @@ Error AdvisoryFileLock::acquire(const FilePath& lockFilePath)
       }
       else
       {
-         LOG("Failed to acquire lock: " << lockFilePath.absolutePath());
+         LOG("Failed to acquire lock: " << lockFilePath.getAbsolutePath());
          Error error = systemError(errc::no_lock_available, ERROR_LOCATION);
          error.addProperty("lock-file", lockFilePath);
          return error;
@@ -169,7 +169,7 @@ Error AdvisoryFileLock::release()
    {
       pImpl_->lock.unlock();
       pImpl_->lock = BoostFileLock();
-      LOG("Released lock: " << pImpl_->lockFilePath.absolutePath());
+      LOG("Released lock: " << pImpl_->lockFilePath.getAbsolutePath());
       pImpl_->lockFilePath = FilePath();
       return Success();
    }

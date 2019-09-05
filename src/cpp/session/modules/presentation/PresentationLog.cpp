@@ -204,12 +204,12 @@ Error ensureTargetFile(const std::string& filename,
                        FilePath* pTargetFile)
 {
    using namespace module_context;
-   FilePath presDir =  userScratchPath().childPath("presentation");
+   FilePath presDir =  userScratchPath().getChildPath("presentation");
    Error error = presDir.ensureDirectory();
    if (error)
       return error;
 
-   *pTargetFile = presDir.childPath(filename);
+   *pTargetFile = presDir.getChildPath(filename);
    if (!pTargetFile->exists())
    {
       Error error = core::writeStringToFile(*pTargetFile, header + "\n");

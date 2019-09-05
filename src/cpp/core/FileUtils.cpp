@@ -36,8 +36,8 @@ bool copySourceFile(const FilePath& sourceDir,
                     const FilePath& sourceFilePath)
 {
    // compute the target path
-   std::string relativePath = sourceFilePath.relativePath(sourceDir);
-   FilePath targetPath = destDir.complete(relativePath);
+   std::string relativePath = sourceFilePath.getRelativePath(sourceDir);
+   FilePath targetPath = destDir.completePath(relativePath);
 
    // if the copy item is a directory just create it
    if (sourceFilePath.isDirectory())
@@ -68,7 +68,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
       std::string shortentedUuid = core::system::generateShortenedUuid();
 
       // form full path
-      FilePath uniqueDir = parent.childPath(prefix + shortentedUuid);
+      FilePath uniqueDir = parent.getChildPath(prefix + shortentedUuid);
 
       // return if it doesn't exist
       if (!uniqueDir.exists())
@@ -76,13 +76,13 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    }
 
    // if we didn't succeed then return prefix + uuid
-   return parent.childPath(prefix + core::system::generateUuid(false));
+   return parent.getChildPath(prefix + core::system::generateUuid(false));
 }
 
 std::string readFile(const FilePath& filePath)
 {
    std::ifstream stream(
-            filePath.absolutePath().c_str(),
+      filePath.getAbsolutePath().c_str(),
             std::ios::in | std::ios::binary);
    
    std::string content;
@@ -130,7 +130,7 @@ Error copyDirectory(const FilePath& sourceDirectory,
       return error ;
 
    // iterate over the source
-   return sourceDirectory.childrenRecursive(
+   return sourceDirectory.getChildrenRecursive(
      boost::bind(copySourceFile, sourceDirectory, targetDirectory, _2));
 }
 
@@ -142,7 +142,7 @@ bool isDirectoryWriteable(const FilePath& directory)
 #endif
    "write-test-");
 
-   FilePath testFile = directory.complete(prefix + core::system::generateUuid());
+   FilePath testFile = directory.completePath(prefix + core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {

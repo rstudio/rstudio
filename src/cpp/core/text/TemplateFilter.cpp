@@ -51,8 +51,8 @@ Error renderTemplate(const core::FilePath& templateFile,
                      std::ostream& os)
 {
    // open input stream to template
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = templateFile.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = templateFile.openForRead(pIfs);
    if (error)
       return error;
 

@@ -278,7 +278,7 @@ public:
          lpEnv = &envBlock[0];
       }
 
-      std::wstring workingDir(options.workingDir.absolutePathW());
+      std::wstring workingDir(options.workingDir.getAbsolutePathW());
 
       if (spawn_config_new)
       {

@@ -83,7 +83,7 @@ class JumpToTopException
 FilePath rSaveGlobalEnvironmentFilePath()
 {
    FilePath rEnvironmentDir = utils::rEnvironmentDir();
-   return rEnvironmentDir.complete(".RData");
+   return rEnvironmentDir.completePath(".RData");
 }
 
 void rSuicideError(const Error& error)
@@ -219,7 +219,7 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+   std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
    Error error = r::exec::executeSafely(
                     boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
    
@@ -477,10 +477,10 @@ int RChooseFile (int newFile, char *buf, int len)
    try 
    {
       FilePath filePath = s_callbacks.chooseFile(newFile == TRUE);
-      if (!filePath.empty())
+      if (!filePath.isEmpty())
       {
          // get absolute path
-         std::string absolutePath = filePath.absolutePath();
+         std::string absolutePath = filePath.getAbsolutePath();
          
          // trunate file if it is too long
          std::string::size_type maxLen = len - 1; 
@@ -519,7 +519,7 @@ int RShowFiles (int nfile,
       {
          // determine file path and title
          std::string fixedPath = r::util::fixPath(file[i]);
-         FilePath filePath = utils::safeCurrentPath().complete(fixedPath);
+         FilePath filePath = utils::safeCurrentPath().completePath(fixedPath);
          if (filePath.exists())
          {
             std::string title(headers[i]);
@@ -611,8 +611,8 @@ void rSuicide(const std::string& msg)
    // log abort message if we are in desktop mode
    if (!utils::isServerMode())
    {
-      FilePath abendLogPath = utils::logPath().complete(
-                                                 "rsession_abort_msg.log");
+      FilePath abendLogPath = utils::logPath().completePath(
+         "rsession_abort_msg.log");
       Error error = core::writeStringToFile(abendLogPath, msg);
       if (error)
          LOG_ERROR(error);

@@ -278,7 +278,7 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDir(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
@@ -305,7 +305,7 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDirViaLsof(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
@@ -330,7 +330,7 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDirViaProcFs(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 

@@ -84,7 +84,7 @@ const char * const kFilesMonitoredPath = "files.monitored-path";
 void onSuspend(Settings* pSettings)
 {
    // get monitored path and alias it
-   std::string monitoredPath = s_filesListingMonitor.currentMonitoredPath().absolutePath();
+   std::string monitoredPath = s_filesListingMonitor.currentMonitoredPath().getAbsolutePath();
    if (!monitoredPath.empty())
    {
       monitoredPath = FilePath::createAliasedPath(FilePath(monitoredPath),
@@ -239,7 +239,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
 
 #ifndef _WIN32
    // on *nix systems, see if browsing above this path is possible
-   error = core::system::isFileReadable(targetPath.parent(), &browseable);
+   error = core::system::isFileReadable(targetPath.getParent(), &browseable);
    if (error && !core::isPathNotFoundError(error))
       LOG_ERROR(error);
 #endif
@@ -413,7 +413,7 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
          ++it)
    {      
       // move the file
-      FilePath targetPath = targetDirPath.childPath(it->filename()) ;
+      FilePath targetPath = targetDirPath.getChildPath(it->getFilename()) ;
       Error moveError = it->move(targetPath) ;
       if (moveError)
          return moveError ;
@@ -492,13 +492,13 @@ void handleFilesRequest(const http::Request& request,
    }
 
    // complete path to file
-   FilePath filePath = module_context::userHomePath().complete(relativePath);
+   FilePath filePath = module_context::userHomePath().completePath(relativePath);
 
    // no directory listing available
    if (filePath.isDirectory())
    {
       // if there is an index.html then serve that
-      filePath = filePath.childPath("index.html");
+      filePath = filePath.getChildPath("index.html");
       if (!filePath.exists())
       {
          pResponse->setNotFoundError(request);
@@ -523,17 +523,17 @@ Error writeTmpData(const FilePath& tmpFile,
    if (error)
       return error;
 
-   boost::shared_ptr<std::ostream> pOfs;
-   error = tmpFile.open_w(&pOfs, false);
+   std::shared_ptr<std::ostream> pOfs;
+   error = tmpFile.openForWrite(pOfs, false);
    if (error)
       return error;
 
-   pOfs->seekp(tmpFile.size());
+   pOfs->seekp(tmpFile.getSize());
 
    if (!pOfs->write(buffer + beginOffset, endOffset - beginOffset + 1))
    {
       return systemError(boost::system::errc::io_error,
-                         "Could not write to destination file: " + tmpFile.absolutePath(),
+                         "Could not write to destination file: " + tmpFile.getAbsolutePath(),
                          ERROR_LOCATION);
    }
 
@@ -571,8 +571,8 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       {
          // expand the archive
          r::exec::RFunction unzip("unzip");
-         unzip.addParam("zipfile", uploadedTempFilePath.absolutePath());
-         unzip.addParam("exdir", targetDirectoryPath.absolutePath());
+         unzip.addParam("zipfile", uploadedTempFilePath.getAbsolutePath());
+         unzip.addParam("exdir", targetDirectoryPath.getAbsolutePath());
          Error unzipError = unzip.call();
          if (unzipError)
          {
@@ -585,7 +585,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          
          // remove the __MACOSX folder if it exists
          const std::string kMacOSXFolder("__MACOSX");
-         FilePath macOSXPath = targetDirectoryPath.complete(kMacOSXFolder);
+         FilePath macOSXPath = targetDirectoryPath.completePath(kMacOSXFolder);
          Error removeError = macOSXPath.removeIfExists();
          if (removeError)
             LOG_ERROR(removeError);
@@ -598,7 +598,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       else
       {
          // calculate target path
-         FilePath targetPath = targetDirectoryPath.childPath(filename);
+         FilePath targetPath = targetDirectoryPath.getChildPath(filename);
          
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
@@ -629,7 +629,7 @@ Error detectZipFileOverwrites(const FilePath& uploadedZipFile,
 {
    // query for all of the paths in the zip file
    core::system::ProcessResult result;
-   Error error = core::system::runCommand("unzip -Z1 " + uploadedZipFile.absolutePath(),
+   Error error = core::system::runCommand("unzip -Z1 " + uploadedZipFile.getAbsolutePath(),
                                           core::system::ProcessOptions(),
                                           &result);
    if (error)
@@ -649,7 +649,7 @@ Error detectZipFileOverwrites(const FilePath& uploadedZipFile,
          // don't count empty lines
          if ((*it).empty()) continue;
 
-         FilePath filePath = destDir.complete(*it);
+         FilePath filePath = destDir.completePath(*it);
          if (filePath.exists())
             pOverwritesJson->push_back(module_context::createFileSystemItem(filePath));
       }
@@ -708,7 +708,7 @@ bool validateUploadedFile(const http::Request& request, http::Response* pRespons
 
 bool validateUploadedFile(const FilePath& file, http::Response* pResponse)
 {
-   return validateUploadedFile(file.size(), pResponse);
+   return validateUploadedFile(file.getSize(), pResponse);
 }
 
 struct UploadState
@@ -843,7 +843,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
       cont(&response);
    };
 
-   if (pUploadState->tmpFile.empty())
+   if (pUploadState->tmpFile.isEmpty())
    {
       // create a temporary file to store the form's file data
       // we store this temporary file under the user's home directory to increase the odds
@@ -857,7 +857,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
          return false;
       }
 
-      error = FilePath::uniqueFilePath(tmpDir.absolutePath(), ".bin", &pUploadState->tmpFile);
+      error = FilePath::uniqueFilePath(tmpDir.getAbsolutePath(), ".bin", pUploadState->tmpFile);
       if (error)
       {
          writeError(error);
@@ -1012,7 +1012,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    // detect any potential overwrites
    bool isZip = boost::ends_with(pUploadState->fileName, "zip");
    FilePath destDir = module_context::resolveAliasedPath(pUploadState->targetDirectory);
-   FilePath destPath = destDir.childPath(pUploadState->fileName);
+   FilePath destPath = destDir.getChildPath(pUploadState->fileName);
 
    json::Array overwritesJson;
    if (isZip)
@@ -1033,8 +1033,8 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    // set the upload information as the result
    json::Object uploadTokenJson;
    uploadTokenJson[kUploadFilename] = pUploadState->fileName;
-   uploadTokenJson[kUploadedTempFile] = pUploadState->tmpFile.absolutePath();
-   uploadTokenJson[kUploadTargetDirectory] = destDir.absolutePath();
+   uploadTokenJson[kUploadedTempFile] = pUploadState->tmpFile.getAbsolutePath();
+   uploadTokenJson[kUploadTargetDirectory] = destDir.getAbsolutePath();
 
    json::Object uploadJson;
    uploadJson["token"] = uploadTokenJson;
@@ -1113,7 +1113,7 @@ void handleMultipleFileExportRequest(const http::Request& request,
          break;
       
       // verify that the file exists
-      FilePath filePath = parentPath.complete(file);
+      FilePath filePath = parentPath.completePath(file);
       if (!filePath.exists())
       {
          pResponse->setError(http::status::BadRequest, 
@@ -1128,8 +1128,8 @@ void handleMultipleFileExportRequest(const http::Request& request,
    // create the zip file
    FilePath tempZipFilePath = module_context::tempFile("export", "zip");
    Error error = r::exec::RFunction(".rs.createZipFile",
-                                    tempZipFilePath.absolutePath(),
-                                    parentPath.absolutePath(),
+                                    tempZipFilePath.getAbsolutePath(),
+                                    parentPath.getAbsolutePath(),
                                     files).call();
    if (error)
    {
@@ -1192,21 +1192,21 @@ SEXP rs_pathInfo(SEXP pathSEXP)
 
       // resolve aliased path
       FilePath filePath = module_context::resolveAliasedPath(path);
-      if (filePath.empty())
+      if (filePath.isEmpty())
          throw r::exec::RErrorException("invalid path: " + path);
 
       // create path info vector (use json repsesentation to force convertion
       // to VECSXP rather than STRSXP)
       json::Object pathInfo;
-      pathInfo["path"] = filePath.absolutePath();
-      std::string parent = filePath.absolutePath();
-      FilePath parentPath = filePath.parent();
-      if (!parentPath.empty())
-         parent = parentPath.absolutePath();
+      pathInfo["path"] = filePath.getAbsolutePath();
+      std::string parent = filePath.getAbsolutePath();
+      FilePath parentPath = filePath.getParent();
+      if (!parentPath.isEmpty())
+         parent = parentPath.getAbsolutePath();
       pathInfo["directory"] = parent;
-      pathInfo["name"] = filePath.filename();
-      pathInfo["stem"] = filePath.stem();
-      pathInfo["extension"] = filePath.extension();
+      pathInfo["name"] = filePath.getFilename();
+      pathInfo["stem"] = filePath.getStem();
+      pathInfo["extension"] = filePath.getExtension();
 
       // return it
       r::sexp::Protect rProtect;
@@ -1258,7 +1258,7 @@ SEXP rs_readLines(SEXP filePathSEXP)
 bool isMonitoringDirectory(const FilePath& directory)
 {
    FilePath monitoredPath = s_filesListingMonitor.currentMonitoredPath();
-   return !monitoredPath.empty() && (directory == monitoredPath);
+   return !monitoredPath.isEmpty() && (directory == monitoredPath);
 }
 
 Error initialize()

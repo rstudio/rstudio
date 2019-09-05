@@ -80,7 +80,7 @@ void applyForwardConcordance(const FilePath& mainFile,
                              core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
-   if (pLoc->file().extensionLowerCase() != ".rnw")
+   if (pLoc->file().getExtensionLowerCase() != ".rnw")
       return;
 
    // try to read concordance
@@ -324,7 +324,7 @@ Error forwardSearch(const FilePath& rootFile,
    FilePath inputFile = module_context::resolveAliasedPath(file);
 
    // determine pdf
-   FilePath pdfFile = rootFile.parent().complete(rootFile.stem() + ".pdf");
+   FilePath pdfFile = rootFile.getParent().completePath(rootFile.getStem() + ".pdf");
 
    core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))

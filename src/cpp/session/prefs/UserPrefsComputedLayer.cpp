@@ -45,19 +45,19 @@ Error UserPrefsComputedLayer::readPrefs()
    json::Object layer;
 
    // VCS executable paths ---------------------------------------------------
-   layer[kGitExePath] = modules::git::detectedGitExePath().absolutePath();
-   layer[kSvnExePath] = modules::svn::detectedSvnExePath().absolutePath();
+   layer[kGitExePath] = modules::git::detectedGitExePath().getAbsolutePath();
+   layer[kSvnExePath] = modules::svn::detectedSvnExePath().getAbsolutePath();
 
    // System terminal path (Linux) -------------------------------------------
-   layer[kTerminalPath] = detectedTerminalPath().absolutePath();
+   layer[kTerminalPath] = detectedTerminalPath().getAbsolutePath();
 
    // Initial working directory ----------------------------------------------
    layer[kInitialWorkingDirectory] = session::options().defaultWorkingDir();
 
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
-   FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
-   layer[kRsaKeyPath] = rsaSshKeyPath.absolutePath();
+   FilePath rsaSshKeyPath = sshKeyDir.getChildPath("id_rsa");
+   layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
 
    // Crash reporting --------------------------------------------------------

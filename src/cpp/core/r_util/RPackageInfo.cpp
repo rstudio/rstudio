@@ -34,7 +34,7 @@ Error fieldNotFoundError(const FilePath& descFilePath,
 {
    return systemError(
             boost::system::errc::protocol_error,
-            fieldName + " field not found in " + descFilePath.absolutePath(),
+            fieldName + " field not found in " + descFilePath.getAbsolutePath(),
             location);
 }
 
@@ -72,7 +72,7 @@ void readField(const Container& container,
 Error RPackageInfo::read(const FilePath& packageDir)
 {
    // parse DCF file
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.getChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
    std::string errMsg;
@@ -111,7 +111,7 @@ std::string RPackageInfo::packageFilename(const std::string& extension) const
 
 bool isPackageDirectory(const FilePath& dir)
 {
-   if (dir.childPath("DESCRIPTION").exists())
+   if (dir.getChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);
@@ -128,7 +128,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 std::string packageNameFromDirectory(const FilePath& dir)
 {
-   if (dir.childPath("DESCRIPTION").exists())
+   if (dir.getChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);

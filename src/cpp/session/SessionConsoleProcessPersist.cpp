@@ -71,13 +71,13 @@ void initialize()
        session::options().programMode() == kSessionProgramModeServer)
    {
       // In multi-session mode, persist per session
-      s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
+      s_consoleProcPath = module_context::sessionScratchPath().completePath(kConsoleDir);
    }
    else
    {
       // In single-session mode, persist in external project storage (not internally in the project
       // since contents include environment values and can be sensitive)
-      s_consoleProcPath = projects::projectContext().externalStoragePath().complete(kConsoleDir);
+      s_consoleProcPath = projects::projectContext().externalStoragePath().completePath(kConsoleDir);
    }
 
    Error error = s_consoleProcPath.ensureDirectory();
@@ -86,7 +86,7 @@ void initialize()
       LOG_ERROR(error);
       return;
    }
-   s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
+   s_consoleProcIndexPath = s_consoleProcPath.completePath(kConsoleIndex);
    s_inited = true;
 }
 
@@ -111,7 +111,7 @@ Error getLogFilePath(const std::string& handle, FilePath* pFile)
       return error;
    }
 
-   *pFile = getConsoleProcPath().complete(handle);
+   *pFile = getConsoleProcPath().completePath(handle);
    return Success();
 }
 
@@ -126,7 +126,7 @@ Error getEnvFilePath(const std::string& handle, FilePath* pFile)
 
    std::string envHandle = handle;
    envHandle.append(s_envFileExt);
-   *pFile = getConsoleProcPath().complete(envHandle);
+   *pFile = getConsoleProcPath().completePath(envHandle);
    return Success();
 }
 
@@ -286,7 +286,7 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
 
    // Delete orphaned buffer files
    std::vector<FilePath> children;
-   Error error = getConsoleProcPath().children(&children);
+   Error error = getConsoleProcPath().getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -295,12 +295,12 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
    for (const FilePath& child : children)
    {
       // Don't erase the INDEXnnn or any subfolders
-      if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
+      if (!child.getFilename().compare(kConsoleIndex) || child.isDirectory())
       {
          continue;
       }
 
-      if (!validHandle(child.stem()))
+      if (!validHandle(child.getStem()))
       {
          error = child.remove();
          if (error)

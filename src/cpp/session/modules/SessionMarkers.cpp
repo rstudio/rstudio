@@ -40,7 +40,7 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
    using namespace module_context;
    json::Object jsonSet;
    jsonSet["name"] = set.name;
-   if (set.basePath.empty())
+   if (set.basePath.isEmpty())
    {
       jsonSet["base_path"] = std::string();
    }
@@ -414,7 +414,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
 FilePath sourceMarkersFilePath()
 {
-   return module_context::scopedScratchPath().childPath("saved_source_markers");
+   return module_context::scopedScratchPath().getChildPath("saved_source_markers");
 }
 
 void readSourceMarkers()

@@ -62,7 +62,7 @@ public:
       std::string input;
       for (const FilePath snapshot : snapshotFiles)
       {
-         input.append(string_utils::utf8ToSystem(snapshot.absolutePath()));
+         input.append(string_utils::utf8ToSystem(snapshot.getAbsolutePath()));
          input.append("\n");
       }
       input.append("\n");
@@ -73,9 +73,9 @@ public:
       FilePath modulesPath = session::options().modulesRSourcePath();
       FilePath sourcesPath = session::options().coreRSourcePath();
 
-      sources.push_back(sourcesPath.complete("Tools.R"));
-      sources.push_back(modulesPath.complete("ModuleTools.R"));
-      sources.push_back(modulesPath.complete("NotebookPlots.R"));
+      sources.push_back(sourcesPath.completePath("Tools.R"));
+      sources.push_back(modulesPath.completePath("ModuleTools.R"));
+      sources.push_back(modulesPath.completePath("NotebookPlots.R"));
 
       // form extra bitmap params 
       std::string extraParams = r::session::graphics::extraBitmapParams();
@@ -124,23 +124,23 @@ private:
             continue;
 
          FilePath chunkBase = png;
-         if (!persistOutput_) chunkBase = png.parent();
+         if (!persistOutput_) chunkBase = png.getParent();
 
          // create the event and send to the client. consider: this makes some
          // assumptions about the way output URLs are formed and some
          // assumptions about cache structure that might be better localized.
          json::Object result;
-         result["chunk_id"] = chunkBase.parent().filename();
+         result["chunk_id"] = chunkBase.getParent().getFilename();
          result["doc_id"] = docId_;
          result["replay_id"] = replayId_;
 
          result["plot_url"] = kChunkOutputPath "/" + 
-            chunkBase.parent().parent().filename() + "/" + // context ID = folder name
+            chunkBase.getParent().getParent().getFilename() + "/" + // context ID = folder name
             docId_ + "/" + 
-            chunkBase.parent().filename() + 
+            chunkBase.getParent().getFilename() + 
             "/" + 
-            (persistOutput_ ? "" : png.parent().filename() + "/") +
-            png.filename();
+            (persistOutput_ ? "" : png.getParent().getFilename() + "/") +
+            png.getFilename();
 
          ClientEvent event(client_events::kChunkPlotRefreshed, result);
          module_context::enqueClientEvent(event);
@@ -234,7 +234,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 
       // look for snapshot files
       std::vector<FilePath> contents;
-      error = path.children(&contents);
+      error = path.getChildren(contents);
       if (error)
       {
          LOG_ERROR(error);
@@ -295,7 +295,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
 
    // look for snapshot files
    std::vector<FilePath> contents;
-   error = path.children(&contents);
+   error = path.getChildren(contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -330,7 +330,7 @@ Error cleanReplayChunkPlotOutput(const json::JsonRpcRequest& request,
    FilePath chunkFilePath = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
       ContextSaved);
 
-   FilePath tempFilePath = chunkFilePath.complete("temp");
+   FilePath tempFilePath = chunkFilePath.completePath("temp");
 
    error = tempFilePath.remove();
    if (error)

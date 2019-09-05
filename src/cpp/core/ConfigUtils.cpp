@@ -66,7 +66,7 @@ Error extractVariables(const FilePath& file, Variables* pVariables)
 {
    // return path not found if necessary
    if (!file.exists())
-      return core::pathNotFoundError(file.absolutePath(), ERROR_LOCATION);
+      return core::pathNotFoundError(file.getAbsolutePath(), ERROR_LOCATION);
 
    // read in the file
    std::string contents;

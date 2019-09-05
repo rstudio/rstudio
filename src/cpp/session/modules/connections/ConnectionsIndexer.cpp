@@ -223,7 +223,7 @@ class ConnectionsWorker : public ppe::Worker
       if (isDevtoolsLoadAllActive())
       {
          FilePath pkgPath = projects::projectContext().buildTargetPath();
-         FilePath extensionPath = pkgPath.childPath("inst/rstudio/connections.dcf");
+         FilePath extensionPath = pkgPath.getChildPath("inst/rstudio/connections.dcf");
          if (extensionPath.exists())
          {
             std::string pkgName = projects::projectContext().packageInfo().name();

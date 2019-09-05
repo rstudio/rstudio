@@ -137,7 +137,7 @@ public:
    ~FileAndLine() {}
    // COPYING: via compiler
 
-   bool empty() const { return filePath_.empty(); }
+   bool empty() const { return filePath_.isEmpty(); }
 
    const core::FilePath& filePath() const { return filePath_; }
    int line() const { return line_; }

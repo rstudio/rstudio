@@ -153,7 +153,7 @@ int signalForType(SignalType type)
 
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
 {
-   std::string path = string_utils::utf8ToSystem(filePath.absolutePath());
+   std::string path = string_utils::utf8ToSystem(filePath.getAbsolutePath());
 
    char buffer[PATH_MAX*2];
    char* realPath = ::realpath(path.c_str(), buffer);
@@ -497,7 +497,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    std::string lower = appName;
    boost::to_lower(lower);
 
-   FilePath path = userHomeDirectory.childPath("." + lower);
+   FilePath path = userHomeDirectory.getChildPath("." + lower);
    if (ensureDirectory)
    {
       Error error = path.ensureDirectory();
@@ -613,7 +613,7 @@ Error getOpenFds(pid_t pid, std::vector<uint32_t>* pFds)
    {
       FilePath path(info.absolutePath());
 
-      boost::optional<uint32_t> fd = safe_convert::stringTo<uint32_t>(path.filename());
+      boost::optional<uint32_t> fd = safe_convert::stringTo<uint32_t>(path.getFilename());
       if (fd)
       {
          pFds->push_back(fd.get());
@@ -845,7 +845,7 @@ void setStandardStreamsToDevNull()
 
 bool isHiddenFile(const FilePath& filePath) 
 {
-   std::string filename = filePath.filename() ;
+   std::string filename = filePath.getFilename() ;
    return (!filename.empty() && (filename[0] == '.')) ;
 }  
 
@@ -856,7 +856,7 @@ bool isHiddenFile(const FileInfo& fileInfo)
 
 bool isReadOnly(const FilePath& filePath)
 {
-   if (::access(filePath.absolutePath().c_str(), W_OK) == -1)
+   if (::access(filePath.getAbsolutePath().c_str(), W_OK) == -1)
    {
       if (errno == EACCES)
       {
@@ -966,8 +966,8 @@ Error installPath(const std::string& relativeToExecutable,
       return error;
 
    // fully resolve installation path relative to executable
-   FilePath installPath = executablePath.parent().complete(relativeToExecutable);
-   return realPath(installPath.absolutePath(), pInstallPath);
+   FilePath installPath = executablePath.getParent().completePath(relativeToExecutable);
+   return realPath(installPath.getAbsolutePath(), pInstallPath);
 }
 
 void fixupExecutablePath(FilePath* pExePath)
@@ -1118,7 +1118,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
    //    4075 (My )(great Program) S 4074 ....
 
    std::vector<FilePath> children;
-   Error error = procFsPath.children(&children);
+   Error error = procFsPath.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -1128,7 +1128,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
    for (const FilePath& child : children)
    {
       // only interested in the numeric directories (pid)
-      std::string filename = child.filename();
+      std::string filename = child.getFilename();
       bool isNumber = true;
       for (std::string::const_iterator k = filename.begin(); k != filename.end(); ++k)
       {
@@ -1144,7 +1144,7 @@ std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid)
 
       // load the stat file
       std::string contents;
-      FilePath statFile(child.complete("stat"));
+      FilePath statFile(child.completePath("stat"));
       Error error = rstudio::core::readStringFromFile(statFile, &contents);
       if (error)
       {
@@ -1318,7 +1318,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
       return FilePath();
 
    // /proc/PID/cwd is a symbolic link to the process' current working directory
-   FilePath pidPath = procFsPath.complete(procId).complete("cwd");
+   FilePath pidPath = procFsPath.completePath(procId).completePath("cwd");
    if (pidPath.isSymlink())
       return pidPath.resolveSymlink();
    else
@@ -1670,7 +1670,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
 
    // stat the file to determine it's owner
    struct stat st;
-   if (::stat(cmdlineFile.absolutePath().c_str(), &st) == -1)
+   if (::stat(cmdlineFile.getAbsolutePath().c_str(), &st) == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", cmdlineFile);
@@ -1718,7 +1718,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
    pInfo->ppid = ppid;
    pInfo->pgrp = pgrp;
    pInfo->username = user.username;
-   pInfo->exe = FilePath(cmdline).filename();
+   pInfo->exe = FilePath(cmdline).getFilename();
    pInfo->state = state;
    pInfo->arguments = commandVector;
 
@@ -1806,7 +1806,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    std::string dir = boost::str(fmt % pid);
    FilePath procDir(dir);
    std::vector<std::string> fields;
-   error = readStatFields(procDir.childPath("stat"), 22, &fields);
+   error = readStatFields(procDir.getChildPath("stat"), 22, &fields);
    if (error)
       return error;
 

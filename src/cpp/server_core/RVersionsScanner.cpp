@@ -103,7 +103,7 @@ bool RVersionsScanner::detectSystemRVersion(core::r_util::RVersion* pVersion,
    // if it's a directory then see if we can find the script
    if (rWhichRPath.isDirectory())
    {
-      FilePath rScriptPath = rWhichRPath.childPath("bin/R");
+      FilePath rScriptPath = rWhichRPath.getChildPath("bin/R");
       if (rScriptPath.exists())
          rWhichRPath = rScriptPath;
    }
@@ -188,7 +188,7 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
    if (!sysVersion.empty())
    {
       r_util::RVersion overrideVersion = r_util::selectVersion(sysVersion.number(),
-                                                               sysVersion.homeDir().absolutePath(),
+                                                               sysVersion.homeDir().getAbsolutePath(),
                                                                "",
                                                                versions);
       systemVersion_ = overrideVersion;

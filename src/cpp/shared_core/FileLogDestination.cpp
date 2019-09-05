@@ -95,10 +95,15 @@ struct FileLogDestination::Impl
    // Returns true if the log file was opened, false otherwise.
    bool openLogFile()
    {
-      LogFile = LogOptions.getDirectory().childPath(LogName);
-      Error error = LogFile.ensureFile();
+      Error error = LogOptions.getDirectory().getChildPath(LogName, LogFile);
+      if (error)
+      {
+         // This will log to any other registered log destinations, or nowhere if there are none.
+         logError(error);
+         return false;
+      }
 
-      // This will log to any other registered log destinations, or nowhere if there are none.
+      error = LogFile.ensureFile();
       if (error)
       {
          logError(error);
@@ -125,9 +130,9 @@ struct FileLogDestination::Impl
       if (LogOptions.doRotation())
       {
          // Convert MB to B for comparison.
-         if (LogFile.size() >= maxSize)
+         if (LogFile.getSize() >= maxSize)
          {
-            FilePath rotatedLogFile = FilePath(LogOptions.getDirectory()).childPath(RotatedLogName);
+            FilePath rotatedLogFile = FilePath(LogOptions.getDirectory()).getChildPath(RotatedLogName);
 
             // We can't safely log errors in this function because we'll end up in an infinitely recursive
             // rotateLogFile() call.
@@ -146,7 +151,7 @@ struct FileLogDestination::Impl
          }
       }
 
-      return LogFile.size() < maxSize;
+      return LogFile.getSize() < maxSize;
    }
 
 

@@ -58,7 +58,7 @@ SEXP rs_getRmdWorkingDir(SEXP rmdFileSEXP, SEXP docIdSEXP)
 
    // if we found a valid working directory, return it
    if (dir.exists())
-      return r::sexp::create(dir.absolutePath(), &protect);
+      return r::sexp::create(dir.getAbsolutePath(), &protect);
 
    // otherwise, return nothing
    return R_NilValue;
@@ -90,7 +90,7 @@ void cleanChunks(const FilePath& cacheDir,
    // remove each stale folder from the system
    for (const std::string& staleId : staleIds)
    {
-      error = cacheDir.complete(staleId).removeIfExists();
+      error = cacheDir.completePath(staleId).removeIfExists();
    }
 }
 
@@ -98,7 +98,7 @@ FilePath chunkDefinitionsPath(const core::FilePath& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, "", nbCtxId).childPath(fileName);
+   return chunkCacheFolder(docPath, "", nbCtxId).getChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
@@ -106,7 +106,7 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, docId, nbCtxId).childPath(fileName);
+   return chunkCacheFolder(docPath, docId, nbCtxId).getChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath, 
@@ -160,7 +160,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
          notebookCtxId());
 
    // make sure the parent folder exists
-   Error error = defFile.parent().ensureDirectory();
+   Error error = defFile.getParent().ensureDirectory();
    if (error)
       return error;
 

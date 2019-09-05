@@ -74,7 +74,7 @@ void beginUpdateCheck(bool manual,
    // Find the path to the script we need to source
    FilePath modulesPath = session::options().modulesRSourcePath();;
    std::string scriptPath = core::string_utils::utf8ToSystem(
-                     modulesPath.complete("SessionUpdates.R").absolutePath());
+      modulesPath.completePath("SessionUpdates.R").getAbsolutePath());
 
    // Arguments
    std::vector<std::string> args;
@@ -116,7 +116,8 @@ void beginUpdateCheck(bool manual,
    core::system::ProcessOptions options;
    options.terminateChildren = true;
 
-   module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
+   module_context::processSupervisor().runProgram(
+      rProgramPath.getAbsolutePath(),
                                   args,
                                   std::string(),
                                   options,

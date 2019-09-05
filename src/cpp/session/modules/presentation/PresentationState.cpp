@@ -52,11 +52,11 @@ PresentationState s_presentationState;
 
 FilePath presentationStatePath()
 {
-   FilePath path = module_context::scopedScratchPath().childPath("presentation");
+   FilePath path = module_context::scopedScratchPath().getChildPath("presentation");
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   return path.childPath("presentation-state-v2");
+   return path.getChildPath("presentation-state-v2");
 }
 
 std::string toPersistentPath(const FilePath& filePath)
@@ -66,11 +66,11 @@ std::string toPersistentPath(const FilePath& filePath)
    if (projectContext.hasProject() &&
        filePath.isWithin(projectContext.directory()))
    {
-      return filePath.relativePath(projectContext.directory());
+      return filePath.getRelativePath(projectContext.directory());
    }
    else
    {
-      return filePath.absolutePath();
+      return filePath.getAbsolutePath();
    }
 }
 
@@ -79,7 +79,7 @@ FilePath fromPersistentPath(const std::string& path)
    projects::ProjectContext& projectContext = projects::projectContext();
    if (projectContext.hasProject())
    {
-      return projectContext.directory().complete(path);
+      return projectContext.directory().completePath(path);
    }
    else
    {
@@ -177,19 +177,19 @@ FilePath filePath()
 
 FilePath directory()
 {
-   return s_presentationState.filePath.parent();
+   return s_presentationState.filePath.getParent();
 }
 
 FilePath viewInBrowserPath()
 {
-   if (s_presentationState.viewInBrowserPath.empty())
+   if (s_presentationState.viewInBrowserPath.isEmpty())
    {
       FilePath viewDir = module_context::tempFile("view", "dir");
       Error error = viewDir.ensureDirectory();
       if (!error)
       {
          s_presentationState.viewInBrowserPath =
-                                    viewDir.childPath("presentation.html");
+                                    viewDir.getChildPath("presentation.html");
       }
       else
       {

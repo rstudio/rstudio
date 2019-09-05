@@ -156,8 +156,8 @@ std::string localMathjax()
 std::string copiedMathjax(const FilePath& targetFile)
 {
    // determine target files dir and create it if necessary
-   std::string presFilesDir = targetFile.stem() + "_files";
-   FilePath filesTargetDir = targetFile.parent().complete(presFilesDir);
+   std::string presFilesDir = targetFile.getStem() + "_files";
+   FilePath filesTargetDir = targetFile.getParent().completePath(presFilesDir);
    Error error = filesTargetDir.ensureDirectory();
    if (error)
    {
@@ -168,9 +168,9 @@ std::string copiedMathjax(const FilePath& targetFile)
    // copy the mathjax directory
    r::exec::RFunction fileCopy("file.copy");
    fileCopy.addParam("from", string_utils::utf8ToSystem(
-                         session::options().mathjaxPath().absolutePath()));
+      session::options().mathjaxPath().getAbsolutePath()));
    fileCopy.addParam("to", string_utils::utf8ToSystem(
-                         filesTargetDir.absolutePath()));
+      filesTargetDir.getAbsolutePath()));
    fileCopy.addParam("recursive", true);
    error = fileCopy.call();
    if (error)
@@ -210,7 +210,7 @@ std::string embeddedWebFonts()
       boost::iostreams::filtering_ostream filteredStream;
 
       // base64 encoder
-      FilePath fontPath = session::options().rResourcesPath().complete(fonts);
+      FilePath fontPath = session::options().rResourcesPath().completePath(fonts);
       filteredStream.push(html_utils::CssUrlFilter(fontPath));
 
       // target stream
@@ -258,7 +258,7 @@ bool performKnit(const FilePath& rmdPath,
                  ErrorResponse* pErrorResponse)
 {
    // calculate the target md path
-   FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
+   FilePath mdPath = rmdPath.getParent().getChildPath(rmdPath.getStem() + ".md");
 
    // remove the md if we are clearing the cache
    if (clearCache)
@@ -270,7 +270,7 @@ bool performKnit(const FilePath& rmdPath,
 
    // Now detect whether we even need to knit -- if there is an .md
    // file with timestamp the same as or later than the .Rmd then skip it
-   if (mdPath.exists() && (mdPath.lastWriteTime() > rmdPath.lastWriteTime()))
+   if (mdPath.exists() && (mdPath.getLastWriteTime() > rmdPath.getLastWriteTime()))
       return true;
 
    // R binary
@@ -298,7 +298,7 @@ bool performKnit(const FilePath& rmdPath,
    // remove the cache if requested
    if (clearCache)
    {
-      FilePath cachePath = rmdPath.parent().childPath(rmdPath.stem()+"-cache");
+      FilePath cachePath = rmdPath.getParent().getChildPath(rmdPath.getStem()+"-cache");
       if (cachePath.exists())
       {
          Error error = cachePath.remove();
@@ -326,20 +326,20 @@ bool performKnit(const FilePath& rmdPath,
    std::string encoding = projects::projectContext().defaultEncoding();
    if(encoding.empty()) encoding = "UTF-8";
    std::string cmd = boost::str(
-      fmt % string_utils::utf8ToSystem(rmdPath.stem())
-          % string_utils::utf8ToSystem(rmdPath.filename())
-          % string_utils::utf8ToSystem(mdPath.filename())
+      fmt % string_utils::utf8ToSystem(rmdPath.getStem())
+          % string_utils::utf8ToSystem(rmdPath.getFilename())
+          % string_utils::utf8ToSystem(mdPath.getFilename())
           % encoding);
    args.push_back(cmd);
 
    // options
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
-   options.workingDir = rmdPath.parent();
+   options.workingDir = rmdPath.getParent();
 
    // run knit
    error = core::system::runProgram(
-            core::string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            core::string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
             args,
             "",
             options,
@@ -356,7 +356,7 @@ bool performKnit(const FilePath& rmdPath,
       if (!mdPath.exists())
       {
          Error error = core::writeStringToFile(mdPath,
-                                               mdPath.stem() +
+                                               mdPath.getStem() +
                                                "\n=======================\n");
          if (error)
             LOG_ERROR(error);
@@ -387,7 +387,7 @@ std::string presentationCommandClickHandler(const std::string& name,
    using namespace boost::algorithm;
    std::ostringstream ostr;
    ostr << "onclick='";
-   ostr << "window.parent.dispatchPresentationCommand(";
+   ostr << "window.getParent.dispatchPresentationCommand(";
    json::Object cmdObj;
    using namespace boost::algorithm;
    cmdObj["name"] = name;
@@ -435,9 +435,9 @@ std::string fixupLink(const boost::cmatch& match)
       std::string path = trim_copy(href.substr(colonLoc+1));
       path = core::http::util::urlDecode(path);
       if (boost::algorithm::starts_with(path, "~/"))
-         path = module_context::resolveAliasedPath(path).absolutePath();
+         path = module_context::resolveAliasedPath(path).getAbsolutePath();
       FilePath filePath = presentation::state::directory()
-                                                   .parent().complete(path);
+                                                   .getParent().completePath(path);
 
       Error error = core::system::realPath(filePath, &filePath);
       if (error)
@@ -478,8 +478,8 @@ std::string userSlidesCss(const SlideDeck& slideDeck)
    // the presentation
    std::string cssFile = slideDeck.css();
    if (cssFile.empty())
-      cssFile = presentation::state::filePath().stem() + ".css";
-   FilePath cssPath = presentation::state::directory().complete(cssFile);
+      cssFile = presentation::state::filePath().getStem() + ".css";
+   FilePath cssPath = presentation::state::directory().completePath(cssFile);
 
    // read user css if it exists
    std::string userSlidesCss;
@@ -504,7 +504,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
 {
    // look for slides and knit if we need to
    FilePath rmdFile = presentation::state::filePath();
-   std::string ext = rmdFile.extensionLowerCase();
+   std::string ext = rmdFile.getExtensionLowerCase();
    if (rmdFile.exists() && (ext != ".md"))
    {
       if (!performKnit(rmdFile, false, pErrorResponse))
@@ -512,10 +512,11 @@ bool readPresentation(SlideDeck* pSlideDeck,
    }
 
    // look for slides markdown
-   FilePath slidesFile = rmdFile.parent().childPath(rmdFile.stem() + ".md");
+   FilePath slidesFile = rmdFile.getParent().getChildPath(rmdFile.getStem() + ".md");
    if (!slidesFile.exists())
    {
-      *pErrorResponse = ErrorResponse(slidesFile.absolutePath() +
+      *pErrorResponse = ErrorResponse(
+         slidesFile.getAbsolutePath() +
                                       " not found");
       return false;
    }
@@ -771,8 +772,8 @@ bool createStandalonePresentation(const FilePath& targetFile,
    externalBrowserVars(slideDeck, &vars);
 
    // target file stream
-   boost::shared_ptr<std::ostream> pOfs;
-   Error error = targetFile.open_w(&pOfs);
+   std::shared_ptr<std::ostream> pOfs;
+   Error error = targetFile.openForWrite(pOfs);
    if (error)
    {
       LOG_ERROR(error);
@@ -941,10 +942,10 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
    FilePath mdFilePath;
 
    // knit if required
-   if (filePath.mimeContentType() == "text/x-r-markdown")
+   if (filePath.getMimeContentType() == "text/x-r-markdown")
    {
       // actual file path will be the md file
-      mdFilePath = filePath.parent().complete(filePath.stem() + ".md");
+      mdFilePath = filePath.getParent().completePath(filePath.getStem() + ".md");
 
       // do the knit if we need to
       ErrorResponse errorResponse;
@@ -1009,8 +1010,8 @@ void handleRangeRequest(const FilePath& targetFile,
    static RangeFileCache s_cache;
 
    // see if we need to do a fresh read
-   if (targetFile.absolutePath() != s_cache.file.absolutePath() ||
-       targetFile.lastWriteTime() != s_cache.file.lastWriteTime())
+   if (targetFile.getAbsolutePath() != s_cache.file.absolutePath() ||
+       targetFile.getLastWriteTime() != s_cache.file.lastWriteTime())
    {
       // clear the cache
       s_cache.clear();
@@ -1025,7 +1026,7 @@ void handleRangeRequest(const FilePath& targetFile,
 
       // update the cache
       s_cache.file = FileInfo(targetFile);
-      s_cache.contentType = targetFile.mimeContentType();
+      s_cache.contentType = targetFile.getMimeContentType();
    }
 
    // always serve from the cache
@@ -1093,9 +1094,9 @@ void handlePresentationFileRequest(const http::Request& request,
 {
    std::string path = http::util::pathAfterPrefix(request,
                                                   "/presentation/" + dir + "/");
-   FilePath resPath = options().rResourcesPath().complete("presentation");
-   FilePath filePath = resPath.complete(dir + "/" + path);
-   pResponse->setContentType(filePath.mimeContentType());
+   FilePath resPath = options().rResourcesPath().completePath("presentation");
+   FilePath filePath = resPath.completePath(dir + "/" + path);
+   pResponse->setContentType(filePath.getMimeContentType());
    setWebCacheableFileResponse(filePath, request, pResponse);
 }
 
@@ -1104,7 +1105,7 @@ void handlePresentationFileRequest(const http::Request& request,
 bool clearKnitrCache(ErrorResponse* pErrorResponse)
 {
    FilePath rmdFile = presentation::state::filePath();
-   std::string ext = rmdFile.extensionLowerCase();
+   std::string ext = rmdFile.getExtensionLowerCase();
    if (rmdFile.exists() && (ext != ".md"))
       return performKnit(rmdFile, true, pErrorResponse);
    else
@@ -1153,7 +1154,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    else if (boost::algorithm::starts_with(path, "mathjax-26/"))
    {
       FilePath filePath =
-            session::options().mathjaxPath().parent().childPath(path);
+            session::options().mathjaxPath().getParent().getChildPath(path);
       setWebCacheableFileResponse(filePath, request, pResponse);
    }
 
@@ -1161,7 +1162,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    // serve the file back
    else
    {
-      FilePath targetFile = presentation::state::directory().childPath(path);
+      FilePath targetFile = presentation::state::directory().getChildPath(path);
       if (!request.headerValue("Range").empty())
       {
          handleRangeRequest(targetFile, request, pResponse);
@@ -1201,11 +1202,11 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       }
 
       // save the help dir
-      s_presentationHelpDir = filePath.parent();
+      s_presentationHelpDir = filePath.getParent();
 
       // check for markdown
-      if (filePath.mimeContentType() == "text/x-markdown" ||
-          filePath.mimeContentType() == "text/x-r-markdown")
+      if (filePath.getMimeContentType() == "text/x-markdown" ||
+          filePath.getMimeContentType() == "text/x-r-markdown")
       {
          handlePresentationHelpMarkdownRequest(filePath,
                                                jsCallbacks,
@@ -1225,7 +1226,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // make sure the directory exists
       if (!s_presentationHelpDir.exists())
       {
-         pResponse->setNotFoundError(s_presentationHelpDir.absolutePath(), request);
+         pResponse->setNotFoundError(s_presentationHelpDir.getAbsolutePath(), request);
          return;
       }
 
@@ -1234,7 +1235,8 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                                      "/help/presentation/");
 
       // serve the file back
-      setWebCacheableFileResponse(s_presentationHelpDir.complete(path),
+      setWebCacheableFileResponse(
+         s_presentationHelpDir.completePath(path),
                                   request, pResponse);
    }
 }

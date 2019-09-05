@@ -48,9 +48,9 @@ std::string iconData(const std::string& iconGroup,
             boost::regex("\\s"), "") + ".png";
 
       // the package did not supply an icon; see if there's one baked in
-      FilePath path = options().rResourcesPath().childPath("connections")
-         .childPath(iconGroup)
-         .childPath(iconFilename);
+      FilePath path = options().rResourcesPath().getChildPath("connections")
+         .getChildPath(iconGroup)
+         .getChildPath(iconFilename);
       if (path.exists())
          return std::string("connections/") + iconGroup + "/" + iconFilename;
 
@@ -66,7 +66,7 @@ std::string iconData(const std::string& iconGroup,
    std::string iconData;
 
    // ensure that the icon file exists and is a small GIF, JPG, or PNG image
-   if (icon.exists() && icon.size() < kMaxIconSize &&
+   if (icon.exists() && icon.getSize() < kMaxIconSize &&
        (icon.hasExtensionLowerCase(".gif") ||
         icon.hasExtensionLowerCase(".png") ||
         icon.hasExtensionLowerCase(".jpg") ||
@@ -77,7 +77,7 @@ std::string iconData(const std::string& iconGroup,
          LOG_ERROR(error);
       else
       {
-         iconData = "data:" + icon.mimeContentType("image/png") + 
+         iconData = "data:" + icon.getMimeContentType("image/png") +
                     ";base64," + iconData;
       }
    }

@@ -99,7 +99,7 @@ bool isValidSrcref(SEXP srcref)
 
 bool handleRBrowseEnv(const core::FilePath& filePath)
 {
-   if (filePath.filename() == "wsbrowser.html")
+   if (filePath.getFilename() == "wsbrowser.html")
    {
       module_context::showContent("R objects", filePath);
       return true;

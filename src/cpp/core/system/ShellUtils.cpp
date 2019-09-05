@@ -59,7 +59,7 @@ ShellCommand& ShellCommand::operator<<(const FilePath& path)
 {
    output_.push_back(' ');
    // TODO: check encoding
-   output_.append(escape(path.absolutePath()));
+   output_.append(escape(path.getAbsolutePath()));
    return *this;
 }
 
@@ -106,9 +106,9 @@ ShellArgs& ShellArgs::operator<<(int arg)
 ShellArgs& ShellArgs::operator<<(const FilePath& path)
 {
    if (encodingMode_ == SystemEncoding)
-      *this << string_utils::utf8ToSystem(path.absolutePath());
+      *this << string_utils::utf8ToSystem(path.getAbsolutePath());
    else
-      *this << path.absolutePath();
+      *this << path.getAbsolutePath();
    return *this;
 }
 

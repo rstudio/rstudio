@@ -78,13 +78,13 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       return false;
    
    FilePath projDir = projectContext().directory();
-   FilePath parentPath = filePath.parent();
+   FilePath parentPath = filePath.getParent();
    std::string websiteDir = module_context::websiteOutputDir();
    bool isPackageProject = projectContext().isPackageProject();
    
    // allow plain files living within the 'revdep' folder
    if (isPackageProject &&
-       parentPath.filename() == "revdep" &&
+       parentPath.getFilename() == "revdep" &&
        !filePath.isDirectory())
    {
       return false;
@@ -95,10 +95,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
    // TODO: it would be better to encode this as a filter that
    // disables traversing of sub-directories we don't want to index
    for (;
-        !parentPath.empty() && parentPath != projDir;
-        parentPath = parentPath.parent())
+        !parentPath.isEmpty() && parentPath != projDir;
+        parentPath = parentPath.getParent())
    {
-      std::string parentName = parentPath.filename();
+      std::string parentName = parentPath.getFilename();
       
       // node_modules
       if (parentName == "node_modules")
@@ -110,11 +110,11 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       
       // packrat
       if (parentName == "packrat" &&
-          parentPath.childPath("packrat.lock").exists())
+          parentPath.getChildPath("packrat.lock").exists())
          return true;
       
       // cmake build directory
-      if (parentPath.childPath("cmake_install.cmake").exists())
+      if (parentPath.getChildPath("cmake_install.cmake").exists())
          return true;
 
       // revdep sub-directories
@@ -608,7 +608,7 @@ public:
       // get the start and end iterators -- default to all leaves
       EntryTree::leaf_iterator it = pEntries_->begin_leaf();
       
-      DEBUG("Searching for node '" << parentPath.absolutePath());
+      DEBUG("Searching for node '" << parentPath.getAbsolutePath());
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parent = pEntries_->find(parentEntry);
       if (parent != pEntries_->end())
@@ -639,7 +639,7 @@ public:
          
          // get file and name
          FilePath filePath(entry.fileInfo.absolutePath());
-         std::string name = filePath.filename();
+         std::string name = filePath.getFilename();
 
          // compare for match (wildcard or standard)
          bool matches = false;
@@ -674,7 +674,7 @@ public:
          if (matches)
          {
             // name and aliased path
-            pNames->push_back(filePath.filename());
+            pNames->push_back(filePath.getFilename());
             pPaths->push_back(module_context::createAliasedPath(filePath));
 
             // return if we are past max results
@@ -777,7 +777,7 @@ public:
       EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);
       if (parentItr == pEntries_->end())
       {
-         LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.absolutePath() + "'");
+         LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.getAbsolutePath() + "'");
          return;
       }
       
@@ -863,7 +863,7 @@ private:
             // file was removed after entering the indexing queue)
             if (!core::isPathNotFoundError(error))
             {
-               error.addProperty("src-file", filePath.absolutePath());
+               error.addProperty("src-file", filePath.getAbsolutePath());
                LOG_ERROR(error);
             }
             return;
@@ -906,8 +906,8 @@ private:
          return false;
 
       // filter files by name and extension
-      std::string ext = filePath.extensionLowerCase();
-      std::string filename = filePath.filename();
+      std::string ext = filePath.getExtensionLowerCase();
+      std::string filename = filePath.getFilename();
       return !filePath.isDirectory() &&
               (ext == ".r" || ext == ".rnw" ||
                ext == ".rmd" || ext == ".rmarkdown" ||
@@ -941,12 +941,12 @@ private:
          return false;
 
       // check for R extension
-      std::string ext = filePath.extensionLowerCase();
+      std::string ext = filePath.getExtensionLowerCase();
       if (ext != ".r" && ext != ".s")
          return false;
 
       // skip large files
-      if (filePath.size() > 2 * 1024 * 1024)
+      if (filePath.getSize() > 2 * 1024 * 1024)
          return false;
 
       // ok to index
@@ -1006,7 +1006,7 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
    idMap_[pDoc->id()] = pIndex;
    
    // create aliases
-   filePathMap_[filePath.absolutePath()] = pIndex;
+   filePathMap_[filePath.getAbsolutePath()] = pIndex;
    
    // kick off an update if necessary
    r_packages::AsyncPackageInformationProcess::update();
@@ -1019,7 +1019,7 @@ void RSourceIndexes::remove(const std::string& id, const std::string&)
    FilePath filePath;
    Error error = source_database::getPath(id, &filePath);
    if (!error)
-      filePathMap_.erase(filePath.absolutePath());
+      filePathMap_.erase(filePath.getAbsolutePath());
 }
 
 void RSourceIndexes::removeAll()
@@ -1213,7 +1213,7 @@ void searchSourceDatabaseFiles(const std::string& term,
 
       // get filename
       FilePath filePath = module_context::resolveAliasedPath(context);
-      std::string filename = filePath.filename();
+      std::string filename = filePath.getFilename();
 
       // compare for match (wildcard or standard)
       bool matches = false;
@@ -2512,7 +2512,7 @@ void addAllProjectSymbols(std::set<std::string>* pSymbols)
 {
    FilePath buildTarget = projects::projectContext().buildTargetPath();
    
-   if (!buildTarget.empty())
+   if (!buildTarget.isEmpty())
       projectIndex().walkFiles(
                buildTarget,
                boost::bind(callbacks::addAllProjectSymbols, _1, pSymbols));

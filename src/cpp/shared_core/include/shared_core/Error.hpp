@@ -45,6 +45,8 @@ class ErrorLock
    friend class Error ;
    friend class Success;
 
+   virtual ~ErrorLock() = default;
+
 private:
    /**
     * @brief Private constructor to prevent further derivation of Error and Success.
@@ -159,9 +161,7 @@ typedef std::vector<std::pair<std::string, std::string> > ErrorProperties;
  * @brief Class which represents an error.
  *
  * This class should not be derived from since it is returned by value throughout the SDK. Instead, create helper
- * functions for each "sub-class" of Error that would be desired.
- *
- * Errors are not copyable. To return by value, use std::move.
+ * functions for each "subclass" of Error that would be desired.
  */
 class Error : public virtual ErrorLock
 {
@@ -212,7 +212,7 @@ public:
    /**
    * @brief Non-virtual destructor because only Success inherits Error and it will keep Error lightweight.
    */
-   ~Error() = default;
+   ~Error() override = default;
 
    /**
     * @brief Overloaded operator bool to allow Errors to be treated as boolean values.
@@ -429,12 +429,12 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
 #define ERROR_LOCATION rstudio::core::ErrorLocation( \
       BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)
 
-#define CATCH_UNEXPECTED_EXCEPTION \
-   catch(const std::exception& e) \
-   { \
-      rstudio::core::logErrorMessage(std::string("Unexpected exception: ") + \
-                        e.what()) ;  \
-   } \
+#define CATCH_UNEXPECTED_EXCEPTION                                            \
+   catch(const std::exception& e)                                             \
+   {                                                                          \
+      rstudio::core::logErrorMessage(std::string("Unexpected exception: ") +  \
+                        e.what()) ;                                           \
+   }                       \
    catch(...) \
    { \
       rstudio::core::logErrorMessage("Unknown exception"); \

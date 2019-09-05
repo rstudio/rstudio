@@ -76,7 +76,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().empty() ? module_context::shellWorkingDirectory() :
+   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
                                                     procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
@@ -232,7 +232,7 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_NAME",
-                           projects::projectContext().file().stem());
+                           projects::projectContext().file().getStem());
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_ID",
                            module_context::activeSession().id());
 #endif

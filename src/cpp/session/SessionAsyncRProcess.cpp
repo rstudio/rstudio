@@ -61,7 +61,7 @@ void AsyncRProcess::start(const char* rCommand,
       const core::FilePath rPath =
             session::options().coreRSourcePath();
       
-      const core::FilePath rTools =  rPath.childPath("Tools.R");
+      const core::FilePath rTools =  rPath.getChildPath("Tools.R");
       
       // insert at begin as Tools.R needs to be sourced first
       rSourceFiles.insert(rSourceFiles.begin(), rTools);
@@ -114,7 +114,7 @@ void AsyncRProcess::start(const char* rCommand,
            it != rSourceFiles.end();
            ++it)
       {
-         command << "source('" << it->absolutePath() << "');";
+         command << "source('" << it->getAbsolutePath() << "');";
       }
       
       command << escapedCommand;
@@ -136,7 +136,7 @@ void AsyncRProcess::start(const char* rCommand,
       options.redirectStdErrToStdOut = true;
 
    // if a working directory was specified, use it
-   if (!workingDir.empty())
+   if (!workingDir.isEmpty())
    {
       options.workingDir = workingDir;
    }
@@ -178,7 +178,7 @@ void AsyncRProcess::start(const char* rCommand,
    input_ = input;
 
    error = module_context::processSupervisor().runProgram(
-            rProgramPath.absolutePath(),
+      rProgramPath.getAbsolutePath(),
             args,
             options,
             cb);

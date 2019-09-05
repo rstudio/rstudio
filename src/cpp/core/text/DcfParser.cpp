@@ -155,7 +155,7 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                                     string_utils::LineEndingPosix);
    if (error)
    {
-      error.addProperty("dcf-file", dcfFilePath.absolutePath());
+      error.addProperty("dcf-file", dcfFilePath.getAbsolutePath());
       *pUserErrMsg = error.getSummary();
       return error;
    }

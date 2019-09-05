@@ -53,9 +53,9 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
 
    // we need to add in the associated libclang headers as
    // they are not discovered / used by default during compilation
-   FilePath llvmPath = s_libraryPath.parent().parent();
+   FilePath llvmPath = s_libraryPath.getParent().getParent();
    boost::format fmt("%1%/lib/clang/%2%/include");
-   fmt % llvmPath.absolutePath() % version.asString();
+   fmt % llvmPath.getAbsolutePath() % version.asString();
    std::string includePath = fmt.str();
    if (FilePath(includePath).exists())
      compileArgs.push_back(std::string("-I") + includePath);
@@ -120,14 +120,14 @@ std::vector<std::string> systemClangVersions()
          continue;
       
       std::vector<FilePath> directories;
-      Error error = prefixPath.children(&directories);
+      Error error = prefixPath.getChildren(directories);
       if (error)
          LOG_ERROR(error);
 
       // generate a path for each 'llvm' directory
       for (const FilePath& path : directories)
-         if (path.filename().find("llvm") == 0)
-            clangVersions.push_back(path.complete("lib/libclang.so.1").absolutePath());
+         if (path.getFilename().find("llvm") == 0)
+            clangVersions.push_back(path.completePath("lib/libclang.so.1").getAbsolutePath());
    }
 #endif
    
@@ -175,7 +175,7 @@ bool LibClang::load(EmbeddedLibrary embedded,
       ostr << versionPath << std::endl;
       if (versionPath.exists())
       {
-         Error error = tryLoad(versionPath.absolutePath(), requiredVersion);
+         Error error = tryLoad(versionPath.getAbsolutePath(), requiredVersion);
          if (!error)
          {
             // if this was the embedded version then record it

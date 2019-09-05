@@ -66,7 +66,7 @@ public:
            it != files_.end();
            it++)
       {
-         filesByPath_[it->path.absolutePath()] = it->status;
+         filesByPath_[it->path.getAbsolutePath()] = it->status;
       }
    }
 

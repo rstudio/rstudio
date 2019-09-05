@@ -102,7 +102,7 @@ json::Object NotebookDocQueue::toJson() const
    json::Object queue;
    queue[kDocQueueId]             = docId_;
    queue[kDocQueueJobDesc]        = jobDesc_;
-   queue[kDocQueueWorkingDir]     = workingDir_.absolutePath();
+   queue[kDocQueueWorkingDir]     = workingDir_.getAbsolutePath();
    queue[kDocQueueCommitMode]     = commitMode_;
    queue[kDocQueuePixelWidth]     = pixelWidth_;
    queue[kDocQueueCharWidth]      = charWidth_;
@@ -269,13 +269,13 @@ void NotebookDocQueue::setWorkingDir(const std::string& workingDir, WorkingDirSo
       // have one, and the current directory if we don't
       core::FilePath docParentPath = docPath_.empty() ? 
          FilePath::safeCurrentPath(module_context::userHomePath()) :
-         module_context::resolveAliasedPath(docPath_).parent();
-      dir = docParentPath.childPath(workingDir);
+         module_context::resolveAliasedPath(docPath_).getParent();
+      dir = docParentPath.getChildPath(workingDir);
    }
 
    // remove any trailing / or .
-   if (!dir.empty() && (dir.stem().empty() || dir.stem() == "."))
-      dir = dir.parent();
+   if (!dir.isEmpty() && (dir.getStem().empty() || dir.getStem() == "."))
+      dir = dir.getParent();
 
    // if this is a real directory, use it; otherwise, use an empty path, which
    // causes use to use the document's path as the working directory

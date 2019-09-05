@@ -208,8 +208,8 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
    if (!filePath.exists())
       return false;
 
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = filePath.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = filePath.openForRead(pIfs);
    if (error)
    {
       LOG_ERROR(error);
@@ -245,7 +245,7 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
          else if (pIfs->fail())
          {
             LOG_WARNING_MESSAGE("I/O Error reading file " +
-                                filePath.absolutePath());
+                                   filePath.getAbsolutePath());
             break;
          }
       }

@@ -175,7 +175,7 @@ std::string buildFileHash(const FilePath& filePath)
    if (filePath.exists())
    {
       std::ostringstream ostr;
-      ostr << filePath.lastWriteTime();
+      ostr << filePath.getLastWriteTime();
       return ostr.str();
    }
    else
@@ -188,12 +188,12 @@ std::string packageBuildFileHash()
 {
    std::ostringstream ostr;
    FilePath buildPath = projects::projectContext().buildTargetPath();
-   ostr << buildFileHash(buildPath.childPath("DESCRIPTION"));
-   FilePath srcPath = buildPath.childPath("src");
+   ostr << buildFileHash(buildPath.getChildPath("DESCRIPTION"));
+   FilePath srcPath = buildPath.getChildPath("src");
    if (srcPath.exists())
    {
-      ostr << buildFileHash(srcPath.childPath("Makevars"));
-      ostr << buildFileHash(srcPath.childPath("Makevars.win"));
+      ostr << buildFileHash(srcPath.getChildPath("Makevars"));
+      ostr << buildFileHash(srcPath.getChildPath("Makevars.win"));
    }
    return ostr.str();
 }
@@ -247,7 +247,7 @@ bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
    else
    {
       std::vector<FilePath> allSrcFiles;
-      Error error = srcDir.children(&allSrcFiles);
+      Error error = srcDir.getChildren(allSrcFiles);
       if (error)
       {
          LOG_ERROR(error);
@@ -256,7 +256,7 @@ bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
 
       for (const FilePath& srcFile : allSrcFiles)
       {
-         std::string ext = srcFile.extensionLowerCase();
+         std::string ext = srcFile.getExtensionLowerCase();
          if (ext == ".cpp" || ext == ".cc")
             return true;
       }
@@ -350,7 +350,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    }
 
    // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.childPath("src");
+   FilePath srcDir = pkgPath.getChildPath("src");
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir);
    if (!compileArgs.empty())
    {
@@ -361,11 +361,11 @@ void RCompilationDatabase::updateForCurrentPackage()
          boost::algorithm::replace_first(
                   arg,
                   "-I..",
-                  "-I" + srcDir.parent().absolutePath());
+                  "-I" + srcDir.getParent().getAbsolutePath());
          boost::algorithm::replace_first(
                   arg,
                   "-I.",
-                  "-I" + srcDir.absolutePath());
+                  "-I" + srcDir.getAbsolutePath());
 
          args.push_back(arg);
       }
@@ -400,10 +400,10 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    }
 
    // copy Makevars to tempdir if it exists
-   FilePath makevarsPath = srcDir.childPath("Makevars");
+   FilePath makevarsPath = srcDir.getChildPath("Makevars");
    if (makevarsPath.exists())
    {
-      Error error = makevarsPath.copy(tempDir.childPath("Makevars"));
+      Error error = makevarsPath.copy(tempDir.getChildPath("Makevars"));
       if (error)
       {
          LOG_ERROR(error);
@@ -411,10 +411,10 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       }
    }
 
-   FilePath makevarsWinPath = srcDir.childPath("Makevars.win");
+   FilePath makevarsWinPath = srcDir.getChildPath("Makevars.win");
    if (makevarsWinPath.exists())
    {
-      Error error = makevarsWinPath.copy(tempDir.childPath("Makevars.win"));
+      Error error = makevarsWinPath.copy(tempDir.getChildPath("Makevars.win"));
       if (error)
       {
          LOG_ERROR(error);
@@ -433,18 +433,18 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
          kCompilationDbPrefix + core::system::generateUuid() + ".cpp";
 
    std::vector<FilePath> children;
-   srcDir.children(&children);
+   srcDir.getChildren(children);
    for (const FilePath& child : children)
    {
-      if (child.extension() == ".cpp")
+      if (child.getExtension() == ".cpp")
       {
-         filename = child.filename();
+         filename = child.getFilename();
          break;
       }
    }
 
    // call R CMD SHLIB on a temp file to capture the compilation args
-   FilePath tempSrcFile = tempDir.childPath(filename);
+   FilePath tempSrcFile = tempDir.getChildPath(filename);
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
    // remove the tempDir
@@ -461,7 +461,7 @@ namespace {
 
 FilePath compilationConfigFilePath()
 {
-   return module_context::scopedScratchPath().complete("cpp-complilation-config");
+   return module_context::scopedScratchPath().completePath("cpp-complilation-config");
 }
 
 
@@ -531,7 +531,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    SourceCppFileInfo info = sourceCppFileInfo(srcFile);
 
    // check if we already have the args for this hash value
-   std::string filename = srcFile.absolutePath();
+   std::string filename = srcFile.getAbsolutePath();
    SourceCppHashes::const_iterator it = sourceCppHashes_.find(filename);
    if (it != sourceCppHashes_.end() && it->second == info.hash)
       return;
@@ -615,13 +615,13 @@ Error RCompilationDatabase::executeSourceCpp(
 
       // add command to arguments
       boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
-      args.push_back(boost::str(fmt % srcPath.absolutePath() % extraParams));
+      args.push_back(boost::str(fmt % srcPath.getAbsolutePath() % extraParams));
    }
    else
    {
       core::system::setenv(&env, "MAKE", "make --dry-run");
       boost::format fmt("attributes::sourceCpp('%1%', verbose = TRUE)");
-      args.push_back(boost::str(fmt % srcPath.absolutePath()));
+      args.push_back(boost::str(fmt % srcPath.getAbsolutePath()));
    }
 
 
@@ -630,7 +630,7 @@ Error RCompilationDatabase::executeSourceCpp(
 
    // execute and capture output
    return core::system::runProgram(
-            core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
+            core::string_utils::utf8ToSystem(rScriptPath.getAbsolutePath()),
             args,
             "",
             options,
@@ -652,11 +652,11 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    module_context::RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << "--dry-run";
-   rCmd << srcPath.filename();
+   rCmd << srcPath.getFilename();
 
    // set options and run
    core::system::ProcessOptions options;
-   options.workingDir = srcPath.parent();
+   options.workingDir = srcPath.getParent();
    options.environment = env;
    return core::system::runCommand(rCmd.shellCommand(), options, pResult);
 }
@@ -671,8 +671,8 @@ bool RCompilationDatabase::isProjectTranslationUnit(
 
    FilePath filePath(filename);
    FilePath pkgPath = projectContext().buildTargetPath();
-   FilePath srcDirPath = pkgPath.childPath("src");
-   FilePath includePath = pkgPath.childPath("inst/include");
+   FilePath srcDirPath = pkgPath.getChildPath("src");
+   FilePath includePath = pkgPath.getChildPath("inst/include");
    return
          filePath.isWithin(srcDirPath) ||
          filePath.isWithin(includePath);
@@ -714,8 +714,8 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
    {
       // setup options for file scanning (including filter)
       FilePath pkgPath = projectContext().buildTargetPath();
-      FilePath srcDirPath = pkgPath.childPath("src");
-      FilePath includePath = pkgPath.childPath("inst/include");
+      FilePath srcDirPath = pkgPath.getChildPath("src");
+      FilePath includePath = pkgPath.getChildPath("inst/include");
       FileScannerOptions options;
       options.recursive = true;
       options.filter =
@@ -773,7 +773,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 
    // if this is a package source file then return the package args
    CompilationConfig config;
-   if (isProjectTranslationUnit(filePath.absolutePath()))
+   if (isProjectTranslationUnit(filePath.getAbsolutePath()))
    {
       // (re-)create on demand
       updateForCurrentPackage();
@@ -788,7 +788,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
       updateForSourceCpp(filePath);
 
       // if we have args then capture them
-      std::string filename = filePath.absolutePath();
+      std::string filename = filePath.getAbsolutePath();
       ConfigMap::const_iterator it = sourceCppConfigMap_.find(filename);
       if (it != sourceCppConfigMap_.end())
          config = it->second;
@@ -809,8 +809,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    // add precompiled headers if necessary
    if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
        !config.PCH.empty() && config.isCpp &&
-       (filePath.extensionLowerCase() != ".c") &&
-       (filePath.extensionLowerCase() != ".m"))
+       (filePath.getExtensionLowerCase() != ".c") &&
+       (filePath.getExtensionLowerCase() != ".m"))
    {
       // extract any -std= argument
       std::string stdArg = extractStdArg(args);
@@ -825,7 +825,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    // if this is a .h file and it's a C++ config then force C++ for
    // libclang (this is necessary because many C++ header files in
    // the R ecosystem use .h
-   if ((filePath.extensionLowerCase() == ".h") && config.isCpp)
+   if ((filePath.getExtensionLowerCase() == ".h") && config.isCpp)
    {
       args.push_back("-x");
       args.push_back("c++");
@@ -856,7 +856,7 @@ RCompilationDatabase::CompilationConfig
 
    // if this is a header file we need to rename it as a temporary .cpp
    // file so that R CMD SHLIB is willing to compile it
-   FilePath tempSrcFile = srcFile.parent().childPath(
+   FilePath tempSrcFile = srcFile.getParent().getChildPath(
             kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
    RemoveOnExitScope removeOnExit(tempSrcFile, ERROR_LOCATION);
    if (SourceIndex::isHeaderFile(srcFile))
@@ -1000,7 +1000,7 @@ namespace {
 
 FilePath precompiledHeaderDir(const std::string& pkgName)
 {
-   return module_context::tempDir().childPath("rstudio/libclang/precompiled/"
+   return module_context::tempDir().getChildPath("rstudio/libclang/precompiled/"
                                               + pkgName);
 }
 
@@ -1026,7 +1026,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       return std::vector<std::string>();
    }
    pkgPath = core::hash::crc32HexHash(pkgPath);
-   precompiledDir = precompiledDir.childPath(pkgPath);
+   precompiledDir = precompiledDir.getChildPath(pkgPath);
 
    // platform/rcpp version specific directory name
    std::string clangVersion = clang().version().asString();
@@ -1043,7 +1043,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // and re-create this one. this enforces only storing precompiled headers
    // for the current version of R/Rcpp/pkg -- if we didn't do this then the
    // storage cost could really pile up over time (~25MB per PCH)
-   FilePath platformPath = precompiledDir.childPath(platformDir);
+   FilePath platformPath = precompiledDir.getChildPath(platformDir);
    if (!platformPath.exists())
    {
       // delete root directory
@@ -1064,11 +1064,11 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    }
 
    // now create the PCH if we need to
-   FilePath pchPath = platformPath.childPath(pkgName + stdArg + ".pch");
+   FilePath pchPath = platformPath.getChildPath(pkgName + stdArg + ".pch");
    if (!pchPath.exists())
    {
       // state cpp file for creating precompiled headers
-      FilePath cppPath = platformPath.childPath(pkgName + stdArg + ".cpp");
+      FilePath cppPath = platformPath.getChildPath(pkgName + stdArg + ".cpp");
       std::string contents;
       boost::format fmt("#include <%1%.h>\n");
       contents.append(boost::str(fmt % pkgName));
@@ -1110,7 +1110,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index,
-                            cppPath.absolutePath().c_str(),
+                            cppPath.getAbsolutePath().c_str(),
                             argsArray.args(),
                             gsl::narrow_cast<int>(argsArray.argCount()),
                             0,
@@ -1119,7 +1119,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       if (tu == nullptr)
       {
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
-                           cppPath.absolutePath());
+                              cppPath.getAbsolutePath());
          clang().disposeIndex(index);
 
          Error removeError = precompiledDir.removeIfExists();
@@ -1130,12 +1130,12 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       }
 
       int ret = clang().saveTranslationUnit(tu,
-                                            pchPath.absolutePath().c_str(),
+                                            pchPath.getAbsolutePath().c_str(),
                                             clang().defaultSaveOptions(tu));
       if (ret != CXSaveError_None)
       {
          boost::format fmt("Error %1% saving translation unit %2%");
-         std::string msg = boost::str(fmt % ret % pchPath.absolutePath());
+         std::string msg = boost::str(fmt % ret % pchPath.getAbsolutePath());
          LOG_ERROR_MESSAGE(msg);
 
          Error removeError = precompiledDir.removeIfExists();
@@ -1150,7 +1150,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
    // reutrn the pch header file args
    args.push_back("-include-pch");
-   args.push_back(pchPath.absolutePath());
+   args.push_back(pchPath.getAbsolutePath());
    return args;
 }
 

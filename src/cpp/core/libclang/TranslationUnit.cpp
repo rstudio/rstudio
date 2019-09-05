@@ -171,7 +171,7 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed) cons
       }
    }
    ostr << "TOTAL MEMORY: " << formatBytes(totalBytes)
-        << " (" << FilePath(getSpelling()).filename() << ")" << std::endl;
+        << " (" << FilePath(getSpelling()).getFilename() << ")" << std::endl;
 
    clang().disposeCXTUResourceUsage(usage);
 }

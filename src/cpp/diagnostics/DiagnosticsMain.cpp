@@ -43,7 +43,7 @@ FilePath userLogPath()
    FilePath logPath = core::system::userSettingsPath(
          homePath(),
          "RStudio-Desktop"
-         ).childPath("log");
+         ).getChildPath("log");
    return logPath;
 }
 
@@ -53,7 +53,7 @@ void writeLogFile(const std::string& logFileName, std::ostream& ostr)
    ostr << "--------------------------------------------------" << std::endl;
    ostr << std::endl;
 
-   FilePath logFilePath = userLogPath().childPath(logFileName);
+   FilePath logFilePath = userLogPath().getChildPath(logFileName);
    if (logFilePath.exists())
    {
       std::string contents;

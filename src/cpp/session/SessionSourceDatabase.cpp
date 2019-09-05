@@ -89,12 +89,12 @@ struct PropertiesDatabase
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
-   pDatabase->path = module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/prop");
+   pDatabase->path = module_context::scopedScratchPath().completePath(kSessionSourceDatabasePrefix "/prop");
    Error error = pDatabase->path.ensureDirectory();
    if (error)
       return error;
 
-   pDatabase->indexFile = pDatabase->path.complete("INDEX");
+   pDatabase->indexFile = pDatabase->path.completePath("INDEX");
 
    if (pDatabase->indexFile.exists())
       return readStringMapFromFile(pDatabase->indexFile, &(pDatabase->index));
@@ -119,7 +119,7 @@ Error putProperties(const std::string& path, const json::Object& properties)
    if (propertiesFile.empty())
    {
       FilePath propFile = file_utils::uniqueFilePath(propertiesDB.path);
-      propertiesFile = propFile.filename();
+      propertiesFile = propFile.getFilename();
       propertiesDB.index[escapedPath] = propertiesFile;
       updateIndex = true;
    }
@@ -127,7 +127,7 @@ Error putProperties(const std::string& path, const json::Object& properties)
    // write the file
    std::ostringstream ostr ;
    json::writeFormatted(properties, ostr);
-   FilePath propertiesFilePath = propertiesDB.path.complete(propertiesFile);
+   FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = writeStringToFile(propertiesFilePath, ostr.str());
    if (error)
       return error;
@@ -161,7 +161,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // read the properties file
    std::string contents ;
-   FilePath propertiesFilePath = propertiesDB.path.complete(propertiesFile);
+   FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = readStringFromFile(propertiesFilePath, &contents,
                               options().sourceLineEnding());
    if (error)
@@ -192,7 +192,7 @@ json::Value pathToProjectPath(const std::string& path)
    // return relative path if we are within the project directory
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (filePath.isWithin(projectContext.directory()))
-      return filePath.relativePath(projectContext.directory());
+      return filePath.getRelativePath(projectContext.directory());
    else
       return json::Value();
 }
@@ -211,7 +211,7 @@ std::string pathFromProjectPath(json::Value projPathJson)
       return std::string();
 
    // interpret path relative to project directory
-   FilePath filePath = projectContext.directory().childPath(projPath);
+   FilePath filePath = projectContext.directory().getChildPath(projPath);
    if (filePath.exists())
       return module_context::createAliasedPath(filePath);
    else
@@ -236,7 +236,7 @@ Error attemptContentsMigration(json::Object& propertiesJson,
       return Success();
    
    // if we already have a contents file, bail (migration already occurred)
-   FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+   FilePath contentsPath(propertiesPath.getAbsolutePath() + kContentsSuffix);
    if (contentsPath.exists())
       return Success();
    
@@ -297,7 +297,7 @@ SourceDocument::SourceDocument(const std::string& type)
 {
    FilePath srcDBPath = source_database::path();
    FilePath docPath = file_utils::uniqueFilePath(srcDBPath);
-   id_ = docPath.filename();
+   id_ = docPath.getFilename();
    type_ = type;
    setContents("");
    dirty_ = false;
@@ -356,7 +356,7 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    // update path and contents
    path_ = path;
    setContents(contents);
-   lastKnownWriteTime_ = docPath.lastWriteTime();
+   lastKnownWriteTime_ = docPath.getLastWriteTime();
 
    // rewind the last content update to the file's write time
    lastContentUpdate_ = lastKnownWriteTime_;
@@ -368,7 +368,7 @@ Error SourceDocument::contentsMatchDisk(bool *pMatches)
 {
    *pMatches = false;
    FilePath docPath = module_context::resolveAliasedPath(path());
-   if (docPath.exists() && docPath.size() <= (1024*1024))
+   if (docPath.exists() && docPath.getSize() <= (1024*1024))
    {
       std::string contents;
       Error error = module_context::readAndDecodeFile(docPath,
@@ -436,7 +436,7 @@ void SourceDocument::checkForExternalEdit(std::time_t* pTime)
    if (!filePath.exists())
       return;
 
-   std::time_t newTime = filePath.lastWriteTime();
+   std::time_t newTime = filePath.getLastWriteTime();
    if (newTime != lastKnownWriteTime_)
       *pTime = newTime;
 }
@@ -451,7 +451,7 @@ void SourceDocument::updateLastKnownWriteTime()
    if (!filePath.exists())
       return;
 
-   lastKnownWriteTime_ = filePath.lastWriteTime();
+   lastKnownWriteTime_ = filePath.getLastWriteTime();
 }
 
 void SourceDocument::setLastKnownWriteTime(std::time_t time)
@@ -576,7 +576,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    // write contents to file
    if (writeContents)
    {
-      FilePath contentsPath(filePath.absolutePath() + kContentsSuffix);
+      FilePath contentsPath(filePath.getAbsolutePath() + kContentsSuffix);
       Error error = writeStringToFile(contentsPath, contents_);
       if (error)
          return error;
@@ -639,13 +639,13 @@ Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
    
 Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceDocument> pDoc)
 {
-   FilePath propertiesPath = source_database::path().complete(id);
+   FilePath propertiesPath = source_database::path().completePath(id);
    
    // attempt to read file contents from sidecar file if available
    std::string contents;
    if (includeContents)
    {
-      FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+      FilePath contentsPath(propertiesPath.getAbsolutePath() + kContentsSuffix);
       if (contentsPath.exists())
       {
          Error error = readStringFromFile(contentsPath,
@@ -708,7 +708,7 @@ bool isSourceDocument(const FilePath& filePath)
    if (filePath.isDirectory())
       return false;
    
-   std::string filename = filePath.filename();
+   std::string filename = filePath.getFilename();
    if (filename == ".DS_Store" ||
        filename == "lock_file" ||
        filename == "suspend_file" ||
@@ -725,8 +725,8 @@ void logUnsafeSourceDocument(const FilePath& filePath,
                              const std::string& reason)
 {
    std::string msg = "Excluded unsafe source document";
-   if (!filePath.empty())
-      msg += " (" + filePath.absolutePath() + ")";
+   if (!filePath.isEmpty())
+      msg += " (" + filePath.getAbsolutePath() + ")";
    msg += ": " + reason;
    LOG_WARNING_MESSAGE(msg);
 }
@@ -747,7 +747,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    if (!pDoc->path().empty())
    {
       filePath = FilePath(pDoc->path());
-      if (filePath.extensionLowerCase() == ".rdata")
+      if (filePath.getExtensionLowerCase() == ".rdata")
       {
          logUnsafeSourceDocument(filePath, ".RData file");
          return false;
@@ -755,7 +755,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    }
 
    // get the size of the file in KB
-   uintmax_t docSizeKb = docDbPath.size() / 1024;
+   uintmax_t docSizeKb = docDbPath.getSize() / 1024;
    std::string kbStr = safe_convert::numberToString(docSizeKb);
 
    // if it's larger than 5MB then always drop it (that's the limit
@@ -792,7 +792,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
    std::vector<FilePath> files ;
-   Error error = source_database::path().children(&files);
+   Error error = source_database::path().getChildren(files);
    if (error)
       return error ;
    
@@ -802,7 +802,7 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
       {
          // get the source doc
          boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
-         Error error = source_database::get(filePath.filename(), pDoc);
+         Error error = source_database::get(filePath.getFilename(), pDoc);
          if (!error)
          {
             // safety filter
@@ -821,7 +821,7 @@ Error list(std::vector<FilePath>* pPaths)
 {
    // list children
    std::vector<FilePath> children;
-   Error error = source_database::path().children(&children);
+   Error error = source_database::path().getChildren(children);
    if (error)
       return error;
    
@@ -838,7 +838,7 @@ Error list(std::vector<FilePath>* pPaths)
 Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
 {   
    // write to file
-   FilePath filePath = source_database::path().complete(pDoc->id());
+   FilePath filePath = source_database::path().completePath(pDoc->id());
    Error error = pDoc->writeToFile(filePath, writeContents);
    if (error)
       return error ;
@@ -856,13 +856,13 @@ Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
    
 Error remove(const std::string& id)
 {
-   return source_database::path().complete(id).removeIfExists();
+   return source_database::path().completePath(id).removeIfExists();
 }
    
 Error removeAll()
 {
    std::vector<FilePath> files ;
-   Error error = source_database::path().children(&files);
+   Error error = source_database::path().getChildren(files);
    if (error)
       return error ;
    

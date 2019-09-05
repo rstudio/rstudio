@@ -63,11 +63,11 @@ public:
                            boost::asio::ssl::context::single_dh_use);
 
       boost::system::error_code ec;
-      context->use_certificate_chain_file(certFile.absolutePath(), ec);
+      context->use_certificate_chain_file(certFile.getAbsolutePath(), ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 
-      context->use_private_key_file(keyFile.absolutePath(), boost::asio::ssl::context::pem, ec);
+      context->use_private_key_file(keyFile.getAbsolutePath(), boost::asio::ssl::context::pem, ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 

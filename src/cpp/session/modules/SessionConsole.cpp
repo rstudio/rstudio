@@ -98,7 +98,7 @@ FilePath s_lastWorkingDirectory;
 void detectWorkingDirectoryChanged()
 {
    FilePath currentWorkingDirectory = module_context::safeCurrentPath();
-   if ( s_lastWorkingDirectory.empty() ||
+   if ( s_lastWorkingDirectory.isEmpty() ||
         (currentWorkingDirectory != s_lastWorkingDirectory) )
    {
       // fire event

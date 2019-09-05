@@ -61,7 +61,7 @@ std::string embeddedLibClangPath()
 #else
    std::string libclang = "libclang.so";
 #endif
-   return options().libclangPath().childPath(libclang).absolutePath();
+   return options().libclangPath().getChildPath(libclang).getAbsolutePath();
 }
 
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
@@ -74,11 +74,11 @@ std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& versi
 
    // add compiler headers
    std::string headersVersion = "5.0.2";
-   compileArgs.push_back("-I" + headersPath.childPath(headersVersion).absolutePath());
+   compileArgs.push_back("-I" + headersPath.getChildPath(headersVersion).getAbsolutePath());
 
    // add libc++ for embedded clang 3.5
    if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.childPath("libc++/5.0.2").absolutePath());
+      compileArgs.push_back("-I" + headersPath.getChildPath("libc++/5.0.2").getAbsolutePath());
 
    return compileArgs;
 }
@@ -99,7 +99,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    // resolve to a full path
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
-   std::string filename = docPath.absolutePath();
+   std::string filename = docPath.getAbsolutePath();
 
    // verify that it's a C/C++ file
    if (!SourceIndex::isSourceFile(filename))
@@ -138,8 +138,8 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 void onSourceDocRemoved(const std::string& id, const std::string& path)
 {
    // resolve source database path
-   std::string resolvedPath = 
-      module_context::resolveAliasedPath(path).absolutePath();
+   std::string resolvedPath =
+      module_context::resolveAliasedPath(path).getAbsolutePath();
 
    // remove from unsaved files
    rSourceIndex().unsavedFiles().remove(resolvedPath);

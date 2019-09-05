@@ -138,9 +138,9 @@ void initializeWorkingDirectory(int argc,
       if (filePath.exists())
       {
          if (filePath.isDirectory())
-            workingDir = filePath.absolutePath();
+            workingDir = filePath.getAbsolutePath();
          else
-            workingDir = filePath.parent().absolutePath();
+            workingDir = filePath.getParent().getAbsolutePath();
       }
    }
 
@@ -178,7 +178,7 @@ void initializeWorkingDirectory(int argc,
       if (core::system::stdoutIsTerminal() &&
          (currentPath != core::system::userHomePath()))
       {
-         workingDir = currentPath.absolutePath();
+         workingDir = currentPath.getAbsolutePath();
       }
 
 #endif
@@ -192,7 +192,7 @@ void initializeWorkingDirectory(int argc,
 
 void setInitialProject(const FilePath& projectFile, QString* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   core::system::setenv(kRStudioInitialProject, projectFile.getAbsolutePath());
    pFilename->clear();
 }
 
@@ -206,14 +206,14 @@ void initializeStartupEnvironment(QString* pFilename)
    FilePath filePath(pFilename->toUtf8().constData());
    if (filePath.exists())
    {
-      std::string ext = filePath.extensionLowerCase();
+      std::string ext = filePath.getExtensionLowerCase();
 
       // if it is a directory or just an .rdata file then we can see
       // whether there is a project file we can automatically attach to
       if (filePath.isDirectory())
       {
          FilePath projectFile = r_util::projectFromDirectory(filePath);
-         if (!projectFile.empty())
+         if (!projectFile.isEmpty())
          {
             setInitialProject(projectFile, pFilename);
          }
@@ -224,7 +224,7 @@ void initializeStartupEnvironment(QString* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
+         core::system::setenv(kRStudioInitialEnvironment, filePath.getAbsolutePath());
          pFilename->clear();
       }
 
@@ -249,7 +249,7 @@ bool isNonProjectFilename(const QString &filename)
       return false;
 
    FilePath filePath(filename.toUtf8().constData());
-   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+   return filePath.exists() && filePath.getExtensionLowerCase() != ".rproj";
 }
 
 bool useRemoteDevtoolsDebugging()
@@ -686,7 +686,7 @@ int main(int argc, char* argv[])
       std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
       {
-         if (openFile.extension() == ".rdprsp")
+         if (openFile.getExtensionLowerCase() == ".rdprsp")
          {
             std::string contents;
             Error error = readStringFromFile(openFile, &contents);
@@ -762,20 +762,20 @@ int main(int argc, char* argv[])
 
       // check for debug configuration
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
-      if (currentPath.complete("conf/rdesktop-dev.conf").exists())
+      if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
       {
-         confPath = currentPath.complete("conf/rdesktop-dev.conf");
-         sessionPath = currentPath.complete("session/rsession");
-         scriptsPath = currentPath.complete("desktop");
+         confPath = currentPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = currentPath.completePath("session/rsession");
+         scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
 
       // if there is no conf path then release mode
-      if (confPath.empty())
+      if (confPath.isEmpty())
       {
          // default paths (then tweak)
-         sessionPath = installPath.complete("bin/rsession");
-         scriptsPath = installPath.complete("bin");
+         sessionPath = installPath.completePath("bin/rsession");
+         scriptsPath = installPath.completePath("bin");
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__

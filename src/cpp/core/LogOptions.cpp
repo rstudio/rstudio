@@ -113,7 +113,7 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
    void setDefaultFileLoggerOptions()
    {
       FileLoggerOptions defaultOptions;
-      profile_.addParams(kLogDir, defaultOptions.logDir.absolutePath(),
+      profile_.addParams(kLogDir, defaultOptions.logDir.getAbsolutePath(),
                          kLogFileMode, defaultOptions.fileMode,
                          kRotate, defaultOptions.rotate,
                          kLogFileIncludePid, defaultOptions.includePid,
@@ -133,7 +133,7 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
    void operator ()(const FileLoggerOptions& options)
    {
       // set file logger option defaults to those that were passed in
-      profile_.addParams(kLogDir, options.logDir.absolutePath(),
+      profile_.addParams(kLogDir, options.logDir.getAbsolutePath(),
                          kRotate, options.rotate,
                          kMaxSizeMb, options.maxSizeMb,
                          kLogFileIncludePid, options.includePid,

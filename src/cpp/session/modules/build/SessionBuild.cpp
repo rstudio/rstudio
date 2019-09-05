@@ -136,11 +136,11 @@ bool isPackageHeaderFile(const FilePath& filePath)
    if (projects::projectContext().hasProject() &&
        (projects::projectContext().config().buildType ==
                                               r_util::kBuildTypePackage) &&
-       (boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h") ||
-        filePath.extensionLowerCase() == ".stan"))
+       (boost::algorithm::starts_with(filePath.getExtensionLowerCase(), ".h") ||
+        filePath.getExtensionLowerCase() == ".stan"))
    {
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      std::string pkgRelative = filePath.relativePath(pkgPath);
+      std::string pkgRelative = filePath.getRelativePath(pkgPath);
       if (boost::algorithm::starts_with(pkgRelative, "src"))
          return true;
       else if (boost::algorithm::starts_with(pkgRelative, "inst/include"))
@@ -180,14 +180,14 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
       if (sourceFilePath.isWithin(buildTargetPath))
       {
          std::string outputDir = module_context::websiteOutputDir();
-         FilePath outputDirPath = buildTargetPath.childPath(outputDir);
+         FilePath outputDirPath = buildTargetPath.getChildPath(outputDir);
          if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
          {
             // are we live previewing?
             bool livePreview = options.livePreviewWebsite;
 
             // force live preview for JS and CSS
-            std::string mimeType = sourceFilePath.mimeContentType();
+            std::string mimeType = sourceFilePath.getMimeContentType();
             if (mimeType == "text/css" || mimeType == "text/javascript")
                livePreview = true;
 
@@ -319,7 +319,7 @@ private:
       if (type == kTestFile)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          FilePath testPath = FilePath(subType);
          executePackageBuild(type, testPath, options, cb);
       }
@@ -331,7 +331,7 @@ private:
       else if (config.buildType == r_util::kBuildTypePackage)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          executePackageBuild(type, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeMakefile)
@@ -359,7 +359,7 @@ private:
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
       else
@@ -378,7 +378,7 @@ private:
           // try to read package from /tests/testthat/filename.R,
           // but ignore errors if not within a package
           FilePath maybePackage = module_context::resolveAliasedPath(
-             packagePath.parent().parent().parent().absolutePath()
+             packagePath.getParent().getParent().getParent().getAbsolutePath()
           );
 
           pkgInfo_.read(maybePackage);
@@ -386,7 +386,7 @@ private:
       else
       {
          // validate that this is a package
-         if (!packagePath.childPath("DESCRIPTION").exists())
+         if (!packagePath.getChildPath("DESCRIPTION").exists())
          {
             std::string message =
                   "The build directory does not contain a DESCRIPTION file and so "
@@ -649,8 +649,8 @@ private:
 
       // use both the R and gcc error parsers
       CompileErrorParsers parsers;
-      parsers.add(rErrorParser(packagePath.complete("R")));
-      parsers.add(gccErrorParser(packagePath.complete("src")));
+      parsers.add(rErrorParser(packagePath.completePath("R")));
+      parsers.add(gccErrorParser(packagePath.completePath("src")));
 
       // track build type
       type_ = type;
@@ -658,11 +658,11 @@ private:
       // add testthat and shinytest result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.parent()));
+         parsers.add(testthatErrorParser(packagePath.getParent()));
       }
       else if (type == kTestPackage) {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
+         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
       }
 
       initErrorParser(packagePath, parsers);
@@ -745,7 +745,7 @@ private:
          rCmd << extraArgs;
 
          // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
          // show the user the command
          enqueCommandString(rCmd.commandString());
@@ -836,7 +836,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -871,7 +871,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -910,7 +910,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
@@ -989,7 +989,7 @@ private:
 
       // run it
       module_context::processSupervisor().runProgram(
-               string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+               string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
                args,
                pkgOptions,
                cb);
@@ -1106,7 +1106,7 @@ private:
 
       // navigate to the tests directory and source all R
       // scripts within
-      FilePath testsPath = packagePath.complete("tests");
+      FilePath testsPath = packagePath.completePath("tests");
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
@@ -1124,8 +1124,8 @@ private:
       );
 
       cmd << boost::str(fmt %
-                        testsPath.absolutePath() %
-                        rScriptPath.absolutePath());
+                           testsPath.getAbsolutePath() %
+                        rScriptPath.getAbsolutePath());
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
@@ -1162,7 +1162,7 @@ private:
 
       std::string testPathEscaped = 
          string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-            testPath.absolutePath()));
+            testPath.getAbsolutePath()));
 
       cmd << boost::str(fmt %
                         pkgInfo_.name() %
@@ -1184,13 +1184,13 @@ private:
       // normalize paths between all tests and single test
       std::string shinyTestName;
       if (type == kTestShinyFile) {
-        shinyTestName = shinyPath.filename();
-        shinyPath = shinyPath.parent().parent();
+        shinyTestName = shinyPath.getFilename();
+        shinyPath = shinyPath.getParent().getParent();
       }
 
       // get temp path to store rds results
       FilePath tempPath;
-      Error error = FilePath::tempFilePath(&tempPath);
+      Error error = FilePath::tempFilePath(tempPath);
       if (error)
       {
          terminateWithError("Find temp dir", error);
@@ -1202,7 +1202,7 @@ private:
          terminateWithError("Creating temp dir", error);
          return;
       }
-      FilePath tempRdsFile = tempPath.complete(core::system::generateUuid() + ".rds");
+      FilePath tempRdsFile = tempPath.completePath(core::system::generateUuid() + ".rds");
 
       // initialize parser
       CompileErrorParsers parsers;
@@ -1231,8 +1231,8 @@ private:
         );
 
         cmd << boost::str(fmt %
-                          shinyPath.absolutePath() %
-                          tempRdsFile.absolutePath());
+                             shinyPath.getAbsolutePath() %
+                          tempRdsFile.getAbsolutePath());
       } else if (type == kTestShinyFile) {
         boost::format fmt(
            "result <- shinytest::testApp('%1%', '%2%');"
@@ -1240,9 +1240,9 @@ private:
         );
 
         cmd << boost::str(fmt %
-                          shinyPath.absolutePath() %
+                             shinyPath.getAbsolutePath() %
                           shinyTestName %
-                          tempRdsFile.absolutePath());
+                          tempRdsFile.getAbsolutePath());
       } else {
         terminateWithError("Shiny test type is unsupported.");
       }
@@ -1324,9 +1324,9 @@ private:
       // compute paths
       FilePath buildPath = projects::projectContext().buildTargetPath();
       if (!session::options().packageOutputInPackageFolder())
-         buildPath = buildPath.parent();
-      FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
-      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+         buildPath = buildPath.getParent();
+      FilePath srcPkgPath = buildPath.getChildPath(pkgInfo.sourcePackageFilename());
+      FilePath chkDirPath = buildPath.getChildPath(pkgInfo.name() + ".Rcheck");
 
       // cleanup
       Error error = srcPkgPath.removeIfExists();
@@ -1343,8 +1343,8 @@ private:
       {
          FilePath buildPath = projects::projectContext().buildTargetPath();
          if (!session::options().packageOutputInPackageFolder())
-            buildPath = buildPath.parent();
-         FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+            buildPath = buildPath.getParent();
+         FilePath chkDirPath = buildPath.getChildPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
          dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
@@ -1361,7 +1361,7 @@ private:
                              const core::system::ProcessCallbacks& cb)
    {
       // validate that there is a Makefile file
-      FilePath makefilePath = targetPath.childPath("Makefile");
+      FilePath makefilePath = targetPath.getChildPath("Makefile");
       if (!makefilePath.exists())
       {
          boost::format fmt ("ERROR: The build directory does "
@@ -1462,14 +1462,14 @@ private:
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.childPath("index.Rmd");
+      FilePath sourceFile = websitePath.getChildPath("index.Rmd");
       if (!sourceFile.exists())
-         sourceFile = websitePath.childPath("index.md");
+         sourceFile = websitePath.getChildPath("index.md");
 
       // look for Output created message
       FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
                                                                      output);
-      if (!outputFile.empty())
+      if (!outputFile.isEmpty())
       {
          json::Object previewRmdJson;
          using namespace module_context;
@@ -1627,9 +1627,9 @@ private:
          // and do differ in some cases)
          if (!pkgInfo_.empty() && !libPaths_.empty())
          {
-            std::string pkgFolder = projects::projectContext().buildTargetPath().filename();
+            std::string pkgFolder = projects::projectContext().buildTargetPath().getFilename();
             FilePath libPath = libPaths_[0];
-            FilePath lockPath = libPath.childPath("00LOCK-" + pkgFolder);
+            FilePath lockPath = libPath.getChildPath("00LOCK-" + pkgFolder);
             lockPath.removeIfExists();
          }
          
@@ -1773,10 +1773,10 @@ private:
    {
       FilePath writtenPath = projects::projectContext().buildTargetPath();
       if (!session::options().packageOutputInPackageFolder())
-         writtenPath = writtenPath.parent();
+         writtenPath = writtenPath.getParent();
       std::string written = module_context::createAliasedPath(writtenPath);
       if (written == "~")
-         written = writtenPath.absolutePath();
+         written = writtenPath.getAbsolutePath();
 
       return type + " package written to " + written;
    }
@@ -2118,10 +2118,10 @@ void onDeferredInit(bool newSession)
       // if we are on mavericks then provide an .R/Makevars that points
       // to clang if necessary
       using namespace module_context;
-      FilePath makevarsPath = userHomePath().childPath(".R/Makevars");
+      FilePath makevarsPath = userHomePath().getChildPath(".R/Makevars");
       if (isOSXMavericks() && !makevarsPath.exists() && !canBuildCpp())
       {
-         Error error = makevarsPath.parent().ensureDirectory();
+         Error error = makevarsPath.getParent().ensureDirectory();
          if (!error)
          {
             std::string makevars = "CC=clang\nCXX=clang++\n";
@@ -2234,10 +2234,10 @@ bool canBuildCpp()
    // try to run build tools
    RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
-   rCmd << cppPath.filename();
+   rCmd << cppPath.getFilename();
 
    core::system::ProcessOptions options;
-   options.workingDir = cppPath.parent();
+   options.workingDir = cppPath.getParent();
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    std::string warningMsg;

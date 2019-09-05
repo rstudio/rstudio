@@ -104,7 +104,7 @@ Error registerPostbackHandler(const std::string& name,
                                                     
    // compute the shell command required to invoke this handler and return it
    Options& options = session::options();
-   *pShellCommand = options.rpostbackPath().absolutePath() + "-" + name ;
+   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name ;
    
    // return success
    return Success();

@@ -62,7 +62,7 @@ LastChunkOutput s_lastChunkOutputs;
 ChunkOutputType chunkOutputType(const FilePath& outputPath)
 {
    ChunkOutputType outputType = ChunkOutputNone;
-   std::string ext = outputPath.extensionLowerCase();
+   std::string ext = outputPath.getExtensionLowerCase();
    if (ext == ".csv")
       outputType = ChunkOutputText;
    else if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
@@ -71,7 +71,7 @@ ChunkOutputType chunkOutputType(const FilePath& outputPath)
       outputType = ChunkOutputHtml;
    else if (ext == ".error")
       outputType = ChunkOutputError;
-   else if (outputPath.extensionLowerCase() == ".rdf")
+   else if (outputPath.getExtensionLowerCase() == ".rdf")
       outputType = ChunkOutputData;
    return outputType;
 }
@@ -161,15 +161,15 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
       // plot/HTML outputs should be requested by the client, so pass the path
       std::string url(kChunkOutputPath "/" + nbCtxId + "/" + 
                          docId + "/" + chunkId + "/" + 
-                         path.filename());
+                         path.getFilename());
 
       // if this is a plot and it doesn't have a display list, hint to client
       // that plot can't be resized
       if (outputType == ChunkOutputPlot)
       {
          // form the path to where we'd expect the snapshot to be
-         FilePath snapshotPath = path.parent().complete(
-               path.stem() + kDisplayListExt);
+         FilePath snapshotPath = path.getParent().completePath(
+               path.getStem() + kDisplayListExt);
          if (!snapshotPath.exists())
             url.append("?fixed_size=1");
       }
@@ -183,7 +183,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 
       Error error = r::exec::RFunction(
          ".rs.readDataCapture",
-         string_utils::utf8ToSystem(path.absolutePath())).call(
+         string_utils::utf8ToSystem(path.getAbsolutePath())).call(
             &argsSEXP,
             &rProtect);
 
@@ -288,8 +288,8 @@ Error handleChunkOutputRequest(const http::Request& request,
    std::string path;
    source_database::getPath(docId, &path);
 
-   FilePath target = chunkCacheFolder(path, docId, ctxId).complete(
-         algorithm::join(parts, "/"));
+   FilePath target = chunkCacheFolder(path, docId, ctxId).completePath(
+      algorithm::join(parts, "/"));
 
    if (!target.exists())
    {
@@ -355,7 +355,7 @@ OutputPair lastChunkOutput(const std::string& docId,
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
-   Error error = outputPath.children(&outputPaths);
+   Error error = outputPath.getChildren(outputPaths);
    if (error)
    {
       LOG_ERROR(error);
@@ -367,7 +367,7 @@ OutputPair lastChunkOutput(const std::string& docId,
    {
       // extract ordinal and update if it's the most recent we've seen so far
       unsigned ordinal = static_cast<unsigned>(
-            ::strtoul(path.stem().c_str(), nullptr, 16));
+            ::strtoul(path.getStem().c_str(), nullptr, 16));
       if (ordinal > last.ordinal)
       {
          last.ordinal = ordinal;
@@ -387,11 +387,11 @@ FilePath chunkOutputPath(
       ChunkOutputContext ctxType)
 {
    // compute path to exact context
-   FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).childPath(chunkId);
+   FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).getChildPath(chunkId);
 
    // fall back to saved context if permitted
    if (!path.exists() && ctxType == ContextSaved)
-      path = chunkCacheFolder(docPath, docId, kSavedCtx).childPath(chunkId);
+      path = chunkCacheFolder(docPath, docId, kSavedCtx).getChildPath(chunkId);
 
    return path;
 }
@@ -416,10 +416,10 @@ FilePath chunkOutputFile(const std::string& docId,
                          const std::string& nbCtxId,
                          const OutputPair& output)
 {
-   return chunkOutputPath(docId, chunkId, nbCtxId, ContextExact).complete(
-         (boost::format("%|1$06x|%2%") 
-                     % (output.ordinal % MAX_ORDINAL)
-                     % chunkOutputExt(output.outputType)).str());
+   return chunkOutputPath(docId, chunkId, nbCtxId, ContextExact).completePath(
+      (boost::format("%|1$06x|%2%")
+       % (output.ordinal % MAX_ORDINAL)
+       % chunkOutputExt(output.outputType)).str());
 }
 
 FilePath chunkOutputFile(const std::string& docId, 
@@ -476,7 +476,7 @@ Error enqueueChunkOutput(
    FilePath outputDir = chunkOutputPath(docPath, docId, chunkId, nbCtxId,
          ContextSaved);
 
-   std::string ctxId(outputDir.parent().filename());
+   std::string ctxId(outputDir.getParent().getFilename());
    std::vector<FilePath> outputPaths;
    json::Array outputs;
 
@@ -485,7 +485,7 @@ Error enqueueChunkOutput(
    // object for the client
    if (outputDir.exists())
    {
-      Error error = outputDir.children(&outputPaths);
+      Error error = outputDir.getChildren(outputPaths);
       if (error) 
          LOG_ERROR(error);
 
@@ -504,12 +504,12 @@ Error enqueueChunkOutput(
             continue;
 
          // extract ordinal from filename
-         unsigned ordinal = ::strtol(outputPath.stem().c_str(), nullptr, 16);
+         unsigned ordinal = ::strtol(outputPath.getStem().c_str(), nullptr, 16);
 
          // extract metadata if present
          json::Value meta;
-         FilePath metadata = outputDir.complete(
-               outputPath.stem() + ".metadata");
+         FilePath metadata = outputDir.completePath(
+            outputPath.getStem() + ".metadata");
          if (metadata.exists())
          {
             std::string contents;
@@ -577,7 +577,7 @@ core::Error writeConsoleOutput(int chunkConsoleType,
 {
    Error error;
    
-   error = targetPath.parent().ensureDirectory();
+   error = targetPath.getParent().ensureDirectory();
    if (error)
       return error;
    

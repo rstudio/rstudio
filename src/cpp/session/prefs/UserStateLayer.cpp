@@ -34,19 +34,19 @@ UserStateLayer::UserStateLayer():
 core::Error UserStateLayer::readPrefs()
 {
    return loadPrefsFromFile(
-         core::system::xdg::userDataDir().complete(kUserStateFile));
+      core::system::xdg::userDataDir().completePath(kUserStateFile));
 }
 
 core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
 {
    return writePrefsToFile(prefs,
-         core::system::xdg::userDataDir().complete(kUserStateFile));
+                           core::system::xdg::userDataDir().completePath(kUserStateFile));
 }
 
 core::Error UserStateLayer::validatePrefs()
 {
    return validatePrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+      options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
 }
 
 } // namespace prefs

@@ -75,7 +75,7 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
                                           = toolsInfo.pathEntries().rbegin();
    for ( ; it != toolsInfo.pathEntries().rend(); ++it)
    {
-      std::string path = it->absolutePath();
+      std::string path = it->getAbsolutePath();
       boost::algorithm::replace_all(path, "/", "\\");
       core::system::addToPath(pTarget, path, true);
    }

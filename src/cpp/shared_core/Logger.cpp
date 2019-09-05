@@ -20,7 +20,7 @@
 
 #include <shared_core/Logger.hpp>
 
-#include <boost/algorithm/string.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <sstream>
@@ -36,43 +36,61 @@ namespace core {
 
 namespace {
 
-std::string formatLogMessage(
-      LogLevel in_logLevel,
-      const std::string& in_message,
-      const std::string& in_programId,
-      bool in_formatForSyslog = false)
+constexpr char s_delim = ';';
+constexpr const char* s_occurredAt = "OCCURRED AT";
+constexpr const char* s_loggedFrom = "LOGGED FROM";
+constexpr const char* s_causedBy = "CAUSED BY";
+
+std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
 {
-   std::string levelPrefix;
    switch (in_logLevel)
    {
       case LogLevel::ERROR:
       {
-         levelPrefix = "ERROR: ";
+         io_ostream << "ERROR";
          break;
       }
       case LogLevel::WARNING:
       {
-         levelPrefix = "WARNING: ";
-         break;
-      }
-      case LogLevel::INFO:
-      {
-         levelPrefix = "INFO: ";
+         io_ostream << "WARNING";
          break;
       }
       case LogLevel::DEBUG:
       {
-         levelPrefix = "DEBUG: ";
+         io_ostream << "DEBUG";
+         break;
+      }
+      case LogLevel::INFO:
+      {
+         io_ostream << "INFO";
          break;
       }
       case LogLevel::OFF:
-      default:
       {
-         // This shouldn't be possible. If it happens don't add a log level.
-         assert(false);
+         io_ostream << "OFF";
          break;
       }
+      default:
+      {
+         assert(false); // This shouldn't be possible
+         if (in_logLevel > LogLevel::INFO)
+            io_ostream << "INFO";
+         else
+            io_ostream << "OFF";
+      }
    }
+
+   return io_ostream;
+}
+
+std::string formatLogMessage(
+      LogLevel in_logLevel,
+      const std::string& in_message,
+      const std::string& in_programId,
+      const ErrorLocation& in_loggedFrom = ErrorLocation(),
+      bool in_formatForSyslog = false)
+{
+   std::ostringstream oss;
 
    if (!in_formatForSyslog)
    {
@@ -80,18 +98,27 @@ std::string formatLogMessage(
       using namespace boost::posix_time;
       ptime time = microsec_clock::universal_time();
 
-      std::ostringstream oss;
       oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
-          << " [" << in_programId << "] "
-          << levelPrefix
-          << in_message << std::endl;
-      return oss.str();
+          << " [" << in_programId << "] ";
    }
 
-   // Formatting for syslog.
-   std::string formattedMessage = levelPrefix + in_message;
-   boost::algorithm::replace_all(formattedMessage, "\n", "|||");
-   return formattedMessage;
+   oss << in_logLevel << " " << in_message << std::endl;
+
+   if (in_loggedFrom.hasLocation())
+   {
+      std::string loggedFromStr = in_loggedFrom.asString();
+      std::replace(loggedFromStr.begin(), loggedFromStr.end(), s_delim, ' ');
+
+      oss << s_delim << " " << s_loggedFrom << ": " << loggedFromStr;
+   }
+
+   if (in_formatForSyslog)
+   {
+      // Newlines delimit logs in syslog, so replace them with |||
+      return boost::replace_all_copy(oss.str(), "\n", "|||");
+   }
+
+   return oss.str();
 }
 
 // Logger Object =======================================================================================================
@@ -109,8 +136,12 @@ public:
     *
     * @param in_logLevel    The log level of the message, which is passed to the destination for informational purposes.
     * @param in_message     The pre-formatted message.
+ * @param in_loggedFrom         The location from which the error message was logged.
     */
-   void writeMessageToAllDestinations(LogLevel in_logLevel, const std::string& in_message);
+   void writeMessageToAllDestinations(
+      LogLevel in_logLevel,
+      const std::string& in_message,
+      const ErrorLocation& in_loggedFrom = ErrorLocation());
 
    /**
     * @brief Constructor to prevent multiple instances of Logger.
@@ -137,17 +168,20 @@ Logger& logger()
    return logger;
 }
 
-void Logger::writeMessageToAllDestinations(LogLevel in_logLevel, const std::string& in_message)
+void Logger::writeMessageToAllDestinations(
+   LogLevel in_logLevel,
+   const std::string& in_message,
+   const ErrorLocation& in_loggedFrom)
 {
    // Preformat the message for non-syslog loggers.
-   std::string formattedMessage = formatLogMessage(in_logLevel, in_message, ProgramId);
+   std::string formattedMessage = formatLogMessage(in_logLevel, in_message, ProgramId, in_loggedFrom);
 
    const auto destEnd = LogDestinations.end();
    for (auto iter = LogDestinations.begin(); iter != destEnd; ++iter)
    {
       if (iter->first == SyslogDestination::getSyslogId())
       {
-         iter->second->writeLog(in_logLevel, formatLogMessage(in_logLevel, in_message, ProgramId, true));
+         iter->second->writeLog(in_logLevel, formatLogMessage(in_logLevel, in_message, ProgramId, in_loggedFrom, true));
       }
       else
       {
@@ -252,9 +286,14 @@ void logErrorAsDebug(const Error& in_error)
 
 void logErrorMessage(const std::string& in_message)
 {
+   logErrorMessage(in_message, ErrorLocation());
+}
+
+void logErrorMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
+{
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::ERROR)
-      log.writeMessageToAllDestinations(LogLevel::ERROR, in_message);
+      log.writeMessageToAllDestinations(LogLevel::ERROR, in_message, in_loggedFrom);
 }
 
 void logWarningMessage(const std::string& in_message)

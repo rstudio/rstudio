@@ -125,8 +125,8 @@ Error writeStringToFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   boost::shared_ptr<std::ostream> pOfs;
-   Error error = filePath.open_w(&pOfs, truncate);
+   std::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.openForWrite(pOfs, truncate);
    if (error)
       return error;
    
@@ -149,7 +149,7 @@ Error writeStringToFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", filePath.absolutePath());
+      error.addProperty("path", filePath.getAbsolutePath());
       return error;
    }
 }
@@ -165,8 +165,8 @@ Error readStringFromFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = filePath.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = filePath.openForRead(pIfs);
    if (error)
       return error;
 
@@ -234,7 +234,7 @@ Error readStringFromFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", filePath.absolutePath());
+      error.addProperty("path", filePath.getAbsolutePath());
       return error;
    }
 }

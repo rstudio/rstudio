@@ -177,7 +177,7 @@ public:
          std::size_t line = startLoc.line - 1;
          std::string message;
          const std::vector<std::string>& lines = fileContents(
-                                 startLoc.filePath.absolutePath());
+            startLoc.filePath.getAbsolutePath());
          if (line < lines.size())
             message = htmlMessage(loc, lines[line]);
 
@@ -330,7 +330,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
    // determine what translation units to look in -- if this is a package
    // then we look throughout all the source code in the package.
    if (rCompilationDatabase().hasTranslationUnit(
-                                         location.filePath.absolutePath()))
+      location.filePath.getAbsolutePath()))
    {
       // get all translation units to search
       std::vector<std::string> files = rCompilationDatabase()
@@ -395,7 +395,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
    else
    {
       TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                             location.filePath.absolutePath(),
+         location.filePath.getAbsolutePath(),
                                              true);
       if (!tu.empty())
          findReferences(USR, tu.getCXTranslationUnit(), pSpelling, pRefs);

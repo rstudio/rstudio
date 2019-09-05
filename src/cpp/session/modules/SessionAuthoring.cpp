@@ -53,7 +53,7 @@ namespace {
 
 FilePath pdfFilePath(const FilePath& texFilePath)
 {
-   return texFilePath.parent().complete(texFilePath.stem() + ".pdf");
+   return texFilePath.getParent().completePath(texFilePath.getStem() + ".pdf");
 }
 
 void viewPdfExternal(const FilePath& texPath)

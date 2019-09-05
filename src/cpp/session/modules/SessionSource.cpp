@@ -260,8 +260,8 @@ Error openDocument(const json::JsonRpcRequest& request,
          return error ;
 
       module_context::consoleWriteError(
-                 "Not all characters in " + documentPath.absolutePath() +
-                 " could be decoded using " + encoding + ". To try a "
+         "Not all characters in " + documentPath.getAbsolutePath() +
+         " could be decoded using " + encoding + ". To try a "
                  "different encoding, choose \"File | Reopen with "
                  "Encoding...\" from the main menu.");
    }
@@ -394,7 +394,7 @@ Error saveDocumentCore(const std::string& contents,
          return error ;
 
       // enque file changed event if we need to
-      if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
+      if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
       {
          using core::system::FileChangeEvent;
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
@@ -811,18 +811,18 @@ Error processSourceTemplate(const std::string& name,
    FilePath templatePath;
 
    // First, check user template path
-   templatePath = core::system::xdg::userConfigDir().complete("templates")
-      .complete(templateName); 
+   templatePath = core::system::xdg::userConfigDir().completePath("templates")
+                                                    .completePath(templateName);
    if (!templatePath.exists())
    {
       // Next, check the system template path.
-      templatePath = core::system::xdg::systemConfigDir().complete("templates")
-         .complete(templateName); 
+      templatePath = core::system::xdg::systemConfigDir().completePath("templates")
+                                                         .completePath(templateName);
       if (!templatePath.exists())
       {
          // No user or system template; check for a built-in template.
-         templatePath = session::options().rResourcesPath().complete("templates")
-            .complete(templateName);
+         templatePath = session::options().rResourcesPath().completePath("templates")
+                                          .completePath(templateName);
 
 #ifdef __APPLE__
          // Special case: built-in templates can have an OSX variant; prefer that if it exists
@@ -926,8 +926,8 @@ Error createRdShell(const json::JsonRpcRequest& request,
       if (!filePath.empty())
       {
          FilePath rdFilePath(string_utils::systemToUtf8(filePath));
-         FilePath manFilePath = packageDir.childPath("man").childPath(
-                                                      rdFilePath.filename());
+         FilePath manFilePath = packageDir.getChildPath("man").getChildPath(
+                                                      rdFilePath.getFilename());
          if (!manFilePath.exists())
          {
             Error error = rdFilePath.copy(manFilePath);
@@ -1017,7 +1017,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    FilePath currentPath = module_context::safeCurrentPath();
    if (filePath.isWithin(currentPath))
    {
-      path = filePath.relativePath(currentPath);
+      path = filePath.getRelativePath(currentPath);
       if (interpreter.empty())
       {
 #ifndef _WIN32
@@ -1028,7 +1028,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    }
    else
    {
-      path = filePath.absolutePath();
+      path = filePath.getAbsolutePath();
    }
 
    // quote if necessary
@@ -1138,7 +1138,7 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
       // don't move the write time backwards (the intent is to sync an edit
       // which has just occurred)
       std::time_t writeTime =
-            module_context::resolveAliasedPath(pDoc->path()).lastWriteTime();
+            module_context::resolveAliasedPath(pDoc->path()).getLastWriteTime();
       if (writeTime > pDoc->lastKnownWriteTime())
          pDoc->setLastKnownWriteTime(writeTime);
    }
@@ -1161,7 +1161,7 @@ void enqueFileEditEvent(const std::string& file)
    // construct file path from full path
    FilePath filePath = (boost::algorithm::starts_with(file, "~"))
          ? module_context::resolveAliasedPath(file)
-         : module_context::safeCurrentPath().complete(file);
+         : module_context::safeCurrentPath().completePath(file);
 
    // if it doesn't exist then create it
    if (!filePath.exists())
@@ -1178,7 +1178,7 @@ void enqueFileEditEvent(const std::string& file)
 
    // construct file system item (also tag with mime type)
    json::Object fileJson = module_context::createFileSystemItem(filePath);
-   fileJson["mime_type"] = filePath.mimeContentType();
+   fileJson["mime_type"] = filePath.getMimeContentType();
    
    // fire event
    ClientEvent event(client_events::kFileEdit, fileJson);

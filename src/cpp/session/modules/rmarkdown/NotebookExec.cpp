@@ -66,13 +66,13 @@ core::Error copyLibDirForOutput(const core::FilePath& file,
 {
    Error error = Success();
 
-   FilePath fileLib = file.parent().complete(kChunkLibDir);
+   FilePath fileLib = file.getParent().completePath(kChunkLibDir);
    if (fileLib.exists())
    {
       std::string docPath;
       source_database::getPath(docId, &docPath);
       error = mergeLib(fileLib, chunkCacheFolder(docPath, docId, nbCtxId)
-                                   .complete(kChunkLibDir));
+         .completePath(kChunkLibDir));
       if (error)
          LOG_ERROR(error);
 
@@ -194,7 +194,7 @@ void ChunkExecContext::connect()
 
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
-            outputPath_.parent().complete(kChunkLibDir),
+            outputPath_.getParent().completePath(kChunkLibDir),
             options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
@@ -318,7 +318,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
 
    // preserve original extension; some output types, such as plots, don't
    // have a canonical extension
-   target = target.parent().complete(target.stem() + file.extension());
+   target = target.getParent().completePath(target.getStem() + file.getExtension());
 
    Error error = file.move(target);
    if (error)
@@ -332,10 +332,10 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    copyLibDirForOutput(file, docId_, nbCtxId_);
 
    // if output sidecar file was provided, write it out
-   if (!sidecar.empty())
+   if (!sidecar.isEmpty())
    {
-      sidecar.move(target.parent().complete(
-               target.stem() + sidecar.extension()));
+      sidecar.move(target.getParent().completePath(
+               target.getStem() + sidecar.getExtension()));
    }
 
    // serialize metadata if provided
@@ -343,8 +343,8 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    {
       std::ostringstream oss;
       json::write(metadata, oss);
-      error = writeStringToFile(target.parent().complete(
-               target.stem() + ".metadata"), oss.str());
+      error = writeStringToFile(target.getParent().completePath(
+               target.getStem() + ".metadata"), oss.str());
    }
 
    enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target,
@@ -363,8 +363,8 @@ void ChunkExecContext::onError(const core::json::Object& err)
    unsigned ordinal;
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
          ChunkOutputError, &ordinal);
-   boost::shared_ptr<std::ostream> pOfs;
-   Error error = target.open_w(&pOfs, true);
+   std::shared_ptr<std::ostream> pOfs;
+   Error error = target.openForWrite(pOfs, true);
    if (error)
    {
       LOG_ERROR(error);

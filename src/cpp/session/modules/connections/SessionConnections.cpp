@@ -511,7 +511,7 @@ void initEnvironment()
    const char * const kRStudioWinutils = "RSTUDIO_WINUTILS";
    std::string rstudioWinutils = core::system::getenv(kRStudioWinutils);
    if (rstudioWinutils.empty())
-      rstudioWinutils = session::options().winutilsPath().absolutePath();
+      rstudioWinutils = session::options().winutilsPath().getAbsolutePath();
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioWinutils, rstudioWinutils);
 
@@ -527,8 +527,8 @@ Error handleConnectionsResourceRequest(const http::Request& request,
 {
    std::string path = http::util::pathAfterPrefix(
          request, "/" kConnectionsPath "/");
-   core::FilePath res = options().rResourcesPath().complete(kConnectionsPath)
-      .childPath(path);
+   core::FilePath res = options().rResourcesPath().completePath(kConnectionsPath)
+      .getChildPath(path);
    pResponse->setCacheableFile(res, request);
    return Success();
 }
@@ -564,7 +564,7 @@ SEXP rs_embeddedViewer(SEXP urlSEXP)
 SEXP rs_connectionOdbcInstallPath()
 {
    r::sexp::Protect rProtect;
-   std::string path = module_context::userScratchPath().absolutePath();
+   std::string path = module_context::userScratchPath().getAbsolutePath();
    return r::sexp::create(path, &rProtect);
 }
 
@@ -606,12 +606,12 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    // find the tools module
    FilePath rPath = session::options().coreRSourcePath();
    std::string toolsPath = core::string_utils::utf8ToSystem(
-      rPath.childPath("Tools.R").absolutePath());
+      rPath.getChildPath("Tools.R").getAbsolutePath());
 
    // find connection installer module
    FilePath modulesPath = session::options().modulesRSourcePath();
    std::string scriptPath = core::string_utils::utf8ToSystem(
-      modulesPath.complete("SessionConnectionsInstaller.R").absolutePath());
+      modulesPath.completePath("SessionConnectionsInstaller.R").getAbsolutePath());
 
    // source the command
    std::string cmd;
@@ -672,7 +672,7 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
    pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
             args,
             options,
             pCPI);

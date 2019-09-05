@@ -37,7 +37,7 @@ UserDirectories userDirectories(SessionType sessionType,
    if (!homePath.empty())
       dirs.homePath = homePath;
    else
-      dirs.homePath = core::system::userHomePath("R_USER|HOME").absolutePath();
+      dirs.homePath = core::system::userHomePath("R_USER|HOME").getAbsolutePath();
 
    // compute user scratch path
    std::string scratchPathName;
@@ -47,8 +47,8 @@ UserDirectories userDirectories(SessionType sessionType,
       scratchPathName = "RStudio";
 
    dirs.scratchPath = core::system::userSettingsPath(
-                                          FilePath(dirs.homePath),
-                                          scratchPathName).absolutePath();
+      FilePath(dirs.homePath),
+      scratchPathName).getAbsolutePath();
 
    return dirs;
 }

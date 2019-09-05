@@ -47,9 +47,9 @@ namespace {
 
 inline core::FilePath projectIdsFilePath(const core::FilePath& userScratchPath)
 {
-   core::FilePath filePath = userScratchPath.childPath(
+   core::FilePath filePath = userScratchPath.getChildPath(
                                     kProjectsSettings "/project-id-mappings");
-   core::Error error = filePath.parent().ensureDirectory();
+   core::Error error = filePath.getParent().ensureDirectory();
    if (error)
       LOG_ERROR(error);
    return filePath;
@@ -105,7 +105,7 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
    {
       error = core::Error(core::json::errc::ParseError,
                                 ERROR_LOCATION);
-      error.addProperty("path", projectEntry.absolutePath());
+      error.addProperty("path", projectEntry.getAbsolutePath());
       return error;
    }
 
@@ -127,7 +127,7 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
       error = core::systemError(boost::system::errc::invalid_argument,
                        "No project directory found in " kProjectEntryDir,
                        ERROR_LOCATION);
-      error.addProperty("path", projectEntry.absolutePath());
+      error.addProperty("path", projectEntry.getAbsolutePath());
       return error;
    }
 
@@ -141,8 +141,8 @@ bool isSharedProject(const core::FilePath& sharedStoragePath,
 {
 #ifndef _WIN32
    core::FilePath projectEntryPath =
-         sharedStoragePath.complete(kProjectSharedDir)
-                          .complete(projectId.asString() + kProjectEntryExt);
+      sharedStoragePath.completePath(kProjectSharedDir)
+                       .completePath(projectId.asString() + kProjectEntryExt);
    if (projectEntryPath.exists())
    {
       // an entry exists, meaning this particular project is shared
@@ -168,11 +168,11 @@ bool isSharedProject(const core::FilePath& sharedStoragePath,
       return false;
 
    *pProjectEntryPath =
-         sharedStoragePath.complete(kProjectSharedDir)
-                          .complete(projectId.asString() + kProjectEntryExt);
+      sharedStoragePath.completePath(kProjectSharedDir)
+                       .completePath(projectId.asString() + kProjectEntryExt);
 
    struct stat st;
-   *pOwnedByEffectiveUser = ::stat(pProjectEntryPath->absolutePath().c_str(), &st) == 0 &&
+   *pOwnedByEffectiveUser = ::stat(pProjectEntryPath->getAbsolutePath().c_str(), &st) == 0 &&
                             st.st_uid == ::geteuid();
    return true;
 }
@@ -192,12 +192,12 @@ std::string toFilePath(const core::r_util::ProjectId& projectId,
    core::FilePath projectEntryPath;
    bool hasAccess = false;
    bool ownedByEffectiveUser = false;
-   bool useQualifiedId = 
-           !projectId.userId().empty() &&
-           sharedStoragePath.complete(kProjectSharedDir).exists() &&
-           isSharedProject(sharedStoragePath, projectId, &projectEntryPath, &hasAccess, &ownedByEffectiveUser) &&
-           hasAccess &&
-           !ownedByEffectiveUser;
+   bool useQualifiedId =
+      !projectId.userId().empty() &&
+         sharedStoragePath.completePath(kProjectSharedDir).exists() &&
+      isSharedProject(sharedStoragePath, projectId, &projectEntryPath, &hasAccess, &ownedByEffectiveUser) &&
+      hasAccess &&
+      !ownedByEffectiveUser;
 
    // if it did, use the fully qualified name; otherwise, use just the project
    // ID (our own projects are stored unqualified in the map)
@@ -247,13 +247,13 @@ inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
                                    const std::string& projectDir)
 {
    // skip if no shared storage path 
-   if (!sharedStoragePath.complete(kProjectSharedDir).exists())
+   if (!sharedStoragePath.completePath(kProjectSharedDir).exists())
       return "";
 
    // enumerate the project entries in shared storage (this should succeed)
    std::vector<core::FilePath> projectEntries;
-   core::Error error = sharedStoragePath.complete(kProjectSharedDir)
-                                        .children(&projectEntries);
+   core::Error error = sharedStoragePath.completePath(kProjectSharedDir)
+                                        .getChildren(projectEntries);
    if (error)
    {
       LOG_ERROR(error);
@@ -263,7 +263,7 @@ inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
    for (const core::FilePath& projectEntry : projectEntries)
    {
       // skip files that don't look like project entries
-      if (projectEntry.extensionLowerCase() != kProjectEntryExt)
+      if (projectEntry.getExtensionLowerCase() != kProjectEntryExt)
          continue;
 
       std::string projectPath;
@@ -276,7 +276,7 @@ inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
       }
       else if (projectDir == projectPath)
       {
-         return projectEntry.stem();
+         return projectEntry.getStem();
       }
    }
 

@@ -50,7 +50,7 @@ private:
       if (error)
          LOG_ERROR(error);
 
-      propertiesPath_ = scratchPath_.childPath("properites");
+      propertiesPath_ = scratchPath_.getChildPath("properites");
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -58,7 +58,7 @@ private:
 
 public:
 
-   bool empty() const { return scratchPath_.empty(); }
+   bool empty() const { return scratchPath_.isEmpty(); }
 
    std::string id() const { return id_; }
 
@@ -275,11 +275,11 @@ public:
 
    uintmax_t suspendSize()
    {
-      FilePath suspendPath = scratchPath_.complete("suspended-session-data");
+      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
       if (!suspendPath.exists())
          return 0;
 
-      return suspendPath.sizeRecursive();
+      return suspendPath.getSizeRecursive();
    }
 
    core::Error destroy()
@@ -318,7 +318,7 @@ public:
         // if we got this far the scope is valid, do one final check for
         // trying to open a shared project if sharing is disabled
         if (!projectSharingEnabled &&
-            r_util::isSharedPath(projectPath.absolutePath(), userHomePath))
+            r_util::isSharedPath(projectPath.getAbsolutePath(), userHomePath))
            return false;
       }
 
@@ -352,7 +352,7 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.childPath("sessions/active");
+      storagePath_ = rootStoragePath.getChildPath("sessions/active");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);

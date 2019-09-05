@@ -420,7 +420,7 @@ private:
       findResults().onFindEnd(handle());
       module_context::enqueClientEvent(
             ClientEvent(client_events::kFindOperationEnded, handle()));
-      if (!tempFile_.empty())
+      if (!tempFile_.isEmpty())
          tempFile_.removeIfExists();
    }
 
@@ -466,8 +466,8 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 
    // Put the grep pattern in a file
    FilePath tempFile = module_context::tempFile("rs_grep", "txt");
-   boost::shared_ptr<std::ostream> pStream;
-   error = tempFile.open_w(&pStream);
+   std::shared_ptr<std::ostream> pStream;
+   error = tempFile.openForWrite(pStream);
    if (error)
       return error;
    std::string encoding = projects::projectContext().hasProject() ?
@@ -523,7 +523,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(directory);
-   cmd << string_utils::utf8ToSystem(dirPath.absolutePath());
+   cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
 
    // Clear existing results
    findResults().clear();

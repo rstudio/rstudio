@@ -449,7 +449,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
-                                 defaultConfigPath.absolutePath() : "";
+                            defaultConfigPath.getAbsolutePath() : "";
    core::program_options::OptionsDescription optionsDesc("rsession",
                                                          configFile);
 
@@ -745,11 +745,11 @@ std::string Options::parseReposConfig(FilePath reposFile)
     if (!reposFile.exists())
       return "";
 
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = FilePath(reposFile).open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = FilePath(reposFile).openForRead(pIfs);
    if (error)
    {
-      core::program_options::reportError("Unable to open repos file: " + reposFile.absolutePath(),
+      core::program_options::reportError("Unable to open repos file: " + reposFile.getAbsolutePath(),
                   ERROR_LOCATION);
 
       return "";
@@ -758,11 +758,11 @@ std::string Options::parseReposConfig(FilePath reposFile)
    try
    {
       ptree pt;
-      ini_parser::read_ini(reposFile.absolutePath(), pt);
+      ini_parser::read_ini(reposFile.getAbsolutePath(), pt);
 
       if (!pt.get_child_optional("CRAN"))
       {
-         LOG_ERROR_MESSAGE("Repos file " + reposFile.absolutePath() + " is missing CRAN entry.");
+         LOG_ERROR_MESSAGE("Repos file " + reposFile.getAbsolutePath() + " is missing CRAN entry.");
          return "";
       }
 
@@ -783,7 +783,7 @@ std::string Options::parseReposConfig(FilePath reposFile)
    catch(const std::exception& e)
    {
       core::program_options::reportError(
-        "Error reading " + reposFile.absolutePath() + ": " + std::string(e.what()),
+         "Error reading " + reposFile.getAbsolutePath() + ": " + std::string(e.what()),
         ERROR_LOCATION);
 
       return "";
@@ -800,7 +800,7 @@ void Options::resolvePath(const FilePath& resourcePath,
                           std::string* pPath)
 {
    if (!pPath->empty())
-      *pPath = resourcePath.complete(*pPath).absolutePath();
+      *pPath = resourcePath.completePath(*pPath).getAbsolutePath();
 }
 
 #ifdef __APPLE__

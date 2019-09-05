@@ -156,7 +156,7 @@ Error changeOwnership(const FilePath& file)
 
    return core::system::posixCall<int>(
             boost::bind(::chown,
-                        file.absolutePath().c_str(),
+                        file.getAbsolutePath().c_str(),
                         serverUser.userId,
                         serverUser.groupId),
             ERROR_LOCATION);
@@ -416,7 +416,7 @@ Error initialize()
       Error error = rootDir.ensureDirectory();
       if (error)
       {
-         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.absolutePath());
+         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
          return error;
       }
 
@@ -425,14 +425,14 @@ Error initialize()
          error = changeOwnership(rootDir);
          if (error)
          {
-            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.absolutePath());
+            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
             return error;
          }
       }
    }
 
-   s_revocationList = rootDir.childPath("revocation-list");
-   s_revocationLockFile = rootDir.childPath("revocation-list.lock");
+   s_revocationList = rootDir.getChildPath("revocation-list");
+   s_revocationLockFile = rootDir.getChildPath("revocation-list.lock");
 
    // create a file lock to gain exclusive access to the revocation list
    boost::shared_ptr<FileLock> lock = FileLock::createDefault();

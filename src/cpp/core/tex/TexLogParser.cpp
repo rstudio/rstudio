@@ -133,7 +133,7 @@ FilePath resolveFilename(const FilePath& rootDir,
       return FilePath();
 
    // Check for existence of file
-   FilePath file = rootDir.complete(result);
+   FilePath file = rootDir.completePath(result);
    if (file.exists() && !file.isDirectory())
       return file;
    else
@@ -272,7 +272,7 @@ private:
            it != fileStack_.rend();
            it++)
       {
-         if (!it->empty())
+         if (!it->isEmpty())
          {
             currentFile_ = *it;
             return;
@@ -292,7 +292,7 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
    // report them relative to the compilation directory -- on Posix use
    // realPath to get a clean full path back
 
-   FilePath path = compileDir.complete(logPath);
+   FilePath path = compileDir.completePath(logPath);
    FilePath realPath;
    Error error = core::system::realPath(path, &realPath);
    if (error)
@@ -346,7 +346,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
    std::vector<size_t> linesUnwrapped;
    unwrapLines(&lines, &linesUnwrapped);
 
-   FilePath rootDir = logFilePath.parent();
+   FilePath rootDir = logFilePath.getParent();
    FileStack fileStack(rootDir);
 
    for (std::vector<std::string>::const_iterator it = lines.begin();
@@ -536,7 +536,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
                      logFilePath,
                      gsl::narrow_cast<int>((it - lines.begin()) + 1),
                      LogEntry::Error,
-                     texFilePath(match[3], logFilePath.parent()),
+                     texFilePath(match[3], logFilePath.getParent()),
                      boost::lexical_cast<int>(match[2]),
                      match[1]));
       }

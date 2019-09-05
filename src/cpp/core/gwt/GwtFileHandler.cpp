@@ -90,7 +90,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
    // get the requested file 
    std::string relativePath = uri.substr(baseUri.length());
    FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
-   if (filePath.empty())
+   if (filePath.isEmpty())
    {
       pResponse->setNotFoundError(request);
       return;

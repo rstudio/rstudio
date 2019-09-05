@@ -74,7 +74,7 @@ json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 
 FilePath userDictionariesDir()
 {
-   return module_context::userScratchPath().childPath("dictionaries");
+   return module_context::userScratchPath().getChildPath("dictionaries");
 }
 
 
@@ -94,13 +94,13 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
 
 FilePath allLanguagesDir()
 {
-   return module_context::userScratchPath().childPath(
+   return module_context::userScratchPath().getChildPath(
                                           "dictionaries/languages-system");
 }
 
 FilePath customDictionariesDir()
 {
-   return module_context::userScratchPath().childPath(
+   return module_context::userScratchPath().getChildPath(
                                           "dictionaries/custom");
 }
 
@@ -120,17 +120,17 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    }
 
    // preference order: custom -> user -> system -> pre-installed
-   if (customDictionariesDir().complete(splat[1]).exists())
+   if (customDictionariesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(customDictionariesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(customDictionariesDir().completePath(splat[1]), request);
    }
-   else if (allLanguagesDir().complete(splat[1]).exists())
+   else if (allLanguagesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(allLanguagesDir().completePath(splat[1]), request);
    }
-   else if (options().hunspellDictionariesPath().complete(splat[1]).exists())
+   else if (options().hunspellDictionariesPath().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(options().hunspellDictionariesPath().complete(splat[1]), request);
+      pResponse->setCacheableFile(options().hunspellDictionariesPath().completePath(splat[1]), request);
    }
    else
    {
@@ -277,7 +277,7 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 {
    // form system path to all languages dir
    std::string targetDir = string_utils::utf8ToSystem(
-                                    allLanguagesDir().absolutePath());
+      allLanguagesDir().getAbsolutePath());
 
    // perform the download
    r::exec::RFunction dlFunc(".rs.downloadAllDictionaries",
@@ -310,7 +310,7 @@ SEXP rs_dictionariesPath()
 {
    r::sexp::Protect protect;
    return r::sexp::create(
-            options().hunspellDictionariesPath().absolutePath(),
+      options().hunspellDictionariesPath().getAbsolutePath(),
             &protect);
 }
 
@@ -318,7 +318,7 @@ SEXP rs_userDictionariesPath()
 {
    r::sexp::Protect protect;
    return r::sexp::create(
-            userDictionariesDir().absolutePath(),
+      userDictionariesDir().getAbsolutePath(),
             &protect);
 }
 

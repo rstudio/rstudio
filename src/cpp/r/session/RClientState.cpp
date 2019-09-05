@@ -93,7 +93,7 @@ void commitState(const json::Object& stateContainer,
       json::writeFormatted(member.value(), ostr);
       
       // write to file
-      FilePath stateFile = stateDir.complete(member.name() + fileExt);
+      FilePath stateFile = stateDir.completePath(member.name() + fileExt);
       Error error = writeStringToFile(stateFile, ostr.str());
       if (error)
          LOG_ERROR(error);   
@@ -121,7 +121,7 @@ void restoreState(const core::FilePath& stateFilePath,
    }
    
    // write to the container 
-   pStateContainer->insert(json::Member(stateFilePath.stem(), value));
+   pStateContainer->insert(json::Member(stateFilePath.getStem(), value));
 }
 
 Error removeAndRecreateStateDir(const FilePath& stateDir)
@@ -141,7 +141,7 @@ Error restoreStateFiles(const FilePath& sourceDir,
 
    // list the files
    std::vector<FilePath> childPaths ;
-   Error error = sourceDir.children(&childPaths);
+   Error error = sourceDir.getChildren(childPaths);
    if (error)
       return error ;
 
@@ -180,15 +180,15 @@ ClientState::ClientState()
 
 void ClientState::restoreGlobalState(const FilePath& stateFile)
 {
-   if (stateFile.extension() == kTemporaryExt)
+   if (stateFile.getExtension() == kTemporaryExt)
       restoreState(stateFile, &temporaryState_);
-   else if (stateFile.extension() == kPersistentExt)
+   else if (stateFile.getExtension() == kPersistentExt)
       restoreState(stateFile, &persistentState_);
 }
 
 void ClientState::restoreProjectState(const FilePath& stateFile)
 {
-   if (stateFile.extension() == kProjPersistentExt)
+   if (stateFile.getExtension() == kProjPersistentExt)
       restoreState(stateFile, &projectPersistentState_);
 }
    

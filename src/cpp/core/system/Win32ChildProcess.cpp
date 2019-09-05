@@ -318,7 +318,7 @@ namespace {
 
 Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
 {
-   HANDLE hFile = ::CreateFileW(file.absolutePathW().c_str(),
+   HANDLE hFile = ::CreateFileW(file.getAbsolutePathW().c_str(),
                                 GENERIC_WRITE,
                                 0,
                                 nullptr,

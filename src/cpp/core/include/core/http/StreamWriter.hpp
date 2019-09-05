@@ -70,7 +70,7 @@ private:
    void writeNextStreamChunk()
    {
       boost::shared_ptr<core::http::StreamResponse> response = response_->getStreamResponse();
-      boost::shared_ptr<core::http::StreamBuffer> buffer = response->nextBuffer();
+      std::shared_ptr<core::http::StreamBuffer> buffer = response->nextBuffer();
 
       if (buffer)
       {

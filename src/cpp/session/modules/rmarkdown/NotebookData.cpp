@@ -62,7 +62,7 @@ void handleNotebookDataResReq(const http::Request& request,
    std::string resourcePath("pagedtable/");
    resourcePath.append(http::util::pathAfterPrefix(request, kNotebookDataResourceLocation));
 
-   core::FilePath pagedTableResource = options().rResourcesPath().childPath(resourcePath);
+   core::FilePath pagedTableResource = options().rResourcesPath().getChildPath(resourcePath);
 
    pResponse->setCacheableFile(pagedTableResource, request);
 }
@@ -93,7 +93,7 @@ core::Error DataCapture::connectDataCapture(
               const json::Object& chunkOptions)
 {
    return r::exec::RFunction(".rs.initDataCapture",
-         string_utils::utf8ToSystem(outputFolder.absolutePath()),
+         string_utils::utf8ToSystem(outputFolder.getAbsolutePath()),
          chunkOptions).call();
 }
 
