@@ -220,7 +220,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
          &sharedScratchPath);
    if (error)
    {
-      *pUserErrMsg = "unable to initialize project - " + error.summary();
+      *pUserErrMsg = "unable to initialize project - " + error.getSummary();
       return error;
    }
 
@@ -523,13 +523,12 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       if (error)
       {
          // base error message
-         boost::system::error_code ec = error.code();
          std::string dir = module_context::createAliasedPath(directory());
          boost::format fmt(
           "\nWarning message:\n"
           "File monitoring failed for project at \"%1%\"\n"
           "Error %2% (%3%)");
-         std::string msg = boost::str(fmt % dir % ec.value() % ec.message());
+         std::string msg = boost::str(fmt % dir % error.getCode() % error.getMessage());
 
          // enumeration of affected features
          if (!monitorSubscribers_.empty())

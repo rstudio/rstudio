@@ -404,7 +404,7 @@ private:
       std::string message =
          "Error generating HTML preview for " +
          module_context::createAliasedPath(targetFile_) + " " +
-         error.summary();
+         error.getSummary();
       terminateWithError(message);
    }
 
@@ -564,7 +564,7 @@ bool okToGenerateFile(const FilePath& rmdPath,
       Error error = filePath.open_r(&pStr);
       if (error)
       {
-         *pErrMsg = "Error opening file: " + error.summary();
+         *pErrMsg = "Error opening file: " + error.getSummary();
          return false;
       }
 

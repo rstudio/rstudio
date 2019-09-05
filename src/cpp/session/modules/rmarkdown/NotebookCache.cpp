@@ -88,7 +88,7 @@ void cleanUnusedCaches()
       error = notebookIdToPath(parts[0], &path);
       if (error)
       {
-         if (error.code() == boost::system::errc::no_such_file_or_directory)
+         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
             // we have no idea what notebook this cache is for, so it's 
             // unusable; delete it

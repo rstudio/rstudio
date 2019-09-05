@@ -218,7 +218,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+   if (error && error.getCode() != core::json::errc::ParamTypeMismatch)
       return error ;
 
    if (encoding.empty())
@@ -1234,7 +1234,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
       std::vector<std::string> filenames;
       Error error = r::sexp::extract(fileSEXP, &filenames, true);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
 
       // fire events
       std::for_each(filenames.begin(), filenames.end(), enqueFileEditEvent);

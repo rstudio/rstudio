@@ -156,7 +156,7 @@ Error parseDcfFile(const FilePath& dcfFilePath,
    if (error)
    {
       error.addProperty("dcf-file", dcfFilePath.absolutePath());
-      *pUserErrMsg = error.summary();
+      *pUserErrMsg = error.getSummary();
       return error;
    }
 

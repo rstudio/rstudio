@@ -349,7 +349,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
       json::Value markersJson;
       Error error = r::json::jsonValueFromList(markersSEXP, &markersJson);
       if (error)
-         throw RErrorException(error.summary());
+         throw RErrorException(error.getSummary());
       if (!json::isType<json::Array>(markersJson))
          throw RErrorException(
             "markers parameter was not a data frame or unnamed list");

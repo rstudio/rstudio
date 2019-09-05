@@ -210,7 +210,7 @@ FilePath systemDefaultRScript(std::string* pErrMsg)
       // log error or failure to return output
       if (error)
       {
-         *pErrMsg = "Error calling which R: " + error.summary();
+         *pErrMsg = "Error calling which R: " + error.getSummary();
       }
       else
       {
@@ -264,7 +264,7 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    if (error)
    {
       *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
-                 error.summary();
+                 error.getSummary();
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -292,7 +292,7 @@ bool validateRScriptPath(const std::string& rScriptPath,
    if (error)
    {
       *pErrMsg = "Unable to determine real path of R script " +
-                 rScriptPath + " (" + error.summary() + ")";
+                 rScriptPath + " (" + error.getSummary() + ")";
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -418,7 +418,7 @@ bool detectRLocationsUsingScript(const FilePath& rScriptPath,
    if (error)
    {
       *pErrMsg = "Error reading R script (" + rScriptPath.absolutePath() +
-                 "), " + error.summary();
+                 "), " + error.getSummary();
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -484,7 +484,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    {
       LOG_ERROR(error);
       *pErrMsg = "Error calling R script (" + rScriptPath +
-                 "), " + error.summary();
+                 "), " + error.getSummary();
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }

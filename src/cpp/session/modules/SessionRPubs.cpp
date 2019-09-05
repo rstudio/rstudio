@@ -253,7 +253,7 @@ private:
 
    void terminateWithError(const Error& error)
    {
-      terminateWithError(error.summary());
+      terminateWithError(error.getSummary());
    }
 
    void terminateWithError(const std::string& error)

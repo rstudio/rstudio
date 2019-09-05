@@ -396,7 +396,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP,
       if (error) 
       {
          // caught below
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
       if (dataFrameSEXP != nullptr && dataFrameSEXP != R_NilValue)
       {
@@ -453,7 +453,7 @@ json::Value getCols(SEXP dataSEXP)
    {
       json::Object err;
       if (error) 
-         err["error"] = error.summary();
+         err["error"] = error.getSummary();
       else
          err["error"] = "Failed to retrieve column definitions for data.";
       result = err;
@@ -569,7 +569,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
       transform.call(&dataSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
 
       // check to see if we've accidentally transformed ourselves into nothing
       // (this shouldn't generally happen without a specific error)
@@ -624,7 +624,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       formatFx.addParam(gsl::narrow_cast<int>(length));
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
    }
 

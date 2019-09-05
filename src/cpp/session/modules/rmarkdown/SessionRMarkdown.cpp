@@ -665,7 +665,7 @@ private:
       std::string message =
             "Error rendering R Markdown for " +
             module_context::createAliasedPath(targetFile_) + " " +
-            error.summary();
+            error.getSummary();
       terminateWithError(message);
    }
 

@@ -1492,7 +1492,7 @@ private:
    void terminateWithError(const std::string& context,
                            const Error& error)
    {
-      std::string msg = "Error " + context + ": " + error.summary();
+      std::string msg = "Error " + context + ": " + error.getSummary();
       terminateWithError(msg);
    }
 

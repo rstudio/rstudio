@@ -391,14 +391,14 @@ void reportHistoryAccessError(const std::string& context,
    LOG_ERROR(error);
 
    // default summary
-   std::string summary = error.summary();
+   std::string summary = error.getSummary();
 
    // if the file exists and we still got no such file or directory
    // then it is almost always permission denied. this seems to happen
    // somewhat frequently on linux systems where the user was root for
    // an operation and ended up writing a .Rhistory
    if (historyFilePath.exists() &&
-       (error.code() == boost::system::errc::no_such_file_or_directory))
+       (error.getCode() == boost::system::errc::no_such_file_or_directory))
    {
       summary = "permission denied (is the .Rhistory file owned by root?)";
    }

@@ -455,7 +455,7 @@ SEXP rs_createGD()
          Error error = r::exec::executeString(".rs.newDesktopGraphicsDevice()");
          if (error)
          {
-            std::string msg = error.summary();
+            std::string msg = error.getSummary();
             r::isCodeExecutionError(error, &msg);
             Rf_warning(("Error creating graphics device: " + msg).c_str());
          }

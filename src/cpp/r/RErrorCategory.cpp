@@ -92,7 +92,7 @@ core::Error rCodeExecutionError(const std::string& errMsg,
    
 bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
 {
-   if (error.code() == r::errc::CodeExecutionError)
+   if (error.getCode() == r::errc::CodeExecutionError)
    {
       if (pErrMsg != nullptr)
          *pErrMsg = error.getProperty("errormsg");
@@ -110,7 +110,7 @@ std::string endUserErrorMessage(const core::Error& error)
    if (isCodeExecutionError(error, &errMsg))
       return errMsg;
    else
-      return error.code().message();
+      return error.getMessage();
 }
 
    

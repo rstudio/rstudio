@@ -148,7 +148,7 @@ pDevDesc shadowDevDesc(pDevDesc dev)
       if (error)
       {
          LOG_ERROR(error);
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
 
       return shadowDev;

@@ -521,7 +521,7 @@ void runWeave(const core::FilePath& rnwPath,
    if (error)
    {
       LOG_ERROR(error);
-      onCompleted(Result::error(error.summary()));
+      onCompleted(Result::error(error.getSummary()));
       return;
    }
 
@@ -560,7 +560,7 @@ void runWeave(const core::FilePath& rnwPath,
       if (error)
       {
          LOG_ERROR(error);
-         onCompleted(Result::error(error.summary()));
+         onCompleted(Result::error(error.getSummary()));
       }
    }
    else

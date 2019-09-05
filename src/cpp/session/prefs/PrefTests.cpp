@@ -39,10 +39,10 @@ std::string findMissingDefaults(const FilePath& schemaFile)
    // Load schema 
    Error error = core::readStringFromFile(schemaFile, &schemaContents);
    if (error)
-      return error.description();
+      return error.asString();
    error = json::parse(schemaContents, ERROR_LOCATION, &value);
    if (error)
-      return error.description();
+      return error.asString();
 
    // Find properties (prefs)
    json::Object schema = value.get_obj();
@@ -101,7 +101,7 @@ test_context("default validation")
 
       error = defaults.validatePrefsFromSchema(
          options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
-      INFO(error.description());
+      INFO(error.asString());
       expect_true(error == Success());
    }
 
@@ -113,7 +113,7 @@ test_context("default validation")
 
       error = defaults.validatePrefsFromSchema(
          options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
-      INFO(error.description());
+      INFO(error.asString());
       expect_true(error == Success());
    }
 }

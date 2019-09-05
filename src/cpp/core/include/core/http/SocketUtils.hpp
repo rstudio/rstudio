@@ -66,12 +66,12 @@ Error closeSocket(SocketService& socket)
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection
-   bool timedOut = error.code() == boost::asio::error::timed_out;
-   bool eof = error.code() == boost::asio::error::eof;
-   bool reset = error.code() == boost::asio::error::connection_reset;
-   bool badFile = error.code() == boost::asio::error::bad_descriptor;
-   bool brokenPipe = error.code() == boost::asio::error::broken_pipe;
-   bool noFile = error.code() == boost::system::errc::no_such_file_or_directory;
+   bool timedOut = error.getCode() == boost::asio::error::timed_out;
+   bool eof = error.getCode() == boost::asio::error::eof;
+   bool reset = error.getCode() == boost::asio::error::connection_reset;
+   bool badFile = error.getCode() == boost::asio::error::bad_descriptor;
+   bool brokenPipe = error.getCode() == boost::asio::error::broken_pipe;
+   bool noFile = error.getCode() == boost::system::errc::no_such_file_or_directory;
 
 #ifdef _WIN32
    boost::system::error_code ec = error.code();
@@ -91,10 +91,10 @@ inline bool isConnectionUnavailableError(const Error& error)
    
    return (
       // for unix domain sockets
-      error.code() == boost::system::errc::no_such_file_or_directory ||
+      error.getCode() == boost::system::errc::no_such_file_or_directory ||
 
       // for tcp-ip and unix domain sockets
-      error.code() == boost::asio::error::connection_refused
+      error.getCode() == boost::asio::error::connection_refused
 
       // for windows named pipes
  #ifdef _WIN32

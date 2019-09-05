@@ -360,7 +360,7 @@ void setDynamicContentResponse(const std::string& content,
       if (error)
       {
          pResponse->setError(http::status::InternalServerError,
-                             error.code().message());
+                             error.getMessage());
       }
    }
    // otherwise just leave it alone
@@ -829,7 +829,7 @@ void handleHttpdRequest(const std::string& location,
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
    
    // error returned explicitly by httpd

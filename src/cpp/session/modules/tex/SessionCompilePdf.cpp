@@ -708,7 +708,7 @@ private:
 
       if (error)
       {
-         terminateWithError("Unable to compile pdf: " + error.summary());
+         terminateWithError("Unable to compile pdf: " + error.getSummary());
       }
       else
       {

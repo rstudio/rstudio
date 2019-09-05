@@ -21,117 +21,355 @@
 #ifndef SHARED_CORE_ERROR_HPP
 #define SHARED_CORE_ERROR_HPP
 
-#include <iosfwd>
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-
+#include <boost/current_function.hpp>
 #include <boost/system/error_code.hpp>
 
-#include <boost/current_function.hpp>
-
 #include "Logger.hpp"
+#include "PImpl.hpp"
 
 namespace rstudio {
 namespace core {
 
 class FilePath;
-class ErrorLocation ;
-   
-class Error ;
-class Success ;
-   
-class Error_lock 
+class Error;
+class Success;
+
+/**
+ * @brief A class which can be derived from in order to prevent child classes from being derived from further.
+ */
+class ErrorLock
 {
    friend class Error ;
-   friend class Success ;
-private:
-   Error_lock() {} 
-   Error_lock(const Error_lock&) {}
-};
- 
-// typedef for error properties
-typedef std::vector<std::pair<std::string,std::string> > ErrorProperties ;
+   friend class Success;
 
-// Concrete class for returning error codes from methods. 
-// Since Error is copied during returns, it should not be derived
-// from to create "convenience" subclasses for various error domains.
-// Rater, a global function like systemError below should be created
-// on a per-domain basis as a helper. 
-// derive from Error_lock to prevent further derivation (see comment above)
-class Error : public virtual Error_lock
+private:
+   /**
+    * @brief Private constructor to prevent further derivation of Error and Success.
+    */
+   ErrorLock() = default;
+
+   /**
+    * @brief Private copy constructor to prevent further derivation of Error and Success.
+    */
+   ErrorLock(const ErrorLock&) = default;
+};
+
+/**
+ * @brief Class which represents the location of an error.
+ */
+class ErrorLocation
 {
 public:
-   Error() ;
+   /**
+    * @brief Default constructor.
+    */
+   ErrorLocation();
 
-   Error(const boost::system::error_code& ec, 
-         const ErrorLocation& location); 
+   /**
+    * @brief Copy constructor.
+    *
+    * @param in_other   The error location to move to this.
+    */
+   ErrorLocation(const ErrorLocation& in_other);
 
-   Error(const boost::system::error_code& ec, 
-         const Error& cause,
-         const ErrorLocation& location); 
+   /**
+    * @brief Move constructor.
+    *
+    * @param in_other   The error location to move to this.
+    */
+   ErrorLocation(ErrorLocation&& in_other) noexcept;
 
-   // non-virtual destructor because no subclasses are permitted and we
-   // want to keep Error as lightweight as possible
-   ~Error() ;
-  
-   // COPYING: via shared_ptr, mutating functions must call copyOnWrite 
-   // prior to executing
-   
-   void addProperty(const std::string& name, const std::string& value); 
-   void addProperty(const std::string& name, const FilePath& value); 
-   void addProperty(const std::string& name, int value);
+   /**
+    * @brief Constructor.
+    *
+    * param in_function     The function in which the error occurred.
+    * @param in_file        The file in which the error occurred.
+    * @param in_line        The line at which the error occurred.
+    */
+   ErrorLocation(const char* in_function, const char* in_file, long in_line);
 
-   void addOrUpdateProperty(const std::string& name, const std::string& value);
-   void addOrUpdateProperty(const std::string& name, const FilePath& value);
-   void addOrUpdateProperty(const std::string& name, int value);
-   
-   void setExpected();
-   bool expected() const;
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_other    The location to copy to this location.
+    *
+    * @return A reference to this location.
+    */
+   ErrorLocation& operator=(const ErrorLocation& in_other);
 
-   const boost::system::error_code& code() const;
+   /**
+    * @brief Equality comparison operator.
+    *
+    * @param in_location    The location to compare this location with.
+    *
+    * @return True if in_location is the same as this location; false otherwise.
+    */
+   bool operator==(const ErrorLocation& in_location) const;
 
-   std::string summary() const;
+   /**
+    * @brief Formats the error location as a string.
+    *
+    * @return The error location formatted as a string.
+    */
+   std::string asString() const;
 
-   std::string description() const;
-   
-   const Error& cause() const ;
+   /**
+    * @brief Gets the file where the error occurred.
+    *
+    * @return The file where the error occurred.
+    */
+   const std::string& getFile() const;
 
-   const ErrorLocation& location() const ;
+   /**
+    * @brief Gets the function where the error occurred.
+    *
+    * @return The function where the error occurred.
+    */
+   const std::string& getFunction() const;
 
-   const ErrorProperties& properties() const;
+   /**
+    * @brief Gets the line where the error occurred.
+    *
+    * @return The line where the error occurred.
+    */
+   long getLine() const;
+
+   /**
+    * @brief Checks whether the location is set.
+    *
+    * @return True if a location has been set; false otherwise.
+    */
+   bool hasLocation() const;
+
+private:
+   // The private implementation of ErrorLocation.
+   PRIVATE_IMPL(m_impl);
+};
+ 
+/**
+ * @brief Convenience typedef for error properties.
+ */
+typedef std::vector<std::pair<std::string, std::string> > ErrorProperties;
+
+
+/**
+ * @brief Class which represents an error.
+ *
+ * This class should not be derived from since it is returned by value throughout the SDK. Instead, create helper
+ * functions for each "sub-class" of Error that would be desired.
+ *
+ * Errors are not copyable. To return by value, use std::move.
+ */
+class Error : public virtual ErrorLock
+{
+public:
+   /**
+    * @brief Default constructor.
+    */
+   Error() = default;
+
+   /**
+    * @brief Copy constructor.
+    *
+    * @param in_other   The error to copy.
+    */
+   Error(const Error& in_other);
+
+   /**
+    * \defgroup FunctionGroup Constructor
+    *
+    * @brief Constructors.
+    *
+    * @param in_ec                   The boost error code to convert from.
+    * @param in_code            The error code. (e.g. 1)
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this plugin.")
+    * @param in_cause                The error which caused this error.
+    * @param in_location        The location of the error.
+    *
+    * @{
+    */
+   Error(const boost::system::error_code& in_ec, const ErrorLocation& in_location);
+   Error(const boost::system::error_code& in_ec, const Error& in_cause, const ErrorLocation& in_location);
+   Error(const boost::system::error_code& in_ec, std::string in_message, const ErrorLocation& in_location);
+   Error(const boost::system::error_code& in_ec,
+         std::string in_message,
+         const Error& in_cause,
+         const ErrorLocation& in_location);
+   Error(int in_code, std::string in_name, const ErrorLocation& in_location);
+   Error(int in_code, std::string in_name, const Error& in_cause, const ErrorLocation& in_location);
+   Error(int in_code, std::string in_name, std::string in_message, const ErrorLocation& in_location);
+   Error(int in_code,
+         std::string in_name,
+         std::string in_message,
+         const Error& in_cause,
+         const ErrorLocation& in_location);
+   /** @} */
+
+   /**
+   * @brief Non-virtual destructor because only Success inherits Error and it will keep Error lightweight.
+   */
+   ~Error() = default;
+
+   /**
+    * @brief Overloaded operator bool to allow Errors to be treated as boolean values.
+    *
+    * @return True if there is an error; false otherwise.
+    */
+   operator bool() const;
+
+   /**
+    * @brief Overloaded operator ! to allow Errors to be treated as boolean values.
+    *
+    * @return True if there is not an error; false otherwise.
+    */
+   bool operator!() const;
+
+   /**
+    * \defgroup FunctionGroup addOrUpdateProperty
+    *
+    * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
+    *        updated.
+    *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    *
+    * @{
+    */
+   void addOrUpdateProperty(const std::string& in_name, const std::string& in_value);
+   void addOrUpdateProperty(const std::string& in_name, const FilePath& in_value);
+   void addOrUpdateProperty(const std::string& in_name, int in_value);
+   /** @} */
+
+   /**
+    * \defgroup FunctionGroup addProperty
+    *
+    * @brief Adds a property of this error. If a property with the same name already exists, a duplicate will be added.
+    *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    *
+    * @{
+    */
+   void addProperty(const std::string& in_name, const std::string& in_value);
+   void addProperty(const std::string& in_name, const FilePath& in_value);
+   void addProperty(const std::string& in_name, int in_value);
+   /** @} */
+
+   /**
+    * @brief Formats the error as a string.
+    *
+    * @return The error formatted as a string.
+    */
+   std::string asString() const;
+
+   /**
+    * @brief Gets the error which caused this error.
+    *
+    * @return The error which caused this error.
+    */
+   const Error& getCause() const;
+
+   /**
+    * @brief Gets the error code.
+    *
+    * @return The error code.
+    */
+   int getCode() const;
+
+   /**
+    * @brief Gets the location where the error occurred.
+    *
+    * @return The location where the error occurred.
+    */
+   const ErrorLocation& getLocation() const;
+
+   /**
+    * @brief Gets the error message.
+    *
+    * @return The error message.
+    */
+   const std::string& getMessage() const;
+
+   /**
+    * @brief Gets the name of the error.
+    *
+    * @return The name of the error.
+    */
+   const std::string& getName() const;
+
+   /**
+    * @brief Gets the custom properties of the error.
+    *
+    * @return The custom properties of this error.
+    */
+   const ErrorProperties& getProperties() const;
+
+   /**
+    * @brief Gets a custom property of this error.
+    *
+    * @param name   The name of the property to retrieve.
+    *
+    * @return The value of the specified property, if it exists; empty string otherwise.
+    */
    std::string getProperty(const std::string& name) const;
 
-   // below based on boost::system::error_code   
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {}
-   operator unspecified_bool_type() const 
-   { 
-      return !isError() ? 0 : unspecified_bool_true;
-   }
-   bool operator!() const 
-   {
-      return !isError();
-   }
+   /**
+    * @brief Gets the cause of the error.
+    *
+    * @return The cause of the error.
+    */
+   std::string getSummary() const;
+
+   /**
+    * @brief Gets whether this error was expected or not.
+    *
+    * @return True if this error was expected; false otherwise.
+    */
+   bool isExpected() const;
+
+   /**
+    * @brief Sets the property that indicates that this error was expected.
+    */
+   void setExpected();
 
 private:
-   bool isError() const ;
-   void copyOnWrite() ;
+   /**
+    * @brief Helper method to copy the error object on write.
+    */
+   void copyOnWrite();
 
-private:
-   struct Impl ;
-   mutable boost::shared_ptr<Impl> pImpl_ ;
+   /**
+    * @brief Helper method that checks whether this error object represents an error or not (i.e. a non-zero error
+    *        code).
+    *
+    * @return True if the error code is non-zero; false otherwise.
+    */
+   bool isError() const;
+
+   // The private implementation of Error.
+   PRIVATE_IMPL_SHARED(m_impl);
+
+   /**
+    * @brief Gets a reference to the private implementation member.
+    *
+    * @return A reference to the private implementation member.
+    */
    Impl& impl() const;
 };
 
-// 
-// No error subclass created for syntactic convenience:
-//   return Success();
-//
+/**
+ * @brief Class which represents a successful operation (i.e. no error).
+ */
 class Success : public Error
 {
 public:
+   /**
+    * @brief Constructor.
+    */
    Success() : Error() {}
 };
 
@@ -145,58 +383,46 @@ public:
 
 #endif // _WIN32
 
-Error systemError(int value, const ErrorLocation& location) ; 
-Error systemError(int value,
-                  const std::string& description,
-                  const ErrorLocation& location) ;
-Error systemError(int value,
-                  const Error& cause,
-                  const ErrorLocation& location) ;
+/**
+ * \defgroup FunctionGroup systemError
+ *
+ * @brief Function which creates a system error.
+ *
+ * @param in_code            The error code. (e.g. 1)
+ * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
+ *                           Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ *
+ * @{
+ */
+Error systemError(int in_code, const ErrorLocation& in_location);
+Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(int in_code, const std::string& in_message, const ErrorLocation& in_location);
+Error systemError(int in_code, const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
+/** @} */
 
-Error fileExistsError(const ErrorLocation& location);
-Error fileNotFoundError(const ErrorLocation& location);
-Error fileNotFoundError(const std::string& path,
-                        const ErrorLocation& location);
-Error fileNotFoundError(const FilePath& filePath,
-                        const ErrorLocation& location);
-bool isFileNotFoundError(const Error& error);
+/**
+ * /defgroup FunctionGroup unknownError
+ *
+ * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be
+ *        determined.
+ *
+ * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
+ *                           Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return An unknown error.
+ *
+ * @{
+ */
+Error unknownError(const std::string& in_message, const ErrorLocation& in_location);
+Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
+/** @} */
 
-bool isPathNotFoundError(const Error& error);
-Error pathNotFoundError(const ErrorLocation& location);
-Error pathNotFoundError(const std::string& path,
-                        const ErrorLocation& location);
-
-
-class ErrorLocation
-{
-public:
-   ErrorLocation() ;
-   ErrorLocation(const char* function, const char* file, long line) ;
-   virtual ~ErrorLocation() ;
-   
-   // immutable - copying and assignment via shared_ptr 
-
-   bool hasLocation() const ;
-
-   const std::string& function() const ;
-   const std::string& file() const ;
-   long line() const ;
-   
-   std::string asString() const;
-   
-   bool operator==(const ErrorLocation& location) const;
-   bool operator!=(const ErrorLocation& location) const
-   {
-      return !(*this == location); 
-   }
-
-private:
-   struct Impl ;
-   boost::shared_ptr<Impl> pImpl_ ;
-};
-   
-std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
-   
 } // namespace core
 } // namespace rstudio
 

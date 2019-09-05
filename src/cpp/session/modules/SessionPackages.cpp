@@ -321,7 +321,7 @@ public:
       if (error)
       {
          // log error if it wasn't merly a null return value
-         if (error.code() != r::errc::UnexpectedDataTypeError)
+         if (error.getCode() != r::errc::UnexpectedDataTypeError)
             LOG_ERROR(error);
          return;
       }

@@ -153,7 +153,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
    if (error)
    {
       std::string msg = "Failed to create terminal: '";
-      msg += error.summary();
+      msg += error.getSummary();
       msg += "'";
       r::exec::error(msg);
       return R_NilValue;
@@ -170,7 +170,7 @@ SEXP rs_terminalCreate(SEXP captionSEXP, SEXP showSEXP, SEXP shellTypeSEXP)
    if (error)
    {
       std::string msg = "Failed to start terminal: '";
-      msg += error.summary();
+      msg += error.getSummary();
       msg += "'";
 
       reapConsoleProcess(*ptrProc);
@@ -410,7 +410,7 @@ SEXP rs_terminalActivate(SEXP idSEXP, SEXP showSEXP)
          {
             LOG_ERROR(err);
             reapConsoleProcess(*proc);
-            r::exec::error(err.summary());
+            r::exec::error(err.getSummary());
             return R_NilValue;
          }
       }
@@ -496,7 +496,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    if (error)
    {
       std::string msg = "Failed to create terminal for job execution: '";
-      msg += error.summary();
+      msg += error.getSummary();
       msg += "'";
       r::exec::error(msg);
       return R_NilValue;
@@ -513,7 +513,7 @@ SEXP rs_terminalExecute(SEXP commandSEXP,
    if (error)
    {
       std::string msg = "Failed to start job in terminal: '";
-      msg += error.summary();
+      msg += error.getSummary();
       msg += "'";
 
       reapConsoleProcess(*ptrProc);

@@ -152,7 +152,7 @@ ProgramStatus Options::read(int argc,
    Error error = core::system::installPath("..", argv[0], &installPath_);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
+      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
       return ProgramStatus::exitFailure();
    }
 

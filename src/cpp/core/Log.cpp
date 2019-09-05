@@ -93,19 +93,17 @@ void writeError(const Error& error, std::ostream& os)
    std::ostringstream errorStream ;
 
    // basics
-   const boost::system::error_code& ec = error.code();
-   errorStream << "ERROR " << ec.category().name() << " error "
-               << ec.value() << " (" << ec.message() << ")"  ;
+   errorStream << "ERROR " << error.getName() << " error "
+               << error.getCode() << " (" << error.getMessage() << ")"  ;
 
    // properties
-   if ( !error.properties().empty() )
+   if ( !error.getProperties().empty() )
    {
       errorStream << " [" ;
-      std::vector<std::pair<std::string,std::string> >::const_iterator
-      it = error.properties().begin() ;
+      auto it = error.getProperties().begin() ;
       errorStream << it->first << "=" << it->second ;
       ++it ;
-      for ( ; it != error.properties().end(); ++it)
+      for ( ; it != error.getProperties().end(); ++it)
          errorStream << ", " << it->first << "=" << it->second ;
       errorStream << "]" ;
    }
@@ -115,13 +113,13 @@ void writeError(const Error& error, std::ostream& os)
 
    // location
    os << DELIM << " " << OCCURRED_AT << ": "
-      << cleanDelims(error.location().asString());
+      << cleanDelims(error.getLocation().asString());
 
    // cause (recurse)
-   if (error.cause() )
+   if (error.getCause() )
    {
       os << DELIM << " " << CAUSED_BY << ": " ;
-      writeError(error.cause(), os);
+      writeError(error.getCause(), os);
    }
 }
    

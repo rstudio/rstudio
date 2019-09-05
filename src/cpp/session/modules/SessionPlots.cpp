@@ -468,7 +468,7 @@ void setImageFileResponse(const FilePath& imageFilePath,
       if (!core::isPathNotFoundError(error))
          LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
 }
 
@@ -575,7 +575,7 @@ void handleZoomPngRequest(const http::Request& request,
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 
-                          saveError.code().message());
+                          saveError.getMessage());
       return;
    }
    
@@ -606,7 +606,7 @@ void handlePngRequest(const http::Request& request,
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
       return;
    }
 

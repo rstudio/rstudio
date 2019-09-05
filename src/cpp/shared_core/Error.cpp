@@ -21,11 +21,8 @@
 #include <ostream>
 
 #include <shared_core/Error.hpp>
-
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
-
-#include <boost/lexical_cast.hpp>
 
 #ifdef _WIN32
 #include <boost/system/windows_error.hpp>
@@ -34,70 +31,264 @@
 namespace rstudio {
 namespace core {
 
-struct Error::Impl
+namespace {
+
+const std::string s_errorExpected = "expected";
+const std::string s_errorExpectedValue = "yes";
+
+} // anonymous namespace
+
+
+// Error Location ======================================================================================================
+std::ostream& operator<<(std::ostream& in_os, const ErrorLocation& in_location)
 {
-   boost::system::error_code ec ;
-   ErrorProperties properties ;
-   Error cause ;
-   ErrorLocation location ;
+   in_os << in_location.getFunction() << " "
+         << in_location.getFile() << ":"
+         << in_location.getLine();
+
+   return in_os;
+}
+
+struct ErrorLocation::Impl
+{
+   Impl() : Line(0)
+   {
+   }
+
+   Impl(const char* in_function, const char* in_file, long in_line) :
+      Function(in_function), File(in_file), Line(in_line)
+   {
+   }
+
+   std::string Function;
+   std::string File;
+   long Line;
 };
 
-Error::Error()
-   : pImpl_()
+PRIVATE_IMPL_DELETER_IMPL(ErrorLocation)
+
+ErrorLocation::ErrorLocation() :
+   m_impl(new Impl())
 {
 }
 
-Error::Error(const boost::system::error_code& ec, 
-             const ErrorLocation& location)
-   : pImpl_(new Impl()) 
-{
-   pImpl_->ec = ec ;
-   pImpl_->location = location ;
-}
-   
-Error::Error(const boost::system::error_code& ec,
-             const Error& cause,
-             const ErrorLocation& location)
-   : pImpl_(new Impl()) 
-{
-   pImpl_->ec = ec ;
-   pImpl_->cause = cause ;
-   pImpl_->location = location ;
-}
-   
- 
-Error::~Error() 
+ErrorLocation::ErrorLocation(const ErrorLocation& in_other) :
+   m_impl(new Impl(*in_other.m_impl))
 {
 }
 
-void Error::copyOnWrite()
+ErrorLocation::ErrorLocation(rstudio::core::ErrorLocation&& in_other) noexcept :
+   m_impl(std::move(in_other.m_impl))
 {
-   if ( (pImpl_.get() != nullptr) && !pImpl_.unique())
-   {
-      Impl* pOldImpl = pImpl_.get() ;
-      pImpl_ = boost::shared_ptr<Impl>(new Impl(*pOldImpl)) ;
-   }
+   // Don't leave an error location with a nullptr impl.
+   in_other.m_impl.reset(new Impl());
 }
 
-const boost::system::error_code& Error::code() const
+ErrorLocation::ErrorLocation(const char* in_function, const char* in_file, long in_line) :
+   m_impl(new Impl(in_function, in_file, in_line))
 {
-   return impl().ec;
 }
 
-   
-std::string Error::summary() const
+ErrorLocation& ErrorLocation::operator=(const ErrorLocation& in_other)
+{
+   m_impl->File = in_other.m_impl->File;
+   m_impl->Function = in_other.m_impl->Function;
+   m_impl->Line = in_other.m_impl->Line;
+
+   return *this;
+}
+
+bool ErrorLocation::operator==(const ErrorLocation& in_location) const
+{
+   return getFunction() == in_location.getFunction() &&
+          getFile() == in_location.getFile() &&
+          getLine() == in_location.getLine();
+}
+
+std::string ErrorLocation::asString() const
 {
    std::ostringstream ostr;
-   ostr << code().category().name() << " error "
-        << code().value() << " (" << code().message() << ")"  ;
+   ostr << *this;
    return ostr.str();
 }
 
-std::string Error::description() const
+const std::string& ErrorLocation::getFunction() const
+{
+   return m_impl->Function;
+}
+
+const std::string& ErrorLocation::getFile() const
+{
+   return m_impl->File;
+}
+
+long ErrorLocation::getLine() const
+{
+   return m_impl->Line;
+}
+
+bool ErrorLocation::hasLocation() const
+{
+   return getLine() > 0;
+}
+
+// Error ===============================================================================================================
+// COPYING: via shared_ptr, mutating functions must call copyOnWrite prior to executing
+struct Error::Impl
+{
+   Impl() : Code(0)
+   { }
+
+   Impl(const Impl& in_other) = default;
+
+   Impl(int in_code, std::string in_name, ErrorLocation in_location) :
+      Code(in_code),
+      Name(std::move(in_name)),
+      Location(std::move(in_location))
+   { }
+
+   Impl(int in_code, std::string in_name, const Error& in_cause, ErrorLocation in_location) :
+      Code(in_code),
+      Name(std::move(in_name)),
+      Cause(in_cause),
+      Location(std::move(in_location))
+   { }
+
+   Impl(int in_code, std::string in_name, std::string in_message, ErrorLocation in_location) :
+      Code(in_code),
+      Name(std::move(in_name)),
+      Message(std::move(in_message)),
+      Location(std::move(in_location))
+   { }
+
+   Impl(int in_code, std::string in_name, std::string in_message, const Error& in_cause, ErrorLocation in_location) :
+      Code(in_code),
+      Name(std::move(in_name)),
+      Message(std::move(in_message)),
+      Cause(in_cause),
+      Location(std::move(in_location))
+   { }
+
+   int Code;
+   std::string Name;
+   std::string Message;
+   ErrorProperties Properties;
+   Error Cause;
+   ErrorLocation Location;
+};
+
+// This is a shallow copy because deep copy will only be performed on a write.
+Error::Error(const Error& in_other) :
+   m_impl(in_other.m_impl)
+{
+}
+
+Error::Error(const boost::system::error_code& in_ec, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), in_ec.message(), in_location))
+{
+}
+
+Error::Error(const boost::system::error_code& in_ec, const Error& in_cause, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), in_ec.message(), in_cause, in_location))
+{
+}
+
+Error::Error(const boost::system::error_code& in_ec, std::string in_message, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_location))
+{
+}
+
+Error::Error(
+   const boost::system::error_code& in_ec,
+   std::string in_message,
+   const Error& in_cause,
+   const ErrorLocation& in_location) :
+      m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_cause, in_location))
+{
+}
+
+Error::Error(int in_code, std::string in_name, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_code, std::move(in_name), in_location))
+{
+}
+
+Error::Error(int in_code, std::string in_name, const Error& in_cause, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_code, std::move(in_name), in_cause, in_location))
+{
+}
+
+Error::Error(int in_code, std::string in_name, std::string in_message, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_location))
+{
+}
+
+Error::Error(
+   int in_code,
+   std::string in_name,
+   std::string in_message,
+   const Error& in_cause,
+   const ErrorLocation& in_location) :
+      m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_cause, in_location))
+{
+}
+
+Error::operator bool() const
+{
+   return !isError();
+}
+
+bool Error::operator!() const
+{
+   return isError();
+}
+
+void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
+{
+   copyOnWrite();
+
+   for (auto & property : impl().Properties)
+   {
+      if (property.first == in_name)
+      {
+         property.second = in_value;
+         return;
+      }
+   }
+
+   addProperty(in_name, in_value);
+}
+
+void Error::addOrUpdateProperty(const std::string& in_name, const FilePath& in_value)
+{
+   addOrUpdateProperty(in_name, in_value.absolutePath());
+}
+
+void Error::addOrUpdateProperty(const std::string& in_name, int in_value)
+{
+   addOrUpdateProperty(in_name, safe_convert::numberToString(in_value));
+}
+
+void Error::addProperty(const std::string& in_name, const std::string& in_value)
+{
+   copyOnWrite();
+   impl().Properties.push_back(std::make_pair(in_name, in_value));
+}
+
+void Error::addProperty(const std::string& in_name, const FilePath& in_value)
+{
+   addProperty(in_name, in_value.absolutePath());
+}
+
+void Error::addProperty(const std::string& in_name, int in_value)
+{
+   addProperty(in_name, safe_convert::numberToString(in_value));
+}
+
+std::string Error::asString() const
 {
    std::ostringstream ostr;
-   ostr << summary();
-   auto& props = properties();
+   ostr << getSummary();
+   auto& props = getProperties();
    if (!props.empty())
    {
       ostr << " (";
@@ -107,272 +298,133 @@ std::string Error::description() const
          if (i < props.size() - 1)
             ostr << ", ";
       }
-      ostr << ") at " << location().asString();
+      ostr << ") at " << getLocation().asString();
    }
    return ostr.str();
 }
 
-const Error& Error::cause() const
+const Error& Error::getCause() const
 {
-   return impl().cause ;
+   return impl().Cause;
 }
 
-const ErrorLocation& Error::location() const
+int Error::getCode() const
 {
-   return impl().location ;
+   return impl().Code;
 }
 
-void Error::addProperty(const std::string& name, const std::string& value)
+const ErrorLocation& Error::getLocation() const
 {
-   copyOnWrite() ;
-   impl().properties.push_back(std::make_pair(name, value)) ;
+   return impl().Location;
+}
+
+const std::string& Error::getMessage() const
+{
+   return impl().Message;
+}
+
+const std::string& Error::getName() const
+{
+   return impl().Name;
 }
    
-void Error::addProperty(const std::string& name, const FilePath& value)
+const ErrorProperties& Error::getProperties() const
 {
-   addProperty(name, value.absolutePath());
+   return impl().Properties;
 }
    
-void Error::addProperty(const std::string& name, int value)
+std::string Error::getProperty(const std::string& in_name) const
 {
-   addProperty(name, safe_convert::numberToString(value));
-}
-
-void Error::addOrUpdateProperty(const std::string& name, const std::string& value)
-{
-   copyOnWrite() ;
-
-   for (auto & property : impl().properties)
+   for (const auto & it : getProperties())
    {
-      if (property.first == name)
-      {
-         property.second = value;
-         return;
-      }
-   }
-
-   addProperty(name, value);
-}
-
-void Error::addOrUpdateProperty(const std::string& name, const FilePath& value)
-{
-   addOrUpdateProperty(name, value.absolutePath());
-}
-
-void Error::addOrUpdateProperty(const std::string& name, int value)
-{
-   addOrUpdateProperty(name, safe_convert::numberToString(value));
-}
-
-#define kErrorExpected      "expected"
-#define kErrorExpectedValue "yes"
-
-void Error::setExpected()
-{
-   addProperty(kErrorExpected, kErrorExpectedValue);
-}
-
-bool Error::expected() const
-{
-   return getProperty(kErrorExpected) == kErrorExpectedValue;
-}
-
-   
-const std::vector<std::pair<std::string,std::string> >& 
-      Error::properties() const
-{
-   return impl().properties ;
-}
-   
-std::string Error::getProperty(const std::string& name) const
-{
-   for (const auto & it : properties())
-   {
-      if (it.first == name)
+      if (it.first == in_name)
          return it.second;
    }
    
    return std::string();
 }
 
-bool Error::isError() const 
+std::string Error::getSummary() const
 {
-   if ( pImpl_.get() != nullptr )
-      return pImpl_->ec.value() != 0 ;
+   std::ostringstream ostr;
+   ostr << impl().Name << " error "
+        << impl().Code << " (" << impl().Message << ")";
+   return ostr.str();
+}
+
+bool Error::isExpected() const
+{
+   return getProperty(s_errorExpected) == s_errorExpectedValue;
+}
+
+void Error::setExpected()
+{
+   addProperty(s_errorExpected, s_errorExpectedValue);
+}
+
+void Error::copyOnWrite()
+{
+   if ((m_impl != nullptr) && !m_impl.unique())
+      m_impl.reset(new Impl(impl()));
+}
+
+bool Error::isError() const
+{
+   if (m_impl != nullptr)
+      return impl().Code != 0;
    else
-      return false ;
+      return false;
 }
 
 Error::Impl& Error::impl() const
 {
-   if (pImpl_.get() == nullptr)
-      pImpl_.reset(new Impl()) ;
-   return *pImpl_ ;
+   // This doesn't really change the internal meaning of the object, so it's safe to const_cast here.
+   if (m_impl == nullptr)
+      const_cast<std::shared_ptr<Impl>*>(&m_impl)->reset(new Impl());
+   return *m_impl;
 }
 
-Error systemError(int value, const ErrorLocation& location) 
+// Common error creation functions =====================================================================================
+Error systemError(int in_value, const ErrorLocation& in_location)
 {
    using namespace boost::system ;
-   return Error(error_code(value, system_category()), location);
+   return Error(error_code(in_value, system_category()), in_location);
 }
 
-Error systemError(int value,
-                  const Error& cause,
-                  const ErrorLocation& location)
+Error systemError(int in_value,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
 {
    using namespace boost::system ;
-   return Error(error_code(value, system_category()), cause, location);
+   return Error(error_code(in_value, system_category()), in_cause, in_location);
 }
 
-Error systemError(int value,
-                  const std::string& description,
-                  const ErrorLocation& location)
+Error systemError(int in_value,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
 {
-   Error error = systemError(value, location);
-   error.addProperty("description", description);
+   Error error = systemError(in_value, in_location);
+   error.addProperty("description", in_description);
    return error;
 }
 
-Error fileExistsError(const ErrorLocation& location)
+Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)
 {
-#ifdef _WIN32
-   return systemError(boost::system::windows_error::file_exists, location);
-#else
-   return systemError(boost::system::errc::file_exists, location);
-#endif
+   return Error(
+      1,
+      "UnknownError",
+      in_message,
+      in_location);
 }
 
-Error fileNotFoundError(const ErrorLocation& location)
+Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location)
 {
-#ifdef _WIN32
-   return systemError(boost::system::windows_error::file_not_found, location);
-#else
-   return systemError(boost::system::errc::no_such_file_or_directory, location);
-#endif
-}
-
-Error fileNotFoundError(const std::string& path,
-                        const ErrorLocation& location)
-{
-   Error error = fileNotFoundError(location);
-   error.addProperty("path", path);
-   return error;
-}
-
-Error fileNotFoundError(const FilePath& filePath,
-                        const ErrorLocation& location)
-{
-   Error error = fileNotFoundError(location);
-   error.addProperty("path", filePath);
-   return error;
-}
-
-bool isFileNotFoundError(const Error& error)
-{
-#ifdef _WIN32
-   return error.code() == boost::system::windows_error::file_not_found;
-#else
-   return error.code() == boost::system::errc::no_such_file_or_directory;
-#endif
-}
-
-bool isPathNotFoundError(const Error& error)
-{
-#ifdef _WIN32
-   return error.code() == boost::system::windows_error::path_not_found;
-#else
-   return error.code() == boost::system::errc::no_such_file_or_directory;
-#endif
-}
-
-Error pathNotFoundError(const ErrorLocation& location)
-{
-#ifdef _WIN32
-   return systemError(boost::system::windows_error::path_not_found, location);
-#else
-   return systemError(boost::system::errc::no_such_file_or_directory, location);
-#endif
-}
-
-Error pathNotFoundError(const std::string& path, const ErrorLocation& location)
-{
-   Error error = pathNotFoundError(location);
-   error.addProperty("path", path);
-   return error;
-}
-   
-struct ErrorLocation::Impl 
-{
-   Impl() : line(0) 
-   {
-   }
-   
-   Impl(const char* function, const char* file, long line)
-      : function(function), file(file), line(line) 
-   {
-   }
-   
-   std::string function ;
-   std::string file ;
-   long line ;
-};
-
-ErrorLocation::ErrorLocation()
-   : pImpl_(new Impl()) 
-{
-}
-
-ErrorLocation::ErrorLocation(const char* function, const char* file, long line)
-   : pImpl_(new Impl(function, file, line)) 
-{
-}
-
-ErrorLocation::~ErrorLocation() 
-{
-}
-
-
-bool ErrorLocation::hasLocation() const 
-{
-   return line() > 0 ;
-}
-
-const std::string& ErrorLocation::function() const 
-{
-   return pImpl_->function ;
-}
-
-const std::string& ErrorLocation::file() const 
-{
-   return pImpl_->file ;
-}
-
-long ErrorLocation::line() const
-{
-   return pImpl_->line ;
-}
-   
-std::string ErrorLocation::asString() const
-{
-   std::ostringstream ostr ;
-   ostr << *this;
-   return ostr.str();
-}
-   
-bool ErrorLocation::operator==(const ErrorLocation& location) const
-{
-   return function() == location.function() &&
-          file() == location.file() &&
-          line() == location.line();
-}
-   
-std::ostream& operator<<(std::ostream& os, const ErrorLocation& location)
-{
-   os << location.function() << " " 
-      << location.file() << ":" 
-      << location.line() ;
-   
-   return os;
+   return Error(
+      1,
+      "UnknownError",
+      in_message,
+      in_cause,
+      in_location);
 }
 
 } // namespace core 

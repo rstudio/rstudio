@@ -327,7 +327,7 @@ public:
 
       Error error = setBody(filePath, filter, 128, usePadding(request, filePath));
       if (error)
-         setError(status::InternalServerError, error.code().message());
+         setError(status::InternalServerError, error.getMessage());
    }
 
    bool usePadding(const Request& request,

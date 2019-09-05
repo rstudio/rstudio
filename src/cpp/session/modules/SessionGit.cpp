@@ -1845,7 +1845,7 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    error = s_git_.commit(commitMsg, amend, signOff, &pCP);
    if (error)
    {
-      if (error.code() == boost::system::errc::illegal_byte_sequence)
+      if (error.getCode() == boost::system::errc::illegal_byte_sequence)
       {
          pResponse->setError(error, error.getProperty("description"));
          return Success();

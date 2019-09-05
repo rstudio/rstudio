@@ -340,7 +340,7 @@ SEXP rs_getThemeColors()
    if (error)
    {
       // Client returned something we didn't understand
-      r::exec::warning("No theme colors could be determined: " + error.summary());
+      r::exec::warning("No theme colors could be determined: " + error.getSummary());
       return R_NilValue;
    }
 

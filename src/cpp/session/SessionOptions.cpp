@@ -92,7 +92,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    Error error = core::system::installPath("..", argv[0], &resourcePath_);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
+      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
       return ProgramStatus::exitFailure();
    }
 

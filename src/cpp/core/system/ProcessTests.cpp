@@ -359,7 +359,7 @@ test_context("ProcessTests")
       }
 
       if (lastError)
-         std::cout << lastError.summary() << " " << lastError.location().asString() << std::endl;
+         std::cout << lastError.getSummary() << " " << lastError.getLocation().asString() << std::endl;
 
       CHECK(numError == 0);
 

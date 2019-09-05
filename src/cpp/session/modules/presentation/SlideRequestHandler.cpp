@@ -278,7 +278,7 @@ bool performKnit(const FilePath& rmdPath,
    Error error = module_context::rScriptPath(&rProgramPath);
    if (error)
    {
-      *pErrorResponse = ErrorResponse(error.summary());
+      *pErrorResponse = ErrorResponse(error.getSummary());
       return false;
    }
 
@@ -346,7 +346,7 @@ bool performKnit(const FilePath& rmdPath,
             &result);
    if (error)
    {
-      *pErrorResponse = ErrorResponse(error.summary());
+      *pErrorResponse = ErrorResponse(error.getSummary());
       return false;
    }
    else if (result.exitStatus != EXIT_SUCCESS)
@@ -525,7 +525,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrorResponse = ErrorResponse(error.summary());
+      *pErrorResponse = ErrorResponse(error.getSummary());
       return false;
    }
 
@@ -541,7 +541,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrorResponse = ErrorResponse(error.summary());
+      *pErrorResponse = ErrorResponse(error.getSummary());
       return false;
    }
 
@@ -776,7 +776,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrorResponse = ErrorResponse(error.summary());
+      *pErrorResponse = ErrorResponse(error.getSummary());
       return false;
    }
 

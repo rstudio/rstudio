@@ -79,7 +79,7 @@ void reportRestoreError(const std::string& context,
    core::log::logError(restoreError, location);
    
    // notify end-user
-   std::string report = message + ": " + error.code().message() + "\n";
+   std::string report = message + ": " + error.getMessage() + "\n";
    REprintf(report.c_str());
 }   
    

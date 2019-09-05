@@ -2438,7 +2438,7 @@ Error terminateChildProcesses(pid_t pid,
 
 bool isUserNotFoundError(const Error& error)
 {
-   return error.code() == boost::system::errc::permission_denied;
+   return error.getCode() == boost::system::errc::permission_denied;
 }
 
 Error userBelongsToGroup(const user::User& user,

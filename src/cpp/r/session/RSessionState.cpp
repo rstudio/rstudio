@@ -217,7 +217,7 @@ void reportError(const std::string& action,
    core::log::logError(serializationError, location);
    
    // notify end-user
-   std::string report = message + ": " + error.code().message() + "\n";
+   std::string report = message + ": " + error.getMessage() + "\n";
    if (reportFunction)
       reportFunction(report.c_str());
    else

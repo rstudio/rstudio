@@ -643,7 +643,7 @@ Error installPackrat(const json::JsonRpcRequest& request,
    {
       std::string desc = error.getProperty("description");
       if (desc.empty())
-         desc = error.summary();
+         desc = error.getSummary();
 
       module_context::consoleWriteError(desc + "\n");
 

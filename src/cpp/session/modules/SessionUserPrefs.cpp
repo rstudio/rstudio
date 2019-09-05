@@ -76,7 +76,7 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    Error error = r::json::jsonValueFromObject(value, &prefValue);
    if (error)
    {
-      r::exec::error("Unexpected value: " + error.summary());
+      r::exec::error("Unexpected value: " + error.getSummary());
       return false;
    }
 
@@ -98,7 +98,7 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    error = prefs.writeValue(pref, prefValue);
    if (error)
    {
-      r::exec::error("Could not save preferences: " + error.description());
+      r::exec::error("Could not save preferences: " + error.asString());
       return false;
    }
 
@@ -118,7 +118,7 @@ SEXP rs_removePref(SEXP prefName)
    Error error = userPrefs().clearValue(pref);
    if (error)
    {
-      r::exec::error("Could not save preferences: " + error.description());
+      r::exec::error("Could not save preferences: " + error.asString());
    }
 
    module_context::events().onPreferencesSaved();
@@ -216,7 +216,7 @@ SEXP rs_allPrefs()
    Error error = asDataFrame.call(&frame, &protect);
    if (error)
    {
-      r::exec::error(error.description());
+      r::exec::error(error.asString());
    }
    else
    {

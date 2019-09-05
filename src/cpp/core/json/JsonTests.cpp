@@ -798,7 +798,7 @@ TEST_CASE("Json")
 
       json::Object defaults;
       Error err = json::getSchemaDefaults(schema, &defaults);
-      INFO(err.description());
+      INFO(err.asString());
       REQUIRE(err == Success());
       
       REQUIRE(defaults["first"] == 5);

@@ -90,7 +90,7 @@ void rSuicideError(const Error& error)
 {
    // provide error message if the error was unexpected
    std::string msg;
-   if (!error.expected())
+   if (!error.isExpected())
       msg = core::log::errorAsLogEntry(error);
 
    rSuicide(msg);
@@ -158,7 +158,7 @@ void doHistoryFileOperation(SEXP args,
    // perform operation
    Error error = fileOp(historyFilePath);
    if (error)
-      throw r::exec::RErrorException(error.code().message());
+      throw r::exec::RErrorException(error.getMessage());
 }
    
 bool consoleInputHook(const std::string& prompt,
@@ -291,7 +291,7 @@ int RReadConsole (const char *pmt,
                error = initError;
 
             // log the error if it was unexpected
-            if (!error.expected())
+            if (!error.isExpected())
                LOG_ERROR(error);
             
             // terminate the session (use suicide so that no special
@@ -584,7 +584,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
       std::vector<std::string> commands ;
       Error error = sexp::extract(CAR(args), &commands);
       if (error)
-         throw r::exec::RErrorException(error.code().message());
+         throw r::exec::RErrorException(error.getMessage());
       
       // append them
       ConsoleHistory& history = consoleHistory();

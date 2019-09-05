@@ -424,7 +424,7 @@ private:
             if (optionsError)
             {
                 execContext_->onConsoleOutput(module_context::ConsoleOutputError,
-                                              optionsError.summary());
+                                              optionsError.getSummary());
             }
          }
          execUnit_ = unit;

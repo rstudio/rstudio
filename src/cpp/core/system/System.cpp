@@ -76,7 +76,7 @@ void addToSystemPath(const FilePath& path, bool prepend)
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
-   if (!error.expected())
+   if (!error.isExpected())
       core::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }

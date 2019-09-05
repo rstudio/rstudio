@@ -208,7 +208,7 @@ void logError(const Error& in_error)
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::ERROR)
    {
-      log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.summary());
+      log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.getSummary());
    }
 }
 
@@ -219,7 +219,7 @@ void logError(const Error& in_error, const ErrorLocation& in_location)
    {
       std::string loggedFromStr = "LOGGED FROM: " + in_location.asString();
       std::replace(loggedFromStr.begin(), loggedFromStr.end(), ';', ' ');
-      log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.summary() + "; " + loggedFromStr);
+      log.writeMessageToAllDestinations(LogLevel::ERROR, in_error.asString() + "; " + loggedFromStr);
    }
 }
 
@@ -228,7 +228,7 @@ void logErrorAsWarning(const Error& in_error)
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::WARNING)
    {
-      log.writeMessageToAllDestinations(LogLevel::WARNING, in_error.summary());
+      log.writeMessageToAllDestinations(LogLevel::WARNING, in_error.asString());
    }
 }
 
@@ -237,7 +237,7 @@ void logErrorAsInfo(const Error& in_error)
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::INFO)
    {
-      log.writeMessageToAllDestinations(LogLevel::INFO, in_error.summary());
+      log.writeMessageToAllDestinations(LogLevel::INFO, in_error.asString());
    }
 }
 
@@ -246,7 +246,7 @@ void logErrorAsDebug(const Error& in_error)
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::DEBUG)
    {
-      log.writeMessageToAllDestinations(LogLevel::DEBUG, in_error.summary());
+      log.writeMessageToAllDestinations(LogLevel::DEBUG, in_error.asString());
    }
 }
 

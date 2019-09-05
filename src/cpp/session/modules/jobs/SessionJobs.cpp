@@ -245,13 +245,13 @@ SEXP rs_stopScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = stopScriptJob(id);
-   if (error.code() == boost::system::errc::no_such_file_or_directory)
+   if (error.getCode() == boost::system::errc::no_such_file_or_directory)
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
    else if (error)
    {
-      r::exec::error("Error while stopping script job: " + error.summary());
+      r::exec::error("Error while stopping script job: " + error.getSummary());
    }
    return R_NilValue;
 }

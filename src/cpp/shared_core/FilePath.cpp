@@ -1317,6 +1317,75 @@ bool RecursiveDirectoryIterator::finished() const
 }
 
 
+Error fileExistsError(const ErrorLocation& in_location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::file_exists, in_location);
+#else
+   return systemError(boost::system::errc::file_exists, in_location);
+#endif
+}
+
+Error fileNotFoundError(const ErrorLocation& in_location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::file_not_found, in_location);
+#else
+   return systemError(boost::system::errc::no_such_file_or_directory, in_location);
+#endif
+}
+
+Error fileNotFoundError(const std::string& in_path,
+                        const ErrorLocation& in_location)
+{
+   Error error = fileNotFoundError(in_location);
+   error.addProperty("path", in_path);
+   return error;
+}
+
+Error fileNotFoundError(const FilePath& in_filePath,
+                        const ErrorLocation& in_location)
+{
+   Error error = fileNotFoundError(in_location);
+   error.addProperty("path", in_filePath);
+   return error;
+}
+
+bool isFileNotFoundError(const Error& in_error)
+{
+#ifdef _WIN32
+   return in_error.getCode() == boost::system::windows_error::file_not_found;
+#else
+   return in_error.getCode() == boost::system::errc::no_such_file_or_directory;
+#endif
+}
+
+bool isPathNotFoundError(const Error& in_error)
+{
+#ifdef _WIN32
+   return in_error.getCode() == boost::system::windows_error::path_not_found;
+#else
+   return in_error.getCode() == boost::system::errc::no_such_file_or_directory;
+#endif
+}
+
+Error pathNotFoundError(const ErrorLocation& in_location)
+{
+#ifdef _WIN32
+   return systemError(boost::system::windows_error::path_not_found, in_location);
+#else
+   return systemError(boost::system::errc::no_such_file_or_directory, in_location);
+#endif
+}
+
+Error pathNotFoundError(const std::string& in_path, const ErrorLocation& in_location)
+{
+   Error error = pathNotFoundError(in_location);
+   error.addProperty("path", in_path);
+   return error;
+}
+
+
 namespace {
 void logError(path_t path,
               const boost::filesystem::filesystem_error& e,

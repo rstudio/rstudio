@@ -156,11 +156,11 @@ void copyErrorCodeToJsonError(const boost::system::error_code& code,
 void setErrorProperties(Object& jsonError,
                         const Error& error)
 {
-   if (error.properties().empty())
+   if (error.getProperties().empty())
       return;
 
    Object properties;
-   for (const std::pair<std::string, std::string>& property : error.properties())
+   for (const std::pair<std::string, std::string>& property : error.getProperties())
    {
       properties[property.first] = property.second;
    }
@@ -205,12 +205,10 @@ void JsonRpcResponse::setError(const Error& error,
    // remove result
    response_.erase(json::kRpcResult);
    response_.erase(json::kRpcAsyncHandle);
-
-   const boost::system::error_code& ec = error.code();
    
-   if ( ec.category() == json::jsonRpcCategory() )
+   if (error.getName() == json::jsonRpcCategory().name())
    {
-      setError(ec, includeErrorProperties);
+      setError(boost::system::error_code(error.getCode(), json::jsonRpcCategory()), includeErrorProperties);
    }
    else
    {
@@ -220,17 +218,17 @@ void JsonRpcResponse::setError(const Error& error,
       
       // populate sub-error field with error details
       Object executionError;
-      executionError["code"] = ec.value();
+      executionError["code"] = error.getCode();
       
-      std::string errorCategoryName = ec.category().name();
+      std::string errorCategoryName = error.getName();
       executionError["category"] = errorCategoryName;
       
-      std::string errorMessage = ec.message();
+      std::string errorMessage = error.getMessage();
       executionError["message"] = errorMessage;
       
-      if (error.location().hasLocation())
+      if (error.getLocation().hasLocation())
       {
-         std::string errorLocation = error.location().asString();
+         std::string errorLocation = error.getLocation().asString();
          executionError["location"] = errorLocation;
       }
       
@@ -324,7 +322,7 @@ void setJsonRpcResponse(const JsonRpcResponse& jsonRpcResponse,
    {
       LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
 }     
 

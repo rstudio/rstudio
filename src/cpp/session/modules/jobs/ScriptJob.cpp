@@ -99,7 +99,7 @@ private:
          error = save.call();
          if (error)
          {
-            job_->addOutput("Error importing environment: " + error.summary() + "\n", true);
+            job_->addOutput("Error importing environment: " + error.getSummary() + "\n", true);
          }
 
          // clear status in preparation for execution
@@ -133,7 +133,7 @@ private:
             // emit the error to the job, and allow it to run with no code (so the only result
             // will be this error)
             job_->addOutput("Error writing code to file " + tempCode_.absolutePath() + ": " +
-                            error.summary() + "\n", true);
+                            error.getSummary() + "\n", true);
          }
          path = tempCode_.absolutePath();
       }
@@ -273,7 +273,7 @@ private:
          }
          if (error)
          {
-            job_->addOutput("Error loading results: " + error.summary() + "\n", true);
+            job_->addOutput("Error loading results: " + error.getSummary() + "\n", true);
          }
          else
          {

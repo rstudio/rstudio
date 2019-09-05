@@ -339,6 +339,18 @@ private:
    ErrorLocation errorLocation_;
 };
 
+Error fileExistsError(const ErrorLocation& in_location);
+Error fileNotFoundError(const ErrorLocation& in_location);
+Error fileNotFoundError(const std::string& path,
+                        const ErrorLocation& in_location);
+Error fileNotFoundError(const FilePath& filePath,
+                        const ErrorLocation& in_location);
+bool isFileNotFoundError(const Error& error);
+
+bool isPathNotFoundError(const Error& error);
+Error pathNotFoundError(const ErrorLocation& in_location);
+Error pathNotFoundError(const std::string& path, const ErrorLocation& in_location);
+
 } // namespace core
 } // namespace rstudio
 

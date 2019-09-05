@@ -393,7 +393,7 @@ Error processEvent(FileEventContext* pContext,
             // in the normal course of business if a file is deleted between
             // the time the change is detected and we try to inspect it)
             if (error &&
-               (error.code() != boost::system::errc::no_such_file_or_directory))
+               (error.getCode() != boost::system::errc::no_such_file_or_directory))
             {
                LOG_ERROR(error);
             }
