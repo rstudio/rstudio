@@ -34,6 +34,8 @@ struct User::Impl
    template <class T>
    using GetPasswdFunc = std::function<int(T, struct passwd*, char*, size_t, struct passwd**)>;
 
+   Impl() : UserId(0), GroupId(0) {};
+
    template <typename T>
    void populateUser(const GetPasswdFunc<T>& in_getPasswdFunc, T in_value)
    {
