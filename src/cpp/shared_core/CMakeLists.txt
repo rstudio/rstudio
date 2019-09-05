@@ -34,15 +34,7 @@ if (UNIX)
 
    set (SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
-      system/PosixUser.cpp
-   )
-
-# Windows specific
-else()
-
-   set(SHARED_CORE_SOURCE_FILES
-      ${SHARED_CORE_SOURCE_FILES}
-      system/Win32User.cpp
+      system/User.cpp
    )
 
 endif()
