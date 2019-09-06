@@ -31,7 +31,8 @@ public class LauncherServerEvent extends GwtEvent<LauncherServerHandler>
       JobSubmitSuccess,
       JobSubmitFailure,
       GetContainerUserSuccess,
-      GetContainerUserFailure
+      GetContainerUserFailure,
+      LauncherServerSettingsChanged
    }
 
    public LauncherServerEvent(EventType eventType, String details)

@@ -260,6 +260,7 @@ public Q_SLOTS:
    bool setLauncherServer(const QJsonObject& sessionServerJson);
    void connectToLauncherServer();
 
+   QJsonObject getLauncherServer();
    void startLauncherJobStatusStream(QString jobId);
    void stopLauncherJobStatusStream(QString jobId);
    void startLauncherJobOutputStream(QString jobId);

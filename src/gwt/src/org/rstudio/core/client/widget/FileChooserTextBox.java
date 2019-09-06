@@ -17,29 +17,52 @@ package org.rstudio.core.client.widget;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Focusable;
 
-public class FileChooserTextBox extends TextBoxWithButton
-{
-   
-   
+public class FileChooserTextBox extends TextBoxWithButton {
+
+
    public FileChooserTextBox(String label, Focusable focusAfter)
    {
       this(label, "", focusAfter, null);
    }
+
+   public FileChooserTextBox(String label,
+                             String emptyLabel,
+                             final Focusable focusAfter,
+                             final Command onChosen)
+
+   {
+      this(label, "", false, focusAfter, onChosen);
+   }
   
    public FileChooserTextBox(String label, 
                              String emptyLabel,
+                             boolean buttonDisabled,
                              final Focusable focusAfter,
                              final Command onChosen)
    {
       super(label, emptyLabel, "Browse...", null);
-      
-      
-      
+
+      if (buttonDisabled)
+      {
+         setReadOnly(false);
+         getButton().setEnabled(false);
+
+         getTextBox().addChangeHandler(new ChangeHandler()
+         {
+            public void onChange(ChangeEvent event)
+            {
+               setText(getTextBox().getText());
+            }
+         });
+      }
+
       addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

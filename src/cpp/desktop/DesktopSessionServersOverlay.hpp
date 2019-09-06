@@ -21,6 +21,7 @@
 #include <QObject>
 
 #include <boost/optional.hpp>
+#include <boost/signals2.hpp>
 
 #include <core/FilePath.hpp>
 
@@ -39,15 +40,47 @@ DesktopSessionServers& sessionServers();
 class SessionServerSettings;
 SessionServerSettings& sessionServerSettings();
 
+class SessionServerPathMapping
+{
+public:
+   SessionServerPathMapping(const std::string& localPath,
+                            const std::string& remotePath) :
+      localPath_(localPath),
+      remotePath_(remotePath)
+   {
+   }
+
+   bool empty() { return localPath_.empty() || remotePath_.empty(); }
+
+   const std::string& localPath() const { return localPath_; }
+   const std::string& remotePath() const { return remotePath_; }
+
+   void setLocalPath(const std::string& localPath) { localPath_ = localPath; }
+   void setRemotePath(const std::string& remotePath) { remotePath_ = remotePath; }
+
+   QJsonObject toJson() const;
+   static SessionServerPathMapping fromJson(const QJsonObject& pathMappingJson);
+
+private:
+   SessionServerPathMapping() {}
+
+   std::string localPath_;
+   std::string remotePath_;
+};
+
 class SessionServer
 {
 public:
    SessionServer(const std::string& name,
                  const std::string& url,
-                 bool isDefault = false) :
+                 bool isDefault = false,
+                 bool allowPathMapping = false,
+                 const std::vector<SessionServerPathMapping>& pathMappings = {}) :
        name_(name),
        url_(url),
-       isDefault_(isDefault)
+       isDefault_(isDefault),
+       allowPathMapping_(allowPathMapping),
+       pathMappings_(pathMappings)
    {
    }
 
@@ -57,14 +90,17 @@ public:
    const std::string& url() const { return url_; }
    const std::string& label() const;
    bool isDefault() const { return isDefault_; }
+   bool allowPathMapping() const { return allowPathMapping_; }
+   std::vector<SessionServerPathMapping> pathMappings() const { return pathMappings_; }
 
    QJsonObject toJson() const;
-
    static SessionServer fromJson(const QJsonObject& sessionServerJson);
 
    void setName(const std::string& name) { name_ = name; }
    void setUrl(const std::string& url) { url_ = url; }
    void setIsDefault(bool isDefault) { isDefault_ = isDefault; }
+   void setAllowPathMapping(bool allow) { allowPathMapping_ = allow; }
+   void setPathMappings(const std::vector<SessionServerPathMapping>& mappings) { pathMappings_ = mappings; }
 
    core::Error test();
 
@@ -81,6 +117,9 @@ private:
    std::string name_;
    std::string url_;
    bool isDefault_;
+   bool allowPathMapping_;
+
+   std::vector<SessionServerPathMapping> pathMappings_;
 };
 
 struct LaunchLocationResult
@@ -138,6 +177,8 @@ public:
              SessionLocation sessionLocation,
              CloseServerSessions closeServerSessionsOnExit);
 
+   void addSaveHandler(const boost::function<void(void)>& onSave);
+
 private:
    friend SessionServerSettings& sessionServerSettings();
    SessionServerSettings();
@@ -146,6 +187,8 @@ private:
    SessionLocation sessionLocation_;
    CloseServerSessions closeServerSessionsOnExit_;
    core::FilePath optionsFile_;
+
+   boost::signals2::signal<void()> onSaveSignal_;
 };
 
 } // namespace desktop

@@ -59,6 +59,8 @@ public:
 
     int getProxyPortNumber();
 
+    SessionServer getLauncherServer();
+
 private:
     boost::shared_ptr<JobLauncherImpl> pImpl_;
 };

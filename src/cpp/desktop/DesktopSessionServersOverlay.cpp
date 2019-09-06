@@ -38,6 +38,16 @@ LaunchLocationResult DesktopSessionServers::showSessionLaunchLocationDialog()
    return result;
 }
 
+QJsonObject SessionServerPathMapping::toJson() const
+{
+   return QJsonObject();
+}
+
+SessionServerPathMapping SessionServerPathMapping::fromJson(const QJsonObject& pathMappingJson)
+{
+   return SessionServerPathMapping();
+}
+
 const std::string& SessionServer::label() const
 {
    if (!name().empty())
@@ -81,6 +91,10 @@ ConfigSource SessionServerSettings::configSource() const
 void SessionServerSettings::save(const std::vector<SessionServer>& servers,
                                  SessionLocation sessionLocation,
                                  CloseServerSessions closeServerSessionsOnExit)
+{
+}
+
+void SessionServerSettings::addSaveHandler(const boost::function<void()>& onSave)
 {
 }
 
