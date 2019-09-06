@@ -100,6 +100,10 @@ public class XTermNative extends JavaScriptObject
       this.element.classList.add(classStr);
    }-*/;
 
+   public final native void removeClass(String classStr) /*-{
+      this.element.classList.remove(classStr);
+   }-*/;
+
    // XTERM_IMP
    public final native int cursorX() /*-{
       return this.buffer.x;
