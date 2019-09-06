@@ -50,7 +50,7 @@ struct User::Impl
    template<class T>
    using GetPasswdFunc = std::function<int(T, struct passwd*, char*, size_t, struct passwd**)>;
 
-   Impl() : UserId(0), GroupId(0)
+   Impl() : UserId(-1), GroupId(-1)
    { };
 
    template<typename T>
