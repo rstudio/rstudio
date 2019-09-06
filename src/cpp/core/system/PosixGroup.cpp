@@ -104,10 +104,9 @@ Error groupFromId(gid_t gid, Group* pGroup)
 
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 {
-   user::User user;
-   Error error = user::userFromUsername(userName, &user);
-   if (error)
-      return error;
+   User user(userName);
+   if (user.getRetrievalError())
+      return user.getRetrievalError();
 
    // get the groups for the user - we start with 100 groups which should be enough for most cases
    // if it is not, resize the buffer with the correct amount of groups and try again
@@ -122,7 +121,7 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 #endif
 
    boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[100]);
-   while (!getgrouplist(userName.c_str(), user.groupId, pGids.get(), &numGroups))
+   while (!getgrouplist(userName.c_str(), user.getGroupId(), pGids.get(), &numGroups))
    {
       // defensive break out in case the OS somehow returns 0 groups for the user
       if (numGroups == 0)
@@ -135,7 +134,7 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    for (int i = 0; i < numGroups; i++)
    {
       Group group;
-      error = groupFromId(*(pGids.get() + i), &group);
+      Error error = groupFromId(*(pGids.get() + i), &group);
       if (error)
          return error;
 

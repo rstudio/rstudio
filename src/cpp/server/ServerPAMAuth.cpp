@@ -170,16 +170,15 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       // view of the username (as that's what the session uses to form the
       // stream path), which is why we do a username => username transform
       // here. See case 5413 for details.
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(userIdentifier, &user);
-      if (error) 
+      core::system::User user(userIdentifier);
+      if (user.getRetrievalError())
       {
          // log the error and return the PAM user identifier as a fallback
-         LOG_ERROR(error);
+         LOG_ERROR(user.getRetrievalError());
       }
       else
       {
-         username = user.username;
+         username = user.getUsername();
       }
 
       // cache the username -- we do this even if the lookup fails since

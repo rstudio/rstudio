@@ -268,6 +268,7 @@ void sendSignalToSelf(SignalType signal);
 
 // user info
 std::string username();
+
 FilePath userHomePath(std::string envOverride = std::string());
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
                           const std::string& appName,

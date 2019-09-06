@@ -18,10 +18,11 @@
 #include <algorithm>
 #include <fstream>
 
-#include <shared_core/system/User.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <shared_core/system/User.hpp>
 #endif
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED

@@ -170,8 +170,8 @@ bool isSharedPath(const std::string& projectPath,
       if (st.st_mode & (S_IROTH | S_IWOTH | S_IXOTH)) 
          return false;
 
-      core::system::user::User user;
-      error = core::system::user::currentUser(&user);
+      core::system::User user;
+      error = core::system::User::getCurrentUser(user);
       if (error)
       {
          LOG_ERROR(error);
@@ -179,7 +179,7 @@ bool isSharedPath(const std::string& projectPath,
       }
 
       // not shared if our group owns the directory 
-      if (st.st_gid == user.groupId)
+      if (st.st_gid == user.getGroupId())
          return false;
 
 #ifndef __APPLE__

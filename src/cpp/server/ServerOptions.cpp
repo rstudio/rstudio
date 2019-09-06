@@ -380,7 +380,7 @@ ProgramStatus Options::read(int argc,
          serverUser_ = "";
       }
       // if there is a program user specified and it doesn't exist....
-      else if (!core::system::user::exists(serverUser_))
+      else if (!system::User(serverUser_).exists())
       {
          if (serverUser_ == kDefaultProgramUser)
          {

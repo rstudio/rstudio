@@ -475,12 +475,11 @@ Error ChildProcess::run()
    {
       // fetch the user to switch to before forking, as the method is not
       // async signal safe and could cause lockups
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(options_.runAsUser, &user);
+      core::system::User user(options_.runAsUser);
       if (error)
          return error;
 
-      runAsUser = user.userId;
+      runAsUser = user.getUserId();
    }
 
    if (options_.threadSafe && options_.pseudoterminal)
@@ -1654,7 +1653,7 @@ pid_t AsioAsyncChildProcess::pid() const
 namespace {
 
 Error forkAndRunImpl(const boost::function<int(void)>& func,
-                     const boost::optional<user::User>& user)
+                     const boost::optional<User>& user)
 {
    pid_t pid = ::fork();
    if (pid < 0)
@@ -1677,11 +1676,11 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
                ::_exit(res);
          }
 
-         if (user.get().userId != 0)
+         if (user.get().getUserId() != 0)
          {
             // non root user requested
             // drop privilege to match UID of requested user
-            int res = signal_safe::permanentlyDropPriv(user.get().userId);
+            int res = signal_safe::permanentlyDropPriv(user.get().getUserId());
             if (res != 0)
                ::_exit(res);
          }
@@ -1720,15 +1719,14 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
 Error forkAndRun(const boost::function<int(void)>& func,
                  const std::string& runAs)
 {
-   boost::optional<user::User> optionalUser;
+   boost::optional<User> optionalUser;
 
    if (!runAs.empty())
    {
       // get uid of user to switch to
-      user::User user;
-      Error error = user::userFromUsername(runAs, &user);
-      if (error)
-         return error;
+      User user(runAs);
+      if (user.getRetrievalError())
+         return user.getRetrievalError();
 
       optionalUser = user;
    }
@@ -1738,11 +1736,10 @@ Error forkAndRun(const boost::function<int(void)>& func,
 
 Error forkAndRunPrivileged(const boost::function<int(void)>& func)
 {
-   user::User user = {};
-   user.userId = 0;
-   boost::optional<user::User> optionalUser = user;
-
-   return forkAndRunImpl(func, optionalUser);
+   User rootUser(UidType(0));
+   if (rootUser.getRetrievalError())
+      return rootUser.getRetrievalError();
+   return forkAndRunImpl(func, rootUser);
 }
 
 } // namespace system

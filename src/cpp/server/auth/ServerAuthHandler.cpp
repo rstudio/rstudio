@@ -149,16 +149,15 @@ Error readRevocationList(std::vector<std::string>* pEntries)
 Error changeOwnership(const FilePath& file)
 {
    // changes ownership of file to the server user
-   core::system::user::User serverUser;
-   Error error = core::system::user::userFromUsername(options().serverUser(), &serverUser);
-   if (error)
-      return error;
+   core::system::User serverUser(options().serverUser());
+   if (serverUser.getRetrievalError())
+      return serverUser.getRetrievalError();
 
    return core::system::posixCall<int>(
             boost::bind(::chown,
                         file.getAbsolutePath().c_str(),
-                        serverUser.userId,
-                        serverUser.groupId),
+                        serverUser.getUserId(),
+                        serverUser.getGroupId()),
             ERROR_LOCATION);
 }
 

@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
@@ -62,9 +63,6 @@
 #include <core/RegexUtils.hpp>
 #include <core/Algorithm.hpp>
 #include <core/DateTime.hpp>
-#include <shared_core/Error.hpp>
-
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -83,6 +81,11 @@
 #include <core/system/PosixGroup.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
+
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/system/User.hpp>
 
 #include "config.h"
 
@@ -466,28 +469,7 @@ unsigned int effectiveUserId()
 
 FilePath userHomePath(std::string envOverride)
 {
-   using namespace boost::algorithm;
-
-   // use environment override if specified
-   if (!envOverride.empty())
-   {
-      for (split_iterator<std::string::iterator> it =
-           make_split_iterator(envOverride, first_finder("|", is_iequal()));
-           it != split_iterator<std::string::iterator>();
-           ++it)
-      {
-         std::string envHomePath = system::getenv(boost::copy_range<std::string>(*it));
-         if (!envHomePath.empty())
-         {
-            FilePath userHomePath(envHomePath);
-            if (userHomePath.exists())
-               return userHomePath;
-         }
-      }
-   }
-
-   // otherwise use standard unix HOME
-   return FilePath(system::getenv("HOME"));
+   return User::getUserHomePath(envOverride);
 }
 
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
@@ -1678,10 +1660,9 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
    }
 
    // get the username
-   core::system::user::User user;
-   error = core::system::user::userFromId(st.st_uid, &user);
-   if (error)
-      return error;
+   core::system::User user(st.st_uid);
+   if (user.getRetrievalError())
+      return user.getRetrievalError();
 
    // read the stat fields for other relevant process info
    std::string statStr;
@@ -1717,7 +1698,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
    pInfo->pid = pid;
    pInfo->ppid = ppid;
    pInfo->pgrp = pgrp;
-   pInfo->username = user.username;
+   pInfo->username = user.getUsername();
    pInfo->exe = FilePath(cmdline).getFilename();
    pInfo->state = state;
    pInfo->arguments = commandVector;
@@ -2214,8 +2195,8 @@ Error runProcess(const std::string& path,
 
    // get current user (before closing file handles since
    // we might be using a PAM module that has open FDs...)
-   user::User user;
-   error = user::currentUser(&user);
+   User user;
+   error = User::getCurrentUser(user);
    if (error)
       return error;
 
@@ -2247,9 +2228,9 @@ Error runProcess(const std::string& path,
    copyEnvironmentVar("PATH", &env);
    copyEnvironmentVar("MANPATH", &env);
    copyEnvironmentVar("LANG", &env);
-   core::system::setenv(&env, "USER", user.username);
-   core::system::setenv(&env, "LOGNAME", user.username);
-   core::system::setenv(&env, "HOME", user.homeDirectory);
+   core::system::setenv(&env, "USER", user.getUsername());
+   core::system::setenv(&env, "LOGNAME", user.getUsername());
+   core::system::setenv(&env, "HOME", user.getHomePath().getAbsolutePath());
    copyEnvironmentVar("SHELL", &env);
 
    // apply config filter if we have one
@@ -2441,7 +2422,7 @@ bool isUserNotFoundError(const Error& error)
    return error.getCode() == boost::system::errc::permission_denied;
 }
 
-Error userBelongsToGroup(const user::User& user,
+Error userBelongsToGroup(const User& user,
                          const std::string& groupName,
                          bool* pBelongs)
 {
@@ -2452,7 +2433,7 @@ Error userBelongsToGroup(const user::User& user,
       return error;
 
    // see if the group id matches the user's group id
-   if (user.groupId == group.groupId)
+   if (user.getGroupId() == group.groupId)
    {
       *pBelongs = true;
    }
@@ -2461,7 +2442,7 @@ Error userBelongsToGroup(const user::User& user,
    {
       *pBelongs = std::find(group.members.begin(),
                             group.members.end(),
-                            user.username) != group.members.end();
+                            user.getUsername()) != group.members.end();
    }
 
    return Success();
@@ -2529,27 +2510,26 @@ Error temporarilyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   user::User user;
-   Error error = userFromUsername(newUsername, &user);
-   if (error)
-      return error;
+   User user(newUsername);
+   if (user.getRetrievalError())
+      return user.getRetrievalError();
 
    // init supplemental group list
    // NOTE: if porting to CYGWIN may need to call getgroups/setgroups
    // after initgroups -- more research required to confirm
-   if (::initgroups(user.username.c_str(), user.groupId) < 0)
+   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group and verify
-   if (::setresgid(-1, user.groupId, ::getegid()) < 0)
+   if (::setresgid(-1, user.getGroupId(), ::getegid()) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (::getegid() != user.groupId)
+   if (::getegid() != user.getGroupId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user and verify
-   if (::setresuid(-1, user.userId, ::geteuid()) < 0)
+   if (::setresuid(-1, user.getUserId(), ::geteuid()) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (::geteuid() != user.userId)
+   if (::geteuid() != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // success
@@ -2562,33 +2542,32 @@ Error permanentlyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   user::User user;
-   Error error = userFromUsername(newUsername, &user);
-   if (error)
-      return error;
+   User user(newUsername);
+   if (user.getRetrievalError())
+      return user.getRetrievalError();
 
    // supplemental group list
-   if (::initgroups(user.username.c_str(), user.groupId) < 0)
+   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setresgid(user.groupId, user.groupId, user.groupId) < 0)
+   if (::setresgid(user.getGroupId(), user.getGroupId(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (rgid != user.groupId || egid != user.groupId || sgid != user.groupId)
+   if (rgid != user.getGroupId() || egid != user.getGroupId() || sgid != user.getGroupId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
-   if (::setresuid(user.userId, user.userId, user.userId) < 0)
+   if (::setresuid(user.getUserId(), user.getUserId(), user.getUserId()) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
    uid_t ruid, euid, suid;
    if (::getresuid(&ruid, &euid, &suid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (ruid != user.userId || euid != user.userId || suid != user.userId)
+   if (ruid != user.getUserId() || euid != user.getUserId() || suid != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // success
@@ -2652,7 +2631,7 @@ Error temporarilyDropPriv(const std::string& newUsername)
       return error;
 
    // init supplemental group list
-   if (::initgroups(user.username.c_str(), user.groupId) < 0)
+   if (::initgroups(user.username.c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
@@ -2665,11 +2644,11 @@ Error temporarilyDropPriv(const std::string& newUsername)
       return systemError(errno, ERROR_LOCATION);
 
    // set new EGID
-   if (::setegid(user.groupId) < 0)
+   if (::setegid(user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // verify
-   if (::getegid() != user.groupId)
+   if (::getegid() != user.getGroupId())
       return systemError(EACCES, ERROR_LOCATION);
 
 
@@ -2683,11 +2662,11 @@ Error temporarilyDropPriv(const std::string& newUsername)
       return systemError(errno, ERROR_LOCATION);
 
    // set new EUID
-   if (::seteuid(user.userId) < 0)
+   if (::seteuid(user.getUserId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // verify
-   if (::geteuid() != user.userId)
+   if (::geteuid() != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // save privilleged user id
@@ -2709,21 +2688,21 @@ Error permanentlyDropPriv(const std::string& newUsername)
       return error;
 
    // supplemental group list
-   if (::initgroups(user.username.c_str(), user.groupId) < 0)
+   if (::initgroups(user.username.c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setregid(user.groupId, user.groupId) < 0)
+   if (::setregid(user.getGroupId(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
-   if (::getgid() != user.groupId || ::getegid() != user.groupId)
+   if (::getgid() != user.getGroupId() || ::getegid() != user.getGroupId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
-   if (::setreuid(user.userId, user.userId) < 0)
+   if (::setreuid(user.getUserId(), user.getUserId()) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
-   if (::getuid() != user.userId || ::geteuid() != user.userId)
+   if (::getuid() != user.getUserId() || ::geteuid() != user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
    // success

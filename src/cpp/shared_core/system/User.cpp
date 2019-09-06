@@ -109,11 +109,7 @@ User::User(const std::string& in_username) :
 {
    m_impl->populateUser<const char*>(::getpwnam_r, in_username.c_str());
    if (m_impl->RetrievalError)
-   {
-      // Log the error an ensure that the username is set.
-      logError(m_impl->RetrievalError);
       m_impl->Name = in_username;
-   }
 }
 
 User::User(UidType in_userId) :
@@ -121,11 +117,7 @@ User::User(UidType in_userId) :
 {
    m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
    if (m_impl->RetrievalError)
-   {
-      // Log the error an ensure that the user ID is set.
-      logError(m_impl->RetrievalError);
       m_impl->UserId = in_userId;
-   }
 }
 
 Error User::getCurrentUser(User& out_currentUser)

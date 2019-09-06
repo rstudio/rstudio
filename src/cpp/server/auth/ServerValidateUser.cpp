@@ -43,8 +43,8 @@ bool validateUser(const std::string& username,
       return true;
    
    // get the user
-   core::system::user::User user;
-   Error error = userFromUsername(username, &user);
+   core::system::User user(username);
+   const Error& error = user.getRetrievalError();
    if (error)
    {
       // log the error only if it is unexpected
@@ -56,7 +56,7 @@ bool validateUser(const std::string& username,
    }
 
    // validate minimum user id
-   if (user.userId < minimumUserId)
+   if (user.getUserId() < minimumUserId)
    {
       if (failureWarning)
       {

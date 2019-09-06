@@ -98,7 +98,7 @@ bool proxyLocalhostRequest(http::Request& request,
                            const LocalhostResponseHandler& responseHandler,
                            const http::ErrorHandler& errorHandler);
 
-Error runVerifyInstallationSession(core::system::user::User& user,
+Error runVerifyInstallationSession(core::system::User& user,
                                    bool* pHandled);
 
 } // namespace overlay
@@ -552,12 +552,11 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    }
    else
    {
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(username, &user);
-      if (error)
-         return error;
+      core::system::User user(username);
+      if (user.getRetrievalError())
+         return user.getRetrievalError();
 
-      *pUID = user.userId;
+      *pUID = user.getUserId();
       cache.set(username, *pUID);
    }
 
@@ -720,8 +719,8 @@ Error initialize()
 Error runVerifyInstallationSession()
 {
    // get current user
-   core::system::user::User user;
-   Error error = currentUser(&user);
+   core::system::User user;
+   Error error = core::system::User::getCurrentUser(user);
    if (error)
       return error;
 
@@ -736,7 +735,7 @@ Error runVerifyInstallationSession()
       core::system::Options args;
       args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
       PidType sessionPid;
-      error = server::launchSession(r_util::SessionContext(user.username),
+      error = server::launchSession(r_util::SessionContext(user.getUsername()),
                                     args,
                                     &sessionPid);
       if (error)
