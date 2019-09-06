@@ -93,6 +93,14 @@ public class XTermWidget extends Widget
             terminal_.addClass("ace_editor");
             terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
+            // Previous versions of xterm.js used 'terminal' css class for styling, and we
+            // have styles based on that. Xterm3 switched to 'xterm' instead of 'terminal',
+            // and an API-based styling technique, but they left in 'terminal' class on root
+            // element. This causes our styles (which are still in the css so we can get them
+            // at runtime and pass to the API) to bleed through when using DOM-based renderer.
+            // Fix by removing the unnecessary 'terminal' class.
+            terminal_.removeClass("terminal");
+
             // Handle keystrokes from the xterm and dispatch them
             addDataEventHandler(data -> fireEvent(new TerminalDataInputEvent(data)));
 
