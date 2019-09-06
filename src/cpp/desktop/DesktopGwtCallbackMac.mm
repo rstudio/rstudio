@@ -15,7 +15,7 @@
 
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
-#include "DesktopUtils.hpp"
+#include "DesktopUtilsMac.hpp"
 
 #import <AppKit/NSApplication.h>
 #import <AppKit/NSAlert.h>
@@ -88,54 +88,6 @@ enum MessageType
    MSG_ERROR = 3,
    MSG_QUESTION = 4
 };
-
-FilePath userHomePath()
-{
-   return core::system::userHomePath("R_USER|HOME");
-}
-
-NSString* createAliasedPath(NSString* path)
-{
-   if (path == nil || [path length] == 0)
-      return @"";
-   
-   std::string aliased = FilePath::createAliasedPath(
-      FilePath([path UTF8String]),
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: aliased.c_str()];
-}
-
-NSString* resolveAliasedPath(NSString* path)
-{
-   if (path == nil)
-      path = @"";
-   
-   FilePath resolved = FilePath::resolveAliasedPath(
-      [path UTF8String],
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
-}
-
-QString runFileDialog(NSSavePanel* panel)
-{
-   NSString* path = @"";
-   long int result = [panel runModal];
-   @try
-   {
-      if (result == NSOKButton)
-      {
-         path = [[panel URL] path];
-      }
-   }
-   @catch (NSException* e)
-   {
-      throw e;
-   }
-   
-   return QString::fromNSString(createAliasedPath(path));
-}
 
 bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
 {
@@ -426,24 +378,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
 QString GwtCallback::getExistingDirectory(const QString& qCaption,
                                           const QString& qLabel,
                                           const QString& qDir,
-                                          bool focusOwner)
+                                          bool /*focusOwner*/)
 {
-   NSString* caption = qCaption.toNSString();
-   NSString* label = qLabel.toNSString();
-   NSString* dir = qDir.toNSString();
-   
-   dir = resolveAliasedPath(dir);
-   
-   NSOpenPanel* panel = [NSOpenPanel openPanel];
-   [panel setTitle: caption];
-   [panel setPrompt: label];
-   [panel setDirectoryURL: [NSURL fileURLWithPath:
-                           [dir stringByStandardizingPath]]];
-   [panel setCanChooseFiles: false];
-   [panel setCanChooseDirectories: true];
-   [panel setCanCreateDirectories: true];
-   
-   return runFileDialog(panel);
+   return browseDirectory(qCaption, qLabel, qDir);
 }
 
 void GwtCallback::showWordDoc(QString qPath)

@@ -1,5 +1,5 @@
 /*
- * SessionServer.java
+ * SessionServerPathMapping.java
  *
  * Copyright (C) 2019 by RStudio, Inc.
  *
@@ -15,25 +15,16 @@
 package org.rstudio.core.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class SessionServer extends JavaScriptObject
+public class SessionServerPathMapping extends JavaScriptObject
 {
-   protected SessionServer() {}
+   protected SessionServerPathMapping() {}
 
-   public native final String getName() /*-{
-      return this.name;
+   public native final String getLocalPath() /*-{
+      return this.localPath;
    }-*/;
 
-   public native final String getUrl() /*-{
-      return this.url;
-   }-*/;
-
-   public native final boolean getAllowPathMapping() /*-{
-      return this.allowPathMapping;
-   }-*/;
-
-   public native final JsArray<SessionServerPathMapping> getPathMappings() /*-{
-      return this.pathMappings;
+   public native final String getRemotePath() /*-{
+      return this.remotePath;
    }-*/;
 }

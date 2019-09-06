@@ -215,6 +215,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setLauncherServer(SessionServer server, CommandWithArg<Boolean> callback);
    void connectToLauncherServer();
 
+   void getLauncherServer(CommandWithArg<SessionServer> callback);
    void startLauncherJobStatusStream(String jobId);
    void stopLauncherJobStatusStream(String jobId);
    void startLauncherJobOutputStream(String jobId);

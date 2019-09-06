@@ -80,5 +80,10 @@ int JobLauncher::getProxyPortNumber()
    return 0;
 }
 
+SessionServer JobLauncher::getLauncherServer()
+{
+   return SessionServer("", "");
+}
+
 } // namespace desktop
 } // namespace rstudio

@@ -19,9 +19,12 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Focusable;
+import com.google.gwt.user.client.ui.TextBox;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
@@ -45,6 +48,18 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
            RStudioGinjector.INSTANCE.getFileDialogs(),
            RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
    }
+
+   public DirectoryChooserTextBox(String label,
+                                  boolean buttonDisabled,
+                                  Focusable focusAfter)
+   {
+      this(label,
+            "",
+            buttonDisabled,
+            focusAfter,
+            RStudioGinjector.INSTANCE.getFileDialogs(),
+            RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
+   }
    
    public DirectoryChooserTextBox(String label, Focusable focusAfter)
    {
@@ -59,25 +74,50 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
    {
       this(label, "", focusAfter, fileDialogs, fsContext);
    }
-   
+
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      this(label, emptyLabel, "Browse...", focusAfter, fileDialogs, fsContext);
+      this(label, emptyLabel, false, focusAfter, fileDialogs, fsContext);
+   }
+
+   public DirectoryChooserTextBox(String label,
+                                  String emptyLabel,
+                                  boolean buttonDisabled,
+                                  final Focusable focusAfter,
+                                  final FileDialogs fileDialogs,
+                                  final FileSystemContext fsContext)
+   {
+      this(label, emptyLabel, "Browse...", buttonDisabled, focusAfter, fileDialogs, fsContext);
    }
    
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel,
                                   String browseLabel,
+                                  boolean buttonDisabled,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
       super(label, emptyLabel, browseLabel, null);
-      
+
+      if (buttonDisabled)
+      {
+         getButton().setEnabled(false);
+         setReadOnly(false);
+
+         getTextBox().addChangeHandler(new ChangeHandler()
+         {
+            public void onChange(ChangeEvent event)
+            {
+               setText(getTextBox().getText());
+            }
+         });
+      }
+
       addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
