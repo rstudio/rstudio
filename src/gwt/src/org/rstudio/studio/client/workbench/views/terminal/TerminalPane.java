@@ -961,8 +961,7 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  Timers.singleShot(200, () ->
-                  {
+                  Timers.singleShot(200, () -> {
                      if (visibleTerminal.terminalEmulatorLoaded())
                         visibleTerminal.setFocus(true);
                   });
