@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -960,17 +961,11 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  new Timer()
+                  Timers.singleShot(200, () ->
                   {
-                     @Override
-                     public void run()
-                     {
-                        if (visibleTerminal.terminalEmulatorLoaded())
-                        {
-                           visibleTerminal.setFocus(true);
-                        }
-                     }
-                  }.schedule(200);
+                     if (visibleTerminal.terminalEmulatorLoaded())
+                        visibleTerminal.setFocus(true);
+                  });
                }
          });
          activeTerminalToolbarButton_.setActiveTerminal(
