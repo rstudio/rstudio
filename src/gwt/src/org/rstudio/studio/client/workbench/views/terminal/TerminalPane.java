@@ -949,7 +949,30 @@ public class TerminalPane extends WorkbenchPane
       if (visibleTerminal != null)
       {
          if (!suppressAutoFocus_)
-            Scheduler.get().scheduleDeferred(() -> visibleTerminal.setFocus(true));
+            Scheduler.get().scheduleDeferred(() -> {
+               // On rare occasions (which I haven't been able to nail down), flow gets here
+               // before xtermjs has initialized, and the setFocus call throws a null exception.
+               // Nothing is obviously broken when that happens, but guard against it, wait
+               // a tiny bit and try once more.
+               if (visibleTerminal.terminalEmulatorLoaded())
+               {
+                  visibleTerminal.setFocus(true);
+               }
+               else
+               {
+                  new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        if (visibleTerminal.terminalEmulatorLoaded())
+                        {
+                           visibleTerminal.setFocus(true);
+                        }
+                     }
+                  }.schedule(200);
+               }
+         });
          activeTerminalToolbarButton_.setActiveTerminal(
                visibleTerminal.getCaption(), visibleTerminal.getHandle());
          setTerminalTitle(visibleTerminal.getTitle());
