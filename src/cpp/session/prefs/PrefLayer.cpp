@@ -116,13 +116,26 @@ Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
 
 Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
 {
-   json::Value val;
-   std::string contents;
-   Error error = readStringFromFile(schemaFile, &contents);
-   if (error)
-      return error;
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      if (cache_ && cache_->type() == json::ObjectType)
+      {
+         std::string contents;
+         Error error = readStringFromFile(schemaFile, &contents);
+         if (error)
+            return error;
 
-  return json::validate(*cache_, contents, ERROR_LOCATION);
+         return json::validate(*cache_, contents, ERROR_LOCATION);
+      }
+      else
+      {
+         // We won't technically fail validation here, but we shouldn't try to validate before reading.
+         LOG_WARNING_MESSAGE("Attempt to validate prefs before they were read.");
+      }
+   }
+   END_LOCK_MUTEX
+
+   return Success();
 }
 
 Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile)
