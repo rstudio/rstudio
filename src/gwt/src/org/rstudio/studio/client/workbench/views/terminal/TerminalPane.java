@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -949,7 +950,23 @@ public class TerminalPane extends WorkbenchPane
       if (visibleTerminal != null)
       {
          if (!suppressAutoFocus_)
-            Scheduler.get().scheduleDeferred(() -> visibleTerminal.setFocus(true));
+            Scheduler.get().scheduleDeferred(() -> {
+               // On rare occasions (which I haven't been able to nail down), flow gets here
+               // before xtermjs has initialized, and the setFocus call throws a null exception.
+               // Nothing is obviously broken when that happens, but guard against it, wait
+               // a tiny bit and try once more.
+               if (visibleTerminal.terminalEmulatorLoaded())
+               {
+                  visibleTerminal.setFocus(true);
+               }
+               else
+               {
+                  Timers.singleShot(200, () -> {
+                     if (visibleTerminal.terminalEmulatorLoaded())
+                        visibleTerminal.setFocus(true);
+                  });
+               }
+         });
          activeTerminalToolbarButton_.setActiveTerminal(
                visibleTerminal.getCaption(), visibleTerminal.getHandle());
          setTerminalTitle(visibleTerminal.getTitle());
