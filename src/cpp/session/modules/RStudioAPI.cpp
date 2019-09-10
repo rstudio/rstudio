@@ -212,8 +212,13 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
+   
+   using boost::bind;
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(sourceModuleRFile, "RStudioAPI.R"));
 
-   return Success();
+   return initBlock.execute();
 }
 
 } // namespace connections
