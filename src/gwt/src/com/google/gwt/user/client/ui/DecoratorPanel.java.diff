@@ -1,4 +1,0 @@
-17a18
-> import com.google.gwt.aria.client.Roles;
-182a184
->     Roles.getPresentationRole().set(table);

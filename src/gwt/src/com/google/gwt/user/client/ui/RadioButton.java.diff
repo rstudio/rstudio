@@ -1,4 +1,0 @@
-85a86
->     sinkEvents(Event.ONFOCUS);
-207a209
->       case Event.ONFOCUS:

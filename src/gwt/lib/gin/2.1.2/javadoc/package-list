@@ -1,0 +1,11 @@
+com.google.gwt.inject.client
+com.google.gwt.inject.client.assistedinject
+com.google.gwt.inject.client.binder
+com.google.gwt.inject.client.multibindings
+com.google.gwt.inject.rebind
+com.google.gwt.inject.rebind.adapter
+com.google.gwt.inject.rebind.binding
+com.google.gwt.inject.rebind.output
+com.google.gwt.inject.rebind.reflect
+com.google.gwt.inject.rebind.resolution
+com.google.gwt.inject.rebind.util
