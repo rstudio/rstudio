@@ -38,7 +38,9 @@ namespace prefs {
 class Preferences
 {
 public:
+   Preferences();
    core::Error initialize();
+   bool initialized();
    core::json::Array allLayers();
    core::json::Object userPrefLayer();
    core::json::Object getLayer(const std::string& name);
@@ -113,6 +115,7 @@ protected:
    core::Error readLayers();
    std::vector<boost::shared_ptr<PrefLayer>> layers_;
    boost::recursive_mutex mutex_;
+   bool initialized_;
 };
 
 } // namespace prefs
