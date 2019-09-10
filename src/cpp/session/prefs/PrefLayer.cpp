@@ -72,7 +72,11 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    if (error)
    {
       // No prefs file; use an empty cache
-      cache_ = boost::make_shared<json::Object>();
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         cache_ = boost::make_shared<json::Object>();
+      }
+      END_LOCK_MUTEX
 
       if (!isFileNotFoundError(error))
       {
@@ -92,7 +96,11 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    else if (val.type() == json::ObjectType)
    {
       // Successful parse of prefs object
-      cache_ = boost::make_shared<json::Object>(val.get_obj());
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         cache_ = boost::make_shared<json::Object>(val.get_obj());
+      }
+      END_LOCK_MUTEX
    }
    else
    {
@@ -110,8 +118,14 @@ Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
    if (error)
       return error;
 
-   cache_ = boost::make_shared<json::Object>();
-   return json::getSchemaDefaults(contents, cache_.get());
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cache_ = boost::make_shared<json::Object>();
+      error = json::getSchemaDefaults(contents, cache_.get());
+   }
+   END_LOCK_MUTEX
+
+   return error;
 }
 
 Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
