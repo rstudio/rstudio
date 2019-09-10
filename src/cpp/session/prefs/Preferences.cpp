@@ -24,6 +24,16 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+Preferences::Preferences():
+   initialized_(false)
+{
+}
+
+bool Preferences::initialized()
+{
+   return initialized_;
+}
+
 core::json::Array Preferences::allLayers()
 {
    json::Array layers;
@@ -84,6 +94,9 @@ Error Preferences::initialize()
       }
    }
    END_LOCK_MUTEX
+
+   // Indicate that we've loaded all layers
+   initialized_ = true;
 
    return Success();
 }
