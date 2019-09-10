@@ -33,14 +33,8 @@ download()
   fi
 }
 
-# target directory for gwt; if there's an opt folder then use that, otherwise,
-# presume we're using the install dir
-OPT_DEPENDENCIES="/opt/rstudio-tools/dependencies/common"
-if [ -d "$OPT_DEPENDENCIES" ]; then
-   GWT_DIR="$OPT_DEPENDENCIES/gwt"
-else
-   GWT_DIR=$INSTALL_DIR/../../src/gwt
-fi
+# target directory for gwt
+GWT_DIR=$INSTALL_DIR/../../src/gwt
 
 # lib dir
 LIB_DIR=$GWT_DIR/lib
@@ -61,18 +55,16 @@ else
 fi
 
 # gwt sdk
-GWT_SDK_VER=2.8.2
+# using a custom SDK build, included in RStudio repo
+# see build-gwt and sync-gwt scripts in src/gwt/tools
+GWT_SDK_VER=rstudio-1.3
 GWT_SDK=gwt-$GWT_SDK_VER
-GWT_SDK_ZIP=$GWT_SDK.zip
-if [ -d "$LIB_DIR/gwt/$GWT_SDK_VER" ]
+if [ -d "$LIB_DIR/gwt/$GWT_SDK" ]
 then
-   echo "$GWT_SDK_ZIP already installed"
+   echo "$GWT_SDK found in repo"
 else
-   download $GWT_SDK_ZIP
-   mkdir -p "$LIB_DIR/gwt"
-   unzip -qd "$LIB_DIR" "$GWT_SDK_ZIP"
-   mv "$LIB_DIR/$GWT_SDK" "$LIB_DIR/gwt/$GWT_SDK_VER"
-   rm $GWT_SDK_ZIP
+   echo "Error: $GWT_SDK not found"
+   exit 1
 fi
 
 JUNIT_JAR=junit-4.9b3.jar

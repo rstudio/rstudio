@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--                                                                        -->
+<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- The module root element -->
+<!ELEMENT module (inherits | source | public | super-source | entry-point | 
+  stylesheet | script | servlet | replace-with | generate-with |
+  define-property | extend-property | set-property | set-property-fallback |
+  clear-configuration-property | define-configuration-property |
+  extend-configuration-property | set-configuration-property |
+  property-provider | define-linker | add-linker | collapse-all-properties |
+  collapse-property)*>
+<!ATTLIST module
+	rename-to CDATA #IMPLIED
+>
+<!-- Inherit the contents of another module -->
+<!ELEMENT inherits EMPTY>
+<!ATTLIST inherits
+	name CDATA #REQUIRED
+>
+<!-- Specify the source path, relative to the classpath location of the module descriptor -->
+<!ELEMENT source (include | exclude)*>
+<!ATTLIST source
+	path CDATA #REQUIRED
+	includes CDATA #IMPLIED
+	excludes CDATA #IMPLIED
+	defaultexcludes (yes | no) "yes"
+	casesensitive (true | false) "true"
+>
+<!-- Specify the public resource path, relative to the classpath location of the module descriptor -->
+<!ELEMENT public (include | exclude)*>
+<!ATTLIST public
+	path CDATA #REQUIRED
+	includes CDATA #IMPLIED
+	excludes CDATA #IMPLIED
+	defaultexcludes (yes | no) "yes"
+	casesensitive (true | false) "true"
+>
+<!-- Specify a source path that rebases subpackages into the root namespace -->
+<!ELEMENT super-source (include | exclude)*>
+<!ATTLIST super-source
+	path CDATA #REQUIRED
+	includes CDATA #IMPLIED
+	excludes CDATA #IMPLIED
+	defaultexcludes (yes | no) "yes"
+	casesensitive (true | false) "true"
+>
+<!ELEMENT include EMPTY>
+<!ATTLIST include
+	name CDATA #REQUIRED
+>
+<!ELEMENT exclude EMPTY>
+<!ATTLIST exclude
+	name CDATA #REQUIRED
+>
+
+<!-- Define a module entry point -->
+<!ELEMENT entry-point EMPTY>
+<!ATTLIST entry-point
+	class CDATA #REQUIRED
+>
+
+<!-- Preload a stylesheet before executing the GWT application -->
+<!ELEMENT stylesheet EMPTY>
+<!ATTLIST stylesheet
+	src CDATA #REQUIRED
+>
+<!-- Preload an external JavaScript file before executing the GWT application -->
+<!ELEMENT script (#PCDATA)>
+<!ATTLIST script
+	src CDATA #REQUIRED
+>
+<!-- Map a named servlet class to a module-relative path in hosted mode -->
+<!ELEMENT servlet EMPTY>
+<!ATTLIST servlet 
+	path CDATA #REQUIRED
+	class CDATA #REQUIRED
+>
+
+<!-- Adds a Linker to the compilation process -->
+<!ELEMENT add-linker EMPTY>
+<!-- A comma-separated list of linker names -->
+<!ATTLIST add-linker
+	name CDATA #REQUIRED
+>
+
+<!-- Defines a Linker type to package compiler output -->
+<!ELEMENT define-linker EMPTY>
+<!ATTLIST define-linker
+	class CDATA #REQUIRED
+	name CDATA #REQUIRED
+>
+
+<!--                 ^^^ Commonly-used elements ^^^                -->
+<!--                VVV Deferred binding elements VVV              -->
+
+<!-- All possible predicates -->
+<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">
+<!-- Define a property and allowable values (comma-separated identifiers) -->
+<!ELEMENT define-property EMPTY>
+<!ATTLIST define-property
+	name CDATA #REQUIRED
+	values CDATA #REQUIRED
+>
+<!-- Define a configuration property -->
+<!ELEMENT define-configuration-property EMPTY>
+<!ATTLIST define-configuration-property
+	name CDATA #REQUIRED
+	is-multi-valued CDATA #REQUIRED
+>
+<!-- Set the value of a previously-defined property -->
+<!ELEMENT set-property (%predicates;)*>
+<!ATTLIST set-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Set the value of a previously-defined property -->
+<!ELEMENT set-property-fallback EMPTY>
+<!ATTLIST set-property-fallback
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Set the value of a configuration property -->
+<!ELEMENT set-configuration-property EMPTY>
+<!ATTLIST set-configuration-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Add additional allowable values to a property -->
+<!ELEMENT extend-property EMPTY>
+<!ATTLIST extend-property
+	name CDATA #REQUIRED
+	values CDATA #REQUIRED
+	fallback-value CDATA #IMPLIED
+>
+<!-- Collapse property values to produce soft permutations -->
+<!ELEMENT collapse-property EMPTY>
+<!ATTLIST collapse-property
+	name CDATA #REQUIRED
+	values CDATA #REQUIRED
+>
+<!-- Collapse all deferred-binding properties to produce a single permutation -->
+<!ELEMENT collapse-all-properties EMPTY>
+<!ATTLIST collapse-all-properties
+	value (true | false) "true"
+>
+<!-- Add additional allowable values to a configuration property -->
+<!ELEMENT extend-configuration-property EMPTY>
+<!ATTLIST extend-configuration-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Remove all allowable values from a configuration property -->
+<!ELEMENT clear-configuration-property EMPTY>
+<!ATTLIST clear-configuration-property
+	name CDATA #REQUIRED
+>
+<!-- Define a JavaScript fragment that will return the value for the named property at runtime -->
+<!ELEMENT property-provider (#PCDATA)>
+<!ATTLIST property-provider
+	name CDATA #REQUIRED
+	generator CDATA #IMPLIED
+>
+<!-- Deferred binding assignment to substitute a named class -->
+<!ELEMENT replace-with (%predicates;)*>
+<!ATTLIST replace-with
+	class CDATA #REQUIRED
+>
+<!-- Deferred binding assignment to substitute a generated class -->
+<!ELEMENT generate-with (%predicates;)*>
+<!ATTLIST generate-with
+	class CDATA #REQUIRED
+>
+<!-- Deferred binding predicate that is true when a named property has a given value-->
+<!ELEMENT when-property-is EMPTY>
+<!ATTLIST when-property-is
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Deferred binding predicate that is true for types in the type system that are assignable to the specified type -->
+<!ELEMENT when-type-assignable EMPTY>
+<!ATTLIST when-type-assignable
+	class CDATA #REQUIRED
+>
+<!-- Deferred binding predicate that is true for exactly one type in the type system -->
+<!ELEMENT when-type-is EMPTY>
+<!ATTLIST when-type-is
+	class CDATA #REQUIRED
+>
+<!-- Predicate that ANDs all child conditions -->
+<!ELEMENT all (%predicates;)*>
+<!-- Predicate that ORs all child conditions -->
+<!ELEMENT any (%predicates;)*>
+<!-- Predicate that NANDs all child conditions -->
+<!ELEMENT none (%predicates;)*>

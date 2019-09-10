@@ -1,0 +1,24 @@
+GWT rstudio-1.3
+(git revision 89fc3b886)
+Copyright (c) Google, Inc. 2009.  All rights reserved.
+Visit http://www.gwtproject.org.
+
+This product includes software developed by:
+ - The Apache Software Foundation (http://www.apache.org/).
+   - Tomcat (http://tomcat.apache.org/) with modifications
+   - Tapestry (http://tapestry.apache.org/)
+ - The Eclipse Foundation (http://www.eclipse.org/).
+   - Java Development Tools (http://www.eclipse.org/jdt/)
+   - Standard Widget Toolkit (http://www.eclipse.org/swt/) with modifications
+ - Mort Bay Consulting (http://www.mortbay.com/)
+   - Jetty 6.1.11 (http://mortbay.org/jetty/)
+ - The Mozilla Foundation (http://www.mozilla.org/).
+   - Mozilla 1.7.12 (http://www.mozilla.org/releases/mozilla1.7.12/)
+   - Rhino (http://www.mozilla.org/rhino/) with modifications
+ - ObjectWeb (http://www.objectweb.org/)
+   - ASM (http://asm.objectweb.org/) with modifications
+ - The OpenQA Project (http://openqa.org/)
+   - Selenium-RC (http://selenium-rc.openqa.org/)
+ - The Protobuf Project (http://code.google.com/p/protobuf/) with modifications
+
+For source availability and license information see COPYING.
