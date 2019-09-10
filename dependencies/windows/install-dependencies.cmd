@@ -101,25 +101,6 @@ if not exist breakpad-tools-windows (
   del breakpad-tools-windows.zip
 )
 
-if not exist ..\..\src\gwt\lib (
-  mkdir ..\..\src\gwt\lib
-)
-pushd ..\..\src\gwt\lib
-
-if not exist gin\2.1.2 (
-  wget %WGET_ARGS% "%BASEURL%%GIN_FILE%"
-  mkdir gin\2.1.2
-  echo Unzipping %GIN_FILE%
-  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\2.1.2
-  del "%GIN_FILE%"
-)
-
-if not exist %JUNIT_FILE% (
-  wget %WGET_ARGS% "%BASEURL%%JUNIT_FILE%"
-)
-
-popd
-
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip
 if not exist "dictionaries\en_US.dic" (
