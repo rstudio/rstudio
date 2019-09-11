@@ -102,7 +102,11 @@ Error invokeServerRpc(const std::string& endpoint,
 
    if (serverAddress.empty())
    {
+#ifdef _WIN32
+       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+#else
       return socket_rpc::invokeRpc(FilePath(kServerRpcSocketPath), endpoint, request, pResult);
+#endif
    }
    else
    {
@@ -140,12 +144,17 @@ void invokeServerRpcAsync(const std::string& endpoint,
 
    if (serverAddress.empty())
    {
+#ifdef _WIN32
+       onError(systemError(boost::system::errc::not_supported, ERROR_LOCATION));
+       return;
+#else
       return socket_rpc::invokeRpcAsync(s_ioService,
                                         FilePath(kServerRpcSocketPath),
                                         endpoint,
                                         request,
                                         onResult,
                                         onError);
+#endif
    }
    else
    {
