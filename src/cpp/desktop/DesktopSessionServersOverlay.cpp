@@ -38,6 +38,15 @@ LaunchLocationResult DesktopSessionServers::showSessionLaunchLocationDialog()
    return result;
 }
 
+void DesktopSessionServers::setPendingSessionServerReconnect(const SessionServer& server)
+{
+}
+
+boost::optional<SessionServer> DesktopSessionServers::getPendingSessionServerReconnect()
+{
+   return boost::none;
+}
+
 QJsonObject SessionServerPathMapping::toJson() const
 {
    return QJsonObject();

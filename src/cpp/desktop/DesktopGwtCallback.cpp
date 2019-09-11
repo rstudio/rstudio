@@ -1563,6 +1563,15 @@ QJsonArray GwtCallback::getSessionServers()
    return serversArray;
 }
 
+void GwtCallback::reconnectToSessionServer(const QJsonValue& sessionServerJson)
+{
+   SessionServer server = !sessionServerJson.isNull() ?
+            SessionServer::fromJson(sessionServerJson.toObject()) :
+            SessionServer("", "");
+   sessionServers().setPendingSessionServerReconnect(server);
+   pMainWindow_->close();
+}
+
 bool GwtCallback::setLauncherServer(const QJsonObject& sessionServerJson)
 {
    SessionServer server = SessionServer::fromJson(sessionServerJson);

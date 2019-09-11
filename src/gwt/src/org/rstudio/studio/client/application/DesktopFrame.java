@@ -211,6 +211,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void getSessionServer(CommandWithArg<SessionServer> callback);
    void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);
+   void reconnectToSessionServer(SessionServer server);
 
    void setLauncherServer(SessionServer server, CommandWithArg<Boolean> callback);
    void connectToLauncherServer();

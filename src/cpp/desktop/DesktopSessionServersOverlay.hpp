@@ -137,11 +137,15 @@ public:
    void showSessionServerOptionsDialog();
    LaunchLocationResult showSessionLaunchLocationDialog();
 
+   void setPendingSessionServerReconnect(const SessionServer& server);
+   boost::optional<SessionServer> getPendingSessionServerReconnect();
+
 Q_SIGNALS:
 
 public:
 
 private:
+   boost::optional<SessionServer> pendingSessionServerReconnect_;
 };
 
 enum class SessionLocation

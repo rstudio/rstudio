@@ -23,6 +23,8 @@
 #include <QJsonObject>
 #include <QPrinter>
 
+#include <boost/optional.hpp>
+
 #ifdef Q_OS_WIN32
 #include "DesktopWordViewer.hpp"
 #include "DesktopPowerpointViewer.hpp"
@@ -256,6 +258,7 @@ public Q_SLOTS:
 
    QJsonObject getSessionServer();
    QJsonArray getSessionServers();
+   void reconnectToSessionServer(const QJsonValue& sessionServerJson);
 
    bool setLauncherServer(const QJsonObject& sessionServerJson);
    void connectToLauncherServer();
