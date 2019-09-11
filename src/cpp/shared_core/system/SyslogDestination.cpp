@@ -18,7 +18,7 @@
  *
  */
 
-#include <shared_core/SyslogDestination.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 
 #include <cassert>
 #include <syslog.h>

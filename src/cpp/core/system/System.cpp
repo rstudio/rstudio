@@ -26,7 +26,7 @@
 #include <core/system/Environment.hpp>
 
 #ifndef _WIN32
-#include <shared_core/SyslogDestination.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 #endif
 
 #include <shared_core/FileLogDestination.hpp>

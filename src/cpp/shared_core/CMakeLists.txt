@@ -25,7 +25,6 @@ set (SHARED_CORE_SOURCE_FILES
    FilePath.cpp
    Logger.cpp
    StderrLogDestination.cpp
-   SyslogDestination.cpp
    json/Json.cpp
 )
 
@@ -34,6 +33,7 @@ if (UNIX)
 
    set (SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
+      system/SyslogDestination.cpp
       system/User.cpp
    )
 

@@ -30,7 +30,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
 #include <shared_core/ILogDestination.hpp>
-#include <shared_core/SyslogDestination.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 
 namespace rstudio {
 namespace core {

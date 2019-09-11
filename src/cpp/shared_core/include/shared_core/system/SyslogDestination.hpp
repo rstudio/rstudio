@@ -21,7 +21,7 @@
 #ifndef SHARED_CORE_SYS_LOG_DESTINATION_HPP
 #define SHARED_CORE_SYS_LOG_DESTINATION_HPP
 
-#include "ILogDestination.hpp"
+#include <shared_core/ILogDestination.hpp>
 
 namespace rstudio {
 namespace core {
