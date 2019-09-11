@@ -278,7 +278,7 @@ const std::string& Response::statusMessage() const
 
 void Response::setStatusMessage(const std::string& statusMessage) 
 {
-   statusMessage_ = statusMessage ;
+   statusMessage_ = statusMessage;
 }
    
 std::string Response::contentEncoding() const
@@ -382,7 +382,7 @@ void Response::setBrowserCompatible(const Request& request)
 
 void Response::addCookie(const Cookie& cookie) 
 {
-	addHeader("Set-Cookie", cookie.cookieHeaderValue()) ;
+   addHeader("Set-Cookie", cookie.cookieHeaderValue());
 }
 
  Headers Response::getCookies() const
@@ -588,9 +588,9 @@ void Response::setMovedTemporarily(const http::Request& request,
    
 void Response::resetMembers() 
 {
-	statusCode_ = status::Ok ;
-	statusCodeStr_.clear() ;
-	statusMessage_.clear() ;
+   statusCode_ = status::Ok;
+   statusCodeStr_.clear();
+   statusMessage_.clear();
 }
    
 void Response::removeCachingHeaders()
@@ -610,62 +610,62 @@ std::string Response::eTagForContent(const std::string& content)
 void Response::appendFirstLineBuffers(
       std::vector<boost::asio::const_buffer>& buffers) const 
 {
-	// create status code string (needs to be a member so memory is still valid
+   // create status code string (needs to be a member so memory is still valid
    // for use of buffers)
-	std::ostringstream statusCodeStream ;
-	statusCodeStream << statusCode_ ;
-	statusCodeStr_ = statusCodeStream.str() ;
+   std::ostringstream statusCodeStream;
+   statusCodeStream << statusCode_;
+   statusCodeStr_ = statusCodeStream.str();
 
-	// status line 
-	appendHttpVersionBuffers(buffers) ;
-	appendSpaceBuffer(buffers) ;
-	buffers.push_back(boost::asio::buffer(statusCodeStr_)) ;
-	appendSpaceBuffer(buffers) ;
-	ensureStatusMessage() ;
-	buffers.push_back(boost::asio::buffer(statusMessage_)) ;
+   // status line 
+   appendHttpVersionBuffers(buffers);
+   appendSpaceBuffer(buffers);
+   buffers.push_back(boost::asio::buffer(statusCodeStr_));
+   appendSpaceBuffer(buffers);
+   ensureStatusMessage();
+   buffers.push_back(boost::asio::buffer(statusMessage_));
 }
 
 namespace status {
 namespace Message {
    const char * const SwitchingProtocols = "SwitchingProtocols";
-	const char * const Ok = "OK" ;
+   const char * const Ok = "OK";
    const char * const Created = "Created";
    const char * const PartialContent = "Partial Content";
-	const char * const MovedPermanently = "Moved Permanently" ;
-	const char * const MovedTemporarily = "Moved Temporarily" ;
+   const char * const MovedPermanently = "Moved Permanently";
+   const char * const MovedTemporarily = "Moved Temporarily";
    const char * const TooManyRedirects = "Too Many Redirects";
-	const char * const SeeOther = "See Other" ;
-	const char * const NotModified = "Not Modified" ;
-	const char * const BadRequest = "Bad Request" ;
-	const char * const Unauthorized = "Unauthorized" ;
-	const char * const Forbidden = "Forbidden" ;
-	const char * const NotFound = "Not Found" ;
-	const char * const MethodNotAllowed = "Method Not Allowed" ;
+   const char * const SeeOther = "See Other";
+   const char * const NotModified = "Not Modified";
+   const char * const BadRequest = "Bad Request";
+   const char * const Unauthorized = "Unauthorized";
+   const char * const Forbidden = "Forbidden";
+   const char * const NotFound = "Not Found";
+   const char * const MethodNotAllowed = "Method Not Allowed";
    const char * const RangeNotSatisfiable = "Range Not Satisfyable";
-	const char * const InternalServerError = "Internal Server Error" ;
-	const char * const NotImplemented = "Not Implemented" ;
-	const char * const BadGateway = "Bad Gateway" ;
-	const char * const ServiceUnavailable = "Service Unavailable" ;
-	const char * const GatewayTimeout = "Gateway Timeout" ;
+   const char * const InternalServerError = "Internal Server Error";
+   const char * const NotImplemented = "Not Implemented";
+   const char * const BadGateway = "Bad Gateway";
+   const char * const ServiceUnavailable = "Service Unavailable";
+   const char * const GatewayTimeout = "Gateway Timeout";
 } // namespace Message
 } // namespace status
 
 
 void Response::ensureStatusMessage() const 
 {
-	if ( statusMessage_.empty() )
-	{
-		using namespace status ;
+   if ( statusMessage_.empty() )
+   {
+      using namespace status;
 
-		switch(statusCode_)
-		{
+      switch(statusCode_)
+      {
          case SwitchingProtocols:
             statusMessage_ = status::Message::SwitchingProtocols;
             break;
 
-			case Ok:
-				statusMessage_ = status::Message::Ok ;
-				break;
+         case Ok:
+            statusMessage_ = status::Message::Ok;
+            break;
 
          case Created:
             statusMessage_ = status::Message::Created;
@@ -676,85 +676,85 @@ void Response::ensureStatusMessage() const
             break;
 
          case MovedPermanently:
-				statusMessage_ = status::Message::MovedPermanently ;
-				break;
-
-			case MovedTemporarily:
-				statusMessage_ = status::Message::MovedTemporarily ;
-				break;
-
-         case TooManyRedirects:
-            statusMessage_ = status::Message::TooManyRedirects ;
+            statusMessage_ = status::Message::MovedPermanently;
             break;
 
-			case SeeOther:
-				statusMessage_ = status::Message::SeeOther ;
-				break;
+         case MovedTemporarily:
+            statusMessage_ = status::Message::MovedTemporarily;
+            break;
 
-			case NotModified:
-				statusMessage_ = status::Message::NotModified ;
-				break;
+         case TooManyRedirects:
+            statusMessage_ = status::Message::TooManyRedirects;
+            break;
 
-			case BadRequest:
-				statusMessage_ = status::Message::BadRequest ;
-				break;
+         case SeeOther:
+            statusMessage_ = status::Message::SeeOther;
+            break;
 
-			case Unauthorized:
-				statusMessage_ = status::Message::Unauthorized ;
-				break;
+         case NotModified:
+            statusMessage_ = status::Message::NotModified;
+            break;
 
-			case Forbidden:
-				statusMessage_ = status::Message::Forbidden ;
-				break;
+         case BadRequest:
+            statusMessage_ = status::Message::BadRequest;
+            break;
 
-			case NotFound:
-				statusMessage_ = status::Message::NotFound ;
-				break;
+         case Unauthorized:
+            statusMessage_ = status::Message::Unauthorized;
+            break;
 
-			case MethodNotAllowed:
-				statusMessage_ = status::Message::MethodNotAllowed ;
-				break;
+         case Forbidden:
+            statusMessage_ = status::Message::Forbidden;
+            break;
+
+         case NotFound:
+            statusMessage_ = status::Message::NotFound;
+            break;
+
+         case MethodNotAllowed:
+            statusMessage_ = status::Message::MethodNotAllowed;
+            break;
 
          case RangeNotSatisfiable:
             statusMessage_ = status::Message::RangeNotSatisfiable;
             break;
 
-			case InternalServerError:
-				statusMessage_ = status::Message::InternalServerError ;
-				break;
+         case InternalServerError:
+            statusMessage_ = status::Message::InternalServerError;
+            break;
 
-			case NotImplemented:
-				statusMessage_ = status::Message::NotImplemented ;
-				break;
+         case NotImplemented:
+            statusMessage_ = status::Message::NotImplemented;
+            break;
 
-			case BadGateway:
-				statusMessage_ = status::Message::BadGateway ;
-				break;
+         case BadGateway:
+            statusMessage_ = status::Message::BadGateway;
+            break;
 
-			case ServiceUnavailable:
-				statusMessage_ = status::Message::ServiceUnavailable ;
-				break;
+         case ServiceUnavailable:
+            statusMessage_ = status::Message::ServiceUnavailable;
+            break;
 
-			case GatewayTimeout:
-				statusMessage_ = status::Message::GatewayTimeout ;
-				break;
-		}
-	}
+         case GatewayTimeout:
+            statusMessage_ = status::Message::GatewayTimeout;
+            break;
+      }
+   }
 }
 
 
 std::ostream& operator << (std::ostream& stream, const Response& r)
 {
-	// output status line
-	stream << "HTTP/" << r.httpVersionMajor() << "." << r.httpVersionMinor() 
+   // output status line
+   stream << "HTTP/" << r.httpVersionMajor() << "." << r.httpVersionMinor() 
           << " " << r.statusCode() << " " << r.statusMessage() 
-          << std::endl ;
+          << std::endl;
 
-	// output headers and body
-	const Message& m = r ;
-	stream << m ;
+   // output headers and body
+   const Message& m = r;
+   stream << m;
 
-	return stream ;
+   return stream;
 }
 
 void Response::setStreamFile(const FilePath& filePath,

@@ -27,20 +27,20 @@ public:
 
 const boost::system::error_category& rCategory()
 {
-   static RErrorCategory rErrorCategoryConst ;
-	return rErrorCategoryConst ;
+   static RErrorCategory rErrorCategoryConst;
+   return rErrorCategoryConst;
 }
 
 const char * RErrorCategory::name() const BOOST_NOEXCEPT
 {
-	return "r" ;
+   return "r";
 }
 
 std::string RErrorCategory::message( int ev ) const
 {
-	std::string message ;
-	switch (ev)
-	{         
+   std::string message;
+   switch (ev)
+   {
       case errc::RHomeNotFound:
          message = "Unable to find R home directory";
          break;
@@ -73,12 +73,12 @@ std::string RErrorCategory::message( int ev ) const
          message = "No data available from R";
          break;
          
-		default:
-			message = "Unknown error" ;
-			break;
-	}
+      default:
+         message = "Unknown error";
+         break;
+   }
 
-	return message ;
+   return message;
 }
 
 core::Error rCodeExecutionError(const std::string& errMsg, 

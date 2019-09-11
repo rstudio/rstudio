@@ -25,7 +25,7 @@
 
 namespace rstudio {
 namespace core {
-	class Error;
+   class Error;
 } 
 }
 
@@ -34,7 +34,7 @@ namespace r {
 namespace session {
 
 // singleton
-class ClientState ;
+class ClientState;
 ClientState& clientState();
 
 enum ClientStateCommitType
@@ -87,11 +87,11 @@ private:
    void restoreProjectState(const core::FilePath& stateFile);
 
 private:
-   core::json::Object temporaryState_ ;
-   core::json::Object persistentState_ ;
+   core::json::Object temporaryState_;
+   core::json::Object persistentState_;
    core::json::Object projectPersistentState_;
 };
-      
+
 } // namespace session
 } // namespace r
 } // namespace rstudio
