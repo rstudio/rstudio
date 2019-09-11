@@ -429,15 +429,15 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
 #define ERROR_LOCATION rstudio::core::ErrorLocation( \
       BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)
 
-#define CATCH_UNEXPECTED_EXCEPTION                                            \
-   catch(const std::exception& e)                                             \
-   {                                                                          \
-      rstudio::core::logErrorMessage(std::string("Unexpected exception: ") +  \
-                        e.what()) ;                                           \
-   }                       \
-   catch(...) \
-   { \
-      rstudio::core::logErrorMessage("Unknown exception"); \
+#define CATCH_UNEXPECTED_EXCEPTION                                                  \
+   catch(const std::exception& e)                                                   \
+   {                                                                                \
+      rstudio::core::log::logErrorMessage(std::string("Unexpected exception: ") +   \
+                        e.what(), "") ;                                             \
+   }                                                                                \
+   catch(...)                                                                       \
+   {                                                                                \
+      rstudio::core::log::logErrorMessage("Unknown exception", "");                 \
    }
 
 #endif

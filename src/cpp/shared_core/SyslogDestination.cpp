@@ -27,20 +27,21 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
 
 namespace {
 
-int logLevelToLogPriority(LogLevel in_logLevel)
+int logLevelToLogPriority(log::LogLevel in_logLevel)
 {
    switch(in_logLevel)
    {
-      case LogLevel::ERROR:
+      case log::LogLevel::ERROR:
          return LOG_ERR;
-      case LogLevel::WARNING:
+      case log::LogLevel::WARNING:
          return LOG_WARNING;
-      case LogLevel::DEBUG:
+      case log::LogLevel::DEBUG:
          return LOG_DEBUG;
-      case LogLevel::INFO:
+      case log::LogLevel::INFO:
          return LOG_INFO;
       default:
       {
@@ -82,11 +83,14 @@ unsigned int SyslogDestination::getId() const
    return getSyslogId();
 }
 
-void SyslogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
+void SyslogDestination::writeLog(
+   log::LogLevel in_logLevel,
+   const std::string& in_message)
 {
    ::syslog(logLevelToLogPriority(in_logLevel), "%s", in_message.c_str());
 }
 
+} // namespace system
 } // namespace core
 } // namespace rstudio
 

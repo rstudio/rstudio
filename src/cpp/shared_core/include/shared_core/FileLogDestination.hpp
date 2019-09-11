@@ -30,6 +30,7 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
 /**
  * @brief Class which represents the options for a file logger.
@@ -38,31 +39,35 @@ class FileLogOptions
 {
 public:
    /**
-   * @brief Constructor.
-   *
-   * @param in_directory      The directory in which to create log files.
-   */
+    * @brief Constructor.
+    *
+    * This constructor is intentionally not explicit to allow for conversion from FilePath to FileLogOptions.
+    *
+    * @param in_directory      The directory in which to create log files.
+    */
    FileLogOptions(FilePath in_directory);
 
    /**
-   * @brief Constructor.
-   *
-   * @param in_directory      The directory in which to create log files.
-   * @param in_fileMode       The permissions to set on log files.
-   * @param in_maxSizeMb      The maximum size of log files, in MB, before they are rotated and/or overwritten.
-   * @param in_doRotation     Whether to rotate log files or not.
-   */
+    * @brief Constructor.
+    *
+    * @param in_directory      The directory in which to create log files.
+    * @param in_fileMode       The permissions to set on log files.
+    * @param in_maxSizeMb      The maximum size of log files, in MB, before they are rotated and/or overwritten.
+    * @param in_doRotation     Whether to rotate log files or not.
+    * @param in_includePid     Whether to include the PID of the process in the logs.
+    */
    FileLogOptions(
       FilePath in_directory,
       std::string in_fileMode,
       double in_maxSizeMb,
-      bool in_doRotation);
+      bool in_doRotation,
+      bool in_includePid);
 
    /**
-   * @brief Gets the directory where log files should be written.
-   *
-   * @return The directory where log files should be written.
-   */
+    * @brief Gets the directory where log files should be written.
+    *
+    * @return The directory where log files should be written.
+    */
    const FilePath& getDirectory() const;
 
    /**
@@ -86,11 +91,19 @@ public:
     */
    bool doRotation() const;
 
+   /**
+    * @brief Returns whether or not to include the PID in the logs.
+    *
+    * @return True if the PID should be included in the logs; false otherwise.
+    */
+   bool includePid() const;
+
 private:
    // Default values.
-   static constexpr const char* kDefaultFileMode = "666";
-   static constexpr int kDefaultMaxSizeMb = 2;
-   static constexpr bool kDefaultDoRotation = true;
+   static constexpr const char* s_defaultFileMode = "666";
+   static constexpr int s_defaultMaxSizeMb = 2;
+   static constexpr bool s_defaultDoRotation = true;
+   static constexpr bool s_defaultIncludePid = false;
 
    // The directory where log files should be written.
    FilePath m_directory;
@@ -103,6 +116,9 @@ private:
 
    // Whether to rotate log files or not.
    bool m_doRotation;
+
+   // Whether to include the PID in logs.
+   bool m_includePid;
 };
 
 /**
@@ -126,7 +142,7 @@ public:
    /**
     * @brief Destructor.
     */
-    ~FileLogDestination() override;
+   ~FileLogDestination() override;
 
    /**
     * @brief Gets the unique ID of this file log destination.
@@ -148,6 +164,7 @@ private:
    PRIVATE_IMPL_SHARED(m_impl);
 };
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

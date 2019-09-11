@@ -19,12 +19,15 @@
 #include <boost/variant.hpp>
 
 #include <core/ConfigProfile.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 
+#include <shared_core/FilePath.hpp>
+#include <shared_core/FileLogDestination.hpp>
+
 namespace rstudio {
 namespace core {
+namespace log {
 
 struct StdErrLoggerOptions
 {
@@ -34,43 +37,9 @@ struct SysLoggerOptions
 {
 };
 
-struct FileLoggerOptions
-{
-   static constexpr const char* defaultFileMode = "666";
-   static constexpr int defaultMaxSizeMb = 2;
-   static constexpr bool defaultRotate = true;
-   static constexpr bool defaultIncludePid = false;
-
-   FileLoggerOptions();
-
-   FileLoggerOptions(const FilePath& logDir) :
-      FileLoggerOptions(logDir, defaultFileMode, defaultMaxSizeMb, defaultRotate, defaultIncludePid)
-   {
-   }
-
-   FileLoggerOptions(const FilePath& logDir,
-                     const std::string& fileMode,
-                     double maxSizeMb,
-                     bool rotate,
-                     bool includePid) :
-      logDir(logDir),
-      fileMode(fileMode),
-      maxSizeMb(maxSizeMb),
-      rotate(rotate),
-      includePid(includePid)
-   {
-   }
-
-   FilePath logDir;
-   std::string fileMode;
-   double maxSizeMb;
-   bool rotate;
-   bool includePid;
-};
-
 typedef boost::variant<StdErrLoggerOptions,
-                       SysLoggerOptions,
-                       FileLoggerOptions> LoggerOptions;
+   SysLoggerOptions,
+   FileLogOptions> LoggerOptions;
 
 class LogOptions
 {
@@ -82,7 +51,8 @@ public:
               int defaultLoggerType,
               const LoggerOptions& defaultLoggerOptions);
 
-   virtual ~LogOptions() {}
+   virtual ~LogOptions()
+   { }
 
    core::Error read();
 
@@ -102,6 +72,7 @@ public:
 
 private:
    void initProfile();
+
    void setLowestLogLevel();
 
    std::vector<ConfigProfile::Level> getLevels(const std::string& loggerName) const;
@@ -117,6 +88,7 @@ private:
    ConfigProfile profile_;
 };
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

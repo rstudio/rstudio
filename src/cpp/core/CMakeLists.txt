@@ -40,7 +40,6 @@ set (CORE_SOURCE_FILES
    ExponentialBackoff.cpp
    Exec.cpp
    FileInfo.cpp
-   FileLogWriter.cpp
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
@@ -48,13 +47,11 @@ set (CORE_SOURCE_FILES
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
-   LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
    RecursionGuard.cpp
    Settings.cpp
-   StderrLogWriter.cpp
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
@@ -235,7 +232,6 @@ if (UNIX)
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
       r_util/RVersionsPosix.cpp
-      SyslogLogWriter.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp

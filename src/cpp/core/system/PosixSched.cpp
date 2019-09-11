@@ -15,6 +15,7 @@
 
 #include <core/system/PosixSched.hpp>
 
+#include <algorithm>
 #include <sched.h>
 
 #include <shared_core/Error.hpp>

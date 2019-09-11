@@ -42,7 +42,7 @@ public:
    }
 
    void logMessage(const std::string& programIdentity,
-                   core::LogLevel level,
+                   core::log::LogLevel level,
                    const std::string& message);
 
    void sendMetrics(const std::vector<metrics::Metric>& metrics);
@@ -79,7 +79,7 @@ public:
    }
 
    void logMessage(const std::string& programIdentity,
-                   core::LogLevel level,
+                   core::log::LogLevel level,
                    const std::string& message);
 
    void sendMetrics(const std::vector<metrics::Metric>& metrics);

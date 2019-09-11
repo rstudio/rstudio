@@ -192,15 +192,15 @@ void initHook();
 
 // initialization
 Error initializeSystemLog(const std::string& programIdentity,
-                          LogLevel logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload = true);
 
 Error initializeStderrLog(const std::string& programIdentity,
-                          LogLevel logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload = true);
 
 Error initializeLog(const std::string& programIdentity,
-                    LogLevel logLevel,
+                    log::LogLevel logLevel,
                     const FilePath& logDir,
                     bool enableConfigReload = true);
 
@@ -278,21 +278,21 @@ bool effectiveUserIsRoot();
 bool currentUserIsPrivilleged(unsigned int minimumUserId);
 
 // log
-void log(LogLevel level,
+void log(log::LogLevel level,
          const char* message,
          const std::string&logSection = std::string());
 
-void log(LogLevel level,
+void log(log::LogLevel level,
          const std::string& message,
          const std::string& logSection = std::string());
 
-void log(LogLevel level,
+void log(log::LogLevel level,
          const boost::function<std::string()>& action,
          const std::string& logSection = std::string());
 
-const char* logLevelToStr(LogLevel level);
+const char* logLevelToStr(log::LogLevel level);
 
-LogLevel lowestLogLevel();
+log::LogLevel lowestLogLevel();
 
 // filesystem
 bool isHiddenFile(const FilePath& filePath) ;

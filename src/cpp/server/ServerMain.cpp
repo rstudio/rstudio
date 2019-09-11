@@ -18,9 +18,8 @@
 #include <signal.h>
 
 #include <core/CrashHandler.hpp>
-#include <shared_core/Error.hpp>
 #include <core/FileLock.hpp>
-#include <core/LogWriter.hpp>
+#include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
@@ -52,6 +51,8 @@
 #include <server/ServerSessionProxy.hpp>
 #include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
+
+#include <shared_core/Error.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
@@ -266,7 +267,7 @@ void httpServerAddHandlers()
 
 Error initLog()
 {
-   return core::system::initializeSystemLog(kProgramIdentity, core::LogLevel::WARNING, false);
+   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARNING, false);
 }
 
 bool reloadLoggingConfiguration()
@@ -559,7 +560,7 @@ int main(int argc, char * const argv[])
                                        s_pHttpServer->ioService());
 
       // add a monitor log writer
-      core::system::addLogWriter(
+      core::log::addLogDestination(
                 monitor::client().createLogWriter(kProgramIdentity));
 
       // call overlay initialize

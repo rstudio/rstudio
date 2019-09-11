@@ -166,13 +166,13 @@ void handleLogExceptionRequest(const std::string& username,
    std::string logEntry = boost::str(
                         fmt % log::cleanDelims("rsession-" + username)
                             % log::cleanDelims(ex.message)
-                            % log::DELIM
+                            % log::s_delim
                             % log::cleanDelims(ostr.str())
                             % log::cleanDelims(jsonRpcRequest.clientId)
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(core::LogLevel::ERROR, logEntry);
+   core::system::log(log::LogLevel::ERROR, logEntry);
 
 
    // set void result
@@ -197,26 +197,26 @@ void handleLogMessageRequest(const std::string& username,
    
    // convert level to appropriate enum and str
    using namespace rstudio::core;
-   LogLevel logLevel;
+   log::LogLevel logLevel;
    std::string logLevelStr;
    switch(level)
    {
       case 0:
-         logLevel = LogLevel::ERROR;
+         logLevel = log::LogLevel::ERROR;
          logLevelStr = "ERROR";
          break;
       case 1:
-         logLevel = LogLevel::WARNING;
+         logLevel = log::LogLevel::WARNING;
          logLevelStr = "WARNING";
          break;
       case 2:
-         logLevel = LogLevel::INFO;
+         logLevel = log::LogLevel::INFO;
          logLevelStr = "INFO";
          break;
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " + 
                              safe_convert::numberToString(level));
-         logLevel = LogLevel::ERROR;
+         logLevel = log::LogLevel::ERROR;
          logLevelStr = "ERROR";
          break;
    }

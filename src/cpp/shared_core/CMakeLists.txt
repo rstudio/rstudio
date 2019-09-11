@@ -24,7 +24,7 @@ set (SHARED_CORE_SOURCE_FILES
    FileLogDestination.cpp
    FilePath.cpp
    Logger.cpp
-   StderrDestination.cpp
+   StderrLogDestination.cpp
    SyslogDestination.cpp
    json/Json.cpp
 )

@@ -824,7 +824,7 @@ int asJsonType(const T& object,
    else if (boost::is_same<T, std::string>::value)
       return StringType;
    
-   logErrorMessage("Unexpected type");
+   log::logErrorMessage("Unexpected type");
    return NullType;
 }
 
@@ -856,7 +856,7 @@ inline void logIncompatibleTypes(const Value& value,
 {
    if (value.type() != expectedType)
    {
-      logErrorMessage("Invalid JSON type: expected '" +
+      log::logErrorMessage("Invalid JSON type: expected '" +
                       typeAsString(expectedType) + "', got '" +
                       typeAsString(value.type()) + "'",
                       location);

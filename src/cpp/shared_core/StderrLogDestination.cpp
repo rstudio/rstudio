@@ -25,28 +25,30 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
-bool StderrDestination::isStderrTty()
+bool StderrLogDestination::isStderrTty()
 {
    return ::isatty(STDERR_FILENO) == 1;
 }
 
-unsigned int StderrDestination::getStderrId()
+unsigned int StderrLogDestination::getStderrId()
 {
    return 0;
 }
 
-unsigned int StderrDestination::getId() const
+unsigned int StderrLogDestination::getId() const
 {
    return getStderrId();
 }
 
-void StderrDestination::writeLog(LogLevel, const std::string& in_message)
+void StderrLogDestination::writeLog(LogLevel, const std::string& in_message)
 {
    if (isStderrTty())
       std::cerr << in_message;
 }
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

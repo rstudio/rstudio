@@ -28,21 +28,29 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
 // FileLogOptions ======================================================================================================
 FileLogOptions::FileLogOptions(FilePath in_directory) :
    m_directory(std::move(in_directory)),
-   m_fileMode(kDefaultFileMode),
-   m_maxSizeMb(kDefaultMaxSizeMb),
-   m_doRotation(kDefaultDoRotation)
+   m_fileMode(s_defaultFileMode),
+   m_maxSizeMb(s_defaultMaxSizeMb),
+   m_doRotation(s_defaultDoRotation),
+   m_includePid(s_defaultIncludePid)
 {
 }
 
-FileLogOptions::FileLogOptions(FilePath in_directory, std::string in_fileMode, double in_maxSizeMb, bool in_doRotation) :
-   m_directory(std::move(in_directory)),
-   m_fileMode(std::move(in_fileMode)),
-   m_maxSizeMb(in_maxSizeMb),
-   m_doRotation(in_doRotation)
+FileLogOptions::FileLogOptions(
+   FilePath in_directory,
+   std::string in_fileMode,
+   double in_maxSizeMb,
+   bool in_doRotation,
+   bool in_includePid) :
+      m_directory(std::move(in_directory)),
+      m_fileMode(std::move(in_fileMode)),
+      m_maxSizeMb(in_maxSizeMb),
+      m_doRotation(in_doRotation),
+      m_includePid(in_includePid)
 {
 }
 
@@ -64,6 +72,11 @@ double FileLogOptions::getMaxSizeMb() const
 bool FileLogOptions::doRotation() const
 {
    return m_doRotation;
+}
+
+bool FileLogOptions::includePid() const
+{
+   return m_includePid;
 }
 
 // FileLogDestination ==================================================================================================
@@ -195,6 +208,7 @@ void FileLogDestination::writeLog(LogLevel, const std::string& in_message)
    (*m_impl->LogOutputStream) << in_message;
 }
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

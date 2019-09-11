@@ -68,7 +68,6 @@
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 #include <core/LogOptions.hpp>
-#include <core/SyslogLogWriter.hpp>
 #include <core/StringUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
@@ -190,19 +189,19 @@ void initHook()
 }
 
 // statics defined in System.cpp
-extern boost::shared_ptr<LogOptions> s_logOptions;
+extern boost::shared_ptr<log::LogOptions> s_logOptions;
 extern boost::recursive_mutex s_loggingMutex;
 extern std::string s_programIdentity;
 
 Error initializeSystemLog(const std::string& programIdentity,
-                          LogLevel logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default syslog logger options
-      SysLoggerOptions options;
-      s_logOptions.reset(new LogOptions(programIdentity, logLevel, kLoggerTypeSysLog, options));
+      log::SysLoggerOptions options;
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeSysLog, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();

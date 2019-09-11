@@ -25,6 +25,7 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
 /**
  * @brief A class which logs messages to stderr.
@@ -32,7 +33,7 @@ namespace core {
  * If stderr is not a TTY, no logs will be written. In that case, it is better not to register the destination.
  * Only one of these should be created per program.
  */
-class StderrDestination : public ILogDestination
+class StderrLogDestination : public ILogDestination
 {
 public:
    /**
@@ -65,6 +66,7 @@ public:
    void writeLog(LogLevel in_logLevel, const std::string& in_message) override;
 };
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

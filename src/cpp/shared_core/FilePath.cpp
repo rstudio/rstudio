@@ -269,7 +269,7 @@ bool copySingleItem(const FilePath& from, const FilePath& to,
                  target.ensureDirectory() :
                  path.copy(target);
    if (error)
-      logError(error);
+      log::logError(error);
 
    return true;
 }
@@ -280,7 +280,7 @@ void logError(path_t path,
 {
    Error error(e.code(), errorLocation);
    addErrorProperties(path, &error);
-   logError(error, errorLocation);
+   log::logError(error, errorLocation);
 }
 
 Error notFoundError(const FilePath& filePath,
@@ -434,7 +434,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
    catch(const boost::filesystem::filesystem_error& e)
    {
       if (e.code() != boost::system::errc::no_such_file_or_directory)
-         logError(Error(e.code(), ERROR_LOCATION));
+         log::logError(Error(e.code(), ERROR_LOCATION));
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -446,7 +446,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
 
    Error error = safePath.makeCurrentPath();
    if (error)
-      logError(error);
+      log::logError(error);
 
    return safePath;
 }
@@ -518,7 +518,7 @@ FilePath FilePath::completePath(const std::string& in_filePath) const
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
       error.addProperty("path", in_filePath);
-      logError(error);
+      log::logError(error);
       return *this;
    }
 }
@@ -618,7 +618,7 @@ FilePath FilePath::getChildPath(const std::string& in_filePath) const
    FilePath childPath;
    Error error = getChildPath(in_filePath, childPath);
    if (error)
-      logError(error);
+      log::logError(error);
 
    return childPath;
 }
@@ -810,7 +810,7 @@ FilePath FilePath::getParent() const
    {
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
-      logError(error);
+      log::logError(error);
       return *this;
    }
 }
@@ -839,7 +839,9 @@ uintmax_t FilePath::getSize() const
       if (e.code().value() == ERROR_NOT_SUPPORTED)
          return 0;
 #endif
-      logError(m_impl->Path, e, ERROR_LOCATION);
+      Error err = Error(e.code(), ERROR_LOCATION);
+      err.addProperty("path", getAbsolutePath());
+      log::logError(err);
       return 0;
    }
 }
@@ -853,7 +855,7 @@ uintmax_t FilePath::getSizeRecursive() const
    boost::shared_ptr<uintmax_t> pTotal = boost::make_shared<uintmax_t>(0);
    Error error = getChildrenRecursive(boost::bind(addItemSize, _2, pTotal));
    if (error)
-      logError(error);
+      log::logError(error);
    return *pTotal;
 }
 
@@ -1059,7 +1061,7 @@ Error FilePath::moveIndirect(const FilePath& in_targetPath) const
    // error)
    error = remove();
    if (error)
-      logError(error);
+      log::logError(error);
 
    return Success();
 }
@@ -1266,11 +1268,11 @@ RestoreCurrentPathScope::~RestoreCurrentPathScope()
    {
       Error error = m_impl->Path.makeCurrentPath();
       if (error)
-         logError(error, m_impl->Location);
+         log::logError(error, m_impl->Location);
    }
    catch(...)
    {
-      logErrorMessage(
+      log::logErrorMessage(
          "An unexpected error occurred when attempting to restore the working directory.",
          m_impl->Location);
    }
@@ -1287,7 +1289,7 @@ RemoveOnExitScope::~RemoveOnExitScope()
    {
       Error error = m_impl->Path.removeIfExists();
       if (error)
-         logError(error, m_impl->Location);
+         log::logError(error, m_impl->Location);
    }
    catch(...)
    {

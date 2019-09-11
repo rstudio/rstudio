@@ -30,6 +30,7 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
 /**
  * @brief Interface which allows a logger to write a log message to a destination.
@@ -42,7 +43,7 @@ public:
    /**
     * @brief Virtual destructor to allow for inheritance.
     */
-    virtual ~ILogDestination() = default;
+   virtual ~ILogDestination() = default;
 
    /**
     * @brief Gets the unique ID of the log destination.
@@ -61,6 +62,7 @@ public:
    virtual void writeLog(LogLevel in_level, const std::string& in_message) = 0;
 };
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

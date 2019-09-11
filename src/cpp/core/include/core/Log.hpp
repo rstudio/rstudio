@@ -16,6 +16,8 @@
 #ifndef CORE_LOG_HPP
 #define CORE_LOG_HPP
 
+#include <shared_core/Logger.hpp>
+
 #include <string>
 
 #include <shared_core/Error.hpp>
@@ -31,57 +33,6 @@ enum LoggerType
    kLoggerTypeFile = 2
 };
 
-namespace log {
-
-extern const char DELIM;
-std::string cleanDelims(const std::string& source);
-
-void writeError(const Error& error,
-                std::ostream& os);
-
-void logError(const Error& error,
-              const ErrorLocation& loggedFromLocation);
-
-void logError(const std::string& logSection,
-              const Error& error,
-              const ErrorLocation& loggedFromLocation);
-   
-void logErrorMessage(const std::string& message, 
-                     const ErrorLocation& loggedFromlocation);
-
-void logErrorMessage(const std::string& logSection,
-                     const std::string& message,
-                     const ErrorLocation& loggedFromLocation);
-   
-void logWarningMessage(const std::string& message,
-                       const ErrorLocation& loggedFromLocation);
-
-void logWarningMessage(const std::string& logSection,
-                       const std::string& message,
-                       const ErrorLocation& loggedFromLocation);
-      
-void logInfoMessage(const std::string& message,
-                    const ErrorLocation& loggedFromLocation = ErrorLocation());
-
-void logInfoMessage(const std::string& logSection,
-                    const std::string& message,
-                    const ErrorLocation& loggedFromLocation = ErrorLocation());
-   
-void logDebugMessage(const std::string& message,
-                     const ErrorLocation& loggedFromLocation = ErrorLocation());
-
-void logDebugAction(const boost::function<std::string()>& action,
-                    const ErrorLocation& loggedFromLocation = ErrorLocation());
-
-void logDebugMessage(const std::string& logSection,
-                     const std::string& message,
-                     const ErrorLocation& loggedFromLocation = ErrorLocation());
-   
-std::string errorAsLogEntry(const Error& error);  
-  
-} // namespace log
-} // namespace core 
-} // namespace rstudio
 
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls
@@ -125,5 +76,7 @@ std::string errorAsLogEntry(const Error& error);
 // define named logging sections
 #define kFileLockingLogSection "file-locking"
 
-#endif // CORE_LOG_HPP
+} // namespace core
+} // namespace rstudio
 
+#endif // CORE_LOG_HPP

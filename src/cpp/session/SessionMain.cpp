@@ -43,18 +43,15 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <shared_core/Error.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
 #include <core/ConfigUtils.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileLock.hpp>
 #include <core/Exec.hpp>
 #include <core/Scope.hpp>
 #include <core/Settings.hpp>
 #include <core/Thread.hpp>
 #include <core/Log.hpp>
-#include <core/LogWriter.hpp>
 #include <core/system/System.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/FileSerializer.hpp>
@@ -99,6 +96,10 @@
 #include <session/SessionClientEventService.hpp>
 #include <session/SessionUrlPorts.hpp>
 #include <session/RVersionSettings.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 #include "SessionAddins.hpp"
 
@@ -1669,7 +1670,7 @@ int main (int argc, char * const argv[])
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       core::system::initializeSystemLog("rsession-" + core::system::username(),
-                                        core::LogLevel::WARNING);
+                                        core::log::LogLevel::WARNING);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1719,8 +1720,13 @@ int main (int argc, char * const argv[])
       // (like rpostback) can determine what the program mode is
       core::system::setenv(kRStudioProgramMode, options.programMode());
 
+      // Set the log level and the program identity.
+      log::setLogLevel(log::LogLevel::WARNING);
+      log::setProgramId(options.programIdentity());
+
       // reflect stderr logging
-      core::system::setLogToStderr(options.logStderr());
+      if (options.logStderr())
+         log::addLogDestination(std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination()));
 
       // initialize monitor
       initMonitorClient();
@@ -1728,8 +1734,7 @@ int main (int argc, char * const argv[])
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
       {
-         core::system::addLogWriter(monitor::client().createLogWriter(
-                                                options.programIdentity()));
+         core::log::addLogDestination(monitor::client().createLogWriter(options.programIdentity()));
       }
 
       // initialize file lock config
@@ -1741,12 +1746,12 @@ int main (int argc, char * const argv[])
          if (options.verifyInstallation())
          {
             core::system::initializeStderrLog(options.programIdentity(),
-                                core::LogLevel::WARNING);
+                                core::log::LogLevel::WARNING);
          }
          else
          {
             core::system::initializeLog(options.programIdentity(),
-                                        core::LogLevel::WARNING,
+                                        core::log::LogLevel::WARNING,
                                         options.userLogPath());
          }
       }

@@ -89,11 +89,11 @@ FilePath rSaveGlobalEnvironmentFilePath()
 void rSuicideError(const Error& error)
 {
    // provide error message if the error was unexpected
-   std::string msg;
+   std::stringstream ostream;
    if (!error.isExpected())
-      msg = core::log::errorAsLogEntry(error);
+      core::log::writeError(error, ostream);
 
-   rSuicide(msg);
+   rSuicide(ostream.str());
 }
 
 SA_TYPE saveAsk()

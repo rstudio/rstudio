@@ -17,6 +17,8 @@
 
 #include <monitor/MonitorClient.hpp>
 
+#include <shared_core/ILogDestination.hpp>
+
 #include "MonitorClientImpl.hpp"
 
 namespace rstudio {
@@ -24,27 +26,23 @@ namespace monitor {
 
 namespace {
 
-class MonitorLogWriter : public core::LogWriter
+class MonitorLogDestination : public core::log::ILogDestination
 {
 public:
-   MonitorLogWriter(const std::string& programIdentity)
+   MonitorLogDestination(const std::string& programIdentity)
       : programIdentity_(programIdentity)
    {
    }
 
-   virtual void log(core::LogLevel level, const std::string& message)
+   unsigned int getId() const override
    {
-      log(programIdentity_, level, message);
+      return 56;
    }
 
-   virtual void log(const std::string& programIdentity,
-                    core::LogLevel level,
-                    const std::string& message)
+   void writeLog(core::log::LogLevel logLevel, const std::string& message) override
    {
-      client().logMessage(programIdentity, level, message);
+      client().logMessage(programIdentity_, logLevel, message);
    }
-
-   virtual core::LogLevel logLevel() { return core::LogLevel::DEBUG; }
 
 private:
    std::string programIdentity_;
@@ -56,11 +54,10 @@ Client* s_pClient = NULL;
 
 } // anonymous namespace
 
-boost::shared_ptr<core::LogWriter> Client::createLogWriter(
+std::shared_ptr<core::log::ILogDestination> Client::createLogWriter(
                                     const std::string& programIdentity)
 {
-   return boost::shared_ptr<core::LogWriter>(
-                                 new MonitorLogWriter(programIdentity));
+   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(programIdentity));
 }
 
 

@@ -25,13 +25,14 @@
 
 namespace rstudio {
 namespace core {
+namespace system {
 
 /**
  * @brief A class which logs messages to syslog.
  *
  * Only one of these should be created per program.
  */
-class SyslogDestination : public ILogDestination
+class SyslogDestination : public log::ILogDestination
 {
 public:
    /**
@@ -68,9 +69,10 @@ public:
     *                       informational purposes only.
     * @param in_message     The message to write to syslog.
     */
-   void writeLog(LogLevel in_logLevel, const std::string& in_message) override;
+   void writeLog(log::LogLevel in_logLevel, const std::string& in_message) override;
 };
 
+} // namespace system
 } // namespace core
 } // namespace rstudio
 

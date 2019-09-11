@@ -20,7 +20,7 @@ namespace rstudio {
 namespace monitor {
 
 void SyncClient::logMessage(const std::string& programIdentity,
-                            core::LogLevel level,
+                            core::log::LogLevel level,
                             const std::string& message)
 {
 }
@@ -35,7 +35,7 @@ void SyncClient::sendMultiMetrics(
 }
 
 void AsyncClient::logMessage(const std::string& programIdentity,
-                             core::LogLevel level,
+                             core::log::LogLevel level,
                              const std::string& message)
 {
 }

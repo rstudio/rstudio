@@ -78,7 +78,7 @@ void writeLogFile(const std::string& logFileName, std::ostream& ostr)
 int main(int argc, char** argv)
 {
   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::LogLevel::WARNING);
+                                    core::log::LogLevel::WARNING);
 
   // ignore SIGPIPE
   Error error = core::system::ignoreSignal(core::system::SigPipe);

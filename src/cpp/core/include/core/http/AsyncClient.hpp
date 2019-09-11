@@ -30,7 +30,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/Thread.hpp>
@@ -42,6 +41,8 @@
 #include <core/http/Socket.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
+
+#include <shared_core/Error.hpp>
 
 // special version of unexpected exception handler which makes
 // sure to call the user's ErrorHandler
