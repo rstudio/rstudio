@@ -44,9 +44,9 @@ void AsyncRProcess::start(const char* rCommand,
                           const std::string& input)
 {
    // file paths to be used for IPC (if any) requested by child process
-   ipcRequests_ = module_context::tempFile("rstudio-ipc-requests-", "rds");
-   ipcResponse_ = module_context::tempFile("rstudio-ipc-response-", "rds");
-   secret_ = core::system::generateUuid();
+   ipcRequests_  = module_context::tempFile("rstudio-ipc-requests-", "rds");
+   ipcResponse_  = module_context::tempFile("rstudio-ipc-response-", "rds");
+   sharedSecret_ = core::system::generateUuid();
    
    // R binary
    core::FilePath rProgramPath;
@@ -68,7 +68,7 @@ void AsyncRProcess::start(const char* rCommand,
       const core::FilePath rPath =
             session::options().coreRSourcePath();
       
-      const core::FilePath rTools =  rPath.childPath("Tools.R");
+      const core::FilePath rTools = rPath.childPath("Tools.R");
       
       // insert at begin as Tools.R needs to be sourced first
       rSourceFiles.insert(rSourceFiles.begin(), rTools);
