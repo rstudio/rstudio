@@ -46,6 +46,7 @@ void AsyncRProcess::start(const char* rCommand,
    // file paths to be used for IPC (if any) requested by child process
    ipcRequests_ = module_context::tempFile("rstudio-ipc-requests-", "rds");
    ipcResponse_ = module_context::tempFile("rstudio-ipc-response-", "rds");
+   secret_ = core::system::generateUuid();
    
    // R binary
    core::FilePath rProgramPath;
@@ -166,6 +167,7 @@ void AsyncRProcess::start(const char* rCommand,
    // set environment variables used for IPC
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.absolutePath());
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.absolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
    
    // update environment used for child process
    options.environment = childEnv;
@@ -242,6 +244,7 @@ bool AsyncRProcess::onContinue()
       core::Error error = r::exec::RFunction(".rs.rstudioapi.processRequest")
             .addParam(ipcRequests_.absolutePathNative())
             .addParam(ipcResponse_.absolutePathNative())
+            .addParam(sharedSecret_)
             .call();
 
       if (error)

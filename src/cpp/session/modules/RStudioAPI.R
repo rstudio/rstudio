@@ -13,9 +13,13 @@
 #
 #
 
-.rs.addFunction("rstudioapi.processRequest", function(requests, response)
+.rs.addFunction("rstudioapi.processRequest", function(requests,
+                                                      response,
+                                                      secret)
 {
-   result <- .rs.tryCatch(.rs.rstudioapi.processRequestImpl(requests, response))
+   result <- .rs.tryCatch(
+      .rs.rstudioapi.processRequestImpl(requests, response, secret)
+   )
    
    unlink(requests)
    if (inherits(result, "error")) {
@@ -26,9 +30,15 @@
    TRUE
 })
 
-.rs.addFunction("rstudioapi.processRequestImpl", function(requests, response)
+.rs.addFunction("rstudioapi.processRequestImpl", function(requests,
+                                                          response,
+                                                          secret)
 {
-   call <- readRDS(requests)
+   data <- readRDS(requests)
+   if (!identical(data$secret, secret))
+      stop("invalid secret in rstudioapi IPC")
+   
+   call <- data$call
    output <- eval(call, envir = baseenv())
    saveRDS(output, file = response)
 })
