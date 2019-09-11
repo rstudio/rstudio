@@ -42,14 +42,8 @@ typedef boost::function<void(const core::Error&)> RpcErrorHandler;
 core::Error initialize();
 core::Error initializeSecret(const std::string& rpcSecret);
 
+#ifndef _WIN32
 core::Error invokeRpc(const core::FilePath& socketPath,
-                      const std::string& endpoint,
-                      const core::json::Object& request,
-                      core::json::Value* pResult);
-
-core::Error invokeRpc(const std::string& address,
-                      const std::string& port,
-                      bool ssl,
                       const std::string& endpoint,
                       const core::json::Object& request,
                       core::json::Value* pResult);
@@ -60,6 +54,14 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
                     const core::json::Object& request,
                     const RpcResultHandler& onResult,
                     const RpcErrorHandler& onError);
+#endif
+
+core::Error invokeRpc(const std::string& address,
+                      const std::string& port,
+                      bool ssl,
+                      const std::string& endpoint,
+                      const core::json::Object& request,
+                      core::json::Value* pResult);
 
 void invokeRpcAsync(boost::asio::io_service& ioService,
                     const std::string& address,

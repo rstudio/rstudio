@@ -17,10 +17,13 @@
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#ifndef _WIN32
 #include <core/http/LocalStreamBlockingClient.hpp>
+#include <core/http/LocalStreamAsyncClient.hpp>
+#endif
+
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/TcpIpBlockingClientSsl.hpp>
-#include <core/http/LocalStreamAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 
@@ -85,6 +88,7 @@ Error handleResponse(const std::string& endpoint,
    return Success();
 }
 
+#ifndef _WIN32
 Error sendRequest(const FilePath& socketPath,
                   const std::string& endpoint,
                   const http::Request& request,
@@ -98,6 +102,7 @@ Error sendRequest(const FilePath& socketPath,
 
    return handleResponse(endpoint, response, pResult);
 }
+#endif
 
 Error sendRequest(const std::string& address,
                   const std::string& port,
@@ -137,6 +142,7 @@ void onRpcResponse(const std::string& endpoint,
    onResult(value);
 }
 
+#ifndef _WIN32
 void sendRequestAsync(boost::asio::io_service& ioService,
                       const FilePath& socketPath,
                       const std::string& endpoint,
@@ -150,6 +156,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
    pClient->request().assign(request);
    pClient->execute(boost::bind(onRpcResponse, endpoint, _1, onResult, onError), onError);
 }
+#endif
 
 void sendRequestAsync(boost::asio::io_service& ioService,
                       const std::string& address,
@@ -180,6 +187,7 @@ void sendRequestAsync(boost::asio::io_service& ioService,
    pClient->execute(boost::bind(onRpcResponse, endpoint, _1, onResult, onError), onError);
 }
 
+#ifndef _WIN32
 void constructUnixRequest(const std::string& endpoint,
                           const json::Object& request,
                           http::Request* pRequest)
@@ -190,6 +198,7 @@ void constructUnixRequest(const std::string& endpoint,
    // only used with unix sockets
    pRequest->setHeader(kServerRpcSecretHeader, s_sessionSharedSecret);
 }
+#endif
 
 void constructTcpRequest(const std::string& address,
                          const std::string& endpoint,
@@ -209,6 +218,7 @@ void constructTcpRequest(const std::string& address,
 
 } // anonymous namespace
 
+#ifndef _WIN32
 Error invokeRpc(const FilePath& socketPath,
                 const std::string& endpoint,
                 const json::Object& request,
@@ -217,18 +227,6 @@ Error invokeRpc(const FilePath& socketPath,
    http::Request req;
    constructUnixRequest(endpoint, request, &req);
    return sendRequest(socketPath, endpoint, req, pResult);
-}
-
-Error invokeRpc(const std::string& address,
-                const std::string& port,
-                bool ssl,
-                const std::string& endpoint,
-                const json::Object& request,
-                json::Value *pResult)
-{
-   http::Request req;
-   constructTcpRequest(address, endpoint, request, &req);
-   return sendRequest(address, port, ssl, endpoint, req, pResult);
 }
 
 void invokeRpcAsync(boost::asio::io_service& ioService,
@@ -241,6 +239,19 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
    http::Request req;
    constructUnixRequest(endpoint, request, &req);
    sendRequestAsync(ioService, socketPath, endpoint, req, onResult, onError);
+}
+#endif
+
+Error invokeRpc(const std::string& address,
+                const std::string& port,
+                bool ssl,
+                const std::string& endpoint,
+                const json::Object& request,
+                json::Value *pResult)
+{
+   http::Request req;
+   constructTcpRequest(address, endpoint, request, &req);
+   return sendRequest(address, port, ssl, endpoint, req, pResult);
 }
 
 void invokeRpcAsync(boost::asio::io_service& ioService,
