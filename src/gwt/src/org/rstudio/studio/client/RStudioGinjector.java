@@ -85,6 +85,7 @@ import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
+import org.rstudio.studio.client.workbench.CommandHighlighter;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -281,6 +282,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CheckForUpdatesDialog dialog);
    void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
+   void injectMembers(CommandHighlighter highlighter);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

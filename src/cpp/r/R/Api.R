@@ -808,3 +808,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
   .Call("rs_executeAppCommand", commandId, quiet, PACKAGE = "(embedding)")
 })
 
+# highlight a command in the IDE
+.rs.addApiFunction("highlightCommand", function(commandId) {
+   .Call("rs_highlightAppCommand", commandId, PACKAGE = "(embedding)")
+})

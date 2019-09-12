@@ -36,6 +36,7 @@ namespace modules {
 namespace rstudioapi {
 
 namespace {
+
 module_context::WaitForMethodFunction s_waitForShowDialog;
 module_context::WaitForMethodFunction s_waitForOpenFileDialog;
 
@@ -45,6 +46,15 @@ SEXP rs_executeAppCommand(SEXP commandSEXP, SEXP quietSEXP)
    data["command"] = r::sexp::safeAsString(commandSEXP);
    data["quiet"] = r::sexp::asLogical(quietSEXP);
    ClientEvent event(client_events::kExecuteAppCommand, data);
+   module_context::enqueClientEvent(event);
+   return R_NilValue;
+}
+
+SEXP rs_highlightAppCommand(SEXP commandSEXP)
+{
+   json::Object data;
+   data["command"] = r::sexp::safeAsString(commandSEXP);
+   ClientEvent event(client_events::kHighlightAppCommand, data);
    module_context::enqueClientEvent(event);
    return R_NilValue;
 }
@@ -212,6 +222,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
+   RS_REGISTER_CALL_METHOD(rs_highlightAppCommand);
 
    return Success();
 }

@@ -126,6 +126,7 @@ public class Workbench implements BusyHandler,
                     RmdOutput rmdOutput,                        // force gin to create    
                     ProjectTemplateRegistryProvider provider,   // force gin to create
                     WorkbenchServerOperations serverOperations, // force gin to create
+                    CommandHighlighter highligher,              // force gin to create
                     AskSecretManager askSecret)                 // force gin to create
   {
       view_ = view;
