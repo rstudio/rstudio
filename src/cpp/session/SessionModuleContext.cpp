@@ -676,27 +676,31 @@ private:
 };
 
 // handlers instance
-SuspendHandlers s_suspendHandlers ;   
+SuspendHandlers& suspendHandlers()
+{
+   static SuspendHandlers instance;
+   return instance;
+}
    
 } // anonymous namespace
    
 void addSuspendHandler(const SuspendHandler& handler)
 {
-   s_suspendHandlers.add(handler);
+   suspendHandlers().add(handler);
 }
    
 void onSuspended(const r::session::RSuspendOptions& options,
                  Settings* pPersistentState)
 {
    pPersistentState->beginUpdate();
-   s_suspendHandlers.suspend(options, pPersistentState);
+   suspendHandlers().suspend(options, pPersistentState);
    pPersistentState->endUpdate();
    
 }
 
 void onResumed(const Settings& persistentState)
 {
-   s_suspendHandlers.resume(persistentState);
+   suspendHandlers().resume(persistentState);
 }
 
 // idle work
