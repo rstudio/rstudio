@@ -493,8 +493,8 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
 
    if (output.empty())
    {
-      *pErrMsg = "R did not return any output when queried for "
-                 "directory location information";
+      *pErrMsg = "R (" + rScriptPath + ") did not return any output "
+                 "when queried for directory location information";
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
