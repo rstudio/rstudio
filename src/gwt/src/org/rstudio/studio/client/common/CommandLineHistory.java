@@ -90,7 +90,7 @@ public class CommandLineHistory
    private int historyPos_ ;
    // If you start typing a command, then go up in history, then go down,
    // then what you had previously typed should still be there. This is
-   // that value--it is loaded/saved whenever history nagivation takes you
+   // that value--it is loaded/saved whenever history navigation takes you
    // into/out of that final history position (history_.size()).
    private String historyTail_;
    private final HasText input_;

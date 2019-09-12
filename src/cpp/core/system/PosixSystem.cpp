@@ -166,8 +166,8 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
       return error;
    }
 
-  *pRealPath = FilePath(string_utils::systemToUtf8(realPath));
-  return Success();
+   *pRealPath = FilePath(string_utils::systemToUtf8(realPath));
+   return Success();
 }
 
 Error realPath(const std::string& path, FilePath* pRealPath)
@@ -265,7 +265,7 @@ void initializeLogConfigReload()
    
 Error ignoreTerminalSignals()
 {
-   ExecBlock ignoreBlock ;
+   ExecBlock ignoreBlock;
    ignoreBlock.addFunctions()
       (boost::bind(ignoreSig, SIGHUP))
       (boost::bind(ignoreSig, SIGTSTP))
@@ -826,8 +826,8 @@ void setStandardStreamsToDevNull()
 
 bool isHiddenFile(const FilePath& filePath) 
 {
-   std::string filename = filePath.getFilename() ;
-   return (!filename.empty() && (filename[0] == '.')) ;
+   std::string filename = filePath.getFilename();
+   return (!filename.empty() && (filename[0] == '.'));
 }  
 
 bool isHiddenFile(const FileInfo& fileInfo)
@@ -870,7 +870,7 @@ bool stdoutIsTerminal()
 std::string generateUuid(bool includeDashes)
 {
    // generaate the uuid and convert it to a strting
-   uuid_t uuid ;
+   uuid_t uuid;
    ::uuid_generate_random(uuid);
    char uuidBuffer[40];
    ::uuid_unparse_lower(uuid, uuidBuffer);
@@ -958,7 +958,7 @@ void fixupExecutablePath(FilePath* pExePath)
 
 void abort()
 {
-	::abort();
+   ::abort();
 }
 
 Error terminateProcess(PidType pid)
@@ -2132,9 +2132,9 @@ Error launchChildProcess(std::string path,
    // error
    if (pid < 0)
    {
-      Error error = systemError(errno, ERROR_LOCATION) ;
-      error.addProperty("commmand", path) ;
-      return error ;
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("commmand", path);
+      return error;
    }
 
    // child
@@ -2159,9 +2159,9 @@ Error launchChildProcess(std::string path,
 
    // parent
    if (pProcessId)
-      *pProcessId = pid ;
+      *pProcessId = pid;
 
-   return Success() ;
+   return Success();
 }
 
 Error runProcess(const std::string& path,
@@ -2615,7 +2615,7 @@ Error restorePriv()
 #else
 
 namespace {
-   uid_t s_privUid ;
+   uid_t s_privUid;
 }
 
 Error temporarilyDropPriv(const std::string& newUsername)

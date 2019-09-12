@@ -14,10 +14,15 @@
  */
 
 #include "SessionUserPrefs.hpp"
+#include "SessionApiPrefs.hpp"
+#include "SessionUserPrefsMigration.hpp"
 
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
+
+#include <core/system/Xdg.hpp>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -36,6 +41,12 @@ namespace session {
 namespace modules {
 namespace prefs {
 namespace {
+
+ApiPrefs& apiPrefs()
+{
+   static ApiPrefs instance;
+   return instance;
+}
 
 Error setPreferences(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
@@ -61,6 +72,58 @@ Error setState(const json::JsonRpcRequest& request,
    module_context::events().onPreferencesSaved();
 
    return Success();
+}
+
+Error editPreferences(const json::JsonRpcRequest& ,
+                      json::JsonRpcResponse*)
+{
+   // Invoke an editor on the user-level config file
+   r::exec::RFunction editor(".rs.editor");
+   editor.addParam("file",
+         core::system::xdg::userConfigDir().completePath(kUserPrefsFile).getAbsolutePath());
+   return editor.call();
+}
+
+Error clearPreferences(const json::JsonRpcRequest& ,
+                       json::JsonRpcResponse* pResponse)
+{
+   json::Value result;
+   FilePath prefsFile = 
+      core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
+   if (!prefsFile.exists())
+   {
+      // No prefs file = no work to do
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // Create a backup path for the old prefs so they can be restored
+   FilePath backup;
+   Error error = FilePath::uniqueFilePath(prefsFile.getParent().getAbsolutePath(), ".json", backup);
+   if (error)
+   {
+      pResponse->setResult(result);
+      return error;
+   }
+
+   // Move the prefs to the backup location
+   error = prefsFile.move(backup);
+   if (error)
+   {
+      pResponse->setResult(result);
+      return error;
+   }
+
+   // Return the backup filename to the client
+   result = backup.getAbsolutePath();
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error viewPreferences(const json::JsonRpcRequest&,
+                       json::JsonRpcResponse*)
+{
+    return r::exec::executeString("View(.rs.allPrefs())");
 }
 
 bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
@@ -161,6 +224,17 @@ SEXP rs_writeUserPref(SEXP prefName, SEXP value)
    return R_NilValue;
 }
 
+SEXP rs_readApiPref(SEXP prefName)
+{
+   return rs_readPref(apiPrefs(), prefName);
+}
+
+SEXP rs_writeApiPref(SEXP prefName, SEXP value)
+{
+   writePref(apiPrefs(), prefName, value);
+   return R_NilValue;
+}
+
 SEXP rs_readUserState(SEXP stateName)
 {
    return rs_readPref(userState(), stateName);
@@ -226,17 +300,64 @@ SEXP rs_allPrefs()
    return list;
 }
 
+/**
+ * One-time migration of user preferences from the user-settings file used in RStudio 1.2 and below
+ * to the formal preferences system in RStudio 1.3.
+ */
+Error migrateUserPrefs()
+{
+   // Check to see whether there's a preferences file at the new location
+   FilePath prefsFile = core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
+   if (prefsFile.exists())
+   {
+      // We already have prefs; don't try to overwrite them
+      return Success();
+   }
+
+   // Check to see whether there's a preferences file at the old location
+   FilePath userSettings = module_context::userScratchPath()
+      .completePath(kMonitoredPath)
+      .completePath("user-settings")
+      .completePath("user-settings");
+
+   if (userSettings.exists())
+   {
+      // There are no new prefs, but there are old prefs. Migrate!
+      return migratePrefs(userSettings);
+   }
+
+   // No work to do
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initialize()
 {
+   // Initialize computed preference layers
    using namespace module_context;
    Error error = initializeSessionPrefs();
    if (error)
       return error;
+
+   // Initialize prefs for the RStudio API
+   error = apiPrefs().initialize();
+   if (error)
+      return error;
+
+   // Migrate user preferences from older versions of RStudio if they exist (and we don't have prefs
+   // yet)
+   error = migrateUserPrefs();
+   if (error)
+   {
+      // This error is non-fatal (we'll just start with clean prefs if we cannot migrate)
+      LOG_ERROR(error);
+   }
    
    RS_REGISTER_CALL_METHOD(rs_readUserPref);
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
+   RS_REGISTER_CALL_METHOD(rs_readApiPref);
+   RS_REGISTER_CALL_METHOD(rs_writeApiPref);
    RS_REGISTER_CALL_METHOD(rs_readUserState);
    RS_REGISTER_CALL_METHOD(rs_writeUserState);
    RS_REGISTER_CALL_METHOD(rs_allPrefs);
@@ -251,7 +372,10 @@ core::Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
-      (bind(registerRpcMethod, "set_user_state", setState));
+      (bind(registerRpcMethod, "set_user_state", setState))
+      (bind(registerRpcMethod, "edit_user_prefs", editPreferences))
+      (bind(registerRpcMethod, "clear_user_prefs", clearPreferences))
+      (bind(registerRpcMethod, "view_all_prefs", viewPreferences));
    return initBlock.execute();
 }
 

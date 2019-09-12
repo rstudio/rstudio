@@ -905,6 +905,9 @@ public class Application implements ApplicationEventHandlers
          removeJobLauncherCommands();
       }
 
+      // only enable suspendSession() in devmode
+      commands_.suspendSession().setVisible(SuperDevMode.isActive());
+
       if (!sessionInfo.getAllowPackageInstallation())
       {
          commands_.installPackage().remove();
@@ -1214,12 +1217,30 @@ public class Application implements ApplicationEventHandlers
 
    private void removeJobLauncherCommands()
    {
-      commands_.startLauncherJob().remove();
-      commands_.sourceAsLauncherJob().remove();
-      commands_.runSelectionAsLauncherJob().remove();
-      commands_.activateLauncherJobs().remove();
-      commands_.sortLauncherJobsRecorded().remove();
-      commands_.sortLauncherJobsState().remove();
+      // we will not remove the launcher commands if we have session servers defined
+      Command removeCommands = () ->
+      {
+         commands_.startLauncherJob().remove();
+         commands_.sourceAsLauncherJob().remove();
+         commands_.runSelectionAsLauncherJob().remove();
+         commands_.activateLauncherJobs().remove();
+         commands_.sortLauncherJobsRecorded().remove();
+         commands_.sortLauncherJobsState().remove();
+      };
+
+      if (Desktop.hasDesktopFrame())
+      {
+         Desktop.getFrame().getSessionServers(servers -> {
+            if (servers.length() == 0)
+            {
+               removeCommands.execute();
+            }
+         });
+      }
+      else
+      {
+         removeCommands.execute();
+      }
    }
 
    private void pauseClientStateUpdater()

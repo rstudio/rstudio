@@ -28,15 +28,15 @@ public class TerminalLocalEcho
    {
       writer_ = writer;
    }
-   
+
    public void echo(String input)
    {
       if (paused())
          return;
-      
+
       // input longer than one character is likely a control sequence, or
       // pasted text; only local-echo and sync with single-character input
-      if (input.length() == 1) 
+      if (input.length() == 1)
       {
          int ch = input.charAt(0);
          if (ch >= 32 /*space*/ && ch <= 126 /*tilde*/ || ch == 8 /*backspace*/)
@@ -46,12 +46,12 @@ public class TerminalLocalEcho
          }
       }
    }
-   
+
    public boolean isEmpty()
    {
       return localEcho_.isEmpty();
    }
-   
+
    public void write(String output)
    {
       // Rapid typing with intermixed backspaces can cause shell
@@ -67,7 +67,7 @@ public class TerminalLocalEcho
       // seen by the shell process when you press enter.
       int chunkStart = 0;
       int chunkEnd = output.length();
-      Match match = ANSI_CTRL_PATTERN.match(output,  0);
+      Match match = ANSI_CTRL_PATTERN.match(output, 0);
       while (match != null)
       {
          chunkEnd = match.getIndex();
@@ -90,7 +90,7 @@ public class TerminalLocalEcho
          }
 
          String matchedValue = match.getValue();
-         if (StringUtil.equals(matchedValue, "\b")  && !localEcho_.isEmpty())
+         if (StringUtil.equals(matchedValue, "\b") && !localEcho_.isEmpty())
          {
             // If the backspace was typed by the user, it will be in the
             // localecho buffer, and already echoed to the screen. If it isn't
@@ -119,7 +119,7 @@ public class TerminalLocalEcho
 
       outputNonEchoed(output.substring(chunkStart, chunkEnd));
    }
-   
+
    /**
     * Skip any previously local-echoed output, write out any trailing text
     * that wasn't previously echoed. Only exact-match from beginning of string.
@@ -151,34 +151,34 @@ public class TerminalLocalEcho
       {
          // didn't match previously echoed text; delete local-input
          // queue so we don't get too far out of sync and write text as-is
-         
+
          // diagnostics to help isolate cases where local-echo is 
          // not matching as expected 
-         diagnostic_.log("Received: '" + AnsiCode.prettyPrint(outputToMatch) + 
+         diagnostic_.log("Received: '" + AnsiCode.prettyPrint(outputToMatch) +
                "' Had: '" + AnsiCode.prettyPrint(lastOutput.toString()) + "'");
-         
+
          localEcho_.clear();
          writer_.accept(outputToMatch);
          return 0;
       }
    }
-   
+
    public void clear()
    {
       localEcho_.clear();
    }
-   
+
    public void pause(int pauseMillis)
    {
       stopEchoPause_ = System.currentTimeMillis() + pauseMillis;
       clear();
    }
-   
+
    public boolean paused()
    {
       if (stopEchoPause_ == 0)
          return false;
-      
+
       if (stopEchoPause_ > 0 && System.currentTimeMillis() < stopEchoPause_)
       {
          return true;
@@ -207,7 +207,7 @@ public class TerminalLocalEcho
    // Pause local-echo until this time
    private long stopEchoPause_;
    private final TerminalDiagnostics diagnostic_ = new TerminalDiagnostics();
-   
+
    private final Consumer<String> writer_;
    private final LinkedList<String> localEcho_ = new LinkedList<>();
 }

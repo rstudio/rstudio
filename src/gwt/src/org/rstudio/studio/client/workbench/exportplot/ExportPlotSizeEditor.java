@@ -179,8 +179,7 @@ public class ExportPlotSizeEditor extends Composite
   
       // lock ratio check box
       keepRatioCheckBox_ = new CheckBox();
-      keepRatioCheckBox_.setStylePrimaryName(
-                           resources.styles().maintainAspectRatioCheckBox());
+      keepRatioCheckBox_.addStyleName(resources.styles().maintainAspectRatioCheckBox());
       keepRatioCheckBox_.setValue(keepRatio);
       keepRatioCheckBox_.setText("Maintain aspect ratio");
       optionsPanel.add(keepRatioCheckBox_);
@@ -295,7 +294,7 @@ public class ExportPlotSizeEditor extends Composite
       initialWidth = constrainWidth(initialWidth);
       initialHeight = constrainHeight(initialHeight);
             
-      // initialie text boxes
+      // initialize text boxes
       setWidthTextBox(initialWidth);
       setHeightTextBox(initialHeight);
  

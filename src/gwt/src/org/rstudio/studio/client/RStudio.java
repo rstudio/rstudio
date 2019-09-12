@@ -106,7 +106,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
@@ -279,20 +278,7 @@ public class RStudio implements EntryPoint
       dismissProgressAnimation_ = showProgress(rTimeoutOptions_);
 
       final SerializedCommandQueue queue = new SerializedCommandQueue();
-      
-      // TODO (gary) This early loading of XTermWidget dependencies needs to be
-      // removed once I figure out why XTermWidget.load in 
-      // TerminalPane:createMainWidget) isn't sufficient. Suspect due to xterm.js
-      // loading its add-ons (fit.js) but need to investigate. 
-      queue.addCommand(new SerializedCommand()
-      {
-         @Override
-         public void onExecute(Command continuation)
-         {
-            XTermWidget.load(continuation);
-         }
-      });
-      
+
       // ensure Ace is loaded up front
       queue.addCommand(new SerializedCommand()
       {

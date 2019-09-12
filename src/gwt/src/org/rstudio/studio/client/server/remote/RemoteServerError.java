@@ -66,7 +66,7 @@ class RemoteServerError implements ServerError
    
    public String getRedirectUrl()
    {
-	  return redirectUrl_;
+      return redirectUrl_;
    }
    
    public ServerErrorCause getCause()
@@ -121,7 +121,7 @@ class RemoteServerError implements ServerError
          
       case RpcError.MAX_SESSIONS_REACHED:
       case RpcError.MAX_USERS_REACHED:
-    	  return ServerError.LICENSE_USAGE_LIMIT;
+         return ServerError.LICENSE_USAGE_LIMIT;
                
       default:
          return ServerError.SUCCESS;

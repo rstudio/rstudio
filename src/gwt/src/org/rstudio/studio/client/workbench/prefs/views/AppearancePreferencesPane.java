@@ -588,7 +588,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    
       var self = this;
       $wnd.onFontListReady = $entry(function() {
-      	self.@org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane::onFontListReady()();
+         self.@org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane::onFontListReady()();
       });
    
    }-*/;

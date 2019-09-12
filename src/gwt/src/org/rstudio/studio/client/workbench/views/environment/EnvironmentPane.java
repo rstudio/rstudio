@@ -209,7 +209,7 @@ public class EnvironmentPane extends WorkbenchPane
       return objects_;
    }
 
-   // EnviromentPresenter.Display implementation ------------------------------
+   // EnvironmentPresenter.Display implementation ------------------------------
 
    @Override
    public void addObject(RObject object)
@@ -401,7 +401,7 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   // EnviromentObjects.Observer implementation -------------------------------
+   // EnvironmentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
    {

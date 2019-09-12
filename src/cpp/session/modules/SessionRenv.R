@@ -17,8 +17,35 @@
 
 .rs.addJsonRpcHandler("renv_init", function(project)
 {
+   # ask renv not to restart since we'll do it ourselves
    .rs.ensureDirectory(project)
-   renv::init(project = project)
+   renv::init(project = project, restart = FALSE)
+})
+
+.rs.addJsonRpcHandler("renv_actions", function(action)
+{
+   project <- .rs.getProjectDirectory()
+   actions <- renv:::actions(tolower(action), project = project)
+   if (length(actions) == 0)
+      return(list())
+   
+   remap <- c(
+      "Package"          = "packageName",
+      "Library Version"  = "libraryVersion",
+      "Library Source"   = "librarySource",
+      "Lockfile Version" = "lockfileVersion",
+      "Lockfile Source"  = "lockfileSource",
+      "Action"           = "action"
+   )
+   
+   matches <- match(names(actions), names(remap), nomatch = 0L)
+   names(actions)[matches] <- remap[matches]
+   
+   data <- lapply(seq_len(nrow(actions)), function(i) {
+      as.list(actions[i, ])
+   })
+   
+   .rs.scalarListFromList(data)
 })
 
 .rs.addFunction("renv.context", function()
@@ -87,7 +114,7 @@
 {
    lockpath <- file.path(project, "renv.lock")
    lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- lockfile$R$Package
+   packages <- renv:::renv_records(lockfile)
    filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL

@@ -52,6 +52,7 @@ public:
 
    RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
    QWebEngineProfile* getPageProfile();
+   WebView* getWebView();
 
 public Q_SLOTS:
    void quit();

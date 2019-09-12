@@ -9,7 +9,6 @@ set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set GIN_FILE=gin-2.1.2.zip
-set GWT_FILE=gwt-2.8.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
@@ -101,34 +100,6 @@ if not exist breakpad-tools-windows (
   unzip %UNZIP_ARGS% breakpad-tools-windows.zip -d breakpad-tools-windows
   del breakpad-tools-windows.zip
 )
-
-if not exist ..\..\src\gwt\lib (
-  mkdir ..\..\src\gwt\lib
-)
-pushd ..\..\src\gwt\lib
-
-if not exist gin\2.1.2 (
-  wget %WGET_ARGS% "%BASEURL%%GIN_FILE%"
-  mkdir gin\2.1.2
-  echo Unzipping %GIN_FILE%
-  unzip %UNZIP_ARGS% "%GIN_FILE%" -d gin\2.1.2
-  del "%GIN_FILE%"
-)
-
-if not exist gwt\2.8.2 (
-  wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
-  echo Unzipping %GWT_FILE%
-  unzip %UNZIP_ARGS% "%GWT_FILE%"
-  mkdir gwt
-  move gwt-2.8.2 gwt\2.8.2
-  del "%GWT_FILE%"
-)
-
-if not exist %JUNIT_FILE% (
-  wget %WGET_ARGS% "%BASEURL%%JUNIT_FILE%"
-)
-
-popd
 
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip

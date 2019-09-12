@@ -1410,6 +1410,34 @@ public class StringUtil
       
       return str.charAt(pos);
    }
+
+   /**
+    * Convert a string "foo" to "f o o"
+    * @param str
+    * @return
+    */
+   public static native String spacedString(String str) /*-{
+      return str.split('').join(' ');
+   }-*/;
+
+   public static String format(String fmt, Object... objects)
+   {
+      List<String> strings = new ArrayList<String>();
+      for (Object object : objects)
+      {
+         strings.add(object.toString());
+      }
+      
+      String result = fmt;
+      for (int i = 0; i < strings.size(); i += 2)
+      {
+         String target = "{" + strings.get(i) + "}";
+         String replacement = strings.get(i + 1);
+         result = result.replace(target, replacement);
+      }
+      
+      return result;
+   }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

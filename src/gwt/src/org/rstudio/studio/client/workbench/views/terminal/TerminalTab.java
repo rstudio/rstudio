@@ -43,7 +43,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
 
-   public abstract static class Shim 
+   public abstract static class Shim
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
       implements SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
@@ -74,13 +74,13 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
       @Handler
       public abstract void onShowTerminalInfo();
-      
+
       @Handler
       public abstract void onInterruptTerminal();
 
       @Handler
       public abstract void onSendTerminalToEditor();
-      
+
       /**
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server
@@ -143,7 +143,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
     * Add process to list of processes, sorted in ascending order by
     * terminal sequence number. If duplicate sequence numbers are
     * encountered, all but the first will have the process killed.
-    * 
+    *
     * @param procInfoList (in/out) sorted list of terminal processes
     * @param procInfo process to insert in the list
     */
@@ -153,7 +153,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       int newSequence = procInfo.getTerminalSequence();
       if (newSequence < 1)
       {
-         Debug.logWarning("Invalid terminal sequence " + newSequence + 
+         Debug.logWarning("Invalid terminal sequence " + newSequence +
                ", killing unrecognized process");
          pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
          return;
@@ -165,7 +165,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
          if (newSequence == currentSequence)
          {
-            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
+            Debug.logWarning("Duplicate terminal sequence " + newSequence +
                   ", killing duplicate process");
             pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
             return;
@@ -179,7 +179,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       }
       procInfoList.add(procInfo);
    }
-   
+
    private Shim shim_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;

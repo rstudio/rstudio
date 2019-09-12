@@ -802,7 +802,7 @@ public class Projects implements OpenProjectFileHandler,
    {
       // call the desktop to open the project (since it is
       // a conventional foreground gui application it has
-      // less chance of running afowl of desktop app creation
+      // less chance of running afoul of desktop app creation
       // & activation restrictions)
       FileSystemItem project = FileSystemItem.createFile(event.getProject());
       if (Desktop.isDesktop())

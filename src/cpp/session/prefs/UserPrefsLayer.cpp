@@ -58,7 +58,8 @@ void UserPrefsLayer::onPrefsFileChanged()
    }
 
    // Make a copy of the prefs prior to reloading, so we can diff against the old copy
-   const json::Object old = cache_->clone().get_obj();
+   const json::Value oldVal = cache_->clone();
+   const json::Object old = oldVal.get_obj();
 
    // Reload the prefs from the file
    Error error = loadPrefsFromFile(prefsFile_);

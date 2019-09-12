@@ -70,7 +70,7 @@ public class TextEditingTargetCompilePdfHelper
    // the chunk options are ready the callback command is execute (note
    // that if there are no chunk options available then execute will 
    // never be called). this method caches the results from the server
-   // so that chunk options are only retreived once per session -- we 
+   // so that chunk options are only retrieved once per session -- we
    // do this not only to save the round-trip but also because knitr takes
    // over 500ms to load and it may need to be loaded to serve the
    // request for chunk options
@@ -139,7 +139,7 @@ public class TextEditingTargetCompilePdfHelper
                               TextFileType fileType)
    {
       // for all tex files we need to parse magic comments and validate
-      // any explict latex proram directive
+      // any explicit latex program directive
       ArrayList<TexMagicComment> magicComments = null;
       if (fileType.canCompilePDF())
       {
@@ -340,7 +340,7 @@ public class TextEditingTargetCompilePdfHelper
    }
 
    // get the currently active rnw weave name -- arranges to always return
-   // a valid string by returing the pref if the directive is invalid
+   // a valid string by returning the pref if the directive is invalid
    public String getActiveRnwWeaveName()
    {
       if (docDisplay_.getFileType().canKnitToHTML() || 

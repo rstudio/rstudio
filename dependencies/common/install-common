@@ -17,7 +17,6 @@
 
 set -e
 
-./install-gwt
 ./install-dictionaries
 ./install-mathjax
 ./install-boost

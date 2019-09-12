@@ -54,6 +54,24 @@ void launchProcess(const std::string& absPath,
    QProcess* process = new QProcess();
    process->setProgram(QString::fromStdString(absPath));
    process->setArguments(argList);
+   
+#ifdef Q_OS_DARWIN
+   // on macOS with the hardened runtime, we can no longer rely on dyld
+   // to lazy-load symbols from libR.dylib; to resolve this, we use
+   // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+   // launch 
+   FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+   FilePath rLib = rHome.childPath("lib/libR.dylib");
+   if (rLib.exists())
+   {
+      QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+      environment.insert(
+               QStringLiteral("DYLD_INSERT_LIBRARIES"),
+               QString::fromStdString(rLib.absolutePathNative()));
+      process->setProcessEnvironment(environment);
+   }
+#endif
+   
    if (options().runDiagnostics())
       process->setProcessChannelMode(QProcess::ForwardedChannels);
 
@@ -369,7 +387,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    if (error)
       LOG_ERROR(error);
 
-   return  parent_process_monitor::wrapFork(
+   return parent_process_monitor::wrapFork(
          boost::bind(launchProcess,
                      sessionPath_.getAbsolutePath(),
                      argList,

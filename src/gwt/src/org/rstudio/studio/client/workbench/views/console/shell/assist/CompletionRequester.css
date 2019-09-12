@@ -1,23 +1,23 @@
 .completionIcon {
-	float: left;
-	margin-top: 4px;
-	padding-left: 2px;
-	padding-right: 6px;
+   float: left;
+   margin-top: 4px;
+   padding-left: 2px;
+   padding-right: 6px;
 }
 
 .fileIcon {
-	float: left;
-	margin-top: 2px;
-	padding-left: 2px;
-	padding-right: 6px;
+   float: left;
+   margin-top: 2px;
+   padding-left: 2px;
+   padding-right: 6px;
 }
 
 .completion {
-	float: left;
+   float: left;
 }
 
 .packageName {
-	float: right;
-	padding-right: 8px;
-	color: #999;
+   float: right;
+   padding-right: 8px;
+   color: #999;
 }

@@ -134,13 +134,29 @@ WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
       baseUrl_(baseUrl),
       allowExternalNav_(allowExternalNavigate)
 {
+   init();
+}
+
+WebPage::WebPage(QWebEngineProfile *profile,
+                 QUrl baseUrl,
+                 QWidget *parent,
+                 bool allowExternalNavigate) :
+   QWebEnginePage(profile, parent),
+   baseUrl_(baseUrl),
+   allowExternalNav_(allowExternalNavigate)
+{
+   init();
+}
+
+void WebPage::init()
+{
    settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
    settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
    settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, true);
    settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
    settings()->setAttribute(QWebEngineSettings::WebGLEnabled, true);
-   
+
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
    connect(this, &QWebEnginePage::linkHovered, onLinkHovered);

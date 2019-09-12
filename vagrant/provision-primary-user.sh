@@ -21,9 +21,6 @@ fi
 
 cd /rstudio/vagrant
 
-# configure a basic c/c++ editing experience inside the VM 
-./provision-editor.sh
-
 # run common user provisioning script
 ./provision-common-user.sh
 

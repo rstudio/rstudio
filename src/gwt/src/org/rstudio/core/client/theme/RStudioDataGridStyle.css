@@ -17,7 +17,7 @@
 @def selectionBorderWidth 1px;
 
 .dataGridHeader:active, .dataGridHeader:focus {
-	outline: 0;
+   outline: 0;
 }
 
 .dataGridWidget {
@@ -31,8 +31,8 @@
 }
 
 .dataGridWidget > div {
-	/* Override GWT styling set on element */
-	min-height: 16px !important;
+   /* Override GWT styling set on element */
+   min-height: 16px !important;
 }
 
 .dataGridFirstColumn {
@@ -234,6 +234,6 @@
  * Styles for brushing histograms
  */
 .histBar {
-  background-color: THEME_ALTERNATE_BACKGROUND;
+   background-color: THEME_ALTERNATE_BACKGROUND;
 }
 

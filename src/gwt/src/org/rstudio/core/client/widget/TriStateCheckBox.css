@@ -1,9 +1,9 @@
 .alignHelper {
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
+   display: inline-block;
+   height: 100%;
+   vertical-align: middle;
 }
 
 .checkboxLabel {
-	margin-left: 3px;
+   margin-left: 3px;
 }

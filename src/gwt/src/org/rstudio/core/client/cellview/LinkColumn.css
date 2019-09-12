@@ -2,17 +2,17 @@
 @external editor_dark, ace_editor_theme;
 
 .link {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	color: #0000AA;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   color: #0000AA;
 }
 
 .linkUnderlined {
-   text-decoration: underline;  
+   text-decoration: underline;
 }
 
 .link:hover {
-   text-decoration: underline;	
+   text-decoration: underline;
 }
 
 .rstudio-themes-flat.editor_dark .ace_editor_theme .link {

@@ -120,7 +120,10 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          {
             final SessionInfo sessionInfo = session.getSessionInfo();
             
-            isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get()); 
+            isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get());
+
+            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
+
             toolbar_.completeInitialization(sessionInfo);
 
             if (Desktop.isRemoteDesktop())
@@ -128,8 +131,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                overlay_.addRVersionsToolbar(DesktopApplicationHeader.this);
                overlay_.addSessionsToolbar(DesktopApplicationHeader.this);
             }
-
-            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
 
             new JSObjectStateValue(
                   "updates",

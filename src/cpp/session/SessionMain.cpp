@@ -623,7 +623,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          if (!diagFile.isEmpty())
          {
             std::cout << "Diagnostics report written to: "
-                      << diagFile << std::endl << std::endl;
+                      << diagFile << std::endl 
+                      << "Please audit the report and remove any sensitive information "
+                      << "before submitting." << std::endl << std::endl;
 
             Error error = rstudio::r::exec::RFunction(".rs.showDiagnostics").call();
             if (error)
@@ -1215,6 +1217,13 @@ void rCleanup(bool terminatedNormally)
       // clean up locks
       FileLock::cleanUp();
 
+      // stop file monitor (need to do this explicitly as otherwise we can
+      // run into issues during close where the runtime attempts to clean
+      // up its data structures at same time that monitor wants to exit)
+      //
+      // https://github.com/rstudio/rstudio/issues/5222
+      system::file_monitor::stop();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
@@ -1692,6 +1701,12 @@ int main (int argc, char * const argv[])
 #endif
       s_printCharsetWarning = !ensureUtf8Charset();
       
+      // remove DYLD_INSERT_LIBRARIES variable (injected on macOS Desktop
+      // to support restrictions with hardened runtime)
+#ifdef __APPLE__
+      core::system::unsetenv("DYLD_INSERT_LIBRARIES");
+#endif
+      
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
@@ -1974,21 +1989,34 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
-      bool customRepo = true;
-
-      // CRAN repos precedence: user setting then repos file then global server option
-      if (prefs::userState().cranMirrorChanged()) {
+      // CRAN repos configuration follows; order of precedence is:
+      //
+      // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
+      //    same
+      // 2. The session's repo settings (in rsession.conf/repos.conf)
+      // 3. The server's repo settings
+      // 4. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 5. If all else fails, cran.rstudio.com
+      std::string layerName;
+      auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
+      if (val && (layerName == kUserPrefsUserLayer ||
+                  layerName == kUserPrefsSystemLayer))
+      {
+         // There is a user-scoped value, so use it
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
       }
-      else if (!options.rCRANMultipleRepos().empty()) {
+      else if (!options.rCRANMultipleRepos().empty())
+      {
+         // There's no user-scoped value, so read from session options (this also loads repos.conf)
          std::vector<std::string> parts;
          std::string repos = options.rCRANMultipleRepos();
          boost::split(parts, repos, boost::is_any_of("|"));
          rOptions.rCRANSecondary = "";
 
          std::vector<std::string> secondary;
-         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2) {
+         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
+         {
             if (string_utils::toLower(parts[idxParts]) == "cran")
                rOptions.rCRANUrl = parts[idxParts + 1];
             else
@@ -1997,10 +2025,21 @@ int main (int argc, char * const argv[])
          rOptions.rCRANSecondary = algorithm::join(secondary, "|");
       }
       else if (!options.rCRANUrl().empty())
+      {
+         // Global server option
          rOptions.rCRANUrl = options.rCRANUrl();
-      else {
+      }
+      else if (val && layerName == kUserPrefsDefaultLayer)
+      {
+         // If we found defaults in the prefs schema, use them.
+         rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
+         rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+      }
+      else
+      {
+         // Hard-coded repo of last resort so we don't wind up without a repo setting (users will
+         // not be able to install packages without one)
          rOptions.rCRANUrl = "https://cran.rstudio.com/";
-         customRepo = false;
       }
 
       rOptions.useInternet2 = prefs::userPrefs().useInternet2();

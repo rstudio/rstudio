@@ -4,7 +4,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;

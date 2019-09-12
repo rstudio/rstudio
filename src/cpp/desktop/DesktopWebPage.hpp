@@ -74,7 +74,13 @@ class WebPage : public QWebEnginePage
    Q_OBJECT
 
 public:
-   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = nullptr,
+   explicit WebPage(QUrl baseUrl = QUrl(),
+                    QWidget *parent = nullptr,
+                    bool allowExternalNavigate = false);
+
+   explicit WebPage(QWebEngineProfile *profile,
+                    QUrl baseUrl = QUrl(),
+                    QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
@@ -88,6 +94,8 @@ public:
 
    void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
 
+   inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
+
 public Q_SLOTS:
    bool shouldInterruptJavaScript();
    void closeRequested();
@@ -100,10 +108,9 @@ protected:
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
    QString viewerUrl();
-   
-   inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
 
 private:
+   void init();
    void handleBase64Download(QUrl url);
 
 private:

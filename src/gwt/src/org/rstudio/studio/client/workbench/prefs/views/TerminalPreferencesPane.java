@@ -19,11 +19,15 @@ import java.util.List;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Panel;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -34,6 +38,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
 import com.google.gwt.core.client.JsArray;
@@ -60,13 +65,16 @@ public class TerminalPreferencesPane extends PreferencesPane
       session_ = session;
       server_ = server;
 
+      VerticalTabPanel general = new VerticalTabPanel(ElementIds.TERMINAL_GENERAL_PREFS);
+      VerticalTabPanel closing = new VerticalTabPanel(ElementIds.TERMINAL_CLOSING_PREFS);
+
       Label shellLabel = headerLabel("Shell");
       shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      add(shellLabel);
+      general.add(shellLabel);
 
       terminalShell_ = new SelectWidget("New terminals open with:");
       spaced(terminalShell_);
-      add(terminalShell_);
+      general.add(terminalShell_);
       terminalShell_.setEnabled(false);
       terminalShell_.addChangeHandler(event -> manageCustomShellControlVisibility());
 
@@ -99,20 +107,20 @@ public class TerminalPreferencesPane extends PreferencesPane
                                                    null,
                                                    onShellExePathChosen);
       customShellPathLabel_ = new Label("Custom shell binary:");
-      addTextBoxChooser(textboxWidth, customShellPathLabel_, customShellChooser_);
+      addTextBoxChooser(general, textboxWidth, customShellPathLabel_, customShellChooser_);
       customShellChooser_.setEnabled(false);
 
       customShellOptionsLabel_ = new Label("Custom shell command-line options:");
-      add(spacedBefore(customShellOptionsLabel_));
+      general.add(spacedBefore(customShellOptionsLabel_));
       customShellOptions_ = new TextBox();
       DomUtils.disableSpellcheck(customShellOptions_);
       customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
-      add(customShellOptions_);
+      general.add(customShellOptions_);
 
       Label perfLabel = headerLabel("Connection");
       perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      add(perfLabel);
+      general.add(perfLabel);
  
       boolean showPerfLabel = false;
       if (haveLocalEchoPref())
@@ -120,7 +128,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
                prefs_.terminalLocalEcho(), 
                "Local echo is more responsive but may get out of sync with some line-editing modes or custom shells.");
-         add(chkTerminalLocalEcho);
+         general.add(chkTerminalLocalEcho);
          showPerfLabel = true;
       }
       if (haveWebsocketPref())
@@ -128,55 +136,70 @@ public class TerminalPreferencesPane extends PreferencesPane
          CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
                prefs_.terminalWebsockets(), 
                "WebSockets are generally more responsive; try turning off if terminal won't connect.");
-         add(chkTerminalWebsocket);
+         general.add(chkTerminalWebsocket);
          showPerfLabel = true;
       }
 
       perfLabel.setVisible(showPerfLabel);
 
+      Label displayLabel = headerLabel("Display");
+      displayLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      general.add(displayLabel);
+      chkHardwareAcceleration_ = new CheckBox("Hardware acceleration");
+      general.add(lessSpaced(chkHardwareAcceleration_));
+      chkAudibleBell_ = new CheckBox("Audible bell");
+      general.add(chkAudibleBell_);
+
+      HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
+      nudgeRight(helpLink);
+      helpLink.addStyleName(res_.styles().newSection());
+      general.add(helpLink);
+
       Label miscLabel = headerLabel("Miscellaneous");
       miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      add(miscLabel);
+      closing.add(miscLabel);
       miscLabel.setVisible(true);
 
       CheckBox chkTerminalAutoClose = checkboxPref("Close terminal when shell exits",
             prefs_.terminalAutoClose(),
             "Deselect this option to keep terminal pane open after shell exits.");
-      add(chkTerminalAutoClose);
+      closing.add(chkTerminalAutoClose);
 
       if (haveCaptureEnvPref())
       {
          CheckBox chkCaptureEnv = checkboxPref("Save and restore environment variables",
                prefs_.terminalTrackEnvironment(),
                "Terminal occasionally runs a hidden command to capture state of environment variables.");
-         add(chkCaptureEnv);
+         closing.add(chkCaptureEnv);
       }
 
       if (haveBusyDetectionPref())
       {
          Label shutdownLabel = headerLabel("Process Termination");
          shutdownLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-         add(shutdownLabel);
+         closing.add(shutdownLabel);
          shutdownLabel.setVisible(true);
 
          busyMode_ = new SelectWidget("Ask before killing processes:");
          spaced(busyMode_);
-         add(busyMode_);
+         closing.add(busyMode_);
          busyMode_.setEnabled(false);
          busyMode_.addChangeHandler(event -> manageBusyModeControlVisibility());
          busyWhitelistLabel_ = new Label("Don't ask before killing:");
-         add(busyWhitelistLabel_);
+         closing.add(busyWhitelistLabel_);
          busyWhitelist_ = new TextBox();
          DomUtils.disableSpellcheck(busyWhitelist_);
          busyWhitelist_.setWidth(textboxWidth);
-         add(busyWhitelist_);
+         closing.add(busyWhitelist_);
          busyWhitelist_.setEnabled(false);
       }
-      
-      HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
-      nudgeRight(helpLink); 
-      helpLink.addStyleName(res_.styles().newSection()); 
-      add(helpLink);
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Terminal");
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(general, "General", general.getBasePanelId());
+      tabPanel.add(closing, "Closing", closing.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
 
    @Override
@@ -278,6 +301,9 @@ public class TerminalPreferencesPane extends PreferencesPane
 
          manageBusyModeControlVisibility();
       }
+
+      chkAudibleBell_.setValue(prefs_.terminalBellStyle().getValue() == UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND);
+      chkHardwareAcceleration_.setValue(prefs_.terminalRenderer().getValue() == UserPrefsAccessor.TERMINAL_RENDERER_CANVAS);
    }
 
    @Override
@@ -299,6 +325,10 @@ public class TerminalPreferencesPane extends PreferencesPane
       prefs_.customShellCommand().setGlobalValue(customShellChooser_.getText());
       prefs_.customShellOptions().setGlobalValue(customShellOptions_.getText());
 
+      prefs_.terminalBellStyle().setGlobalValue(chkAudibleBell_.getValue() ?
+            UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND : UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE);
+      prefs_.terminalRenderer().setGlobalValue(chkHardwareAcceleration_.getValue() ?
+            UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
       return restartRequired;
    }
 
@@ -349,7 +379,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       busyWhitelist_.setVisible(whitelistEnabled);
    }
    
-   private void addTextBoxChooser(String textWidth, Label captionLabel, TextBoxWithButton chooser)
+   private void addTextBoxChooser(Panel panel, String textWidth, Label captionLabel, TextBoxWithButton chooser)
    {
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
@@ -359,13 +389,13 @@ public class TerminalPreferencesPane extends PreferencesPane
       captionPanel.setCellHorizontalAlignment(captionLabel,
             HasHorizontalAlignment.ALIGN_LEFT);
 
-      add(tight(captionPanel));
+      panel.add(tight(captionPanel));
 
       chooser.setTextWidth(textWidth);
       nudgeRight(chooser);
       textBoxWithChooser(chooser);
       spaced(chooser);
-      add(chooser);
+      panel.add(chooser);
    }
 
    private final SelectWidget terminalShell_;
@@ -373,6 +403,9 @@ public class TerminalPreferencesPane extends PreferencesPane
    private final TextBoxWithButton customShellChooser_;
    private final Label customShellOptionsLabel_;
    private final TextBox customShellOptions_;
+
+   private final CheckBox chkHardwareAcceleration_;
+   private final CheckBox chkAudibleBell_;
 
    private SelectWidget busyMode_;
    private Label busyWhitelistLabel_;

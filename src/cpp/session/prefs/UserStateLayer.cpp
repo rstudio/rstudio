@@ -33,14 +33,25 @@ UserStateLayer::UserStateLayer():
 
 core::Error UserStateLayer::readPrefs()
 {
-   return loadPrefsFromFile(
-      core::system::xdg::userDataDir().completePath(kUserStateFile));
+   prefsFile_ = core::system::xdg::userDataDir().completePath(kUserStateFile);
+
+   return loadPrefsFromFile(prefsFile_);
 }
 
 core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
 {
-   return writePrefsToFile(prefs,
-                           core::system::xdg::userDataDir().completePath(kUserStateFile));
+   if (prefsFile_.isEmpty())
+   {
+      return fileNotFoundError(ERROR_LOCATION);
+   }
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      *cache_ = prefs;
+   }
+   END_LOCK_MUTEX
+
+   return writePrefsToFile(*cache_, prefsFile_);
 }
 
 core::Error UserStateLayer::validatePrefs()

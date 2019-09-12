@@ -43,7 +43,7 @@ public class SuspendOptions extends JavaScriptObject
    }-*/;
    
    /*
-    * Indidates that only a minimal amount of session state should be 
+    * Indicates that only a minimal amount of session state should be
     * saved (e.g. working directory and up-arrow history). 
     * 
     * If this option is true then the save_workspace option will be 

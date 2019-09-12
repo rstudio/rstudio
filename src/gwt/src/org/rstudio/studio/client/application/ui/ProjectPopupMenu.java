@@ -94,7 +94,10 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
           
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
-               Document.get().setTitle(editionInfo_.editionName() + " - " + buttonText);
+            {
+               // put project title first so it isn't cut off when there are many tabs
+               Document.get().setTitle(buttonText + " \u00b7 " + editionInfo_.editionName());
+            }
          }
         
           if (activeProjectFile_ == null)

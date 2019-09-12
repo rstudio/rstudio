@@ -33,6 +33,7 @@
       <excludeFolder url="file://$MODULE_DIR$/lib" />
       <excludeFolder url="file://$MODULE_DIR$/sdk" />
       <excludeFolder url="file://$MODULE_DIR$/tools" />
+      <excludeFolder url="file://$MODULE_DIR$/www/WEB-INF/deploy" />
       <excludeFolder url="file://$MODULE_DIR$/www/rstudio" />
     </content>
     <orderEntry type="inheritedJdk" />

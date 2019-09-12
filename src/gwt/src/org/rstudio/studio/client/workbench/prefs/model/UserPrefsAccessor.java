@@ -582,7 +582,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically discover and offer to install missing R package dependenices.
+    * Whether to automatically discover and offer to install missing R package dependencies.
     */
    public PrefValue<Boolean> autoDiscoverPackageDependencies()
    {
@@ -1151,6 +1151,28 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Terminal bell style
+    */
+   public PrefValue<String> terminalBellStyle()
+   {
+      return string("terminal_bell_style", "sound");
+   }
+
+   public final static String TERMINAL_BELL_STYLE_NONE = "none";
+   public final static String TERMINAL_BELL_STYLE_SOUND = "sound";
+
+   /**
+    * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+    */
+   public PrefValue<String> terminalRenderer()
+   {
+      return string("terminal_renderer", "canvas");
+   }
+
+   public final static String TERMINAL_RENDERER_CANVAS = "canvas";
+   public final static String TERMINAL_RENDERER_DOM = "dom";
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    public PrefValue<Boolean> showRmdRenderCommand()
@@ -1495,6 +1517,14 @@ public class UserPrefsAccessor extends Prefs
 
    }
 
+   /**
+    * The maximum number of columns to show at once in the data viewer.
+    */
+   public PrefValue<Integer> dataViewerMaxColumns()
+   {
+      return integer("data_viewer_max_columns", 50);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1741,6 +1771,10 @@ public class UserPrefsAccessor extends Prefs
          terminalAutoClose().setValue(layer, source.getBool("terminal_auto_close"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
+      if (source.hasKey("terminal_bell_style"))
+         terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
+      if (source.hasKey("terminal_renderer"))
+         terminalRenderer().setValue(layer, source.getString("terminal_renderer"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
       if (source.hasKey("enable_text_drag"))
@@ -1815,6 +1849,8 @@ public class UserPrefsAccessor extends Prefs
          submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
       if (source.hasKey("default_r_version"))
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
+      if (source.hasKey("data_viewer_max_columns"))
+         dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
    }
    
 

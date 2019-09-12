@@ -45,6 +45,8 @@
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
 #endif
@@ -353,7 +355,8 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true);
+      http::util::urlEncode(cacheKey, true) + "&max_cols=" + 
+      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
    return std::move(dataItem);
@@ -663,7 +666,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
          if (columnSEXP != nullptr &&
-             TYPEOF(columnSEXP) != NILSXP &&
+             TYPEOF(columnSEXP) == STRSXP &&
              !Rf_isNull(columnSEXP))
          {
             SEXP stringSEXP = STRING_ELT(columnSEXP, row);

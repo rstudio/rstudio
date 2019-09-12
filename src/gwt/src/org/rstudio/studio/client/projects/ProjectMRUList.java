@@ -115,9 +115,9 @@ public class ProjectMRUList extends MRUList
    
    @Override
    protected ArrayList<String> generateLabels(
-		   ArrayList<String> mruEntries, boolean includeExt)
+         ArrayList<String> mruEntries, boolean includeExt)
    {
-	   return DuplicateHelper.getPathLabels(mruEntries, true);
+      return DuplicateHelper.getPathLabels(mruEntries, true);
    }
    
    private static boolean openInNewWindow_ = false;

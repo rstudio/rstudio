@@ -30,6 +30,7 @@ import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuicideEvent;
@@ -245,6 +246,12 @@ public class DesktopHooks
          globalDisplay_.hideWarningBar();
       else
          globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+   }
+
+   void onLauncherServerEvent(String eventType, String details)
+   {
+      LauncherServerEvent.EventType type = LauncherServerEvent.EventType.valueOf(eventType);
+      events_.fireEvent(new LauncherServerEvent(type, details));
    }
 
    private final Commands commands_;

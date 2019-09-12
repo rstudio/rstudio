@@ -107,7 +107,7 @@ class RemoteServerAuth
          public void onResponseReceived(Integer response)
          {
             // this method does nothing in the case of both successfully
-            // updating credentails and method not found. however, if
+            // updating credentials and method not found. however, if
             // the credentials update fails then it needs to blow
             // away the client
             

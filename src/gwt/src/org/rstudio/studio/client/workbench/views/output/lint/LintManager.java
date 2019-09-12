@@ -83,8 +83,13 @@ public class LintManager
    private boolean isLintableDocument()
    {
       TextFileType type = docDisplay_.getFileType();
-      return (((type.isC() || type.isCpp()) && userPrefs_.showDiagnosticsCpp().getValue()) ||
-              ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && userPrefs_.showDiagnosticsR().getValue()));
+      if (type.isC() || type.isCpp())
+         return userPrefs_.showDiagnosticsCpp().getValue();
+      
+      if (type.isR() || type.isRmd() || type.isRnw() || type.isRpres())
+         return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
+      
+      return false;
    }
 
    public LintManager(TextEditingTarget target,
@@ -218,12 +223,12 @@ public class LintManager
    {
       if (context.token.isInvalid())
          return;
-      
-      if (target_.getTextFileType().isCpp() || target_.getTextFileType().isC())
+
+      if (userPrefs_.showDiagnosticsCpp().getValue() && (target_.getTextFileType().isCpp() || target_.getTextFileType().isC()))
          performCppLintServerRequest(context);
-      else if (target_.getTextFileType().isR())
+      else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
-      else if (target_.getTextFileType().isRmd())
+      else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
 

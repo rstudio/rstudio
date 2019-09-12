@@ -379,7 +379,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                globalDisplay_.showErrorMessage(
                      "Error", 
                      "Unable to view " + path + " on GitHub.\n\n" +
-                     "Are you sure that this file is on GithHub and is " + 
+                     "Are you sure that this file is on GitHub and is " +
                      "contained in the currently active project?");
             }
             else

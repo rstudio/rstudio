@@ -2365,18 +2365,18 @@ START:
          // parses with '-' as a binary operator.
          if (isBinaryOp(next))
          {
-            if (!status.isInParentheticalScope() &&
-                isValidAsUnaryOperator(next) &&
-                (next.row() > cursor.row()))
+            if (!status.isInParentheticalScope() && (next.row() > cursor.row()))
             {
-               DEBUG("----- Unary operator: " << next);
+               DEBUG("----- Not binding binary operator to statement" << next);
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
                goto START;
             }
-            
-            DEBUG("----- Binary operator: " << next);
-            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-            goto BINARY_OPERATOR;
+            else
+            {
+               DEBUG("----- Binary operator: " << next);
+               MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+               goto BINARY_OPERATOR;
+            }
          }
          
          // Identifiers followed by brackets are function calls.

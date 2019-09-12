@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 public class TerminalInfoDialog extends ModalDialogBase
 {
@@ -43,11 +44,11 @@ public class TerminalInfoDialog extends ModalDialogBase
 
       setText("Terminal Diagnostics");
 
-      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() && 
+      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop();
-      
+
       final StringBuilder diagnostics = new StringBuilder();
-      
+
       diagnostics.append("Global Terminal Information\n---------------------------\n");
       diagnostics.append(globalInfo);
       if (session != null)
@@ -75,7 +76,14 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
          diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
-         diagnostics.append("Typing lag:  '").append(session.getSocket().getTypingLagMsg()).append("'\n");
+
+         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
+         for (String optionName : XTermOptions.stringOptions)
+            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.boolOptions)
+            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.numberOptions)
+            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
 
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
@@ -100,7 +108,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setText(diagnostics.toString());
 
       addOkButton(new ThemedButton("Close", event -> closeDialog()));
-      
+
       if (session != null)
       {
          appendBufferButton_ = new ThemedButton("Append Buffer", event -> {
@@ -115,10 +123,6 @@ public class TerminalInfoDialog extends ModalDialogBase
                   textArea_.setText(diagnostics.toString());
                   textArea_.setCursorPos(diagnostics.toString().length());
                   textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
-
-                  diagnostics.append("\n\nTerminal Buffer (Client)\n---------------\n");
-                  diagnostics.append(AnsiCode.prettyPrint(session.getLocalBuffer()));
-                  textArea_.setText(diagnostics.toString());
                }
 
                @Override
@@ -137,15 +141,14 @@ public class TerminalInfoDialog extends ModalDialogBase
    private void initialize(UserPrefs uiPrefs)
    {
       userPrefs_ = uiPrefs;
-   } 
+   }
 
-   
    @Override
    protected Widget createMainWidget()
    {
       return textArea_;
    }
-   
+
    private TextArea textArea_;
    private ThemedButton appendBufferButton_;
 

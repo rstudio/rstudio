@@ -739,7 +739,7 @@ core::Error UserPrefValues::setWarnVariableDefinedButNotUsed(bool val)
 }
 
 /**
- * Whether to automatically discover and offer to install missing R package dependenices.
+ * Whether to automatically discover and offer to install missing R package dependencies.
  */
 bool UserPrefValues::autoDiscoverPackageDependencies()
 {
@@ -1610,6 +1610,32 @@ core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 }
 
 /**
+ * Terminal bell style
+ */
+std::string UserPrefValues::terminalBellStyle()
+{
+   return readPref<std::string>("terminal_bell_style");
+}
+
+core::Error UserPrefValues::setTerminalBellStyle(std::string val)
+{
+   return writePref("terminal_bell_style", val);
+}
+
+/**
+ * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+ */
+std::string UserPrefValues::terminalRenderer()
+{
+   return readPref<std::string>("terminal_renderer");
+}
+
+core::Error UserPrefValues::setTerminalRenderer(std::string val)
+{
+   return writePref("terminal_renderer", val);
+}
+
+/**
  * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
  */
 bool UserPrefValues::showRmdRenderCommand()
@@ -2090,6 +2116,19 @@ core::Error UserPrefValues::setDefaultRVersion(core::json::Object val)
    return writePref("default_r_version", val);
 }
 
+/**
+ * The maximum number of columns to show at once in the data viewer.
+ */
+int UserPrefValues::dataViewerMaxColumns()
+{
+   return readPref<int>("data_viewer_max_columns");
+}
+
+core::Error UserPrefValues::setDataViewerMaxColumns(int val)
+{
+   return writePref("data_viewer_max_columns", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2215,6 +2254,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalWebsockets,
       kTerminalAutoClose,
       kTerminalTrackEnvironment,
+      kTerminalBellStyle,
+      kTerminalRenderer,
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
@@ -2252,6 +2293,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kClangVerbose,
       kSubmitCrashReports,
       kDefaultRVersion,
+      kDataViewerMaxColumns,
    });
 }
    

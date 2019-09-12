@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallbackMac.mm
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
-#include "DesktopUtils.hpp"
+#include "DesktopUtilsMac.hpp"
 
 #import <AppKit/NSApplication.h>
 #import <AppKit/NSAlert.h>
@@ -89,54 +89,6 @@ enum MessageType
    MSG_QUESTION = 4
 };
 
-FilePath userHomePath()
-{
-   return core::system::userHomePath("R_USER|HOME");
-}
-
-NSString* createAliasedPath(NSString* path)
-{
-   if (path == nil || [path length] == 0)
-      return @"";
-   
-   std::string aliased = FilePath::createAliasedPath(
-      FilePath([path UTF8String]),
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: aliased.c_str()];
-}
-
-NSString* resolveAliasedPath(NSString* path)
-{
-   if (path == nil)
-      path = @"";
-   
-   FilePath resolved = FilePath::resolveAliasedPath(
-      [path UTF8String],
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
-}
-
-QString runFileDialog(NSSavePanel* panel)
-{
-   NSString* path = @"";
-   long int result = [panel runModal];
-   @try
-   {
-      if (result == NSOKButton)
-      {
-         path = [[panel URL] path];
-      }
-   }
-   @catch (NSException* e)
-   {
-      throw e;
-   }
-   
-   return QString::fromNSString(createAliasedPath(path));
-}
-
 bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
 {
    bool opened = false;
@@ -167,7 +119,7 @@ bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
                     &kCFTypeArrayCallBacks);
       
       // ask the OS to open the doc for us in an appropriate viewer
-      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, nullptr, nullptr, nullptr, 0);
       if (status != noErr)
       {
          return false;
@@ -284,12 +236,20 @@ int GwtCallback::showMessageBox(int type,
    }
 
    // Make Enter invoke the default button, and ESC the cancel button.
-   // If there's only one button, make sure Enter is the button used to
+   // If there's only one button, allow both Enter and ESC to
    // dismiss the dialog. If there's multiple dialogs, accommodate the
    // case where the default button may be the cancel button.
    if ([dialogButtons count] == 1)
    {
       [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
+
+      // a single button can't have multiple key equivalents, so create a second
+      // hidden button to respond to ESC
+      NSButton* otherButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+      otherButton.target = alert.buttons.lastObject;
+      otherButton.action = @selector(performClick:);
+      otherButton.keyEquivalent = @"\e"; // Escape
+      [alert setAccessoryView:otherButton];
    }
    else
    {
@@ -418,24 +378,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
 QString GwtCallback::getExistingDirectory(const QString& qCaption,
                                           const QString& qLabel,
                                           const QString& qDir,
-                                          bool focusOwner)
+                                          bool /*focusOwner*/)
 {
-   NSString* caption = qCaption.toNSString();
-   NSString* label = qLabel.toNSString();
-   NSString* dir = qDir.toNSString();
-   
-   dir = resolveAliasedPath(dir);
-   
-   NSOpenPanel* panel = [NSOpenPanel openPanel];
-   [panel setTitle: caption];
-   [panel setPrompt: label];
-   [panel setDirectoryURL: [NSURL fileURLWithPath:
-                           [dir stringByStandardizingPath]]];
-   [panel setCanChooseFiles: false];
-   [panel setCanChooseDirectories: true];
-   [panel setCanCreateDirectories: true];
-   
-   return runFileDialog(panel);
+   return browseDirectory(qCaption, qLabel, qDir);
 }
 
 void GwtCallback::showWordDoc(QString qPath)

@@ -1,10 +1,10 @@
 
 .exportTargetLabel {
-   margin-right: 7px;	
+   margin-right: 7px;
 }
 
 .imageFormatListBox {
-   width: 170px;	
+   width: 170px;
 }
 
 .fileNameLabel {
@@ -12,8 +12,8 @@
 }
 
 .fileNameTextBox {
-	margin-top: -5px;
-   width: 165px; 	
+   margin-top: -5px;
+   width: 165px;
 }
 
 .directoryButton {
@@ -21,7 +21,7 @@
 }
 
 .directoryLabel {
-	margin-top: -2px;
+   margin-top: -2px;
    width: 250px;
    cursor: default;
 }
@@ -42,33 +42,29 @@
 }
 
 .horizontalSizeOptions {
-	margin-bottom: 4px;
+   margin-bottom: 4px;
 }
 
 .horizontalSizeOptions .widthAndHeightEntry {
-   margin-right: 10px;	
+   margin-right: 10px;
    margin-bottom: 4px;
 }
 
 .horizontalSizeOptions .maintainAspectRatioCheckBox  {
-	margin-left: 10px;
-   margin-right: 10px;  
+   margin-left: 10px;
+   margin-right: 10px;
    margin-bottom: 4px;
 }
 
 .horizontalSizeOptions .updateImageSizeButton  {
-	padding-top: 5px;
-  
+   padding-top: 5px;
 }
 
-
-
 .verticalSizeOptions {
-  
 }
 
 .verticalSizeOptions .widthAndHeightEntry {
-   margin-bottom: 4px;	
+   margin-bottom: 4px;
 }
 
 .verticalSizeOptions .maintainAspectRatioCheckBox {
@@ -76,30 +72,28 @@
 }
 
 .verticalSizeOptions .updateImageSizeButton {
-	margin-left: -2px;
-	margin-top: 6px;
-	margin-bottom: 4px;
+   margin-left: -2px;
+   margin-top: 6px;
+   margin-bottom: 4px;
 }
 
 .rightClickCopyLabel {
-	margin-left: 8px;
-	margin-top: 3px;
-	width: 220px;
+   margin-left: 8px;
+   margin-top: 3px;
+   width: 220px;
 }
 
 .copyFormatLabel {
-	margin-top: 2px;
-	margin-right: 6px;
-	
+   margin-top: 2px;
+   margin-right: 6px;
 }
 
 .copyFormatBitmap {
-   margin-right: 8px;	
+   margin-right: 8px;
 }
 
 .copyFormatMetafile {
 }
-
 
 .savePdfMainWidget {
    width: 360px;
@@ -124,7 +118,7 @@
 }
 
 .savePdfFileNameLabel {
-	margin-top: 0px;
+   margin-top: 0px;
 }
 
 

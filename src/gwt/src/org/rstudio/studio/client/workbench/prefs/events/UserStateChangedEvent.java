@@ -18,9 +18,7 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable

@@ -3,7 +3,7 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -939,6 +939,7 @@ var parseLocationUrl = function() {
   var parsedLocation = {};
 
   parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
+  parsedLocation.maxCols = defaultMaxColumns;
 
   var query = window.location.search.substring(1);
   var queryVars = query.split("&");
@@ -954,6 +955,8 @@ var parseLocationUrl = function() {
       parsedLocation.dataSource = queryVar[1];
     } else if (queryVar[0] == "id") {
       parsedLocation.id = queryVar[1];
+    } else if (queryVar[0] == "max_cols") {
+      parsedLocation.maxCols = queryVar[1];
     }
   }
 
@@ -1020,6 +1023,7 @@ var initDataTable = function(resCols, data) {
   // look up the query parameters
   var parsedLocation = parseLocationUrl();
   var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
+  maxColumns = defaultMaxColumns = parsedLocation.maxCols;
 
   // keep track of column types for later render
   var typeIndices = {

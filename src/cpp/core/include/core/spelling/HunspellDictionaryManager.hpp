@@ -72,7 +72,7 @@ public:
                              const FilePath& userDir)
       : coreLanguagesDir_(coreLanguagesDir),
         userDir_(userDir),
-        customDicts_(userDir_.getChildPath("custom"))
+        customDicts_(customLanguagesDir())
    {
    }
 
@@ -93,7 +93,9 @@ public:
 
 private:
    core::FilePath allLanguagesDir() const;
-   core::FilePath userLanguagesDir() const;
+   core::FilePath customLanguagesDir() const;
+   core::FilePath legacyAllLanguagesDir() const;
+   core::FilePath legacyCustomLanguagesDir() const;
 
 private:
    core::FilePath coreLanguagesDir_;

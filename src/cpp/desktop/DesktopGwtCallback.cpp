@@ -38,6 +38,7 @@
 #include "DesktopActivationOverlay.hpp"
 #include "DesktopSessionServersOverlay.hpp"
 #include "DesktopOptions.hpp"
+#include "DesktopUtils.hpp"
 #include "DesktopBrowserWindow.hpp"
 #include "DesktopWindowTracker.hpp"
 #include "DesktopInputDialog.hpp"
@@ -45,6 +46,7 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopMainWindow.hpp"
 #include "DesktopSynctex.hpp"
+#include "DesktopJobLauncherOverlay.hpp"
 #include "RemoteDesktopSessionLauncherOverlay.hpp"
 
 #ifdef __APPLE__
@@ -71,11 +73,23 @@ extern QString scratchPath;
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner, bool isRemoteDesktop)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
+     pLauncher_(new JobLauncher(pMainWindow)),
      isRemoteDesktop_(isRemoteDesktop),
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
    initialize();
+
+   Error error = pLauncher_->initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      showError(nullptr,
+                QStringLiteral("Initialization error"),
+                QStringLiteral("Could not initialize Job Launcher"),
+                QString());
+      ::_exit(EXIT_FAILURE);
+   }
    
 #ifdef Q_OS_LINUX
    // assume light theme on startup (theme will be dynamically updated
@@ -239,33 +253,6 @@ void GwtCallback::browseUrl(QString url)
    desktop::openUrl(qurl);
 }
 
-namespace {
-
-FilePath userHomePath()
-{
-   return core::system::userHomePath("R_USER|HOME");
-}
-
-#ifndef Q_OS_MAC
-
-QString createAliasedPath(const QString& path)
-{
-   std::string aliased = FilePath::createAliasedPath(
-         FilePath(path.toUtf8().constData()), userHomePath());
-   return QString::fromUtf8(aliased.c_str());
-}
-
-#endif
-
-QString resolveAliasedPath(const QString& path)
-{
-   FilePath resolved(FilePath::resolveAliasedPath(path.toUtf8().constData(),
-                                                  userHomePath()));
-   return QString::fromUtf8(resolved.getAbsolutePath().c_str());
-}
-
-} // anonymous namespace
-
 #ifndef Q_OS_MAC
 
 QString GwtCallback::getOpenFileName(const QString& caption,
@@ -275,7 +262,7 @@ QString GwtCallback::getOpenFileName(const QString& caption,
                                      bool canChooseDirectories,
                                      bool focusOwner)
 {
-   QString resolvedDir = resolveAliasedPath(dir);
+   QString resolvedDir = desktop::resolveAliasedPath(dir);
 
    QWidget* owner = focusOwner ? pOwner_->asWidget() : qApp->focusWidget();
    QFileDialog dialog(
@@ -332,7 +319,7 @@ QString GwtCallback::getSaveFileName(const QString& caption,
                                      bool forceDefaultExtension,
                                      bool focusOwner)
 {
-   QString resolvedDir = resolveAliasedPath(dir);
+   QString resolvedDir = desktop::resolveAliasedPath(dir);
 
    while (true)
    {
@@ -384,26 +371,10 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
                                           const QString& dir,
                                           bool focusOwner)
 {
-
-
-   QWidget* owner = focusOwner ? pOwner_->asWidget() : qApp->focusWidget();
-   QFileDialog dialog(
-            owner,
-            caption,
-            resolveAliasedPath(dir));
-
-   dialog.setLabelText(QFileDialog::Accept, label);
-   dialog.setFileMode(QFileDialog::Directory);
-   dialog.setOption(QFileDialog::ShowDirsOnly, true);
-   dialog.setWindowModality(Qt::WindowModal);
-
-   QString result;
-   if (dialog.exec() == QDialog::Accepted)
-      result = dialog.selectedFiles().value(0);
-
-   desktop::raiseAndActivateWindow(owner);
-
-   return createAliasedPath(result);
+   return desktop::browseDirectory(caption,
+                                   label,
+                                   dir,
+                                   focusOwner ? pOwner_->asWidget() : qApp->focusWidget());
 }
 
 #endif
@@ -571,7 +542,7 @@ void GwtCallback::showFolder(QString path)
    if (path.isNull() || path.isEmpty())
       return;
 
-   path = resolveAliasedPath(path);
+   path = desktop::resolveAliasedPath(path);
 
    QDir dir(path);
    if (dir.exists())
@@ -585,7 +556,7 @@ void GwtCallback::showFile(QString path)
    if (path.isNull() || path.isEmpty())
       return;
 
-   path = resolveAliasedPath(path);
+   path = desktop::resolveAliasedPath(path);
 
    desktop::openUrl(QUrl::fromLocalFile(path));
 }
@@ -596,7 +567,7 @@ void GwtCallback::showWordDoc(QString path)
 {
 #ifdef Q_OS_WIN32
 
-   path = resolveAliasedPath(path);
+   path = desktop::resolveAliasedPath(path);
    Error error = wordViewer_.showItem(path.toStdWString());
    if (error)
    {
@@ -614,7 +585,7 @@ void GwtCallback::showPptPresentation(QString path)
 {
 #ifdef Q_OS_WIN32
 
-   path = resolveAliasedPath(path);
+   path = desktop::resolveAliasedPath(path);
    Error error = pptViewer_.showItem(path.toStdWString());
    if (error)
    {
@@ -631,7 +602,7 @@ void GwtCallback::showPptPresentation(QString path)
 
 void GwtCallback::showPDF(QString path, int pdfPage)
 {
-   path = resolveAliasedPath(path);
+   path = desktop::resolveAliasedPath(path);
    
 #ifdef Q_OS_MAC
    desktop::openFile(path);
@@ -805,7 +776,7 @@ void GwtCallback::exportPageRegionToFile(QString targetPath,
                                          int height)
 {
    // resolve target path
-   targetPath = resolveAliasedPath(targetPath);
+   targetPath = desktop::resolveAliasedPath(targetPath);
 
    // get the pixmap
    QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
@@ -1168,7 +1139,7 @@ void GwtCallback::openProjectInNewWindow(QString projectFilePath)
    if (!isRemoteDesktop_)
    {
       std::vector<std::string> args;
-      args.push_back(resolveAliasedPath(projectFilePath).toStdString());
+      args.push_back(desktop::resolveAliasedPath(projectFilePath).toStdString());
       pMainWindow_->launchRStudio(args);
    }
    else
@@ -1182,7 +1153,7 @@ void GwtCallback::openSessionInNewWindow(QString workingDirectoryPath)
 {
    if (!isRemoteDesktop_)
    {
-      workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
+      workingDirectoryPath = desktop::resolveAliasedPath(workingDirectoryPath);
       pMainWindow_->launchRStudio(std::vector<std::string>(),
                                   workingDirectoryPath.toStdString());
    }
@@ -1215,7 +1186,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    QString macTermScriptPath = QString::fromUtf8(
          macTermScriptFilePath.absolutePath().c_str());
    QStringList args;
-   args.append(resolveAliasedPath(workingDirectory));
+   args.append(desktop::resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);
 
 #elif defined(Q_OS_WIN)
@@ -1246,7 +1217,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    QProcess process;
    process.setProgram(terminalPath);
    process.setArguments(args);
-   process.setWorkingDirectory(resolveAliasedPath(workingDirectory));
+   process.setWorkingDirectory(desktop::resolveAliasedPath(workingDirectory));
    process.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments* cpa)
    {
       cpa->flags |= CREATE_NEW_CONSOLE;
@@ -1265,7 +1236,7 @@ void GwtCallback::openTerminal(QString terminalPath,
       QStringList args;
       QProcess::startDetached(terminalPath,
                               args,
-                              resolveAliasedPath(workingDirectory));
+                              desktop::resolveAliasedPath(workingDirectory));
    }
    else
    {
@@ -1446,7 +1417,7 @@ QString GwtCallback::getDesktopSynctexViewer()
 
 void GwtCallback::externalSynctexPreview(QString pdfPath, int page)
 {
-   synctex().syncView(resolveAliasedPath(pdfPath), page);
+   synctex().syncView(desktop::resolveAliasedPath(pdfPath), page);
 }
 
 void GwtCallback::externalSynctexView(const QString& pdfFile,
@@ -1454,8 +1425,8 @@ void GwtCallback::externalSynctexView(const QString& pdfFile,
                                       int line,
                                       int column)
 {
-   synctex().syncView(resolveAliasedPath(pdfFile),
-                      resolveAliasedPath(srcFile),
+   synctex().syncView(desktop::resolveAliasedPath(pdfFile),
+                      desktop::resolveAliasedPath(srcFile),
                       QPoint(line, column));
 }
 
@@ -1567,9 +1538,118 @@ void GwtCallback::onSessionQuit()
    sessionQuit();
 }
 
-QString GwtCallback::getSessionServer()
+QJsonObject GwtCallback::getSessionServer()
 {
-   return QString::fromStdString(pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer().label());
+   if (pMainWindow_->getRemoteDesktopSessionLauncher() != nullptr)
+      return pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer().toJson();
+   else
+      return QJsonObject();
+}
+
+QJsonObject GwtCallback::getLauncherServer()
+{
+   SessionServer server = pLauncher_->getLauncherServer();
+   return server.toJson();
+}
+
+QJsonArray GwtCallback::getSessionServers()
+{
+   QJsonArray serversArray;
+   for (const SessionServer& server : sessionServerSettings().servers())
+   {
+      serversArray.append(server.toJson());
+   }
+
+   return serversArray;
+}
+
+void GwtCallback::reconnectToSessionServer(const QJsonValue& sessionServerJson)
+{
+   SessionServer server = !sessionServerJson.isNull() ?
+            SessionServer::fromJson(sessionServerJson.toObject()) :
+            SessionServer("", "");
+   sessionServers().setPendingSessionServerReconnect(server);
+   pMainWindow_->close();
+}
+
+bool GwtCallback::setLauncherServer(const QJsonObject& sessionServerJson)
+{
+   SessionServer server = SessionServer::fromJson(sessionServerJson);
+   return pLauncher_->setSessionServer(server);
+}
+
+void GwtCallback::connectToLauncherServer()
+{
+   pLauncher_->signIn();
+}
+
+void GwtCallback::startLauncherJobStatusStream(QString jobId)
+{
+   pLauncher_->startLauncherJobStatusStream(jobId.toStdString());
+}
+
+void GwtCallback::stopLauncherJobStatusStream(QString jobId)
+{
+   pLauncher_->stopLauncherJobStatusStream(jobId.toStdString());
+}
+
+void GwtCallback::startLauncherJobOutputStream(QString jobId)
+{
+   pLauncher_->startLauncherJobOutputStream(jobId.toStdString());
+}
+
+void GwtCallback::stopLauncherJobOutputStream(QString jobId)
+{
+   pLauncher_->stopLauncherJobOutputStream(jobId.toStdString());
+}
+
+void GwtCallback::controlLauncherJob(QString jobId, QString operation)
+{
+   pLauncher_->controlLauncherJob(jobId.toStdString(), operation.toStdString());
+}
+
+void GwtCallback::submitLauncherJob(const QJsonObject& job)
+{
+   // convert qt json object to core json object
+   QJsonDocument doc(job);
+   std::string jsonStr = doc.toJson().toStdString();
+
+   json::Value val;
+   Error error = json::parse(jsonStr, ERROR_LOCATION, &val);
+   if (error)
+   {
+      // a parse error should not occur here - if it does it indicates a programmer
+      // error while invoking this method - as such, forward on the invalid job
+      // so the appropriate error event is eventually delivered
+      LOG_ERROR(error);
+   }
+
+   json::Object obj;
+   if (val.type() == json::ObjectType)
+      obj = val.get_obj();
+
+   if (obj.empty())
+   {
+      // same as above - if this is not a valid object, it indicates a programmer error
+      LOG_ERROR_MESSAGE("Empty job object submitted");
+   }
+
+   pLauncher_->submitLauncherJob(obj);
+}
+
+void GwtCallback::getJobContainerUser()
+{
+   pLauncher_->getJobContainerUser();
+}
+
+void GwtCallback::validateJobsConfig()
+{
+   pLauncher_->validateJobsConfig();
+}
+
+int GwtCallback::getProxyPortNumber()
+{
+   return pLauncher_->getProxyPortNumber();
 }
 
 } // namespace desktop

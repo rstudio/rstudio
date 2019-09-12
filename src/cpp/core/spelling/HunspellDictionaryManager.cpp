@@ -14,6 +14,7 @@
  */
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <boost/bind.hpp>
 
@@ -149,13 +150,13 @@ Error HunspellDictionaryManager::availableLanguages(
          return error;
    }
 
-   // always check the languages-extra directory as well (and auto-create
+   // always check the custom directory as well (and auto-create
    // it so users who look for it will see it)
-   FilePath userLangsDir = userLanguagesDir();
-   Error error = userLangsDir.ensureDirectory();
+   FilePath customLangsDir = customLanguagesDir();
+   Error error = customLangsDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   error = listAffFiles(userLangsDir, &affFiles);
+   error = listAffFiles(customLangsDir, &affFiles);
    if (error)
       LOG_ERROR(error);
 
@@ -177,9 +178,9 @@ HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
    std::string affFile = langId + ".aff";
 
    // first check to see whether it exists in the user languages directory
-   FilePath userLangsAff = userLanguagesDir().completePath(affFile);
-   if (userLangsAff.exists())
-      return HunspellDictionary(userLangsAff);
+   FilePath customLangsAff = customLanguagesDir().completePath(affFile);
+   if (customLangsAff.exists())
+      return HunspellDictionary(customLangsAff);
    else if (allLanguagesInstalled())
       return HunspellDictionary(allLanguagesDir().completePath(affFile));
    else
@@ -191,16 +192,33 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
    return customDicts_;
 }
 
-FilePath HunspellDictionaryManager::allLanguagesDir() const
+/*
+ * \deprecated
+ * For getting all languages from pre-1.3 RStudio
+ * */
+FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
 {
    return userDir_.getChildPath("languages-system");
 }
 
-FilePath HunspellDictionaryManager::userLanguagesDir() const
+/*
+ * \deprecated
+ * For getting user languages from pre-1.3 RStudio
+ * */
+FilePath HunspellDictionaryManager::legacyCustomLanguagesDir() const
 {
-   return userDir_.getChildPath("languages-user");
+   return userDir_.getChildPath("custom");
 }
 
+FilePath HunspellDictionaryManager::allLanguagesDir() const
+{
+   return core::system::xdg::userConfigDir().getChildPath("dictionaries/languages-system");
+}
+
+FilePath HunspellDictionaryManager::customLanguagesDir() const
+{
+   return core::system::xdg::userConfigDir().getChildPath("dictionaries/custom");
+}
 
 } // namespace spelling
 } // namespace core

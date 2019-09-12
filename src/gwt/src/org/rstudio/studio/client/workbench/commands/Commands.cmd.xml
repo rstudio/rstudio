@@ -530,6 +530,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="openDeveloperConsole"/>
             <cmd refid="reloadUi"/>
             <separator/>
+            <cmd refid="editUserPrefs"/>
+            <cmd refid="clearUserPrefs"/>
+            <cmd refid="viewAllPrefs"/>
+            <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
@@ -1016,7 +1020,8 @@ well as menu structures (for main menu and popup menus).
         label="Save All Source Documents"
         menuLabel="Sa_ve All"
         buttonLabel=""
-        desc="Save all open documents"/>
+        desc="Save all open documents"
+        windowMode="main"/>
         
    <cmd id="saveSourceDocWithEncoding"
         label="Save Current Document with Encoding..."
@@ -2583,23 +2588,23 @@ well as menu structures (for main menu and popup menus).
         context="packrat"/>
 
    <cmd id="packratClean"
-         menuLabel="_Clean Unused Packages..."
-         desc="Remove unused packages from your packrat library"
-         rebindable="false"
-         context="packrat"/>
+        menuLabel="_Clean Unused Packages..."
+        desc="Remove unused packages from your packrat library"
+        rebindable="false"
+        context="packrat"/>
 
    <cmd id="packratHelp"
-         menuLabel="Using Packrat"
-         desc="Help on using packrat with R projects"
-         rebindable="false"
-         context="packrat"/>
+        menuLabel="Using Packrat"
+        desc="Help on using packrat with R projects"
+        rebindable="false"
+        context="packrat"/>
          
    <cmd id="packratOptions"
-         buttonLabel="Options"
-         menuLabel="Packrat _Options..."
-         desc="Configure packrat options for this project"
-         rebindable="false"
-         context="packrat"/>
+        buttonLabel="Options"
+        menuLabel="Packrat _Options..."
+        desc="Configure packrat options for this project"
+        rebindable="false"
+        context="packrat"/>
          
    <cmd id="packratBundle"
         buttonLabel="Bundle"
@@ -2609,11 +2614,29 @@ well as menu structures (for main menu and popup menus).
         context="packrat"/>
 
    <cmd id="packratCheckStatus"
-         menuLabel="Check Library _Status..."
-         desc="Check the status of the Packrat library"
-         rebindable="false"
-         context="packrat"/>
-
+        menuLabel="Check Library _Status..."
+        desc="Check the status of the Packrat library"
+        rebindable="false"
+        context="packrat"/>
+         
+   <cmd id="renvHelp"
+        menuLabel="Introduction to renv"
+        desc="Learn how to use renv"
+        rebindable="false"
+        context="renv"/>
+         
+   <cmd id="renvSnapshot"
+        menuLabel="Snapshot Library..."
+        desc="Snapshot the state of your project library"
+        rebindable="false"
+        context="renv"/>
+        
+   <cmd id="renvRestore"
+        menuLabel="Restore Library..."
+        desc="Restore your project library from renv.lock"
+        rebindable="false"
+        context="renv"/>
+         
    <cmd id="versionControlOptions"
         menuLabel="_Options..."
         desc="Configure version control options"
@@ -2906,6 +2929,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showSessionServerOptionsDialog"
         label="Session Server Settings..."
+        menuLabel="_Session Server Settings..."
         buttonLabel=""
         desc="Configure available session servers"
         windowMode="main"/>
@@ -3436,4 +3460,18 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show Help Menu"
         windowMode="main"/>
 
+   <cmd id="editUserPrefs"
+        menuLabel="Edit User Prefs File"
+        windowMode="main"
+        rebindable="false"/>
+
+   <cmd id="clearUserPrefs"
+        menuLabel="Clear User Prefs"
+        windowMode="main"
+        rebindable="false"/>
+
+   <cmd id="viewAllPrefs"
+        menuLabel="View All Prefs"
+        windowMode="main"
+        rebindable="false"/>
 </commands>

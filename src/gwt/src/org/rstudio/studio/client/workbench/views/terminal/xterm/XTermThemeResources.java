@@ -1,7 +1,7 @@
 /*
  * XTermThemeResources.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,8 +21,8 @@ import org.rstudio.core.client.resources.StaticDataResource;
 
 public interface XTermThemeResources extends ClientBundle
 {
-   public static final XTermThemeResources INSTANCE = GWT.create(XTermThemeResources.class);
-  
+   XTermThemeResources INSTANCE = GWT.create(XTermThemeResources.class);
+
    @Source("xterm.css")
-   StaticDataResource xtermcss();   
+   StaticDataResource xtermcss();
 }

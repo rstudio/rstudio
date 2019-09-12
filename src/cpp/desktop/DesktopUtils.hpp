@@ -38,6 +38,7 @@ class MainWindow;
 void reattachConsoleIfNecessary();
 
 rstudio::core::FilePath userLogPath();
+rstudio::core::FilePath userWebCachePath();
 
 double devicePixelRatio(QMainWindow* pMainWindow);
 
@@ -108,6 +109,15 @@ double getDpiZoomScaling();
 int getDpi();
 
 QFileDialog::Options standardFileDialogOptions();
+
+QString browseDirectory(const QString& caption,
+                        const QString& label,
+                        const QString& dir,
+                        QWidget* pOwner = nullptr);
+
+core::FilePath userHomePath();
+QString createAliasedPath(const QString& path);
+QString resolveAliasedPath(const QString& path);
 
 } // namespace desktop
 } // namespace rstudio

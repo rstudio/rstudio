@@ -21,7 +21,7 @@ import com.google.gwt.core.client.JsArray;
 
 public interface JobsServerOperations
 {
-   void setJobListening(String id, boolean listening,
+   void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                         ServerRequestCallback<JsArray<JobOutput> > output);
    void startJob(JobLaunchSpec spec, ServerRequestCallback<String> callback);
    void clearJobs(ServerRequestCallback<Void> callback);

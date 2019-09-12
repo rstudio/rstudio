@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -37,7 +36,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 /**
- * Drop-down menu used in terminal pane. Has commands, and a list of 
+ * Drop-down menu used in terminal pane. Has commands, and a list of
  * terminal sessions.
  */
 public class TerminalPopupMenu extends ToolbarPopupMenu
@@ -46,9 +45,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       terminals_ = terminals;
-
-      eventBus_.addHandler(TerminalBusyEvent.TYPE,
-            event -> refreshActiveTerminal());
    }
 
    @Inject
@@ -60,12 +56,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       eventBus_ = events;
       server_ = server;
    }
-   
+
    @Override
    public void getDynamicPopupMenu(final DynamicPopupMenuCallback callback)
-   { 
+   {
       // clean out existing entries
-      clearItems(); 
+      clearItems();
       addItem(commands_.newTerminal().createMenuItem(false));
       addSeparator();
 
@@ -108,27 +104,26 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
       callback.onPopupMenu(this);
    }
-   
+
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
          String buttonText = "Terminal";
-         
+
          toolbarButton_ = new ToolbarMenuButton(
-                buttonText, 
+                buttonText,
                 ToolbarButton.NoTitle,
                 StandardIcons.INSTANCE.empty_command(),
-                this, 
+                this,
                 false);
 
          setNoActiveTerminal();
       }
       return toolbarButton_;
    }
-   
+
    /**
-    *       
     * @param caption caption of the active terminal
     * @param handle handle of the active terminal
     */
@@ -142,16 +137,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       }
       toolbarButton_.setText(trimmed);
 
-      // Update terminal commands based on current selection
-      boolean haveActiveTerminal = activeTerminalHandle_ != null;
-      commands_.closeTerminal().setEnabled(haveActiveTerminal);
-      commands_.renameTerminal().setEnabled(haveActiveTerminal);
-      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
-      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
-      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
-      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
-      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
-      
+      updateTerminalCommands();
+
       // inform server of the selection
       server_.processNotifyVisible(activeTerminalHandle_, new ServerRequestCallback<Void>() {
 
@@ -162,7 +149,22 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          }
       });
    }
-   
+
+   /**
+    * Update terminal commands based on current selection
+    */
+   public void updateTerminalCommands()
+   {
+      boolean haveActiveTerminal = activeTerminalHandle_ != null;
+      commands_.closeTerminal().setEnabled(haveActiveTerminal);
+      commands_.renameTerminal().setEnabled(haveActiveTerminal);
+      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
+      commands_.interruptTerminal().setEnabled(haveActiveTerminal);
+      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
+      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
+      commands_.sendTerminalToEditor().setEnabled(haveActiveTerminal);
+   }
+
    public void setActiveTerminalByCaption(String caption, boolean createdByApi)
    {
       String handle = terminals_.handleForCaption(caption);
@@ -174,7 +176,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    /**
     * Refresh caption of active terminal based on busy status.
     */
-   private void refreshActiveTerminal()
+   public void refreshActiveTerminal()
    {
       if (toolbarButton_ == null || activeTerminalHandle_ == null)
          return;
@@ -182,11 +184,11 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       String caption = terminals_.getCaption(activeTerminalHandle_);
       if (caption == null)
          return;
-      
-      toolbarButton_.setText(addBusyIndicator(trimCaption(caption), 
+
+      toolbarButton_.setText(addBusyIndicator(trimCaption(caption),
             terminals_.getHasSubprocs(activeTerminalHandle_)));
    }
-    
+
    /**
     * set state to indicate no active terminals
     */
@@ -308,7 +310,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private String activeTerminalHandle_;
    private TerminalList terminals_;
 
-   // Injected ----  
+   // Injected ----
    private Commands commands_;
    private EventBus eventBus_;
    private WorkbenchServerOperations server_;

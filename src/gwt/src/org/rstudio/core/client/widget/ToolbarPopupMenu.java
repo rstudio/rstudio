@@ -172,6 +172,8 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return menuBar_.getItemCount() ;
    }
 
+   public List<MenuItem> getMenuItems() { return menuBar_.getMenuItems(); }
+
    public void focus()
    {
       menuBar_.focus();
@@ -287,6 +289,8 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          return getItems().size() ;
       }
+
+      public List<MenuItem> getMenuItems() { return getItems(); }
       
       public int getSelectedIndex()
       {

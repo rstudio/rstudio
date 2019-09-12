@@ -38,12 +38,41 @@ LaunchLocationResult DesktopSessionServers::showSessionLaunchLocationDialog()
    return result;
 }
 
+void DesktopSessionServers::setPendingSessionServerReconnect(const SessionServer& server)
+{
+}
+
+boost::optional<SessionServer> DesktopSessionServers::getPendingSessionServerReconnect()
+{
+   return boost::none;
+}
+
+QJsonObject SessionServerPathMapping::toJson() const
+{
+   return QJsonObject();
+}
+
+SessionServerPathMapping SessionServerPathMapping::fromJson(const QJsonObject& pathMappingJson)
+{
+   return SessionServerPathMapping();
+}
+
 const std::string& SessionServer::label() const
 {
    if (!name().empty())
       return name();
    else
       return url();
+}
+
+QJsonObject SessionServer::toJson() const
+{
+   return QJsonObject();
+}
+
+SessionServer SessionServer::fromJson(const QJsonObject& sessionServerJson)
+{
+   return SessionServer();
 }
 
 Error SessionServer::test()
@@ -71,6 +100,10 @@ ConfigSource SessionServerSettings::configSource() const
 void SessionServerSettings::save(const std::vector<SessionServer>& servers,
                                  SessionLocation sessionLocation,
                                  CloseServerSessions closeServerSessionsOnExit)
+{
+}
+
+void SessionServerSettings::addSaveHandler(const boost::function<void()>& onSave)
 {
 }
 

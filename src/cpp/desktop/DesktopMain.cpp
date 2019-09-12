@@ -441,6 +441,10 @@ boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
    return boost::optional<SessionServer>();
 }
 
+void initializeOptions(const boost::scoped_ptr<QApplication>& pApp)
+{
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -465,7 +469,7 @@ int main(int argc, char* argv[])
 
       } while (dir.cdUp());
 #endif
-      
+
       initializeLang();
       initializeRenderingEngine(&arguments);
       
@@ -649,6 +653,8 @@ int main(int argc, char* argv[])
                               argv,
                               &pApp,
                               &pAppLaunch);
+
+      initializeOptions(pApp);
 
       // determine the filename that was passed to us
       QString filename;
@@ -857,6 +863,7 @@ int main(int argc, char* argv[])
       }
 
       bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
+      bool forceReuseSession = false;
 
       while (true)
       {
@@ -951,7 +958,7 @@ int main(int argc, char* argv[])
             {
                pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
                                                             pAppLaunch.get(),
-                                                            forceSessionServerLaunch);
+                                                            forceSessionServerLaunch && !forceReuseSession);
             }
             else
             {
@@ -970,6 +977,30 @@ int main(int argc, char* argv[])
 
          desktop::activation().releaseLicense();
          options.cleanUpScratchTempDir();
+
+         boost::optional<SessionServer> pendingReconnect = sessionServers().getPendingSessionServerReconnect();
+         if (pendingReconnect.has_value())
+         {
+            // we need to reconnect to the specified session server
+            forceSessionServerLaunch = true;
+            const SessionServer& server = pendingReconnect.get();
+            if (server.label().empty())
+            {
+               // reconnect to a local session
+               launchServer = boost::none;
+            }
+            else
+            {
+               // reconnect to the specified session
+               launchServer = getLaunchServerFromUrl(server.url());
+               sessionUrl.clear();
+               forceReuseSession = true;
+            }
+
+            // clear activation's cached main window to allow relaunching of sessions
+            desktop::activation().setMainWindow(nullptr);
+            continue;
+         }
 
          return result;
       }

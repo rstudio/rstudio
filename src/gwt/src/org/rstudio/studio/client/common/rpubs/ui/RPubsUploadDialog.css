@@ -9,32 +9,32 @@
 }
 
 .headerLabel {
-	margin-left: 12px;
-	font-weight: bold;
-	font-size: 16px;
+   margin-left: 12px;
+   font-weight: bold;
+   font-size: 16px;
    display: none;
 }
 
 .warningLabel {
-	margin-top: 15px;
-	margin-bottom: 15px;
+   margin-top: 15px;
+   margin-bottom: 15px;
 }
 
 .fieldLabel {
-	margin-bottom: 2px;
+   margin-bottom: 2px;
 }
 
 .titleTextBox {
-	width: 99%;
-	margin-bottom: 10px;
+   width: 99%;
+   margin-bottom: 10px;
 }
 
 .commentTextArea {
-	width: 99%;
+   width: 99%;
 }
 
 .descLabel {
-	margin-bottom: 14px;
+   margin-bottom: 14px;
 }
 
 .progressImage {

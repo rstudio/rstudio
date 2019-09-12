@@ -146,6 +146,7 @@ import org.rstudio.studio.client.workbench.model.TerminalOptions;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
@@ -488,6 +489,7 @@ public class RemoteServer implements Server
                                requestCallback);
    }
 
+   @Override
    public void setUserPrefs(JavaScriptObject userPrefs,
                             ServerRequestCallback<Void> requestCallback)
    {
@@ -497,7 +499,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-
    @Override
    public void setUserState(JavaScriptObject userState,
                             ServerRequestCallback<Void> requestCallback)
@@ -505,6 +506,30 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   SET_USER_STATE,
                   userState,
+                  requestCallback);
+   }
+
+   @Override
+   public void editPreferences(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "edit_user_prefs",
+                  requestCallback);
+   }
+
+   @Override
+   public void viewPreferences(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "view_all_prefs",
+                  requestCallback);
+   }
+
+   @Override
+   public void clearPreferences(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  "clear_user_prefs",
                   requestCallback);
    }
 
@@ -551,7 +576,7 @@ public class RemoteServer implements Server
    public void getTerminalShells(
          ServerRequestCallback<JsArray<TerminalShellInfo>> requestCallback)
    {
-	   sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
+      sendRequest(RPC_SCOPE, GET_TERMINAL_SHELLS, requestCallback);
    }
 
    @Override
@@ -3623,7 +3648,7 @@ public class RemoteServer implements Server
       final ResponseHandler responseHandler = new ResponseHandler();
       
       // setup a retry handler which will call back the second time with
-      // the same args (but no retryHandler, ensurin at most 1 retry)
+      // the same args (but no retryHandler, ensuring at most 1 retry)
       RetryHandler retryHandler = new RetryHandler() {
         
          public void onRetry()
@@ -5351,6 +5376,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void renvActions(String action,
+                           ServerRequestCallback<JsArray<RenvAction>> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(action)
+            .get();
+      
+      sendRequest(RPC_SCOPE, RENV_ACTIONS, params, requestCallback);
+   }
+   
+   @Override
    public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
@@ -5795,12 +5831,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setJobListening(String id, boolean listening,
+   public void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                                ServerRequestCallback<JsArray<JobOutput>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
       params.set(1, JSONBoolean.getInstance(listening));
+      params.set(2, JSONBoolean.getInstance(bypassLauncherCall));
       sendRequest(RPC_SCOPE, "set_job_listening", params, callback);
    }
    
@@ -6349,6 +6386,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_ACTIONS = "get_packrat_actions";
    
    private static final String RENV_INIT = "renv_init";
+   private static final String RENV_ACTIONS = "renv_actions";
    
    private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
    private static final String ANALYZE_PROJECT = "analyze_project";

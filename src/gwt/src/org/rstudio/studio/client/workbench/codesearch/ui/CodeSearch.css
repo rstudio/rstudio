@@ -11,19 +11,19 @@
 }
 
 .fileImage {
-	position: relative;
-	top: 2px;
-	margin-right: 5px;
+   position: relative;
+   top: 2px;
+   margin-right: 5px;
 }
 
 .itemImage {
-	position: relative;
-	top: 2px;
-	margin-left: 2px;
-	margin-right: 8px;
-	padding-top: 4px;
-	padding-bottom: 2px;
-	
+   position: relative;
+   top: 2px;
+   margin-left: 2px;
+   margin-right: 8px;
+   padding-top: 4px;
+   padding-bottom: 2px;
+
 }
 
 .itemName {
@@ -35,9 +35,9 @@
 }
 
 .codeSearchDialogMainWidget {
-	width: 250px;
+   width: 250px;
 }
 
 .codeSearchDialogMainWidget .codeSearchWidget .search {
-   width: 100%;	
+   width: 100%;
 }

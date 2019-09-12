@@ -23,6 +23,8 @@
 #include <QJsonObject>
 #include <QPrinter>
 
+#include <boost/optional.hpp>
+
 #ifdef Q_OS_WIN32
 #include "DesktopWordViewer.hpp"
 #include "DesktopPowerpointViewer.hpp"
@@ -34,6 +36,7 @@ namespace desktop {
 class MainWindow;
 class GwtWindow;
 class Synctex;
+class JobLauncher;
 
 enum PendingQuit 
 {
@@ -253,7 +256,23 @@ public Q_SLOTS:
 
    void onSessionQuit();
 
-   QString getSessionServer();
+   QJsonObject getSessionServer();
+   QJsonArray getSessionServers();
+   void reconnectToSessionServer(const QJsonValue& sessionServerJson);
+
+   bool setLauncherServer(const QJsonObject& sessionServerJson);
+   void connectToLauncherServer();
+
+   QJsonObject getLauncherServer();
+   void startLauncherJobStatusStream(QString jobId);
+   void stopLauncherJobStatusStream(QString jobId);
+   void startLauncherJobOutputStream(QString jobId);
+   void stopLauncherJobOutputStream(QString jobId);
+   void controlLauncherJob(QString jobId, QString operation);
+   void submitLauncherJob(const QJsonObject& job);
+   void getJobContainerUser();
+   void validateJobsConfig();
+   int getProxyPortNumber();
 
 private:
    void invokeReflowComment();
@@ -265,6 +284,7 @@ private:
    void doAction(QKeySequence::StandardKey key);
    MainWindow* pMainWindow_;
    GwtWindow* pOwner_;
+   JobLauncher* pLauncher_;
    bool isRemoteDesktop_;
    Synctex* pSynctex_;
    int pendingQuit_;

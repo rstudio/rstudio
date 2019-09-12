@@ -1,9 +1,9 @@
 @CHARSET "UTF-8";
 
 .splitter {
-	position: absolute;
-	width: 7px;
-	height: 18px;
-	cursor: col-resize;
-	margin-top: -2px;
+   position: absolute;
+   width: 7px;
+   height: 18px;
+   cursor: col-resize;
+   margin-top: -2px;
 }

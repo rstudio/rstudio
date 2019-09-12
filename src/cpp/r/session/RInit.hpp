@@ -17,8 +17,8 @@
 
 namespace rstudio {
 namespace core {
-	class Error;
-	class FilePath;
+   class Error;
+   class FilePath;
 } 
 }
 

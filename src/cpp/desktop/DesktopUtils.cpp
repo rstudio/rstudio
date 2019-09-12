@@ -23,6 +23,7 @@
 
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopMainWindow.hpp"
@@ -69,6 +70,11 @@ FilePath userLogPath()
    return logPath;
 }
 
+FilePath userWebCachePath()
+{
+   return core::system::xdg::userDataDir().getChildPath("web-cache");
+}
+
 bool isWindows()
 {
 #ifdef Q_OS_WIN
@@ -103,6 +109,31 @@ bool isCentOS()
 
    return contents.find("CentOS") != std::string::npos ||
           contents.find("Red Hat Enterprise Linux") != std::string::npos;
+}
+
+QString browseDirectory(const QString& caption,
+                        const QString& label,
+                        const QString& dir,
+                        QWidget* pOwner)
+{
+   QFileDialog dialog(
+            pOwner,
+            caption,
+            resolveAliasedPath(dir));
+
+   dialog.setLabelText(QFileDialog::Accept, label);
+   dialog.setFileMode(QFileDialog::Directory);
+   dialog.setOption(QFileDialog::ShowDirsOnly, true);
+   dialog.setWindowModality(Qt::WindowModal);
+
+   QString result;
+   if (dialog.exec() == QDialog::Accepted)
+      result = dialog.selectedFiles().value(0);
+
+   if (pOwner)
+      raiseAndActivateWindow(pOwner);
+
+   return createAliasedPath(result);
 }
 
 #endif
@@ -411,6 +442,25 @@ QFileDialog::Options standardFileDialogOptions()
 }
 
 #endif
+
+FilePath userHomePath()
+{
+   return core::system::userHomePath("R_USER|HOME");
+}
+
+QString createAliasedPath(const QString& path)
+{
+   std::string aliased = FilePath::createAliasedPath(
+         FilePath(path.toUtf8().constData()), desktop::userHomePath());
+   return QString::fromUtf8(aliased.c_str());
+}
+
+QString resolveAliasedPath(const QString& path)
+{
+   FilePath resolved(FilePath::resolveAliasedPath(path.toUtf8().constData(),
+                                                  userHomePath()));
+   return QString::fromUtf8(resolved.getAbsolutePath().c_str());
+}
 
 } // namespace desktop
 } // namespace rstudio

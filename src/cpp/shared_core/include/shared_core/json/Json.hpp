@@ -289,7 +289,7 @@ public:
       return get_impl().GetDouble();
    }
 
-   Value clone()
+   Value clone() const
    {
       return Value(*this);
    }

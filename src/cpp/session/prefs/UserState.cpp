@@ -96,6 +96,6 @@ Error initializeState()
    return userState().initialize();
 }
 
-} // namespace state
+} // namespace prefs
 } // namespace session
 } // namespace rstudio

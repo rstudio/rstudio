@@ -219,6 +219,12 @@ namespace prefs {
 #define kTerminalWebsockets "terminal_websockets"
 #define kTerminalAutoClose "terminal_auto_close"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalBellStyle "terminal_bell_style"
+#define kTerminalBellStyleNone "none"
+#define kTerminalBellStyleSound "sound"
+#define kTerminalRenderer "terminal_renderer"
+#define kTerminalRendererCanvas "canvas"
+#define kTerminalRendererDom "dom"
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
@@ -282,6 +288,7 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDataViewerMaxColumns "data_viewer_max_columns"
 
 class UserPrefValues: public Preferences
 {
@@ -618,7 +625,7 @@ public:
    core::Error setWarnVariableDefinedButNotUsed(bool val);
 
    /**
-    * Whether to automatically discover and offer to install missing R package dependenices.
+    * Whether to automatically discover and offer to install missing R package dependencies.
     */
    bool autoDiscoverPackageDependencies();
    core::Error setAutoDiscoverPackageDependencies(bool val);
@@ -1020,6 +1027,18 @@ public:
    core::Error setTerminalTrackEnvironment(bool val);
 
    /**
+    * Terminal bell style
+    */
+   std::string terminalBellStyle();
+   core::Error setTerminalBellStyle(std::string val);
+
+   /**
+    * Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards
+    */
+   std::string terminalRenderer();
+   core::Error setTerminalRenderer(std::string val);
+
+   /**
     * Whether to print the render command use to knit R Markdown documents in the R Markdown tab.
     */
    bool showRmdRenderCommand();
@@ -1240,6 +1259,12 @@ public:
     */
    core::json::Object defaultRVersion();
    core::Error setDefaultRVersion(core::json::Object val);
+
+   /**
+    * The maximum number of columns to show at once in the data viewer.
+    */
+   int dataViewerMaxColumns();
+   core::Error setDataViewerMaxColumns(int val);
 
 };
 

@@ -30,12 +30,12 @@ public class NotebookHtmlMetadata extends JavaScriptObject
    public final native boolean getSizingPolicyKnitrFigure() /*-{
       var defaultFigurePolicy = true;
 
-   	if (!this.sizingPolicy) return defaultFigurePolicy;
-   	if (!this.sizingPolicy.knitr) return defaultFigurePolicy;
-   	if (typeof(this.sizingPolicy.knitr.figure) === "undefined") return defaultFigurePolicy;
-   	if (this.sizingPolicy.knitr.figure === null) return defaultFigurePolicy
+      if (!this.sizingPolicy) return defaultFigurePolicy;
+      if (!this.sizingPolicy.knitr) return defaultFigurePolicy;
+      if (typeof(this.sizingPolicy.knitr.figure) === "undefined") return defaultFigurePolicy;
+      if (this.sizingPolicy.knitr.figure === null) return defaultFigurePolicy
 
-   	var figure = this.sizingPolicy.knitr.figure;
+      var figure = this.sizingPolicy.knitr.figure;
       return figure.length ? figure[0] : figure;
    }-*/;
 }

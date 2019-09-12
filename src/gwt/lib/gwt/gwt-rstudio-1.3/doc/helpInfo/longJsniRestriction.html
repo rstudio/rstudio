@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Restrictions on long values with JSNI</title>
+  </head>
+  <body>
+
+ <p>The Java <code>long</code> type cannot be represented in JavaScript
+ as a numeric type, so GWT emulates it using an opaque data structure.
+ This means that JSNI methods cannot process a <code>long</code> as a
+ numeric type.  The compiler therefore disallows, by default, directly
+ accessing a <code>long</code> from JSNI: JSNI methods cannot have
+ <code>long</code> as a parameter type or a return type, and they
+ cannot access a <code>long</code> using a JSNI reference.  If you
+ find yourself wanting to pass a <code>long</code> into or out of a
+ JSNI method, here are some options:
+
+  <ol>
+
+    <li> For numbers that fit into type <code>double</code>, use type
+    <code>double</code> instead of type <code>long</code>.
+
+    <li> For computations that require the full <code>long</code>
+    semantics, rearrange the code so that the computations happen in
+    Java instead of in JavaScript.  That way they will use the
+    <code>long</code> emulation.
+
+    <li> For values meant to be passed through unchanged to Java code,
+    wrap the value in a <code>Long</code>.  There are no restrictions
+    on type <code>Long</code> with JSNI methods.
+
+    <li> If you are sure you know what you are doing, you can add the
+    annotation
+    <code>com.google.gwt.core.client.UnsafeNativeLong</code> to the
+    method.  The compiler will then allow you to pass a
+    <code>long</code> into and out of JavaScript.  It will still be an
+    opaque data type, however, so the only thing you will be able to
+    do with it will be to pass it back to Java.
+
+  </ol>
+  </body>
+</html>

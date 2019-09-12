@@ -359,8 +359,8 @@ Error setJobListening(const json::JsonRpcRequest& request,
 {
    // extract job ID
    std::string id;
-   bool listening;
-   Error error = json::readParams(request.params, &id, &listening);
+   bool listening, bypassLauncherCall;
+   Error error = json::readParams(request.params, &id, &listening, &bypassLauncherCall);
    if (error)
       return error;
 
@@ -369,7 +369,7 @@ Error setJobListening(const json::JsonRpcRequest& request,
    if (!lookupJob(id, &pJob))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
-   if (pJob->type() == JobType::JobTypeLauncher)
+   if (pJob->type() == JobType::JobTypeLauncher && !bypassLauncherCall)
       modules::overlay::streamLauncherOutput(id, listening);
 
    // if listening started, return the output so far

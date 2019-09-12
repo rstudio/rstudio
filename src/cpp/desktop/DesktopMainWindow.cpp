@@ -73,7 +73,18 @@ MainWindow::MainWindow(QUrl url,
    auto* channel = webPage()->webChannel();
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
    if (isRemoteDesktop_)
+   {
+      // since the object registration is asynchronous, during the GWT setup code
+      // there is a race condition where the initialization can happen before the
+      // remoteDesktop object is registered, making the GWT application think that
+      // it should use regular desktop objects - to circumvent this, we use a custom
+      // user agent string that the GWT code can detect with 100% success rate to
+      // get around this race condition
+      QString userAgent = webPage()->profile()->httpUserAgent().append(
+               QStringLiteral("; RStudio Remote Desktop"));
+      webPage()->profile()->setHttpUserAgent(userAgent);
       channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
+   }
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
 
    // Dummy menu bar to deal with the fact that
@@ -333,11 +344,8 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
 
    auto quit = [this]()
    {
-      if (isRemoteDesktop_)
-      {
-         closeAllSatellites(this);
-         this->quit();
-      }
+      closeAllSatellites(this);
+      this->quit();
    };
 
    pEvent->ignore();
@@ -495,6 +503,11 @@ void MainWindow::onActivated()
 void MainWindow::onUrlChanged(QUrl url)
 {
    urlChanged(url);
+}
+
+WebView* MainWindow::getWebView()
+{
+   return webView();
 }
 
 } // namespace desktop

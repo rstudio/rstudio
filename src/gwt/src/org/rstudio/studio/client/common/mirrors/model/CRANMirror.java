@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
-
 public class CRANMirror extends UserPrefs.CranMirror
 {
    protected CRANMirror()

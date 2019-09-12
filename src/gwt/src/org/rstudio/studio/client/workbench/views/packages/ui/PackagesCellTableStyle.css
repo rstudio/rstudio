@@ -26,11 +26,11 @@
 
 .libraryHeader h1
 {
-	margin-top: 5px;
-	margin-bottom: 5px;
-	margin-left: 5px;
-	font-size: 12px;
-	color: #3c474d;
+   margin-top: 5px;
+   margin-bottom: 5px;
+   margin-left: 5px;
+   font-size: 12px;
+   color: #3c474d;
 }
 
 .rstudio-themes-flat .libraryHeader h1 {

@@ -120,7 +120,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       
       // in desktop mode, the frame checks to see if we want to be closed, but
       // in web mode the best we can do is prompt if the user attempts to close
-      // a source window with unsaved chaanges.
+      // a source window with unsaved changes.
       if (!Desktop.hasDesktopFrame())
       {
          Window.addWindowClosingHandler(new ClosingHandler() {

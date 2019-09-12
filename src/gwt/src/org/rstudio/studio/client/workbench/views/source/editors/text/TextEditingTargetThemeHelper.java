@@ -40,7 +40,7 @@ public class TextEditingTargetThemeHelper
          // do the sync
          syncToEditorTheme(editingTarget);
 
-         // register for notification on subsquent changes
+         // register for notification on subsequent changes
          releaseOnDismiss.add(
                eventBus.addHandler(
                      EditorThemeChangedEvent.TYPE,

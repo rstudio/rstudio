@@ -14,9 +14,12 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
@@ -30,6 +33,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
@@ -225,6 +229,9 @@ public class SearchWidget extends Composite implements SearchDisplay
       });
       
       focusTracker_ = new FocusTracker(suggestBox_);
+
+      Roles.getStatusRole().set(readerResultsLabel_);
+      Roles.getStatusRole().setAriaLiveProperty(readerResultsLabel_, LiveValue.POLITE);
    }
    
    public HandlerRegistration addFocusHandler(FocusHandler handler)
@@ -237,14 +244,12 @@ public class SearchWidget extends Composite implements SearchDisplay
       return suggestBox_.addBlurHandler(handler);
    }
 
-   public HandlerRegistration addValueChangeHandler(
-                                           ValueChangeHandler<String> handler)
+   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
 
-   public HandlerRegistration addSelectionCommitHandler(
-                                       SelectionCommitHandler<String> handler)
+   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<String> handler)
    {
       return addHandler(handler, SelectionCommitEvent.getType());
    }
@@ -260,14 +265,12 @@ public class SearchWidget extends Composite implements SearchDisplay
       });
    }
 
-   public HandlerRegistration addSelectionHandler(
-                           SelectionHandler<SuggestOracle.Suggestion> handler)
+   public HandlerRegistration addSelectionHandler(SelectionHandler<SuggestOracle.Suggestion> handler)
    {
       return suggestBox_.addSelectionHandler(handler);
    }
    
-   public HandlerRegistration addCloseHandler(
-                                          CloseHandler<SearchDisplay> handler)
+   public HandlerRegistration addCloseHandler(CloseHandler<SearchDisplay> handler)
    {
       return addHandler(handler, CloseEvent.getType());
    }
@@ -367,7 +370,19 @@ public class SearchWidget extends Composite implements SearchDisplay
       Element inputEl = inputEls.getItem(0);
       return inputEl;
    }
-   
+
+   /**
+    * Report status using aria-live region, after a delay
+    * @param message
+    */
+   public void speakResult(String message)
+   {
+      resultsMessage_ = message;
+      if (updateReaderTimer_.isRunning())
+         updateReaderTimer_.cancel();
+      updateReaderTimer_.schedule(A11y.TypingStatusDelayMs);
+   }
+
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
    @UiField
@@ -376,8 +391,22 @@ public class SearchWidget extends Composite implements SearchDisplay
    DecorativeImage icon_;
    @UiField
    LabelElement hiddenLabel_;
+   @UiField
+   DivElement readerResultsLabel_;
+
+   /**
+    * Timer for reporting the results via aria-live (to avoid interrupting typing)
+    */
+   private Timer updateReaderTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         readerResultsLabel_.setInnerText(resultsMessage_);
+      }
+   };
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;
-  
+   private String resultsMessage_;
 }

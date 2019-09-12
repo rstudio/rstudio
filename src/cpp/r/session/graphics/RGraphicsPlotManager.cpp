@@ -729,6 +729,16 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
    if (suppressDeviceEvents_)
       return;
    
+   // make sure the graphics path exists (may have been blown away
+   // by call to dev.off or other call to removeAllPlots)
+   Error error = graphicsPath_.ensureDirectory();
+   if (error)
+   {
+      Error graphicsError(errc::PlotFileError, error, ERROR_LOCATION);
+      logAndReportError(graphicsError, ERROR_LOCATION);
+      return;
+   }
+   
    // if we have a plot with unrendered changes then save the previous snapshot
    if (hasPlot() && hasChanges())
    {

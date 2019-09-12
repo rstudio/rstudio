@@ -1,54 +1,54 @@
 
 .selectedItem
 {
-	background-color: #D6E5F2;
+   background-color: #D6E5F2;
 }
 
 .anyItem
 {
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
+   box-sizing: border-box;
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
 }
 
 .outerPanel
 {
-	margin: 0px;
-	padding: 0px;
+   margin: 0px;
+   padding: 0px;
 }
 
 .scrollPanel
 {
-	background-color: #ffffff;
-	border: 1px solid #999999;
-	width: 100%;
-	height: 100%;
-	overflow: auto;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
+   background-color: #ffffff;
+   border: 1px solid #999999;
+   width: 100%;
+   height: 100%;
+   overflow: auto;
+   box-sizing: border-box;
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
 }
 
 .outerPanel:focus
 {
-	outline: none;
+   outline: none;
 }
 
 .listPanel
 {
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
-	width: 100%;
+   box-sizing: border-box;
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   width: 100%;
 }
 
 .listPanel:focus
 {
-	outline: none;
+   outline: none;
 }
 
 .emptyMessage
 {
-	color: #737373;
-	text-align: center;
+   color: #737373;
+   text-align: center;
 }

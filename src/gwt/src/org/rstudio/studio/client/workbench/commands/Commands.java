@@ -383,6 +383,11 @@ public abstract class
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
    public abstract AppCommand packratCheckStatus();
+   
+   // renv
+   public abstract AppCommand renvHelp();
+   public abstract AppCommand renvSnapshot();
+   public abstract AppCommand renvRestore();
 
    // Version control
    public abstract AppCommand versionControlHelp();
@@ -443,6 +448,9 @@ public abstract class
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
    public abstract AppCommand viewShortcuts();
+   public abstract AppCommand editUserPrefs();
+   public abstract AppCommand viewAllPrefs();
+   public abstract AppCommand clearUserPrefs();
    
    // Viewer
    public abstract AppCommand activateViewer();
@@ -589,9 +597,6 @@ public abstract class
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand toggleEditorTokenInfo();
    
-   public static final String KEYBINDINGS_PATH =
-         "~/.R/keybindings/rstudio_commands.json";
-
    // Main menu (server)
    public abstract AppCommand showFileMenu();
    public abstract AppCommand showEditMenu();

@@ -355,6 +355,8 @@ private:
                continue;
             if (file.find("/packrat/src/") != std::string::npos)
                continue;
+            if (file.find("/renv/library/") != std::string::npos)
+               continue;
             if (file.find("/.Rhistory") != std::string::npos)
                continue;
 

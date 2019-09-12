@@ -49,11 +49,11 @@
 }
 
 .cancelColumn {
-	padding-left: 6px;
+   padding-left: 6px;
 }
 .cancelButton {
-	margin-top: 1px;
-	border: 0px;
-	padding: 0px;
-	background: none;
+   margin-top: 1px;
+   border: 0px;
+   padding: 0px;
+   background: none;
 }

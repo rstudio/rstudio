@@ -57,7 +57,7 @@
             "default": {
                 "name": "Global (CDN)",
                 "host": "RStudio",
-                "url": "http://cran.rstudio.com/",
+                "url": "https://cran.rstudio.com/",
                 "repos": "",
                 "country": "us",
                 "secondary": ""
@@ -365,7 +365,7 @@
         "auto_discover_package_dependencies": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to automatically discover and offer to install missing R package dependenices."
+            "description": "Whether to automatically discover and offer to install missing R package dependencies."
         },
         "auto_append_newline": {
             "type": "boolean",
@@ -704,6 +704,18 @@
             "default": true,
             "description": "Whether to track and save changes to system environment variables in the Terminal."
         },
+        "terminal_bell_style": {
+            "type": "string",
+            "enum": ["none", "sound"],
+            "default": "sound",
+            "description": "Terminal bell style"
+        },
+        "terminal_renderer": {
+            "type": "string",
+            "enum": ["canvas", "dom"],
+            "default": "canvas",
+            "description": "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards"
+        },
         "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
@@ -909,6 +921,11 @@
                 }
             },
             "description": "The R version to use by default."
+        },
+        "data_viewer_max_columns": {
+            "type": "integer",
+            "default": 50,
+            "description": "The maximum number of columns to show at once in the data viewer."
         }
     }
 }

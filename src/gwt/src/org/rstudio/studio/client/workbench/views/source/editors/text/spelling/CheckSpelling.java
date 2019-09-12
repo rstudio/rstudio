@@ -81,7 +81,7 @@ public class CheckSpelling
                         ProgressDisplay progressDisplay,
                         ResultCallback<Void, Exception> callback)
    {
-      spellChecker_ = spellChecker;
+      typoSpellChecker_ = spellChecker;
       docDisplay_ = docDisplay;
       view_ = view;
       progressDisplay_ = progressDisplay;
@@ -116,14 +116,14 @@ public class CheckSpelling
 
       view_.getIgnoreAllButton().addClickHandler((ClickEvent event) ->
       {
-         spellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
+         typoSpellChecker_.addIgnoredWord(view_.getMisspelledWord().getText());
          currentPos_ = docDisplay_.getCursorPosition();
          findNextMisspelling();
       });
 
       view_.getAddButton().addClickHandler((ClickEvent event) ->
       {
-         spellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
+         typoSpellChecker_.addToUserDictionary(view_.getMisspelledWord().getText());
          currentPos_ = docDisplay_.getCursorPosition();
          findNextMisspelling();
       });
@@ -178,8 +178,7 @@ public class CheckSpelling
 
          for (Range r : wordSource)
          {
-            // Don't worry about pathologically long words
-            if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+            if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
                continue;
 
             wordRanges.add(r);
@@ -196,7 +195,7 @@ public class CheckSpelling
 
          if (wordRanges.size() > 0)
          {
-            spellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
+            typoSpellChecker_.checkSpelling(words, new SimpleRequestCallback<SpellCheckerResult>()
             {
                @Override
                public void onResponseReceived(SpellCheckerResult response)
@@ -309,7 +308,7 @@ public class CheckSpelling
 
             view_.focusReplacement();
 
-            String[] suggestions = spellChecker_.suggestionList(word);
+            String[] suggestions = typoSpellChecker_.suggestionList(word);
             view_.setSuggestions(suggestions);
             if (suggestions.length > 0)
             {
@@ -331,7 +330,7 @@ public class CheckSpelling
       }
    }
 
-   private final TypoSpellChecker spellChecker_;
+   private final TypoSpellChecker typoSpellChecker_;
    private final DocDisplay docDisplay_;
    private final Display view_;
    private final ProgressDisplay progressDisplay_;

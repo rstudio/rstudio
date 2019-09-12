@@ -467,7 +467,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal, namespace = FALSE)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, namespace = FALSE)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 

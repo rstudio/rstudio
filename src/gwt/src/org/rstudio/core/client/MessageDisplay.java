@@ -356,7 +356,7 @@ public abstract class MessageDisplay
    public void showNotYetImplemented()
    {
       showMessage(MSG_INFO, 
-                 "Not Yet Implemetned", 
+                 "Not Yet Implemented",
                  "This feature has not yet been implemented.");
    }
 }

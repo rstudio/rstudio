@@ -80,6 +80,11 @@ oop.inherits(RStudioEditor, Editor);
          // in markdown documents, allow '_', '*' to surround selection
          do
          {
+            // assume this preference is only wanted when surrounding
+            // other objects in general for now
+            if (this.$surroundSelection !== "quotes_and_brackets")
+               break;
+
             var mode = this.session.$mode;
             if (/\/markdown$/.test(mode.$id))
             {

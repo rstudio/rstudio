@@ -27,8 +27,12 @@
 
    <define-property name="rstudio.remoteDesktop" values="true,false"/>
    <property-provider name="rstudio.remoteDesktop"><![CDATA[
-      // true if desktop hooks are injected
-      return !!window.remoteDesktop;
+      // true if remote desktop hooks are injected
+      if (window.remoteDesktop)
+         return "true";
+
+      // also true when run under QtWebEngine, which defers hook injection
+      return window.navigator.userAgent.indexOf("RStudio Remote Desktop") > 0 ? "true" : "false";
    ]]></property-provider>
 
    <set-property name="user.agent" value="safari">

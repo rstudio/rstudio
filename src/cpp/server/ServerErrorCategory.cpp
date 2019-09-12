@@ -27,20 +27,20 @@ public:
 
 const boost::system::error_category& serverCategory()
 {
-   static ServerErrorCategory serverErrorCategoryConst ;
-   return serverErrorCategoryConst ;
+   static ServerErrorCategory serverErrorCategoryConst;
+   return serverErrorCategoryConst;
 }
 
 const char * ServerErrorCategory::name() const BOOST_NOEXCEPT
 {
-   return "server" ;
+   return "server";
 }
 
 std::string ServerErrorCategory::message( int ev ) const
 {
-	std::string message ;
-	switch (ev)
-	{         
+   std::string message;
+   switch (ev)
+   {
       case errc::AuthenticationError:
          message = "Authentication error";
          break;
@@ -54,11 +54,11 @@ std::string ServerErrorCategory::message( int ev ) const
          break;
          
       default:
-         message = "Unknown error" ;
+         message = "Unknown error";
          break;
-	}
+   }
 
-	return message ;
+   return message;
 }
 
 

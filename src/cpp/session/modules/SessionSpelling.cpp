@@ -19,8 +19,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/Algorithm.hpp>
 #include <core/spelling/HunspellSpellingEngine.hpp>
@@ -32,6 +32,12 @@
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include <shared_core/Error.hpp>
+
+#define kDictionariesPath "dictionaries/"
+#define kSystemLanguages kDictionariesPath "languages-system"
+#define kCustomDictionaries kDictionariesPath "custom"
 
 using namespace rstudio::core;
 
@@ -92,16 +98,32 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
    return dictManager;
 }
 
+/*
+ * \deprecated
+ * For getting all languages from pre-1.3 RStudio
+ * */
+FilePath legacyAllLanguagesDir()
+{
+   return module_context::userScratchPath().getChildPath(kSystemLanguages);
+}
+
+/*
+ * \deprecated
+ * For getting custom languages from pre-1.3 RStudio
+ * */
+FilePath legacyCustomDictionariesDir()
+{
+   return module_context::userScratchPath().getChildPath(kCustomDictionaries);
+}
+
 FilePath allLanguagesDir()
 {
-   return module_context::userScratchPath().getChildPath(
-                                          "dictionaries/languages-system");
+   return core::system::xdg::userConfigDir().getChildPath(kSystemLanguages);
 }
 
 FilePath customDictionariesDir()
 {
-   return module_context::userScratchPath().getChildPath(
-                                          "dictionaries/custom");
+   return core::system::xdg::userConfigDir().getChildPath(kCustomDictionaries);
 }
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
@@ -119,7 +141,7 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
       return;
    }
 
-   // preference order: custom -> user -> system -> pre-installed
+   // preference order: custom -> system -> pre-installed
    if (customDictionariesDir().completePath(splat[1]).exists())
    {
       pResponse->setCacheableFile(customDictionariesDir().completePath(splat[1]), request);
@@ -127,6 +149,30 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    else if (allLanguagesDir().completePath(splat[1]).exists())
    {
       pResponse->setCacheableFile(allLanguagesDir().completePath(splat[1]), request);
+   }
+   else if (core::system::xdg::systemConfigDir()
+               .completePath(kCustomDictionaries).completePath(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+               kCustomDictionaries).completePath(splat[1]), request);
+   }
+   else if (core::system::xdg::systemConfigDir()
+               .completePath(kSystemLanguages).completePath(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+               kSystemLanguages).completePath(splat[1]), request);
+   }
+   /*
+    * \deprecated
+    * Calls to old deprecated dictionary locations for RStudio 1.2 and earlier
+    */
+   else if (legacyCustomDictionariesDir().completePath(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(legacyCustomDictionariesDir().completePath(splat[1]), request);
+   }
+   else if (legacyAllLanguagesDir().completePath(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(legacyAllLanguagesDir().completePath(splat[1]), request);
    }
    else if (options().hunspellDictionariesPath().completePath(splat[1]).exists())
    {

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
@@ -65,8 +66,10 @@ public class TextBoxWithButton extends Composite
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
       textBox_.setReadOnly(readOnly);
+      ElementIds.assignElementId(textBox_, ElementIds.TEXTBOXBUTTON_TEXT);
 
       themedButton_ = new ThemedButton(action, handler);
+      ElementIds.assignElementId(themedButton_, ElementIds.TEXTBOXBUTTON_BUTTON);
 
       inner_ = new HorizontalPanel();
       inner_.add(textBox_);
@@ -83,6 +86,7 @@ public class TextBoxWithButton extends Composite
             HorizontalPanel panel = new HorizontalPanel();
             panel.add(lblCaption);
             helpButton.getElement().getStyle().setMarginLeft(5, Unit.PX);
+            ElementIds.assignElementId(helpButton, ElementIds.TEXTBOXBUTTON_HELP);
             panel.add(helpButton);
             outer.add(panel);
          }

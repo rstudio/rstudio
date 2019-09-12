@@ -56,7 +56,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefiniti
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefUtils;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
@@ -294,7 +293,7 @@ public class RCompletionManager implements CompletionManager
          if (cursor.moveToPosition(editor.getCursorPosition(), true))
          {
             // if the cursor is 'on' a left bracket, move back to the associated
-            // token (obstensibly a funciton name)
+            // token (ostensibly a function name)
             if (cursor.isLeftBracket())
                cursor.moveToPreviousToken();
             

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;

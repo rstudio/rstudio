@@ -24,6 +24,16 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+Preferences::Preferences():
+   initialized_(false)
+{
+}
+
+bool Preferences::initialized()
+{
+   return initialized_;
+}
+
 core::json::Array Preferences::allLayers()
 {
    json::Array layers;
@@ -84,6 +94,9 @@ Error Preferences::initialize()
       }
    }
    END_LOCK_MUTEX
+
+   // Indicate that we've loaded all layers
+   initialized_ = true;
 
    return Success();
 }
@@ -291,6 +304,12 @@ void Preferences::onPrefLayerChanged(const std::string& layerName, const std::st
 
 void Preferences::notifyClient(const std::string &layerName, const std::string &pref)
 {
+   // No work to do unless there's a client event to emit
+   int eventId = clientChangedEvent();
+   if (eventId < 1)
+      return;
+
+   // Loop through layers to find pref at named layer
    bool found = false;
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
@@ -307,7 +326,7 @@ void Preferences::notifyClient(const std::string &layerName, const std::string &
                json::Object dataJson;
                dataJson["name"] = layerName;
                dataJson["values"] = valueJson;
-               ClientEvent event(clientChangedEvent(), dataJson);
+               ClientEvent event(eventId, dataJson);
                module_context::enqueClientEvent(event);
 
                found = true;

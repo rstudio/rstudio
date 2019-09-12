@@ -1,7 +1,7 @@
 /*
  * DiagnosticsMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,11 +18,13 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <shared_core/FilePath.hpp>
+#include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "config.h"
 
@@ -47,28 +49,42 @@ FilePath userLogPath()
    return logPath;
 }
 
-void writeLogFile(const std::string& logFileName, std::ostream& ostr)
+void writeFile(const std::string& description, const core::FilePath& path, std::ostream& ostr)
 {
-   ostr << "Log file: " << logFileName << std::endl;
+   ostr << description << ": " << path << std::endl;
    ostr << "--------------------------------------------------" << std::endl;
    ostr << std::endl;
 
-   FilePath logFilePath = userLogPath().getChildPath(logFileName);
-   if (logFilePath.exists())
+   if (path.exists())
    {
       std::string contents;
-      Error error = core::readStringFromFile(logFilePath, &contents);
+      Error error = core::readStringFromFile(path, &contents);
       if (error)
          LOG_ERROR(error);
       if (contents.empty())
          ostr << "(Empty)" << std::endl << std::endl;
       else
-         ostr << contents << std::endl;
+         ostr << contents << std::endl << std::endl;
    }
    else
    {
       ostr << "(Not Found)" << std::endl << std::endl;
    }
+}
+
+void writeLogFile(const std::string& logFileName, std::ostream& ostr)
+{
+   writeFile("Log file", userLogPath().getChildPath(logFileName), ostr);
+}
+
+void writeUserPrefs(std::ostream& ostr)
+{
+   writeFile("User prefs", core::system::xdg::userConfigDir().completePath("rstudio-prefs.json"),
+         ostr);
+   writeFile("System prefs", core::system::xdg::systemConfigDir().completePath("rstudio-prefs.json"),
+         ostr);
+   writeFile("User state", core::system::xdg::userDataDir().completePath("rstudio-state.json"),
+         ostr);
 }
 
 
@@ -87,6 +103,7 @@ int main(int argc, char** argv)
 
   writeLogFile("rdesktop.log", std::cout);
   writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
+  writeUserPrefs(std::cout);
 
   return EXIT_SUCCESS;
 }

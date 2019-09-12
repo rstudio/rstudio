@@ -15,11 +15,15 @@
 package org.rstudio.studio.client.renv.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+
+import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.server.Void;
 
 public interface RenvServerOperations extends BuildServerOperations
 {
    void renvInit(String projDir, ServerRequestCallback<Void> requestCallback);
+   void renvActions(String action, ServerRequestCallback<JsArray<RenvAction>> requestCallback);
 }

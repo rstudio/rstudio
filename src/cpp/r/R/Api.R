@@ -478,11 +478,20 @@
 })
 
 .rs.addApiFunction("writePreference", function(name, value) {
-  .rs.writeUiPref(paste("rstudioapi", name, sep = "_"), value)
+  .rs.writeApiPref(name, value)
 })
 
 .rs.addApiFunction("readPreference", function(name, default = NULL) {
-  value <- .rs.readUiPref(paste("rstudioapi", name, sep = "_"))
+  value <- .rs.readApiPref(name)
+  if (is.null(value)) default else value
+})
+
+.rs.addApiFunction("writeRStudioPreference", function(name, value) {
+  .rs.writeUiPref(name, value)
+})
+
+.rs.addApiFunction("readRStudioPreference", function(name, default = NULL) {
+  value <- .rs.readUiPref(name)
   if (is.null(value)) default else value
 })
 
@@ -584,10 +593,10 @@
    validShellType = TRUE
    if (!is.null(shellType)) {
       validShellType <- tolower(shellType) %in% c("default", "win-cmd", 
-            "win-ps", "win-git-bash", "win-wsl-bash", "custom")
+            "win-ps", "win-git-bash", "win-wsl-bash", "ps-core", "custom")
    }      
    if (!validShellType)
-      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', or 'custom'.") 
+      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', 'ps-core', or 'custom'.") 
 
    .Call("rs_terminalCreate", caption, show, shellType)
 })

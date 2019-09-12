@@ -25,6 +25,8 @@
 #include <shared_core/json/Json.hpp>
 #include <core/CrashHandler.hpp>
 
+#include <r/session/RSession.hpp>
+
 #include "../modules/SessionVCS.hpp"
 #include "../modules/SessionSVN.hpp"
 #include "../modules/SessionSpelling.hpp"
@@ -82,6 +84,18 @@ Error UserPrefsComputedLayer::readPrefs()
    layer["spelling"] =
          session::modules::spelling::spellingPrefsContextAsJson();
 
+   // Other session defaults from rsession.conf -------------------------------
+
+   int saveAction = session::options().saveActionDefault();
+   if (saveAction == r::session::kSaveActionSave)
+      layer[kSaveWorkspace] = kSaveWorkspaceAlways;
+   else if (saveAction == r::session::kSaveActionNoSave)
+      layer[kSaveWorkspace] = kSaveWorkspaceNever;
+   else if (saveAction == r::session::kSaveActionAsk)
+      layer[kSaveWorkspace] = kSaveWorkspaceAsk;
+
+   layer[kRunRprofileOnResume] = session::options().rProfileOnResumeDefault();
+   
    cache_ = boost::make_shared<core::json::Object>(layer);
    return Success();
 }

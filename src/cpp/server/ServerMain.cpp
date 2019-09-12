@@ -559,9 +559,11 @@ int main(int argc, char * const argv[])
                                        server::options().monitorSharedSecret(),
                                        s_pHttpServer->ioService());
 
-      // add a monitor log writer
-      core::log::addLogDestination(
-                monitor::client().createLogWriter(kProgramIdentity));
+      if (!options.verifyInstallation())
+      {
+         // add a monitor log writer
+         core::log::addLogDestination(monitor::client().createLogWriter(kProgramIdentity));
+      }
 
       // call overlay initialize
       error = overlay::initialize();

@@ -426,7 +426,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private int getPageScroll(ScrollPanel panel)
    {
       // Return slightly less than the client height (so there's overlap between
-      // one screen and the next) but never less than the line scoll height.
+      // one screen and the next) but never less than the line scroll height.
       return Math.max(
             getLineScroll(panel),
             panel.getElement().getClientHeight() - getLineScroll(panel));
@@ -692,7 +692,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       // Debounce an update to the accessible character count
       if (updateCharCountTimer_.isRunning())
          updateCharCountTimer_.cancel();
-      updateCharCountTimer_.schedule(2000);
+      updateCharCountTimer_.schedule(A11y.TypingStatusDelayMs);
    }
 
    @UiField(provided = true)

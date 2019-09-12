@@ -454,7 +454,8 @@ public class TextFileType extends EditableFileType
 
          return reTextType_.match(token.getType(), 0) != null ||
             reStringType_.match(token.getType(), 0) != null ||
-            reHeaderType_.match(token.getType(), 0) != null;
+            reHeaderType_.match(token.getType(), 0) != null ||
+            reCommentType_.match(token.getType(), 0) != null;
       };
    }
 
@@ -467,7 +468,9 @@ public class TextFileType extends EditableFileType
             return false;
          }
 
-         return reCommentType_.match(token.getType(), 0) != null;
+         return reCommentType_.match(token.getType(), 0) != null &&
+            reKeywordType_.match(token.getType(), 0) == null &&
+            reIdentifierType_.match(token.getType(), 0) == null;
       };
    }
 
@@ -523,4 +526,6 @@ public class TextFileType extends EditableFileType
    private static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
    private static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
    private static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
+   private static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
+   private static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
 }
