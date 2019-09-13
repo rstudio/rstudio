@@ -10,10 +10,9 @@
 	<classpathentry kind="lib" path="lib/gin/2.1.2/guice-3.0.jar"/>
 	<classpathentry kind="lib" path="lib/gin/2.1.2/javax.inject.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.8.2/gwt-api-checker.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.8.2/gwt-dev.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.8.2/gwt-user.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.8.2/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="lib" path="lib/gwt/2.8.2/validation-api-1.0.0.GA.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio-1.3/gwt-dev.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio-1.3/gwt-user.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio-1.3/validation-api-1.0.0.GA-sources.jar"/>
+	<classpathentry kind="lib" path="lib/gwt/gwt-rstudio-1.3/validation-api-1.0.0.GA.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
