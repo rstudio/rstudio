@@ -36,7 +36,7 @@ if(NOT WIN32)
       endif()
          
       if(APPLE)
-         set(QT_CANDIDATES 5.12.5)
+         set(QT_CANDIDATES 5.12.5 5.12.1)
       else()
          set(QT_CANDIDATES 5.12.5 5.10.1)
       endif()
