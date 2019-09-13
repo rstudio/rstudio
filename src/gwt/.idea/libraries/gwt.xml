@@ -3,9 +3,7 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" />
     </CLASSES>
-    <JAVADOC>
-      <root url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3/doc/javadoc" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
       <root url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" />
     </SOURCES>
