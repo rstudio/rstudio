@@ -250,7 +250,12 @@ bool AsyncRProcess::onContinue()
       if (error)
       {
          LOG_ERROR(error);
-         ipcRequests_.removeIfExists();
+
+         // remove the requests file so we don't attempt to re-log
+         Error error = ipcRequests_.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
          return false;
       }
    }
