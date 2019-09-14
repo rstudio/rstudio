@@ -234,6 +234,7 @@ void MainWindow::onWorkbenchInitialized()
 
       avoidMoveCursorIfNecessary();
    });
+   webView()->setFocus();
 }
 
 void MainWindow::resetMargins()
