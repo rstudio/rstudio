@@ -234,7 +234,10 @@ void MainWindow::onWorkbenchInitialized()
 
       avoidMoveCursorIfNecessary();
    });
+
+#ifdef Q_OS_MAC
    webView()->setFocus();
+#endif
 }
 
 void MainWindow::resetMargins()
