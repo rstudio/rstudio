@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -26,7 +27,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
@@ -35,10 +35,10 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
    public ProjectGeneralPreferencesPane(Session session)
-   {        
+   {
       sessionInfo_ = session.getSessionInfo();
 
-      Grid grid = new Grid(6, 2);
+      LayoutGrid grid = new LayoutGrid(6, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());
       grid.setCellSpacing(8);
 

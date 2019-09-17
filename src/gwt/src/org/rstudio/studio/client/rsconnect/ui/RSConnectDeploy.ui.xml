@@ -8,8 +8,8 @@
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources" />
     <g:HTMLPanel ui:field="rootPanel_">
     <g:Image ui:field="deployIllustration_"></g:Image>
-    <g:Grid ui:field="mainGrid_"><g:row>
-    <g:customCell styleName="{res.style.rootCell}">
+    <rw:LayoutGrid><rw:row>
+    <rw:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:VerticalPanel ui:field="filePanel_">
            <g:HTMLPanel>
@@ -41,8 +41,8 @@
             </rw:ThemedButton>
          </g:VerticalPanel>
        </g:HTMLPanel>
-     </g:customCell>
-     <g:customCell styleName="{res.style.rootCell}">
+     </rw:customCell>
+     <rw:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%" ui:field="publishFromPanel_">
             <g:Label styleName="{res.style.firstControlLabel}" 
@@ -108,7 +108,7 @@
             </g:HTMLPanel>
          </g:HTMLPanel>
       </g:HTMLPanel>
-     </g:customCell>
-   </g:row></g:Grid>
+     </rw:customCell>
+   </rw:row></rw:LayoutGrid>
    </g:HTMLPanel>
 </ui:UiBinder> 
