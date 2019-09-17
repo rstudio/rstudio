@@ -66,10 +66,8 @@ public class TextBoxWithButton extends Composite
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
       textBox_.setReadOnly(readOnly);
-      ElementIds.assignElementId(textBox_, ElementIds.TEXTBOXBUTTON_TEXT);
 
       themedButton_ = new ThemedButton(action, handler);
-      ElementIds.assignElementId(themedButton_, ElementIds.TEXTBOXBUTTON_BUTTON);
 
       inner_ = new HorizontalPanel();
       inner_.add(textBox_);
@@ -80,19 +78,19 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         FormLabel lblCaption = new FormLabel(label, textBox_, true);
+         lblCaption_ = new FormLabel(label, true);
          if (helpButton != null)
          {
+            helpButton_ = helpButton;
             HorizontalPanel panel = new HorizontalPanel();
-            panel.add(lblCaption);
+            panel.add(lblCaption_);
             helpButton.getElement().getStyle().setMarginLeft(5, Unit.PX);
-            ElementIds.assignElementId(helpButton, ElementIds.TEXTBOXBUTTON_HELP);
             panel.add(helpButton);
             outer.add(panel);
          }
          else
          {
-            outer.add(lblCaption);
+            outer.add(lblCaption_);
          }
       }
       outer.add(inner_);
@@ -185,11 +183,28 @@ public class TextBoxWithButton extends Composite
       textBox_.setFocus(true);
    }
 
+   @Override
+   public void onAttach()
+   {
+      super.onAttach();
+
+      // Some UI scenarios create multiple TextBoxWithButtons before adding them to the
+      // DOM; defer assigning IDs until added to DOM in order to detect and
+      // prevent duplicates.
+      ElementIds.assignElementId(textBox_, ElementIds.TEXTBOXBUTTON_TEXT);
+      ElementIds.assignElementId(themedButton_, ElementIds.TEXTBOXBUTTON_BUTTON);
+      if (helpButton_ != null)
+         ElementIds.assignElementId(helpButton_, ElementIds.TEXTBOXBUTTON_HELP);
+      if (lblCaption_ != null)
+         lblCaption_.setFor(textBox_);
+   }
+
    private HorizontalPanel inner_;
+   private FormLabel lblCaption_;
    private TextBox textBox_;
+   private HelpButton helpButton_;
    private ThemedButton themedButton_;
    private String emptyLabel_;
    private String useDefaultValue_;
    private String text_ = "";
-  
 }
