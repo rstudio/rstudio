@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.Grid;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -197,7 +196,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       templateChooser_ = new RmdTemplateChooser(server_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      Roles.getPresentationRole().set(formGrid_.getElement());
       formatOptions_ = new ArrayList<>();
       style.ensureInjected();
       txtAuthor_.setText(author);
@@ -458,7 +456,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       return formatWrapper;
    }
    
-   @UiField Grid formGrid_;
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;

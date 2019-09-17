@@ -132,26 +132,26 @@
      <g:HTMLPanel height="100%" width="325px" 
                   styleName="{style.templateDetails}">
         <g:HTMLPanel ui:field="newTemplatePanel_">
-           <g:Grid ui:field="formGrid_" width="100%" cellSpacing="0" cellPadding="0">
-             <g:row>
-               <g:customCell>
+           <rw:LayoutGrid width="100%" cellSpacing="0" cellPadding="0">
+             <rw:row>
+               <rw:customCell>
                   <rw:FormLabel for="{ElementIds.getNewRmdTitle}" styleName="{style.topLabel}">Title:</rw:FormLabel>
-               </g:customCell>
-               <g:customCell styleName="{style.textCol}">
+               </rw:customCell>
+               <rw:customCell styleName="{style.textCol}">
                  <rw:FormTextBox elementId="{ElementIds.getNewRmdTitle}" styleName="{style.textBox}" 
                                  ui:field="txtTitle_" />
-               </g:customCell>
-              </g:row>
-              <g:row>
-                <g:customCell>
+               </rw:customCell>
+              </rw:row>
+              <rw:row>
+                <rw:customCell>
                    <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{style.topLabel}">Author:</rw:FormLabel>
-                </g:customCell>
-                <g:customCell>
+                </rw:customCell>
+                <rw:customCell>
                    <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{style.textBox}" 
                                    ui:field="txtAuthor_"/>
-                </g:customCell>
-              </g:row>
-           </g:Grid>
+                </rw:customCell>
+              </rw:row>
+           </rw:LayoutGrid>
            <rw:FieldSetPanel legend="Default Output Format:" styleName="{style.defaultOutputLabel}">
               <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
            </rw:FieldSetPanel>

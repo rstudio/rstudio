@@ -22,13 +22,13 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -61,7 +61,7 @@ public class ProjectTemplateWidget extends Composite
    
    public ProjectTemplateWidget(ProjectTemplateDescription description)
    {
-      widgets_ = new ArrayList<ProjectTemplateWidgetItem>();
+      widgets_ = new ArrayList<>();
       
       // initialize widgets
       JsArray<ProjectTemplateWidgetDescription> descriptions = description.getWidgetDescription();
@@ -180,7 +180,7 @@ public class ProjectTemplateWidget extends Composite
       if (!StringUtil.isNullOrEmpty(defaultValue))
          primaryWidget.setText(defaultValue);
       
-      Grid grid = new Grid(1, 2);
+      LayoutGrid grid = new LayoutGrid(1, 2);
       DomUtils.disableSpellcheck(primaryWidget);
       grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
       grid.setWidget(0, 1, primaryWidget);
