@@ -731,9 +731,9 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("getThemeInfo", function() {
    
    # read theme preferences
-   global <- .rs.readUiPref("flat_theme")
+   global <- .rs.readUiPref("global_theme")
 
-   theme <- .rs.readUiPref("rstheme")
+   theme <- .rs.readUserState("theme")
    if (is.null(theme))
       theme <- list("name" = "Textmate (default)", "isDark" = FALSE)
 
