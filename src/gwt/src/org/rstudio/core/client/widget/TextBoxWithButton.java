@@ -26,42 +26,56 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class TextBoxWithButton extends Composite
                                implements HasValueChangeHandlers<String>,
                                           CanFocus
 {
-   public TextBoxWithButton(String label, String action, ClickHandler handler)
-   {
-      this(label, "", action, handler);
-   }
-   
-   public TextBoxWithButton(String label, 
-                            String emptyLabel, 
-                            String action, 
+   /**
+    * @param label label text
+    * @param emptyLabel placeholder text
+    * @param action button text
+    * @param helpButton optional HelpButton
+    * @param readOnly textbox editability
+    * @param handler button click callback
+    */
+   public TextBoxWithButton(String label,
+                            String emptyLabel,
+                            String action,
+                            HelpButton helpButton,
+                            boolean readOnly,
                             ClickHandler handler)
    {
-      this(label, emptyLabel, action, null, handler);
+      this(label, null, emptyLabel, action, helpButton, readOnly, handler);
    }
 
-   public TextBoxWithButton(String label, 
-                            String emptyLabel, 
-                            String action, 
-                            HelpButton helpButton,
+   /**
+    * @param existingLabel label control to associate with textbox
+    * @param emptyLabel placeholder text
+    * @param action button text
+    * @param readOnly textbox editability
+    * @param handler button click callback
+    */
+   public TextBoxWithButton(FormLabel existingLabel,
+                            String emptyLabel,
+                            String action,
+                            boolean readOnly,
                             ClickHandler handler)
    {
-      this(label, emptyLabel, action, helpButton, handler, true);
+      this(null, existingLabel, emptyLabel, action, null, readOnly, handler);
    }
-   
-   public TextBoxWithButton(String label, 
-                            String emptyLabel, 
-                            String action, 
-                            HelpButton helpButton,
-                            ClickHandler handler,
-                            Boolean readOnly)
+
+   protected TextBoxWithButton(String label,
+                               FormLabel existingLabel,
+                               String emptyLabel,
+                               String action,
+                               HelpButton helpButton,
+                               boolean readOnly,
+                               ClickHandler handler)
    {
-      emptyLabel_ = emptyLabel;
+      emptyLabel_ = StringUtil.isNullOrEmpty(emptyLabel) ? "" : emptyLabel;
       
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
@@ -78,6 +92,8 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
+         assert existingLabel == null : "Invalid usage, cannot provide both label and existingLabel";
+
          lblCaption_ = new FormLabel(label, true);
          if (helpButton != null)
          {
@@ -93,6 +109,11 @@ public class TextBoxWithButton extends Composite
             outer.add(lblCaption_);
          }
       }
+      else
+      {
+         lblCaption_ = existingLabel;
+      }
+
       outer.add(inner_);
       initWidget(outer);
 

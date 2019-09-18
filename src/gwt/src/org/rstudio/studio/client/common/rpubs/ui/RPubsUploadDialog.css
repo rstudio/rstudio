@@ -1,5 +1,3 @@
-
-
 .mainWidget {
    width: 400px;
 }
@@ -18,19 +16,6 @@
 .warningLabel {
    margin-top: 15px;
    margin-bottom: 15px;
-}
-
-.fieldLabel {
-   margin-bottom: 2px;
-}
-
-.titleTextBox {
-   width: 99%;
-   margin-bottom: 10px;
-}
-
-.commentTextArea {
-   width: 99%;
 }
 
 .descLabel {

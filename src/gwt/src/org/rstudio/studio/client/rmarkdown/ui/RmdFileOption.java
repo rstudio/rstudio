@@ -31,7 +31,7 @@ public class RmdFileOption extends RmdNullableOption
       HTMLPanel panel = new HTMLPanel("");
       panel.add(getOptionLabelWidget());
       
-      fileChooser_ = new FileChooserTextBox("", null);
+      fileChooser_ = new FileChooserTextBox("", "", false, null, null);
       if (initialValue != "null")
          fileChooser_.setText(initialValue);
       fileChooser_.getElement().getStyle().setMarginLeft(20, Unit.PX);

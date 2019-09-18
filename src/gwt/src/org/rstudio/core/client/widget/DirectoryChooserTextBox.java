@@ -101,7 +101,7 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      super(label, emptyLabel, browseLabel, null);
+      super(label, emptyLabel, browseLabel, null, true, null);
 
       if (buttonDisabled)
       {

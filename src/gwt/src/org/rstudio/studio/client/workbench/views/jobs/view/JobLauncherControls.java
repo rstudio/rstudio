@@ -37,7 +37,7 @@ public class JobLauncherControls extends Composite
 
    public JobLauncherControls()
    {
-      file_ = new FileChooserTextBox("R Script", null);
+      file_ = new FileChooserTextBox("R Script", "", false, null, null);
       dir_ = new DirectoryChooserTextBox("Working Directory", null);
 
       initWidget(uiBinder.createAndBindUi(this));

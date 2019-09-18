@@ -226,7 +226,7 @@ public class PublishingPreferencesPane extends PreferencesPane
             val -> caBundlePath_.setVisible(val.getValue()));
       add(useCaBundle);
 
-      caBundlePath_ = new FileChooserTextBox("", "(none)", null, null);
+      caBundlePath_ = new FileChooserTextBox("", "(none)", false, null, null);
       caBundlePath_.setText(userPrefs_.publishCaBundle().getValue());
       caBundlePath_.setVisible(userPrefs_.usePublishCaBundle().getValue());
       add(caBundlePath_);

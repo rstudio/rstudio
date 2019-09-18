@@ -198,7 +198,8 @@ public class ProjectTemplateWidget extends Composite
    
    private ProjectTemplateWidgetItem fileInput(final ProjectTemplateWidgetDescription description)
    {
-      final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), null);
+      final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), "",
+                                                               false, null, null);
       
       String defaultValue = description.getDefault();
       if (!StringUtil.isNullOrEmpty(defaultValue))
