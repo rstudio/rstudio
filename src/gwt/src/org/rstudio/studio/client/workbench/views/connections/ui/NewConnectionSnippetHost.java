@@ -27,6 +27,8 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -56,7 +58,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -228,7 +229,7 @@ public class NewConnectionSnippetHost extends Composite
       dlg.showModal();
    }
    
-   private Grid createParameterizedUI(final NewConnectionInfo info, int maxRows)
+   private LayoutGrid createParameterizedUI(final NewConnectionInfo info, int maxRows)
    {
       final ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
       int visibleRows = snippetParts.size();
@@ -249,7 +250,7 @@ public class NewConnectionSnippetHost extends Composite
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
             new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 
-      final Grid connGrid = new Grid(visibleRows + 1, 4);
+      final LayoutGrid connGrid = new LayoutGrid(visibleRows + 1, 4);
       connGrid.addStyleName(RES.styles().grid());
 
       if (visibleRows > 0) {
@@ -266,7 +267,7 @@ public class NewConnectionSnippetHost extends Composite
          connGrid.getRowFormatter().setStyleName(idxRow, RES.styles().gridRow());
          
          final String key = snippetParts.get(idxParams).getKey();
-         Label label = new Label(key + ":");
+         FormLabel label = new FormLabel(key + ":");
          label.addStyleName(RES.styles().label());
          connGrid.setWidget(idxRow, 0, label);
          connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
@@ -295,6 +296,7 @@ public class NewConnectionSnippetHost extends Composite
             textbox.addStyleName(textboxStyle);
             textboxBase = textbox;
          }
+         label.setFor(textboxBase);
          
          connGrid.setWidget(idxRow, 1, textboxBase);
          
@@ -472,13 +474,13 @@ public class NewConnectionSnippetHost extends Composite
       
       parametersPanel_ = new VerticalPanel();
       parametersPanel_.addStyleName(RES.styles().parametersPanel());
-      container.add(parametersPanel_);        
+      container.add(parametersPanel_);
       
-      // add the code panel     
+      // add the code panel
       codePanel_ = new ConnectionCodePanel();
       codePanel_.addStyleName(RES.styles().dialogCodePanel());
 
-      Grid codeGrid = new Grid(1, 1);
+      LayoutGrid codeGrid = new LayoutGrid(1, 1);
       codeGrid.addStyleName(RES.styles().codeGrid());
       codeGrid.setCellPadding(0);
       codeGrid.setCellSpacing(0);

@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -47,7 +48,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -169,7 +169,7 @@ public class NewConnectionShinyHost extends Composite
       };
       updateCodeCommand.execute();
 
-      Grid codeGrid = new Grid(1, 1);
+      LayoutGrid codeGrid = new LayoutGrid(1, 1);
       codeGrid.addStyleName(RES.styles().codeGrid());
       codeGrid.setCellPadding(0);
       codeGrid.setCellSpacing(0);

@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -160,7 +161,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       
       int gridRows = includeChunkNameUI ? 2 : 1;
-      Grid nameAndOutputGrid = new Grid(gridRows, 2);
+      LayoutGrid nameAndOutputGrid = new LayoutGrid(gridRows, 2);
 
       chunkLabel_ = new FormLabel("Chunk Name:", tbChunkLabel_);
       chunkLabel_.addStyleName(RES.styles().chunkLabel());
