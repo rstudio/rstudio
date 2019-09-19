@@ -78,7 +78,7 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
       }
       END_LOCK_MUTEX
 
-      if (!isFileNotFoundError(error))
+      if (!isNotFoundError(error))
       {
          // If we hit an unexpected error (e.g. permission denied), it's still not fatal (we can live
          // without a prefs file) but users might like to know.

@@ -263,6 +263,16 @@ Error fileNotFoundError(const FilePath& filePath,
    return error;
 }
 
+bool isNotFoundError(const Error& error)
+{
+#ifdef _WIN32
+   return error.code() == boost::system::windows_error::file_not_found ||
+          error.code() == boost::system::windows_error::path_not_found;
+#else
+   return error.code() == boost::system::errc::no_such_file_or_directory;
+#endif
+}
+
 bool isFileNotFoundError(const Error& error)
 {
 #ifdef _WIN32

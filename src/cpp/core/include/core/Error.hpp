@@ -152,13 +152,16 @@ Error fileNotFoundError(const std::string& path,
                         const ErrorLocation& location);
 Error fileNotFoundError(const FilePath& filePath,
                         const ErrorLocation& location);
-bool isFileNotFoundError(const Error& error);
 
+
+bool isFileNotFoundError(const Error& error);
 bool isPathNotFoundError(const Error& error);
 Error pathNotFoundError(const ErrorLocation& location);
 Error pathNotFoundError(const std::string& path,
                         const ErrorLocation& location);
 
+// Checks for both path not found and file not found; on Windows, these errors are distinct
+bool isNotFoundError(const Error& error);
 
 class ErrorLocation
 {
