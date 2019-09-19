@@ -79,7 +79,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       {
          rVersion_ = new TextBoxWithButton(
                "R version:",
+               "",
                "Change...",
+               null,
+               true,
                new ClickHandler()
                {
                   @Override

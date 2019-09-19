@@ -29,6 +29,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -102,20 +103,21 @@ public class TerminalPreferencesPane extends PreferencesPane
       };
 
       String textboxWidth = "250px";
-      customShellChooser_ = new FileChooserTextBox("",
+      customShellPathLabel_ = new FormLabel("Custom shell binary:");
+      customShellChooser_ = new FileChooserTextBox(customShellPathLabel_,
                                                    "(Not Found)",
+                                                   false,
                                                    null,
                                                    onShellExePathChosen);
-      customShellPathLabel_ = new Label("Custom shell binary:");
       addTextBoxChooser(general, textboxWidth, customShellPathLabel_, customShellChooser_);
       customShellChooser_.setEnabled(false);
 
-      customShellOptionsLabel_ = new Label("Custom shell command-line options:");
-      general.add(spacedBefore(customShellOptionsLabel_));
       customShellOptions_ = new TextBox();
       DomUtils.disableSpellcheck(customShellOptions_);
       customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
+      customShellOptionsLabel_ = new FormLabel("Custom shell command-line options:", customShellOptions_);
+      general.add(spacedBefore(customShellOptionsLabel_));
       general.add(customShellOptions_);
 
       Label perfLabel = headerLabel("Connection");
@@ -185,11 +187,11 @@ public class TerminalPreferencesPane extends PreferencesPane
          closing.add(busyMode_);
          busyMode_.setEnabled(false);
          busyMode_.addChangeHandler(event -> manageBusyModeControlVisibility());
-         busyWhitelistLabel_ = new Label("Don't ask before killing:");
-         closing.add(busyWhitelistLabel_);
          busyWhitelist_ = new TextBox();
          DomUtils.disableSpellcheck(busyWhitelist_);
          busyWhitelist_.setWidth(textboxWidth);
+         busyWhitelistLabel_ = new FormLabel("Don't ask before killing:", busyWhitelist_);
+         closing.add(busyWhitelistLabel_);
          closing.add(busyWhitelist_);
          busyWhitelist_.setEnabled(false);
       }
@@ -379,15 +381,14 @@ public class TerminalPreferencesPane extends PreferencesPane
       busyWhitelist_.setVisible(whitelistEnabled);
    }
    
-   private void addTextBoxChooser(Panel panel, String textWidth, Label captionLabel, TextBoxWithButton chooser)
+   private void addTextBoxChooser(Panel panel, String textWidth, FormLabel captionLabel, TextBoxWithButton chooser)
    {
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
       nudgeRight(captionPanel);
 
       captionPanel.add(captionLabel);
-      captionPanel.setCellHorizontalAlignment(captionLabel,
-            HasHorizontalAlignment.ALIGN_LEFT);
+      captionPanel.setCellHorizontalAlignment(captionLabel, HasHorizontalAlignment.ALIGN_LEFT);
 
       panel.add(tight(captionPanel));
 
@@ -399,16 +400,16 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    private final SelectWidget terminalShell_;
-   private final Label customShellPathLabel_;
+   private final FormLabel customShellPathLabel_;
    private final TextBoxWithButton customShellChooser_;
-   private final Label customShellOptionsLabel_;
+   private final FormLabel customShellOptionsLabel_;
    private final TextBox customShellOptions_;
 
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
 
    private SelectWidget busyMode_;
-   private Label busyWhitelistLabel_;
+   private FormLabel busyWhitelistLabel_;
    private TextBox busyWhitelist_;
    
    // Injected ----  

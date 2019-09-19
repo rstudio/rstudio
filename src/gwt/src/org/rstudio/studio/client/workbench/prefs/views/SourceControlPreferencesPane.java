@@ -100,31 +100,34 @@ public class SourceControlPreferencesPane extends PreferencesPane
             }
          }
       };
-      
-      gitExePathChooser_ = new FileChooserTextBox(null,
+
+      gitExePathLabel_ = new FormLabel("Git executable:");
+      gitExePathChooser_ = new FileChooserTextBox(gitExePathLabel_,
                                                   "(Not Found)",
+                                                  false,
                                                   null,
                                                   onGitExePathChosen);
-      gitExePathLabel_ = new FormLabel("Git executable:", gitExePathChooser_.getTextBox());
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
  
       // svn exe path chooser
-      svnExePathChooser_ = new FileChooserTextBox(null,
+      svnExePathLabel_ = new FormLabel("SVN executable:");
+      svnExePathChooser_ = new FileChooserTextBox(svnExePathLabel_,
                                                   "(Not Found)",
+                                                  false,
                                                   null,
                                                   null);
-      svnExePathLabel_ = new FormLabel("SVN executable:", svnExePathChooser_.getTextBox());
       if (sessionInfo.getAllowVcsExeEdit())
          addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
       
       // terminal path
-      terminalPathChooser_ = new FileChooserTextBox(null,
+      terminalPathLabel_ = new FormLabel("Terminal executable:");
+      terminalPathChooser_ = new FileChooserTextBox(terminalPathLabel_,
                                                     "(Not Found)",
+                                                    false,
                                                     null, 
                                                     null);
-      terminalPathLabel_ = new FormLabel("Terminal executable:", terminalPathChooser_.getTextBox());
       if (haveTerminalPathPref())
          addTextBoxChooser(terminalPathLabel_, null, null, terminalPathChooser_);
      

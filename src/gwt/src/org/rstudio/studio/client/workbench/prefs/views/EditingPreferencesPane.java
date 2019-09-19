@@ -263,7 +263,10 @@ public class EditingPreferencesPane extends PreferencesPane
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
+            "",
             "Change...",
+            null,
+            true,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)

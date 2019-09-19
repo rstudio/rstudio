@@ -108,6 +108,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
                "(Current Document)", 
                "Browse...", 
                new HelpButton("pdf_root_document", "Get help on Compile PDF root document"),
+               true,
                null);
          
          // allow user to set the value to empty string

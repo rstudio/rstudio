@@ -67,7 +67,10 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       
       encoding_ = new TextBoxWithButton(
             "Text encoding:",
+            "",
             "Change...",
+            null,
+            true,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)

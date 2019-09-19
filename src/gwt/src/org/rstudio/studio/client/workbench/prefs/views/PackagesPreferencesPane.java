@@ -85,6 +85,7 @@ public class PackagesPreferencesPane extends PreferencesPane
             "",
             "Change...",
             null,
+            true,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)
@@ -112,8 +113,7 @@ public class PackagesPreferencesPane extends PreferencesPane
                      }     
                   });
                }
-            },
-            true);
+            });
       
       cranMirrorTextBox_.getTextBox().addValueChangeHandler(new ValueChangeHandler<String>()
       {
