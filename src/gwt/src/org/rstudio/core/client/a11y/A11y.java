@@ -44,15 +44,6 @@ public class A11y
       element.setAttribute("alt", "");
    }
 
-   public static void setARIAMenuItemExpanded(Element element, boolean expanded)
-   {
-      // W3C recommends having no aria-expanded state when value is false
-      if (expanded)
-         element.setAttribute("aria-expanded", "true");
-      else
-         element.removeAttribute("aria-expanded");
-   }
-
    public static void setARIATablistOrientation(Element element, boolean vertical)
    {
       element.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
