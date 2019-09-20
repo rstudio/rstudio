@@ -14,13 +14,13 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -134,7 +134,7 @@ public class ToolbarMenuButton extends ToolbarButton
          {
             removeStyleName(styles_.toolbarButtonPushed());
             menu.hide();
-            A11y.setARIAMenuItemExpanded(getElement(), false);
+            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
             setFocus(true);
          }
          else
@@ -163,7 +163,7 @@ public class ToolbarMenuButton extends ToolbarButton
             }
             menuShowing_ = true;
             menu_.focus();
-            A11y.setARIAMenuItemExpanded(getElement(), true);
+            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
          }
       });
    }
