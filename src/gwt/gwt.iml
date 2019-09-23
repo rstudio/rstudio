@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="gwt" name="GWT">
+      <configuration>
+        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/2.8.1" />
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/bin" />
     <output-test url="file://$MODULE_DIR$/bin.test" />
@@ -24,5 +31,6 @@
     <orderEntry type="library" name="gwt" level="project" />
     <orderEntry type="library" name="gin" level="project" />
     <orderEntry type="library" scope="TEST" name="junit-4.9b3" level="project" />
+    <orderEntry type="library" name="gwt-user" level="project" />
   </component>
 </module>
