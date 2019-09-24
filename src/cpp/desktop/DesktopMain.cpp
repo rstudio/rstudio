@@ -26,6 +26,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Log.hpp>
+#include <core/ProgramStatus.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/SafeConvert.hpp>
@@ -441,8 +442,19 @@ boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
    return boost::optional<SessionServer>();
 }
 
-void initializeOptions(const boost::scoped_ptr<QApplication>& pApp)
+ProgramStatus initializeOptions(const QStringList& arguments)
 {
+   return ProgramStatus::run();
+}
+
+std::string getSessionServer()
+{
+   return std::string();
+}
+
+std::string getSessionUrl()
+{
+   return std::string();
 }
 
 } // anonymous namespace
@@ -654,8 +666,6 @@ int main(int argc, char* argv[])
                               &pApp,
                               &pAppLaunch);
 
-      initializeOptions(pApp);
-
       // determine the filename that was passed to us
       QString filename;
 
@@ -741,6 +751,9 @@ int main(int argc, char* argv[])
 
       // init options from command line
       desktop::options().initFromCommandLine(pApp->arguments());
+      ProgramStatus status = initializeOptions(pApp->arguments());
+      if (status.exit())
+         return status.exitCode();
 
       // reset log if we are in run-diagnostics mode
       if (desktop::options().runDiagnostics())
@@ -829,21 +842,21 @@ int main(int argc, char* argv[])
       // determine where the session should be launched
       boost::optional<SessionServer> launchServer;
       bool forceSessionServerLaunch = false;
-      if (!desktop::options().sessionServer().empty())
+      std::string sessionServer = getSessionServer();
+      if (!sessionServer.empty())
       {
          forceSessionServerLaunch = true;
 
          // launched with a specific session server selected
          // such as opening a new session in another window
-         launchServer = getLaunchServerFromUrl(desktop::options().sessionServer());
+         launchServer = getLaunchServerFromUrl(sessionServer);
          if (!launchServer)
          {
             // if we don't have an entry for the server URL, something is horribly wrong
             // just show an error and exit
             showError(nullptr,
                       QString::fromUtf8("Invalid session server"),
-                      QString::fromStdString("Session server " + desktop::options().sessionServer() +
-                                                " does not exist"),
+                      QString::fromStdString("Session server " + sessionServer + " does not exist"),
                       QString::null);
             return EXIT_FAILURE;
          }
@@ -952,7 +965,7 @@ int main(int argc, char* argv[])
             RemoteDesktopSessionLauncher* pLauncher;
 
             if (sessionUrl.empty())
-               sessionUrl = desktop::options().sessionUrl();
+               sessionUrl = getSessionUrl();
 
             if (sessionUrl.empty())
             {
