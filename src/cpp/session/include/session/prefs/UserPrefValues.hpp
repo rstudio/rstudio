@@ -149,6 +149,7 @@ namespace prefs {
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
+#define kHelpFontSizePoints "help_font_size_points"
 #define kFontSizePoints "font_size_points"
 #define kEditorTheme "editor_theme"
 #define kDefaultEncoding "default_encoding"
@@ -731,6 +732,12 @@ public:
     */
    bool saveFilesBeforeBuild();
    core::Error setSaveFilesBeforeBuild(bool val);
+
+   /**
+    * The help panel font size, in points.
+    */
+   double helpFontSizePoints();
+   core::Error setHelpFontSizePoints(double val);
 
    /**
     * The default editor font size, in points.

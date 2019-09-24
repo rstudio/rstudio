@@ -309,6 +309,20 @@ public class GeneralPreferencesPane extends PreferencesPane
             enableAccessibility_.setValue(enabled);
          });
          
+         // probably want this somewhere else
+         String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+         String[] values = new String[labels.length];
+         for (int i = 0; i < labels.length; i++)
+            values[i] = Double.parseDouble(labels[i]) + "";
+
+         helpFontSize_ = new SelectWidget("Help panel font size:",
+                                          labels,
+                                          values,
+                                          false);
+         helpFontSize_.getListBox().setWidth("95%");
+         if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getGlobalValue() + ""))
+            helpFontSize_.getListBox().setSelectedIndex(3);
+
          if (BrowseCap.isLinuxDesktop())
          {
             clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
@@ -442,6 +456,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
       }
       
+      {
+         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
+      }
+
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
@@ -577,6 +596,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
+   private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox useGpuBlacklist_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;

@@ -1532,7 +1532,6 @@ public class TextEditingTarget implements
       rmarkdownHelper_.verifyPrerequisites(view_, fileType_);  
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
-     
 
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
