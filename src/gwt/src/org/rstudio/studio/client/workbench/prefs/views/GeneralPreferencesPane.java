@@ -309,20 +309,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             enableAccessibility_.setValue(enabled);
          });
          
-         // probably want this somewhere else
-         String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
-         String[] values = new String[labels.length];
-         for (int i = 0; i < labels.length; i++)
-            values[i] = Double.parseDouble(labels[i]) + "";
-
-         helpFontSize_ = new SelectWidget("Help panel font size:",
-                                          labels,
-                                          values,
-                                          false);
-         helpFontSize_.getListBox().setWidth("95%");
-         if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getGlobalValue() + ""))
-            helpFontSize_.getListBox().setSelectedIndex(3);
-
          if (BrowseCap.isLinuxDesktop())
          {
             clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
@@ -349,6 +335,20 @@ public class GeneralPreferencesPane extends PreferencesPane
             "Double-click to select words in Console pane", 
             prefs_.consoleDoubleClickSelect())));
       
+      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+      String[] values = new String[labels.length];
+      for (int i = 0; i < labels.length; i++)
+         values[i] = Double.parseDouble(labels[i]) + "";
+
+      helpFontSize_ = new SelectWidget("Help panel font size:",
+                                       labels,
+                                       values,
+                                       false);
+      helpFontSize_.getListBox().setWidth("95%");
+      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getGlobalValue() + ""))
+         helpFontSize_.getListBox().setSelectedIndex(3);
+      advanced.add(helpFontSize_);
+
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);

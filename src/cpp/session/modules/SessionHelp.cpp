@@ -776,55 +776,15 @@ void handleHttpdRequest(const std::string& location,
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request, location);
 
-   // !!! MJB
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
       core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
       if (cssFile.exists())
       {
-/*
-         std::string cssFileValue;
-         Error error = core::readStringFromFile(cssFile, &cssFileValue);
-         if (error)
-            LOG_ERROR(error);
-
-         // update R.css with the help_font_size preference 
-         size_t pos;
-         if ((pos = cssFileValue.find(std::string("body, "))) != cssFileValue.npos)
-         {
-            if (cssFileValue.find("font-size:", pos) <
-                cssFileValue.find("}", pos))
-            {
-               size_t replacePos1 = cssFileValue.find_first_of("123456789",
-                                       cssFileValue.find("font-size:", pos));
-               size_t replacePos2 = cssFileValue.find("p", replacePos1);
-               std::string cssCode(std::to_string(prefs::userPrefs().helpFontSizePoints()));
-               cssFileValue.replace(replacePos1, (replacePos2 - replacePos1), cssCode);
-            }
-            else
-            {
-               std::string cssCode("   font-size:");
-               cssCode.append(std::to_string(prefs::userPrefs().helpFontSizePoints()));
-               cssCode.append("pt;\n");
-
-               size_t insertPos = cssFileValue.find_first_of("}",pos);
-               cssFileValue.insert(insertPos-1, cssCode);
-            }
-            core::writeStringToFile(cssFile, cssFileValue);
-         }
-         else
-         {
-            std::string cssCode("body {\n   font-size:");
-            cssCode.append(std::to_string(prefs::userPrefs().helpFontSizePoints()));
-            cssCode.append("pt;\n}");
-            Error error = core::appendToFile(cssFile,cssCode);
-            if (error)
-               LOG_ERROR(error);
-         }
-*/
-         // !!! now we're not using the filter paramter
-         pResponse->setFile(filePath, request, HelpFontSizeFilter());
+         // ignoring the filter parameter here because the only other possible filter 
+         // is HelpContentsFilter which is for html
+         pResponse->setFile(cssFile, request, HelpFontSizeFilter());
          return;
       }
    }
