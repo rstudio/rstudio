@@ -1,7 +1,7 @@
 #
 # SessionPackages.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1478,11 +1478,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # check and see if R has already queried available packages;
    # if so we can ask R for available packages as it will use
    # the cache
-   paths <- sprintf(
-      "%s/repos_%s.rds",
-      tempdir(),
-      URLencode(contrib.url(repos), TRUE)
+   paths <- vapply(repos, function(url) {
+      sprintf("%s/repos_%s.rds", 
+              tempdir(), 
+              URLencode(contrib.url(url), TRUE)
    )
+   }, FUN.VALUE = character(1))
    
    if (all(file.exists(paths))) {
       
