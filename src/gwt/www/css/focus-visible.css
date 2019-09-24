@@ -1,0 +1,17 @@
+/*
+  This will hide the focus indicator if the element receives focus via the mouse,
+  but it will still show up on keyboard focus.
+*/
+.js-focus-visible :focus:not(.focus-visible) {
+    outline: none;
+}
+
+.js-focus-visible :focus:not([data-focus-visible-added]) {
+    outline: none;
+}
+
+.js-focus-visible .focus-visible, input[type="checkbox"].focus-visible {
+    outline: goldenrod solid 2px;
+    outline-offset: -2px;
+    background-color: rgba(100, 125, 75, 0.5);
+}
