@@ -62,7 +62,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
       StackElement element;
-      Error error = json::readObject(elementJson.get_obj(),
+      Error error = json::readObject(elementJson.getObject(),
                                      "file_name", &element.fileName,
                                      "class_name", &element.className,
                                      "method_name", &element.methodName,

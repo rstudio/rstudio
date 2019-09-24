@@ -119,7 +119,7 @@ SEXP rs_fromJSON(SEXP objectSEXP)
    std::string contents = r::sexp::asString(objectSEXP);
    
    json::Value jsonValue;
-   if (!json::parse(contents, &jsonValue))
+   if (!!jsonValue.parse(contents))
       return R_NilValue;
    
    r::sexp::Protect protect;

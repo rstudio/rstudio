@@ -452,7 +452,7 @@ void handleRpcError(
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
-      json::setJsonRpcError(json::errc::Unauthorized,
+      json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                             &(ptrConnection->response()));
       ptrConnection->writeResponse();
       return;
@@ -476,7 +476,7 @@ void handleRpcError(
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse ;
-      jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
+      jsonRpcResponse.setError(Error(json::errc::InvalidSession, ERROR_LOCATION), clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
       return;
@@ -488,12 +488,12 @@ void handleRpcError(
    // distinguish between connection and other error types
    if (http::isConnectionUnavailableError(error))
    {
-      json::setJsonRpcError(json::errc::ConnectionError,
+      json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
    else
    {
-      json::setJsonRpcError(json::errc::TransmissionError,
+      json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response())) ;
    }
 
@@ -520,13 +520,13 @@ void handleEventsError(
       }
       else
       {
-         json::setJsonRpcError(json::errc::Unavailable,
+         json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                               &(ptrConnection->response()));
       }
    }
    else if (server::isInvalidSessionScopeError(error))
    {
-      json::setJsonRpcError(json::errc::Unavailable,
+      json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
    else
@@ -534,7 +534,7 @@ void handleEventsError(
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
-      json::setJsonRpcError(json::errc::TransmissionError,
+      json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response())) ;
    }
 
@@ -677,7 +677,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
    else
    {
-       json::setJsonRpcError(json::errc::Unauthorized,
+       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                              &(ptrConnection->response()));
        ptrConnection->writeResponse();
        return false;

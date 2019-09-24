@@ -67,7 +67,7 @@ public:
 
    int resultCount() const
    {
-      return gsl::narrow_cast<int>(files_.size());
+      return gsl::narrow_cast<int>(files_.getSize());
    }
 
    bool isRunning() const
@@ -145,7 +145,7 @@ public:
       if (error)
          return error;
 
-      if (files_.size() != lineNums_.size() || files_.size() != contents_.size())
+      if (files_.getSize() != lineNums_.getSize() || files_.getSize() != contents_.getSize())
       {
          files_.clear();
          lineNums_.clear();
@@ -297,9 +297,9 @@ private:
 
          // update the match state
          if (match[1] == "01")
-            pMatchOn->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
+            pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
          else
-            pMatchOff->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
+            pMatchOff->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
       }
       
       if (inputPos != end)
@@ -370,9 +370,9 @@ private:
             json::Array matchOn, matchOff;
             processContents(&lineContents, &matchOn, &matchOff);
 
-            files.push_back(file);
-            lineNums.push_back(lineNum);
-            contents.push_back(lineContents);
+            files.push_back(json::Value(file));
+            lineNums.push_back(json::Value(lineNum));
+            contents.push_back(json::Value(lineContents));
             matchOns.push_back(matchOn);
             matchOffs.push_back(matchOff);
 
@@ -385,7 +385,7 @@ private:
          stdOutBuf_.erase(0, nextLineStart);
       }
 
-      if (files.size() > 0)
+      if (files.getSize() > 0)
       {
          json::Object result;
          result["handle"] = handle();
@@ -517,7 +517,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 
    for (json::Value filePattern : filePatterns)
    {
-      cmd << "--include=" + filePattern.get_str();
+      cmd << "--include=" + filePattern.getString();
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
@@ -568,7 +568,7 @@ core::Error clearFindResults(const json::JsonRpcRequest& request,
 void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
-   json::write(findResults().asJson(), os);
+   findResults().asJson().write(os);
    pSettings->set("find-in-files-state", os.str());
 }
 
@@ -578,13 +578,13 @@ void onResume(const core::Settings& settings)
    if (!state.empty())
    {
       json::Value stateJson;
-      if (!json::parse(state, &stateJson))
+      if (!stateJson.parse(state))
       {
          LOG_WARNING_MESSAGE("invalid find results state json");
          return;
       }
 
-      Error error = findResults().readFromJson(stateJson.get_obj());
+      Error error = findResults().readFromJson(stateJson.getObject());
       if (error)
          LOG_ERROR(error);
    }

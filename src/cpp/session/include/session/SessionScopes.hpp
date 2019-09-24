@@ -101,7 +101,7 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
 
    // read the contents
    core::json::Value projectEntryVal;
-   if (!core::json::parse(entryContents, &projectEntryVal))
+   if (!!projectEntryVal.parse(entryContents))
    {
       error = core::Error(core::json::errc::ParseError,
                                 ERROR_LOCATION);
@@ -111,13 +111,13 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
 
    // extract the path
    std::string projectPath;
-   if (projectEntryVal.type() == core::json::ObjectType)
+   if (projectEntryVal.getType() == core::json::Type::OBJECT)
    {
-      const core::json::Object& obj = projectEntryVal.get_obj();
-      core::json::Object::iterator it = obj.find(kProjectEntryDir);
-      if (it != obj.end() && (*it).value().type() == core::json::StringType)
+      const core::json::Object& obj = projectEntryVal.getObject();
+      core::json::Object::Iterator it = obj.find(kProjectEntryDir);
+      if (it != obj.end() && (*it).getValue().getType() == core::json::Type::STRING)
       {
-         projectPath = (*it).value().get_str();
+         projectPath = (*it).getValue().getString();
       }
    }
 

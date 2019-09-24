@@ -151,9 +151,7 @@ core::Error setChunkValue(const std::string& docPath,
 
    // update key and write out new contents
    defs[key] = value;
-   std::ostringstream oss;
-   core::json::write(defs, oss);
-   return core::writeStringToFile(defFile, oss.str());
+   return core::writeStringToFile(defFile, defs.write());
 }
 
 core::Error initChunkDefs();

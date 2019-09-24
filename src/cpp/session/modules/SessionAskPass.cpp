@@ -127,7 +127,7 @@ Error askForPassword(const std::string& prompt,
 
    // read inputs
    pInput->remember = remember;
-   pInput->password = value.get_value<std::string>();
+   pInput->password = value.getValue<std::string>();
 
    // decrypt if necessary
 #ifdef RSTUDIO_SERVER

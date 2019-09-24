@@ -155,16 +155,16 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
 void addObjectSpecifiers(const json::Array& specifiers, 
                          r::exec::RFunction* pFunction)
 {
-   for (unsigned i = 0; i < specifiers.size(); i++) 
+   for (unsigned i = 0; i < specifiers.getSize(); i++)
    {
       // make sure we're dealing with a json object
       const json::Value& val = specifiers[i];
-      if (val.type() != json::ObjectType)
+      if (val.getType() != json::Type::OBJECT)
          continue;
 
       // extract the name and type of the specifier
       std::string name, type;
-      Error error = json::readObject(val.get_obj(), 
+      Error error = json::readObject(val.getObject(),
             "name", &name, "type", &type);
       if (error)
       {
@@ -219,7 +219,7 @@ SEXP rs_availableRemoteServers()
 
       // get the host
       json::Object idJson;
-      Error error = json::readObject(connectionJson.get_obj(), "id", &idJson);
+      Error error = json::readObject(connectionJson.getObject(), "id", &idJson);
       if (error)
       {
          LOG_ERROR(error);
@@ -248,7 +248,7 @@ SEXP rs_availableRemoteServers()
 
 SEXP rs_availableConnections()
 {
-   std::string data = json::write(connectionsRegistryAsJson());
+   std::string data = connectionsRegistryAsJson().write();
 
    r::sexp::Protect rProtect;
    return r::sexp::create(data, &rProtect);

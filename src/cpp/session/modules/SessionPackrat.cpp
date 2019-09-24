@@ -512,7 +512,7 @@ bool getPendingActions(PackratActionType action, bool useCached,
       PACKRAT_TRACE("using cached action list for action '" << 
                     packratActionName(action) << "' (" << libraryHash << ", " <<
                     lockfileHash << ")");
-      if (pActions && !cachedActions[action].is_null())
+      if (pActions && !cachedActions[action].isNull())
          *pActions = cachedActions[action];
       return cachedResult[action];
    }

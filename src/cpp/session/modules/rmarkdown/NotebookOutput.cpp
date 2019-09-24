@@ -117,9 +117,9 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
          if (outputType != kChunkConsoleInput)
          {
             json::Array output;
-            output.push_back(outputType);
-            output.push_back(line.first[1]);
-            pArray->push_back(output);
+            output.push_back(json::Value(outputType));
+            output.push_back(json::Value(line.first[1]));
+            pArray->push_back(json::Value(output));
          }
       }
       // read next line
@@ -144,7 +144,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
       Error error = core::readStringFromFile(path, &fileContents);
       if (error)
          return error;
-      if (!json::parse(fileContents, &errorVal))
+      if (!!errorVal.parse(fileContents))
          return Error(json::errc::ParseError, ERROR_LOCATION);
 
      (*pObj)[kChunkOutputValue] = errorVal;
@@ -515,7 +515,7 @@ Error enqueueChunkOutput(
             std::string contents;
             error = readStringFromFile(metadata, &contents);
             if (!contents.empty())
-               json::parse(contents, &meta);
+               meta.parse(contents);
          }
          output[kChunkOutputMetadata] = meta;
          

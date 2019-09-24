@@ -213,7 +213,7 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
    json::Object descriptionJson;
    json::Object inputsJson;
-   error = json::readObject(projectTemplateOptions.get_obj(),
+   error = json::readObject(projectTemplateOptions.getObject(),
                             "description", &descriptionJson,
                             "inputs", &inputsJson);
    if (error)
@@ -248,7 +248,7 @@ Error createProject(const json::JsonRpcRequest& request,
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
    // Shiny application
-   if (!newShinyAppJson.is_null())
+   if (!newShinyAppJson.isNull())
    {
       // error if the shiny app dir already exists
       FilePath appDir = projectFilePath.getParent();
@@ -288,7 +288,7 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    
    // if we have a custom project template, call that first
-   if (!projectTemplateOptions.is_null() &&
+   if (!projectTemplateOptions.isNull() &&
        json::isType<json::Object>(projectTemplateOptions))
    {
       Error error = initializeProjectFromTemplate(projectFilePath, projectTemplateOptions);
@@ -441,7 +441,7 @@ json::Object projectVcsContextJson()
    json::Array applicableJson;
    for (const std::string& vcs : vcsContext.applicableVcs)
    {
-      applicableJson.push_back(vcs);
+      applicableJson.push_back(json::Value(vcs));
    }
    contextJson["applicable_vcs"] = applicableJson;
 
@@ -770,7 +770,7 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 void onClientInit(const json::Object& errorToSend)
 {
    // enque the error
-   if (!errorToSend.empty())
+   if (!errorToSend.isEmpty())
    {
       ClientEvent event(client_events::kOpenProjectError, errorToSend);
       module_context::enqueClientEvent(event);

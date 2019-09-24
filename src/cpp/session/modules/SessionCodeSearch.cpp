@@ -2279,8 +2279,7 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
       return error;
 
    // handle fromWhere NULL case
-   std::string fromWhere = fromWhereJSON.is_null() ? "" :
-                                                     fromWhereJSON.get_str();
+   std::string fromWhere = fromWhereJSON.isNull() ? "" : fromWhereJSON.getString();
 
 
    // call into R to determine the token

@@ -191,10 +191,10 @@ Error connectionFromJson(const json::Object& connectionJson,
    // read each action
    for (const json::Value& action : actions)
    {
-      if (action.type() != json::ObjectType)
+      if (action.getType() != json::Type::OBJECT)
          continue;
       ConnectionAction act;
-      error = actionFromJson(action.get_obj(), &act);
+      error = actionFromJson(action.getObject(), &act);
       if (error)
       {
          // be fault-tolerant here (we can still use the connection even if the
@@ -208,10 +208,10 @@ Error connectionFromJson(const json::Object& connectionJson,
    // read each object type
    for (const json::Value& objectType : objectTypes)
    {
-      if (objectType.type() != json::ObjectType)
+      if (objectType.getType() != json::Type::OBJECT)
          continue;
       ConnectionObjectType type;
-      error = objectTypeFromJson(objectType.get_obj(), &type);
+      error = objectTypeFromJson(objectType.getObject(), &type);
       if (error)
       {
          LOG_ERROR(error);

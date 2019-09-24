@@ -700,7 +700,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   using namespace module_context;
                   std::string version, rHome, label;
                   Error error = json::readObject(
-                                            switchToVersionJson.get_obj(),
+                                            switchToVersionJson.getObject(),
                                             "version", &version,
                                             "r_home", &rHome,
                                             "label", &label);

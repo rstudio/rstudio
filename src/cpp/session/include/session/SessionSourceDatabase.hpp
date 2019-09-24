@@ -155,7 +155,7 @@ public:
    SEXP toRObject(r::sexp::Protect* pProtect, bool includeContents = true) const;
 
 private:
-   void editProperty(const core::json::Member& property);
+   void editProperty(const core::json::Object::Member& property);
 
 private:
    std::string id_;

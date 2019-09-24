@@ -43,7 +43,7 @@ namespace {
 
 struct SourceCppState
 {
-   bool empty() const { return errors.empty() && outputs.empty(); }
+   bool empty() const { return errors.isEmpty() && outputs.isEmpty(); }
 
    void clear()
    {

@@ -124,15 +124,15 @@ void onClientInit()
 Error extractFilePaths(const json::Array& files, 
                        std::vector<FilePath>* pFilePaths)
 {   
-   for(json::Array::iterator
+   for(json::Array::Iterator
          it = files.begin(); 
          it != files.end();
          ++it)
    {
-      if ((*it).type() != json::StringType)
+      if ((*it).getType() != json::Type::STRING)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
-      std::string file = (*it).get_str() ;
+      std::string file = (*it).getString() ;
       pFilePaths->push_back(module_context::resolveAliasedPath(file)) ;
    }
 
@@ -838,7 +838,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
 
    auto writeParamError = [&]()
    {
-      json::setJsonRpcError(json::errc::ParamInvalid, &response);
+      json::setJsonRpcError(Error(json::errc::ParamInvalid, ERROR_LOCATION), &response);
       cleanupState();
       cont(&response);
    };

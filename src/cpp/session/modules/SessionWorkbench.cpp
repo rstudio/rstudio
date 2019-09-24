@@ -121,9 +121,9 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
    
    // add in the selection ranges
    ListBuilder selectionBuilder(&protect);
-   for (std::size_t i = 0; i < selection.size(); ++i)
+   for (std::size_t i = 0; i < selection.getSize(); ++i)
    {
-      const json::Object& object = selection[i].get_obj();
+      const json::Object& object = selection[i].getObject();
       
       json::Array rangeJson;
       std::string text;
@@ -137,7 +137,7 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
       }
       
       std::vector<int> range;
-      if (!json::fillVectorInt(rangeJson, &range))
+      if (!rangeJson.toVectorInt(range))
       {
          LOG_WARNING_MESSAGE("failed to parse document range");
          continue;
@@ -422,7 +422,7 @@ void editFilePostback(const std::string& file,
    bool succeeded = s_waitForEditCompleted(&request, editEvent);
 
    // cancelled or otherwise didn't succeed
-   if (!succeeded || request.params[0].is_null())
+   if (!succeeded || request.params[0].isNull())
    {
       cont(EXIT_FAILURE, "");
       return;

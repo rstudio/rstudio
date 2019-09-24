@@ -231,7 +231,7 @@ void setHttpError(const http::Request& request, http::Response* pResponse)
 
 void setJsonRpcError(const http::Request&, http::Response* pResponse)
 {
-   json::setJsonRpcError(json::errc::Unauthorized, pResponse);
+   json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION), pResponse);
 }
    
 void setFileUploadError(const http::Request& request, http::Response* pResponse)

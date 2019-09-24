@@ -94,11 +94,11 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
                                           bool includeRenameNew = true)
 {
    std::vector<FilePath> results;
-   for (json::Array::iterator it = paths.begin();
+   for (json::Array::Iterator it = paths.begin();
         it != paths.end();
         it++)
    {
-      results.push_back(resolveAliasedPath((*it).get_str()));
+      results.push_back(resolveAliasedPath((*it).getString()));
    }
    return results;
 }
@@ -659,7 +659,7 @@ std::string node_value(rapidxml::xml_node<>* pNode, const std::string& nodeName)
 
 FilePath resolveAliasedJsonPath(const json::Value& value)
 {
-   std::string path = value.get_str();
+   std::string path = value.getString();
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
@@ -1052,7 +1052,7 @@ Error svnCommit(const json::JsonRpcRequest& request,
    args << "-F" << tempFile;
 
    args << "--";
-   if (!paths.empty())
+   if (!paths.isEmpty())
       args << resolveAliasedPaths(paths);
 
    // TODO: ensure tempFile is deleted when the commit process exits
@@ -1432,11 +1432,11 @@ Error svnHistoryEnd_CommitCallback(json::Array *pIds,
                                    json::Array *pDates,
                                    const CommitInfo& commit)
 {
-   pIds->push_back(commit.id);
-   pAuthors->push_back(commit.author);
-   pSubjects->push_back(commit.subject);
-   pDescriptions->push_back(commit.description);
-   pDates->push_back(commit.date);
+   pIds->push_back(json::Value(commit.id));
+   pAuthors->push_back(json::Value(commit.author));
+   pSubjects->push_back(json::Value(commit.subject));
+   pDescriptions->push_back(json::Value(commit.description));
+   pDates->push_back(json::Value(commit.date));
    return Success();
 }
 

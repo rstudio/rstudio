@@ -40,7 +40,7 @@ void handleOfflineRequest(const http::Request& request,
    // send error code for json responses
    if (request.acceptsContentType(json::kJsonContentType))
    {
-      json::setJsonRpcError(json::errc::ServerOffline, pResponse);
+      json::setJsonRpcError(Error(json::errc::ServerOffline, ERROR_LOCATION), pResponse);
    }
    
    // send error page for html responses

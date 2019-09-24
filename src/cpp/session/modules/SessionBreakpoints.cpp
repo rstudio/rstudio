@@ -515,10 +515,10 @@ Error initBreakpoints()
    json::Value breakpointStateValue =
       r::session::clientState().getProjectPersistent("debug-breakpoints",
                                                      "debugBreakpointsState");
-   if (!breakpointStateValue.is_null() &&
+   if (!breakpointStateValue.isNull() &&
        json::isType<core::json::Object>(breakpointStateValue))
    {
-      json::Object breakpointState = breakpointStateValue.get_obj();
+      json::Object breakpointState = breakpointStateValue.getObject();
       
       // Protect against the breakpoint array being serialized as an
       // empty object
@@ -527,19 +527,19 @@ Error initBreakpoints()
       {
          Error error = json::errors::typeMismatch(
                   jsonBreakpointArray,
-                  json::ArrayType,
+                  json::Type::ARRAY,
                   ERROR_LOCATION);
          LOG_ERROR(error);
       }
       else
       {
-         json::Array breakpointArray = jsonBreakpointArray.get_array();
+         json::Array breakpointArray = jsonBreakpointArray.getArray();
          s_breakpoints.clear();
          for (json::Value bp : breakpointArray)
          {
             if (json::isType<core::json::Object>(bp))
             {
-               s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+               s_breakpoints.push_back(breakpointFromJson(bp.getObject()));
             }
          }
       }
@@ -560,7 +560,7 @@ Error updateBreakpoints(const json::JsonRpcRequest& request,
    for (json::Value bp : breakpointArr)
    {
       boost::shared_ptr<Breakpoint> breakpoint
-            (breakpointFromJson(bp.get_obj()));
+            (breakpointFromJson(bp.getObject()));
       std::vector<boost::shared_ptr<Breakpoint> >::iterator psbi =
             posOfBreakpointId(breakpoint->id);
 

@@ -134,9 +134,7 @@ CompilePdfState s_compilePdfState;
 
 void onSuspend(Settings* pSettings)
 {
-   std::ostringstream os;
-   json::write(s_compilePdfState.asJson(), os);
-   pSettings->set("compile_pdf_state", os.str());
+   pSettings->set("compile_pdf_state", s_compilePdfState.asJson().write());
 }
 
 
@@ -146,13 +144,13 @@ void onResume(const Settings& settings)
    if (!state.empty())
    {
       json::Value stateJson;
-      if (!json::parse(state, &stateJson))
+      if (!!stateJson.parse(state))
       {
          LOG_WARNING_MESSAGE("invalid compile pdf state json");
          return;
       }
 
-      Error error = s_compilePdfState.readFromJson(stateJson.get_obj());
+      Error error = s_compilePdfState.readFromJson(stateJson.getObject());
       if (error)
          LOG_ERROR(error);
    }

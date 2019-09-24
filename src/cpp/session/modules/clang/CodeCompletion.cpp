@@ -558,10 +558,10 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             std::string typedText = result.getTypedText();
 
             // if we have the same typed text then just ammend previous result
-            if ((typedText == lastTypedText) && !completionsJson.empty())
+            if ((typedText == lastTypedText) && !completionsJson.isEmpty())
             {
-               json::Object res = completionsJson.back().get_obj();
-               json::Array text = res["text"].get_array();
+               json::Object res = completionsJson.getBack().getObject();
+               json::Array text = res["text"].getArray();
                text.push_back(friendlyCompletionText(result));
             }
             else

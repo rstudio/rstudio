@@ -53,9 +53,7 @@ std::string commandsAsJsonArray(const Slide& slide)
       commandsJsonArray.push_back(command.asJson());
    }
 
-   std::ostringstream ostr;
-   json::write(commandsJsonArray, ostr);
-   return ostr.str();
+   return commandsJsonArray.write();
 }
 
 Error renderMarkdown(const std::string& content, std::string* pHTML)

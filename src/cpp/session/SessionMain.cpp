@@ -804,7 +804,7 @@ int rEditFile(const std::string& file)
       return false;
    
    // user cancelled edit
-   if (request.params[0].is_null())
+   if (request.params[0].isNull())
    {
       return 0; // no-op, object will be re-parsed from original content
    }
@@ -854,7 +854,7 @@ FilePath rChooseFile(bool newFile)
 
    // extract the file name
    std::string fileName;
-   if (!request.params[0].is_null())
+   if (!request.params[0].isNull())
    {
       Error error = json::readParam(request.params, 0, &fileName);
       if (error)
@@ -933,7 +933,7 @@ bool rLocator(double* x, double* y)
       return false;
    
    // see if we got a point
-   if ((request.params.size() > 0) && !request.params[0].is_null())
+   if ((request.params.getSize() > 0) && !request.params[0].isNull())
    {
       // read the x and y
       Error error = json::readObjectParam(request.params, 0,

@@ -24,6 +24,47 @@ namespace session {
 namespace prefs {
 namespace {
 
+enum class PrefErrorCode
+{
+   SUCCESS = 0,
+   LOAD_ERROR = 1,
+   WRITE_ERROR = 2,
+   UNKNOWN_ERROR = 3
+};
+
+Error prefsError(PrefErrorCode code, const Error& cause, const ErrorLocation& location)
+{
+   switch (code)
+   {
+      case PrefErrorCode::SUCCESS:
+         return Success();
+      case PrefErrorCode::LOAD_ERROR:
+         return Error(
+            static_cast<int>(PrefErrorCode::LOAD_ERROR),
+            "pref_error",
+            "Error occurred while loading preferences.",
+            cause,
+            location);
+      case PrefErrorCode::WRITE_ERROR:
+         return Error(
+            static_cast<int>(PrefErrorCode::WRITE_ERROR),
+            "pref_error",
+            "Error occurred while writing preferences.",
+            cause,
+            location);
+      default:
+      {
+         assert(false);
+         return Error(
+            static_cast<int>(PrefErrorCode::UNKNOWN_ERROR),
+            "pref_error",
+            "Unknown preferences error.",
+            cause,
+            location);
+      }
+   }
+}
+
 bool prefsFileFilter(const core::FilePath& prefsFile, const core::FileInfo& fileInfo)
 {
    return prefsFile.getAbsolutePath() == fileInfo.absolutePath();
@@ -87,25 +128,29 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
       return Success();
    }
 
-   error = json::parse(contents, ERROR_LOCATION, &val);
+   error = val.parse(contents);
    if (error)
    {
       // Couldn't parse prefs JSON
-      return error;
+      return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
    }
-   else if (val.type() == json::ObjectType)
+   else if (val.isObject())
    {
       // Successful parse of prefs object
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         cache_ = boost::make_shared<json::Object>(val.get_obj());
+         cache_ = boost::make_shared<json::Object>(val.getObject());
       }
       END_LOCK_MUTEX
    }
    else
    {
       // We parsed but got a non-object JSON value (this is exceedingly unlikely)
-      return Error(rapidjson::kParseErrorValueInvalid, ERROR_LOCATION);
+      return Error(
+         static_cast<int>(PrefErrorCode::LOAD_ERROR),
+         "pref_error",
+         "Invalid value while parsing preferences: " + val.write(),
+         ERROR_LOCATION);
    }
 
    return Success();
@@ -121,7 +166,7 @@ Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       cache_ = boost::make_shared<json::Object>();
-      error = json::getSchemaDefaults(contents, cache_.get());
+      error = json::Object::getSchemaDefaults(contents, *cache_);
    }
    END_LOCK_MUTEX
 
@@ -132,14 +177,16 @@ Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      if (cache_ && cache_->type() == json::ObjectType)
+      if (cache_ && cache_->isObject())
       {
          std::string contents;
          Error error = readStringFromFile(schemaFile, &contents);
          if (error)
             return error;
 
-         return json::validate(*cache_, contents, ERROR_LOCATION);
+         error = cache_->validate(contents);
+         if (error)
+            return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
       }
       else
       {
@@ -165,9 +212,7 @@ Error PrefLayer::writePrefsToFile(const core::json::Object& prefs, const core::F
    }
 
    // Save the new preferences to file
-   std::ostringstream oss;
-   json::writeFormatted(prefs, oss);
-   error = writeStringToFile(prefsFile, oss.str());
+   error = writeStringToFile(prefsFile, prefs.writeFormatted());
 
    return error;
 }
@@ -182,7 +227,7 @@ boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
          // The value doesn't exist in this layer.
          return boost::none;
       }
-      return (*it).value().clone();
+      return (*it).getValue().clone();
    }
    END_LOCK_MUTEX
 

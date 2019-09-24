@@ -265,8 +265,8 @@ test_context("Options")
       options.push_back({"abc", std::string()});
       options.push_back({"abc=", std::string()});
 
-      core::json::Array optionsArray = core::json::toJsonArray(options);
-      core::system::Options options2 = core::json::optionsFromJson(optionsArray);
+      core::json::Array optionsArray = core::json::Array(options);
+      core::system::Options options2 = optionsArray.toStringPairList();
 
       for (size_t i = 0; i < options.size(); ++i)
       {

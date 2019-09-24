@@ -219,7 +219,7 @@ public:
     *
     * @return True if there is an error; false otherwise.
     */
-   operator bool() const;
+   explicit operator bool() const;
 
    /**
     * @brief Overloaded operator ! to allow Errors to be treated as boolean values.
@@ -372,6 +372,16 @@ public:
     */
    Success() : Error() {}
 };
+
+/**
+ * @brief Output stream operator. Writes the specified error to the provided output stream.
+ *
+ * @param io_ostream     The output stream to which to write the error.
+ * @param in_error       The error to write to the output stream.
+ *
+ * @return A reference to the provided output stream, for chaining writes.
+ */
+std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 
 #ifdef _WIN32
 

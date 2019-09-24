@@ -59,7 +59,7 @@ void UserPrefsLayer::onPrefsFileChanged()
 
    // Make a copy of the prefs prior to reloading, so we can diff against the old copy
    const json::Value oldVal = cache_->clone();
-   const json::Object old = oldVal.get_obj();
+   const json::Object old = oldVal.getObject();
 
    // Reload the prefs from the file
    Error error = loadPrefsFromFile(prefsFile_);
@@ -79,7 +79,7 @@ void UserPrefsLayer::onPrefsFileChanged()
       // didn't exist in the old set, or existed there with a new value. This does not currently
       // emit events for pref values that have been removed.
       if (itNew != cache_->end() &&
-          (itOld == old.end() || !((*itNew).value() == (*itOld).value())))
+          (itOld == old.end() || !((*itNew).getValue() == (*itOld).getValue())))
       {
          onChanged(key);
       }

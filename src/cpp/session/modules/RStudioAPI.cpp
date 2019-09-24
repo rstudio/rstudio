@@ -110,7 +110,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
          return R_NilValue;
       }
 
-      if (dialogIcon == 4 && !request.params[1].is_null()) {
+      if (dialogIcon == 4 && !request.params[1].isNull()) {
          bool result;
          Error error = json::readParam(request.params, 1, &result);
          if (error)
@@ -122,7 +122,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
          r::sexp::Protect rProtect;
          return r::sexp::create(result, &rProtect);
       }
-      else if (!request.params[0].is_null())
+      else if (!request.params[0].isNull())
       {
          std::string promptValue;
          Error error = json::readParam(request.params, 0, &promptValue);

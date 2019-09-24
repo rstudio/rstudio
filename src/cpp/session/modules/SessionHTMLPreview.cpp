@@ -1131,7 +1131,7 @@ core::json::Object capabilitiesAsJson()
       if (error)
          LOG_ERROR(error);
       else if (core::json::isType<core::json::Object>(valJson))
-         capsJson = valJson.get_value<json::Object>();
+         capsJson = valJson.getValue<json::Object>();
    }
 
    return capsJson;

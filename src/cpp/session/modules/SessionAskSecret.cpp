@@ -148,7 +148,7 @@ Error askForSecret(const std::string& name,
    // if secret changed
    if (pInput->changed)
    {
-      pInput->secret = value.get_value<std::string>();
+      pInput->secret = value.getValue<std::string>();
 
       // decrypt if necessary
 #ifdef RSTUDIO_SERVER

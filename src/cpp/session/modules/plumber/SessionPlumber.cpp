@@ -111,8 +111,8 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
       {
          pResponse->setError(
                   fileExistsError(ERROR_LOCATION),
-                  "The directory '" + module_context::createAliasedPath(plumberDir) + "' already exists "
-                  "and is not a directory");
+                  json::Value("The directory '" + module_context::createAliasedPath(plumberDir) + "' already exists "
+                  "and is not a directory"));
          return Success();
       }
       
@@ -125,8 +125,8 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
       {
          pResponse->setError(
                   fileExistsError(ERROR_LOCATION),
-                  "The directory '" + module_context::createAliasedPath(plumberDir) + "' already exists "
-                  "and is not empty");
+                  json::Value("The directory '" + module_context::createAliasedPath(plumberDir) + "' already exists "
+                  "and is not empty"));
          return Success();
       }
    }
@@ -145,13 +145,13 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
    // if file already exists, report that as an error
    FilePath target = plumberDir.completePath(templateFile);
    std::string aliasedPath = module_context::createAliasedPath(plumberDir.completePath(templateFile));
-   result.push_back(aliasedPath);
+   result.push_back(json::Value(aliasedPath));
    if (target.exists())
    {
       std::string message = "The file '" + aliasedPath + "' already exists";
       pResponse->setError(
                fileExistsError(ERROR_LOCATION),
-               message);
+               json::Value(message));
       return Success();
    }
    
@@ -159,7 +159,7 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
    error = copyTemplateFile(templateFile, target);
    if (error)
    {
-      pResponse->setError(error, "Failed to write '" + module_context::createAliasedPath(target) + "'");
+      pResponse->setError(error, json::Value("Failed to write '" + module_context::createAliasedPath(target) + "'"));
       return Success();
    }
    

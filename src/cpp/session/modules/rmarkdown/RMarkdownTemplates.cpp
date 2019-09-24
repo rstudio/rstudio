@@ -132,11 +132,11 @@ Error getRmdTemplates(const json::JsonRpcRequest&,
    for (auto it: s_templates)
    {
       // skip if not an object type
-      if (it.type() != json::ObjectType)
+      if (!it.isObject())
          continue;
 
       // if we already know this template's name, no need to re-parse
-      json::Object item = it.get_obj();
+      json::Object item = it.getObject();
       if (item.find("name") != item.end())
       {
          result.push_back(item);

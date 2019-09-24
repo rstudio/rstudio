@@ -125,10 +125,8 @@ Error putProperties(const std::string& path, const json::Object& properties)
    }
 
    // write the file
-   std::ostringstream ostr ;
-   json::writeFormatted(properties, ostr);
    FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
-   error = writeStringToFile(propertiesFilePath, ostr.str());
+   error = writeStringToFile(propertiesFilePath, properties.writeFormatted());
    if (error)
       return error;
 
@@ -169,12 +167,12 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // parse the json
    json::Value value;
-   if ( !json::parse(contents, &value) )
+   if ( !!value.parse(contents) )
       return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
 
    // return it
    if (json::isType<json::Object>(value))
-      *pProperties = value.get_value<json::Object>();
+      *pProperties = value.getValue<json::Object>();
    return Success();
 }
 
@@ -192,7 +190,7 @@ json::Value pathToProjectPath(const std::string& path)
    // return relative path if we are within the project directory
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (filePath.isWithin(projectContext.directory()))
-      return filePath.getRelativePath(projectContext.directory());
+      return json::Value(filePath.getRelativePath(projectContext.directory()));
    else
       return json::Value();
 }
@@ -205,7 +203,7 @@ std::string pathFromProjectPath(json::Value projPathJson)
       return std::string();
 
    // no proj path
-   std::string projPath = !projPathJson.is_null() ? projPathJson.get_str() :
+   std::string projPath = !projPathJson.isNull() ? projPathJson.getString() :
                                                     std::string();
    if (projPath.empty())
       return std::string();
@@ -231,7 +229,7 @@ Error attemptContentsMigration(json::Object& propertiesJson,
    
    // if the contents string is empty, bail (no need to migrate empty document;
    // also signals that an earlier migration occurred)
-   std::string contents = contentsJson.get_str();
+   std::string contents = contentsJson.getString();
    if (contents.empty())
       return Success();
    
@@ -310,12 +308,12 @@ SourceDocument::SourceDocument(const std::string& type)
 
 std::string SourceDocument::getProperty(const std::string& name) const
 {
-   json::Object::iterator it = properties_.find(name);
+   json::Object::Iterator it = properties_.find(name);
    if (it != properties_.end())
    {
-      json::Value valueJson = (*it).value();
+      json::Value valueJson = (*it).getValue();
       if (json::isType<std::string>(valueJson))
-         return valueJson.get_str();
+         return valueJson.getString();
       else
          return "";
    }
@@ -471,9 +469,9 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
    {
       json::Object& docJson = *pDocJson;
 
-      id_ = docJson["id"].get_str();
+      id_ = docJson["id"].getString();
       json::Value path = docJson["path"];
-      path_ = !path.is_null() ? path.get_str() : std::string();
+      path_ = !path.isNull() ? path.getString() : std::string();
 
       // if we have a project_path field then it supercedes the path field
       // (since it would correctly survive a moved project folder)
@@ -482,41 +480,41 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
          path_ = projPath;
 
       json::Value type = docJson["type"];
-      type_ = !type.is_null() ? type.get_str() : std::string();
+      type_ = !type.isNull() ? type.getString() : std::string();
 
-      setContents(docJson["contents"].get_str());
-      dirty_ = docJson["dirty"].get_bool();
-      created_ = docJson["created"].get_real();
-      sourceOnSave_ = docJson["source_on_save"].get_bool();
+      setContents(docJson["contents"].getString());
+      dirty_ = docJson["dirty"].getBool();
+      created_ = docJson["created"].getDouble();
+      sourceOnSave_ = docJson["source_on_save"].getBool();
 
       // read safely (migration)
       json::Value properties = docJson["properties"];
-      properties_ = !properties.is_null() ? properties.get_value<json::Object>() : json::Object();
+      properties_ = !properties.isNull() ? properties.getValue<json::Object>() : json::Object();
 
       json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
-      lastKnownWriteTime_ = !lastKnownWriteTime.is_null()
-                               ? lastKnownWriteTime.get_int64()
+      lastKnownWriteTime_ = !lastKnownWriteTime.isNull()
+                               ? lastKnownWriteTime.getInt64()
                                : 0;
 
       json::Value encoding = docJson["encoding"];
-      encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
+      encoding_ = !encoding.isNull() ? encoding.getString() : std::string();
 
       json::Value folds = docJson["folds"];
-      folds_ = !folds.is_null() ? folds.get_str() : std::string();
+      folds_ = !folds.isNull() ? folds.getString() : std::string();
 
       json::Value order = docJson["relative_order"];
-      relativeOrder_ = !order.is_null() ? order.get_int() : 0;
+      relativeOrder_ = !order.isNull() ? order.getInt() : 0;
 
       json::Value lastContentUpdate = docJson["last_content_update"];
-      lastContentUpdate_ = !lastContentUpdate.is_null() ? 
-                               lastContentUpdate.get_int64() : 0;
+      lastContentUpdate_ = !lastContentUpdate.isNull() ? 
+                               lastContentUpdate.getInt64() : 0;
 
       json::Value collabServer = docJson["collab_server"];
-      collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
+      collabServer_ = !collabServer.isNull() ? collabServer.getString() : 
                                                 std::string();
 
       json::Value sourceWindow = docJson["source_window"];
-      sourceWindow_ = !sourceWindow.is_null() ? sourceWindow.get_str() :
+      sourceWindow_ = !sourceWindow.isNull() ? sourceWindow.getString() :
                                                 std::string();
 
       return Success();
@@ -533,9 +531,9 @@ void SourceDocument::writeToJson(json::Object* pDocJson, bool includeContents) c
 {
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
-   jsonDoc["path"] = !path().empty() ? path_ : json::Value();
+   jsonDoc["path"] = !path().empty() ? json::Value(path_) : json::Value();
    jsonDoc["project_path"] = pathToProjectPath(path_);
-   jsonDoc["type"] = !type().empty() ? type_ : json::Value();
+   jsonDoc["type"] = !type().empty() ? json::Value(type_) : json::Value();
    jsonDoc["hash"] = hash();
    jsonDoc["contents"] = includeContents ? contents() : std::string();
    jsonDoc["dirty"] = dirty();
@@ -587,17 +585,15 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   std::ostringstream oss;
-   json::writeFormatted(jsonProperties, oss);
-   Error error = writeStringToFile(filePath, oss.str());
+   Error error = writeStringToFile(filePath, jsonProperties.writeFormatted());
    return error;
 }
 
-void SourceDocument::editProperty(const json::Member& property)
+void SourceDocument::editProperty(const json::Object::Member& property)
 {
-   if (property.value().is_null())
+   if (property.getValue().isNull())
    {
-      properties_.erase(property.name());
+      properties_.erase(property.getName());
    }
    else
    {
@@ -668,14 +664,14 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
    
       // parse the json
       json::Value value;
-      if (!json::parse(properties, &value))
+      if (value.parse(properties))
       {
          return systemError(boost::system::errc::invalid_argument,
                             ERROR_LOCATION);
       }
       
       // initialize doc from json
-      json::Object jsonDoc = value.get_obj();
+      json::Object jsonDoc = value.getObject();
       
       // migration: if we have a 'contents' field, but no '-contents' side-car
       // file, perform a one-time generation of that sidecar file from contents

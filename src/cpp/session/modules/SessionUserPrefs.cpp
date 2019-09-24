@@ -56,7 +56,7 @@ Error setPreferences(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return userPrefs().writeLayer(PREF_LAYER_USER, val.get_obj()); 
+   return userPrefs().writeLayer(PREF_LAYER_USER, val.getObject());
 }
 
 Error setState(const json::JsonRpcRequest& request,
@@ -67,7 +67,7 @@ Error setState(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   userState().writeLayer(STATE_LAYER_USER, val.get_obj()); 
+   userState().writeLayer(STATE_LAYER_USER, val.getObject());
 
    module_context::events().onPreferencesSaved();
 
@@ -148,11 +148,11 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    boost::optional<json::Value> previous = prefs.readValue(pref);
    if (previous)
    {
-      if ((*previous).type() != prefValue.type())
+      if ((*previous).getType() != prefValue.getType())
       {
          r::exec::error("Type mismatch: expected " + 
-                  json::typeAsString((*previous).type()) + "; got " +
-                  json::typeAsString(prefValue.type()));
+                  json::typeAsString((*previous).getType()) + "; got " +
+                  json::typeAsString(prefValue.getType()));
          return false;
       }
    }
@@ -265,10 +265,7 @@ SEXP rs_allPrefs()
       if (val)
       {
          sources.push_back(layer);
-
-         std::ostringstream oss;
-         json::write(*val, oss);
-         values.push_back(oss.str());
+         values.push_back(val->write());
       }
       else
       {

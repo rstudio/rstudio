@@ -1146,7 +1146,7 @@ bool isTextFile(const FilePath& targetPath)
    if (error)
    {
       LOG_ERROR(error);
-      return error;
+      return !!error;
    }
 
    // strip encoding
@@ -1909,8 +1909,8 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 {
    // construct our JSON RPC
    json::Array jsonParams;
-   jsonParams.push_back(consoleInput);
-   jsonParams.push_back("");
+   jsonParams.push_back(json::Value(consoleInput));
+   jsonParams.push_back(json::Value(""));
    
    json::Object jsonRpc;
    jsonRpc["method"] = "console_input";
@@ -1919,7 +1919,7 @@ Error enqueueConsoleInput(const std::string& consoleInput)
    
    // serialize for transmission
    std::ostringstream oss;
-   json::write(jsonRpc, oss);
+   jsonRpc.write(oss);
    
    // and fire it off
    consoleInputService().enqueue(oss.str());

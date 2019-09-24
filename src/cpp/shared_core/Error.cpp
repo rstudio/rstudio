@@ -234,12 +234,12 @@ Error::Error(
 
 Error::operator bool() const
 {
-   return !isError();
+   return isError();
 }
 
 bool Error::operator!() const
 {
-   return isError();
+   return !isError();
 }
 
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
@@ -382,6 +382,11 @@ Error::Impl& Error::impl() const
    if (m_impl == nullptr)
       const_cast<std::shared_ptr<Impl>*>(&m_impl)->reset(new Impl());
    return *m_impl;
+}
+
+std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
+{
+   return io_ostream << in_error.asString();
 }
 
 // Common error creation functions =====================================================================================

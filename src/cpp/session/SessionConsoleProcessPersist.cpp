@@ -319,9 +319,9 @@ void saveConsoleEnvironment(const std::string& handle, const core::system::Optio
       return;
    }
 
-   json::Object envJson = json::toJsonObject(environment);
+   json::Object envJson = json::Object(environment);
    std::ostringstream ostr;
-   json::writeFormatted(envJson, ostr);
+   envJson.writeFormatted(ostr);
    error = rstudio::core::writeStringToFile(log, ostr.str());
    if (error)
    {
@@ -351,7 +351,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
    }
 
    json::Value envJson;
-   if (!json::parse(jsonStr, &envJson) ||
+   if (!envJson.parse(jsonStr) ||
        !json::isType<json::Object>(envJson))
    {
       LOG_ERROR(systemError(boost::system::errc::protocol_error,
@@ -360,7 +360,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
       return;
    }
 
-   core::system::Options loadedEnvironment = json::optionsFromJson(envJson.get_obj());
+   core::system::Options loadedEnvironment = envJson.getObject().toStringPairList();
    for (const core::system::Option& var : loadedEnvironment)
    {
       core::system::setenv(pEnv, var.first, var.second);

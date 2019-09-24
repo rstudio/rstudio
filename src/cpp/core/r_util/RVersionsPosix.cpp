@@ -413,7 +413,7 @@ json::Object rVersionToJson(const RVersion& version)
 {
    json::Object versionJson;
    versionJson["number"] = version.number();
-   versionJson["environment"] = json::toJsonObject(version.environment());
+   versionJson["environment"] = json::Object(version.environment());
    versionJson["label"] = version.label();
    versionJson["module"] = version.module();
    versionJson["prelaunchScript"] = version.prelaunchScript();
@@ -439,8 +439,7 @@ Error rVersionFromJson(const json::Object& versionJson,
    if (error)
       return error;
 
-   *pVersion = RVersion(number,
-                        json::optionsFromJson(environmentJson));
+   *pVersion = RVersion(number, environmentJson.toStringPairList());
 
    pVersion->setLabel(label);
    pVersion->setModule(module);
@@ -468,7 +467,7 @@ Error rVersionsFromJson(const json::Array& versionsJson,
          return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
 
       r_util::RVersion rVersion;
-      Error error = rVersionFromJson(versionJson.get_obj(), &rVersion);
+      Error error = rVersionFromJson(versionJson.getObject(), &rVersion);
       if (error)
           return error;
 
@@ -482,9 +481,7 @@ Error rVersionsFromJson(const json::Array& versionsJson,
 Error writeRVersionsToFile(const FilePath& filePath,
                            const std::vector<r_util::RVersion>& versions)
 {
-   std::ostringstream ostr;
-   json::writeFormatted(versionsToJson(versions), ostr);
-   return core::writeStringToFile(filePath, ostr.str());
+   return core::writeStringToFile(filePath, versionsToJson(versions).writeFormatted());
 }
 
 Error readRVersionsFromFile(const FilePath& filePath,
@@ -499,7 +496,7 @@ Error readRVersionsFromFile(const FilePath& filePath,
    // parse json
    using namespace json;
    json::Value jsonValue;
-   if (!parse(contents, &jsonValue) || !isType<json::Array>(jsonValue))
+   if (!!jsonValue.parse(contents) || !isType<json::Array>(jsonValue))
    {
       Error error = systemError(boost::system::errc::bad_message,
                                 ERROR_LOCATION);
@@ -507,7 +504,7 @@ Error readRVersionsFromFile(const FilePath& filePath,
       return error;
    }
 
-   return rVersionsFromJson(jsonValue.get_array(), pVersions);
+   return rVersionsFromJson(jsonValue.getArray(), pVersions);
 }
 
 Error validatedReadRVersionsFromFile(const FilePath& filePath,

@@ -40,6 +40,29 @@ namespace config_file {
 
 namespace {
 
+enum class ConfigErrorCode
+{
+   SUCCESS = 0,
+   READ_ERROR = 1,
+   WRITE_ERROR = 2
+};
+
+Error configError(ConfigErrorCode code, const Error& cause, const ErrorLocation& location)
+{
+   static constexpr const char* errorName = { "config_error" };
+   switch (code)
+   {
+      case ConfigErrorCode::SUCCESS:
+         return Success();
+      case ConfigErrorCode::READ_ERROR:
+         return Error(static_cast<int>(code), errorName, "Error while reading config file.", cause, location);
+      case ConfigErrorCode::WRITE_ERROR:
+         return Error(static_cast<int>(code), errorName, "Error while writing config file.", cause, location);
+      default:
+         return Error(static_cast<int>(code), errorName, "Unknown config error.", cause, location);
+   }
+}
+
 // Writes JSON configuration data to the user configuration folder.
 Error writeConfigJSON(const core::json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
@@ -65,8 +88,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    }
    
    // Write the new configuration data.
-   std::string contents = json::writeFormatted(object);
-   error = writeStringToFile(filePath, contents);
+   error = writeStringToFile(filePath, object.writeFormatted());
    if (error)
    {
       LOG_ERROR(error);
@@ -135,9 +157,10 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
          }
       }
       
-      error = json::parse(contents, ERROR_LOCATION, &configJson);
+      error = configJson.parse(contents);
       if (error)
       {
+         error = configError(ConfigErrorCode::READ_ERROR, error, ERROR_LOCATION);
          LOG_ERROR(error);
          if (!systemConfig.exists())
          {
@@ -161,20 +184,21 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
       else
       {
          json::Value systemJson;
-         error = json::parse(contents, ERROR_LOCATION, &systemJson);
+         error = systemJson.parse(contents);
          if (error)
          {
+            error = configError(ConfigErrorCode::READ_ERROR, error, ERROR_LOCATION);
             LOG_ERROR(error);
             if (!userConfig.exists())
             {
                return error;
             }
          }
-         else if (systemJson.type() == json::ObjectType &&
-                  configJson.type() == json::ObjectType)
+         else if (systemJson.getType() == json::Type::OBJECT &&
+                  configJson.getType() == json::Type::OBJECT)
          {
             // If we have successfully read two config sources, merge them
-            configJson = json::merge(configJson.get_obj(), systemJson.get_obj());
+            configJson = json::Object::mergeObjects(configJson.getObject(), systemJson.getObject());
          }
       }
    }

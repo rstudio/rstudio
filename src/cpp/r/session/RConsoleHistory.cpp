@@ -144,7 +144,7 @@ void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 {
    const_iterator it = begin();
    while(it != end())
-      pHistoryArray->push_back(*it++);
+      pHistoryArray->push_back(json::Value(*it++));
 }
       
 Error ConsoleHistory::loadFromFile(const FilePath& filePath,

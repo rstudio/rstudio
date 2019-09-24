@@ -208,7 +208,11 @@ json::Object Job::toJson() const
       error = r::sexp::getNames(actions_.get(), &names);
       if (!error)
       {
-         std::copy(names.begin(), names.end(), std::back_inserter(actions));
+         std::transform(
+            names.begin(),
+            names.end(),
+            std::back_inserter(actions),
+            [](const std::string& val) { return json::Value(val); });
       }
    }
 
@@ -375,9 +379,9 @@ void Job::addOutput(const std::string& output, bool asError)
    if (listening_)
    {
       json::Array data;
-      data.push_back(id_);
-      data.push_back(type);
-      data.push_back(output);
+      data.push_back(json::Value(id_));
+      data.push_back(json::Value(type));
+      data.push_back(json::Value(output));
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobOutput, data));
    }
@@ -411,9 +415,9 @@ void Job::addOutput(const std::string& output, bool asError)
 
    // create json array with output and write it to the file
    json::Array contents;
-   contents.push_back(type);
-   contents.push_back(output);
-   json::write(contents, *file);
+   contents.push_back(json::Value(type));
+   contents.push_back(json::Value(output));
+   contents.write(*file);
 
    // append a newline (the file is newline-delimited JSON)
    *file << std::endl;
@@ -450,7 +454,7 @@ json::Array Job::output(int position)
          std::getline(*pIfs, content);
          if (++line > position)
          {
-            if (json::parse(content, &val))
+            if (!val.parse(content))
             {
                output.push_back(val);
             }

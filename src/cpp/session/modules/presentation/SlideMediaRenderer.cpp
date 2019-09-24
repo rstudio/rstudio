@@ -111,9 +111,7 @@ std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
       cmdsArray.push_back(atCmd.asJson());
    }
 
-   std::ostringstream ostr;
-   json::write(cmdsArray, ostr);
-   return ostr.str();
+   return cmdsArray.write();
 }
 
 } // anonymous namespace

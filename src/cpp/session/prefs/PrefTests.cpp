@@ -40,37 +40,36 @@ std::string findMissingDefaults(const FilePath& schemaFile)
    Error error = core::readStringFromFile(schemaFile, &schemaContents);
    if (error)
       return error.asString();
-   error = json::parse(schemaContents, ERROR_LOCATION, &value);
+   error = value.parse(schemaContents);
    if (error)
       return error.asString();
 
    // Find properties (prefs)
-   json::Object schema = value.get_obj();
-   json::Object::iterator objProperties = schema.find("properties");
-   if (objProperties == schema.end() ||
-       (*objProperties).value().type() != json::ObjectType)
+   json::Object schema = value.getObject();
+   json::Object::Iterator objProperties = schema.find("properties");
+   if (objProperties == schema.end() || !(*objProperties).getValue().isObject())
    {
       return "No properties found";
    }
-   const json::Object& properties = (*objProperties).value().get_obj();
+   const json::Object& properties = (*objProperties).getValue().getObject();
 
    // Ensure each property has a default value
    for (auto prop: properties)
    {
-      const json::Object& definition = prop.value().get_obj();
-      json::Object::iterator type = definition.find("type");
+      const json::Object& definition = prop.getValue().getObject();
+      json::Object::Iterator type = definition.find("type");
       if (type != definition.end())
       {
-         if ((*type).value().get_str() == "object")
+         if ((*type).getValue().getString() == "object")
          {
             // Exempt object types from the requirement for a default (only scalars need defaults)
             continue;
          }
       }
-      json::Object::iterator def = definition.find("default");
+      json::Object::Iterator def = definition.find("default");
       if (def == definition.end())
       {
-         return "Pref named '" + prop.name() + "' does not have a default.";
+         return "Pref named '" + prop.getName() + "' does not have a default.";
       }
    }
 
@@ -97,24 +96,24 @@ test_context("default validation")
    {
       UserPrefsDefaultLayer defaults;
       Error error = defaults.readPrefs();
-      expect_true(error == Success());
+      expect_true(!error);
 
       error = defaults.validatePrefsFromSchema(
          options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
       INFO(error.asString());
-      expect_true(error == Success());
+      expect_true(!error);
    }
 
    test_that("user state defaults are valid according to their schema")
    {
       UserStateDefaultLayer defaults;
       Error error = defaults.readPrefs();
-      expect_true(error == Success());
+      expect_true(!error);
 
       error = defaults.validatePrefsFromSchema(
          options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
       INFO(error.asString());
-      expect_true(error == Success());
+      expect_true(!error);
    }
 }
 

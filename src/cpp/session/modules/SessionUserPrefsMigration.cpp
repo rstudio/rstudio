@@ -46,10 +46,10 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
       if (key == kPanes)
       {
          // Migrate pane locations
-         json::Object::iterator it = uiPrefs.find("pane_config");
+         json::Object::Iterator it = uiPrefs.find("pane_config");
          if (it != uiPrefs.end())
          {
-            json::Object old = (*it).value().get_obj();
+            json::Object old = (*it).getValue().getObject();
             json::Object panes;
             panes[kPanesQuadrants] = old["panes"];
             panes[kPanesTabSet1] = old["tabSet1"];
@@ -101,11 +101,11 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
       }
       else if (key == kEditorTheme)
       {
-         json::Object::iterator it = uiPrefs.find("rstheme");
+         json::Object::Iterator it = uiPrefs.find("rstheme");
          if (it != uiPrefs.end())
          {
             std::string theme;
-            json::getOptionalParam((*it).value().get_obj(), "name", std::string(), &theme);
+            json::getOptionalParam((*it).getValue().getObject(), "name", std::string(), &theme);
             if (!theme.empty())
             {
                // We only need to preserve the name of the theme; the other theme properties will be
@@ -127,10 +127,10 @@ void migrateUiPrefs(const json::Object& uiPrefs, json::Object* dest)
       else
       {
          // Most UI prefs can just be copied to the new system without modification.
-         json::Object::iterator it = uiPrefs.find(key);
+         json::Object::Iterator it = uiPrefs.find(key);
          if (it != uiPrefs.end())
          {
-            (*dest)[key] = (*it).value();
+            (*dest)[key] = (*it).getValue();
          }
       }
    }
@@ -161,18 +161,18 @@ core::Error migratePrefs(const FilePath& src)
    if (!uiPrefs.empty())
    {
       json::Value val;
-      err = json::parse(uiPrefs, ERROR_LOCATION, &val);
+      err = val.parse(uiPrefs);
       if (err)
       {
-         LOG_ERROR(err);
+         log::logError(err, ERROR_LOCATION);
       }
-      else if (val.type() == json::ObjectType)
+      else if (val.getType() == json::Type::OBJECT)
       {
          // Migrate UI prefs; guard against JSON exceptions (there's a lot of potential for these
          // due to malformed or invalid prefs files from the wild)
          try
          {
-            migrateUiPrefs(val.get_obj(), &destPrefs);
+            migrateUiPrefs(val.getObject(), &destPrefs);
          }
          CATCH_UNEXPECTED_EXCEPTION
       }

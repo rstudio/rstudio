@@ -650,16 +650,16 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
+            rowData.push_back(json::Value(Rf_translateCharUTF8(nameSEXP)));
          }
          else
          {
-            rowData.push_back(row + start);
+            rowData.push_back(json::Value(row + start));
          }
       }
       else
       {
-         rowData.push_back(row + start);
+         rowData.push_back(json::Value(row + start));
       }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
@@ -674,20 +674,20 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
+               rowData.push_back(json::Value(Rf_translateCharUTF8(stringSEXP)));
             }
             else if (stringSEXP == NA_STRING)
             {
-               rowData.push_back(SPECIAL_CELL_NA);
+               rowData.push_back(json::Value(SPECIAL_CELL_NA));
             }
             else
             {
-               rowData.push_back("");
+               rowData.push_back(json::Value(""));
             }
          }
          else
          {
-            rowData.push_back("");
+            rowData.push_back(json::Value(""));
          }
       }
       data.push_back(rowData);
@@ -785,9 +785,6 @@ Error getGridData(const http::Request& request,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   std::ostringstream ostr;
-   json::write(result, ostr);
-
    // There are some unprintable ASCII control characters that are written
    // verbatim by json::write, but that won't parse in most Javascript JSON
    // parsing implementations, even if contained in a string literal. Scan the
@@ -796,7 +793,7 @@ Error getGridData(const http::Request& request,
    // unprintable and (b) some characters are invalid *even if escaped* e.g.
    // \v, there's little to be gained here in trying to marshal them to the
    // viewer.
-   std::string output = ostr.str();
+   std::string output = result.write();
    for (size_t i = 0; i < output.size(); i++)
    {
       char c = output[i];

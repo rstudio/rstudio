@@ -753,12 +753,12 @@ Error executeAlternateEngineChunk(const std::string& docId,
 
    // read json chunk options
    std::map<std::string, std::string> options;
-   for (json::Object::iterator it = jsonChunkOptions.begin();
+   for (json::Object::Iterator it = jsonChunkOptions.begin();
         it != jsonChunkOptions.end();
         ++it)
    {
-      if ((*it).value().type() == json::StringType)
-         options[(*it).name()] = (*it).value().get_str();
+      if ((*it).getValue().getType() == json::Type::STRING)
+         options[(*it).getName()] = (*it).getValue().getString();
    }
 
    // set working directory

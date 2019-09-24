@@ -392,7 +392,7 @@ std::string presentationCommandClickHandler(const std::string& name,
    using namespace boost::algorithm;
    cmdObj["name"] = name;
    cmdObj["params"] = params;
-   json::write(cmdObj, ostr);
+   cmdObj.write(ostr);
    ostr << "); return false;'";
    return ostr.str();
 }

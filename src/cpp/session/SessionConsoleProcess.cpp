@@ -88,7 +88,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
    {
       std::vector<std::string> whitelist;
-      core::json::fillVectorString(prefs::userPrefs().busyWhitelist(), &whitelist);
+      prefs::userPrefs().busyWhitelist().toVectorString(whitelist);
       options.subprocWhitelist = whitelist;
    }
 

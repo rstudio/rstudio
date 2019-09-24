@@ -217,11 +217,11 @@ Error fromJson(
       if (!json::isType<json::Object>(value))
          return json::errors::typeMismatch(
                   value,
-                  json::ObjectType,
+                  json::Type::OBJECT,
                   ERROR_LOCATION);
       
       ProjectTemplateWidgetDescription widget;
-      error = fromJson(value.get_obj(), &widget);
+      error = fromJson(value.getObject(), &widget);
       if (error)
          return error;
       

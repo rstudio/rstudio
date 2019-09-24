@@ -64,9 +64,9 @@ void historyEntriesAsJson(const std::vector<HistoryEntry>& entries,
    json::Array indexArray, timestampArray, commandArray;
    for (std::size_t i=0; i<entries.size(); i++)
    {
-      indexArray.push_back(entries[i].index);
-      timestampArray.push_back(entries[i].timestamp);
-      commandArray.push_back(entries[i].command);
+      indexArray.push_back(json::Value(entries[i].index));
+      timestampArray.push_back(json::Value(entries[i].timestamp));
+      commandArray.push_back(json::Value(entries[i].command));
    }
    
    // set arrays into result object
@@ -207,12 +207,12 @@ Error removeHistoryItems(const json::JsonRpcRequest& request,
    // convert to top indexes
    int historySize = r::session::consoleHistory().size();
    std::vector<int> indexes;
-   for (std::size_t i=0; i<bottomIndexesJson.size(); i++)
+   for (std::size_t i=0; i<bottomIndexesJson.getSize(); i++)
    {  
       const json::Value& value = bottomIndexesJson[i];
       if (json::isType<int>(value))
       {
-         int bottomIndex = value.get_int();
+         int bottomIndex = value.getInt();
          int topIndex = historySize - 1 - bottomIndex;
          indexes.push_back(topIndex);
       }

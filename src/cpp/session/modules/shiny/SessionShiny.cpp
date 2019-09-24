@@ -18,7 +18,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
-#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/YamlUtil.hpp>
@@ -30,6 +29,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUrlPorts.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #define kShinyTypeNone       "none"
 #define kShinyTypeDirectory  "shiny-dir"
@@ -268,8 +270,8 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       {
          pResponse->setError(
                   fileExistsError(ERROR_LOCATION),
-                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
-                  "and is not a directory");
+                  json::Value("The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not a directory"));
          return Success();
       }
       
@@ -282,8 +284,8 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       {
          pResponse->setError(
                   fileExistsError(ERROR_LOCATION),
-                  "The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
-                  "and is not empty");
+                  json::Value("The directory '" + module_context::createAliasedPath(shinyDir) + "' already exists "
+                  "and is not empty"));
          return Success();
       }
    }
@@ -319,7 +321,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
       
-      result.push_back(aliasedPath);
+      result.push_back(json::Value(aliasedPath));
    }
    
    if (!existingFiles.empty())
@@ -339,7 +341,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       
       pResponse->setError(
                fileExistsError(ERROR_LOCATION),
-               message);
+               json::Value(message));
       return Success();
    }
    
@@ -351,7 +353,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       if (error)
       {
          std::string aliasedPath = module_context::createAliasedPath(target);
-         pResponse->setError(error, "Failed to write '" + aliasedPath + "'");
+         pResponse->setError(error, json::Value("Failed to write '" + aliasedPath + "'"));
          return Success();
       }
    }

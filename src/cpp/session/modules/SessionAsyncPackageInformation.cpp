@@ -85,16 +85,16 @@ void fillFormalInfo(const json::Array& formalNamesJson,
                     const json::Array& formalInfoJsonArray,
                     FunctionInformation* pInfo)
 {
-   for (std::size_t i = 0, n = formalNamesJson.size(); i < n; ++i)
+   for (std::size_t i = 0, n = formalNamesJson.getSize(); i < n; ++i)
    {
-      std::string formalName = formalNamesJson[i].get_str();
+      std::string formalName = formalNamesJson[i].getString();
       FormalInformation info(formalName);
       
-      const json::Array& formalInfoJson = formalInfoJsonArray[i].get_array();
+      const json::Array& formalInfoJson = formalInfoJsonArray[i].getArray();
       
-      bool hasDefaultValue = formalInfoJson[0].get_int() != 0;
-      bool isMissingnessHandled = formalInfoJson[1].get_int() != 0;
-      bool isUsed = formalInfoJson[2].get_int() != 0;
+      bool hasDefaultValue = formalInfoJson[0].getInt() != 0;
+      bool isMissingnessHandled = formalInfoJson[1].getInt() != 0;
+      bool isUsed = formalInfoJson[2].getInt() != 0;
       
       info.setHasDefaultValue(hasDefaultValue);
       info.setMissingnessHandled(isMissingnessHandled);
@@ -110,17 +110,17 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
 {
    using namespace core::json;
    
-   for (const json::Member& member : functionObjectJson)
+   for (const json::Object::Member& member : functionObjectJson)
    {
-      const std::string& functionName = member.name();
+      const std::string& functionName = member.getName();
       FunctionInformation info(functionName, pkgName);
       
-      const json::Value& valueJson = member.value();
+      const json::Value& valueJson = member.getValue();
       
       json::Array formalNamesJson;
       json::Array formalInfoJson;
       int performsNse = 0;
-      Error error = json::readObject(valueJson.get_obj(),
+      Error error = json::readObject(valueJson.getObject(),
                                      "formal_names", &formalNamesJson,
                                      "formal_info",  &formalInfoJson,
                                      "performs_nse", &performsNse);
@@ -194,7 +194,7 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       std::string line = splat[i].substr(::strlen("#!json: "));
       
       json::Value value;
-      if (!json::parse(line, &value))
+      if (!value.parse(line))
       {
          std::string subset;
          if (splat[i].length() > 60)
@@ -211,7 +211,7 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       if (!json::isType<json::Object>(value))
          continue;
       
-      Error error = json::readObject(value.get_obj(),
+      Error error = json::readObject(value.getObject(),
                                      "package", &pkgInfo.package,
                                      "exports", &exportsJson,
                                      "types", &typesJson,
@@ -226,16 +226,16 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 
       DEBUG("Adding entry for package: '" << pkgInfo.package << "'");
 
-      if (!json::fillVectorString(exportsJson, &(pkgInfo.exports)))
+      if (!exportsJson.toVectorString(pkgInfo.exports))
          LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
 
-      if (!json::fillVectorInt(typesJson, &(pkgInfo.types)))
+      if (!typesJson.toVectorInt(pkgInfo.types))
          LOG_ERROR_MESSAGE("Failed to read JSON 'types' array to vector");
 
       if (!fillFunctionInfo(functionInfoJson, pkgInfo.package, &(pkgInfo.functionInfo)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
       
-      if (!json::fillVectorString(datasetsJson, &(pkgInfo.datasets)))
+      if (!datasetsJson.toVectorString(pkgInfo.datasets))
          LOG_ERROR_MESSAGE("Failed to read JSON 'data' array to vector");
       
       // Update the index

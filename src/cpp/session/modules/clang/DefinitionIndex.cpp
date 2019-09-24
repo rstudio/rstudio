@@ -477,14 +477,14 @@ void loadDefinitionIndex()
    }
 
    json::Value indexValueJson;
-   if (!json::parse(contents, &indexValueJson) ||
+   if (!!indexValueJson.parse(contents) ||
        !json::isType<json::Array>(indexValueJson))
    {
       LOG_ERROR_MESSAGE("Error parsing definition index: " + contents);
       return;
    }
 
-   const json::Array& indexJson = indexValueJson.get_array();
+   const json::Array& indexJson = indexValueJson.getArray();
    for (const json::Value& definitionsJson : indexJson)
    {
       if (!json::isType<json::Object>(definitionsJson))
@@ -496,7 +496,7 @@ void loadDefinitionIndex()
       json::Array defsArrayJson;
       double fileLastWrite;
       CppDefinitions definitions;
-      Error error = json::readObject(definitionsJson.get_obj(),
+      Error error = json::readObject(definitionsJson.getObject(),
                                      "file", &definitions.file,
                                      "file_last_write", &fileLastWrite,
                                      "definitions", &defsArrayJson);
@@ -519,7 +519,7 @@ void loadDefinitionIndex()
             continue;
          }
 
-         CppDefinition definition = cppDefinitionFromJson(defJson.get_obj());
+         CppDefinition definition = cppDefinitionFromJson(defJson.getObject());
          if (!definition.empty())
             definitions.definitions.push_back(definition);
       }
@@ -551,9 +551,8 @@ void saveDefinitionIndex()
       indexJson.push_back(definitionsJson);
    }
 
-   std::ostringstream ostr;
-   json::writeFormatted(indexJson, ostr);
-   Error error = writeStringToFile(definitionIndexFilePath(), ostr.str());
+   ;
+   Error error = writeStringToFile(definitionIndexFilePath(), indexJson.writeFormatted());
    if (error)
       LOG_ERROR(error);
 }

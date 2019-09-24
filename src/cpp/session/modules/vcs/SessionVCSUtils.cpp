@@ -62,7 +62,7 @@ FilePath fileFilterPath(const json::Value& fileFilterJson)
    if (json::isType<std::string>(fileFilterJson))
    {
       // get the underlying file path
-      std::string aliasedPath= fileFilterJson.get_str();
+      std::string aliasedPath= fileFilterJson.getString();
       return module_context::resolveAliasedPath(aliasedPath);
    }
    else

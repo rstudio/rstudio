@@ -475,9 +475,7 @@ void RCompilationDatabase::savePackageCompilationConfig()
    configJson["is_cpp"] = packageCompilationConfig_.isCpp;
    configJson["hash"] = packageBuildFileHash_;
 
-   std::ostringstream ostr;
-   json::writeFormatted(configJson, ostr);
-   Error error = writeStringToFile(compilationConfigFilePath(), ostr.str());
+   Error error = writeStringToFile(compilationConfigFilePath(), configJson.writeFormatted());
    if (error)
       LOG_ERROR(error);
 }
@@ -497,7 +495,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 
    json::Value configJson;
-   if (!json::parse(contents, &configJson) ||
+   if (!!configJson.parse(contents) ||
        !json::isType<json::Object>(configJson))
    {
       LOG_ERROR_MESSAGE("Error parsing compilation config: " + contents);
@@ -505,7 +503,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 
    json::Array argsJson;
-   error = json::readObject(configJson.get_obj(),
+   error = json::readObject(configJson.getObject(),
                             "args", &argsJson,
                             "pch", &packageCompilationConfig_.PCH,
                             "is_cpp", &packageCompilationConfig_.isCpp,
@@ -521,7 +519,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    for (const json::Value& argJson : argsJson)
    {
       if (json::isType<std::string>(argJson))
-         packageCompilationConfig_.args.push_back(argJson.get_str());
+         packageCompilationConfig_.args.push_back(argJson.getString());
    }
 }
 

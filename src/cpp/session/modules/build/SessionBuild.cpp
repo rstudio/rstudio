@@ -1898,7 +1898,7 @@ Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
 
 struct BuildContext
 {
-   bool empty() const { return errors.empty() && outputs.empty(); }
+   bool empty() const { return errors.isEmpty() && outputs.isEmpty(); }
    std::string errorsBaseDir;
    json::Array errors;
    json::Array outputs;
@@ -1911,14 +1911,8 @@ BuildContext s_suspendBuildContext;
 void writeBuildContext(const BuildContext& buildContext,
                        core::Settings* pSettings)
 {
-   std::ostringstream ostr;
-   json::write(buildContext.outputs, ostr);
-   pSettings->set("build-last-outputs", ostr.str());
-
-   std::ostringstream ostrErrors;
-   json::write(buildContext.errors, ostrErrors);
-   pSettings->set("build-last-errors", ostrErrors.str());
-
+   pSettings->set("build-last-outputs", buildContext.outputs.write());
+   pSettings->set("build-last-errors", buildContext.errors.write());
    pSettings->set("build-last-errors-base-dir", buildContext.errorsBaseDir);
 }
 
@@ -1950,10 +1944,10 @@ void onResume(const core::Settings& settings)
    if (!buildLastOutputs.empty())
    {
       json::Value outputsJson;
-      if (json::parse(buildLastOutputs, &outputsJson) &&
+      if (!outputsJson.parse(buildLastOutputs) &&
           json::isType<json::Array>(outputsJson))
       {
-         s_suspendBuildContext.outputs = outputsJson.get_value<json::Array>();
+         s_suspendBuildContext.outputs = outputsJson.getValue<json::Array>();
       }
    }
 
@@ -1962,10 +1956,10 @@ void onResume(const core::Settings& settings)
    if (!buildLastErrors.empty())
    {
       json::Value errorsJson;
-      if (json::parse(buildLastErrors, &errorsJson) &&
+      if (!errorsJson.parse(buildLastErrors) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendBuildContext.errors = errorsJson.get_value<json::Array>();
+         s_suspendBuildContext.errors = errorsJson.getValue<json::Array>();
       }
    }
 }

@@ -1492,12 +1492,12 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
                                           bool includeRenameNew = true)
 {
    std::vector<FilePath> results;
-   for (json::Array::iterator it = paths.begin();
+   for (json::Array::Iterator it = paths.begin();
         it != paths.end();
         it++)
    {
       std::string oldPath, newPath;
-      if (splitRename((*it).get_str(), &oldPath, &newPath))
+      if (splitRename((*it).getString(), &oldPath, &newPath))
       {
          if (includeRenameOld)
             results.push_back(resolveAliasedPath(oldPath));
@@ -1506,7 +1506,7 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
       }
       else
       {
-         results.push_back(resolveAliasedPath((*it).get_str()));
+         results.push_back(resolveAliasedPath((*it).getString()));
       }
    }
    return results;
@@ -1847,7 +1847,7 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    {
       if (error.getCode() == boost::system::errc::illegal_byte_sequence)
       {
-         pResponse->setError(error, error.getProperty("description"));
+         pResponse->setError(error, json::Value(error.getProperty("description")));
          return Success();
       }
 
@@ -2304,20 +2304,28 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it != commits.end();
         it++)
    {
-      ids.push_back(it->id.substr(0, 8));
-      authors.push_back(string_utils::filterControlChars(it->author));
-      parents.push_back(string_utils::filterControlChars(it->parent));
-      subjects.push_back(string_utils::filterControlChars(it->subject));
-      descriptions.push_back(string_utils::filterControlChars(it->description));
-      dates.push_back(static_cast<double>(it->date));
-      graphs.push_back(it->graph);
+      ids.push_back(json::Value(it->id.substr(0, 8)));
+      authors.push_back(json::Value(string_utils::filterControlChars(it->author)));
+      parents.push_back(json::Value(string_utils::filterControlChars(it->parent)));
+      subjects.push_back(json::Value(string_utils::filterControlChars(it->subject)));
+      descriptions.push_back(json::Value(string_utils::filterControlChars(it->description)));
+      dates.push_back(json::Value(static_cast<double>(it->date)));
+      graphs.push_back(json::Value(it->graph));
 
       json::Array theseRefs;
-      std::copy(it->refs.begin(), it->refs.end(), std::back_inserter(theseRefs));
+      std::transform(
+         it->refs.begin(),
+         it->refs.end(),
+         std::back_inserter(theseRefs),
+         [](const std::string& val) { return json::Value(val); });
       refs.push_back(theseRefs);
 
       json::Array theseTags;
-      std::copy(it->tags.begin(), it->tags.end(), std::back_inserter(theseTags));
+      std::transform(
+         it->tags.begin(),
+         it->tags.end(),
+         std::back_inserter(theseTags),
+         [](const std::string& val) { return json::Value(val); });
       tags.push_back(theseTags);
    }
 

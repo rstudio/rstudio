@@ -126,7 +126,7 @@ public:
          return;
       }
 
-      json::writeFormatted(toJson(), *pStream);
+      toJson().writeFormatted(*pStream);
    }
 
    void loadFromFile(const core::FilePath& filePath)
@@ -147,20 +147,20 @@ public:
       // check but don't log for unexpected input because we are the only ones
       // that write this file
       json::Value parsedJson;
-      if (json::parse(contents, &parsedJson) &&
+      if (parsedJson.parse(contents) &&
           json::isType<json::Object>(parsedJson))
       {
-         const json::Object& addinsJson = parsedJson.get_obj();
+         const json::Object& addinsJson = parsedJson.getObject();
 
-         for(const json::Member& member : addinsJson)
+         for(const json::Object::Member& member : addinsJson)
          {
-            const std::string& key = member.name();
-            const json::Value& valueJson = member.value();
+            const std::string& key = member.getName();
+            const json::Value& valueJson = member.getValue();
             if (json::isType<json::Object>(valueJson))
             {
                bool interactive;
                std::string name, package, title, description, binding;
-               Error error = json::readObject(valueJson.get_obj(),
+               Error error = json::readObject(valueJson.getObject(),
                                               "name", &name,
                                               "package", &package,
                                               "title", &title,
@@ -178,7 +178,7 @@ public:
                // we don't log errors as they're rather noisy and otherwise
                // harmless)
                int ordinal = 0;
-               json::readObject(valueJson.get_obj(), "ordinal", &ordinal);
+               json::readObject(valueJson.getObject(), "ordinal", &ordinal);
                addins_[key] = AddinSpecification(name,
                                                  package,
                                                  title,
@@ -467,7 +467,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    if (!addinRegistry().contains(pkgName, cmdName))
    {
       std::string message = "no addin with id '" + commandId + "' registered";
-      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), json::Value(message));
       return Success();
    }
    
@@ -476,7 +476,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    {
       std::string message =
             "no function '" + cmdName + "' found in package '" + pkgName + "'";
-      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), json::Value(message));
       return Success();
    }
    

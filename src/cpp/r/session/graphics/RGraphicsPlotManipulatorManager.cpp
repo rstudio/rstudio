@@ -41,22 +41,28 @@ namespace graphics {
 namespace {
 
 void setManipulatorJsonValue(SEXP manipulatorSEXP,
-                             const json::Member& object)
+                             const std::string& objectName,
+                             const json::Value& objectValue)
 {
    // get the actual value to assign
    r::exec::RFunction setFunction("manipulate:::setManipulatorValue");
    setFunction.addParam(manipulatorSEXP);
-   setFunction.addParam(object.name());
-   setFunction.addParam(object.value());
+   setFunction.addParam(objectName);
+   setFunction.addParam(objectValue);
    Error error = setFunction.call();
    if (error)
       LOG_ERROR(error);
 }
 
+void setManipulatorJsonValue(SEXP manipulatorSEXP,
+                             const json::Object::Member& in_object)
+{
+   setManipulatorJsonValue(manipulatorSEXP, in_object.getName(), in_object.getValue());
+}
+
 void setManipulatorValueToFalse(SEXP manipulatorSEXP, const std::string& name)
 {
-   setManipulatorJsonValue(manipulatorSEXP,
-                           json::Member(name, json::toJsonValue(false)));
+   setManipulatorJsonValue(manipulatorSEXP, name, json::toJsonValue(false));
 }
 
 

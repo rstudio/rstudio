@@ -119,7 +119,7 @@ void buildFontDatabase()
                &result);
 
       bool didReturnFonts =
-            error == Success() &&
+            !error &&
             result.exitStatus == EXIT_SUCCESS &&
             !result.stdOut.empty();
 

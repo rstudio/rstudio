@@ -132,11 +132,11 @@ Error getChunkJson(const FilePath& defs, json::Object *pJson)
 
    // pull out the contents
    json::Value defContents;
-   if (!json::parse(contents, &defContents) || 
-       defContents.type() != json::ObjectType)
+   if (!!defContents.parse(contents) ||
+       defContents.getType() != json::Type::OBJECT)
       return Error(json::errc::ParseError, ERROR_LOCATION);
 
-   *pJson = defContents.get_value<json::Object>();
+   *pJson = defContents.getValue<json::Object>();
 
    return Success();
 }
@@ -198,10 +198,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
    defContents[kChunkDefs] = newDefs;
    defContents[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);
 
-   std::ostringstream oss;
-   json::write(defContents, oss);
-
-   error = writeStringToFile(defFile, oss.str());
+   error = writeStringToFile(defFile, defContents.write());
    if (error)
    {
       LOG_ERROR(error);
@@ -216,11 +213,10 @@ void extractChunkIds(const json::Array& chunkOutputs,
 {
    for (const json::Value& chunkOutput : chunkOutputs)
    {
-      if (chunkOutput.type() != json::ObjectType)
+      if (chunkOutput.getType() != json::Type::OBJECT)
          continue;
       std::string chunkId;
-      if (json::readObject(chunkOutput.get_obj(), kChunkId, &chunkId) ==
-            Success()) 
+      if (!json::readObject(chunkOutput.getObject(), kChunkId, &chunkId))
       {
          pIds->push_back(chunkId);
       }

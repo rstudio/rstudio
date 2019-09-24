@@ -403,7 +403,7 @@ Error availablePackages(const core::json::JsonRpcRequest&,
    // return as json
    json::Array jsonResults;
    for (size_t i = 0; i < availablePackages.size(); i++)
-      jsonResults.push_back(availablePackages.at(i));
+      jsonResults.push_back(json::Value(availablePackages.at(i)));
    pResponse->setResult(jsonResults);
    return Success();
 }
@@ -421,7 +421,7 @@ Error getPackageStateJson(json::Object* pJson)
    r::sexp::Protect protect;
    SEXP packageList;
 
-   bool renvActive = renvContext.get_obj()["active"].get_bool();
+   bool renvActive = renvContext.getObject()["active"].getBool();
 
    // determine the appropriate package listing method from the current
    // packrat mode status

@@ -54,18 +54,18 @@ namespace {
 std::string quotedFilesFromArray(json::Array array, bool quoted) 
 {
    std::string joined;
-   for (size_t i = 0; i < array.size(); i++) 
+   for (size_t i = 0; i < array.getSize(); i++)
    {
       // convert filenames to system encoding and escape quotes if quoted
       std::string filename = 
          string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-                  array[i].get_str()));
+                  array[i].getString()));
 
       // join into a single string
       joined += (quoted ? "'" : "") + 
                 filename +
                 (quoted ? "'" : "");
-      if (i < array.size() - 1) 
+      if (i < array.getSize() - 1)
          joined += (quoted ? ", " : "|");
    }
    return joined;
@@ -74,7 +74,7 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
 // transforms a FilePath into an aliased json string
 json::Value toJsonString(const core::FilePath& filePath)
 {
-   return module_context::createAliasedPath(filePath);
+   return json::Value(module_context::createAliasedPath(filePath));
 }
 
 class RSConnectPublish : public async_r::AsyncRProcess
@@ -121,7 +121,7 @@ public:
       }
 
       // create temporary file to host file manifest
-      if (!fileList.empty())
+      if (!fileList.isEmpty())
       {
          Error error = FilePath::tempFilePath(pDeploy->manifestPath_);
          if (error)
@@ -129,7 +129,7 @@ public:
 
          // write manifest to temporary file
          std::vector<std::string> deployFileList;
-         json::fillVectorString(fileList, &deployFileList);
+         fileList.toVectorString(deployFileList);
          error = core::writeStringVectorToFile(pDeploy->manifestPath_, 
                                                deployFileList);
          if (error)
@@ -393,7 +393,7 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
 
    // we want to always return an array, even if it's just one element long, so
    // wrap the result in an array if it isn't one already
-   if (result.type() != json::ArrayType) 
+   if (result.getType() != json::Type::ARRAY)
    {
       json::Array singleEle;
       singleEle.push_back(result);
@@ -483,9 +483,9 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    // extract JSON object from result
    json::Value resultVal;
    error = r::json::jsonValueFromList(sexpDetails, &resultVal);
-   if (resultVal.type() != json::ObjectType)
+   if (resultVal.getType() != json::Type::OBJECT)
       return Error(json::errc::ParseError, ERROR_LOCATION);
-   json::Object result = resultVal.get_value<json::Object>();
+   json::Object result = resultVal.getValue<json::Object>();
 
    // augment with website project information
    FilePath path = module_context::resolveAliasedPath(target);

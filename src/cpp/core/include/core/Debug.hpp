@@ -35,7 +35,7 @@ void print(const std::map<K, V>& map, std::ostream& os = std::cerr)
    {
       object[it->first] = json::toJsonValue(it->second);
    }
-   json::writeFormatted(object, os);
+   object.writeFormatted(os);
    os << std::endl;
 }
 
@@ -44,7 +44,7 @@ void print(const ConvertibleToArray& object, std::ostream& os = std::cerr)
 {
    typedef typename ConvertibleToArray::value_type value_type;
    std::vector<value_type> asVector(object.begin(), object.end());
-   json::writeFormatted(json::toJsonArray(asVector), os);
+   json::toJsonArray(asVector).writeFormatted(os);
    os << std::endl;
 }
 

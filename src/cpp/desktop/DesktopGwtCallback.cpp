@@ -1615,20 +1615,20 @@ void GwtCallback::submitLauncherJob(const QJsonObject& job)
    std::string jsonStr = doc.toJson().toStdString();
 
    json::Value val;
-   Error error = json::parse(jsonStr, ERROR_LOCATION, &val);
+   Error error = val.parse(jsonStr);
    if (error)
    {
       // a parse error should not occur here - if it does it indicates a programmer
       // error while invoking this method - as such, forward on the invalid job
       // so the appropriate error event is eventually delivered
-      LOG_ERROR(error);
+      log::logError(error, ERROR_LOCATION);
    }
 
    json::Object obj;
-   if (val.type() == json::ObjectType)
-      obj = val.get_obj();
+   if (val.isObject())
+      obj = val.getObject();
 
-   if (obj.empty())
+   if (obj.isEmpty())
    {
       // same as above - if this is not a valid object, it indicates a programmer error
       LOG_ERROR_MESSAGE("Empty job object submitted");

@@ -124,17 +124,17 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
          bool differs = false;
          for (int i = layer; i >= 0; --i)
          {
-            const auto val = layers_[i]->readValue(pref.name());
+            const auto val = layers_[i]->readValue(pref.getName());
             if (val)
             {
                found = true;
-               if (!(*val == pref.value()))
+               if (!(*val == pref.getValue()))
                {
                   if (layer == i)
                   {
                      // The pref exists in this layer and has a different value; emit a changed
                      // notification for it later.
-                     changed.push_back(pref.name());
+                     changed.push_back(pref.getName());
                   }
                   else
                   {
@@ -154,7 +154,7 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
          {
             // If the preference doesn't exist in any other layer, or the value doesn't match the
             // value found elsewhere, record the unique value in this layer.
-            unique[pref.name()] = pref.value();
+            unique[pref.getName()] = pref.getValue();
          }
       }
 

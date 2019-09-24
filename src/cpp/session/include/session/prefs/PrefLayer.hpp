@@ -63,18 +63,18 @@ public:
          if (it != cache_->end())
          {
             // Ensure the preference we found is of the correct type. 
-            if (!core::json::isType<T>((*it).value()))
+            if (!core::json::isType<T>((*it).getValue()))
             {  
                core::Error error(core::json::errc::ParamTypeMismatch, ERROR_LOCATION);
                error.addProperty("description", "unexpected type "
-                     "'" + core::json::typeAsString((*it).value()) + "'"
+                     "'" + core::json::typeAsString((*it).getValue()) + "'"
                      " for preference '" + name + "' in layer '" + layerName() + "'");
                LOG_ERROR(error);
                return boost::none;
             }
 
             // Return the preference
-            return (*it).value().get_value<T>();
+            return (*it).getValue().getValue<T>();
          }
       }
       END_LOCK_MUTEX;

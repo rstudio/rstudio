@@ -605,7 +605,7 @@ Error syncThemePrefs()
    json::Object stateTheme = prefs::userState().theme();
    auto themeName = stateTheme.find(kThemeName);
    if (themeName != stateTheme.end() &&
-       (*themeName).value().get_str() != prefTheme)
+       (*themeName).getValue().getString() != prefTheme)
    {
       bool found = false;
       ThemeMap themes = getAllThemes();

@@ -80,11 +80,11 @@ test_context("Base64 Encoding")
          
          std::string encoded;
          error = encode(random, &encoded);
-         expect_true(error == Success());
+         expect_true(!error);
          
          std::string decoded;
          error = decode(encoded, &decoded);
-         expect_true(error == Success());
+         expect_true(!error);
          
          expect_true(random == decoded);
       }

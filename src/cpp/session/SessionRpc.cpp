@@ -154,7 +154,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
    {
       std::cout << "<<<" << std::endl;
-      core::json::writeFormatted(response.getRawResponse(), std::cout);
+      response.getRawResponse().writeFormatted(std::cout);
       std::cout << std::endl;
    }
 
@@ -215,19 +215,19 @@ void formatRpcRequest(SEXP name,
    Error error = r::json::jsonValueFromObject(args, &rpcArgs);
    if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
       std::cout << ">>>" << std::endl;
-   if (rpcArgs.type() == json::ObjectType)
+   if (rpcArgs.getType() == json::Type::OBJECT)
    {
       // named pair parameters
-      pRequest->kwparams = rpcArgs.get_value<json::Object>();
+      pRequest->kwparams = rpcArgs.getValue<json::Object>();
       if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-         core::json::writeFormatted(pRequest->kwparams, std::cout);
+         pRequest->kwparams.writeFormatted(std::cout);
    }
-   else if (rpcArgs.type() == json::ArrayType)
+   else if (rpcArgs.getType() == json::Type::ARRAY)
    {
       // array parameters
-      pRequest->params = rpcArgs.get_value<json::Array>();
+      pRequest->params = rpcArgs.getValue<json::Array>();
       if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
-         core::json::writeFormatted(pRequest->params, std::cout);
+         pRequest->params.writeFormatted(std::cout);
    }
    if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
       std::cout << std::endl;
@@ -236,19 +236,19 @@ void formatRpcRequest(SEXP name,
 void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
 {
    // raise an R error if the RPC returns an error
-   if (response.error().type() == json::ObjectType)
+   if (response.error().getType() == json::Type::OBJECT)
    {
       // formulate verbose error string
-      json::Object err = response.error().get_obj();
-      std::string message = err["message"].get_str();
+      json::Object err = response.error().getObject();
+      std::string message = err["message"].getString();
       if (err.find("error") != err.end())
-         message += ", Error " + err["error"].get_str();
+         message += ", Error " + err["error"].getString();
       if (err.find("category") != err.end())
-         message += ", Category " + err["category"].get_str();
+         message += ", Category " + err["category"].getString();
       if (err.find("code") != err.end())
-         message += ", Code " + err["code"].get_str();
+         message += ", Code " + err["code"].getString();
       if (err.find("location") != err.end())
-         message += " at " + err["location"].get_str();
+         message += " at " + err["location"].getString();
 
       r::exec::error(message);
    }

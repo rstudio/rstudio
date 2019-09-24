@@ -193,7 +193,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       return error;
 
    json::Array misspelledIndexes;
-   for (std::size_t i=0; i<words.size(); i++)
+   for (std::size_t i=0; i<words.getSize(); i++)
    {
       if (!json::isType<std::string>(words[i]))
       {
@@ -201,7 +201,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
          continue;
       }
 
-      std::string word = words[i].get_str();
+      std::string word = words[i].getString();
       bool isCorrect = true;
       error = s_pSpellingEngine->checkSpelling(word, &isCorrect);
       if (error)
@@ -213,7 +213,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       }
       else if (!isCorrect) 
       {
-         misspelledIndexes.push_back(gsl::narrow_cast<int>(i));
+         misspelledIndexes.push_back(json::Value(gsl::narrow_cast<int>(i)));
       }
    }
 

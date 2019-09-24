@@ -130,7 +130,7 @@ public:
          {
             std::string name, basePath;
             json::Array markersJson;
-            Error error = json::readObject(setJson.get_obj(),
+            Error error = json::readObject(setJson.getObject(),
                                            "name", &name,
                                            "base_path", &basePath,
                                            "markers", &markersJson);
@@ -150,7 +150,7 @@ public:
                   std::string message;
                   bool showErrorList;
                   Error error = json::readObject(
-                     markerJson.get_obj(),
+                     markerJson.getObject(),
                      "type", &type,
                      "path", &path,
                      "line", &line,
@@ -218,7 +218,7 @@ public:
          json::Array namesJson;
          for (const module_context::SourceMarkerSet& set : markerSets_)
          {
-            namesJson.push_back(set.name);
+            namesJson.push_back(json::Value(set.name));
          }
 
          // markers for active set
@@ -355,7 +355,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             "markers parameter was not a data frame or unnamed list");
 
       std::vector<SourceMarker> markers;
-      for (const json::Value& markerJson : markersJson.get_array())
+      for (const json::Value& markerJson : markersJson.getArray())
       {
          if (json::isType<json::Object>(markerJson))
          {
@@ -365,7 +365,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             std::string message;
             bool messageHTML;
             Error error = json::readObject(
-               markerJson.get_obj(),
+               markerJson.getObject(),
                "type", &type,
                "file", &path,
                "line", &line,
@@ -432,7 +432,7 @@ void readSourceMarkers()
    }
 
    json::Value stateJson;
-   if (!json::parse(contents, &stateJson))
+   if (!!stateJson.parse(contents))
    {
       LOG_WARNING_MESSAGE("invalid session markers json");
       return;
@@ -444,7 +444,7 @@ void readSourceMarkers()
       return;
    }
 
-   error = sourceMarkers().readFromJson(stateJson.get_obj());
+   error = sourceMarkers().readFromJson(stateJson.getObject());
    if (error)
       LOG_ERROR(error);
 }
@@ -454,7 +454,7 @@ void writeSourceMarkers(bool terminatedNormally)
    if (terminatedNormally)
    {
       std::ostringstream os;
-      json::write(sourceMarkers().asJson(), os);
+      sourceMarkers().asJson().write(os);
       Error error = writeStringToFile(sourceMarkersFilePath(), os.str());
       if (error)
          LOG_ERROR(error);

@@ -104,13 +104,13 @@ bool canSuspend(const std::string& prompt)
 // extract console input -- can be either null (user hit escape) or a string
 Error extractConsoleInput(const json::JsonRpcRequest& request)
 {
-   if (request.params.size() == 2)
+   if (request.params.getSize() == 2)
    {
       // ensure the caller specified the requesting console
       std::string console;
-      if (request.params[1].type() == json::StringType)
+      if (request.params[1].getType() == json::Type::STRING)
       {
-         console = request.params[1].get_str();
+         console = request.params[1].getString();
       }
       else
       {
@@ -118,15 +118,15 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       }
 
       // extract the requesting console
-      if (request.params[0].is_null())
+      if (request.params[0].isNull())
       {
          addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console));
          return Success();
       }
-      else if (request.params[0].type() == json::StringType)
+      else if (request.params[0].getType() == json::Type::STRING)
       {
          // get console input to return to R
-         std::string text = request.params[0].get_str();
+         std::string text = request.params[0].getString();
          addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, 
                   console));
 

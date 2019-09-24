@@ -703,20 +703,20 @@ int main(int argc, char* argv[])
             else
             {
                json::Value val;
-               error = json::parse(contents, ERROR_LOCATION, &val);
+               error = val.parse(contents);
                if (error)
                {
-                  LOG_ERROR(error);
+                  log::logError(error, ERROR_LOCATION);
                }
                else
                {
-                  if (val.type() != json::ObjectType)
+                  if (!val.isObject())
                   {
                      LOG_ERROR_MESSAGE("Invalid .rdprsp file");
                   }
                   else
                   {
-                     error = json::readObject(val.get_obj(),
+                     error = json::readObject(val.getObject(),
                                               "sessionUrl", &sessionUrl,
                                               "serverUrl", &serverUrl);
                      if (error)

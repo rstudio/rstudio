@@ -93,7 +93,7 @@ json::Array listToJson(const std::list<std::string>& list)
    json::Array jsonArray;
    for (const std::string& val : list)
    {
-      jsonArray.push_back(val);
+      jsonArray.push_back(json::Value(val));
    }
    return jsonArray;
 }
@@ -191,10 +191,10 @@ Error listSetContents(const json::JsonRpcRequest& request,
          continue;
       }
 
-      list.push_back(val.get_str());
+      list.push_back(val.getString());
    }
 
-   return writeCollectionToFile<std::list<std::string>>(listPath(name), list, stringifyString);
+   return writeCollectionToFile<std::list<std::string> >(listPath(name), list, stringifyString);
 }
 
 Error listInsertItem(bool prepend,

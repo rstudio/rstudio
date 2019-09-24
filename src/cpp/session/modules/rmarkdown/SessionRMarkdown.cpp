@@ -385,7 +385,7 @@ public:
       if (sourceNavigation_)
       {
          rmarkdown::presentation::ammendResults(
-                  outputFormat_["format_name"].get_str(),
+                  outputFormat_["format_name"].getString(),
                   targetFile_,
                   sourceLine,
                   jsonObject);
@@ -731,7 +731,7 @@ private:
       resultJson["viewer_type"] = viewerType_;
 
       // allow for format specific additions to the result json
-      std::string formatName =  outputFormat_["format_name"].get_str();
+      std::string formatName =  outputFormat_["format_name"].getString();
 
       // populate slide information if available
       getPresentationDetails(sourceLine_, &resultJson);

@@ -184,7 +184,7 @@ Error newDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
 
    if (json::isType<std::string>(jsonContents))
-      pDoc->setContents(jsonContents.get_str());
+      pDoc->setContents(jsonContents.getString());
 
    pDoc->editProperties(properties);
 
@@ -311,7 +311,7 @@ Error saveDocumentCore(const std::string& contents,
    if (hasPath)
    {
       oldPath = pDoc->path();
-      path = jsonPath.get_str();
+      path = jsonPath.getString();
       fullDocPath = module_context::resolveAliasedPath(path);
    }
 
@@ -323,7 +323,7 @@ Error saveDocumentCore(const std::string& contents,
    bool hasType = json::isType<std::string>(jsonType);
    if (hasType)
    {
-      pDoc->setType(jsonType.get_str());
+      pDoc->setType(jsonType.getString());
    }
    
    Error error;
@@ -331,13 +331,13 @@ Error saveDocumentCore(const std::string& contents,
    bool hasEncoding = json::isType<std::string>(jsonEncoding);
    if (hasEncoding)
    {
-      pDoc->setEncoding(jsonEncoding.get_str());
+      pDoc->setEncoding(jsonEncoding.getString());
    }
 
    bool hasFoldSpec = json::isType<std::string>(jsonFoldSpec);
    if (hasFoldSpec)
    {
-      pDoc->setFolds(jsonFoldSpec.get_str());
+      pDoc->setFolds(jsonFoldSpec.getString());
    }
 
    // note that it's entirely possible for the chunk output to be null if the
@@ -347,7 +347,7 @@ Error saveDocumentCore(const std::string& contents,
    if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
       error = rmarkdown::notebook::setChunkDefs(pDoc, 
-            jsonChunkOutput.get_array());
+            jsonChunkOutput.getArray());
       if (error)
          LOG_ERROR(error);
    }
@@ -1073,11 +1073,11 @@ Error setDocOrder(const json::JsonRpcRequest& request,
 
    for (boost::shared_ptr<SourceDocument>& pDoc : docs)
    {
-      for (unsigned i = 0; i < ids.size(); i++) 
+      for (unsigned i = 0; i < ids.getSize(); i++)
       {
          // docs are ordered starting at 1; the special value 0 indicates a
          // document with no order
-         if (pDoc->id() == ids[i].get_str() && 
+         if (pDoc->id() == ids[i].getString() &&
              pDoc->relativeOrder() != gsl::narrow_cast<int>(i + 1))
          {
             pDoc->setRelativeOrder(i + 1);

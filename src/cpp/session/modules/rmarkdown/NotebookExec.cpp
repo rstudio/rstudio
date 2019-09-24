@@ -339,12 +339,10 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    }
 
    // serialize metadata if provided
-   if (!metadata.is_null())
+   if (!metadata.isNull())
    {
-      std::ostringstream oss;
-      json::write(metadata, oss);
       error = writeStringToFile(target.getParent().completePath(
-               target.getStem() + ".metadata"), oss.str());
+               target.getStem() + ".metadata"), metadata.write());
    }
 
    enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target,
@@ -370,7 +368,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
       LOG_ERROR(error);
       return;
    }
-   json::write(err, *pOfs);
+   err.write(*pOfs);
    
    pOfs->flush();
    pOfs.reset();

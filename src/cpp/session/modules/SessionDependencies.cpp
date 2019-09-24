@@ -142,7 +142,7 @@ std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
       if (json::isType<json::Object>(depJsonValue))
       {
          Dependency dep;
-         const json::Object& depJson = depJsonValue.get_obj();
+         const json::Object& depJson = depJsonValue.getObject();
          Error error = json::readObject(depJson,
                                         "type", &(dep.type),
                                         "name", &(dep.name),
