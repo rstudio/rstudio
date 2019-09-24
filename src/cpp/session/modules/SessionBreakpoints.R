@@ -118,7 +118,7 @@
    {
       # if this is a doTrace call, we found a breakpoint; stop recursion here
       if (is.call(funBody[[idx]]) && 
-          as.character(funBody[[idx]][[1]]) == ".doTrace")
+          identical(as.character(funBody[[idx]][[1]])[[1]], ".doTrace"))
       {
          return(idx + 1)
       }
