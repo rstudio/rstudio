@@ -38,10 +38,11 @@ public class EditEvent extends GwtEvent<EditEvent.Handler>
    private final boolean before_;
    private final int type_;
    
-   public static final int TYPE_NONE  = 0;
-   public static final int TYPE_CUT   = 1;
-   public static final int TYPE_COPY  = 2;
-   public static final int TYPE_PASTE = 4;
+   public static final int TYPE_NONE              = 0;
+   public static final int TYPE_CUT               = 1;
+   public static final int TYPE_COPY              = 2;
+   public static final int TYPE_PASTE             = 4;
+   public static final int TYPE_PASTE_WITH_INDENT = 8;
 
    // Boilerplate ----
    public interface Handler extends EventHandler

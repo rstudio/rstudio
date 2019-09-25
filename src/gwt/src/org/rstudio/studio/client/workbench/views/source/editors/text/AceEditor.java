@@ -62,6 +62,7 @@ import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -79,6 +80,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -386,6 +388,25 @@ public class AceEditor implements DocDisplay,
          public void onFoldChange(FoldChangeEvent event)
          {
             AceEditor.this.fireEvent(new FoldChangeEvent());
+         }
+      });
+      
+      events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
+      {
+         @Override
+         public void onEdit(EditEvent event)
+         {
+            if (event.isBeforeEdit())
+            {
+               activeEditEventType_ = event.getType();
+            }
+            else
+            {
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  activeEditEventType_ = EditEvent.TYPE_NONE;
+               });
+            }
          }
       });
 
@@ -699,8 +720,17 @@ public class AceEditor implements DocDisplay,
       if (fileType_ == null || !fileType_.canAutoIndent())
          return false;
       
+      // if the user has requested reindent on paste, then we reindent
       boolean indentPref = RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue();
-      return indentPref != keyboard_.isShiftKeyDown();
+      if (indentPref)
+         return true;
+      
+      // if the user has explicitly executed a paste with indent command, we reindent
+      if (activeEditEventType_ == EditEvent.TYPE_PASTE_WITH_INDENT)
+         return true;
+      
+      // finally, infer based on whether shift key is down
+      return keyboard_.isShiftKeyDown();
    }
 
    private void indentPastedRange(Range range)
@@ -3045,10 +3075,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addUndoRedoHandler(handler);
    }
-
+   
    public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
    {
       return widget_.addPasteHandler(handler);
+   }
+   
+   public HandlerRegistration addEditHandler(EditEvent.Handler handler)
+   {
+      return widget_.addHandler(handler, EditEvent.TYPE);
    }
 
    public HandlerRegistration addAceClickHandler(Handler handler)
@@ -4272,6 +4307,8 @@ public class AceEditor implements DocDisplay,
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
    private String yankedText_ = null;
+   
+   private int activeEditEventType_ = EditEvent.TYPE_NONE;
    
    private static AceEditor s_lastFocusedEditor = null;
    

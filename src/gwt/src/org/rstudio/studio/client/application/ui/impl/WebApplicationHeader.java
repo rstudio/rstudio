@@ -314,12 +314,13 @@ public class WebApplicationHeader extends Composite
    {
       int modifiers = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : KeyboardShortcut.CTRL;
 
-      setCommandShortcut(commands.undoDummy(),  "z", 'Z', modifiers);
-      setCommandShortcut(commands.redoDummy(),  "Z", 'Z', modifiers | KeyboardShortcut.SHIFT);
+      setCommandShortcut(commands.undoDummy(),            "z", 'Z', modifiers);
+      setCommandShortcut(commands.redoDummy(),            "Z", 'Z', modifiers | KeyboardShortcut.SHIFT);
 
-      setCommandShortcut(commands.cutDummy(),   "x", 'X', modifiers);
-      setCommandShortcut(commands.copyDummy(),  "c", 'C', modifiers);
-      setCommandShortcut(commands.pasteDummy(), "v", 'V', modifiers);
+      setCommandShortcut(commands.cutDummy(),             "x", 'X', modifiers);
+      setCommandShortcut(commands.copyDummy(),            "c", 'C', modifiers);
+      setCommandShortcut(commands.pasteDummy(),           "v", 'V', modifiers);
+      setCommandShortcut(commands.pasteWithIndentDummy(), "v", 'V', modifiers | KeyboardShortcut.SHIFT);
       
       CommandHandler useKeyboardNotification = new CommandHandler()
       {
@@ -335,6 +336,7 @@ public class WebApplicationHeader extends Composite
                           makeRow(commands.cutDummy()) +
                           makeRow(commands.copyDummy()) +
                           makeRow(commands.pasteDummy()) +
+                          makeRow(commands.pasteWithIndentDummy()) +
                           "</table>"
                           );
             new WebDialogBuilderFactory().create(
@@ -359,6 +361,7 @@ public class WebApplicationHeader extends Composite
       commands.cutDummy().addHandler(useKeyboardNotification);
       commands.copyDummy().addHandler(useKeyboardNotification);
       commands.pasteDummy().addHandler(useKeyboardNotification);
+      commands.pasteWithIndentDummy().addHandler(useKeyboardNotification);
    }
 
    public int getPreferredHeight()
