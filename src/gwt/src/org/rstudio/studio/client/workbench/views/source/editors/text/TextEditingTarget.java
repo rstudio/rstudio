@@ -1533,6 +1533,7 @@ public class TextEditingTarget implements
       
       syncFontSize(releaseOnDismiss_, events_, view_, fontSizeManager_);
 
+
       releaseOnDismiss_.add(prefs_.softWrapRFiles().addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {

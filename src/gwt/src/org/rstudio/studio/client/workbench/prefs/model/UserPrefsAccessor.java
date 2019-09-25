@@ -919,7 +919,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> realTimeSpellchecking()
    {
-      return bool("real_time_spellchecking", true);
+      return bool("real_time_spellchecking", false);
    }
 
    /**
