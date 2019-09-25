@@ -343,8 +343,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       helpFontSize_ = new SelectWidget("Help panel font size:",
                                        labels,
                                        values,
-                                       false);
-      helpFontSize_.getListBox().setWidth("95%");
+                                       false, /* Multi select */
+                                       true, /* Horizontal label */
+                                       false /* List on left */);
       if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
          helpFontSize_.getListBox().setSelectedIndex(3);
       advanced.add(helpFontSize_);
