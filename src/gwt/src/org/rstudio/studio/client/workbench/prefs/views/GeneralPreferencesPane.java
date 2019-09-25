@@ -1,4 +1,4 @@
-/*
+*
  * GeneralPreferencesPane.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
@@ -345,7 +345,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                        values,
                                        false);
       helpFontSize_.getListBox().setWidth("95%");
-      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getGlobalValue() + ""))
+      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
          helpFontSize_.getListBox().setSelectedIndex(3);
       advanced.add(helpFontSize_);
 

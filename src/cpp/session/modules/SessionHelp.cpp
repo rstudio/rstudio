@@ -294,7 +294,7 @@ public:
    {
       std::string cssValue;
       cssValue.append("body {\n   font-size:");
-      cssValue.append(std::to_string(prefs::userPrefs().helpFontSizePoints()));
+      cssValue.append(safe_convert::numberToString(prefs::userPrefs().helpFontSizePoints()));
       cssValue.append("pt;\n}");
       std::copy(cssValue.begin(), cssValue.end(), std::back_inserter(dest));
    }
