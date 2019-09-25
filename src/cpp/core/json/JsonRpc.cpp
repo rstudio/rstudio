@@ -208,8 +208,8 @@ void JsonRpcResponse::setError(const Error& error,
    if (error.getName() == json::jsonRpcCategory().name())
    {
       setError(
-         Error(boost::system::error_code(error.getCode(), json::jsonRpcCategory()), error.getLocation()),
-         includeErrorProperties);
+         boost::system::error_code(error.getCode(), json::jsonRpcCategory()),
+         json::Value(includeErrorProperties));
    }
    else
    {
