@@ -88,7 +88,7 @@ public:
 #endif
 
    /**
-    * @brief Comparison operator. File paths are equal if their absolute representations are equals.
+    * @brief Comparison operator. File paths are equal if their absolute representations are equal.
     *
     * @param in_other   The file path to compare with this file path.
     *
@@ -97,7 +97,7 @@ public:
    bool operator==(const FilePath& in_other) const;
 
    /**
-    * @brief Comparison operator. File paths are equal if their absolute representations are equals.
+    * @brief Comparison operator. File paths are equal if their absolute representations are equal.
     *
     * @param in_other   The file path to compare with this file path.
     *
