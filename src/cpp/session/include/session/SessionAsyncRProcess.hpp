@@ -92,6 +92,9 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string input_;
+   core::FilePath ipcRequests_;
+   core::FilePath ipcResponse_;
+   std::string sharedSecret_;
 };
 
 } // namespace async_r

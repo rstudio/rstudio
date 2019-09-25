@@ -220,6 +220,10 @@ protected:
    
    bool onContinue()
    {
+      bool ok = AsyncRProcess::onContinue();
+      if (!ok)
+         return false;
+      
       invokeCallback("continue");
       return true;
    }

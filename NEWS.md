@@ -1,12 +1,33 @@
 ## v1.3 - Release Notes
 
+### Accessibility
+
+* Dramatically improved accessibility for sight-impaired users, including:
+  * Keyboard focus management and visibility upgrades
+  * Improved keyboard navigation
+  * Compatibility with popular screen readers
+  * Compliant contrast ratios and other accessibility improvements
+
+### Spell Check
+
+* Real-time spell-checking engine for checking while editing
+* Customizable dictionaries and word ignore lists preloaded with common R terms
+* Inline correction suggestions
+
+### Preferences and Configuration
+
+* All user preferences and settings can now be set using a plain JSON file
+* All user preferences can now have global defaults set by a system administrator
+* New diagnostics commands for editing the prefs file, resetting state, and viewing pref system data
+* Editor themes, snippets, file templates, and keybindings are now portable and can be installed by admins
+* The content of new file templates (New R Script, New R Markdown, etc.) can now be controlled by users or administrators
+
 ### renv
 
 * New projects can be initialized with renv, giving them an isolated project environment
 
 ### Miscellaneous
 
-* RStudio builds on macOS are now notarized and use the hardened runtime
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
 * Files with extension '.q' are no longer indexed or parsed as R files (#4696)
 * Add automated crash handling and reporting
@@ -19,6 +40,7 @@
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 * Keyboard shortcuts for main menu items on RStudio Server (e.g. Ctrl+Alt+F for File menu)
 * Show number of characters when entering version control commit messages (#5192)
+* Update embedded Qt to 5.12.5 for Chromium update, stability and bugfixes (#5399)
 
 ### Bugfixes
 
@@ -26,3 +48,8 @@
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
 
+### RStudio Professional
+
+* Logging improvements; log destinations and levels are more configurable and can be changed in real time
+* RStudio Desktop Pro can now function as a client for RStudio Server Pro
+* 
