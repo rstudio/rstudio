@@ -246,7 +246,7 @@ void Logger::writeMessageToDestinations(
 // Logging functions
 void setProgramId(const std::string& in_programId)
 {
-   if (!logger().ProgramId.empty())
+   if (!logger().ProgramId.empty() && (logger().ProgramId != in_programId))
       logWarningMessage("Changing the program id from " + logger().ProgramId + " to " + in_programId);
 
    logger().ProgramId = in_programId;
