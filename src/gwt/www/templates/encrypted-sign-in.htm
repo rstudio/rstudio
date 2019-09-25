@@ -201,8 +201,11 @@ function submitRealForm() {
                 autocomplete='off' /><br />
       </p>
       <p style="display: #staySignedInDisplay#;">
+         <p style="display: #authTimeoutMinutesDisplay#";">
+            <label style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</label>
+         </p>
          <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-         <label for="staySignedIn">Stay signed in</label>
+         <label for="staySignedIn">Stay signed in when browser closes</label>
       </p>
       </div>
        <input type="hidden" name="appUri" value="#appUri#"/>
