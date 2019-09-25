@@ -29,16 +29,16 @@ namespace rstudio {
 namespace core {
 namespace log {
 
-struct StdErrLoggerOptions
+struct StdErrLogOptions
 {
 };
 
-struct SysLoggerOptions
+struct SysLogOptions
 {
 };
 
-typedef boost::variant<StdErrLoggerOptions,
-   SysLoggerOptions,
+typedef boost::variant<StdErrLogOptions,
+   SysLogOptions,
    FileLogOptions> LoggerOptions;
 
 class LogOptions

@@ -200,7 +200,7 @@ Error initializeSystemLog(const std::string& programIdentity,
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default syslog logger options
-      log::SysLoggerOptions options;
+      log::SysLogOptions options;
       s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeSysLog, options));
       s_programIdentity = programIdentity;
 

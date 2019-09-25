@@ -266,7 +266,7 @@ Error initializeStderrLog(const std::string& programIdentity,
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default stderr logger options
-      log::StdErrLoggerOptions options;
+      log::StdErrLogOptions options;
       s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeStdErr, options));
       s_programIdentity = programIdentity;
 

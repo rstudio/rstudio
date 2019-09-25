@@ -136,12 +136,12 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
          kMaxSizeMb, defaultOptions.getMaxSizeMb());
    }
 
-   void operator()(const StdErrLoggerOptions& options)
+   void operator()(const StdErrLogOptions& options)
    {
       setDefaultFileLoggerOptions();
    }
 
-   void operator()(const SysLoggerOptions& options)
+   void operator()(const SysLogOptions& options)
    {
       setDefaultFileLoggerOptions();
    }
@@ -167,7 +167,7 @@ LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
    defaultLogLevel_(logLevelToString(LogLevel::WARNING)),
    defaultLoggerType_(loggerTypeToString(kLoggerTypeSysLog)),
-   defaultLoggerOptions_(SysLoggerOptions()),
+   defaultLoggerOptions_(SysLogOptions()),
    lowestLogLevel_(LogLevel::WARNING)
 {
    initProfile();
@@ -317,13 +317,13 @@ LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
       }
 
       case kLoggerTypeStdErr:
-         return StdErrLoggerOptions();
+         return StdErrLogOptions();
 
       case kLoggerTypeSysLog:
-         return SysLoggerOptions();
+         return SysLogOptions();
 
       default:
-         return SysLoggerOptions();
+         return SysLogOptions();
    }
 }
 
