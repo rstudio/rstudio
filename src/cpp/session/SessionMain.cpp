@@ -1735,10 +1735,6 @@ int main (int argc, char * const argv[])
       // (like rpostback) can determine what the program mode is
       core::system::setenv(kRStudioProgramMode, options.programMode());
 
-      // Set the log level and the program identity.
-      log::setLogLevel(log::LogLevel::WARNING);
-      log::setProgramId(options.programIdentity());
-
       // reflect stderr logging
       if (options.logStderr())
          log::addLogDestination(std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination()));
