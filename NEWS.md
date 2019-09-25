@@ -41,6 +41,7 @@
 * Keyboard shortcuts for main menu items on RStudio Server (e.g. Ctrl+Alt+F for File menu)
 * Show number of characters when entering version control commit messages (#5192)
 * Update embedded Qt to 5.12.5 for Chromium update, stability and bugfixes (#5399)
+* Add preference for changing font size on help pane (#3282)
 
 ### Bugfixes
 

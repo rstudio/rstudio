@@ -43,6 +43,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -70,6 +71,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
@@ -85,7 +87,8 @@ public class HelpPane extends WorkbenchPane
    public HelpPane(Provider<HelpSearch> searchProvider,
                    GlobalDisplay globalDisplay,
                    Commands commands,
-                   EventBus events)
+                   EventBus events,
+                   UserPrefs prefs)
    {
       super("Help") ;
       
@@ -93,6 +96,15 @@ public class HelpPane extends WorkbenchPane
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       events_ = events;
+
+      prefs_ = prefs;
+      prefs_.helpFontSizePoints().bind(new CommandWithArg<Double>()
+      {
+         public void execute(Double value)
+         {
+            refresh();
+         }
+      });
     
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
       history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear }) ;
@@ -760,6 +772,8 @@ public class HelpPane extends WorkbenchPane
 
    private static final Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
+
+   private UserPrefs prefs_;
 
    private final VirtualHistory navStack_ ;
    private final ToolbarLinkMenu history_ ;

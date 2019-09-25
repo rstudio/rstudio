@@ -459,6 +459,11 @@
             "default": 10.0,
             "description": "The default editor font size, in points."
         },
+        "help_font_size_points": {
+            "type": "number",
+            "default": 10.0,
+            "description": "The help panel font size, in points."
+        },
         "editor_theme": {
             "type": "string",
             "default": "Textmate (default)",

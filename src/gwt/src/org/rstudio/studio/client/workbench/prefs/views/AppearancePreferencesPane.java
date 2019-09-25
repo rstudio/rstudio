@@ -627,6 +627,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final UserPrefs userPrefs_;
    private final UserState userState_;
+   private SelectWidget helpFontSize_;
    private SelectWidget fontSize_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;

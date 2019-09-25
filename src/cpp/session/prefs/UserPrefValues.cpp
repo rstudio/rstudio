@@ -973,6 +973,19 @@ core::Error UserPrefValues::setSaveFilesBeforeBuild(bool val)
 }
 
 /**
+ * The help panel font size, in points.
+ */
+double UserPrefValues::helpFontSizePoints()
+{
+   return readPref<double>("help_font_size_points");
+}
+
+core::Error UserPrefValues::setHelpFontSizePoints(double val)
+{
+   return writePref("help_font_size_points", val);
+}
+
+/**
  * The default editor font size, in points.
  */
 double UserPrefValues::fontSizePoints()
@@ -2205,6 +2218,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
+      kHelpFontSizePoints,
       kFontSizePoints,
       kEditorTheme,
       kDefaultEncoding,
