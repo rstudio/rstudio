@@ -137,7 +137,7 @@ public:
     * If the log file cannot be opened, no logs will be written to the file. If there are other log destinations
     * registered an error will be logged regarding the failure.
     */
-   FileLogDestination(unsigned int in_id, std::string in_programId, FileLogOptions in_logOptions);
+   FileLogDestination(unsigned int in_id, const std::string& in_programId, FileLogOptions in_logOptions);
 
    /**
     * @brief Destructor.

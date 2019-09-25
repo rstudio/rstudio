@@ -108,27 +108,18 @@ struct FileLogDestination::Impl
    // Returns true if the log file was opened, false otherwise.
    bool openLogFile()
    {
+      // We can't safely log in this function.
       Error error = LogOptions.getDirectory().getChildPath(LogName, LogFile);
       if (error)
-      {
-         // This will log to any other registered log destinations, or nowhere if there are none.
-         logError(error);
          return false;
-      }
 
       error = LogFile.ensureFile();
       if (error)
-      {
-         logError(error);
          return false;
-      }
 
       error = LogFile.openForWrite(LogOutputStream, false);
       if (error)
-      {
-         logError(error);
          return false;
-      }
 
       return true;
    }
@@ -177,8 +168,11 @@ struct FileLogDestination::Impl
    std::shared_ptr<std::ostream> LogOutputStream;
 };
 
-FileLogDestination::FileLogDestination(unsigned int in_id, std::string in_programId, FileLogOptions in_logOptions) :
-   m_impl(new Impl(in_id, in_programId, in_logOptions))
+FileLogDestination::FileLogDestination(
+   unsigned int in_id,
+   const std::string& in_programId,
+   FileLogOptions in_logOptions) :
+      m_impl(new Impl(in_id, in_programId, std::move(in_logOptions)))
 {
 }
 
@@ -201,7 +195,6 @@ void FileLogDestination::writeLog(LogLevel, const std::string& in_message)
    // Open the log file if it's not open. If it fails to open, log nothing.
    if (!m_impl->LogOutputStream && !m_impl->openLogFile())
       return;
-
 
    // Rotate the log file if necessary.
    m_impl->rotateLogFile();
