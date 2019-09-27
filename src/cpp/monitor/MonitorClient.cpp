@@ -36,6 +36,8 @@ public:
 
    unsigned int getId() const override
    {
+      // Return a unique ID that's not likely to be used by other log destination types (stderr and syslog are 0 & 1,
+      // and file log destinations in the server start at 3.
       return 56;
    }
 
