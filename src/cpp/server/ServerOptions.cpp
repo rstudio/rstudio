@@ -380,18 +380,23 @@ ProgramStatus Options::read(int argc,
          serverUser_ = "";
       }
       // if there is a program user specified and it doesn't exist....
-      else if (!system::User(serverUser_).exists())
+      else
       {
-         if (serverUser_ == kDefaultProgramUser)
+         system::User user;
+         Error error = system::User::createUser(serverUser_, user);
+         if (error || !user.exists())
          {
-            // administrator hasn't created an rserver system account yet
-            // so we'll end up running as root
-            serverUser_ = "";
-         }
-         else
-         {
-            LOG_ERROR_MESSAGE("Server user "+ serverUser_ +" does not exist");
-            return ProgramStatus::exitFailure();
+            if (serverUser_ == kDefaultProgramUser)
+            {
+               // administrator hasn't created an rserver system account yet
+               // so we'll end up running as root
+               serverUser_ = "";
+            }
+            else
+            {
+               LOG_ERROR_MESSAGE("Server user " + serverUser_ + " does not exist");
+               return ProgramStatus::exitFailure();
+            }
          }
       }
    }

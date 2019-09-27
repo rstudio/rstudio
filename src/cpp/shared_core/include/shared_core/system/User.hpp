@@ -52,12 +52,26 @@ class User
 public:
 
 #ifndef _WIN32
+
    /**
     * @brief Creates a user by user ID.
     *
     * @param in_userId      The ID of the user to create.
+    * @param out_user       The created user.
+    *
+    * @return Success if the user could be retrieved; Error otherwise.
     */
-   explicit User(UidType in_userId);
+   static Error createUser(UidType in_userId, User& out_user);
+
+   /**
+    * @brief Gets the current user.
+    *
+    * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
+    *                           user if this function returns an error.
+    *
+    * @return Success if the user could be retrieved; Error otherwise.
+    */
+   static Error getCurrentUser(User& out_currentUser);
 
    /**
     * @brief Gets the ID of this user's primary group.
@@ -76,6 +90,13 @@ public:
 #endif
 
    /**
+    * @brief Default constructor.
+    *
+    * Creates a user object which represents all users.
+    */
+    User();
+
+   /**
     * @brief Copy constructor.
     *
     * @param in_other   The user to copy.
@@ -83,30 +104,14 @@ public:
    User(const User& in_other);
 
    /**
-    * @brief Creates either an empty user or a user object which represents all users. Either way, a user object
-    *        constructed this way does not have a user ID, user name, or group ID.
-    *
-    * @param in_isAllUsers      True if this user should represent all users; false if it should be an empty user.
-    *                           Default: false.
-    */
-   explicit User(bool in_isAllUsers = false);
-
-   /**
     * @brief Creates a user by username.
     *
-    * @param in_username    The name of the user.
-    */
-   explicit User(const std::string& in_username);
-
-   /**
-    * @brief Gets the current user.
-    *
-    * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
-    *                           user if this function returns an error.
+    * @param in_username    The name of the user to create.
+    * @param out_user       The created user.
     *
     * @return Success if the user could be retrieved; Error otherwise.
     */
-   static Error getCurrentUser(User& out_currentUser);
+   static Error createUser(const std::string& in_username, User& out_user);
 
    /**
     * @brief Gets the user home path, as set in the environment.
@@ -147,13 +152,6 @@ public:
     * @return The user's home path, if it exists; empty path otherwise.
     */
    const FilePath& getHomePath() const;
-
-   /**
-    * @brief Gets the error that occurred while retrieving this user, or Success if there was none.
-    *
-    * @return Success if the user was able to be retrieved; error that occurred during retrieval otherwise.
-    */
-   const Error& getRetrievalError() const;
 
    /**
     * @brief Returns the name of this user.

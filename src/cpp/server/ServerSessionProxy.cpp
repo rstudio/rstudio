@@ -552,9 +552,10 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    }
    else
    {
-      core::system::User user(username);
-      if (user.getRetrievalError())
-         return user.getRetrievalError();
+      core::system::User user;
+      Error error = core::system::User::createUser(username, user);
+      if (error)
+         return error;
 
       *pUID = user.getUserId();
       cache.set(username, *pUID);

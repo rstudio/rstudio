@@ -104,9 +104,10 @@ Error groupFromId(gid_t gid, Group* pGroup)
 
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 {
-   User user(userName);
-   if (user.getRetrievalError())
-      return user.getRetrievalError();
+   User user;
+   Error error = User::createUser(userName, user);
+   if (error)
+      return error;
 
    // get the groups for the user - we start with 100 groups which should be enough for most cases
    // if it is not, resize the buffer with the correct amount of groups and try again

@@ -54,7 +54,7 @@ struct User::Impl
    { };
 
    template<typename T>
-   void populateUser(const GetPasswdFunc<T>& in_getPasswdFunc, T in_value)
+   Error populateUser(const GetPasswdFunc<T>& in_getPasswdFunc, T in_value)
    {
       struct passwd pwd;
       struct passwd* tempPtrPwd;
@@ -71,8 +71,9 @@ struct User::Impl
          if (result == 0) // will happen if user is simply not found. Return EACCES (not found error).
             result = EACCES;
 
-         RetrievalError = systemError(result, "Failed to get user details.", ERROR_LOCATION);
-         RetrievalError.addProperty("user-value", safe_convert::numberToString(in_value));
+         Error error = systemError(result, "Failed to get user details.", ERROR_LOCATION);
+         error.addProperty("user-value", safe_convert::numberToString(in_value));
+         return error;
       }
       else
       {
@@ -81,49 +82,68 @@ struct User::Impl
          Name = pwd.pw_name;
          HomeDirectory = FilePath(pwd.pw_dir);
       }
+
+      return Success();
    }
 
    UidType UserId;
    GidType GroupId;
    std::string Name;
    FilePath HomeDirectory;
-   Error RetrievalError;
 };
 
 PRIVATE_IMPL_DELETER_IMPL(User)
+
+#ifndef _WIN32
+
+Error User::createUser(UidType in_userId, User& out_user)
+{
+   User user;
+   Error error = user.m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
+   if (!error)
+      out_user = user;
+
+   return error;
+}
+
+Error User::getCurrentUser(User& out_currentUser)
+{
+   return createUser(::geteuid(), out_currentUser);
+}
+
+GidType User::getGroupId() const
+{
+   return m_impl->GroupId;
+}
+
+UidType User::getUserId() const
+{
+   return m_impl->UserId;
+}
+
+#endif
+
+
+User::User() :
+   m_impl(new Impl())
+{
+   m_impl->Name = "*";
+}
 
 User::User(const User& in_other) :
    m_impl(new Impl(*in_other.m_impl))
 {
 }
 
-User::User(bool in_isAllUsers) :
-   m_impl(new Impl())
+Error User::createUser(const std::string& in_username, User& out_user)
 {
-   if (in_isAllUsers)
-      m_impl->Name = "*";
-}
+   User user;
 
-User::User(const std::string& in_username) :
-   User()
-{
-   m_impl->populateUser<const char*>(::getpwnam_r, in_username.c_str());
-   if (m_impl->RetrievalError)
-      m_impl->Name = in_username;
-}
+   Error error = user.m_impl->populateUser<const char*>(::getpwnam_r, in_username.c_str());
+   if (!error)
+      out_user = user;
 
-User::User(UidType in_userId) :
-   User()
-{
-   m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
-   if (m_impl->RetrievalError)
-      m_impl->UserId = in_userId;
-}
-
-Error User::getCurrentUser(User& out_currentUser)
-{
-   out_currentUser = User(::geteuid());
-   return out_currentUser.m_impl->RetrievalError;
+   return error;
 }
 
 FilePath User::getUserHomePath(const std::string& in_envOverride)
@@ -153,7 +173,7 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
 
 bool User::exists() const
 {
-   return !m_impl->RetrievalError && !isEmpty() && !isAllUsers();
+   return !isEmpty() && !isAllUsers();
 }
 
 bool User::isAllUsers() const
@@ -166,29 +186,14 @@ bool User::isEmpty() const
    return m_impl->Name.empty();
 }
 
-GidType User::getGroupId() const
-{
-   return m_impl->GroupId;
-}
-
 const FilePath& User::getHomePath() const
 {
    return m_impl->HomeDirectory;
 }
 
-const Error& User::getRetrievalError() const
-{
-   return m_impl->RetrievalError;
-}
-
 const std::string& User::getUsername() const
 {
    return m_impl->Name;
-}
-
-UidType User::getUserId() const
-{
-   return m_impl->UserId;
 }
 
 User& User::operator=(const User& in_other)

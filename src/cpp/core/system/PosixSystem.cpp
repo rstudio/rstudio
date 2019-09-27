@@ -1659,9 +1659,10 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
    }
 
    // get the username
-   core::system::User user(st.st_uid);
-   if (user.getRetrievalError())
-      return user.getRetrievalError();
+   core::system::User user;
+   error = User::createUser(st.st_uid, user);
+   if (error)
+      return error;
 
    // read the stat fields for other relevant process info
    std::string statStr;
@@ -2509,9 +2510,10 @@ Error temporarilyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   User user(newUsername);
-   if (user.getRetrievalError())
-      return user.getRetrievalError();
+   User user;
+   Error error = User::createUser(newUsername, user);
+   if (error)
+      return error;
 
    // init supplemental group list
    // NOTE: if porting to CYGWIN may need to call getgroups/setgroups
@@ -2541,9 +2543,10 @@ Error permanentlyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   User user(newUsername);
-   if (user.getRetrievalError())
-      return user.getRetrievalError();
+   User user;
+   Error error = User::createUser(newUsername, user);
+   if (error)
+      return error;
 
    // supplemental group list
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
