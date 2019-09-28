@@ -75,7 +75,7 @@ public:
                            core::log::LogLevel level,
                            const std::string& message) = 0;
 
-   std::shared_ptr<core::log::ILogDestination> createLogWriter(const std::string& programIdentity);
+   static std::shared_ptr<core::log::ILogDestination> createLogDestination(const std::string& programIdentity);
 
    virtual void sendMetrics(const std::vector<metrics::Metric>& metrics) = 0;
 

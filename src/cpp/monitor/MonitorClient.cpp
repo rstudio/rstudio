@@ -56,12 +56,11 @@ Client* s_pClient = NULL;
 
 } // anonymous namespace
 
-std::shared_ptr<core::log::ILogDestination> Client::createLogWriter(
+std::shared_ptr<core::log::ILogDestination> Client::createLogDestination(
                                     const std::string& programIdentity)
 {
    return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(programIdentity));
 }
-
 
 void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& auth,

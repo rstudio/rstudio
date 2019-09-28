@@ -1745,7 +1745,7 @@ int main (int argc, char * const argv[])
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
       {
-         core::log::addLogDestination(monitor::client().createLogWriter(options.programIdentity()));
+         core::log::addLogDestination(monitor::client().createLogDestination(options.programIdentity()));
       }
 
       // initialize file lock config
