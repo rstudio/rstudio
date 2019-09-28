@@ -531,10 +531,10 @@ bool pamLogin(const std::string& username, const std::string& password)
    core::system::ProcessResult result;
    Error error = core::system::runProgram(
       pamHelperPath.getAbsolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
+      args,
+      password,
+      options,
+      &result);
    if (error)
    {
       LOG_ERROR(error);
