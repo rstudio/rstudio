@@ -351,11 +351,19 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
  * @brief Writes an error to the specified output stream.
  *
  * @param in_error      The error to write.
- * @param io_os         The ouptut stream to which to write the error.
+ * @param io_os         The output stream to which to write the error.
  *
  * @return A reference to the specified output stream.
  */
  std::ostream& writeError(const Error& in_error, std::ostream& io_os);
+/**
+ * @brief Writes an error to string.
+ *
+ * @param in_error      The error to write.
+ *
+ * @return The error as a string.
+ */
+std::string writeError(const Error& in_error);
 
 } // namespace log
 } // namespace core

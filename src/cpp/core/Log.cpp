@@ -75,9 +75,7 @@ void logDebugAction(const std::string& logSection,
    
 std::string errorAsLogEntry(const Error& error)
 {
-   std::ostringstream ostr;
-   writeError(error, ostr);
-   return ostr.str();
+   return writeError(error);
 }
    
 

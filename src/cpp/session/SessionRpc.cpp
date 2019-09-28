@@ -145,9 +145,7 @@ SEXP rs_invokeRpc(SEXP name, SEXP args)
    // raise an R error if the RPC fails
    if (rpcError)
    {
-      std::stringstream ostream;
-      log::writeError(rpcError, ostream);
-      r::exec::error(ostream.str());
+      r::exec::error(log::writeError(rpcError));
    }
 
    // emit formatted response if enabled

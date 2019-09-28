@@ -481,7 +481,12 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
 
 std::ostream& writeError(const Error& in_error, std::ostream& io_os)
 {
-   return io_os << formatLogMessage(LogLevel::ERROR, in_error.asString(), logger().ProgramId);
+   return io_os << writeError(in_error);
+}
+
+std::string writeError(const Error& in_error)
+{
+   return formatLogMessage(LogLevel::ERROR, in_error.asString(), logger().ProgramId);
 }
 
 } // namespace log
