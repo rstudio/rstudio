@@ -118,10 +118,10 @@ void beginUpdateCheck(bool manual,
 
    module_context::processSupervisor().runProgram(
       rProgramPath.getAbsolutePath(),
-                                  args,
-                                  std::string(),
-                                  options,
-                                  onCompleted);
+      args,
+      std::string(),
+      options,
+      onCompleted);
 }
 
 void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
