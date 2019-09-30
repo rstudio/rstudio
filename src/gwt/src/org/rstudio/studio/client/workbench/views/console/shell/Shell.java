@@ -140,8 +140,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
 
-      keyDownPreviewHandlers_ = new ArrayList<KeyDownPreviewHandler>() ;
-      keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
+      keyDownPreviewHandlers_ = new ArrayList<>() ;
+      keyPressPreviewHandlers_ = new ArrayList<>() ;
 
       InputKeyHandler handler = new InputKeyHandler() ;
 
@@ -520,10 +520,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                                                   KeyPressHandler,
                                                   KeyUpHandler
    {
+      @Override
       public void onKeyDown(KeyDownEvent event)
       {
          int keyCode = event.getNativeKeyCode();
-         
+
          // typically we allow all the handlers to process the key; however,
          // this behavior is suppressed when we're incrementally searching the
          // history so we don't stack two kinds of completion popups
@@ -531,7 +532,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          if (historyCompletion_.getMode() == 
                HistoryCompletionManager.PopupMode.PopupIncremental)
          {
-            handlers = new ArrayList<KeyDownPreviewHandler>();
+            handlers = new ArrayList<>();
             handlers.add(historyCompletion_);
          }
 
@@ -611,7 +612,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                   eventBus_.fireEvent(new ConsoleInputEvent(null, ""));
                }
             }
-             
+
             input_.clear();
          }
          else
@@ -654,6 +655,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          }
       }
 
+      @Override
       public void onKeyPress(KeyPressEvent event)
       {
          // typically we allow all the handlers to process the key; however,
@@ -663,7 +665,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          if (historyCompletion_.getMode() == 
                HistoryCompletionManager.PopupMode.PopupIncremental)
          {
-            handlers = new ArrayList<KeyPressPreviewHandler>();
+            handlers = new ArrayList<>();
             handlers.add(historyCompletion_);
          }
 
@@ -737,7 +739,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    private void setHistory(JsArrayString history)
    {
-      ArrayList<String> historyList = new ArrayList<String>(history.length());
+      ArrayList<String> historyList = new ArrayList<>(history.length());
       for (int i = 0; i < history.length(); i++)
          historyList.add(history.get(i));
       historyManager_.setHistory(historyList);
