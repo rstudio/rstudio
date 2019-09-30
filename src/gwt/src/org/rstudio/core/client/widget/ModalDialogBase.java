@@ -25,13 +25,19 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -45,6 +51,7 @@ import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.Timers;
 
 import java.util.ArrayList;
 
@@ -96,14 +103,10 @@ public abstract class ModalDialogBase extends DialogBox
          setWidget(mainPanel_);
       }
 
-      addDomHandler(new KeyDownHandler()
-      {
-         public void onKeyDown(KeyDownEvent event)
-         {
-            // Is this too aggressive? Alternatively we could only filter out
-            // keycodes that are known to be problematic (pgup/pgdown)
-            event.stopPropagation();
-         }
+      addDomHandler(event -> {
+         // Is this too aggressive? Alternatively we could only filter out
+         // keycodes that are known to be problematic (pgup/pgdown)
+         event.stopPropagation();
       }, KeyDownEvent.getType());
    }
 
@@ -186,19 +189,10 @@ public abstract class ModalDialogBase extends DialogBox
          originallyActiveElement_.blur();
 
       // position the dialog
-      positionAndShowDialog(new Command() {
-         @Override
-         public void execute()
-         {
-            // defer shown notification to allow all elements to render
-            // before attempting to interact w/ them programmatically (e.g. setFocus)
-            Timer timer = new Timer() {
-               public void run() {
-                  onDialogShown();
-               }
-            };
-            timer.schedule(100);
-         }
+      positionAndShowDialog(() -> {
+         // defer shown notification to allow all elements to render
+         // before attempting to interact w/ them programmatically (e.g. setFocus)
+         Timers.singleShot(100, () -> onDialogShown());
       });
    }
    
@@ -323,12 +317,10 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected ThemedButton createCancelButton(final Operation cancelOperation)
    {
-      return new ThemedButton("Cancel", new ClickHandler() {
-         public void onClick(ClickEvent event) {
-            if (cancelOperation != null)
-               cancelOperation.execute();
-            closeDialog();
-         }
+      return new ThemedButton("Cancel", event -> {
+         if (cancelOperation != null)
+            cancelOperation.execute();
+         closeDialog();
       });
    }
 
@@ -588,8 +580,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void enableButtons(boolean enabled)
    {
-      for (int i = 0; i < allButtons_.size(); i++)
-         allButtons_.get(i).setEnabled(enabled);
+      for (ThemedButton allButton : allButtons_)
+         allButton.setEnabled(enabled);
    }
 
    public void move(Point p, boolean allowAnimation)

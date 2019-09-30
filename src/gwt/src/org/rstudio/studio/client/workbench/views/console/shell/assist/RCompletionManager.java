@@ -50,7 +50,6 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
@@ -279,7 +278,7 @@ public class RCompletionManager implements CompletionManager
 
       server_.getHelpAtCursor(
             linePos.getLine(), linePos.getPosition(),
-            new SimpleRequestCallback<Void>("Help"));
+            new SimpleRequestCallback<>("Help"));
    }
    
    public void goToDefinition()
@@ -431,7 +430,7 @@ public class RCompletionManager implements CompletionManager
       if (isDisabled())
          return false;
       
-      /**
+      /*
        * KEYS THAT MATTER
        *
        * When popup not showing:
@@ -439,6 +438,7 @@ public class RCompletionManager implements CompletionManager
        * 
        * When popup showing:
        * Esc - dismiss popup
+       * Ctrl+Esc - variation of Esc triggered by Ctrl+[ on iPadOS 13.1
        * Enter/Tab - accept current selection
        * Up-arrow/Down-arrow - change selected item
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
@@ -513,6 +513,10 @@ public class RCompletionManager implements CompletionManager
             {
             case KeyCodes.KEY_P: return popup_.selectPrev();
             case KeyCodes.KEY_N: return popup_.selectNext();
+
+            // Typing Ctrl+[ on iPadOS keyboard sends equivalent of Ctrl+Esc, but want to treat
+            // as plain Esc keypress
+            case KeyCodes.KEY_ESCAPE: invalidatePendingRequests(); return true;
             }
          }
          
@@ -1034,9 +1038,9 @@ public class RCompletionManager implements CompletionManager
       public AutocompletionContext()
       {
          token_ = "";
-         assocData_ = new ArrayList<String>();
-         dataType_ = new ArrayList<Integer>();
-         numCommas_ = new ArrayList<Integer>();
+         assocData_ = new ArrayList<>();
+         dataType_ = new ArrayList<>();
+         numCommas_ = new ArrayList<>();
          functionCallString_ = "";
       }
 
@@ -1588,7 +1592,7 @@ public class RCompletionManager implements CompletionManager
       do
       {
          String value = clone.currentValue();
-         if (value.indexOf(",") != -1 || value.equals("("))
+         if (value.contains(",") || value.equals("("))
             break;
          
          if (clone.bwdToMatchingToken())
@@ -1612,7 +1616,7 @@ public class RCompletionManager implements CompletionManager
       while (clone.moveToNextToken())
       {
          String value = clone.currentValue();
-         if (value.indexOf(",") != -1 || value.equals(")"))
+         if (value.contains(",") || value.equals(")"))
          {
             lookupSucceeded = true;
             break;

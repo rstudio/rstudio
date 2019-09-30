@@ -42,6 +42,8 @@
 * Show number of characters when entering version control commit messages (#5192)
 * Update embedded Qt to 5.12.5 for Chromium update, stability and bugfixes (#5399)
 * Add preference for changing font size on help pane (#3282)
+* Improved keyboard and touch support for iPadOS 13.1
+* Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 
 ### Bugfixes
 
@@ -53,4 +55,4 @@
 
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
-* 
+
