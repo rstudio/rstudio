@@ -1252,6 +1252,24 @@ public class TextEditingTarget implements
       view_.showRequiredPackagesMissingWarning(packages);
    }
    
+   public void showTexInstallationMissingWarning(String message)
+   {
+      view_.showTexInstallationMissingWarning(message);
+   }
+   
+   public void installTinyTeX()
+   {
+      Command onInstall = () -> {
+         String code = "tinytex::install_tinytex()";
+         events_.fireEvent(new SendToConsoleEvent(code, true));
+      };
+      
+      dependencyManager_.withTinyTeX(
+            "Installing tinytex",
+            "Installing TinyTeX",
+            onInstall);
+   }
+   
    private void jumpToPreviousFunction()
    {
       Scope jumpTo = scopeHelper_.getPreviousFunction(

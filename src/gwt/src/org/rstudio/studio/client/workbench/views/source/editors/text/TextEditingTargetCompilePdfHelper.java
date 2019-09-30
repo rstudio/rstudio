@@ -215,12 +215,12 @@ public class TextEditingTargetCompilePdfHelper
                {
                   String warning;
                   if (Desktop.isDesktop())
-                     warning = "No TeX installation detected. Please install " +
-                               "TeX before compiling.";
+                     warning = "No LaTeX installation detected. Please install " +
+                               "LaTeX before compiling.";
                   else
-                     warning = "This server does not have TeX installed. You " +
+                     warning = "This server does not have LaTeX installed. You " +
                                "may not be able to compile.";
-                  display.showWarningBar(warning);
+                  display.showTexInstallationMissingWarning(warning);
                }
                else if (checkForRnwWeave && 
                         !response.isRnwWeaveAvailable(fRnwWeave))
