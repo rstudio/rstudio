@@ -63,7 +63,7 @@ public class ImageButtonColumn<T> extends Column<T, T>
       {
          if (value != null)
          {
-            sb.append(TEMPLATES.render(image_.getSafeHtml(titleProvider_.get(value)), titleProvider_.get(value)));
+            sb.append(TEMPLATES.render(image_.getSafeHtml(), titleProvider_.get(value)));
          }
       }
       

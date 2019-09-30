@@ -716,12 +716,16 @@ public abstract class ModalDialogBase extends DialogBox
       NodeList<Element> potentiallyFocusable = DomUtils.querySelectorAll(getElement(), focusableElements);
 
       ArrayList<Element> focusable = new ArrayList<>();
+      Debug.devlog("Potentially focusable: " + potentiallyFocusable.getLength());
       for (int i = 0; i < potentiallyFocusable.getLength(); i++)
       {
          // only include items taking up space
          if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 && 
                potentiallyFocusable.getItem(i).getOffsetHeight() > 0)
          {
+            Element ele = potentiallyFocusable.getItem(i);
+            ele.getStyle().setBorderColor("red");
+            ele.getStyle().setBorderWidth(5, Unit.PX);
             focusable.add(potentiallyFocusable.getItem(i));
          }
       }
@@ -794,7 +798,7 @@ public abstract class ModalDialogBase extends DialogBox
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
-   private ArrayList<ThemedButton> allButtons_ = new ArrayList<ThemedButton>();
+   private ArrayList<ThemedButton> allButtons_ = new ArrayList<>();
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;

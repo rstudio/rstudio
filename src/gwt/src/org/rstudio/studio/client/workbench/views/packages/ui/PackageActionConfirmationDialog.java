@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.cellview.client.LoadingStateChangeEvent;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.LabeledBoolean;
@@ -66,8 +69,12 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
      
       addLeftButton(selectNoneButton_ = new ThemedButton("Select None",
          event -> setGlobalPerformAction("Select None", false)), ElementIds.SELECT_NONE_BUTTON);
-      
+
       enableOkButton(false);
+
+      // Grid control uses Enter to activate checkboxes, NEWS links
+      setEnterDisabled(true);
+
       selectAllButton_.setEnabled(false);
       selectNoneButton_.setEnabled(false);
    }
@@ -106,9 +113,29 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
       actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-      actionsTable_.setSelectionModel(new NoSelectionModel<>());
+      NoSelectionModel<PendingAction> selectionModel = new NoSelectionModel<>();
+      selectionModel.addSelectionChangeHandler(event -> {
+         Debug.devlog("Selection changed");
+      });
+      actionsTable_.setSelectionModel(selectionModel);
       actionsTable_.setWidth("100%", true);
-      
+      actionsTable_.addLoadingStateChangeHandler(event -> {
+            if (event.getLoadingState() == LoadingStateChangeEvent.LoadingState.LOADED)
+            {
+               Debug.devlog("loaded");
+               Scheduler.get().scheduleDeferred(() -> {
+                  Debug.devlog("refreshing focusable");
+                  refreshFocusableElements();
+                  if (!initialFocusSet_)
+                  {
+                     initialFocusSet_ = true;
+                     Debug.devlog("focus initial");
+                     focusInitialControl();
+                  }
+               });
+            }
+      });
+
       ActionColumn actionColumn = new ActionColumn();
       actionsTable_.addColumn(actionColumn);
       actionsTable_.setColumnWidth(actionColumn, 30, Unit.PX);
@@ -119,7 +146,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       scrollPanel.setWidget(actionsTable_);
       scrollPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       flowPanel.add(scrollPanel);
-      
+
       // query for updates
       actionsDS_.requestData(new SimpleRequestCallback<JsArray<T>>() {
 
@@ -129,9 +156,11 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
             if (actions != null && actions.length() > 0)
             {
                ArrayList<PendingAction> pendingActions = new ArrayList<>();
-               for (int i=0; i<actions.length(); i++)
+               for (int i = 0; i < actions.length(); i++)
+               {
                   pendingActions.add(new PendingAction(actions.get(i),
                      new LabeledBoolean(getActionName(actions.get(i)), false)));
+               }
                actionsTable_.setPageSize(pendingActions.size());
                actionsDataProvider_ = new ListDataProvider<>();
                actionsDataProvider_.setList(pendingActions);
@@ -139,8 +168,6 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
                
                selectAllButton_.setEnabled(true);
                selectNoneButton_.setEnabled(true);
-               refreshFocusableElements();
-               focusInitialControl();
             }
             else
             {
@@ -223,12 +250,12 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       actionsDataProvider_.setList(newActions);
       manageUIState();
    }
-   
+
    private void manageUIState()
    {
       enableOkButton(collectInput().size() > 0);
    }
-   
+
    interface Styles extends CssResource
    {
       String mainWidget();
@@ -253,5 +280,5 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    private ListDataProvider<PendingAction> actionsDataProvider_;
    private ThemedButton selectAllButton_;
    private ThemedButton selectNoneButton_;
-
+   private boolean initialFocusSet_ = false;
 }

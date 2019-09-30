@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.cellview.GridCellTextColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -36,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.inject.Inject;
 
 public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<PackageUpdate>
@@ -71,7 +71,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
    @Override
    protected void addTableColumns(CellTable<PendingAction> table)
    {
-      TextColumn<PendingAction> nameColumn = new TextColumn<PendingAction>() {
+      GridCellTextColumn<PendingAction> nameColumn = new GridCellTextColumn<PendingAction>() {
          public String getValue(PendingAction action)
          {
             return action.getActionInfo().getPackageName();
@@ -80,7 +80,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       table.addColumn(nameColumn, "Package");
       table.setColumnWidth(nameColumn, 28, Unit.PCT);
 
-      TextColumn<PendingAction> installedColumn = new TextColumn<PendingAction>() {
+      GridCellTextColumn<PendingAction> installedColumn = new GridCellTextColumn<PendingAction>() {
          public String getValue(PendingAction action)
          {
             return action.getActionInfo().getInstalled();
@@ -89,7 +89,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       table.addColumn(installedColumn, "Installed");
       table.setColumnWidth(installedColumn, 28, Unit.PCT);
 
-      TextColumn<PendingAction> availableColumn = new TextColumn<PendingAction>() {
+      GridCellTextColumn<PendingAction> availableColumn = new GridCellTextColumn<PendingAction>() {
          public String getValue(PendingAction action)
          {
             return action.getActionInfo().getAvailable();
