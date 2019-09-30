@@ -56,7 +56,7 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "Build " + info.build + " (" + info.commit.substring(0, 8) + ", " +
+           "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
            info.date + ")");
       noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
