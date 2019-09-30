@@ -1070,6 +1070,25 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+bool addTinytexToPathIfNecessary()
+{
+   if (isPdfLatexInstalled())
+      return false;
+
+   FilePath binPath;
+
+#if defined(_WIN32)
+   FilePath appData(core::system::getenv("APPDATA"));
+   binPath = appData.complete("TinyTeX\\bin\\win32");
+#elif defined(__APPLE__)
+   binPath = resolveAliasedPath("~/Library/TinyTeX/bin/x86_64-darwin");
+#else
+   binPath = resolveAliasedPath("~/bin");
+#endif
+
+   if (binPath.childPath("pdflatex").exists())
+      core::system::addToSystemPath(binPath);
+}
 
 bool isPdfLatexInstalled()
 {
