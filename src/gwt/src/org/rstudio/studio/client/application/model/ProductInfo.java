@@ -1,7 +1,7 @@
 /*
  * ProductInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public class ProductInfo
    public String version;
    public String commit;
    public String build;
+   public String release_name;
    public String notice;
    public String date;
    public String copyright_year;
