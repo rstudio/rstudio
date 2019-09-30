@@ -585,7 +585,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             processCommandEntry();
          }
          else if (
-               (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0) ||
+               (keyCode == KeyCodes.KEY_ESCAPE &&
+                     (modifiers == 0 || modifiers == KeyboardShortcut.CTRL /*iPadOS 13.1*/)) ||
                (BrowseCap.isMacintoshDesktop() && (
                      modifiers == KeyboardShortcut.CTRL &&
                      keyCode == KeyCodes.KEY_C)))
