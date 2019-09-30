@@ -71,13 +71,13 @@ void onPackageLoaded(const std::string& pkgname)
 
 bool isShinyAppDir(const FilePath& filePath)
 {
-   bool hasServer = filePath.getChildPath("server.R").exists() ||
-                    filePath.getChildPath("server.r").exists();
+   bool hasServer = filePath.completeChildPath("server.R").exists() ||
+                    filePath.completeChildPath("server.r").exists();
    if (hasServer)
    {
-      bool hasUI = filePath.getChildPath("ui.R").exists() ||
-                   filePath.getChildPath("ui.r").exists() ||
-                   filePath.getChildPath("www").exists();
+      bool hasUI = filePath.completeChildPath("ui.R").exists() ||
+                   filePath.completeChildPath("ui.r").exists() ||
+                   filePath.completeChildPath("www").exists();
 
       return hasUI;
    }
@@ -225,7 +225,7 @@ const char * const kShinyAppTypeMultiFile =  "type_multi_file";
 
 FilePath shinyTemplatePath(const std::string& name)
 {
-   return session::options().rResourcesPath().getChildPath("templates/shiny/" + name);
+   return session::options().rResourcesPath().completeChildPath("templates/shiny/" + name);
 }
 
 Error copyTemplateFile(const std::string& templateFileName,

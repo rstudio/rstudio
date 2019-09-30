@@ -80,7 +80,7 @@ json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 
 FilePath userDictionariesDir()
 {
-   return module_context::userScratchPath().getChildPath("dictionaries");
+   return module_context::userScratchPath().completeChildPath("dictionaries");
 }
 
 
@@ -104,7 +104,7 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
  * */
 FilePath legacyAllLanguagesDir()
 {
-   return module_context::userScratchPath().getChildPath(kSystemLanguages);
+   return module_context::userScratchPath().completeChildPath(kSystemLanguages);
 }
 
 /*
@@ -113,17 +113,17 @@ FilePath legacyAllLanguagesDir()
  * */
 FilePath legacyCustomDictionariesDir()
 {
-   return module_context::userScratchPath().getChildPath(kCustomDictionaries);
+   return module_context::userScratchPath().completeChildPath(kCustomDictionaries);
 }
 
 FilePath allLanguagesDir()
 {
-   return core::system::xdg::userConfigDir().getChildPath(kSystemLanguages);
+   return core::system::xdg::userConfigDir().completeChildPath(kSystemLanguages);
 }
 
 FilePath customDictionariesDir()
 {
-   return core::system::xdg::userConfigDir().getChildPath(kCustomDictionaries);
+   return core::system::xdg::userConfigDir().completeChildPath(kCustomDictionaries);
 }
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic

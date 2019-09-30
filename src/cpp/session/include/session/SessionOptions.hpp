@@ -478,7 +478,7 @@ public:
 
    core::FilePath userLogPath() const
    {
-      return userScratchPath().getChildPath("log");
+      return userScratchPath().completeChildPath("log");
    }
 
    core::FilePath initialWorkingDirOverride()

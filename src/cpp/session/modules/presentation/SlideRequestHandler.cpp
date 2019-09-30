@@ -258,7 +258,7 @@ bool performKnit(const FilePath& rmdPath,
                  ErrorResponse* pErrorResponse)
 {
    // calculate the target md path
-   FilePath mdPath = rmdPath.getParent().getChildPath(rmdPath.getStem() + ".md");
+   FilePath mdPath = rmdPath.getParent().completeChildPath(rmdPath.getStem() + ".md");
 
    // remove the md if we are clearing the cache
    if (clearCache)
@@ -298,7 +298,7 @@ bool performKnit(const FilePath& rmdPath,
    // remove the cache if requested
    if (clearCache)
    {
-      FilePath cachePath = rmdPath.getParent().getChildPath(rmdPath.getStem()+"-cache");
+      FilePath cachePath = rmdPath.getParent().completeChildPath(rmdPath.getStem() + "-cache");
       if (cachePath.exists())
       {
          Error error = cachePath.remove();
@@ -512,7 +512,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    }
 
    // look for slides markdown
-   FilePath slidesFile = rmdFile.getParent().getChildPath(rmdFile.getStem() + ".md");
+   FilePath slidesFile = rmdFile.getParent().completeChildPath(rmdFile.getStem() + ".md");
    if (!slidesFile.exists())
    {
       *pErrorResponse = ErrorResponse(
@@ -1154,7 +1154,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    else if (boost::algorithm::starts_with(path, "mathjax-26/"))
    {
       FilePath filePath =
-            session::options().mathjaxPath().getParent().getChildPath(path);
+         session::options().mathjaxPath().getParent().completeChildPath(path);
       setWebCacheableFileResponse(filePath, request, pResponse);
    }
 
@@ -1162,7 +1162,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    // serve the file back
    else
    {
-      FilePath targetFile = presentation::state::directory().getChildPath(path);
+      FilePath targetFile = presentation::state::directory().completeChildPath(path);
       if (!request.headerValue("Range").empty())
       {
          handleRangeRequest(targetFile, request, pResponse);

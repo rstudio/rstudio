@@ -188,12 +188,12 @@ std::string packageBuildFileHash()
 {
    std::ostringstream ostr;
    FilePath buildPath = projects::projectContext().buildTargetPath();
-   ostr << buildFileHash(buildPath.getChildPath("DESCRIPTION"));
-   FilePath srcPath = buildPath.getChildPath("src");
+   ostr << buildFileHash(buildPath.completeChildPath("DESCRIPTION"));
+   FilePath srcPath = buildPath.completeChildPath("src");
    if (srcPath.exists())
    {
-      ostr << buildFileHash(srcPath.getChildPath("Makevars"));
-      ostr << buildFileHash(srcPath.getChildPath("Makevars.win"));
+      ostr << buildFileHash(srcPath.completeChildPath("Makevars"));
+      ostr << buildFileHash(srcPath.completeChildPath("Makevars.win"));
    }
    return ostr.str();
 }
@@ -350,7 +350,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    }
 
    // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.getChildPath("src");
+   FilePath srcDir = pkgPath.completeChildPath("src");
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir);
    if (!compileArgs.empty())
    {
@@ -400,10 +400,10 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    }
 
    // copy Makevars to tempdir if it exists
-   FilePath makevarsPath = srcDir.getChildPath("Makevars");
+   FilePath makevarsPath = srcDir.completeChildPath("Makevars");
    if (makevarsPath.exists())
    {
-      Error error = makevarsPath.copy(tempDir.getChildPath("Makevars"));
+      Error error = makevarsPath.copy(tempDir.completeChildPath("Makevars"));
       if (error)
       {
          LOG_ERROR(error);
@@ -411,10 +411,10 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       }
    }
 
-   FilePath makevarsWinPath = srcDir.getChildPath("Makevars.win");
+   FilePath makevarsWinPath = srcDir.completeChildPath("Makevars.win");
    if (makevarsWinPath.exists())
    {
-      Error error = makevarsWinPath.copy(tempDir.getChildPath("Makevars.win"));
+      Error error = makevarsWinPath.copy(tempDir.completeChildPath("Makevars.win"));
       if (error)
       {
          LOG_ERROR(error);
@@ -444,7 +444,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    }
 
    // call R CMD SHLIB on a temp file to capture the compilation args
-   FilePath tempSrcFile = tempDir.getChildPath(filename);
+   FilePath tempSrcFile = tempDir.completeChildPath(filename);
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
    // remove the tempDir
@@ -669,8 +669,8 @@ bool RCompilationDatabase::isProjectTranslationUnit(
 
    FilePath filePath(filename);
    FilePath pkgPath = projectContext().buildTargetPath();
-   FilePath srcDirPath = pkgPath.getChildPath("src");
-   FilePath includePath = pkgPath.getChildPath("inst/include");
+   FilePath srcDirPath = pkgPath.completeChildPath("src");
+   FilePath includePath = pkgPath.completeChildPath("inst/include");
    return
          filePath.isWithin(srcDirPath) ||
          filePath.isWithin(includePath);
@@ -712,8 +712,8 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
    {
       // setup options for file scanning (including filter)
       FilePath pkgPath = projectContext().buildTargetPath();
-      FilePath srcDirPath = pkgPath.getChildPath("src");
-      FilePath includePath = pkgPath.getChildPath("inst/include");
+      FilePath srcDirPath = pkgPath.completeChildPath("src");
+      FilePath includePath = pkgPath.completeChildPath("inst/include");
       FileScannerOptions options;
       options.recursive = true;
       options.filter =
@@ -854,8 +854,8 @@ RCompilationDatabase::CompilationConfig
 
    // if this is a header file we need to rename it as a temporary .cpp
    // file so that R CMD SHLIB is willing to compile it
-   FilePath tempSrcFile = srcFile.getParent().getChildPath(
-            kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
+   FilePath tempSrcFile = srcFile.getParent().completeChildPath(
+      kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
    RemoveOnExitScope removeOnExit(tempSrcFile, ERROR_LOCATION);
    if (SourceIndex::isHeaderFile(srcFile))
    {
@@ -998,8 +998,9 @@ namespace {
 
 FilePath precompiledHeaderDir(const std::string& pkgName)
 {
-   return module_context::tempDir().getChildPath("rstudio/libclang/precompiled/"
-                                              + pkgName);
+   return module_context::tempDir().completeChildPath(
+      "rstudio/libclang/precompiled/"
+      + pkgName);
 }
 
 } // anonymous namespace
@@ -1024,7 +1025,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       return std::vector<std::string>();
    }
    pkgPath = core::hash::crc32HexHash(pkgPath);
-   precompiledDir = precompiledDir.getChildPath(pkgPath);
+   precompiledDir = precompiledDir.completeChildPath(pkgPath);
 
    // platform/rcpp version specific directory name
    std::string clangVersion = clang().version().asString();
@@ -1041,7 +1042,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // and re-create this one. this enforces only storing precompiled headers
    // for the current version of R/Rcpp/pkg -- if we didn't do this then the
    // storage cost could really pile up over time (~25MB per PCH)
-   FilePath platformPath = precompiledDir.getChildPath(platformDir);
+   FilePath platformPath = precompiledDir.completeChildPath(platformDir);
    if (!platformPath.exists())
    {
       // delete root directory
@@ -1062,11 +1063,11 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    }
 
    // now create the PCH if we need to
-   FilePath pchPath = platformPath.getChildPath(pkgName + stdArg + ".pch");
+   FilePath pchPath = platformPath.completeChildPath(pkgName + stdArg + ".pch");
    if (!pchPath.exists())
    {
       // state cpp file for creating precompiled headers
-      FilePath cppPath = platformPath.getChildPath(pkgName + stdArg + ".cpp");
+      FilePath cppPath = platformPath.completeChildPath(pkgName + stdArg + ".cpp");
       std::string contents;
       boost::format fmt("#include <%1%.h>\n");
       contents.append(boost::str(fmt % pkgName));

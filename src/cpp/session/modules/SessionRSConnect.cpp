@@ -429,10 +429,10 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
    else
    {
       std::vector<FilePath> shinyPaths;
-      shinyPaths.push_back(appPath.getChildPath("app.R"));
-      shinyPaths.push_back(appPath.getChildPath("ui.R"));
-      shinyPaths.push_back(appPath.getChildPath("server.R"));
-      shinyPaths.push_back(appPath.getChildPath("www/index.html"));
+      shinyPaths.push_back(appPath.completeChildPath("app.R"));
+      shinyPaths.push_back(appPath.completeChildPath("ui.R"));
+      shinyPaths.push_back(appPath.completeChildPath("server.R"));
+      shinyPaths.push_back(appPath.completeChildPath("www/index.html"));
       for (const FilePath& filePath : shinyPaths)
       {
          if (filePath.exists())

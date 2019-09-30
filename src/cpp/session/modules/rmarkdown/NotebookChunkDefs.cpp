@@ -98,7 +98,7 @@ FilePath chunkDefinitionsPath(const core::FilePath& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, "", nbCtxId).getChildPath(fileName);
+   return chunkCacheFolder(docPath, "", nbCtxId).completeChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
@@ -106,7 +106,7 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, docId, nbCtxId).getChildPath(fileName);
+   return chunkCacheFolder(docPath, docId, nbCtxId).completeChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath, 

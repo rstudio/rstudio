@@ -482,7 +482,7 @@ void onDocSaved(FilePath path)
 
 FilePath unsavedNotebookCache()
 {
-   return module_context::sessionScratchPath().getChildPath("unsaved-notebooks");
+   return module_context::sessionScratchPath().completeChildPath("unsaved-notebooks");
 }
 
 SEXP rs_chunkCacheFolder(SEXP fileSEXP)
@@ -624,7 +624,7 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
 
 FilePath notebookCacheRoot()
 { 
-   return module_context::sharedScratchPath().getChildPath("notebooks");
+   return module_context::sharedScratchPath().completeChildPath("notebooks");
 }
 
 FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
@@ -637,8 +637,8 @@ FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = unsavedNotebookCache().getChildPath(docId)
-                                     .getChildPath(kCacheVersion);
+      folder = unsavedNotebookCache().completeChildPath(docId)
+                                     .completeChildPath(kCacheVersion);
    }
    else
    {
@@ -647,9 +647,9 @@ FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
       if (error)
          LOG_ERROR(error);
       
-      folder = notebookCacheRoot().getChildPath(id + "-" + path.getStem())
-                                  .getChildPath(kCacheVersion)
-                                  .getChildPath(nbCtxId);
+      folder = notebookCacheRoot().completeChildPath(id + "-" + path.getStem())
+                                  .completeChildPath(kCacheVersion)
+                                  .completeChildPath(nbCtxId);
    }
 
    return folder;

@@ -45,7 +45,7 @@ namespace {
 
 std::string profilesCacheDir() 
 {
-   return module_context::scopedScratchPath().getChildPath(kProfilesCacheDir)
+   return module_context::scopedScratchPath().completeChildPath(kProfilesCacheDir)
       .getAbsolutePath();
 }
 
@@ -64,7 +64,7 @@ void handleProfilerResReq(const http::Request& request,
    std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
 
    core::FilePath profilesPath = core::FilePath(profilesCacheDir());
-   core::FilePath profileResource = profilesPath.getChildPath(resourceName);
+   core::FilePath profileResource = profilesPath.completeChildPath(resourceName);
 
    pResponse->setCacheableFile(profileResource, request);
 }
@@ -75,7 +75,7 @@ void handleProfilerResourceResReq(const http::Request& request,
    std::string path("profiler/");
    path.append(http::util::pathAfterPrefix(request, kProfilerResourceLocation));
 
-   core::FilePath profilerResource = options().rResourcesPath().getChildPath(path);
+   core::FilePath profilerResource = options().rResourcesPath().completeChildPath(path);
    pResponse->setCacheableFile(profilerResource, request);
 }
 

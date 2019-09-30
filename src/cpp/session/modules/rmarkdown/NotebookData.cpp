@@ -62,7 +62,7 @@ void handleNotebookDataResReq(const http::Request& request,
    std::string resourcePath("pagedtable/");
    resourcePath.append(http::util::pathAfterPrefix(request, kNotebookDataResourceLocation));
 
-   core::FilePath pagedTableResource = options().rResourcesPath().getChildPath(resourcePath);
+   core::FilePath pagedTableResource = options().rResourcesPath().completeChildPath(resourcePath);
 
    pResponse->setCacheableFile(pagedTableResource, request);
 }

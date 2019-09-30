@@ -103,7 +103,7 @@ bool RVersionsScanner::detectSystemRVersion(core::r_util::RVersion* pVersion,
    // if it's a directory then see if we can find the script
    if (rWhichRPath.isDirectory())
    {
-      FilePath rScriptPath = rWhichRPath.getChildPath("bin/R");
+      FilePath rScriptPath = rWhichRPath.completeChildPath("bin/R");
       if (rScriptPath.exists())
          rWhichRPath = rScriptPath;
    }

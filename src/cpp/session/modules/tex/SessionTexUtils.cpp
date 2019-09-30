@@ -105,9 +105,9 @@ RTexmfPaths rTexmfPaths()
 
    // populate and return struct
    RTexmfPaths texmfPaths;
-   texmfPaths.texInputsPath = rTexmfPath.getChildPath("tex/latex");
-   texmfPaths.bibInputsPath = rTexmfPath.getChildPath("bibtex/bib");
-   texmfPaths.bstInputsPath = rTexmfPath.getChildPath("bibtex/bst");
+   texmfPaths.texInputsPath = rTexmfPath.completeChildPath("tex/latex");
+   texmfPaths.bibInputsPath = rTexmfPath.completeChildPath("bibtex/bib");
+   texmfPaths.bstInputsPath = rTexmfPath.completeChildPath("bibtex/bst");
    return texmfPaths;
 }
 

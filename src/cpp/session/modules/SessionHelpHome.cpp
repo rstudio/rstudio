@@ -49,7 +49,8 @@ void handleHelpHomeRequest(const core::http::Request& request,
       variables["js_callbacks"] = jsCallbacks;
       text::TemplateFilter templateFilter(variables);
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(helpResPath.getChildPath("index.htm"),
+      pResponse->setFile(
+         helpResPath.completeChildPath("index.htm"),
                          request,
                          templateFilter);
 

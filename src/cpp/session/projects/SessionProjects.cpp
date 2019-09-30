@@ -262,9 +262,9 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // copy app.R into the project
       FilePath shinyDir = session::options().rResourcesPath()
-            .getChildPath("templates/shiny");
+                                            .completeChildPath("templates/shiny");
       
-      error = shinyDir.getChildPath("app.R").copy(appDir.getChildPath("app.R"));
+      error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
       if (error)
          LOG_ERROR(error);
 

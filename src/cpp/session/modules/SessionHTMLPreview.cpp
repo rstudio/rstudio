@@ -192,7 +192,7 @@ public:
    {
       FilePath baseFile = requiresKnit() ? knitrOutputFile() : targetFile();
       if (isMarkdown())
-         return baseFile.getParent().getChildPath(baseFile.getStem() + ".html");
+         return baseFile.getParent().completeChildPath(baseFile.getStem() + ".html");
       else
          return baseFile;
    }
@@ -304,7 +304,7 @@ private:
 
    FilePath outputFileForTarget(const std::string& ext)
    {
-      return targetFile_.getParent().getChildPath(targetFile_.getStem() + ext);
+      return targetFile_.getParent().completeChildPath(targetFile_.getStem() + ext);
    }
 
    void terminateWithContent(const FilePath& filePath,
@@ -811,7 +811,7 @@ Error readPreviewTemplate(const FilePath& resPath,
                           std::string* pPreviewTemplate)
 {
 
-   FilePath htmlPreviewFile = resPath.getChildPath("markdown.html");
+   FilePath htmlPreviewFile = resPath.completeChildPath("markdown.html");
    return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
 }
 
@@ -965,14 +965,14 @@ void handlePreviewRequest(const http::Request& request,
    {
 
       FilePath filePath =
-            session::options().mathjaxPath().getParent().getChildPath(path);
+         session::options().mathjaxPath().getParent().completeChildPath(path);
       pResponse->setFile(filePath, request);
    }
 
    // request for dependent file
    else
    {
-      FilePath filePath = s_pCurrentPreview_->targetDirectory().getChildPath(path);
+      FilePath filePath = s_pCurrentPreview_->targetDirectory().completeChildPath(path);
       addFileSpecificHeaders(filePath, pResponse);
       pResponse->setFile(filePath, request);
    }
@@ -1025,7 +1025,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
             Error error = viewerTempDir.ensureDirectory();
             if (error)
                throw r::exec::RErrorException(r::endUserErrorMessage(error));
-            viewerFilePath = viewerTempDir.getChildPath(filePath.getFilename());
+            viewerFilePath = viewerTempDir.completeChildPath(filePath.getFilename());
 
             // create base64 encoded version
             error = module_context::createSelfContainedHtml(filePath, viewerFilePath);

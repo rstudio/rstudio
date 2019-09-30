@@ -72,7 +72,7 @@ void readField(const Container& container,
 Error RPackageInfo::read(const FilePath& packageDir)
 {
    // parse DCF file
-   FilePath descFilePath = packageDir.getChildPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
    std::string errMsg;
@@ -111,7 +111,7 @@ std::string RPackageInfo::packageFilename(const std::string& extension) const
 
 bool isPackageDirectory(const FilePath& dir)
 {
-   if (dir.getChildPath("DESCRIPTION").exists())
+   if (dir.completeChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);
@@ -128,7 +128,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 std::string packageNameFromDirectory(const FilePath& dir)
 {
-   if (dir.getChildPath("DESCRIPTION").exists())
+   if (dir.completeChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);

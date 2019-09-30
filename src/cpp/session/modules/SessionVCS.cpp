@@ -191,7 +191,7 @@ FilePath getTrueHomeDir()
 
 FilePath defaultSshKeyDir()
 {
-   return getTrueHomeDir().getChildPath(".ssh");
+   return getTrueHomeDir().completeChildPath(".ssh");
 }
 
 void enqueueRefreshEvent()

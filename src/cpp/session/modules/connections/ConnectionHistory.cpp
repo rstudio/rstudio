@@ -151,7 +151,7 @@ const char* const kConnectionListFile = "connection-history-database.json";
 
 Error ConnectionHistory::readConnections(json::Array* pConnections)
 {
-   FilePath connectionListFile = connectionsDir_.getChildPath(kConnectionListFile);
+   FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
    if (connectionListFile.exists())
    {
       std::string contents;
@@ -176,7 +176,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
 
 Error ConnectionHistory::writeConnections(const json::Array& connectionsJson)
 {
-   FilePath connectionListFile = connectionsDir_.getChildPath(kConnectionListFile);
+   FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
    std::shared_ptr<std::ostream> pStream;
    Error error = connectionListFile.openForWrite(pStream);
    if (error)

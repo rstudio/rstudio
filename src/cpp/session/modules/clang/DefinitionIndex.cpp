@@ -457,7 +457,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().getChildPath("cpp-definition-cache");
+   return module_context::scopedScratchPath().completeChildPath("cpp-definition-cache");
 }
 
 void loadDefinitionIndex()
@@ -621,8 +621,8 @@ Error initializeDefinitionIndex()
 
       // check for src and inst/include dirs
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      FilePath srcPath = pkgPath.getChildPath("src");
-      FilePath includePath = pkgPath.getChildPath("inst/include");
+      FilePath srcPath = pkgPath.completeChildPath("src");
+      FilePath includePath = pkgPath.completeChildPath("inst/include");
       if (srcPath.exists() || includePath.exists())
       {
          // create an incremental file change handler (on the heap so that it

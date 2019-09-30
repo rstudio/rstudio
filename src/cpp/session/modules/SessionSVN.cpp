@@ -85,7 +85,7 @@ FilePath resolveAliasedPath(const std::string& path)
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_workingDir.getChildPath(path);
+      return s_workingDir.completeChildPath(path);
 }
 
 
@@ -663,7 +663,7 @@ FilePath resolveAliasedJsonPath(const json::Value& value)
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_workingDir.getChildPath(path);
+      return s_workingDir.completeChildPath(path);
 }
 
 Error svnAdd(const json::JsonRpcRequest& request,

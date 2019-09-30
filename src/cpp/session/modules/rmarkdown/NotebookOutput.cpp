@@ -387,11 +387,11 @@ FilePath chunkOutputPath(
       ChunkOutputContext ctxType)
 {
    // compute path to exact context
-   FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).getChildPath(chunkId);
+   FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).completeChildPath(chunkId);
 
    // fall back to saved context if permitted
    if (!path.exists() && ctxType == ContextSaved)
-      path = chunkCacheFolder(docPath, docId, kSavedCtx).getChildPath(chunkId);
+      path = chunkCacheFolder(docPath, docId, kSavedCtx).completeChildPath(chunkId);
 
    return path;
 }

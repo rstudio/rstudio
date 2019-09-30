@@ -42,7 +42,7 @@ const char * const kExplorerCacheDir = "explorer-cache";
 
 FilePath explorerCacheDir() 
 {
-   return module_context::sessionScratchPath().getChildPath(kExplorerCacheDir);
+   return module_context::sessionScratchPath().completeChildPath(kExplorerCacheDir);
 }
 
 std::string explorerCacheDirSystem()
@@ -152,7 +152,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (id.empty())
       return;
    
-   FilePath cachePath = explorerCacheDir().getChildPath(id);
+   FilePath cachePath = explorerCacheDir().completeChildPath(id);
    error = cachePath.removeIfExists();
    if (error)
    {

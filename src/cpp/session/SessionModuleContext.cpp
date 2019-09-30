@@ -328,7 +328,7 @@ SEXP rs_rstudioVersion()
 SEXP rs_rstudioCitation()
 {
    FilePath resPath = session::options().rResourcesPath();
-   FilePath citationPath = resPath.getChildPath("CITATION");
+   FilePath citationPath = resPath.completeChildPath("CITATION");
 
    // the citation file may not exist when working in e.g.
    // development configurations so just ignore if it's missing
@@ -976,7 +976,7 @@ FilePath userScratchPath()
 
 FilePath userUploadedFilesScratchPath()
 {
-   return session::options().userScratchPath().getChildPath("uploaded-files");
+   return session::options().userScratchPath().completeChildPath("uploaded-files");
 }
 
 FilePath scopedScratchPath()
@@ -1213,7 +1213,7 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #ifdef _WIN32
       return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
 #else
-      shell_utils::ShellCommand rCmd(rBinDir.getChildPath("R"));
+      shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
       rCmd << "CMD";
       return rCmd;
 #endif
@@ -1342,7 +1342,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 #ifdef _WIN32
    shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
 #else
-   shell_utils::ShellCommand installCommand(rBinDir.getChildPath("R"));
+   shell_utils::ShellCommand installCommand(rBinDir.completeChildPath("R"));
 #endif
 
    installCommand << core::shell_utils::EscapeFilesOnly;
@@ -1439,7 +1439,7 @@ bool isUnmonitoredPackageSourceFile(const FilePath& filePath)
    // see if one the file's parent directories has a DESCRIPTION
    while (!dir.isEmpty())
    {
-      FilePath descPath = dir.getChildPath("DESCRIPTION");
+      FilePath descPath = dir.completeChildPath("DESCRIPTION");
       if (descPath.exists())
       {
          // get path relative to package dir
@@ -2109,7 +2109,7 @@ FilePath sourceDiagnostics()
 {
    r::exec::RFunction sourceFx("source");
    sourceFx.addParam(string_utils::utf8ToSystem(
-      options().coreRSourcePath().getChildPath("Diagnostics.R").getAbsolutePath()));
+      options().coreRSourcePath().completeChildPath("Diagnostics.R").getAbsolutePath()));
    sourceFx.addParam("chdir", true);
    Error error = sourceFx.call();
    if (error)
@@ -2233,7 +2233,7 @@ shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 #if defined(_WIN32)
    shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
 #else
-   shell_utils::ShellCommand rCmd(rBinDir.getChildPath("R"));
+   shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
    rCmd << "CMD";
 #endif
    return rCmd;

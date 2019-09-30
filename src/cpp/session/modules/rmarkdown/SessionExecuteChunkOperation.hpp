@@ -400,7 +400,7 @@ core::Error runChunk(const std::string& docId,
       // in the same directory -- if it exists, this is a virtual env
       if (enginePath.exists())
       {
-         FilePath activatePath = enginePath.getParent().getChildPath("activate");
+         FilePath activatePath = enginePath.getParent().completeChildPath("activate");
          if (activatePath.exists())
          {
             FilePath binPath = enginePath.getParent();

@@ -413,7 +413,7 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
          ++it)
    {      
       // move the file
-      FilePath targetPath = targetDirPath.getChildPath(it->getFilename()) ;
+      FilePath targetPath = targetDirPath.completeChildPath(it->getFilename()) ;
       Error moveError = it->move(targetPath) ;
       if (moveError)
          return moveError ;
@@ -498,7 +498,7 @@ void handleFilesRequest(const http::Request& request,
    if (filePath.isDirectory())
    {
       // if there is an index.html then serve that
-      filePath = filePath.getChildPath("index.html");
+      filePath = filePath.completeChildPath("index.html");
       if (!filePath.exists())
       {
          pResponse->setNotFoundError(request);
@@ -598,7 +598,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
       else
       {
          // calculate target path
-         FilePath targetPath = targetDirectoryPath.getChildPath(filename);
+         FilePath targetPath = targetDirectoryPath.completeChildPath(filename);
          
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
@@ -1012,7 +1012,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    // detect any potential overwrites
    bool isZip = boost::ends_with(pUploadState->fileName, "zip");
    FilePath destDir = module_context::resolveAliasedPath(pUploadState->targetDirectory);
-   FilePath destPath = destDir.getChildPath(pUploadState->fileName);
+   FilePath destPath = destDir.completeChildPath(pUploadState->fileName);
 
    json::Array overwritesJson;
    if (isZip)

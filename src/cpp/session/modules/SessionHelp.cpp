@@ -674,7 +674,7 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 {
    FilePath packageDir = rdFilePath.getParent().getParent();
 
-   FilePath descFilePath = packageDir.getChildPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return r_util::RPackageInfo();
 
@@ -763,7 +763,7 @@ void handleHttpdRequest(const std::string& location,
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rResourcesPath().getChildPath("R.css");
+      core::FilePath cssFile = options().rResourcesPath().completeChildPath("R.css");
       if (cssFile.exists())
       {
          pResponse->setFile(cssFile, request, filter);
@@ -788,8 +788,8 @@ void handleHttpdRequest(const std::string& location,
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().getChildPath(
-                                                      "markdown_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath(
+         "markdown_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -800,7 +800,7 @@ void handleHttpdRequest(const std::string& location,
    // roxygen help
    if (path == "/doc/roxygen_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().getChildPath("roxygen_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath("roxygen_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -924,7 +924,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    }
 
    // form a path to the temporary file
-   FilePath tempFilePath = r::session::utils::tempDir().getChildPath(uri);
+   FilePath tempFilePath = r::session::utils::tempDir().completeChildPath(uri);
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();

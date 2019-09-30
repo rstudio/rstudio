@@ -113,7 +113,7 @@ bool Indexer::work()
    std::string pkgName = pkgPath.getFilename();
    for (boost::shared_ptr<Worker> pWorker : workers_)
    {
-      FilePath resourcePath = pkgPath.getChildPath(pWorker->resourcePath());
+      FilePath resourcePath = pkgPath.completeChildPath(pWorker->resourcePath());
       if (!resourcePath.exists())
          continue;
       

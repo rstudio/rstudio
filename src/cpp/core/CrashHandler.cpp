@@ -221,7 +221,7 @@ Error initialize(ProgramMode programMode)
          if (error)
             return error;
 
-         FilePath databasePath = tmpPath.getParent().getChildPath("crashpad_database");
+         FilePath databasePath = tmpPath.getParent().completeChildPath("crashpad_database");
 
          // ensure that the database path exists
          error = databasePath.ensureDirectory();
@@ -241,7 +241,7 @@ Error initialize(ProgramMode programMode)
          databasePathStr = core::system::userSettingsPath(
             core::system::userHomePath(),
             "R",
-            true).getChildPath("crashpad_database").getAbsolutePath();
+            true).completeChildPath("crashpad_database").getAbsolutePath();
       }
 #else
       // desktop mode - default database path to user settings path
@@ -277,9 +277,9 @@ Error initialize(ProgramMode programMode)
          // is run with the correct permissions (otherwise ptrace will not work if setuid is used)
          #ifdef RSTUDIO_SERVER
             if (s_programMode == ProgramMode::Server)
-               handlerPath = googleFilePath(exePath.getParent().getChildPath("crash-handler-proxy").getAbsolutePath());
+               handlerPath = googleFilePath(exePath.getParent().completeChildPath("crash-handler-proxy").getAbsolutePath());
             else
-               handlerPath = googleFilePath(exePath.getParent().getChildPath("crashpad_handler").getAbsolutePath());
+               handlerPath = googleFilePath(exePath.getParent().completeChildPath("crashpad_handler").getAbsolutePath());
          #else
             handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler").absolutePath());
          #endif

@@ -248,7 +248,7 @@ core::Error ViewerHistoryEntry::copy(
              const core::FilePath& destinationDir) const
 {
    // copy enclosing directory to the destinationDir
-   FilePath entryPath = sourceDir.getChildPath(sessionTempPath_);
+   FilePath entryPath = sourceDir.completeChildPath(sessionTempPath_);
    FilePath parentDir = entryPath.getParent();
    return module_context::recursiveCopyDirectory(parentDir, destinationDir);
 }

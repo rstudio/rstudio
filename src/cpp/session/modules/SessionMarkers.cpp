@@ -414,7 +414,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
 FilePath sourceMarkersFilePath()
 {
-   return module_context::scopedScratchPath().getChildPath("saved_source_markers");
+   return module_context::scopedScratchPath().completeChildPath("saved_source_markers");
 }
 
 void readSourceMarkers()

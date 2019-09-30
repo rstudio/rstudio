@@ -158,7 +158,7 @@ void onResume(const Settings& settings)
 
 FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
 {
-   return texFilePath.getParent().getChildPath(texFilePath.getStem() + ext);
+   return texFilePath.getParent().completeChildPath(texFilePath.getStem() + ext);
 }
 
 bool isSynctexAvailable(const FilePath& texFilePath)
@@ -460,8 +460,8 @@ public:
 
    void init(const FilePath& targetFilePath)
    {
-      basePath_ = targetFilePath.getParent().getChildPath(
-                                    targetFilePath.getStem()).getAbsolutePath();
+      basePath_ = targetFilePath.getParent().completeChildPath(
+         targetFilePath.getStem()).getAbsolutePath();
    }
 
    void preserveLog()

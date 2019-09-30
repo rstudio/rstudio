@@ -180,8 +180,8 @@ public:
 
       // add words from dic_delta if available
       FilePath dicPath = dictionary.dicPath();
-      FilePath dicDeltaPath = dicPath.getParent().getChildPath(
-                                                dicPath.getStem() + ".dic_delta");
+      FilePath dicDeltaPath = dicPath.getParent().completeChildPath(
+         dicPath.getStem() + ".dic_delta");
       if (dicDeltaPath.exists())
       {
          Error error = mergeDicDeltaFile(dicDeltaPath);

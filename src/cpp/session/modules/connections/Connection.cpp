@@ -48,9 +48,9 @@ std::string iconData(const std::string& iconGroup,
             boost::regex("\\s"), "") + ".png";
 
       // the package did not supply an icon; see if there's one baked in
-      FilePath path = options().rResourcesPath().getChildPath("connections")
-         .getChildPath(iconGroup)
-         .getChildPath(iconFilename);
+      FilePath path = options().rResourcesPath().completeChildPath("connections")
+                               .completeChildPath(iconGroup)
+                               .completeChildPath(iconFilename);
       if (path.exists())
          return std::string("connections/") + iconGroup + "/" + iconFilename;
 

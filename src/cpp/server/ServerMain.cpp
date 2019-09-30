@@ -165,7 +165,7 @@ void pageNotFoundHandler(const http::Request& request,
    std::map<std::string, std::string> vars;
    vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
 
-   FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).getChildPath("404.htm");
+   FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).completeChildPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
 
    if (err)

@@ -39,7 +39,7 @@ FilePath s_snippetsMonitoredDir;
 void notifySnippetsChanged()
 {
    Error error = core::writeStringToFile(
-          s_snippetsMonitoredDir.getChildPath("changed"),
+      s_snippetsMonitoredDir.completeChildPath("changed"),
           core::system::generateUuid());
    if (error)
       LOG_ERROR(error);
@@ -86,7 +86,8 @@ Error saveSnippets(const json::JsonRpcRequest& request,
             continue;
          }
 
-         error = writeStringToFile(snippetsDir.getChildPath(mode + ".snippets"),
+         error = writeStringToFile(
+            snippetsDir.completeChildPath(mode + ".snippets"),
                                    contents);
          if (error)
             LOG_ERROR(error);

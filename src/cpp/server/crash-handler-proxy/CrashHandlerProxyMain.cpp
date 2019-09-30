@@ -24,7 +24,7 @@ void runCrashHandler(const char* argv[])
    if (!crashpadHandlerPath.empty())
       handlerPath = FilePath(crashpadHandlerPath);
    else
-      handlerPath = exePath.getParent().getChildPath("crashpad_handler");
+      handlerPath = exePath.getParent().completeChildPath("crashpad_handler");
 
    std::string handlerPathStr = handlerPath.getAbsolutePath();
    const char* handlerExe = handlerPathStr.c_str();

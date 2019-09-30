@@ -158,7 +158,7 @@ ProgramStatus Options::read(int argc,
 
    // compute the resource and binary paths
    FilePath resourcePath = installPath_;
-   FilePath binaryPath = installPath_.getChildPath("bin");
+   FilePath binaryPath = installPath_.completeChildPath("bin");
 
    // detect running in OSX bundle and tweak paths
 #ifdef __APPLE__

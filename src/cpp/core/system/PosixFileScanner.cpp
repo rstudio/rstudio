@@ -125,7 +125,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    for (const std::string& name : names)
    {
       // compute the path
-      std::string path = rootPath.getChildPath(name).getAbsolutePath();
+      std::string path = rootPath.completeChildPath(name).getAbsolutePath();
 
       // get the attributes
       struct stat st;

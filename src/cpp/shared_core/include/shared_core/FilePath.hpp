@@ -221,6 +221,25 @@ public:
    /** @} */
 
    /**
+    * @brief Gets the provided relative path as a child of this path.
+    *
+    * @param in_filePath    The path to get as a child of this path. Must be a relative path.
+    *
+    * @return The completed child path, or this path if the provided path was not relative or another error occurred.
+    */
+   FilePath completeChildPath(const std::string& in_filePath) const;
+
+   /**
+    * @brief Gets the provided relative path as a child of this path.
+    *
+    * @param in_filePath        The path to get as a child of this path. Must be a relative path.
+    * @param out_childPath      The completed child path. Not valid if an error is returned.
+    *
+    * @return Success if the child path could be completed; Error otherwise.
+    */
+   Error completeChildPath(const std::string& in_filePath, FilePath& out_childPath) const;
+
+   /**
     * @brief Completes the provided path relative to this path. If the provided path is not relative, it will be
     *        returned as is.
     *
@@ -302,25 +321,6 @@ public:
     * @return The canonical representation of this file path.
     */
    std::string getCanonicalPath() const;
-
-   /**
-    * @brief Gets the provided relative path as a child of this path.
-    *
-    * @param in_filePath    The path to get as a child of this path. Must be a relative path.
-    *
-    * @return The completed child path, or this path if the provided path was not relative or another error occurred.
-    */
-   FilePath getChildPath(const std::string& in_filePath) const;
-
-   /**
-    * @brief Gets the provided relative path as a child of this path.
-    *
-    * @param in_filePath        The path to get as a child of this path. Must be a relative path.
-    * @param out_childPath      The completed child path. Not valid if an error is returned.
-    *
-    * @return Success if the child path could be completed; Error otherwise.
-    */
-   Error getChildPath(const std::string& in_filePath, FilePath& out_childPath) const;
 
    /**
     * @brief Gets the children of this directory. Sub-directories will not be traversed.

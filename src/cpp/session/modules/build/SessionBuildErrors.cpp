@@ -203,7 +203,7 @@ std::vector<module_context::SourceMarker> parseGccErrors(
          if (FilePath::isRootPath(file))
             filePath = FilePath(file);
          else
-            filePath = basePath.getChildPath(file);
+            filePath = basePath.completeChildPath(file);
 
          // skip if the file doesn't exist
          if (!filePath.exists())
@@ -232,7 +232,7 @@ std::vector<module_context::SourceMarker> parseGccErrors(
 
                // does this file exist? if so substitute it
                FilePath includePath = projectContext().buildTargetPath()
-                     .getChildPath("inst/include/" + relativePath);
+                                                      .completeChildPath("inst/include/" + relativePath);
                if (includePath.exists())
                   filePath = includePath;
             }

@@ -270,7 +270,7 @@ void NotebookDocQueue::setWorkingDir(const std::string& workingDir, WorkingDirSo
       core::FilePath docParentPath = docPath_.empty() ? 
          FilePath::safeCurrentPath(module_context::userHomePath()) :
          module_context::resolveAliasedPath(docPath_).getParent();
-      dir = docParentPath.getChildPath(workingDir);
+      dir = docParentPath.completeChildPath(workingDir);
    }
 
    // remove any trailing / or .

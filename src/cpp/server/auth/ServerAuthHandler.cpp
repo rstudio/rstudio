@@ -431,8 +431,8 @@ Error initialize()
       }
    }
 
-   s_revocationList = rootDir.getChildPath("revocation-list");
-   s_revocationLockFile = rootDir.getChildPath("revocation-list.lock");
+   s_revocationList = rootDir.completeChildPath("revocation-list");
+   s_revocationLockFile = rootDir.completeChildPath("revocation-list.lock");
 
    // create a file lock to gain exclusive access to the revocation list
    boost::shared_ptr<FileLock> lock = FileLock::createDefault();

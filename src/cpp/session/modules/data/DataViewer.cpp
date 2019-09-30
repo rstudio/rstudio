@@ -302,7 +302,7 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::sessionScratchPath().getChildPath(kViewerCacheDir)
+   return module_context::sessionScratchPath().completeChildPath(kViewerCacheDir)
       .getAbsolutePath();
 }
 
@@ -441,7 +441,7 @@ void handleGridResReq(const http::Request& request,
 
    // setCacheableFile is responsible for emitting a 404 when the file doesn't
    // exist.
-   core::FilePath gridResource = options().rResourcesPath().getChildPath(path);
+   core::FilePath gridResource = options().rResourcesPath().completeChildPath(path);
    pResponse->setCacheableFile(gridResource, request);
 }
 

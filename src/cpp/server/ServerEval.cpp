@@ -38,8 +38,8 @@ bool expirationFilter(const core::http::Request& request,
 {
    // read the expiration date
    std::string expires;
-   FilePath expiresPath = server::options().wwwSymbolMapsPath().getChildPath(
-                 "17493e044be34dc589712565d9902700.symbolMapOffset");
+   FilePath expiresPath = server::options().wwwSymbolMapsPath().completeChildPath(
+      "17493e044be34dc589712565d9902700.symbolMapOffset");
    Error error = readStringFromFile(expiresPath, &expires);
    boost::algorithm::trim(expires);
    if (error || expires.empty())

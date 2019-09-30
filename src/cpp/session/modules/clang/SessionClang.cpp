@@ -61,7 +61,7 @@ std::string embeddedLibClangPath()
 #else
    std::string libclang = "libclang.so";
 #endif
-   return options().libclangPath().getChildPath(libclang).getAbsolutePath();
+   return options().libclangPath().completeChildPath(libclang).getAbsolutePath();
 }
 
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
@@ -74,11 +74,11 @@ std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& versi
 
    // add compiler headers
    std::string headersVersion = "5.0.2";
-   compileArgs.push_back("-I" + headersPath.getChildPath(headersVersion).getAbsolutePath());
+   compileArgs.push_back("-I" + headersPath.completeChildPath(headersVersion).getAbsolutePath());
 
    // add libc++ for embedded clang 3.5
    if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.getChildPath("libc++/5.0.2").getAbsolutePath());
+      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/5.0.2").getAbsolutePath());
 
    return compileArgs;
 }

@@ -66,7 +66,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   core::FilePath pdfJsResource = options().rResourcesPath().getChildPath(path);
+   core::FilePath pdfJsResource = options().rResourcesPath().completeChildPath(path);
    if (pdfJsResource.exists())
    {
       pResponse->setCacheableFile(pdfJsResource, request);

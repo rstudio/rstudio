@@ -528,7 +528,7 @@ Error handleConnectionsResourceRequest(const http::Request& request,
    std::string path = http::util::pathAfterPrefix(
          request, "/" kConnectionsPath "/");
    core::FilePath res = options().rResourcesPath().completePath(kConnectionsPath)
-      .getChildPath(path);
+                                 .completeChildPath(path);
    pResponse->setCacheableFile(res, request);
    return Success();
 }
@@ -606,7 +606,7 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
    // find the tools module
    FilePath rPath = session::options().coreRSourcePath();
    std::string toolsPath = core::string_utils::utf8ToSystem(
-      rPath.getChildPath("Tools.R").getAbsolutePath());
+      rPath.completeChildPath("Tools.R").getAbsolutePath());
 
    // find connection installer module
    FilePath modulesPath = session::options().modulesRSourcePath();

@@ -498,7 +498,7 @@ Error saveMostRecentDocuments()
          FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
                                                    mostRecentDir;
 
-         Error error = pDoc->writeToFile(targetDir.getChildPath(pDoc->id()));
+         Error error = pDoc->writeToFile(targetDir.completeChildPath(pDoc->id()));
          if (error)
             LOG_ERROR(error);
       }

@@ -73,7 +73,7 @@ KnownDictionary s_knownDictionaries[] =
 
 FilePath dicPathForAffPath(const FilePath& affPath)
 {
-   return affPath.getParent().getChildPath(affPath.getStem() + ".dic");
+   return affPath.getParent().completeChildPath(affPath.getStem() + ".dic");
 }
 
 bool isDictionaryAff(const FilePath& filePath)
@@ -198,7 +198,7 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
  * */
 FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
 {
-   return userDir_.getChildPath("languages-system");
+   return userDir_.completeChildPath("languages-system");
 }
 
 /*
@@ -207,17 +207,17 @@ FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
  * */
 FilePath HunspellDictionaryManager::legacyCustomLanguagesDir() const
 {
-   return userDir_.getChildPath("custom");
+   return userDir_.completeChildPath("custom");
 }
 
 FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
-   return core::system::xdg::userConfigDir().getChildPath("dictionaries/languages-system");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/languages-system");
 }
 
 FilePath HunspellDictionaryManager::customLanguagesDir() const
 {
-   return core::system::xdg::userConfigDir().getChildPath("dictionaries/custom");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/custom");
 }
 
 } // namespace spelling

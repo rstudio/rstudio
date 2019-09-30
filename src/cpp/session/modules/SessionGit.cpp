@@ -249,7 +249,7 @@ bool waitForIndexLock(const FilePath& workingDir)
    // an index.lock file exists and is never cleaned up)
    static int retryCount = 0;
    
-   FilePath lockPath = workingDir.getChildPath(".git/index.lock");
+   FilePath lockPath = workingDir.completeChildPath(".git/index.lock");
    
    // first stab attempt to see if the lockfile exists
    if (!lockPath.exists())
@@ -538,7 +538,7 @@ public:
 
          // file paths are returned as UTF-8 encoded paths,
          // so no need to re-encode here
-         file.path = root_.getChildPath(filePath);
+         file.path = root_.completeChildPath(filePath);
 
          files.push_back(file);
       }
@@ -888,10 +888,10 @@ public:
       *pStream << message;
 
       // append merge commit message when appropriate
-      FilePath gitDir = root_.getChildPath(".git");
-      if (gitDir.getChildPath("MERGE_HEAD").exists())
+      FilePath gitDir = root_.completeChildPath(".git");
+      if (gitDir.completeChildPath("MERGE_HEAD").exists())
       {
-         FilePath mergeMsg = gitDir.getChildPath("MERGE_MSG");
+         FilePath mergeMsg = gitDir.completeChildPath("MERGE_MSG");
          if (mergeMsg.exists())
          {
             std::string mergeMsgStr;
@@ -1468,7 +1468,7 @@ FilePath resolveAliasedPath(const std::string& path)
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_git_.root().getChildPath(path);
+      return s_git_.root().completeChildPath(path);
 }
 
 bool splitRename(const std::string& path, std::string* pOld, std::string* pNew)
@@ -2995,9 +2995,9 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
       FilePath gitIgnoreParent = gitIgnoreFile.getParent();
-      if (gitIgnoreParent.getChildPath("DESCRIPTION").exists())
+      if (gitIgnoreParent.completeChildPath("DESCRIPTION").exists())
       {
-         if (gitIgnoreParent.getChildPath("src").exists())
+         if (gitIgnoreParent.completeChildPath("src").exists())
          {
             filesToIgnore.push_back("src/*.o");
             filesToIgnore.push_back("src/*.so");
@@ -3301,7 +3301,7 @@ core::Error initializeGit(const core::FilePath& workingDir)
 
    if (!s_git_.root().isEmpty())
    {
-      FilePath gitIgnore = s_git_.root().getChildPath(".gitignore");
+      FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
       Error error = augmentGitIgnore(gitIgnore);
       if (error)
          LOG_ERROR(error);

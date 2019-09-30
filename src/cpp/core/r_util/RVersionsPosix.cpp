@@ -76,7 +76,7 @@ void scanForRHomePaths(const core::FilePath& rootDir,
          LOG_ERROR(error);
       for (const FilePath& rDir : rDirs)
       {
-         if (rDir.getChildPath("bin/R").exists())
+         if (rDir.completeChildPath("bin/R").exists())
             pHomePaths->push_back(rDir);
       }
    }
@@ -141,7 +141,7 @@ std::vector<RVersion> enumerateRVersions(
    for (r_util::RVersion& rEntry : rEntries)
    {
       // compute R script path
-      FilePath rScriptPath = rEntry.homeDir().getChildPath("bin/R");
+      FilePath rScriptPath = rEntry.homeDir().completeChildPath("bin/R");
       if (!rScriptPath.exists())
          continue;
 
@@ -205,7 +205,7 @@ std::vector<RVersion> enumerateRVersions(
    for (const FilePath& rHomePath : rHomePaths)
    {
       // compute R script path
-      FilePath rScriptPath = rHomePath.getChildPath("bin/R");
+      FilePath rScriptPath = rHomePath.completeChildPath("bin/R");
       if (!rScriptPath.exists())
          continue;
 

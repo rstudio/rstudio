@@ -478,7 +478,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    std::string lower = appName;
    boost::to_lower(lower);
 
-   FilePath path = userHomeDirectory.getChildPath("." + lower);
+   FilePath path = userHomeDirectory.completeChildPath("." + lower);
    if (ensureDirectory)
    {
       Error error = path.ensureDirectory();
@@ -1787,7 +1787,7 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
    std::string dir = boost::str(fmt % pid);
    FilePath procDir(dir);
    std::vector<std::string> fields;
-   error = readStatFields(procDir.getChildPath("stat"), 22, &fields);
+   error = readStatFields(procDir.completeChildPath("stat"), 22, &fields);
    if (error)
       return error;
 

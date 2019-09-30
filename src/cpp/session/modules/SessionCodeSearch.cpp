@@ -110,11 +110,11 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       
       // packrat
       if (parentName == "packrat" &&
-          parentPath.getChildPath("packrat.lock").exists())
+         parentPath.completeChildPath("packrat.lock").exists())
          return true;
       
       // cmake build directory
-      if (parentPath.getChildPath("cmake_install.cmake").exists())
+      if (parentPath.completeChildPath("cmake_install.cmake").exists())
          return true;
 
       // revdep sub-directories

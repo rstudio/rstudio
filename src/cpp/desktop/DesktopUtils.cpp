@@ -65,14 +65,14 @@ FilePath userLogPath()
 {
    FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
    FilePath logPath = core::system::userSettingsPath(
-         userHomePath,
-         "RStudio-Desktop").getChildPath("log");
+      userHomePath,
+      "RStudio-Desktop").completeChildPath("log");
    return logPath;
 }
 
 FilePath userWebCachePath()
 {
-   return core::system::xdg::userDataDir().getChildPath("web-cache");
+   return core::system::xdg::userDataDir().completeChildPath("web-cache");
 }
 
 bool isWindows()

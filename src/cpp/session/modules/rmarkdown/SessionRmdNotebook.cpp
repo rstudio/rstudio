@@ -160,7 +160,7 @@ bool fixChunkFilename(int, const core::FilePath& path)
    // rename file if we had to change it
    if (transformed != name)
    {
-      FilePath target = path.getParent().getChildPath(transformed);
+      FilePath target = path.getParent().completeChildPath(transformed);
       Error error = path.move(target);
       if (error)
          LOG_ERROR(error);

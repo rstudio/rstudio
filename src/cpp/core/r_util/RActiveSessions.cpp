@@ -41,7 +41,7 @@ namespace {
 void ActiveSession::writeProperty(const std::string& name,
                                  const std::string& value) const
 {
-   FilePath propertyFile = propertiesPath_.getChildPath(name);
+   FilePath propertyFile = propertiesPath_.completeChildPath(name);
    Error error = core::writeStringToFile(propertyFile, value);
    if (error)
       LOG_ERROR(error);
@@ -50,7 +50,7 @@ void ActiveSession::writeProperty(const std::string& name,
 std::string ActiveSession::readProperty(const std::string& name) const
 {
    using namespace rstudio::core;
-   FilePath readPath = propertiesPath_.getChildPath(name);
+   FilePath readPath = propertiesPath_.completeChildPath(name);
    if (readPath.exists())
    {
       std::string value;
@@ -79,7 +79,7 @@ Error ActiveSessions::create(const std::string& project,
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
-      dir = storagePath_.getChildPath(kSessionDirPrefix + candidateId);
+      dir = storagePath_.completeChildPath(kSessionDirPrefix + candidateId);
       if (!dir.exists())
          id = candidateId;
    }
@@ -191,7 +191,7 @@ size_t ActiveSessions::count(const FilePath& userHomePath,
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
 {
-   FilePath scratchPath = storagePath_.getChildPath(kSessionDirPrefix + id);
+   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
                                                                 scratchPath));
@@ -235,7 +235,7 @@ GlobalActiveSessions::list() const
 boost::shared_ptr<GlobalActiveSession>
 GlobalActiveSessions::get(const std::string& id) const
 {
-   FilePath sessionFile = rootPath_.getChildPath(id);
+   FilePath sessionFile = rootPath_.completeChildPath(id);
    if (!sessionFile.exists())
       return boost::shared_ptr<GlobalActiveSession>();
 

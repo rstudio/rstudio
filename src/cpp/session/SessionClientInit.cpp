@@ -356,10 +356,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
          sessionInfo["build_target_dir"] = module_context::createAliasedPath(
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
-                                      buildTargetDir.getChildPath("src").exists();
+            buildTargetDir.completeChildPath("src").exists();
          sessionInfo["has_pkg_vig"] =
                (type == r_util::kBuildTypePackage) &&
-               buildTargetDir.getChildPath("vignettes").exists();
+                  buildTargetDir.completeChildPath("vignettes").exists();
       }
       else
       {

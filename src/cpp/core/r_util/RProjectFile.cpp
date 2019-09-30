@@ -219,11 +219,11 @@ std::string detectBuildType(const FilePath& projectFilePath,
    {
       setBuildPackageDefaults("", buildDefaults ,pConfig);
    }
-   else if (projectDir.getChildPath("pkg/DESCRIPTION").exists())
+   else if (projectDir.completeChildPath("pkg/DESCRIPTION").exists())
    {
       setBuildPackageDefaults("pkg", buildDefaults, pConfig);
    }
-   else if (projectDir.getChildPath("Makefile").exists())
+   else if (projectDir.completeChildPath("Makefile").exists())
    {
       pConfig->buildType = kBuildTypeMakefile;
       pConfig->makefilePath = "";
@@ -1021,7 +1021,7 @@ FilePath projectFromDirectory(const FilePath& path)
    std::string dirName = directoryPath.getFilename();
    if (!FilePath::isRootPath(dirName))
    {
-      FilePath projectFile = directoryPath.getChildPath(dirName + ".Rproj");
+      FilePath projectFile = directoryPath.completeChildPath(dirName + ".Rproj");
       if (projectFile.exists())
          return projectFile;
    }
@@ -1094,13 +1094,13 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
 bool isWebsiteDirectory(const FilePath& projectDir)
 {
    // look for an index.Rmd or index.md
-   FilePath indexFile = projectDir.getChildPath("index.Rmd");
+   FilePath indexFile = projectDir.completeChildPath("index.Rmd");
    if (!indexFile.exists())
-      indexFile = projectDir.getChildPath("index.md");
+      indexFile = projectDir.completeChildPath("index.md");
    if (indexFile.exists())
    {
       // look for _site.yml
-      FilePath siteFile = projectDir.getChildPath("_site.yml");
+      FilePath siteFile = projectDir.completeChildPath("_site.yml");
       if (siteFile.exists())
       {
          return true;

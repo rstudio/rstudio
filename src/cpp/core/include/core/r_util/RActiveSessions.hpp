@@ -50,7 +50,7 @@ private:
       if (error)
          LOG_ERROR(error);
 
-      propertiesPath_ = scratchPath_.getChildPath("properites");
+      propertiesPath_ = scratchPath_.completeChildPath("properites");
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -352,7 +352,7 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.getChildPath("sessions/active");
+      storagePath_ = rootStoragePath.completeChildPath("sessions/active");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);

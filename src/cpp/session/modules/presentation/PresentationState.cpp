@@ -52,11 +52,11 @@ PresentationState s_presentationState;
 
 FilePath presentationStatePath()
 {
-   FilePath path = module_context::scopedScratchPath().getChildPath("presentation");
+   FilePath path = module_context::scopedScratchPath().completeChildPath("presentation");
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   return path.getChildPath("presentation-state-v2");
+   return path.completeChildPath("presentation-state-v2");
 }
 
 std::string toPersistentPath(const FilePath& filePath)
@@ -189,7 +189,7 @@ FilePath viewInBrowserPath()
       if (!error)
       {
          s_presentationState.viewInBrowserPath =
-                                    viewDir.getChildPath("presentation.html");
+            viewDir.completeChildPath("presentation.html");
       }
       else
       {

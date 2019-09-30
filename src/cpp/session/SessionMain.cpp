@@ -1844,8 +1844,8 @@ int main (int argc, char * const argv[])
 
       // set the rpostback absolute path
       FilePath rpostback = options.rpostbackPath()
-                           .getParent().getParent()
-                           .getChildPath("rpostback");
+                                  .getParent().getParent()
+                                  .completeChildPath("rpostback");
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
@@ -1883,14 +1883,15 @@ int main (int argc, char * const argv[])
             FilePath templatePath = FilePath(options.firstProjectTemplatePath());
             if (templatePath.exists())
             {
-               error = templatePath.copyDirectoryRecursive(options.userHomePath().getChildPath(
-                                                              templatePath.getFilename()));
+               error = templatePath.copyDirectoryRecursive(
+                  options.userHomePath().completeChildPath(
+                     templatePath.getFilename()));
                if (error)
                   LOG_ERROR(error);
                else
                {
-                  FilePath firstProjPath = options.userHomePath().getChildPath(templatePath.getFilename())
-                        .getChildPath(templatePath.getFilename() + ".Rproj");
+                  FilePath firstProjPath = options.userHomePath().completeChildPath(templatePath.getFilename())
+                                                  .completeChildPath(templatePath.getFilename() + ".Rproj");
                   if (firstProjPath.exists())
                      firstProjectPath = firstProjPath.getAbsolutePath();
                   else

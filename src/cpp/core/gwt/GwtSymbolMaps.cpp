@@ -158,7 +158,7 @@ struct SymbolMaps::Impl
       std::set<std::string> symbolsLeftToFind = requiredSymbols;
 
       // read it from disk if it exists
-      FilePath mapPath = symbolMapsPath.getChildPath(strongName + ".symbolMap");
+      FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
       if (mapPath.exists())
       {
          Error error = readCollectionFromFile

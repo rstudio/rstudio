@@ -43,9 +43,9 @@ FilePath homePath()
 FilePath userLogPath()
 {
    FilePath logPath = core::system::userSettingsPath(
-         homePath(),
-         "RStudio-Desktop"
-         ).getChildPath("log");
+      homePath(),
+      "RStudio-Desktop"
+   ).completeChildPath("log");
    return logPath;
 }
 
@@ -74,7 +74,7 @@ void writeFile(const std::string& description, const core::FilePath& path, std::
 
 void writeLogFile(const std::string& logFileName, std::ostream& ostr)
 {
-   writeFile("Log file", userLogPath().getChildPath(logFileName), ostr);
+   writeFile("Log file", userLogPath().completeChildPath(logFileName), ostr);
 }
 
 void writeUserPrefs(std::ostream& ostr)

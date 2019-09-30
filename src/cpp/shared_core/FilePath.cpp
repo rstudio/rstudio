@@ -500,6 +500,56 @@ Error FilePath::uniqueFilePath(const std::string& in_basePath, const std::string
    return pathNotFoundError(ERROR_LOCATION);
 }
 
+// note: this differs from complete in the following ways:
+//    - the passed path can be an empty string (returns self)
+//    - the passed path must be relative
+FilePath FilePath::completeChildPath(const std::string& in_filePath) const
+{
+   FilePath childPath;
+   Error error = completeChildPath(in_filePath, childPath);
+   if (error)
+      log::logError(error);
+
+   return childPath;
+}
+
+Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_childPath) const
+{
+   try
+   {
+      if (in_filePath.empty())
+      {
+         out_childPath = *this;
+      }
+      else
+      {
+         // confirm this is a relative path
+         path_t relativePath(fromString(in_filePath));
+         if (relativePath.has_root_path())
+         {
+            throw boost::filesystem::filesystem_error(
+               "absolute path not permitted",
+               boost::system::error_code(
+                  boost::system::errc::no_such_file_or_directory,
+                  boost::system::system_category()));
+         }
+
+         out_childPath =  completePath(in_filePath);
+      }
+   }
+   catch(const boost::filesystem::filesystem_error& e)
+   {
+      out_childPath = *this;
+
+      Error error(e.code(), ERROR_LOCATION);
+      addErrorProperties(m_impl->Path, &error);
+      error.addProperty("path", in_filePath);
+      return error;
+   }
+
+   return Success();
+}
+
 FilePath FilePath::completePath(const std::string& in_filePath) const
 {
    // in-theory boost::filesystem::complete can throw but the conditions
@@ -610,19 +660,6 @@ bool FilePath::exists() const
    }
 }
 
-// note: this differs from complete in the following ways:
-//    - the passed path can be an empty string (returns self)
-//    - the passed path must be relative
-FilePath FilePath::getChildPath(const std::string& in_filePath) const
-{
-   FilePath childPath;
-   Error error = getChildPath(in_filePath, childPath);
-   if (error)
-      log::logError(error);
-
-   return childPath;
-}
-
 std::string FilePath::getAbsolutePath() const
 {
    if (isEmpty())
@@ -655,43 +692,6 @@ std::string FilePath::getCanonicalPath() const
       return std::string();
    else
       return BOOST_FS_PATH2STR(boost::filesystem::canonical(m_impl->Path));
-}
-
-Error FilePath::getChildPath(const std::string& in_filePath, FilePath& out_childPath) const
-{
-   try
-   {
-      if (in_filePath.empty())
-      {
-         out_childPath = *this;
-      }
-      else
-      {
-         // confirm this is a relative path
-         path_t relativePath(fromString(in_filePath));
-         if (relativePath.has_root_path())
-         {
-            throw boost::filesystem::filesystem_error(
-               "absolute path not permitted",
-               boost::system::error_code(
-                  boost::system::errc::no_such_file_or_directory,
-                  boost::system::system_category()));
-         }
-
-         out_childPath =  completePath(in_filePath);
-      }
-   }
-   catch(const boost::filesystem::filesystem_error& e)
-   {
-      out_childPath = *this;
-
-      Error error(e.code(), ERROR_LOCATION);
-      addErrorProperties(m_impl->Path, &error);
-      error.addProperty("path", in_filePath);
-      return error;
-   }
-
-   return Success();
 }
 
 Error FilePath::getChildren(std::vector<FilePath>& out_filePaths) const

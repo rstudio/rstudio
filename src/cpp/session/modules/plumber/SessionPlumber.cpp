@@ -70,7 +70,7 @@ std::string onDetectPlumberSourceType(boost::shared_ptr<source_database::SourceD
 
 FilePath plumberTemplatePath(const std::string& name)
 {
-   return session::options().rResourcesPath().getChildPath("templates/plumber/" + name);
+   return session::options().rResourcesPath().completeChildPath("templates/plumber/" + name);
 }
 
 Error copyTemplateFile(const std::string& templateFileName, const FilePath& target)

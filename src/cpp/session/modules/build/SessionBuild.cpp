@@ -180,7 +180,7 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
       if (sourceFilePath.isWithin(buildTargetPath))
       {
          std::string outputDir = module_context::websiteOutputDir();
-         FilePath outputDirPath = buildTargetPath.getChildPath(outputDir);
+         FilePath outputDirPath = buildTargetPath.completeChildPath(outputDir);
          if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
          {
             // are we live previewing?
@@ -386,7 +386,7 @@ private:
       else
       {
          // validate that this is a package
-         if (!packagePath.getChildPath("DESCRIPTION").exists())
+         if (!packagePath.completeChildPath("DESCRIPTION").exists())
          {
             std::string message =
                   "The build directory does not contain a DESCRIPTION file and so "
@@ -1325,8 +1325,8 @@ private:
       FilePath buildPath = projects::projectContext().buildTargetPath();
       if (!session::options().packageOutputInPackageFolder())
          buildPath = buildPath.getParent();
-      FilePath srcPkgPath = buildPath.getChildPath(pkgInfo.sourcePackageFilename());
-      FilePath chkDirPath = buildPath.getChildPath(pkgInfo.name() + ".Rcheck");
+      FilePath srcPkgPath = buildPath.completeChildPath(pkgInfo.sourcePackageFilename());
+      FilePath chkDirPath = buildPath.completeChildPath(pkgInfo.name() + ".Rcheck");
 
       // cleanup
       Error error = srcPkgPath.removeIfExists();
@@ -1344,7 +1344,7 @@ private:
          FilePath buildPath = projects::projectContext().buildTargetPath();
          if (!session::options().packageOutputInPackageFolder())
             buildPath = buildPath.getParent();
-         FilePath chkDirPath = buildPath.getChildPath(pkgInfo.name() + ".Rcheck");
+         FilePath chkDirPath = buildPath.completeChildPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
          dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
@@ -1361,7 +1361,7 @@ private:
                              const core::system::ProcessCallbacks& cb)
    {
       // validate that there is a Makefile file
-      FilePath makefilePath = targetPath.getChildPath("Makefile");
+      FilePath makefilePath = targetPath.completeChildPath("Makefile");
       if (!makefilePath.exists())
       {
          boost::format fmt ("ERROR: The build directory does "
@@ -1462,9 +1462,9 @@ private:
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.getChildPath("index.Rmd");
+      FilePath sourceFile = websitePath.completeChildPath("index.Rmd");
       if (!sourceFile.exists())
-         sourceFile = websitePath.getChildPath("index.md");
+         sourceFile = websitePath.completeChildPath("index.md");
 
       // look for Output created message
       FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
@@ -1629,7 +1629,7 @@ private:
          {
             std::string pkgFolder = projects::projectContext().buildTargetPath().getFilename();
             FilePath libPath = libPaths_[0];
-            FilePath lockPath = libPath.getChildPath("00LOCK-" + pkgFolder);
+            FilePath lockPath = libPath.completeChildPath("00LOCK-" + pkgFolder);
             lockPath.removeIfExists();
          }
          
@@ -2112,7 +2112,7 @@ void onDeferredInit(bool newSession)
       // if we are on mavericks then provide an .R/Makevars that points
       // to clang if necessary
       using namespace module_context;
-      FilePath makevarsPath = userHomePath().getChildPath(".R/Makevars");
+      FilePath makevarsPath = userHomePath().completeChildPath(".R/Makevars");
       if (isOSXMavericks() && !makevarsPath.exists() && !canBuildCpp())
       {
          Error error = makevarsPath.getParent().ensureDirectory();

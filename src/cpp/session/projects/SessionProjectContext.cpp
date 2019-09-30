@@ -73,7 +73,7 @@ void onDescriptionChanged()
 
 void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   FilePath descPath = projectContext().buildTargetPath().getChildPath("DESCRIPTION");
+   FilePath descPath = projectContext().buildTargetPath().completeChildPath("DESCRIPTION");
    for (auto& event : events)
    {
       auto& info = event.fileInfo();
@@ -302,7 +302,7 @@ void ProjectContext::augmentRbuildignore()
       }
 
       // create the file if it doesn't exists
-      FilePath rbuildIgnorePath = directory().getChildPath(".Rbuildignore");
+      FilePath rbuildIgnorePath = directory().completeChildPath(".Rbuildignore");
       if (!rbuildIgnorePath.exists())
       {
          Error error = writeStringToFile(rbuildIgnorePath,
@@ -632,8 +632,8 @@ void ProjectContext::updateBuildTargetPath()
       }
       else
       {
-         buildTargetPath_=  projects::projectContext().directory().getChildPath(
-                                                                  buildTarget);
+         buildTargetPath_= projects::projectContext().directory().completeChildPath(
+            buildTarget);
       }
    }
 }
@@ -669,7 +669,7 @@ json::Array ProjectContext::openDocs() const
    std::vector<std::string> docs = projects::collectFirstRunDocs(file());
    for (const std::string& doc : docs)
    {
-      FilePath docPath = directory().getChildPath(doc);
+      FilePath docPath = directory().completeChildPath(doc);
       openDocsJson.push_back(json::Value(module_context::createAliasedPath(docPath)));
    }
    return openDocsJson;
@@ -714,12 +714,12 @@ const char * const kVcsOverride = "activeVcsOverride";
 
 FilePath ProjectContext::vcsOptionsFilePath() const
 {
-   return scratchPath().getChildPath("vcs_options");
+   return scratchPath().completeChildPath("vcs_options");
 }
 
 Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
 {
-   return pOptionsFile->initialize(scratchPath().getChildPath("build_options"));
+   return pOptionsFile->initialize(scratchPath().completeChildPath("build_options"));
 }
 
 

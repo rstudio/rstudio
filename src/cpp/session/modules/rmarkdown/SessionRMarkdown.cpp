@@ -235,7 +235,7 @@ int s_currentRenderOutput = 0;
 
 FilePath outputCachePath()
 {
-   return module_context::sessionScratchPath().getChildPath("rmd-outputs");
+   return module_context::sessionScratchPath().completeChildPath("rmd-outputs");
 }
 
 std::string assignOutputUrl(const std::string& outputFile)
@@ -275,9 +275,9 @@ std::string assignOutputUrl(const std::string& outputFile)
       // if we're creating a '.pdf', detect the created book appropriately
       FilePath indexPath;
       if (outputPath.getExtensionLowerCase() == ".pdf")
-         indexPath = websiteDir.getChildPath(outputPath.getFilename());
+         indexPath = websiteDir.completeChildPath(outputPath.getFilename());
       else
-         indexPath = websiteDir.getChildPath("index.html");
+         indexPath = websiteDir.completeChildPath("index.html");
       
       s_renderOutputs[s_currentRenderOutput] = indexPath.getAbsolutePath();
       // compute relative path to target file and append it to the path
@@ -1175,11 +1175,11 @@ void handleRmdOutputRequest(const http::Request& request,
    else
    {
       // serve a file resource from the output folder
-      FilePath filePath = outputFilePath.getParent().getChildPath(path);
+      FilePath filePath = outputFilePath.getParent().completeChildPath(path);
 
       // if it's a directory then auto-append index.html
       if (filePath.isDirectory())
-         filePath = filePath.getChildPath("index.html");
+         filePath = filePath.completeChildPath("index.html");
 
       html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setNoCacheHeaders();
@@ -1321,7 +1321,7 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
 
    // copy the file (removing it first)
    FilePath outputDir = FilePath(websiteOutputDir);
-   FilePath outputFile = outputDir.getChildPath(relativePath);
+   FilePath outputFile = outputDir.completeChildPath(relativePath);
    if (outputFile.exists())
    {
       error = outputFile.remove();

@@ -93,8 +93,8 @@ SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
 
       // resolve against presentation directory
       std::string helpDoc = r::sexp::asString(helpDocSEXP);
-      FilePath helpDocPath = presentation::state::directory().getChildPath(
-                                                                  helpDoc);
+      FilePath helpDocPath = presentation::state::directory().completeChildPath(
+         helpDoc);
       if (!helpDocPath.exists())
       {
          throw r::exec::RErrorException("Path " + helpDocPath.getAbsolutePath()
@@ -404,8 +404,8 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    // use a stable location in the presentation directory for the Rpubs
    // source file so that update works across sessions
    std::string stem = presentation::state::filePath().getStem();
-   FilePath filePath = presentation::state::directory().getChildPath(
-                                                      stem + "-rpubs.html");
+   FilePath filePath = presentation::state::directory().completeChildPath(
+      stem + "-rpubs.html");
 
    ErrorResponse errorResponse;
    if (savePresentationAsRpubsSource(filePath, &errorResponse))

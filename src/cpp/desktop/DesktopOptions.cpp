@@ -513,7 +513,7 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 
    if (!dir.isEmpty() && dir.exists())
    {
-      dir = dir.getChildPath("tmp");
+      dir = dir.completeChildPath("tmp");
       core::Error error = dir.ensureDirectory();
       if (!error)
          return dir;

@@ -209,7 +209,7 @@ std::string pathFromProjectPath(json::Value projPathJson)
       return std::string();
 
    // interpret path relative to project directory
-   FilePath filePath = projectContext.directory().getChildPath(projPath);
+   FilePath filePath = projectContext.directory().completeChildPath(projPath);
    if (filePath.exists())
       return module_context::createAliasedPath(filePath);
    else

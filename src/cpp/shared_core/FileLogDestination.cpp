@@ -109,7 +109,7 @@ struct FileLogDestination::Impl
    bool openLogFile()
    {
       // We can't safely log in this function.
-      Error error = LogOptions.getDirectory().getChildPath(LogName, LogFile);
+      Error error = LogOptions.getDirectory().completeChildPath(LogName, LogFile);
       if (error)
          return false;
 
@@ -136,7 +136,7 @@ struct FileLogDestination::Impl
          // Convert MB to B for comparison.
          if (LogFile.getSize() >= maxSize)
          {
-            FilePath rotatedLogFile = FilePath(LogOptions.getDirectory()).getChildPath(RotatedLogName);
+            FilePath rotatedLogFile = FilePath(LogOptions.getDirectory()).completeChildPath(RotatedLogName);
 
             // We can't safely log errors in this function because we'll end up in an infinitely recursive
             // rotateLogFile() call.

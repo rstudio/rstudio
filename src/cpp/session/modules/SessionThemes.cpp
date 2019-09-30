@@ -210,7 +210,7 @@ void getThemesInLocation(
  */
 FilePath getDefaultThemePath()
 {
-   return session::options().rResourcesPath().getChildPath("themes");
+   return session::options().rResourcesPath().completeChildPath("themes");
 }
 
 /**
@@ -260,7 +260,7 @@ FilePath getEnvCustomThemePath()
  */
 FilePath getLegacyLocalCustomThemePath()
 {
-   return module_context::userHomePath().getChildPath(".R/rstudio/themes/");
+   return module_context::userHomePath().completeChildPath(".R/rstudio/themes/");
 }
 
 /**
@@ -396,11 +396,11 @@ FilePath getDefaultTheme(const http::Request& request)
 
    if (isDark)
    {
-      return getDefaultThemePath().getChildPath("tomorrow_night.rstheme");
+      return getDefaultThemePath().completeChildPath("tomorrow_night.rstheme");
    }
    else
    {
-      return getDefaultThemePath().getChildPath("textmate.rstheme");
+      return getDefaultThemePath().completeChildPath("textmate.rstheme");
    }
 }
 
@@ -549,7 +549,7 @@ void handleDefaultThemeRequest(const http::Request& request,
 {
    std::string prefix = "/" + kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
-   pResponse->setCacheableFile(getDefaultThemePath().getChildPath(fileName), request);
+   pResponse->setCacheableFile(getDefaultThemePath().completeChildPath(fileName), request);
 }
 
 /**
@@ -565,7 +565,7 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    // ability to pop up a warning dialog or something to the user.
    std::string prefix = "/" + kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
-   FilePath requestedTheme = getGlobalCustomThemePath().getChildPath(fileName);
+   FilePath requestedTheme = getGlobalCustomThemePath().completeChildPath(fileName);
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
       request);
@@ -587,9 +587,9 @@ void handleLocalCustomThemeRequest(const http::Request& request,
 
    // Check first in the local custom theme path; if the theme isn't found there, try the legacy
    // theme path (where RStudio 1.2 wrote custom themes)
-   FilePath requestedTheme = getLocalCustomThemePath().getChildPath(fileName);
+   FilePath requestedTheme = getLocalCustomThemePath().completeChildPath(fileName);
    if (!requestedTheme.exists())
-      requestedTheme = getLegacyLocalCustomThemePath().getChildPath(fileName);
+      requestedTheme = getLegacyLocalCustomThemePath().completeChildPath(fileName);
 
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -666,7 +666,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(
          sourceModuleRFile,
-         session::options().rResourcesPath().getChildPath("themes").getChildPath("compile-themes.R").getAbsolutePath()))
+         session::options().rResourcesPath().completeChildPath("themes").completeChildPath("compile-themes.R").getAbsolutePath()))
       (bind(sourceModuleRFile, "SessionThemes.R"))
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))

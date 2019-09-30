@@ -294,7 +294,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    // save small plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   FilePath smallPlotPath = tempPath.getChildPath("plot-small.png");
+   FilePath smallPlotPath = tempPath.completeChildPath("plot-small.png");
    error = display.savePlotAsImage(smallPlotPath, "png", width, height);
    if (error)
    {
@@ -303,7 +303,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    }
 
    // save full plot
-   FilePath fullPlotPath = tempPath.getChildPath("plot-full.png");
+   FilePath fullPlotPath = tempPath.completeChildPath("plot-full.png");
    error = display.savePlotAsImage(fullPlotPath, "png", 1024, 768, 2.0);
    if (error)
    {
@@ -312,13 +312,13 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    }
 
    // copy source file to temp dir
-   FilePath sourceFilePath = tempPath.getChildPath("source.html");
+   FilePath sourceFilePath = tempPath.completeChildPath("source.html");
    FilePath resPath = session::options().rResourcesPath();
    FilePath plotFilePath = resPath.completePath("plot_publish.html");
    error = plotFilePath.copy(sourceFilePath);
 
    // perform the base64 encode using pandoc
-   FilePath targetFilePath = tempPath.getChildPath("target.html");
+   FilePath targetFilePath = tempPath.completeChildPath("target.html");
    error = module_context::createSelfContainedHtml(sourceFilePath,
                                                    targetFilePath);
    if (error)

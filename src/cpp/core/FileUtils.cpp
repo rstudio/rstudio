@@ -68,7 +68,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
       std::string shortentedUuid = core::system::generateShortenedUuid();
 
       // form full path
-      FilePath uniqueDir = parent.getChildPath(prefix + shortentedUuid);
+      FilePath uniqueDir = parent.completeChildPath(prefix + shortentedUuid);
 
       // return if it doesn't exist
       if (!uniqueDir.exists())
@@ -76,7 +76,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    }
 
    // if we didn't succeed then return prefix + uuid
-   return parent.getChildPath(prefix + core::system::generateUuid(false));
+   return parent.completeChildPath(prefix + core::system::generateUuid(false));
 }
 
 std::string readFile(const FilePath& filePath)

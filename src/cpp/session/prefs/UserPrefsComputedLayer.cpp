@@ -58,7 +58,7 @@ Error UserPrefsComputedLayer::readPrefs()
 
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
-   FilePath rsaSshKeyPath = sshKeyDir.getChildPath("id_rsa");
+   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath("id_rsa");
    layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
 

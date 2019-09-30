@@ -432,13 +432,13 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // Add common 'testing' packages, based on the DESCRIPTION's
    // 'Imports' and 'Suggests' fields, and use that if we're within a
    // common 'test'ing directory.
-   if (filePath.isWithin(projDir.getChildPath("inst")) ||
-       filePath.isWithin(projDir.getChildPath("tests")))
+   if (filePath.isWithin(projDir.completeChildPath("inst")) ||
+       filePath.isWithin(projDir.completeChildPath("tests")))
    {
       addTestPackageSymbols(pSymbols);
    }
    
-   if (filePath.isWithin(projects::projectContext().directory().getChildPath("tests/testthat")))
+   if (filePath.isWithin(projects::projectContext().directory().completeChildPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
       registry.fillNamespaceSymbols("testthat", pSymbols, false);

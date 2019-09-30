@@ -71,7 +71,7 @@ std::string Base64ImageFilter::toBase64Image(const boost::cmatch& match)
 
    // see if this is an image within the base directory. if it is then
    // base64 encode it
-   FilePath imagePath = basePath_.getChildPath(imgRef);
+   FilePath imagePath = basePath_.completeChildPath(imgRef);
    if (imagePath.exists() &&
        boost::algorithm::starts_with(imagePath.getMimeContentType(), "image/"))
    {     
@@ -106,7 +106,7 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
 {
    // is this a local file?
    std::string urlRef = match[1];
-   FilePath urlPath = basePath_.getChildPath(urlRef);
+   FilePath urlPath = basePath_.completeChildPath(urlRef);
    std::string ext = urlPath.getExtensionLowerCase();
    if (urlPath.exists() && (ext == ".ttf" || ext == ".otf"))
    {

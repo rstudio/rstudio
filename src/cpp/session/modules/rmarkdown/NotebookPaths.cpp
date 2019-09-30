@@ -52,7 +52,7 @@ public:
    PathLockGuard()
    {
       error_ = nbPathLock().acquire(
-            notebookCacheRoot().getChildPath("lock_file"));
+         notebookCacheRoot().completeChildPath("lock_file"));
    }
 
    ~PathLockGuard()
@@ -76,7 +76,7 @@ private:
 
 FilePath cachePath()
 {
-   return notebookCacheRoot().getChildPath("paths");
+   return notebookCacheRoot().completeChildPath("paths");
 }
 
 void cleanNotebookPathMap()

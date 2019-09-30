@@ -926,8 +926,8 @@ Error createRdShell(const json::JsonRpcRequest& request,
       if (!filePath.empty())
       {
          FilePath rdFilePath(string_utils::systemToUtf8(filePath));
-         FilePath manFilePath = packageDir.getChildPath("man").getChildPath(
-                                                      rdFilePath.getFilename());
+         FilePath manFilePath = packageDir.completeChildPath("man").completeChildPath(
+            rdFilePath.getFilename());
          if (!manFilePath.exists())
          {
             Error error = rdFilePath.copy(manFilePath);

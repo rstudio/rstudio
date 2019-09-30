@@ -257,7 +257,7 @@ std::string computeLibraryHash()
 
    for (auto& pkgPath : pkgPaths)
    {
-      FilePath descPath = pkgPath.getChildPath("DESCRIPTION");
+      FilePath descPath = pkgPath.completeChildPath("DESCRIPTION");
       if (descPath.exists())
          addDescContent(descPath, &descFileContent);
    }

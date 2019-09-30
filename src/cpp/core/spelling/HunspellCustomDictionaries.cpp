@@ -55,7 +55,7 @@ std::vector<std::string> HunspellCustomDictionaries::dictionaries() const
 FilePath HunspellCustomDictionaries::dictionaryPath(
                                           const std::string& name) const
 {
-   return customDictionariesDir_.getChildPath(name + ".dic");
+   return customDictionariesDir_.completeChildPath(name + ".dic");
 }
 
 Error HunspellCustomDictionaries::add(const FilePath& dicPath) const
