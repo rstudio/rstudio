@@ -364,13 +364,13 @@ bool Value::getBool() const
 
 double Value::getDouble() const
 {
-   assert(isDouble() || isFloat());
+   assert(isDouble() || isFloat() || (getType() == Type::INTEGER));
    return m_impl->Document->GetDouble();
 }
 
 float Value::getFloat() const
 {
-   assert(isFloat());
+   assert(isFloat() || (getType() == Type::INTEGER));
    return m_impl->Document->GetFloat();
 }
 
