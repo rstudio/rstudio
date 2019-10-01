@@ -327,11 +327,7 @@ void logError(const Error& in_error, const ErrorLocation& in_location)
 {
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::ERROR)
-   {
-      std::string loggedFromStr = "LOGGED FROM: " + in_location.asString();
-      std::replace(loggedFromStr.begin(), loggedFromStr.end(), ';', ' ');
-      log.writeMessageToDestinations(LogLevel::ERROR, in_error.asString() + "; " + loggedFromStr);
-   }
+      log.writeMessageToDestinations(LogLevel::ERROR, in_error.asString(), "", in_location);
 }
 
 void logErrorAsWarning(const Error& in_error)
