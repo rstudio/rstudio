@@ -36,10 +36,6 @@ namespace log {
 class StderrLogDestination : public ILogDestination
 {
 public:
-   /**
-    * @brief Checks whether stderr is a TTY
-    */
-   static bool isStderrTty();
 
    /**
     * @brief Gets the unique ID for the stderr destination. There should only be one stderr destination for the whole

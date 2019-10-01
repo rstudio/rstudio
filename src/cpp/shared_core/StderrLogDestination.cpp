@@ -27,11 +27,6 @@ namespace rstudio {
 namespace core {
 namespace log {
 
-bool StderrLogDestination::isStderrTty()
-{
-   return ::isatty(STDERR_FILENO) == 1;
-}
-
 unsigned int StderrLogDestination::getStderrId()
 {
    return 0;
