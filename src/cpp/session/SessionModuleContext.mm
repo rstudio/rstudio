@@ -34,38 +34,21 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-bool isOSXMavericks()
+bool isMacOS()
 {
-   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   [pool release];
-
-   return boost::algorithm::starts_with(version, "10.9") ||
-          boost::algorithm::starts_with(version, "10.10");
+   return true;
 }
 
-bool hasOSXMavericksDeveloperTools()
+bool hasMacOSDeveloperTools()
 {
-   if (isOSXMavericks())
+   if (isMacOS())
    {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("xcode-select -p",
-                                             core::system::ProcessOptions(),
-                                             &result);
-      if (!error && (result.exitStatus == EXIT_SUCCESS))
-         return true;
-      else
-         return false;
+      // NOTE: From what I can tell, there isn't a reliable way of
+      // detecting whether command line tools vs. Xcode is installed
+      // on a machine. For that reason, we just check the common
+      // developer tools path, and assume most R users won't adjust it.
+      FilePath devtoolsPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
+      return devtoolsPath.exists();
    }
    else
    {

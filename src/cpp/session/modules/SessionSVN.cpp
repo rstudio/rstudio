@@ -229,6 +229,11 @@ Error runSvn(const ShellArgs& args,
    if (pExitCode)
       *pExitCode = result.exitStatus;
 
+#ifdef __APPLE__
+   if (result.exitStatus == 69)
+      module_context::checkXcodeLicense();
+#endif
+   
    return Success();
 }
 
@@ -428,14 +433,6 @@ Error parseXml(const std::string strData,
 
 bool isSvnInstalled()
 {
-   // special check on osx mavericks to make sure we don't run the fake svn
-   if (module_context::isOSXMavericks() &&
-       !module_context::hasOSXMavericksDeveloperTools() &&
-       whichSvnExe().empty())
-   {
-      return false;
-   }
-
    int exitCode;
    Error error = runSvn(ShellArgs() << "help", nullptr, nullptr, &exitCode);
 
@@ -540,9 +537,9 @@ FilePath detectedSvnExePath()
    if (!svnExeFilePath.empty())
    {
       // extra check on mavericks to make sure it's not the fake svn
-      if (module_context::isOSXMavericks())
+      if (module_context::isMacOS())
       {
-         if (module_context::hasOSXMavericksDeveloperTools())
+         if (module_context::hasMacOSDeveloperTools())
             return FilePath(svnExeFilePath);
          else
             return FilePath();

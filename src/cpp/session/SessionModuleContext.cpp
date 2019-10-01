@@ -2467,6 +2467,58 @@ bool usingMingwGcc49()
 }
 #endif
 
+namespace {
+
+void warnXcodeLicense()
+{
+   const char* msg = 1 + R"EOF(
+Warning: macOS is reporting that you have not yet agreed to the Xcode license.
+This can occur if Xcode has been updated or reinstalled (e.g. as part of a macOS update).
+Some features (e.g. Git / SVN) may be disabled.
+
+Please run:
+
+    sudo xcodebuild -license accept
+
+in a terminal to accept the Xcode license, and then restart RStudio.
+)EOF";
+   
+   std::cerr << msg << std::endl;
+}
+
+} // end anonymous namespace
+
+void checkXcodeLicense()
+{
+#ifdef __APPLE__
+   
+   // avoid repeatedly warning the user
+   static bool s_licenseChecked;
+   if (s_licenseChecked)
+      return;
+   
+   s_licenseChecked = true;
+   
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "/usr/bin/xcrun --find --show-sdk-path",
+            core::system::ProcessOptions(),
+            &result);
+   
+   // if an error occurs, log it but avoid otherwise annoying the user
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // exit code 69 implies license error
+   if (result.exitStatus == 69)
+      warnXcodeLicense();
+   
+#endif
+}
+
 Error initialize()
 {
    // register .Call methods

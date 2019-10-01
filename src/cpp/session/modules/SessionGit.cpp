@@ -326,18 +326,30 @@ Error gitExec(const ShellArgs& args,
    if (string_utils::isTruthy(log))
       std::cout << gitText(args);
 
+   Error error;
+   
 #ifdef _WIN32
-      return runProgram(gitBin(),
-                        args.args(),
-                        "",
-                        options,
-                        pResult);
+   error = runProgram(
+            gitBin(),
+            args.args(),
+            "",
+            options,
+            pResult);
 #else
-      return runCommand(git() << args.args(),
-                        "",
-                        options,
-                        pResult);
+   error = runCommand(
+            git() << args.args(),
+            "",
+            options,
+            pResult);
 #endif
+
+#ifdef __APPLE__
+   if (pResult->exitStatus == 69)
+      module_context::checkXcodeLicense();
+#endif
+
+   return error;
+      
 }
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
@@ -3056,28 +3068,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
 FilePath whichGitExe()
 {
-   // find git
-   FilePath whichGit = module_context::findProgram("git");
-   if (whichGit.empty())
-   {
-      return whichGit;
-   }
-   else
-   {
-      // if we are on osx mavericks we need to do a further check to make
-      // sure this isn't the fake version of git installed by default
-      if (module_context::isOSXMavericks())
-      {
-         if (module_context::hasOSXMavericksDeveloperTools())
-            return whichGit;
-         else
-            return FilePath();
-      }
-      else
-      {
-         return whichGit;
-      }
-   }
+   return module_context::findProgram("git");
 }
 
 } // anonymous namespace
@@ -3087,22 +3078,18 @@ bool isGitInstalled()
    if (!prefs::userPrefs().vcsEnabled())
       return false;
 
-   // special handling for mavericks for case where there is /usr/bin/git
-   // but it's the fake on installed by osx
-   if ((s_gitExePath.empty() || s_gitExePath == "/usr/bin/git") &&
-       module_context::isOSXMavericks() &&
-       !module_context::hasOSXMavericksDeveloperTools() &&
-       whichGitExe().empty())
-   {
-      return false;
-   }
-
    core::system::ProcessResult result;
    Error error = core::system::runCommand(git() << "--version",
                                           procOptions(),
                                           &result);
    if (error)
       return false;
+   
+#ifdef __APPLE__
+   if (result.exitStatus != EXIT_SUCCESS)
+      module_context::checkXcodeLicense();
+#endif
+   
    return result.exitStatus == EXIT_SUCCESS;
 }
 
