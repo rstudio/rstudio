@@ -1,6 +1,7 @@
 
 ## RStudio v1.2 Patch 2
 
+* Fully reset Connections pane objects when refreshing (#2136)
 * Eliminate warnings when using `_R_CHECK_LENGTH_1_LOGIC2_` (#5268, #5363)
 
 ### Server Pro
