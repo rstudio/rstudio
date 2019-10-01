@@ -34,14 +34,19 @@ namespace gwt {
    
 namespace {
    
+struct FileRequestOptions
+{
+   std::string wwwLocalPath;
+   std::string baseUri;
+   core::http::UriFilterFunction mainPageFilter;
+   std::string initJs;
+   std::string gwtPrefix;
+   bool useEmulatedStack;
+   bool useSecureCookies;
+   std::string frameOptions;
+};
 
-void handleFileRequest(const std::string& wwwLocalPath,
-                       const std::string& baseUri,
-                       core::http::UriFilterFunction mainPageFilter,
-                       const std::string& initJs,
-                       const std::string& gwtPrefix,
-                       bool useEmulatedStack,
-                       const std::string& frameOptions,
+void handleFileRequest(const FileRequestOptions& options,
                        const http::Request& request, 
                        http::Response* pResponse)
 {
@@ -52,14 +57,14 @@ void handleFileRequest(const std::string& wwwLocalPath,
       uri.erase(pos);
             
    // request for one-character short of root location redirects to root
-   if (uri == baseUri.substr(0, baseUri.size()-1))
+   if (uri == options.baseUri.substr(0, options.baseUri.size()-1))
    {
-      pResponse->setMovedPermanently(request, baseUri);
+      pResponse->setMovedPermanently(request, options.baseUri);
       return;
    }
    
    // request for a URI not within our location scope
-   if (uri.find(baseUri) != 0)
+   if (uri.find(options.baseUri) != 0)
    {
       pResponse->setNotFoundError(request);
       return;
@@ -67,19 +72,19 @@ void handleFileRequest(const std::string& wwwLocalPath,
    
    // auto-append index.htm to request for root location
    const char * const kIndexFile = "index.htm";
-   if (uri == baseUri)
+   if (uri == options.baseUri)
       uri += kIndexFile;
    
    // if this is main page and we have a filter then then give it a crack
    // at the request
-   std::string mainPage = baseUri + kIndexFile;
+   std::string mainPage = options.baseUri + kIndexFile;
    if (uri == mainPage)
    {
       // run filter if we have one
-      if (mainPageFilter)
+      if (options.mainPageFilter)
       {
          // if the filter returns false it means we should stop processing
-         if (!mainPageFilter(request, pResponse))
+         if (!options.mainPageFilter(request, pResponse))
             return ;
       }
 
@@ -88,8 +93,8 @@ void handleFileRequest(const std::string& wwwLocalPath,
    }
    
    // get the requested file 
-   std::string relativePath = uri.substr(baseUri.length());
-   FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
+   std::string relativePath = uri.substr(options.baseUri.length());
+   FilePath filePath = http::util::requestedFile(options.wwwLocalPath, relativePath);
    if (filePath.empty())
    {
       pResponse->setNotFoundError(request);
@@ -120,18 +125,18 @@ void handleFileRequest(const std::string& wwwLocalPath,
    {
       // check for emulated stack
       std::map<std::string,std::string> vars;
-      useEmulatedStack = useEmulatedStack ||
+      bool useEmulatedStack = options.useEmulatedStack ||
                          (request.queryParamValue("emulatedStack") == "1");
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
 
       // check for initJs
-      if (!initJs.empty())
-         vars["head_tags"] = "<script>" + initJs + "</script>";
+      if (!options.initJs.empty())
+         vars["head_tags"] = "<script>" + options.initJs + "</script>";
       else
          vars["head_tags"] = std::string();
 
       // gwt prefix
-      vars["gwt_prefix"] = gwtPrefix;
+      vars["gwt_prefix"] = options.gwtPrefix;
 
 #ifndef RSTUDIO_SERVER
       vars["viewport_tag"] = R"(<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />)";
@@ -140,19 +145,20 @@ void handleFileRequest(const std::string& wwwLocalPath,
 #endif
 
       // read existing CSRF token 
+      //secure = secure || boost::algorithm::starts_with(request.absoluteUri(), "https");
       std::string csrfToken = request.cookieValue("csrf-token");
       if (csrfToken.empty())
       {
          // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
          // set when using proxied authentication. generate and apply a new token.
          csrfToken = core::system::generateUuid();
-         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, pResponse);
+         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, true, pResponse);
       }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
       // don't allow main page to be framed by other domains (clickjacking
       // defense)
-      pResponse->setFrameOptionHeaders(frameOptions);
+      pResponse->setFrameOptionHeaders(options.frameOptions);
 
       // return the page
       pResponse->setNoCacheHeaders();
@@ -172,6 +178,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
    
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
+                                       bool useSecureCookies,
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
@@ -179,14 +186,11 @@ http::UriHandlerFunction fileHandlerFunction(
                                        bool useEmulatedStack,
                                        const std::string& frameOptions)
 {
+   FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
+                                gwtPrefix, useEmulatedStack, useSecureCookies, frameOptions };
+
    return boost::bind(handleFileRequest,
-                      wwwLocalPath,
-                      baseUri,
-                      mainPageFilter,
-                      initJs,
-                      gwtPrefix,
-                      useEmulatedStack,
-                      frameOptions,
+                      options,
                       _1,
                       _2);
 }

@@ -103,6 +103,12 @@ core::system::ProcessConfig sessionProcessConfig(
                                     context.scope.id()));
    }
 
+   // ensure cookies are marked secure if applicable
+   bool useSecureCookies = options.authCookiesForceSecure() ||
+                           options.getOverlayOption("ssl-enabled") == "1";
+   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
+                                 useSecureCookies ? "1" : "0"));
+
    // create launch token if we haven't already
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();

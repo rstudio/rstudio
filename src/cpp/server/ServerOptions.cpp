@@ -315,7 +315,10 @@ ProgramStatus Options::read(int argc,
         "minimum amount of time a user must wait before attempting to sign in again")
       ("auth-revocation-list-dir",
         value<std::string>(&authRevocationListDir_)->default_value("/var/run/rstudio-server"),
-        "path to the directory which contains the revocation list to be used for storing expired auth tokens");
+        "path to the directory which contains the revocation list to be used for storing expired auth tokens")
+      ("auth-cookies-force-secure",
+        value<bool>(&authCookiesForceSecure_)->default_value(false),
+        "forces auth cookies to be marked as secure - should be enabled if running an SSL terminator infront of RStudio Server");
 
    options_description monitor("monitor");
    monitor.add_options()

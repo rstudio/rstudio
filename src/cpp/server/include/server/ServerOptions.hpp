@@ -194,6 +194,11 @@ public:
       return authRevocationListDir_;
    }
 
+   bool authCookiesForceSecure() const
+   {
+      return authCookiesForceSecure_;
+   }
+
    // rsession
    std::string rsessionWhichR() const
    {
@@ -309,6 +314,7 @@ private:
    std::string authPamHelperPath_;
    int authSignInThrottleSeconds_;
    std::string authRevocationListDir_;
+   bool authCookiesForceSecure_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

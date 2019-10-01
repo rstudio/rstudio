@@ -610,6 +610,11 @@ public:
       return sessionRsaPrivateKey_;
    }
 
+   bool useSecureCookies() const
+   {
+      return useSecureCookies_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -682,6 +687,7 @@ private:
    int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
+   bool useSecureCookies_;
 
    // r
    std::string coreRSourcePath_;

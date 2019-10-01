@@ -44,6 +44,7 @@
 * Add preference for changing font size on help pane (#3282)
 * Improved keyboard and touch support for iPadOS 13.1
 * Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
+* Added ability to mark auth cookies as secure via the `auth-cookies-force-secure` `rserver.conf` configuration setting
 
 ### Bugfixes
 

@@ -101,8 +101,12 @@ http::UriHandlerFunction blockingFileHandler()
    // determine initJs (none for now)
    std::string initJs;
 
+   bool secure = options.authCookiesForceSecure() ||
+                 options.getOverlayOption("ssl-enabled") == "1";
+
    // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
+                                   secure,
                                    "/",
                                    mainPageFilter,
                                    initJs,

@@ -251,7 +251,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "WebSocket protocol handshake timeout (ms)")
       (kPackageOutputInPackageFolder,
        value<bool>(&packageOutputToPackageFolder_)->default_value(false),
-       "devtools check and devtools build output to package project folder");
+       "devtools check and devtools build output to package project folder")
+      (kUseSecureCookiesSessionOption,
+       value<bool>(&useSecureCookies_)->default_value(false),
+       "whether to mark cookies as secure");
 
    // allow options
    options_description allow("allow");
