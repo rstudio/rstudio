@@ -33,7 +33,7 @@ public:
 
    SslAsyncServer(const std::string& serverName,
                   const std::string& baseUri = std::string(),
-                  bool disableOriginCheck = false)
+                  bool disableOriginCheck = true)
       : AsyncServerImpl(serverName, baseUri, disableOriginCheck)
    {
    }

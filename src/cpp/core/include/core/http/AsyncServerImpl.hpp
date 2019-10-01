@@ -73,7 +73,7 @@ class AsyncServerImpl : public AsyncServer, boost::noncopyable
 public:
    AsyncServerImpl(const std::string& serverName,
                    const std::string& baseUri = std::string(),
-                   bool disableOriginCheck = false)
+                   bool disableOriginCheck = true)
       : abortOnResourceError_(false),
         serverName_(serverName),
         baseUri_(baseUri),
