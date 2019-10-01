@@ -39,7 +39,7 @@ unsigned int StderrLogDestination::getId() const
 
 void StderrLogDestination::writeLog(LogLevel, const std::string& in_message)
 {
-   std::cerr << in_message;
+   std::cerr << in_message << std::endl;
 }
 
 } // namespace log
