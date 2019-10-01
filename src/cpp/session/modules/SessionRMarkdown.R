@@ -462,4 +462,17 @@
       FALSE
 })
 
-
+.rs.addFunction("tinytexBin", function()
+{
+   if (!requireNamespace("tinytex", quietly = TRUE))
+      return(NULL)
+   
+   # NOTE: binary directory has a single arch-specific subdir;
+   # rather than trying to hard-code the architecture we just
+   # infer it directly
+   root <- tinytex:::tinytex_root()
+   bin <- file.path(root, "bin")
+   subbin <- list.files(bin, full.names = TRUE)
+   subbin[[1]]
+   
+})
