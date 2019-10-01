@@ -201,7 +201,7 @@ Error initializeSystemLog(const std::string& programIdentity,
    {
       // create default syslog logger options
       log::SysLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeSysLog, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, LoggerType::kSysLog, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();

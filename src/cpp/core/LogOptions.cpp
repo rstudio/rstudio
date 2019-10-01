@@ -59,63 +59,58 @@ std::string logLevelToString(LogLevel logLevel)
    switch (logLevel)
    {
       case LogLevel::DEBUG:
-         return "debug";
+         return kLoggingLevelDebug;
       case LogLevel::INFO:
-         return "info";
+         return kLoggingLevelInfo;
       case LogLevel::WARNING:
-         return "warn";
+         return kLoggingLevelWarn;
       case LogLevel::ERROR:
-         return "error";
+         return kLoggingLevelError;
       case LogLevel::OFF:
       default:
-         return "warn";
+         return kLoggingLevelWarn;
    }
 }
 
-std::string loggerTypeToString(int loggerType)
+std::string loggerTypeToString(LoggerType loggerType)
 {
    switch (loggerType)
    {
-      case kLoggerTypeFile:
-         return "file";
-      case kLoggerTypeStdErr:
-         return "stderr";
-      case kLoggerTypeSysLog:
-         return "syslog";
+      case LoggerType::kFile:
+         return kFileLogger;
+      case LoggerType::kStdErr:
+         return kStdErrLogger;
+      case LoggerType::kSysLog:
+         return kSysLogger;
       default:
-         return "syslog";
+         return kSysLogger;
    }
 }
 
 LogLevel strToLogLevel(const std::string& logLevelStr)
 {
-   if (logLevelStr == "warn")
+   if (logLevelStr == kLoggingLevelWarn)
       return LogLevel::WARNING;
+   else if (logLevelStr == kLoggingLevelError)
+       return LogLevel::ERROR;
+   else if (logLevelStr == kLoggingLevelInfo)
+       return LogLevel::INFO;
+   else if (logLevelStr == kLoggingLevelDebug)
+       return LogLevel::DEBUG;
    else
-      if (logLevelStr == "error")
-         return LogLevel::ERROR;
-      else
-         if (logLevelStr == "info")
-            return LogLevel::INFO;
-         else
-            if (logLevelStr == "debug")
-               return LogLevel::DEBUG;
-            else
-               return LogLevel::WARNING;
+       return LogLevel::WARNING;
 }
 
-int strToLoggerType(const std::string& loggerTypeStr)
+LoggerType strToLoggerType(const std::string& loggerTypeStr)
 {
-   if (loggerTypeStr == "syslog")
-      return kLoggerTypeSysLog;
+   if (loggerTypeStr == kSysLogger)
+      return LoggerType::kSysLog;
+   else if (loggerTypeStr == kFileLogger)
+      return LoggerType::kFile;
+   else if (loggerTypeStr == kStdErrLogger)
+      return LoggerType::kStdErr;
    else
-      if (loggerTypeStr == "file")
-         return kLoggerTypeFile;
-      else
-         if (loggerTypeStr == "stderr")
-            return kLoggerTypeStdErr;
-         else
-            return kLoggerTypeSysLog;
+      return LoggerType::kSysLog;
 }
 
 struct LoggerOptionsVisitor : boost::static_visitor<>
@@ -166,7 +161,7 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
 LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
    defaultLogLevel_(logLevelToString(LogLevel::WARNING)),
-   defaultLoggerType_(loggerTypeToString(kLoggerTypeSysLog)),
+   defaultLoggerType_(loggerTypeToString(LoggerType::kSysLog)),
    defaultLoggerOptions_(SysLogOptions()),
    lowestLogLevel_(LogLevel::WARNING)
 {
@@ -175,7 +170,7 @@ LogOptions::LogOptions(const std::string& executableName) :
 
 LogOptions::LogOptions(const std::string& executableName,
                        LogLevel logLevel,
-                       int loggerType,
+                       LoggerType loggerType,
                        const LoggerOptions& options) :
    executableName_(executableName),
    defaultLogLevel_(logLevelToString(logLevel)),
@@ -282,7 +277,7 @@ LogLevel LogOptions::lowestLogLevel() const
    return lowestLogLevel_;
 }
 
-int LogOptions::loggerType(const std::string& loggerName) const
+LoggerType LogOptions::loggerType(const std::string& loggerName) const
 {
    std::vector<ConfigProfile::Level> levels = getLevels(loggerName);
 
@@ -295,11 +290,11 @@ int LogOptions::loggerType(const std::string& loggerName) const
 
 LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
 {
-   int type = loggerType(loggerName);
+   LoggerType type = loggerType(loggerName);
 
    switch (type)
    {
-      case kLoggerTypeFile:
+      case LoggerType::kFile:
       {
          std::vector<ConfigProfile::Level> levels = getLevels(loggerName);
 
@@ -316,10 +311,10 @@ LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
          return FileLogOptions(FilePath(logDir), fileMode, maxSizeMb, rotate, includePid);
       }
 
-      case kLoggerTypeStdErr:
+      case LoggerType::kStdErr:
          return StdErrLogOptions();
 
-      case kLoggerTypeSysLog:
+      case LoggerType::kSysLog:
          return SysLogOptions();
 
       default:

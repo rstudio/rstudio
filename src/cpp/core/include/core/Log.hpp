@@ -26,11 +26,11 @@
 namespace rstudio {
 namespace core {
 
-enum LoggerType
+enum class LoggerType
 {
-   kLoggerTypeStdErr = 0,
-   kLoggerTypeSysLog = 1,
-   kLoggerTypeFile = 2
+   kStdErr = 0,
+   kSysLog = 1,
+   kFile = 2
 };
 
 

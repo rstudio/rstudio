@@ -124,14 +124,14 @@ void initializeLogWriter()
    using namespace log;
 
    // requires prior synchronization
-   int loggerType = s_logOptions->loggerType();
+   LoggerType loggerType = s_logOptions->loggerType();
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions();
 
    switch (loggerType)
    {
-      case kLoggerTypeFile:
+      case LoggerType::kFile:
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
@@ -140,14 +140,14 @@ void initializeLogWriter()
                boost::get<FileLogOptions>(options))));
          break;
       }
-      case kLoggerTypeStdErr:
+      case LoggerType::kStdErr:
       {
          if (s_stdErrLogDest == nullptr)
             s_stdErrLogDest.reset(new StderrLogDestination());
          addLogDestination(s_stdErrLogDest);
          break;
       }
-      case kLoggerTypeSysLog:
+      case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
@@ -164,14 +164,14 @@ void initializeLogWriter(const std::string& logSection)
    using namespace log;
 
    // requires prior synchronization
-   int loggerType = s_logOptions->loggerType(logSection);
+   LoggerType loggerType = s_logOptions->loggerType(logSection);
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions(logSection);
 
    switch (loggerType)
    {
-      case kLoggerTypeFile:
+      case LoggerType::kFile:
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
@@ -181,7 +181,7 @@ void initializeLogWriter(const std::string& logSection)
             LogSection(logSection, s_logOptions->logLevel(logSection)));
          break;
       }
-      case kLoggerTypeStdErr:
+      case LoggerType::kStdErr:
       {
          if (s_stdErrLogDest == nullptr)
             s_stdErrLogDest.reset(new StderrLogDestination());
@@ -190,7 +190,7 @@ void initializeLogWriter(const std::string& logSection)
             LogSection(logSection, s_logOptions->logLevel(logSection)));
          break;
       }
-      case kLoggerTypeSysLog:
+      case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
@@ -267,7 +267,7 @@ Error initializeStderrLog(const std::string& programIdentity,
    {
       // create default stderr logger options
       log::StdErrLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeStdErr, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, LoggerType::kStdErr, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -291,7 +291,7 @@ Error initializeLog(const std::string& programIdentity,
    {
       // create default file logger options
       log::FileLogOptions options(logDir);
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, kLoggerTypeFile, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, LoggerType::kFile, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();

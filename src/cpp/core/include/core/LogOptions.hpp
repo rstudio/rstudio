@@ -48,7 +48,7 @@ public:
 
    LogOptions(const std::string& executableName,
               LogLevel defaultLogLevel,
-              int defaultLoggerType,
+              LoggerType defaultLoggerType,
               const LoggerOptions& defaultLoggerOptions);
 
    virtual ~LogOptions()
@@ -63,7 +63,7 @@ public:
    LogLevel lowestLogLevel() const;
 
    // gets the current logger type
-   int loggerType(const std::string& loggerName = std::string()) const;
+   LoggerType loggerType(const std::string& loggerName = std::string()) const;
 
    // gets the current logger's specific options
    LoggerOptions loggerOptions(const std::string& loggerName = std::string()) const;
