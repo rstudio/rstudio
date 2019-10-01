@@ -1072,9 +1072,6 @@ FilePath findProgram(const std::string& name)
 
 bool addTinytexToPathIfNecessary()
 {
-   if (isPdfLatexInstalled())
-      return false;
-   
    std::string binDir;
    Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDir);
    if (error)
@@ -1090,6 +1087,7 @@ bool addTinytexToPathIfNecessary()
 
 bool isPdfLatexInstalled()
 {
+   addTinytexToPathIfNecessary();
    return !module_context::findProgram("pdflatex").empty();
 }
 

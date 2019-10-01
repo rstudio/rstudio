@@ -462,17 +462,31 @@
       FALSE
 })
 
+.rs.addFunction("tinytexRoot", function()
+{
+   sysname <- Sys.info()[["sysname"]]
+   if (sysname == "Windows")
+      file.path(Sys.getenv("APPDATA"), "TinyTeX")
+   else if (sysname == "Darwin")
+      "~/Library/TinyTeX"
+   else
+      "~/.TinyTeX"
+})
+
 .rs.addFunction("tinytexBin", function()
 {
-   if (!requireNamespace("tinytex", quietly = TRUE))
+   root <- tryCatch(
+      tinytex:::tinytex_root(),
+      error = function(e) .rs.tinytexRoot()
+   )
+   
+   if (!file.exists(root))
       return(NULL)
    
    # NOTE: binary directory has a single arch-specific subdir;
    # rather than trying to hard-code the architecture we just
    # infer it directly
-   root <- tinytex:::tinytex_root()
    bin <- file.path(root, "bin")
    subbin <- list.files(bin, full.names = TRUE)
-   subbin[[1]]
-   
+   normalizePath(subbin[[1]], mustWork = TRUE)
 })
