@@ -33,8 +33,9 @@ class LocalStreamAsyncServer
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
-                          core::system::FileMode fileMode)
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri),
+                          core::system::FileMode fileMode,
+                          bool disableOriginCheck = false)
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck),
         fileMode_(fileMode)
    {
    }

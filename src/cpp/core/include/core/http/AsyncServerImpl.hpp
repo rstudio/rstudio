@@ -42,6 +42,7 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/http/Util.hpp>
 #include <core/http/UriHandler.hpp>
+#include <core/http/URL.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketAcceptorService.hpp>
 
@@ -71,10 +72,12 @@ class AsyncServerImpl : public AsyncServer, boost::noncopyable
 {
 public:
    AsyncServerImpl(const std::string& serverName,
-               const std::string& baseUri = std::string())
+                   const std::string& baseUri = std::string(),
+                   bool disableOriginCheck = false)
       : abortOnResourceError_(false),
         serverName_(serverName),
         baseUri_(baseUri),
+        originCheckDisabled_(disableOriginCheck),
         acceptorService_(),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioService()),
@@ -397,6 +400,47 @@ private:
                pConnection->response().setStatusCode(http::status::MethodNotAllowed);
                return false;
             }
+
+            if (!originCheckDisabled_)
+            {
+               // cross-origin check: ensure that the Origin or Referer headers match the target origin
+               // this is a basic security precaution recommended here:
+               // https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
+               std::string originator = pRequest->headerValue("Origin");
+               if (originator.empty())
+                  originator = pRequest->headerValue("Referer");
+
+               // get the actual host from the originator as it is possible for it to be a full URL
+               originator = URL(originator).host();
+
+               // get the host header, which indicates the destination for the request
+               // we check for proxy values first as any reverse proxies will modify the host header
+               std::string host = pRequest->headerValue("X-Forwarded-Host");
+               if (host.empty())
+               {
+                  // might be using new Forwarded header, so check there for the host
+                  std::string forwarded = pRequest->headerValue("Forwarded");
+                  if (!forwarded.empty())
+                  {
+                     boost::regex re("host=([\\w.:]+);?");
+                     boost::smatch matches;
+                     if (boost::regex_search(forwarded, matches, re))
+                        host = matches[1];
+                  }
+
+                  // no forwarded information, so use regular host header
+                  if (host.empty())
+                     host = pRequest->headerValue("Host");
+               }
+
+               if (!originator.empty() && originator != host)
+               {
+                  LOG_ERROR_MESSAGE("Rejecting request with mistmatched originator " + originator + " - "
+                                    "expected: " + host + " for URI " + pRequest->uri());
+                  pConnection->response().setStatusCode(http::status::BadRequest);
+                  return false;
+               }
+            }
          }
 
          if (handlerFunc)
@@ -617,6 +661,7 @@ private:
    bool abortOnResourceError_;
    std::string serverName_;
    std::string baseUri_;
+   bool originCheckDisabled_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
    AsyncUriHandlers uriHandlers_ ;

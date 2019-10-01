@@ -28,7 +28,9 @@ namespace server {
 
 http::AsyncServer* httpServerCreate()
 {
-   return new http::TcpIpAsyncServer("RStudio");
+   return new http::TcpIpAsyncServer("RStudio",
+                                     std::string(),
+                                     options().wwwDisableOriginCheck());
 }
 
 Error httpServerInit(http::AsyncServer* pAsyncServer)

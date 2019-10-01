@@ -188,6 +188,7 @@ public:
          response_.setHeader("Date", util::httpDate());
       if (close)
          response_.setHeader("Connection", "close");
+      response_.setHeader("X-Content-Type-Options", "nosniff");
 
       // call the response filter if we have one
       if (responseFilter_)

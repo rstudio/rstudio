@@ -239,7 +239,10 @@ ProgramStatus Options::read(int argc,
          "verify that the user agent is compatible")
       ("www-frame-origin",
          value<std::string>(&wwwFrameOrigin_)->default_value("none"),
-         "allowed origin for hosting frame");
+         "allowed origin for hosting frame")
+      ("www-disable-origin-check",
+         value<bool>(&wwwDisableOriginCheck_)->default_value(false),
+         "disable check that ensures request origin is from the host domain");
 
    // rsession
    Deprecated dep;

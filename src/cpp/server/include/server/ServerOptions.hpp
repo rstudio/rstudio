@@ -138,6 +138,11 @@ public:
       return wwwVerifyUserAgent_;
    }
 
+   bool wwwDisableOriginCheck() const
+   {
+      return wwwDisableOriginCheck_;
+   }
+
    // auth
    bool authNone()
    {
@@ -303,6 +308,7 @@ private:
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
+   bool wwwDisableOriginCheck_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
