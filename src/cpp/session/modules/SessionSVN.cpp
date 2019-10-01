@@ -533,24 +533,7 @@ FilePath detectedSvnExePath()
       return FilePath();
    }
 #else
-   FilePath svnExeFilePath = whichSvnExe();
-   if (!svnExeFilePath.empty())
-   {
-      // extra check on mavericks to make sure it's not the fake svn
-      if (module_context::isMacOS())
-      {
-         if (module_context::hasMacOSDeveloperTools())
-            return FilePath(svnExeFilePath);
-         else
-            return FilePath();
-      }
-      else
-      {
-         return FilePath(svnExeFilePath);
-      }
-   }
-   else
-      return FilePath();
+   return whichSvnExe();
 #endif
 }
 
