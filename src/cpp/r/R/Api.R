@@ -89,6 +89,7 @@
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
   info$version <- package_version(info$version)
+  info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })
 
