@@ -321,6 +321,13 @@ SEXP rs_rstudioVersion()
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
 }
 
+// get release name
+SEXP rs_rstudioReleaseName()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(std::string(RSTUDIO_RELEASE_NAME), &rProtect);
+}
+
 // get citation
 SEXP rs_rstudioCitation()
 {
@@ -2601,6 +2608,7 @@ Error initialize()
    
    RS_REGISTER_CALL_METHOD(rs_resolveAliasedPath, 1);
    RS_REGISTER_CALL_METHOD(rs_sessionModulePath, 0);
+   RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName, 0);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
