@@ -101,8 +101,26 @@ struct LogSection
     */
    bool operator==(const LogSection& in_other) const;
 
+   /**
+    * @brief Gets the maximum log level for the section.
+    *
+    * @param in_defaultLevel   The default log level to use if this section does not have a log level configured.
+    *
+    * @return The maximum log level for the section, or the specified default level if this section has no log level
+    *         configured.
+    */
+    LogLevel getMaxLogLevel(LogLevel in_defaultLevel) const;
+
+   /**
+    * @brief Gets the name of the log section.
+    *
+    * @return The name of the log section.
+    */
+   const std::string& getName() const;
+
+private:
    // Private implementation of LogSection.
-   PRIVATE_IMPL_SHARED(Impl);
+   PRIVATE_IMPL_SHARED(m_impl);
 };
 
 /**

@@ -47,28 +47,28 @@ enum class LoggerType
 #define LOG_ERROR_MESSAGE(message) rstudio::core::log::logErrorMessage(message, \
                                                                        ERROR_LOCATION)
 
-#define LOG_ERROR_MESSAGE_NAMED(logSection, message) rstudio::core::log::logErrorMessage(logSection, \
-                                                                                         message, \
+#define LOG_ERROR_MESSAGE_NAMED(logSection, message) rstudio::core::log::logErrorMessage(message, \
+                                                                                         logSection, \
                                                                                          ERROR_LOCATION)
 
 #define LOG_WARNING_MESSAGE(message) rstudio::core::log::logWarningMessage(message, \
                                                                            ERROR_LOCATION)
 
-#define LOG_WARNING_MESSAGE_NAMED(logSection, message) rstudio::core::log::logWarningMessage(logSection, \
-                                                                                             message, \
+#define LOG_WARNING_MESSAGE_NAMED(logSection, message) rstudio::core::log::logWarningMessage(message, \
+                                                                                             logSection, \
                                                                                              ERROR_LOCATION)
 
 #define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message)
 
-#define LOG_INFO_MESSAGE_NAMED(logSection, message) rstudio::core::log::logInfoMessage(logSection, \
-                                                                                       message)
+#define LOG_INFO_MESSAGE_NAMED(logSection, message) rstudio::core::log::logInfoMessage(message, \
+                                                                                       logSection)
 
 #define LOG_DEBUG_MESSAGE(message) rstudio::core::log::logDebugMessage(message)
 
 #define LOG_DEBUG_ACTION(action) rstudio::core::log::logDebugAction(action)
 
-#define LOG_DEBUG_MESSAGE_NAMED(logSection, message) rstudio::core::log::logDebugMessage(logSection, \
-                                                                                         message)
+#define LOG_DEBUG_MESSAGE_NAMED(logSection, message) rstudio::core::log::logDebugMessage(message, \
+                                                                                         logSection)
 
 #define LOG_DEBUG_ACTION_NAMED(logSection, action) rstudio::core::log::logDebugAction(logSection, \
                                                                                       action)

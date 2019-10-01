@@ -129,25 +129,37 @@ struct LogSection::Impl
    boost::optional<LogLevel> MaxLogLevel;
 };
 
-LogSection::LogSection(const std::string& in_name)
+LogSection::LogSection(const std::string& in_name) :
+   m_impl(new Impl())
 {
-   Impl->Name = in_name;
+   m_impl->Name = in_name;
 }
 
-LogSection::LogSection(const std::string& in_name, LogLevel in_logLevel)
+LogSection::LogSection(const std::string& in_name, LogLevel in_logLevel) :
+   m_impl(new Impl())
 {
-   Impl->Name = in_name;
-   Impl->MaxLogLevel = in_logLevel;
+   m_impl->Name = in_name;
+   m_impl->MaxLogLevel = in_logLevel;
 }
 
 bool LogSection::operator<(const LogSection& in_other) const
 {
-   return Impl->Name < in_other.Impl->Name;
+   return m_impl->Name < in_other.m_impl->Name;
 }
 
 bool LogSection::operator==(const LogSection& in_other) const
 {
-   return Impl->Name == in_other.Impl->Name;
+   return m_impl->Name == in_other.m_impl->Name;
+}
+
+LogLevel LogSection::getMaxLogLevel(LogLevel in_defaultLevel) const
+{
+   return boost::get_optional_value_or(m_impl->MaxLogLevel, in_defaultLevel);
+}
+
+const std::string& LogSection::getName() const
+{
+   return m_impl->Name;
 }
 
 // Logger Object =======================================================================================================
@@ -221,7 +233,7 @@ void Logger::writeMessageToDestinations(
          return;
       auto logDestIter = SectionedLogDestinations.find(in_section);
       logMap = &logDestIter->second;
-      maxLogLevel = logDestIter->first.Impl->MaxLogLevel.value_or(maxLogLevel);
+      maxLogLevel = logDestIter->first.getMaxLogLevel(maxLogLevel);
    }
 
    // Don't log this message, it's too detailed for the configuration.
@@ -288,11 +300,11 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, c
          "Attempted to register a log destination that has already been registered with id " +
          std::to_string(in_destination->getId()) +
          " to section " +
-         in_section.Impl->Name);
+         in_section.getName());
    }
 
-   if (in_section.Impl->MaxLogLevel.value_or(log.DefaultLogLevel) > log.MaxLogLevel)
-      log.MaxLogLevel = in_section.Impl->MaxLogLevel.value_or(log.DefaultLogLevel);
+   if (in_section.getMaxLogLevel(log.DefaultLogLevel) > log.MaxLogLevel)
+      log.MaxLogLevel = in_section.getMaxLogLevel(log.DefaultLogLevel);
 }
 
 std::string cleanDelims(const std::string& in_toClean)
