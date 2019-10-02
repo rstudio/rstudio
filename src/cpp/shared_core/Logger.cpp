@@ -229,7 +229,7 @@ void Logger::writeMessageToDestinations(
    if (!in_section.empty())
    {
       // Don't log anything if there is no logger for this section.
-      if (SectionedLogDestinations.find(in_section) != SectionedLogDestinations.end())
+      if (SectionedLogDestinations.find(in_section) == SectionedLogDestinations.end())
          return;
       auto logDestIter = SectionedLogDestinations.find(in_section);
       logMap = &logDestIter->second;
