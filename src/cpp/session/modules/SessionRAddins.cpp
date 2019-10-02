@@ -147,7 +147,7 @@ public:
       // check but don't log for unexpected input because we are the only ones
       // that write this file
       json::Value parsedJson;
-      if (parsedJson.parse(contents) &&
+      if (!parsedJson.parse(contents) &&
           json::isType<json::Object>(parsedJson))
       {
          const json::Object& addinsJson = parsedJson.getObject();
