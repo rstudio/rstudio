@@ -199,6 +199,7 @@ void FileLogDestination::writeLog(LogLevel, const std::string& in_message)
    // Rotate the log file if necessary.
    m_impl->rotateLogFile();
    (*m_impl->LogOutputStream) << in_message;
+   m_impl->LogOutputStream->flush();
 }
 
 } // namespace log
