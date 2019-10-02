@@ -34,28 +34,6 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-bool isMacOS()
-{
-   return true;
-}
-
-bool hasMacOSDeveloperTools()
-{
-   if (isMacOS())
-   {
-      // NOTE: From what I can tell, there isn't a reliable way of
-      // detecting whether command line tools vs. Xcode is installed
-      // on a machine. For that reason, we just check the common
-      // developer tools path, and assume most R users won't adjust it.
-      FilePath devtoolsPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
-      return devtoolsPath.exists();
-   }
-   else
-   {
-      return false;
-   }
-}
-
 Error copyImageToCocoaPasteboard(const FilePath& imagePath)
 {
    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];

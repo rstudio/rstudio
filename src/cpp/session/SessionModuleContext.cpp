@@ -2488,6 +2488,46 @@ in a terminal to accept the Xcode license, and then restart RStudio.
 
 } // end anonymous namespace
 
+bool isMacOS()
+{
+#ifdef __APPLE__
+   return true;
+#else
+   return false;
+#endif
+}
+
+bool hasMacOSDeveloperTools()
+{
+   if (!isMacOS())
+      return false;
+   
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "/usr/bin/xcrun --find --show-sdk-path",
+            core::system::ProcessOptions(),
+            &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   if (result.exitStatus == 69)
+      checkXcodeLicense();
+
+   return result.exitStatus == 0;
+}
+
+bool hasMacOSCommandLineTools()
+{
+   if (!isMacOS())
+      return false;
+   
+   return FilePath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk").exists();
+}
+
 void checkXcodeLicense()
 {
 #ifdef __APPLE__
