@@ -106,10 +106,12 @@ std::string formatLogMessage(
           << " [" << in_programId << "] ";
    }
 
-   oss << in_logLevel << " " << in_message << std::endl;
+   oss << in_logLevel << " " << in_message;
 
    if (in_loggedFrom.hasLocation())
       oss << s_delim << " " << s_loggedFrom << ": " << cleanDelims(in_loggedFrom.asString());
+
+   oss << std::endl;
 
    if (in_formatForSyslog)
    {
