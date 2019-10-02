@@ -25,8 +25,10 @@
 
 #include <core/system/PosixUser.hpp>
 
+#include <server/ServerConstants.hpp>
 #include <server/ServerObject.hpp>
 #include <server/ServerOptionsOverlay.hpp>
+#include <server/ServerPaths.hpp>
 #include <server/ServerSessionManager.hpp>
 
 #include <session/projects/SessionProjectSharing.hpp>
@@ -279,7 +281,7 @@ Error initialize()
 
    // initialize with path to our socket
    Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
-            FilePath(kServerRpcSocketPath));
+            serverRpcSocketPath());
    if (error)
       return error;
 

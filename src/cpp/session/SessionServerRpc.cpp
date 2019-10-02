@@ -105,7 +105,8 @@ Error invokeServerRpc(const std::string& endpoint,
 #ifdef _WIN32
        return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 #else
-      return socket_rpc::invokeRpc(FilePath(kServerRpcSocketPath), endpoint, request, pResult);
+      FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+      return socket_rpc::invokeRpc(rpcSocket, endpoint, request, pResult);
 #endif
    }
    else
@@ -148,8 +149,9 @@ void invokeServerRpcAsync(const std::string& endpoint,
        onError(systemError(boost::system::errc::not_supported, ERROR_LOCATION));
        return;
 #else
+      FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
       return socket_rpc::invokeRpcAsync(s_ioService,
-                                        FilePath(kServerRpcSocketPath),
+                                        rpcSocket,
                                         endpoint,
                                         request,
                                         onResult,

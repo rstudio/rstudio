@@ -21,7 +21,8 @@
 
 #include <server/auth/ServerSecureUriHandler.hpp>
 
-#define kSessionRpcCmdPeriodMs 50
+#define kSessionRpcCmdPeriodMs  50
+#define kSessionServerRpcSocket "session-server-rpc.socket"
 
 namespace rstudio {
 namespace core {
