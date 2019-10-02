@@ -69,7 +69,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -1300,7 +1299,6 @@ public class RSConnectDeploy extends Composite
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
-   @UiField Grid mainGrid_;
    @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appInfoPanel_;
    @UiField HTMLPanel appProgressPanel_;

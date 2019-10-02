@@ -15,16 +15,16 @@
 #
 
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.1
+    QT_VERSION=5.12.5
 fi
 if [ -z "$QT_SDK_BINARY" ]; then
     QT_SDK_BINARY=qt-opensource-linux-x64-${QT_VERSION}.run
 fi
 if [ -z "$QT_PACKAGES" ]; then
-    QT_PACKAGES=qt.qt5.5121.gcc_64,qt.qt5.5121.qtwebengine,qt.qt5.5121.qtwebengine.gcc_64
+    QT_PACKAGES=qt.qt5.5125.gcc_64,qt.qt5.5125.qtwebengine,qt.qt5.5125.qtwebengine.gcc_64
 fi
 if [ -z "$QT_SDK_CUSTOM" ]; then
-    echo Using online Qt installer
+    echo Using Qt $QT_VERSION
 else
     echo Using custom Qt package: $QT_SDK_CUSTOM
 fi
@@ -38,7 +38,7 @@ if [ -z "$QT_SDK_DIR" ]; then
    QT_SDK_DIR3=~/Qt/${QT_VERSION}
 fi
 
-QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
+QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/Qt/$QT_SDK_BINARY
 QT_SCRIPT=/tmp/qt-noninteractive-install-linux.qs
 
 # generate script for automatic Qt installation; customizes the install location via $QT_SDK_DIR
@@ -122,7 +122,7 @@ EOF
 if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
 then
    if [ -z "$QT_SDK_CUSTOM" ]; then
-      # download and install via Qt online installer
+      # download and install via Qt installer package
       wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY
       chmod u+x /tmp/$QT_SDK_BINARY
       write_qt_script

@@ -52,6 +52,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionPersistentState.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "presentation/SlideRequestHandler.hpp"
 
 #include "SessionHelpHome.hpp"
@@ -283,7 +285,21 @@ const char * const kJsCallbacks =
       "</script>\n";
 
 
-   
+class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>
+{
+public:
+   typedef std::vector<char> Characters ;
+
+   void do_filter(const Characters& src, Characters& dest)
+   {
+      std::string cssValue;
+      cssValue.append("body {\n   font-size:");
+      cssValue.append(safe_convert::numberToString(prefs::userPrefs().helpFontSizePoints()));
+      cssValue.append("pt;\n}");
+      std::copy(cssValue.begin(), cssValue.end(), std::back_inserter(dest));
+   }
+};
+
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
@@ -766,7 +782,9 @@ void handleHttpdRequest(const std::string& location,
       core::FilePath cssFile = options().rResourcesPath().completeChildPath("R.css");
       if (cssFile.exists())
       {
-         pResponse->setFile(cssFile, request, filter);
+         // ignoring the filter parameter here because the only other possible filter 
+         // is HelpContentsFilter which is for html
+         pResponse->setFile(cssFile, request, HelpFontSizeFilter());
          return;
       }
    }

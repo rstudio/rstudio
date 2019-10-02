@@ -59,7 +59,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
       public PathSelector(String label, 
                           final String emptyLabel)
       {
-         super(label, emptyLabel, "Browse...", null);
+         super(label, emptyLabel, "Browse...", null, true, null);
       }
       
       

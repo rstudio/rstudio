@@ -32,8 +32,9 @@ class SslAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
 public:
 
    SslAsyncServer(const std::string& serverName,
-                  const std::string& baseUri = std::string())
-      : AsyncServerImpl(serverName, baseUri)
+                  const std::string& baseUri = std::string(),
+                  bool disableOriginCheck = true)
+      : AsyncServerImpl(serverName, baseUri, disableOriginCheck)
    {
    }
    

@@ -79,7 +79,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       {
          rVersion_ = new TextBoxWithButton(
                "R version:",
+               "",
                "Change...",
+               null,
+               true,
                new ClickHandler()
                {
                   @Override
@@ -332,6 +335,21 @@ public class GeneralPreferencesPane extends PreferencesPane
             "Double-click to select words in Console pane", 
             prefs_.consoleDoubleClickSelect())));
       
+      String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+      String[] values = new String[labels.length];
+      for (int i = 0; i < labels.length; i++)
+         values[i] = Double.parseDouble(labels[i]) + "";
+
+      helpFontSize_ = new SelectWidget("Help panel font size:",
+                                       labels,
+                                       values,
+                                       false, /* Multi select */
+                                       true, /* Horizontal label */
+                                       false /* List on left */);
+      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
+         helpFontSize_.getListBox().setSelectedIndex(3);
+      advanced.add(helpFontSize_);
+
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
       saveWorkspace_.setEnabled(false);
@@ -439,6 +457,11 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
       }
       
+      {
+         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
+      }
+
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
@@ -574,6 +597,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private CheckBox enableAccessibility_ = null;
+   private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox useGpuBlacklist_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;

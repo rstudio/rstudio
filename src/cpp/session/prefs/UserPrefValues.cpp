@@ -986,6 +986,19 @@ core::Error UserPrefValues::setFontSizePoints(double val)
 }
 
 /**
+ * The help panel font size, in points.
+ */
+double UserPrefValues::helpFontSizePoints()
+{
+   return readPref<double>("help_font_size_points");
+}
+
+core::Error UserPrefValues::setHelpFontSizePoints(double val)
+{
+   return writePref("help_font_size_points", val);
+}
+
+/**
  * The name of the color theme to apply to the text editor in RStudio.
  */
 std::string UserPrefValues::editorTheme()
@@ -2206,6 +2219,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
       kFontSizePoints,
+      kHelpFontSizePoints,
       kEditorTheme,
       kDefaultEncoding,
       kToolbarVisible,

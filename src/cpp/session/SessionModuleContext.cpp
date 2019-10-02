@@ -324,6 +324,13 @@ SEXP rs_rstudioVersion()
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
 }
 
+// get release name
+SEXP rs_rstudioReleaseName()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(std::string(RSTUDIO_RELEASE_NAME), &rProtect);
+}
+
 // get citation
 SEXP rs_rstudioCitation()
 {
@@ -676,27 +683,31 @@ private:
 };
 
 // handlers instance
-SuspendHandlers s_suspendHandlers ;   
+SuspendHandlers& suspendHandlers()
+{
+   static SuspendHandlers instance;
+   return instance;
+}
    
 } // anonymous namespace
    
 void addSuspendHandler(const SuspendHandler& handler)
 {
-   s_suspendHandlers.add(handler);
+   suspendHandlers().add(handler);
 }
    
 void onSuspended(const r::session::RSuspendOptions& options,
                  Settings* pPersistentState)
 {
    pPersistentState->beginUpdate();
-   s_suspendHandlers.suspend(options, pPersistentState);
+   suspendHandlers().suspend(options, pPersistentState);
    pPersistentState->endUpdate();
    
 }
 
 void onResumed(const Settings& persistentState)
 {
-   s_suspendHandlers.resume(persistentState);
+   suspendHandlers().resume(persistentState);
 }
 
 // idle work
@@ -2481,6 +2492,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
    RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
    RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
+   RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);
    RS_REGISTER_CALL_METHOD(rs_sessionModulePath);
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);
    RS_REGISTER_CALL_METHOD(rs_setUsingMingwGcc49);

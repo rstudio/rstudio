@@ -91,6 +91,9 @@ const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 
+const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
+const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
+
 const char * const kLoginPageHtml = "loginPageHtml";
 
 enum ErrorType 
@@ -244,6 +247,9 @@ void signIn(const http::Request& request,
             safe_convert::stringTo<unsigned>(error, kErrorNone)));
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
    variables[kStaySignedInDisplay] = canStaySignedIn() ? "block" : "none";
+   int timeoutMinutes = server::options().authTimeoutMinutes();
+   variables[kAuthTimeoutMinutesDisplay] = timeoutMinutes > 0 ? "block" : "none";
+   variables[kAuthTimeoutMinutes] = safe_convert::numberToString(timeoutMinutes);
    if (server::options().authEncryptPassword())
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
@@ -293,6 +299,10 @@ void setSignInCookies(const core::http::Request& request,
    int staySignedInDays = server::options().authStaySignedInDays();
    int authTimeoutMinutes = server::options().authTimeoutMinutes();
 
+   bool secureCookie = options().authCookiesForceSecure() ||
+                       options().getOverlayOption("ssl-enabled") == "1" ||
+                       boost::algorithm::starts_with(request.absoluteUri(), "https");
+
    if (authTimeoutMinutes == 0)
    {
       // legacy auth expiration - users do not idle
@@ -314,10 +324,10 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     options().getOverlayOption("ssl-enabled") == "1");
+                                     secureCookie);
 
       // add cross site request forgery detection cookie
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, pResponse);
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
    }
    else
    {
@@ -337,7 +347,7 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     options().getOverlayOption("ssl-enabled") == "1");
+                                     secureCookie);
 
       // set a cookie indicating whether or not we should persist the auth cookie
       // when it is automatically refreshed
@@ -346,11 +356,11 @@ void setSignInCookies(const core::http::Request& request,
                                        persist ? "1" : "0",
                                        "/",
                                        true,
-                                       options().getOverlayOption("ssl-enabled") == "1");
+                                       secureCookie);
       persistCookie.setExpires(boost::posix_time::minutes(authTimeoutMinutes));
       pResponse->addCookie(persistCookie);
 
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, pResponse);
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
    }
 }
 

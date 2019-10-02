@@ -228,13 +228,16 @@ var MarkdownHighlightRules = function() {
             linkByReference,
            { // HR *
             token : "constant",
-            regex : "^[ ]{0,2}(?:[ ]?\\*[ ]?){3,}\\s*$"
+            regex : "^\\s*[*](?:\\s*[*]){2,}\\s*$",
+            next  : "allowBlock",
         }, { // HR -
             token : "constant",
-            regex : "^[ ]{0,2}(?:[ ]?\\-[ ]?){3,}\\s*$"
+            regex : "^\\s*[-](?:\\s*[-]){2,}\\s*$",
+            next  : "allowBlock",
         }, { // HR _
             token : "constant",
-            regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
+            regex : "^\\s*[_](?:\\s*[_]){2,}\\s*$",
+            next  : "allowBlock"
         }, { // MathJax native display \[ ... \]
             token : "latex.markup.list.string.begin",
             regex : "\\\\\\[",
@@ -278,10 +281,6 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "text",
             regex : "\\\\"
-        }, { // HR * - _
-            token : "constant",
-            regex : "^ {0,2}(?:(?: ?\\* ?){3,}|(?: ?\\- ?){3,}|(?: ?\\_ ?){3,})\\s*$",
-            next: "allowBlock"
         }, { // list
             token : "text",
             regex : "^\\s*(?:[*+-]|\\d+\\.)\\s+",

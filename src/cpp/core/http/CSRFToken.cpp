@@ -31,18 +31,20 @@ namespace http {
 void setCSRFTokenCookie(const http::Request& request, 
                         const boost::optional<boost::gregorian::days>& expiry,
                         const std::string& token,
+                        bool secure,
                         http::Response* pResponse)
 {
    boost::optional<boost::posix_time::time_duration> expiresFromNow;
    if (expiry.is_initialized())
       expiresFromNow = boost::posix_time::time_duration(24 * expiry->days(), 0, 0);
 
-   setCSRFTokenCookie(request, expiresFromNow, token, pResponse);
+   setCSRFTokenCookie(request, expiresFromNow, token, secure, pResponse);
 }
 
 void setCSRFTokenCookie(const http::Request& request,
                         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
                         const std::string& token,
+                        bool secure,
                         http::Response* pResponse)
 {
    // generate UUID for token if unspecified
@@ -57,8 +59,7 @@ void setCSRFTokenCookie(const http::Request& request,
             csrfToken,
             "/",  // cookie for root path
             true, // HTTP only
-            // secure if delivered via SSL
-            boost::algorithm::starts_with(request.absoluteUri(), "https"));
+            secure);
 
    // set expiration for cookie
    if (expiresFromNow.is_initialized())

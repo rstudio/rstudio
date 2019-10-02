@@ -741,6 +741,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The help panel font size, in points.
+    */
+   public PrefValue<Double> helpFontSizePoints()
+   {
+      return dbl("help_font_size_points", 10.0);
+   }
+
+   /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
    public PrefValue<String> editorTheme()
@@ -911,7 +919,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> realTimeSpellchecking()
    {
-      return bool("real_time_spellchecking", false);
+      return bool("real_time_spellchecking", true);
    }
 
    /**
@@ -1675,6 +1683,8 @@ public class UserPrefsAccessor extends Prefs
          saveFilesBeforeBuild().setValue(layer, source.getBool("save_files_before_build"));
       if (source.hasKey("font_size_points"))
          fontSizePoints().setValue(layer, source.getDbl("font_size_points"));
+      if (source.hasKey("help_font_size_points"))
+         helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
       if (source.hasKey("default_encoding"))

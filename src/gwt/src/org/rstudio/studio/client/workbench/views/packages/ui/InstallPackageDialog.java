@@ -185,8 +185,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          
       // archive source panel
       packageArchiveFile_ = new TextBoxWithButton(
-                                              "Package archive:", 
+                                              "Package archive:",
+                                              "",
                                               "Browse...",
+                                              null,
+                                              true,
                                               browseForArchiveClickHandler_);
             
       // create check box here because manageUIState accesses it

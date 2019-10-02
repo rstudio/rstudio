@@ -150,6 +150,7 @@ namespace prefs {
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
 #define kFontSizePoints "font_size_points"
+#define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
@@ -737,6 +738,12 @@ public:
     */
    double fontSizePoints();
    core::Error setFontSizePoints(double val);
+
+   /**
+    * The help panel font size, in points.
+    */
+   double helpFontSizePoints();
+   core::Error setHelpFontSizePoints(double val);
 
    /**
     * The name of the color theme to apply to the text editor in RStudio.

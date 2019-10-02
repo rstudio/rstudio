@@ -138,6 +138,11 @@ public:
       return wwwVerifyUserAgent_;
    }
 
+   bool wwwDisableOriginCheck() const
+   {
+      return wwwDisableOriginCheck_;
+   }
+
    // auth
    bool authNone()
    {
@@ -192,6 +197,11 @@ public:
    std::string authRevocationListDir() const
    {
       return authRevocationListDir_;
+   }
+
+   bool authCookiesForceSecure() const
+   {
+      return authCookiesForceSecure_;
    }
 
    // rsession
@@ -298,6 +308,7 @@ private:
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
+   bool wwwDisableOriginCheck_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
@@ -309,6 +320,7 @@ private:
    std::string authPamHelperPath_;
    int authSignInThrottleSeconds_;
    std::string authRevocationListDir_;
+   bool authCookiesForceSecure_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

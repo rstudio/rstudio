@@ -32,11 +32,13 @@ namespace http {
 void setCSRFTokenCookie(const Request& request, 
       const boost::optional<boost::gregorian::days>& expiry,
       const std::string& token,
+      bool secure,
       core::http::Response* pResponse);
 
 void setCSRFTokenCookie(const Request& request,
       const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
       const std::string& token,
+      bool secure,
       core::http::Response* pResponse);
 
 // Validates an HTTP POST request by ensuring that the submitted fields include

@@ -55,16 +55,6 @@ void Options::initFromCommandLine(const QStringList& arguments)
       const QString &arg = arguments.at(i);
       if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
-      else if (arg == QString::fromUtf8(kSessionServerOption))
-      {
-         if ((i + 1) < arguments.size())
-            sessionServer_ = arguments.at(++i).toStdString();
-      }
-      else if (arg == QString::fromUtf8(kSessionServerUrlOption))
-      {
-         if ((i + 1) < arguments.size())
-            sessionUrl_ = arguments.at(++i).toStdString();
-      }
    }
 
    // synchronize zoom level with desktop frame

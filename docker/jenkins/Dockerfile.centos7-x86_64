@@ -86,7 +86,7 @@ RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin
 # install Qt SDK
 COPY dependencies/linux/install-qt-sdk /tmp/
 RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
+    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.5 && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
 

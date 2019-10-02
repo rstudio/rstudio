@@ -20,6 +20,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
+#include <r/RExec.hpp>
+
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
@@ -41,6 +43,11 @@ void AsyncRProcess::start(const char* rCommand,
                           std::vector<core::FilePath> rSourceFiles,
                           const std::string& input)
 {
+   // file paths to be used for IPC (if any) requested by child process
+   ipcRequests_  = module_context::tempFile("rstudio-ipc-requests-", "rds");
+   ipcResponse_  = module_context::tempFile("rstudio-ipc-response-", "rds");
+   sharedSecret_ = core::system::generateUuid();
+   
    // R binary
    core::FilePath rProgramPath;
    core::Error error = module_context::rScriptPath(&rProgramPath);
@@ -150,11 +157,19 @@ void AsyncRProcess::start(const char* rCommand,
    {
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
    }
+   
    // forward passed environment variables
    for (const core::system::Option& var : environment)
    {
       core::system::setenv(&childEnv, var.first, var.second);
    }
+   
+   // set environment variables used for IPC
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.absolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.absolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
+   
+   // update environment used for child process
    options.environment = childEnv;
 
    core::system::ProcessCallbacks cb;
@@ -220,7 +235,32 @@ void AsyncRProcess::onStderr(const std::string& output)
 
 bool AsyncRProcess::onContinue()
 {
-   return !terminationRequested_;
+   if (terminationRequested_)
+      return false;
+   
+   // check for request requiring a response
+   if (ipcRequests_.exists())
+   {
+      core::Error error = r::exec::RFunction(".rs.rstudioapi.processRequest")
+            .addParam(ipcRequests_.absolutePathNative())
+            .addParam(ipcResponse_.absolutePathNative())
+            .addParam(sharedSecret_)
+            .call();
+
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         // remove the requests file so we don't attempt to re-log
+         core::Error error = ipcRequests_.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         return false;
+      }
+   }
+   
+   return true;
 }
 
 bool AsyncRProcess::terminationRequested()
@@ -231,6 +271,8 @@ bool AsyncRProcess::terminationRequested()
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();
+   ipcRequests_.removeIfExists();
+   ipcResponse_.removeIfExists();
    onCompleted(exitStatus);
 }
 

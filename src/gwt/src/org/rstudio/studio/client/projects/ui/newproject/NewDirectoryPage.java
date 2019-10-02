@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -86,6 +87,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       txtProjectName_ = new TextBox();
       txtProjectName_.setWidth("100%");
       DomUtils.disableSpellcheck(txtProjectName_);
+      Roles.getTextboxRole().setAriaRequiredProperty(txtProjectName_.getElement(), true);
 
       // create the dir name label
       dirNameLabel_ = new FormLabel(getDirNameLabel(), txtProjectName_);

@@ -118,9 +118,6 @@ public:
 
    bool runDiagnostics() { return runDiagnostics_; }
 
-   std::string sessionServer() { return sessionServer_; }
-   std::string sessionUrl() { return sessionUrl_; }
-
    QString lastRemoteSessionUrl(const QString& serverUrl);
    void setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl);
 
@@ -143,8 +140,6 @@ private:
    mutable QString portNumber_;
    mutable std::string localPeer_;
    bool runDiagnostics_;
-   std::string sessionServer_;
-   std::string sessionUrl_;
 };
 
 } // namespace desktop

@@ -89,6 +89,7 @@
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
   info$version <- package_version(info$version)
+  info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })
 
@@ -731,9 +732,9 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("getThemeInfo", function() {
    
    # read theme preferences
-   global <- .rs.readUiPref("flat_theme")
+   global <- .rs.readUiPref("global_theme")
 
-   theme <- .rs.readUiPref("rstheme")
+   theme <- .rs.readUserState("theme")
    if (is.null(theme))
       theme <- list("name" = "Textmate (default)", "isDark" = FALSE)
 
