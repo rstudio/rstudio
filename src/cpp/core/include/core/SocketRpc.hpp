@@ -20,11 +20,11 @@
 #include <boost/function.hpp>
 #include <core/json/Json.hpp>
 
-#define kServerRpcSocketPath          "/tmp/rstudio-rserver/session-server-rpc.socket"
 #define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
 #define kRstudioRpcCookieHeader       "X-RS-Session-Server-RPC-Cookie"
 #define kRstudioRpcCookieEnvVar       "RS_SESSION_RPC_COOKIE"
+#define kServerRpcSocketPathEnvVar    "RS_SERVER_RPC_SOCKET_PATH"
 
 namespace rstudio {
 namespace core {
