@@ -222,7 +222,8 @@ void onConsoleInput(const std::string& input)
       "remove.packages",
       "utils::remove.packages",
       "install_github",
-      "devtools::install_github",
+      "devtools::install_",
+      "remotes::install_",
       "load_all",
       "devtools::load_all",
    };
