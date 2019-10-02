@@ -22,6 +22,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -46,6 +47,37 @@ namespace desktop {
 namespace {
 
 std::string s_launcherToken;
+
+class RLaunchObserver : public QThread
+{
+public:
+   RLaunchObserver(MainWindow *pMainWindow):
+       pMainWindow_(pMainWindow)
+   {}
+private:
+   MainWindow *pMainWindow_;
+   void run()
+   {
+      pMainWindow_->loadHtml(QString::fromUtf8("<h1>Loaded</h1>"));
+   }
+};
+
+core::WaitResult serverReady(const std::string& host, const std::string& port)
+{
+   core::http::Request request;
+   request.setMethod("GET");
+   request.setHost("host");
+   request.setUri("/");
+   request.setHeader("Accept", "*/*");
+   request.setHeader("Connection", "close");
+
+   core::http::Response response;
+   Error error = core::http::sendRequest(host, port, request, &response);
+   if (error)
+      return WaitResult(WaitContinue, Success());
+   else
+      return WaitResult(WaitSuccess, Success());
+}
 
 void launchProcess(const std::string& absPath,
                    const QStringList& argList,
@@ -196,7 +228,42 @@ Error SessionLauncher::launchFirstSession()
       pMainWindow_->show();
       desktop::activation().setMainWindow(pMainWindow_);
       pAppLaunch_->activateWindow();
-      pMainWindow_->loadUrl(url);
+
+      // TODO: Show a loading page. Wait for timeout in a thread.
+      /*
+      Error error = core::waitWithTimeout(
+               boost::bind(serverReady, host.toStdString(), port.toStdString()),
+               50,
+               25,
+               10);
+      if (error)
+      {
+         // If we time out, show an error page.
+      }
+      else
+      {
+          // If we don't time out, load the URL.
+         pMainWindow_->loadUrl(url);
+      }
+      */
+
+      // Read loading page from disk
+      /*
+      std::string contents;
+      Error error = core::readStringFromFile(
+                  options().resourcesPath().complete("html/load.html"), &contents);
+      if (error)
+      {
+          LOG_ERROR(error);
+      }
+      else
+      {
+         pMainWindow_->loadHtml(QString::fromStdString(contents));
+      }
+      */
+
+       pMainWindow_->loadUrl(url);
+      // pObserver->start();
    }
    qApp->setQuitOnLastWindowClosed(true);
    return Success();
@@ -228,15 +295,44 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
+      /*
       pMainWindow_->webView()->webPage()->runJavaScript(
                QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
+               */
 
+      std::map<std::string,std::string> vars;
       if (abendLogPath().exists())
       {
-         showMessageBox(QMessageBox::Critical,
-                        pMainWindow_,
-                        desktop::activation().editionName(),
-                        launchFailedErrorMessage(), QString());
+         vars["launch_failed"] = launchFailedErrorMessage().toStdString();
+      }
+      else
+      {
+         vars["launch_failed"] = "";
+      }
+
+      vars["process_output"] =
+              pRSessionProcess_->readAllStandardError().toStdString() +
+              pRSessionProcess_->readAllStandardOutput().toStdString();
+
+      std::string content;
+      Error error = core::readStringFromFile(
+                  options().resourcesPath().complete("html/error.html"), &content);
+      if (error)
+      {
+          LOG_ERROR(error);
+      }
+      else
+      {
+         // Replace variables and load HTML
+         text::TemplateFilter filter(vars);
+         std::istringstream is(content);
+         boost::iostreams::filtering_ostream filteringStream;
+         std::ostringstream bodyStream;
+         filteringStream.push(filter, 128);
+         filteringStream.push(bodyStream, 128);
+         boost::iostreams::copy(is, filteringStream, 128);
+
+         pMainWindow_->loadHtml(QString::fromStdString(bodyStream.str()));
       }
    }
 
@@ -286,27 +382,6 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       }
    }
 }
-
-namespace {
-
-core::WaitResult serverReady(const std::string& host, const std::string& port)
-{
-   core::http::Request request;
-   request.setMethod("GET");
-   request.setHost("host");
-   request.setUri("/");
-   request.setHeader("Accept", "*/*");
-   request.setHeader("Connection", "close");
-   
-   core::http::Response response;
-   Error error = core::http::sendRequest(host, port, request, &response);
-   if (error)
-      return WaitResult(WaitContinue, Success());
-   else
-      return WaitResult(WaitSuccess, Success());
-}
-
-} // end anonymous namespace
 
 Error SessionLauncher::launchNextSession(bool reload)
 {

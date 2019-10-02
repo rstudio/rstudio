@@ -553,6 +553,15 @@ if(RSTUDIO_BUNDLE_QT)
           
 endif(RSTUDIO_BUNDLE_QT)
 
+# install HTML templates
+file(
+   COPY ${CMAKE_CURRENT_SOURCE_DIR}/html
+   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
+
+install(
+   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/html
+   DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
 # install stylesheets
 if(NOT APPLE)
 

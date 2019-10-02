@@ -264,6 +264,11 @@ void MainWindow::loadUrl(const QUrl& url)
    webView()->load(url);
 }
 
+void MainWindow::loadHtml(const QString& html)
+{
+   webView()->setHtml(html);
+}
+
 QWebEngineProfile* MainWindow::getPageProfile()
 {
    return webView()->page()->profile();
