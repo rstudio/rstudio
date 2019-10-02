@@ -726,6 +726,16 @@ Error pathNotFoundError(const ErrorLocation& in_location);
 Error pathNotFoundError(const std::string& path, const ErrorLocation& in_location);
 /** @} */
 
+
+/**
+ * @brief Checks whether the error is either a file not found error or a path not found error.
+ *
+ * @param in_error      The error to check.
+ *
+ * @return True if the specified error is a file not found error or a path not found error.
+ */
+bool isNotFoundError(const Error& in_error);
+
 } // namespace core
 } // namespace rstudio
 

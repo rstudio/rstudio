@@ -1376,5 +1376,15 @@ Error pathNotFoundError(const std::string& in_path, const ErrorLocation& in_loca
    return error;
 }
 
+bool isNotFoundError(const Error& in_error)
+{
+#ifdef _WIN32
+   return in_error.getCode() == boost::system::windows_error::file_not_found ||
+          in_error.getCode() == boost::system::windows_error::path_not_found;
+#else
+   return in_error.getCode() == boost::system::errc::no_such_file_or_directory;
+#endif
+}
+
 } // namespace core
 } // namespace rstudio
