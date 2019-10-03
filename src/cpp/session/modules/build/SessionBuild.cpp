@@ -2201,11 +2201,15 @@ bool canBuildCpp()
 {
    if (s_canBuildCpp)
       return true;
-   
+
 #ifdef __APPLE__
+   // NOTE: on macOS, R normally requests user install and use its own
+   // LLVM toolchain; however, that toolchain still needs to re-use
+   // system headers provided by the default macOS toolchain, and so
+   // we still want to check for macOS command line tools here
    if (isMacOS() &&
        usingSystemMake() &&
-       !hasMacOSDeveloperTools())
+       !hasMacOSCommandLineTools())
    {
       return false;
    }
