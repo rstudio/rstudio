@@ -12,6 +12,24 @@
             body {
                 margin: 100px;
             }
+
+            .reload {
+                padding-top: 10px;
+                padding-bottom: 10px;
+                padding-left: 30px;
+                padding-right: 30px;
+                text-transform: uppercase;
+                font-family: Helvetica, sans-serif;
+                display: inline-block;
+                margin-left: auto;
+                margin-right: auto;
+                background-color: #2268BC;
+                color: white;
+                border: 0px;
+                border-radius: 3px;
+                font-size: 12pt;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body>
@@ -46,6 +64,11 @@
         </ul>
         <p>
             Please try cleaning up any code that runs when R starts, running R from a terminal with a project on a local disk, and adding an exclusion for RStudio to any security software that guards access to your machine's local network interface.
+        </p>
+        <p style="text-align: center; margin-top: 50px;">
+            <button onclick="javascript:location.reload();" class="reload">
+                Retry
+            </button>
         </p>
     </body>
 </html>
