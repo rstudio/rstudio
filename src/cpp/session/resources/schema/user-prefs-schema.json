@@ -931,6 +931,26 @@
             "type": "integer",
             "default": 50,
             "description": "The maximum number of columns to show at once in the data viewer."
+        },
+        "enable_screen_reader": {
+            "type": "boolean",
+            "default": false,
+            "description": "Support accessibility aids such as screen readers (RStudio Server)."
+        },
+        "typing_status_delay_ms": {
+            "type": "integer",
+            "default": 2000,
+            "description": "Number of milliseconds to wait after last keystroke before updating live region."
+        },
+        "aria_application_role": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to tell screen readers that the entire page is an application."
+        },
+        "reduced_motion": {
+            "type": "boolean",
+            "default": false,
+            "description": "Reduce use of animations in the user interface."
         }
     }
 }

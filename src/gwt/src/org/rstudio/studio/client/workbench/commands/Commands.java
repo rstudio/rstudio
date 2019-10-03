@@ -609,4 +609,8 @@ public abstract class
    public abstract AppCommand showProfileMenu();
    public abstract AppCommand showToolsMenu();
    public abstract AppCommand showHelpMenu();
+
+   // Accessibility
+   public abstract AppCommand toggleScreenReaderSupport();
+   public abstract AppCommand showAccessibilityOptions();
 }

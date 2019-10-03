@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.Operation;
@@ -538,9 +539,12 @@ public class AppearancePreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
+
+      if (relaunchRequired_)
+         restartRequirement.setUiReloadRequired(true);
 
       String themeName = flatTheme_.getValue();
       if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
@@ -563,7 +567,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             String fontFace = fontFace_.getValue();
             initialFontFace_ = fontFace;
             Desktop.getFrame().setFixedWidthFont(fontFace);
-            restartRequired = true;
+            restartRequirement.setUiReloadRequired(true);
          }
          
          if (!StringUtil.equals(initialZoomLevel_, zoomLevel_.getValue()))
@@ -574,7 +578,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       }
 
-      return restartRequired || relaunchRequired_;
+      return restartRequirement;
    }
 
    @Override

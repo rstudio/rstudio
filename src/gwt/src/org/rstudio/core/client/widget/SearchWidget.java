@@ -76,8 +76,6 @@ public class SearchWidget extends Composite implements SearchDisplay
          super(oracle, textBox, suggestDisplay);
       }
       
-    
-
       public HandlerRegistration addBlurHandler(BlurHandler handler)
       {
          return addDomHandler(handler, BlurEvent.getType());
@@ -375,12 +373,15 @@ public class SearchWidget extends Composite implements SearchDisplay
     * Report status using aria-live region, after a delay
     * @param message
     */
-   public void speakResult(String message)
+   public void speakResult(String message, int speakDelayMs)
    {
+      if (speakDelayMs <= 0)
+         return;
+
       resultsMessage_ = message;
       if (updateReaderTimer_.isRunning())
          updateReaderTimer_.cancel();
-      updateReaderTimer_.schedule(A11y.TypingStatusDelayMs);
+      updateReaderTimer_.schedule(speakDelayMs);
    }
 
    @UiField(provided=true)

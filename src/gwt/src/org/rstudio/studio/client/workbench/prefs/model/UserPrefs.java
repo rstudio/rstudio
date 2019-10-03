@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -24,8 +26,11 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
@@ -46,13 +51,14 @@ public class UserPrefs extends UserPrefsComputed
            extends CommandBinder<Commands, UserPrefs> {}
 
    @Inject
-   public UserPrefs(Session session, 
-                  EventBus eventBus,
-                  PrefsServerOperations server,
-                  SatelliteManager satelliteManager,
-                  Commands commands,
-                  Binder binder,
-                  GlobalDisplay display)
+   public UserPrefs(Session session,
+                    EventBus eventBus,
+                    PrefsServerOperations server,
+                    SatelliteManager satelliteManager,
+                    Commands commands,
+                    Binder binder,
+                    GlobalDisplay display,
+                    ApplicationQuit quit)
    {
       super(session.getSessionInfo(),
             (session.getSessionInfo() == null ? 
@@ -60,16 +66,19 @@ public class UserPrefs extends UserPrefsComputed
                session.getSessionInfo().getPrefs()));
 
       session_ = session;
+      eventBus_ = eventBus;
       server_ = server;
       satelliteManager_ = satelliteManager;
       display_ = display;
       commands_ = commands;
       reloadAfterInit_ = false;
+      quit_ = quit;
       
       binder.bind(commands_, this);
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+      Scheduler.get().scheduleDeferred(() -> loadScreenReaderEnabledSetting());
    }
    
    public void writeUserPrefs()
@@ -192,6 +201,80 @@ public class UserPrefs extends UserPrefsComputed
       server_.viewPreferences(new VoidServerRequestCallback());
    }
 
+   /**
+    * Screen-reader enabled setting is stored differently on desktop vs server.
+    * On desktop is must be available earlier in startup so the RStudio.app/exe native
+    * code can configure Chromium. Fetching that is async and we want interested parties
+    * to be able to check it synchronously. So we cache it. Changing this setting
+    * requires a reload of the UI to fully take effect.
+    */
+   private void loadScreenReaderEnabledSetting()
+   {
+      if (screenReaderEnabled_ != null)
+         return;
+
+      Command onCompleted = () -> commands_.toggleScreenReaderSupport().setChecked(screenReaderEnabled_);
+
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().getEnableAccessibility(enabled -> {
+            screenReaderEnabled_ = enabled;
+            onCompleted.execute();
+         });
+      else
+      {
+         screenReaderEnabled_ = RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().getValue();
+         onCompleted.execute();
+      }
+   }
+
+   public boolean getScreenReaderEnabled()
+   {
+      assert screenReaderEnabled_ != null: "Attempt to check screen reader flag before it was set";
+      return screenReaderEnabled_;
+   }
+
+   public void setScreenReaderEnabled(boolean enabled)
+   {
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().setEnableAccessibility(enabled);
+      else
+         RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().setGlobalValue(enabled);
+
+      screenReaderEnabled_ = enabled;
+   }
+
+   @Handler
+   void onToggleScreenReaderSupport()
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+            "Confirm Toggle Screen Reader Support",
+            "Are you sure you want to " + (getScreenReaderEnabled() ? "disable" : "enable") + " " +
+            "screen reader support? The application will reload to apply the change.",
+            false,
+            () -> {
+               setScreenReaderEnabled(!getScreenReaderEnabled());
+               writeUserPrefs(succeeded -> {
+                  if (succeeded)
+                  {
+                     if (Desktop.isDesktop())
+                        quit_.doRestart(session_);
+                     else
+                        eventBus_.fireEvent(new ReloadEvent());
+                  }
+                  else
+                  {
+                     display_.showErrorMessage("Error Changing Setting",
+                           "The screen reader support setting could not be changed.");
+                  }
+               });
+            },
+            () -> {
+               commands_.toggleScreenReaderSupport().setChecked(getScreenReaderEnabled());
+            },
+            false);
+
+   }
+
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
    public static final int LAYER_COMPUTED = 2;
@@ -203,5 +286,9 @@ public class UserPrefs extends UserPrefsComputed
    private final SatelliteManager satelliteManager_;
    private final GlobalDisplay display_;
    private final Commands commands_;
+   private final EventBus eventBus_;
+   private final ApplicationQuit quit_;
+
    private boolean reloadAfterInit_;
+   private Boolean screenReaderEnabled_ = null;
 }

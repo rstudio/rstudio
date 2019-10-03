@@ -497,6 +497,12 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
          <separator/>
+         <menu label="Acc_essibility">
+            <cmd refid="toggleScreenReaderSupport"/>
+            <separator/>
+            <cmd refid="showAccessibilityOptions"/>
+         </menu>
+         <separator/>
          <cmd refid="helpUsingRStudio"/>
          <cmd refid="rstudioCommunityForum"/>
          <cmd refid="rstudioSupport"/>
@@ -3474,4 +3480,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="View All Prefs"
         windowMode="main"
         rebindable="false"/>
+
+   <cmd id="toggleScreenReaderSupport"
+        menuLabel="Screen Reader Support"
+        checkable="true"
+        windowMode="main"
+        rebindable="false"/>
+
+   <cmd id="showAccessibilityOptions"
+        menuLabel="Accessibility Options..."
+        windowMode="main"/>
 </commands>
