@@ -1,7 +1,7 @@
 /*
  * ProjectSourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -133,11 +134,11 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectVcsOptions vcsOptions = options.getVcsOptions();
       setVcsOptions(vcsOptions);
-      return false;
+      return new RestartRequirement();
    }
    
    private void setVcsOptions(RProjectVcsOptions vcsOptions)

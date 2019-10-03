@@ -35,7 +35,13 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
@@ -193,14 +199,15 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       {
          // apply changes
          T prefs = createEmptyPrefs();
-         boolean restartRequired = false;
+         RestartRequirement restartRequirement = new RestartRequirement();
          for (PreferencesDialogPaneBase<T> pane : panes_)
-            if (pane.onApply(prefs))
-               restartRequired = true;
+         {
+            restartRequirement.mergeRequirements(pane.onApply(prefs));
+         }
 
          // perform save
          progressIndicator_.onProgress("Saving...");
-         doSaveChanges(prefs, onCompleted, progressIndicator_, restartRequired);
+         doSaveChanges(prefs, onCompleted, progressIndicator_, restartRequirement);
       }
    }
    
@@ -209,14 +216,24 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    protected abstract void doSaveChanges(T prefs,
                                          Operation onCompleted,
                                          ProgressIndicator progressIndicator,
-                                         boolean reload);
+                                         RestartRequirement restartRequirement);
 
    protected void reload()
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
    }
-   
-   
+
+   protected void restart(GlobalDisplay globalDisplay, ApplicationQuit quit, Session session)
+   {
+      globalDisplay.showYesNoMessage(
+            GlobalDisplay.MSG_QUESTION,
+            "Restart Required",
+            "You need to restart RStudio in order for these changes to take effect. " +
+                  "Do you want to do this now?",
+            () -> forceClosed(() -> quit.doRestart(session)),
+            true);
+   }
+
    void forceClosed(final Command onClosed)
    {
       attemptSaveChanges(new Operation() {

@@ -290,6 +290,10 @@ namespace prefs {
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
+#define kEnableScreenReader "enable_screen_reader"
+#define kTypingStatusDelayMs "typing_status_delay_ms"
+#define kAriaApplicationRole "aria_application_role"
+#define kReducedMotion "reduced_motion"
 
 class UserPrefValues: public Preferences
 {
@@ -1272,6 +1276,30 @@ public:
     */
    int dataViewerMaxColumns();
    core::Error setDataViewerMaxColumns(int val);
+
+   /**
+    * Support accessibility aids such as screen readers (RStudio Server).
+    */
+   bool enableScreenReader();
+   core::Error setEnableScreenReader(bool val);
+
+   /**
+    * Number of milliseconds to wait after last keystroke before updating live region.
+    */
+   int typingStatusDelayMs();
+   core::Error setTypingStatusDelayMs(int val);
+
+   /**
+    * Whether to tell screen readers that the entire page is an application.
+    */
+   bool ariaApplicationRole();
+   core::Error setAriaApplicationRole(bool val);
+
+   /**
+    * Reduce use of animations in the user interface.
+    */
+   bool reducedMotion();
+   core::Error setReducedMotion(bool val);
 
 };
 

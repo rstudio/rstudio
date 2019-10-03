@@ -148,7 +148,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ReloadWithLastChanceSaveEvent.TYPE, this);
       events.addHandler(QuitEvent.TYPE, this);
       events.addHandler(SuicideEvent.TYPE, this);
-      events.addHandler(SessionAbendWarningEvent.TYPE, this);    
+      events.addHandler(SessionAbendWarningEvent.TYPE, this);
       events.addHandler(SessionSerializationEvent.TYPE, this);
       events.addHandler(SessionRelaunchEvent.TYPE, this);
       events.addHandler(ServerUnavailableEvent.TYPE, this);
@@ -173,10 +173,8 @@ public class Application implements ApplicationEventHandlers
       Widget w = view_.getWidget();
       rootPanel.add(w);
 
-      // a11y landmarks, we are a role=application, but wrapping that in a role=main helps
-      // placate various automated accessibility checks
+      // wrapping in a role=main placates automated accessibility checks
       rootPanel.getElement().setAttribute("role", "main");
-      w.getElement().setAttribute("role", "application");
 
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
@@ -1004,7 +1002,14 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromODBC().remove();
          commands_.importDatasetFromMongo().remove();
       }
-   
+
+      if (userPrefs_.get().ariaApplicationRole().getValue())
+      {
+         // "application" role prioritizes application keyboard handling
+         // over screen-reader shortcuts
+         view_.getWidget().getElement().setAttribute("role", "application");
+      }
+
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done
       if (!Desktop.isDesktop() &&

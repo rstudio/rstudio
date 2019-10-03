@@ -1,7 +1,7 @@
 /*
  * SpellingPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -124,7 +125,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
       uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
                                        languageWidget_.getSelectedLanguage());

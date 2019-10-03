@@ -674,7 +674,8 @@ public class PaneManager
                                    final double end,
                                    final Command afterComplete)
    {
-      horizontalResizeAnimation(start, end, afterComplete).run(300);
+      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
+      horizontalResizeAnimation(start, end, afterComplete).run(duration);
    }
    
    private Animation horizontalResizeAnimation(final double start,

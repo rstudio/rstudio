@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -305,9 +306,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
 
       if (dirty_)
       {
@@ -348,7 +349,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          dirty_ = false;
       }
 
-      return restartRequired;
+      return restartRequirement;
    }
 
    @Override

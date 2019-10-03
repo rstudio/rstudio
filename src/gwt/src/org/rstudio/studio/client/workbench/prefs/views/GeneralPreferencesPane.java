@@ -21,6 +21,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -28,17 +29,12 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.studio.client.application.ApplicationQuit;
-import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.projects.Projects;
-import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -59,18 +55,13 @@ public class GeneralPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Session session,
                                  GlobalDisplay globalDisplay,
-                                 WorkbenchContext context,
-                                 EventBus events,
-                                 ApplicationQuit quit)
+                                 WorkbenchContext context)
    {
       fsContext_ = fsContext;
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       session_ = session;
-      globalDisplay_ = globalDisplay;
-      events_ = events;
-      quit_ = quit;
-      
+
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
       
@@ -301,14 +292,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             useGpuDriverBugWorkarounds_.setValue(!disable);
          });
          
-         enableAccessibility_ = new CheckBox("Enable DOM accessibility");
-         advanced.add(lessSpaced(enableAccessibility_));
-         Desktop.getFrame().getEnableAccessibility(enabled -> 
-         {
-            desktopAccessibility_ = enabled;
-            enableAccessibility_.setValue(enabled);
-         });
-         
          if (BrowseCap.isLinuxDesktop())
          {
             clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
@@ -442,21 +425,10 @@ public class GeneralPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs prefs)
+   public RestartRequirement onApply(UserPrefs prefs)
    {
-      boolean uiReloadRequired = super.onApply(prefs);
-      boolean restartRequired = false;
+      RestartRequirement restartRequirement = super.onApply(prefs);
 
-      if (enableAccessibility_ != null &&
-          desktopAccessibility_ != enableAccessibility_.getValue())
-      {
-         // set accessibility property if changed
-         restartRequired = true;
-         boolean desktopAccessibility = enableAccessibility_.getValue();
-         desktopAccessibility_ = desktopAccessibility;
-         Desktop.getFrame().setEnableAccessibility(desktopAccessibility);
-      }
-      
       {
          double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
          prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
@@ -466,7 +438,7 @@ public class GeneralPreferencesPane extends PreferencesPane
           desktopMonitoring_ != clipboardMonitoring_.getValue())
       {
          // set monitoring property if changed
-         restartRequired = true;
+         restartRequirement.setDesktopRestartRequired(true);
          boolean desktopMonitoring = clipboardMonitoring_.getValue();
          desktopMonitoring_ = desktopMonitoring;
          Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
@@ -476,7 +448,7 @@ public class GeneralPreferencesPane extends PreferencesPane
           !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
          // set desktop renderer when changed
-         restartRequired = true;
+         restartRequirement.setDesktopRestartRequired(true);
          String renderingEngine = renderingEngineWidget_.getValue();
          renderingEngine_ = renderingEngine;
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
@@ -485,7 +457,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (useGpuBlacklist_ != null &&
           desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue())
       {
-         restartRequired = true;
+         restartRequirement.setDesktopRestartRequired(true);
          boolean ignore = !useGpuBlacklist_.getValue();
          desktopIgnoreGpuBlacklist_ = ignore;
          Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
@@ -494,7 +466,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (useGpuDriverBugWorkarounds_ != null &&
           desktopDisableGpuDriverBugWorkarounds_ != !useGpuDriverBugWorkarounds_.getValue())
       {
-         restartRequired = true;
+         restartRequirement.setDesktopRestartRequired(true);
          boolean disable = !useGpuDriverBugWorkarounds_.getValue();
          desktopDisableGpuDriverBugWorkarounds_ = disable;
          Desktop.getFrame().setDisableGpuDriverBugWorkarounds(disable);
@@ -522,20 +494,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          prefs.defaultRVersion().setGlobalValue(rServerRVersion_.getRVersion());
       if (rememberRVersionForProjects_ != null && rememberRVersionForProjects_.isEnabled())
          prefs.restoreProjectRVersion().setGlobalValue(rememberRVersionForProjects_.getValue());
-      
-      if (restartRequired)
-      {
-         globalDisplay_.showYesNoMessage(
-               GlobalDisplay.MSG_QUESTION,
-               "Restart Required",
-               "You need to restart RStudio in order for these changes to take effect. " +
-               "Do you want to do this now?",
-               () -> forceClosed(() -> restart()),
-               true);
-         
-      }
 
-      return uiReloadRequired;
+      return restartRequirement;
    }
 
    @Override
@@ -559,34 +519,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       else
          return false;
    }
-   
-   private void restart()
-   {
-      quit_.prepareForQuit(
-            "Restarting RStudio",
-            new QuitContext()
-            {
-               @Override
-               public void onReadyToQuit(boolean saveChanges)
-               {
-                  String project = session_.getSessionInfo().getActiveProjectFile();
-                  if (project == null)
-                     project = Projects.NONE;
-                  
-                  final String finalProject = project;
-                  quit_.performQuit(null, saveChanges, () -> {
-                     events_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
-                  });
-               }
-            });
-   }
-   
+
    private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
    private static final String ENGINE_GLES        = "gles";
    private static final String ENGINE_SOFTWARE    = "software";
    
-   private boolean desktopAccessibility_ = false;
    private boolean desktopMonitoring_ = false;
    private boolean desktopIgnoreGpuBlacklist_ = false;
    private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
@@ -596,7 +534,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
-   private CheckBox enableAccessibility_ = null;
    private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox useGpuBlacklist_ = null;
@@ -616,8 +553,4 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox enableCrashReporting_;
    private final UserPrefs prefs_;
    private final Session session_;
-   private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
-   private final ApplicationQuit quit_;
-   
 }

@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -149,9 +150,9 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean requiresRestart = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
       
       prefs_.defaultSweaveEngine().setGlobalValue(
                                     defaultSweaveEngine_.getValue());
@@ -166,7 +167,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       prefs_.latexShellEscape().setGlobalValue(
             chkEnableShellEscape_.getValue());
          
-      return requiresRestart;
+      return restartRequirement;
    }
 
    private final UserPrefs prefs_;

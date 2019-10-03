@@ -7,6 +7,7 @@
   * Improved keyboard navigation
   * Compatibility with popular screen readers
   * Compliant contrast ratios and other accessibility improvements
+  * User preference for disabling user-interface animations such as when zooming panes
 
 ### Spell Check
 

@@ -41,6 +41,7 @@ public class XTermOptions extends JavaScriptObject
    public final native static XTermOptions create(
          String bellStyle,
          boolean cursorBlink,
+         boolean screenReaderMode,
          String rendererType,
          boolean windowsMode,
          XTermTheme theme,
@@ -49,6 +50,7 @@ public class XTermOptions extends JavaScriptObject
       return {
          "bellStyle": bellStyle,
          "cursorBlink": cursorBlink,
+         "screenReaderMode": screenReaderMode,
          "rendererType": rendererType,
          "windowsMode": windowsMode,
          "theme": theme,
