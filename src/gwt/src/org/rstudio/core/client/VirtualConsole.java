@@ -23,6 +23,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -33,6 +34,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -54,7 +56,29 @@ public class VirtualConsole
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
    }
-  
+
+   public static class PreferencesImpl extends UserPrefsSubset
+                                       implements Preferences
+   {
+      @Inject
+      public PreferencesImpl(Provider<UserPrefs> pUserPrefs)
+      {
+         super(pUserPrefs);
+      }
+
+      @Override
+      public int truncateLongLinesInConsoleHistory()
+      {
+         return getUserPrefs().consoleLineLengthLimit().getGlobalValue();
+      }
+
+      @Override
+      public String consoleAnsiMode()
+      {
+         return getUserPrefs().ansiConsoleMode().getValue();
+      }
+   }
+
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {

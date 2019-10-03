@@ -113,13 +113,22 @@ public class JobsListTests extends GWTTestCase
       {
       }
    }
-   
+
+   private static class FakeJobItemPrefs implements JobItem.Preferences
+   {
+      @Override
+      public boolean reducedMotion()
+      {
+         return false;
+      }
+   }
+
    private static class Factory implements JobItemFactory
    {
       @Override
       public JobItem create(Job job)
       {
-         return new JobItem(job, new FakeEventBus());
+         return new JobItem(job, new FakeEventBus(), new FakeJobItemPrefs());
       }
    }
    
