@@ -29,6 +29,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/r_util/RUserData.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -47,20 +48,6 @@ namespace desktop {
 namespace {
 
 std::string s_launcherToken;
-
-class RLaunchObserver : public QThread
-{
-public:
-   RLaunchObserver(MainWindow *pMainWindow):
-       pMainWindow_(pMainWindow)
-   {}
-private:
-   MainWindow *pMainWindow_;
-   void run()
-   {
-      pMainWindow_->loadHtml(QString::fromUtf8("<h1>Loaded</h1>"));
-   }
-};
 
 core::WaitResult serverReady(const std::string& host, const std::string& port)
 {
@@ -295,10 +282,16 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
-      /*
-      pMainWindow_->webView()->webPage()->runJavaScript(
-               QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
-               */
+      try
+      {
+         pMainWindow_->webView()->webPage()->runJavaScript(
+                  QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
+      }
+      catch (...)
+      {
+         // The above can throw if the window has no desktop hooks; this is normal
+         // if we haven't loaded the initial session.
+      }
 
       std::map<std::string,std::string> vars;
       if (abendLogPath().exists())
@@ -307,12 +300,20 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       }
       else
       {
-         vars["launch_failed"] = "";
+         vars["launch_failed"] = "None";
       }
 
-      vars["process_output"] =
-              pRSessionProcess_->readAllStandardError().toStdString() +
-              pRSessionProcess_->readAllStandardOutput().toStdString();
+      vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
+
+      std::string stdout = pRSessionProcess_->readAllStandardOutput().toStdString();
+      if (stdout.empty())
+          stdout = "None";
+      vars["process_output"] = stdout;
+
+      std::string stderr = pRSessionProcess_->readAllStandardError().toStdString();
+      if (stderr.empty())
+          stderr = "None";
+      vars["process_error"] = stderr;
 
       std::string content;
       Error error = core::readStringFromFile(
