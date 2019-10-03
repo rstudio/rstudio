@@ -55,7 +55,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       Label displayLabel = headerLabel("Other");
       add(displayLabel);
       displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
-      add(checkboxPref("Reduce motion", prefs.reducedMotion()));
+      add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
    }
 
    @Override
