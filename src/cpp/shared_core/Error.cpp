@@ -291,14 +291,14 @@ std::string Error::asString() const
    auto& props = getProperties();
    if (!props.empty())
    {
-      ostr << " (";
+      ostr << " [";
       for (size_t i = 0; i < props.size(); i++)
       {
          ostr << props[i].first << ": " << props[i].second;
          if (i < props.size() - 1)
             ostr << ", ";
       }
-      ostr << ") at " << getLocation().asString();
+      ostr << "] at " << getLocation().asString();
    }
    return ostr.str();
 }
