@@ -128,6 +128,9 @@ MainWindow::MainWindow(QUrl url,
    connect(webView(), &WebView::urlChanged,
            this, &MainWindow::onUrlChanged);
 
+   connect(webView(), &WebView::loadFinished,
+           this, &MainWindow::onLoadFinished);
+
    connect(webPage(), &QWebEnginePage::loadFinished,
            &menuCallback_, &MenuCallback::cleanUpActions);
 
@@ -512,6 +515,17 @@ void MainWindow::onActivated()
 void MainWindow::onUrlChanged(QUrl url)
 {
    urlChanged(url);
+}
+
+void MainWindow::onLoadFinished(bool ok)
+{
+   if (ok)
+      return;
+
+   std::string content;
+   Error error = core::readStringFromFile(
+               options().resourcesPath().complete("html/connect.html"), &content);
+   loadHtml(QString::fromStdString(content));
 }
 
 WebView* MainWindow::getWebView()
