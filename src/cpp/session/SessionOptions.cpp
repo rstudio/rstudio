@@ -98,8 +98,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // detect running in OSX bundle and tweak resource path
 #ifdef __APPLE__
-   if (resourcePath_.complete("Info.plist").exists())
-      resourcePath_ = resourcePath_.complete("Resources");
+   if (resourcePath_.completePath("Info.plist").exists())
+      resourcePath_ = resourcePath_.completePath("Resources");
 #endif
 
    // detect running in x86 directory and tweak resource path
@@ -816,8 +816,8 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    // when the default postback path has been passed
    if (*pPath == kDefaultPostbackPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
-      *pPath = path.absolutePath();
+      FilePath path = resourcePath.getParent().completePath("MacOS/postback/rpostback");
+      *pPath = path.getAbsolutePath();
    }
    else
    {
@@ -830,8 +830,8 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.parent().complete("MacOS/pandoc");
-      *pPath = path.absolutePath();
+      FilePath path = resourcePath.getParent().completePath("MacOS/pandoc");
+      *pPath = path.getAbsolutePath();
    }
    else
    {
@@ -844,8 +844,8 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultRsclangPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.parent().complete("MacOS/rsclang");
-      *pPath = path.absolutePath();
+      FilePath path = resourcePath.getParent().completePath("MacOS/rsclang");
+      *pPath = path.getAbsolutePath();
    }
    else
    {

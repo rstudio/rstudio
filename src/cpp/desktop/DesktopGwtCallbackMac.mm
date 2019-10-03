@@ -351,9 +351,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
    {
       std::string filename;
       if (hasDefaultExtension)
-         filename = filePath.stem();
+         filename = filePath.getStem();
       else
-         filename = filePath.filename();
+         filename = filePath.getFilename();
       [panel setNameFieldStringValue:
                   [NSString stringWithUTF8String: filename.c_str()]];
 

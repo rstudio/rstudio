@@ -826,8 +826,8 @@ Error processSourceTemplate(const std::string& name,
 
 #ifdef __APPLE__
          // Special case: built-in templates can have an OSX variant; prefer that if it exists
-         FilePath osxTemplatePath = templatePath.parent().complete(
-               templatePath.stem() + "_osx" + templatePath.extension());
+         FilePath osxTemplatePath = templatePath.getParent().completePath(
+               templatePath.getStem() + "_osx" + templatePath.getExtension());
          if (osxTemplatePath.exists())
             templatePath = osxTemplatePath;
 #endif

@@ -87,7 +87,7 @@ class FileEventContext : boost::noncopyable
 public:
    FileEventContext(const FilePath& rootPath)
       : rootPath(rootPath),
-        rootHandle(rootPath.absolutePathNative()),
+        rootHandle(rootPath.getAbsolutePathNative()),
         streamRef(nullptr),
         recursive(false)
    {
@@ -140,7 +140,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    if (!pContext->rootPath.isEquivalentTo(pContext->rootHandle.currentPath()))
    {
       // propagate error to client
-      Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+      Error error = fileNotFoundError(pContext->rootPath.getAbsolutePath(),
                                       ERROR_LOCATION);
       pContext->callbacks.onMonitoringError(error);
 
@@ -160,7 +160,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
 
       // if we aren't in recursive mode then ignore this if it isn't for
       // the root directory
-      if (!pContext->recursive && (path != pContext->rootPath.absolutePath()))
+      if (!pContext->recursive && (path != pContext->rootPath.getAbsolutePath()))
          continue;
 
       // get FileInfo for this directory
@@ -181,7 +181,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              &(pContext->fileTree),
                                              pContext->callbacks.onFilesChanged);
          if (error &&
-            (error.code() != boost::system::errc::no_such_file_or_directory))
+            (error.getCode() != boost::system::errc::no_such_file_or_directory))
          {
             LOG_ERROR(error);
          }
@@ -235,7 +235,7 @@ Handle registerMonitor(const FilePath& filePath,
    // allocate file path
    CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
-                                       filePath.absolutePath().c_str(),
+                                       filePath.getAbsolutePath().c_str(),
                                        kCFStringEncodingUTF8);
    if (filePathRef == nullptr)
    {

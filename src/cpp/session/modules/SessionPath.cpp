@@ -49,7 +49,7 @@ Error readPathsFromFile(const FilePath& filePath,
    Error error = core::readStringVectorFromFile(filePath, &paths);
    if (error)
    {
-      error.addProperty("path-source", filePath.absolutePath());
+      error.addProperty("path-source", filePath.getAbsolutePath());
       return error;
    }
 
@@ -103,7 +103,7 @@ Error initialize()
    {
       // enumerate the children
       std::vector<FilePath> pathsDChildren;
-      Error error = pathsD.children(&pathsDChildren);
+      Error error = pathsD.getChildren(pathsDChildren);
       if (error)
          LOG_ERROR(error);
 
@@ -127,15 +127,15 @@ Error initialize()
    // doesn't get this written into /etc/paths.d)
    FilePath libraryTexbinPath("/Library/TeX/texbin");
    if (libraryTexbinPath.exists())
-      addToPathIfNecessary(libraryTexbinPath.absolutePath(), &parts);
+      addToPathIfNecessary(libraryTexbinPath.getAbsolutePath(), &parts);
    FilePath texbinPath("/usr/texbin");
    if (texbinPath.exists())
-      addToPathIfNecessary(texbinPath.absolutePath(), &parts);
+      addToPathIfNecessary(texbinPath.getAbsolutePath(), &parts);
 
    // add /opt/local/bin if necessary
    FilePath optLocalBinPath("/opt/local/bin");
    if (optLocalBinPath.exists())
-      addToPathIfNecessary(optLocalBinPath.absolutePath(), &parts);
+      addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &parts);
 
    // set the path
    core::system::setenv("PATH", core::algorithm::join(parts, ":"));

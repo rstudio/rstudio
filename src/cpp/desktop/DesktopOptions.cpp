@@ -423,8 +423,8 @@ FilePath Options::supportingFilePath() const
 
       // adapt for OSX resource bundles
 #ifdef __APPLE__
-         if (supportingFilePath_.complete("Info.plist").exists())
-            supportingFilePath_ = supportingFilePath_.complete("Resources");
+         if (supportingFilePath_.completePath("Info.plist").exists())
+            supportingFilePath_ = supportingFilePath_.completePath("Resources");
 #endif
    }
    return supportingFilePath_;
@@ -456,7 +456,7 @@ FilePath Options::wwwDocsPath() const
       wwwDocsPath = supportingFilePath.completePath("../gwt/www/docs");
 #ifdef __APPLE__
    if (!wwwDocsPath.exists())
-      wwwDocsPath = supportingFilePath.complete("../../../../../gwt/www/docs");
+      wwwDocsPath = supportingFilePath.completePath("../../../../../gwt/www/docs");
 #endif
    return wwwDocsPath;
 }

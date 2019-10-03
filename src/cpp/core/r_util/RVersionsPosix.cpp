@@ -234,27 +234,27 @@ std::vector<RVersion> enumerateRVersions(
    // scan the R frameworks directory
    FilePath rFrameworkVersions(kRFrameworkVersions);
    std::vector<FilePath> versionPaths;
-   Error error = rFrameworkVersions.children(&versionPaths);
+   Error error = rFrameworkVersions.getChildren(versionPaths);
    if (error)
       LOG_ERROR(error);
    for (const FilePath& versionPath : versionPaths)
    {
-      if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
+      if (!versionPath.isHidden() && (versionPath.getFilename() != "Current"))
       {
          using namespace rstudio::core::system;
          core::system::Options env;
-         FilePath rHomePath = versionPath.childPath("Resources");
-         FilePath rLibPath = rHomePath.childPath("lib");
-         core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+         FilePath rHomePath = versionPath.completeChildPath("Resources");
+         FilePath rLibPath = rHomePath.completeChildPath("lib");
+         core::system::setenv(&env, "R_HOME", rHomePath.getAbsolutePath());
          core::system::setenv(&env,
                               "R_SHARE_DIR",
-                              rHomePath.childPath("share").absolutePath());
+                              rHomePath.completeChildPath("share").getAbsolutePath());
          core::system::setenv(&env,
                               "R_INCLUDE_DIR",
-                               rHomePath.childPath("include").absolutePath());
+                               rHomePath.completeChildPath("include").getAbsolutePath());
          core::system::setenv(&env,
                               "R_DOC_DIR",
-                               rHomePath.childPath("doc").absolutePath());
+                               rHomePath.completeChildPath("doc").getAbsolutePath());
          core::system::setenv(&env,
                               "DYLD_FALLBACK_LIBRARY_PATH",
                               r_util::rLibraryPath(rHomePath,
@@ -263,12 +263,12 @@ std::vector<RVersion> enumerateRVersions(
                                                    ldLibraryPath));
          core::system::setenv(&env, "R_ARCH", "/x86_64");
 
-         RVersion version(versionPath.filename(), env);
+         RVersion version(versionPath.getFilename(), env);
 
          // improve on the version by asking R for it's version
-         FilePath rBinaryPath = rHomePath.childPath("bin/exec/R");
+         FilePath rBinaryPath = rHomePath.completeChildPath("bin/exec/R");
          if (!rBinaryPath.exists())
-            rBinaryPath = rHomePath.childPath("bin/exec/x86_64/R");
+            rBinaryPath = rHomePath.completeChildPath("bin/exec/x86_64/R");
          if (rBinaryPath.exists())
          {
             std::string versionNumber = version.number();

@@ -1182,9 +1182,9 @@ void GwtCallback::openTerminal(QString terminalPath,
    // passed terminalPath because this setting isn't respected
    // on the Mac (we always use Terminal.app)
    FilePath macTermScriptFilePath =
-      desktop::options().scriptsPath().complete("mac-terminal");
+      desktop::options().scriptsPath().completePath("mac-terminal");
    QString macTermScriptPath = QString::fromUtf8(
-         macTermScriptFilePath.absolutePath().c_str());
+         macTermScriptFilePath.getAbsolutePath().c_str());
    QStringList args;
    args.append(desktop::resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);

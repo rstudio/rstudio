@@ -462,7 +462,7 @@ protected:
       for (const FilePath& filePath : filePaths)
       {
          if (filePath.isWithin(root_))
-            *pArgs << filePath.relativePath(root_);
+            *pArgs << filePath.getRelativePath(root_);
          else
             *pArgs << filePath;
       }

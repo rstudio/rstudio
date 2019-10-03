@@ -162,10 +162,10 @@ ProgramStatus Options::read(int argc,
 
    // detect running in OSX bundle and tweak paths
 #ifdef __APPLE__
-   if (installPath_.complete("Info.plist").exists())
+   if (installPath_.completePath("Info.plist").exists())
    {
-      resourcePath = installPath_.complete("Resources");
-      binaryPath = installPath_.complete("MacOS");
+      resourcePath = installPath_.completePath("Resources");
+      binaryPath = installPath_.completePath("MacOS");
    }
 #endif
 

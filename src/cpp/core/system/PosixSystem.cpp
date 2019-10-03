@@ -1061,7 +1061,7 @@ std::vector<SubprocInfo> getSubprocessesMac(PidType pid)
          if (!path.empty())
          {
             core::FilePath exePath(path);
-            info.exe = exePath.filename();
+            info.exe = exePath.getFilename();
          }
          subprocs.push_back(info);
       }
@@ -2406,7 +2406,7 @@ Error terminateChildProcesses(pid_t pid,
          // suppress that particular error to prevent bogus error states.
          Error error = systemError(errno, ERROR_LOCATION);
 #ifdef __APPLE__
-         if (error.code() != boost::system::errc::no_such_process)
+         if (error.getCode() != boost::system::errc::no_such_process)
 #endif
             LOG_ERROR(error);
       }
@@ -2627,13 +2627,13 @@ Error temporarilyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   user::User user;
-   Error error = userFromUsername(newUsername, &user);
+   User user;
+   Error error = User::createUser(newUsername, user);
    if (error)
       return error;
 
    // init supplemental group list
-   if (::initgroups(user.username.c_str(), user.getGroupId()) < 0)
+   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
@@ -2684,13 +2684,13 @@ Error permanentlyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // get user info
-   user::User user;
-   Error error = userFromUsername(newUsername, &user);
+   User user;
+   Error error = User::createUser(newUsername, user);
    if (error)
       return error;
 
    // supplemental group list
-   if (::initgroups(user.username.c_str(), user.getGroupId()) < 0)
+   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group

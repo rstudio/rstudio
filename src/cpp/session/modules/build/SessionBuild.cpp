@@ -2182,7 +2182,7 @@ namespace {
 
 bool usingSystemMake()
 {
-   return findProgram("make").absolutePath() == "/usr/bin/make";
+   return findProgram("make").getAbsolutePath() == "/usr/bin/make";
 }
 
 } // anonymous namespace

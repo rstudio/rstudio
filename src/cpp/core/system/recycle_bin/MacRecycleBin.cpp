@@ -50,7 +50,7 @@ Error errorForStatus(OSStatus status,
 Error sendTo(const FilePath& filePath)
 {
    FSRef ref;
-   std::string sysPath = string_utils::utf8ToSystem(filePath.absolutePath());
+   std::string sysPath = string_utils::utf8ToSystem(filePath.getAbsolutePath());
    OSStatus status = ::FSPathMakeRefWithOptions(
                                         (const UInt8*)sysPath.c_str(),
                                         kFSPathMakeRefDoNotFollowLeafSymlink,

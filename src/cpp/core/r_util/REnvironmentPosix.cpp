@@ -120,23 +120,23 @@ bool getLibPathFromRHome(const FilePath& rHomePath,
                          std::string* pErrMsg)
 {
    // get R lib path (probe subdiretories if necessary)
-   FilePath libPath = rHomePath.complete("lib");
+   FilePath libPath = rHomePath.completePath("lib");
 
    // check for dylib in lib and lib/x86_64
-   if (libPath.complete(kLibRFileName).exists())
+   if (libPath.completePath(kLibRFileName).exists())
    {
-      *pRLibPath = libPath.absolutePath();
+      *pRLibPath = libPath.getAbsolutePath();
       return true;
    }
-   else if (libPath.complete("x86_64/" kLibRFileName).exists())
+   else if (libPath.completePath("x86_64/" kLibRFileName).exists())
    {
-      *pRLibPath = libPath.complete("x86_64").absolutePath();
+      *pRLibPath = libPath.completePath("x86_64").getAbsolutePath();
       return true;
    }
    else
    {
       *pErrMsg = "Unable to find " kLibRFileName " in expected locations"
-                 "within R Home directory " + rHomePath.absolutePath();
+                 "within R Home directory " + rHomePath.getAbsolutePath();
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -160,7 +160,7 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    }
    else
    {
-      *pErrMsg = "Unable to find R_HOME_DIR in " + rScriptPath.absolutePath();
+      *pErrMsg = "Unable to find R_HOME_DIR in " + rScriptPath.getAbsolutePath();
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -182,10 +182,10 @@ bool detectRLocationsUsingFramework(FilePath* pHomePath,
 
    // other paths
    config_utils::Variables& scriptVars = *pScriptVars;
-   scriptVars["R_HOME"] = pHomePath->absolutePath();
-   scriptVars["R_SHARE_DIR"] = pHomePath->complete("share").absolutePath();
-   scriptVars["R_INCLUDE_DIR"] = pHomePath->complete("include").absolutePath();
-   scriptVars["R_DOC_DIR"] = pHomePath->complete("doc").absolutePath();
+   scriptVars["R_HOME"] = pHomePath->getAbsolutePath();
+   scriptVars["R_SHARE_DIR"] = pHomePath->completePath("share").getAbsolutePath();
+   scriptVars["R_INCLUDE_DIR"] = pHomePath->completePath("include").getAbsolutePath();
+   scriptVars["R_DOC_DIR"] = pHomePath->completePath("doc").getAbsolutePath();
 
    return true;
 }
@@ -681,7 +681,7 @@ bool detectREnvironment(const FilePath& whichRScript,
 #ifdef __APPLE__
    // if it starts with the standard prefix and an etc/x86_64 directory
    // exists then we set the R_ARCH
-   if (boost::algorithm::starts_with(rHomePath.absolutePath(),
+   if (boost::algorithm::starts_with(rHomePath.getAbsolutePath(),
                                      "/Library/Frameworks/R.framework/") &&
        FilePath("/Library/Frameworks/R.framework/Resources/etc/x86_64")
                                                                    .exists())

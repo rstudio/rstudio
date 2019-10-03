@@ -22,6 +22,7 @@
 #define SHARED_CORE_USER_HPP
 
 #include <string>
+#include <unistd.h>
 
 #include <shared_core/PImpl.hpp>
 

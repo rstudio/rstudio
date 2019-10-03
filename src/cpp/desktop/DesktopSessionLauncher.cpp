@@ -61,13 +61,13 @@ void launchProcess(const std::string& absPath,
    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
    // launch 
    FilePath rHome = FilePath(core::system::getenv("R_HOME"));
-   FilePath rLib = rHome.childPath("lib/libR.dylib");
+   FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
    if (rLib.exists())
    {
       QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
-               QString::fromStdString(rLib.absolutePathNative()));
+               QString::fromStdString(rLib.getAbsolutePathNative()));
       process->setProcessEnvironment(environment);
    }
 #endif

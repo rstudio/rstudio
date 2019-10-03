@@ -51,14 +51,14 @@ bool prepareEnvironment(Options& options)
       rWhichRPath = FilePath(whichROverride);
 
 #ifdef Q_OS_MAC
-   FilePath rLdScriptPath = options.scriptsPath().complete("session/r-ldpath");
+   FilePath rLdScriptPath = options.scriptsPath().completePath("session/r-ldpath");
    if (!rLdScriptPath.exists())
    {
       FilePath executablePath;
       Error error = core::system::executablePath(nullptr, &executablePath);
       if (error)
          LOG_ERROR(error);
-      rLdScriptPath = executablePath.parent().complete("r-ldpath");
+      rLdScriptPath = executablePath.getParent().completePath("r-ldpath");
    }
 #else
    // determine rLdPaths script location

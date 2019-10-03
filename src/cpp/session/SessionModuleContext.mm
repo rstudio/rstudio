@@ -78,7 +78,7 @@ Error copyImageToCocoaPasteboard(const FilePath& imagePath)
    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
    NSString* path = [NSString stringWithUTF8String:
-                     imagePath.absolutePath().c_str()];
+                     imagePath.getAbsolutePath().c_str()];
    
    NSImage* image = [[NSImage alloc] initWithContentsOfFile: path];
    

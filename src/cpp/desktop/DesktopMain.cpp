@@ -165,7 +165,7 @@ void initializeWorkingDirectory(int argc,
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
-            workingDir = currentPath.absolutePath();
+            workingDir = currentPath.getAbsolutePath();
       }
       else
       {
@@ -798,10 +798,10 @@ int main(int argc, char* argv[])
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
-         if (installPath.complete("Info.plist").exists())
+         if (installPath.completePath("Info.plist").exists())
          {
-            sessionPath = installPath.complete("MacOS/rsession");
-            scriptsPath = installPath.complete("MacOS");
+            sessionPath = installPath.completePath("MacOS/rsession");
+            scriptsPath = installPath.completePath("MacOS");
          }
 #endif
       }

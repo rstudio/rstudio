@@ -172,7 +172,7 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDirMac(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
