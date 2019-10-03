@@ -2021,7 +2021,7 @@ SEXP rs_installBuildTools()
 {
    if (module_context::isMacOS())
    {
-      if (!module_context::hasMacOSDeveloperTools())
+      if (!module_context::hasMacOSCommandLineTools())
       {
          core::system::ProcessResult result;
          Error error = core::system::runCommand(
