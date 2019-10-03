@@ -1,7 +1,7 @@
 /*
  * WorkbenchScreen.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
@@ -382,7 +383,12 @@ public class WorkbenchScreen extends Composite
       optionsLoader_.showOptions();
    }
    
-     
+   @Handler
+   void onShowAccessibilityOptions()
+   {
+      optionsLoader_.showOptions(AccessibilityPreferencesPane.class);
+   }
+
    @Handler
    void onVersionControlHelp()
    {
@@ -406,7 +412,4 @@ public class WorkbenchScreen extends Composite
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;
-
-  
-
 }

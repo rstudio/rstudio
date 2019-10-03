@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
@@ -183,7 +184,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectPackratOptions packratOptions = options.getPackratOptions();
       packratOptions.setUsePackrat(chkUsePackrat_.getValue());
@@ -197,7 +198,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setLocalRepos(
             JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
             
-      return false;
+      return new RestartRequirement();
    }
    
    

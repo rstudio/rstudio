@@ -42,6 +42,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
+import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.a11y.A11y;
@@ -54,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
@@ -213,9 +215,11 @@ public class GitReviewPanel extends ResizeComposite implements Display
                          LineTableView diffPane,
                          final Commands commands,
                          FileTypeRegistry fileTypeRegistry,
-                         CheckoutBranchToolbarButton branchToolbarButton)
+                         CheckoutBranchToolbarButton branchToolbarButton,
+                         Provider<UserPrefs> pPrefs)
    {
       fileTypeRegistry_ = fileTypeRegistry;
+      pPrefs_ = pPrefs;
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
 
@@ -692,7 +696,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       // Debounce an update to the accessible character count
       if (updateCharCountTimer_.isRunning())
          updateCharCountTimer_.cancel();
-      updateCharCountTimer_.schedule(A11y.TypingStatusDelayMs);
+      if (pPrefs_.get().typingStatusDelayMs().getValue() > 0)
+         updateCharCountTimer_.schedule(pPrefs_.get().typingStatusDelayMs().getValue());
    }
 
    @UiField(provided = true)
@@ -748,6 +753,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private ToolbarButton unstageAllButton_;
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
+   private final Provider<UserPrefs> pPrefs_;
    private LeftRightToggleButton switchViewButton_;
 
    private SizeWarningWidget overrideSizeWarning_;

@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
@@ -259,13 +260,16 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean reload = super.onApply(rPrefs);
-      
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
+
+      if (reloadRequired_)
+         restartRequirement.setUiReloadRequired(true);
+
       userPrefs_.publishCaBundle().setGlobalValue(caBundlePath_.getText());
 
-      return reload || reloadRequired_;
+      return restartRequirement;
    }
 
    

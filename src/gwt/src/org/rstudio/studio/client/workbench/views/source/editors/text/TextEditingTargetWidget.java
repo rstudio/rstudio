@@ -88,7 +88,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -104,8 +103,7 @@ public class TextEditingTargetWidget
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
-                                  Session session,
-                                  SourceServerOperations server)
+                                  Session session)
    {
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -258,8 +256,8 @@ public class TextEditingTargetWidget
       compareTestButton_ = new ToolbarButton(
             "Compare Results", 
             ToolbarButton.NoTitle,
-            commands_.shinyCompareTest().getImageResource(), 
-            new ClickHandler() 
+            commands_.shinyCompareTest().getImageResource(),
+            new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)
@@ -275,8 +273,8 @@ public class TextEditingTargetWidget
       testThatButton_ = new ToolbarButton(
             "Run Tests", 
             ToolbarButton.NoTitle,
-            commands_.testTestthatFile().getImageResource(), 
-            new ClickHandler() 
+            commands_.testTestthatFile().getImageResource(),
+            new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)
@@ -292,8 +290,8 @@ public class TextEditingTargetWidget
       testShinyButton_ = new ToolbarButton(
             "Run Tests", 
             ToolbarButton.NoTitle,
-            commands_.testShinytestFile().getImageResource(), 
-            new ClickHandler() 
+            commands_.testShinytestFile().getImageResource(),
+            new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)
@@ -418,8 +416,8 @@ public class TextEditingTargetWidget
       sourceButton_ = new ToolbarButton(
             "Source", 
             SOURCE_BUTTON_TITLE,
-            commands_.sourceActiveDocument().getImageResource(), 
-            new ClickHandler() 
+            commands_.sourceActiveDocument().getImageResource(),
+            new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent event)
@@ -559,7 +557,8 @@ public class TextEditingTargetWidget
                   toggleDocOutlineButton_.setTitle(title);
                   
                   toggleDocOutlineButton_.setLatched(destination != 0);
-                  
+
+                  int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
                   new Animation()
                   {
                      @Override
@@ -571,14 +570,15 @@ public class TextEditingTargetWidget
                         editorPanel_.setWidgetSize(docOutlineWidget_, size);
                         editor_.onResize();
                      }
-                     
+
                      @Override
                      protected void onComplete()
                      {
-                        if (destination == 0) editorPanel_.setWidgetSize(docOutlineWidget_, 0);
+                        editorPanel_.setWidgetSize(docOutlineWidget_, destination);
                         target_.setPreferredOutlineWidgetVisibility(destination != 0);
+                        editor_.onResize();
                      }
-                  }.run(500);
+                  }.run(duration);
                }
             });
       
@@ -1016,7 +1016,7 @@ public class TextEditingTargetWidget
          @Override
          public void execute()
          {
-            manageToolbarSizes(); 
+            manageToolbarSizes();
          }
       });
    }

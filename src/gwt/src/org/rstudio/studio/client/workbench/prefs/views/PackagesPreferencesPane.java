@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -40,7 +41,6 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
@@ -52,7 +52,6 @@ import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PackagesPreferencesPane extends PreferencesPane
 {
@@ -377,10 +376,12 @@ public class PackagesPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs prefs)
+   public RestartRequirement onApply(UserPrefs prefs)
    {
-      boolean reload = super.onApply(prefs);
-      UserState state = RStudioGinjector.INSTANCE.getUserState();
+      RestartRequirement restartRequirement = super.onApply(prefs);
+
+      if (reloadRequired_)
+         restartRequirement.setUiReloadRequired(true);
 
       String mirrorTextValue = cranMirrorTextBox_.getTextBox().getText();
 
@@ -412,7 +413,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
       prefs.cranMirror().setGlobalValue(cranMirror_);
       
-      return reload || reloadRequired_;
+      return restartRequirement;
    }
 
    private final PreferencesDialogResources res_;
