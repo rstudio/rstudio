@@ -21,7 +21,7 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
-#include <core/FileSerializer.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
@@ -522,10 +522,15 @@ void MainWindow::onLoadFinished(bool ok)
    if (ok)
       return;
 
-   std::string content;
-   Error error = core::readStringFromFile(
-               options().resourcesPath().complete("html/connect.html"), &content);
-   loadHtml(QString::fromStdString(content));
+   std::map<std::string,std::string> vars;
+   vars["url"] = webView()->url().url().toStdString();
+   std::ostringstream oss;
+   Error error = text::renderTemplate(options().resourcesPath().complete("html/connect.html"),
+                                      vars, oss);
+   if (error)
+       LOG_ERROR(error);
+   else
+      loadHtml(QString::fromStdString(oss.str()));
 }
 
 WebView* MainWindow::getWebView()

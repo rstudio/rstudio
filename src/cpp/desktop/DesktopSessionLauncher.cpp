@@ -311,6 +311,7 @@ void SessionLauncher::showLaunchErrorPage()
        stderr = "None";
    vars["process_error"] = stderr;
 
+   // Read recent entries from the rsession log file
    std::string logFile, logContent;
    Error error = getRecentSessionLogs(&logFile, &logContent);
    if (error)
@@ -318,27 +319,13 @@ void SessionLauncher::showLaunchErrorPage()
    vars["log_file"] = logFile;
    vars["log_content"] = logContent;
 
-   // Read text template
-   std::string content;
-   error = core::readStringFromFile(
-               options().resourcesPath().complete("html/error.html"), &content);
+   // Read text template, substitute variables, and load HTML into the main window
+   std::ostringstream oss;
+   error = text::renderTemplate(options().resourcesPath().complete("html/error.html"), vars, oss);
    if (error)
-   {
        LOG_ERROR(error);
-   }
    else
-   {
-      // Replace variables and load HTML
-      text::TemplateFilter filter(vars);
-      std::istringstream is(content);
-      boost::iostreams::filtering_ostream filteringStream;
-      std::ostringstream bodyStream;
-      filteringStream.push(filter, 128);
-      filteringStream.push(bodyStream, 128);
-      boost::iostreams::copy(is, filteringStream, 128);
-
-      pMainWindow_->loadHtml(QString::fromStdString(bodyStream.str()));
-   }
+      pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
 }
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
