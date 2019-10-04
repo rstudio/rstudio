@@ -49,23 +49,6 @@ namespace {
 
 std::string s_launcherToken;
 
-core::WaitResult serverReady(const std::string& host, const std::string& port)
-{
-   core::http::Request request;
-   request.setMethod("GET");
-   request.setHost("host");
-   request.setUri("/");
-   request.setHeader("Accept", "*/*");
-   request.setHeader("Connection", "close");
-
-   core::http::Response response;
-   Error error = core::http::sendRequest(host, port, request, &response);
-   if (error)
-      return WaitResult(WaitContinue, Success());
-   else
-      return WaitResult(WaitSuccess, Success());
-}
-
 void launchProcess(const std::string& absPath,
                    const QStringList& argList,
                    QProcess** ppProc)
@@ -403,6 +386,27 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       }
    }
 }
+
+namespace {
+
+core::WaitResult serverReady(const std::string& host, const std::string& port)
+{
+   core::http::Request request;
+   request.setMethod("GET");
+   request.setHost("host");
+   request.setUri("/");
+   request.setHeader("Accept", "*/*");
+   request.setHeader("Connection", "close");
+   
+   core::http::Response response;
+   Error error = core::http::sendRequest(host, port, request, &response);
+   if (error)
+      return WaitResult(WaitContinue, Success());
+   else
+      return WaitResult(WaitSuccess, Success());
+}
+
+} // end anonymous namespace
 
 Error SessionLauncher::launchNextSession(bool reload)
 {
