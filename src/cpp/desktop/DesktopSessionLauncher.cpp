@@ -215,42 +215,7 @@ Error SessionLauncher::launchFirstSession()
       pMainWindow_->show();
       desktop::activation().setMainWindow(pMainWindow_);
       pAppLaunch_->activateWindow();
-
-      // TODO: Show a loading page. Wait for timeout in a thread.
-      /*
-      Error error = core::waitWithTimeout(
-               boost::bind(serverReady, host.toStdString(), port.toStdString()),
-               50,
-               25,
-               10);
-      if (error)
-      {
-         // If we time out, show an error page.
-      }
-      else
-      {
-          // If we don't time out, load the URL.
-         pMainWindow_->loadUrl(url);
-      }
-      */
-
-      // Read loading page from disk
-      /*
-      std::string contents;
-      Error error = core::readStringFromFile(
-                  options().resourcesPath().complete("html/load.html"), &contents);
-      if (error)
-      {
-          LOG_ERROR(error);
-      }
-      else
-      {
-         pMainWindow_->loadHtml(QString::fromStdString(contents));
-      }
-      */
-
-       pMainWindow_->loadUrl(url);
-      // pObserver->start();
+      pMainWindow_->loadUrl(url);
    }
    qApp->setQuitOnLastWindowClosed(true);
    return Success();
@@ -266,6 +231,115 @@ void SessionLauncher::closeAllSatellites()
    }
 }
 
+Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
+{
+   // Collect R session logs
+   std::vector<FilePath> logs;
+   Error error = userLogPath().children(&logs);
+   if (error)
+   {
+      return error;
+   }
+
+   // Sort by recency in case there are several session logs --
+   // inverse sort so most recent logs are first
+   std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
+   {
+      return a.lastWriteTime() < b.lastWriteTime();
+   });
+
+   // Loop over all the log files and stop when we find a session log
+   // (desktop logs are also in this folder)
+   for (const auto& log: logs)
+   {
+      if (log.filename().find("rsession") != std::string::npos)
+      {
+         // Record the path where we found the log file
+         *pLogFile = log.absolutePath();
+
+         // Read all the lines from a file into a string vector
+         std::vector<std::string> lines;
+         error = readStringVectorFromFile(log, &lines);
+         if (error)
+             return error;
+
+         // Combine the three most recent lines
+         std::string logContents;
+         for (size_t i = static_cast<size_t>(std::max(static_cast<int>(lines.size()) - 3, 0));
+              i < lines.size();
+              ++i)
+         {
+            logContents += lines[i] + "\n";
+         }
+         *pLogContents = logContents;
+         return Success();
+      }
+   }
+
+   // No logs found
+   *pLogFile = "Log File";
+   *pLogContents = "None";
+   return Success();
+}
+
+void SessionLauncher::showLaunchErrorPage()
+{
+   // String mapping of template codes to diagnostic information
+   std::map<std::string,std::string> vars;
+
+   // Collect message from the abnormal end log path
+   if (abendLogPath().exists())
+   {
+      vars["launch_failed"] = launchFailedErrorMessage().toStdString();
+   }
+   else
+   {
+      vars["launch_failed"] = "None";
+   }
+
+   // Collect the rsession process exit code
+   vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
+
+   // Read standard output and standard error streams
+   std::string stdout = pRSessionProcess_->readAllStandardOutput().toStdString();
+   if (stdout.empty())
+       stdout = "None";
+   vars["process_output"] = stdout;
+
+   std::string stderr = pRSessionProcess_->readAllStandardError().toStdString();
+   if (stderr.empty())
+       stderr = "None";
+   vars["process_error"] = stderr;
+
+   std::string logFile, logContent;
+   Error error = getRecentSessionLogs(&logFile, &logContent);
+   if (error)
+       LOG_ERROR(error);
+   vars["log_file"] = logFile;
+   vars["log_content"] = logContent;
+
+   // Read text template
+   std::string content;
+   error = core::readStringFromFile(
+               options().resourcesPath().complete("html/error.html"), &content);
+   if (error)
+   {
+       LOG_ERROR(error);
+   }
+   else
+   {
+      // Replace variables and load HTML
+      text::TemplateFilter filter(vars);
+      std::istringstream is(content);
+      boost::iostreams::filtering_ostream filteringStream;
+      std::ostringstream bodyStream;
+      filteringStream.push(filter, 128);
+      filteringStream.push(bodyStream, 128);
+      boost::iostreams::copy(is, filteringStream, 128);
+
+      pMainWindow_->loadHtml(QString::fromStdString(bodyStream.str()));
+   }
+}
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 {
@@ -293,48 +367,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          // if we haven't loaded the initial session.
       }
 
-      std::map<std::string,std::string> vars;
-      if (abendLogPath().exists())
-      {
-         vars["launch_failed"] = launchFailedErrorMessage().toStdString();
-      }
-      else
-      {
-         vars["launch_failed"] = "None";
-      }
-
-      vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
-
-      std::string stdout = pRSessionProcess_->readAllStandardOutput().toStdString();
-      if (stdout.empty())
-          stdout = "None";
-      vars["process_output"] = stdout;
-
-      std::string stderr = pRSessionProcess_->readAllStandardError().toStdString();
-      if (stderr.empty())
-          stderr = "None";
-      vars["process_error"] = stderr;
-
-      std::string content;
-      Error error = core::readStringFromFile(
-                  options().resourcesPath().complete("html/error.html"), &content);
-      if (error)
-      {
-          LOG_ERROR(error);
-      }
-      else
-      {
-         // Replace variables and load HTML
-         text::TemplateFilter filter(vars);
-         std::istringstream is(content);
-         boost::iostreams::filtering_ostream filteringStream;
-         std::ostringstream bodyStream;
-         filteringStream.push(filter, 128);
-         filteringStream.push(bodyStream, 128);
-         boost::iostreams::copy(is, filteringStream, 128);
-
-         pMainWindow_->loadHtml(QString::fromStdString(bodyStream.str()));
-      }
+      showLaunchErrorPage();
    }
 
    // quit and exit means close the main window

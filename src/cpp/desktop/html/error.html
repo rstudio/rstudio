@@ -4,7 +4,6 @@
         <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
         <style>
             h1 {
-                font-family: Helvetica, sans-serif;
                 margin-left: auto;
                 margin-right: auto;
             }
@@ -14,6 +13,7 @@
             }
 
             body {
+                font-family: Helvetica, sans-serif;
                 margin: 100px;
             }
 
@@ -23,6 +23,7 @@
                 background-color: #f0f0f0;
                 display: block;
                 border-radius: 3px;
+                white-space: pre-line;
             }
 
             h2 {
@@ -72,24 +73,17 @@
             incompatible R versions or R packages. 
         </p>
         <h2>Error Message</h2>
-        <code>
-            #launch_failed#
-        </code>
+        <code>#launch_failed#</code>
         <h2>Process Output</h2>
         <p>
-          Process exited with code <tt>#exit_code#</tt>.
+          Process exited with code <strong>#exit_code#</strong>.
         </p>
         <h3>Errors</h3>
-        <code class="error">
-            #process_error#
-        </code>
+        <code class="error">#process_error#</code>
         <h3>Output</h3>
-        <code class="output">
-            #process_output#
-        </code>
+        <code class="output">#process_output#</code>
         <h2>Recent Log</h2>
-        <code>
-            #abort_message#
-        </code>
+        <em>#log_file#</em>
+        <code>#log_content#</code>
     </body>
 </html>
