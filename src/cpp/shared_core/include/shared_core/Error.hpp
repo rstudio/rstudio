@@ -229,6 +229,15 @@ public:
    bool operator!() const;
 
    /**
+    * @brief Equality operator. Two errors are equal if their codes and names are the same.
+    *
+    * @param in_other   The error to compare with this error.
+    *
+    * @return True if in_other is equal to this error; false otherwise.
+    */
+   bool operator==(const Error& in_other) const;
+
+   /**
     * \defgroup FunctionGroup addOrUpdateProperty
     *
     * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
