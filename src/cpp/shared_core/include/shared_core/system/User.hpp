@@ -22,7 +22,10 @@
 #define SHARED_CORE_USER_HPP
 
 #include <string>
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #include <shared_core/PImpl.hpp>
 
@@ -43,6 +46,20 @@ namespace system {
 #ifndef _WIN32
 typedef uid_t  UidType;
 typedef gid_t  GidType;
+#else
+namespace detail {
+
+/**
+ * @brief Gets an environment variable with the specified name.
+ *
+ * @param in_name   The name of the environment variable to retrieve.
+ *
+ * @return The value of the environment variable.
+ */
+std::string getenv(const std::string& name);
+
+} // namespace detail
+
 #endif
 
 /**
@@ -51,6 +68,16 @@ typedef gid_t  GidType;
 class User
 {
 public:
+
+   /**
+    * @brief Gets the user home path, as set in the environment.
+    *
+    * @param in_envOverride     If set, overrides the name of the environment variable to use as the user's home path.
+    *                           Multiple overrides may be specified by delimiting them with '|' in order of precedence.
+    *
+    * @return The user home path, as set in the environment.
+    */
+   static FilePath getUserHomePath(const std::string& in_envOverride = std::string());
 
 #ifndef _WIN32
 
@@ -88,8 +115,6 @@ public:
     */
    UidType getUserId() const;
 
-#endif
-
    /**
     * @brief Default constructor.
     *
@@ -113,16 +138,6 @@ public:
     * @return Success if the user could be retrieved; Error otherwise.
     */
    static Error createUser(const std::string& in_username, User& out_user);
-
-   /**
-    * @brief Gets the user home path, as set in the environment.
-    *
-    * @param in_envOverride     If set, overrides the name of the environment variable to use as the user's home path.
-    *                           Multiple overrides may be specified by delimiting them with '|' in order of precedence.
-    *
-    * @return The user home path, as set in the environment.
-    */
-   static FilePath getUserHomePath(const std::string& in_envOverride = std::string());
 
    /**
     * @brief Checks whether the user represented by this object exists.
@@ -173,6 +188,12 @@ public:
 private:
    // The private implementation of User.
    PRIVATE_IMPL(m_impl);
+
+#else
+   // No construction on windows.
+   User() = delete;
+
+#endif
 };
 
 } // namesapce system
