@@ -62,9 +62,9 @@ std::string logLevelToString(LogLevel logLevel)
          return kLoggingLevelDebug;
       case LogLevel::INFO:
          return kLoggingLevelInfo;
-      case LogLevel::WARNING:
+      case LogLevel::WARN:
          return kLoggingLevelWarn;
-      case LogLevel::ERROR:
+      case LogLevel::ERR:
          return kLoggingLevelError;
       case LogLevel::OFF:
       default:
@@ -90,15 +90,15 @@ std::string loggerTypeToString(LoggerType loggerType)
 LogLevel strToLogLevel(const std::string& logLevelStr)
 {
    if (logLevelStr == kLoggingLevelWarn)
-      return LogLevel::WARNING;
+      return LogLevel::WARN;
    else if (logLevelStr == kLoggingLevelError)
-       return LogLevel::ERROR;
+       return LogLevel::ERR;
    else if (logLevelStr == kLoggingLevelInfo)
        return LogLevel::INFO;
    else if (logLevelStr == kLoggingLevelDebug)
        return LogLevel::DEBUG;
    else
-       return LogLevel::WARNING;
+       return LogLevel::WARN;
 }
 
 LoggerType strToLoggerType(const std::string& loggerTypeStr)
@@ -160,10 +160,10 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
 
 LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
-   defaultLogLevel_(logLevelToString(LogLevel::WARNING)),
+   defaultLogLevel_(logLevelToString(LogLevel::WARN)),
    defaultLoggerType_(loggerTypeToString(LoggerType::kSysLog)),
    defaultLoggerOptions_(SysLogOptions()),
-   lowestLogLevel_(LogLevel::WARNING)
+   lowestLogLevel_(LogLevel::WARN)
 {
    initProfile();
 }

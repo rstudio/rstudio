@@ -172,7 +172,7 @@ void handleLogExceptionRequest(const std::string& username,
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(log::LogLevel::ERROR, logEntry);
+   core::system::log(log::LogLevel::ERR, logEntry);
 
 
    // set void result
@@ -202,11 +202,11 @@ void handleLogMessageRequest(const std::string& username,
    switch(level)
    {
       case 0:
-         logLevel = log::LogLevel::ERROR;
+         logLevel = log::LogLevel::ERR;
          logLevelStr = "ERROR";
          break;
       case 1:
-         logLevel = log::LogLevel::WARNING;
+         logLevel = log::LogLevel::WARN;
          logLevelStr = "WARNING";
          break;
       case 2:
@@ -216,7 +216,7 @@ void handleLogMessageRequest(const std::string& username,
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " + 
                              safe_convert::numberToString(level));
-         logLevel = log::LogLevel::ERROR;
+         logLevel = log::LogLevel::ERR;
          logLevelStr = "ERROR";
          break;
    }

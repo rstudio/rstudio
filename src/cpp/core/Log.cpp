@@ -35,9 +35,9 @@ void logAction(LogLevel logLevel,
 {
    switch (logLevel)
    {
-      case LogLevel::ERROR:
+      case LogLevel::ERR:
          return logErrorMessage(action(), logSection, loggedFromLocation);
-      case LogLevel::WARNING:
+      case LogLevel::WARN:
          return logWarningMessage(action(), logSection, loggedFromLocation);
       case LogLevel::DEBUG:
          return logDebugMessage(action(), logSection, loggedFromLocation);
