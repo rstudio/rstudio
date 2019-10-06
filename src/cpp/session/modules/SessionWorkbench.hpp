@@ -56,7 +56,7 @@ void ammendShellPaths(T* pTarget)
 #ifdef _WIN32
    // msys_ssh path
    core::system::addToPath(pTarget,
-                           session::options().msysSshPath().absolutePath());
+                           session::options().msysSshPath().getAbsolutePath());
 #endif
 }
 

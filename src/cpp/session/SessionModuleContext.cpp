@@ -1178,7 +1178,7 @@ bool isTextFile(const FilePath& targetPath)
    if (error)
    {
       LOG_ERROR(error);
-      return error;
+      return !!error;
    }
 
    // does it have null bytes?
@@ -1212,7 +1212,7 @@ Error rScriptPath(FilePath* pRScriptPath)
       return error;
 
 #ifdef _WIN32
-*pRScriptPath = rHomeBinPath.complete("Rterm.exe");
+*pRScriptPath = rHomeBinPath.completePath("Rterm.exe");
 #else
 *pRScriptPath = rHomeBinPath.completePath("R");
 #endif
@@ -1222,7 +1222,7 @@ Error rScriptPath(FilePath* pRScriptPath)
 shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 {
 #ifdef _WIN32
-      return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
+      return shell_utils::ShellCommand(rBinDir.completeChildPath("Rcmd.exe"));
 #else
       shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
       rCmd << "CMD";
@@ -1351,7 +1351,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    // setup options and command
    core::system::ProcessOptions options;
 #ifdef _WIN32
-   shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
+   shell_utils::ShellCommand installCommand(rBinDir.completeChildPath("R.exe"));
 #else
    shell_utils::ShellCommand installCommand(rBinDir.completeChildPath("R"));
 #endif
@@ -2242,7 +2242,7 @@ bool haveSecureDownloadFileMethod()
 shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+   shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("Rcmd.exe"));
 #else
    shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
    rCmd << "CMD";

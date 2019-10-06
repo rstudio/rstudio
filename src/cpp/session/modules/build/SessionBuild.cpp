@@ -636,7 +636,7 @@ private:
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
 #ifdef _WIN32
-      if (packagePath.childPath("src").exists() &&
+      if (packagePath.completeChildPath("src").exists() &&
          (type == kBuildAndReload || type == kRebuildAll ||
           type == kBuildBinaryPackage))
       {

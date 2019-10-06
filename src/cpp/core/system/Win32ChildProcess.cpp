@@ -194,7 +194,7 @@ void ChildProcess::init(const std::string& exe,
    options_ = options;
    resolveCommand(&exe_, &args_);
 
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
    {
       LOG_ERROR_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with runProgram");
@@ -215,7 +215,7 @@ void ChildProcess::init(const std::string& command,
 void ChildProcess::init(const ProcessOptions& options)
 {
    options_ = options;
-   exe_ = options_.shellPath.absolutePathNative();
+   exe_ = options_.shellPath.getAbsolutePathNative();
    args_ = options_.args;
 }
 
@@ -427,7 +427,7 @@ Error ChildProcess::run()
    si.hStdInput = hStdInRead;
 
    HANDLE hStdOutWriteFile = INVALID_HANDLE_VALUE;
-   if (!options_.stdOutFile.empty())
+   if (!options_.stdOutFile.isEmpty())
    {
       error = openFile(options_.stdOutFile, true, &hStdOutWriteFile);
       if (error)
@@ -437,7 +437,7 @@ Error ChildProcess::run()
    CloseHandleOnExitScope closeStdOutFile(&hStdOutWriteFile, ERROR_LOCATION);
 
    HANDLE hStdErrWriteFile = INVALID_HANDLE_VALUE;
-   if (!options_.stdErrFile.empty())
+   if (!options_.stdErrFile.isEmpty())
    {
       error = openFile(options_.stdErrFile, true, &hStdErrWriteFile);
       if (error)
@@ -518,10 +518,10 @@ Error ChildProcess::run()
       dwFlags |= CREATE_BREAKAWAY_FROM_JOB;
 
    std::wstring workingDir;
-   if (!options_.workingDir.empty())
+   if (!options_.workingDir.isEmpty())
    {
       workingDir = string_utils::utf8ToWide(
-            options_.workingDir.absolutePathNative());
+            options_.workingDir.getAbsolutePathNative());
    }
 
    // Start the child process.

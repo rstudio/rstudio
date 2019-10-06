@@ -369,7 +369,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // add msys_ssh to path
    core::system::addToPath(&childEnv,
-                           session::options().msysSshPath().absolutePath());
+                           session::options().msysSshPath().getAbsolutePath());
 
    options.environment = childEnv;
 #endif

@@ -106,7 +106,7 @@ Error tryLoad(const core::FilePath& libraryPath)
       return Success();
 
    Error error = core::system::loadLibrary(
-            libraryPath.absolutePath(),
+            libraryPath.getAbsolutePath(),
             reinterpret_cast<void**>(&hMod));
    if (error)
    {

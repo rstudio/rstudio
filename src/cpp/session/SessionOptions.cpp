@@ -104,9 +104,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 
    // detect running in x86 directory and tweak resource path
 #ifdef _WIN32
-   if (resourcePath_.complete("x86").exists())
+   if (resourcePath_.completePath("x86").exists())
    {
-      resourcePath_ = resourcePath_.parent();
+      resourcePath_ = resourcePath_.getParent();
    }
 #endif
    
@@ -615,7 +615,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       completion = "32/bin/winpty.dll";
 #endif
    }
-   winptyPath_ = pty.complete(completion).absolutePath();
+   winptyPath_ = pty.completePath(completion).getAbsolutePath();
 #endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);

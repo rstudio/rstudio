@@ -38,7 +38,7 @@ namespace {
 
 std::string asRBuildPath(const FilePath& filePath)
 {
-   std::string path = filePath.absolutePath();
+   std::string path = filePath.getAbsolutePath();
    boost::algorithm::replace_all(path, "\\", "/");
    if (!boost::algorithm::ends_with(path, "/"))
       path += "/";
@@ -48,14 +48,14 @@ std::string asRBuildPath(const FilePath& filePath)
 std::vector<std::string> gcc463ClangArgs(const FilePath& installPath)
 {
    std::vector<std::string> clangArgs;
-   clangArgs.push_back("-I" + installPath.childPath(
-      "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
+   clangArgs.push_back("-I" + installPath.completeChildPath(
+      "gcc-4.6.3/i686-w64-mingw32/include").getAbsolutePath());
 
-   clangArgs.push_back("-I" + installPath.childPath(
-      "gcc-4.6.3/include/c++/4.6.3").absolutePath());
+   clangArgs.push_back("-I" + installPath.completeChildPath(
+      "gcc-4.6.3/include/c++/4.6.3").getAbsolutePath());
 
-   std::string bits = "-I" + installPath.childPath(
-      "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
+   std::string bits = "-I" + installPath.completeChildPath(
+      "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").getAbsolutePath();
 #ifdef _WIN64
    bits += "/64";
 #endif
@@ -160,7 +160,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
       relativePathEntries.push_back("bin");
 
       // set environment variables
-      FilePath gccPath = installPath_.childPath("mingw_$(WIN)/bin");
+      FilePath gccPath = installPath_.completeChildPath("mingw_$(WIN)/bin");
       environmentVars.push_back(
             std::make_pair("BINPREF", asRBuildPath(gccPath)));
 
@@ -176,16 +176,16 @@ RToolsInfo::RToolsInfo(const std::string& name,
       boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
       std::string mgwInc = boost::str(mgwIncFmt % baseDir % arch);
       clangArgs.push_back(
-            "-I" + installPath.childPath(mgwInc).absolutePath());
+            "-I" + installPath.completeChildPath(mgwInc).getAbsolutePath());
 
       std::string cppInc = mgwInc + "/c++";
       clangArgs.push_back(
-            "-I" + installPath.childPath(cppInc).absolutePath());
+            "-I" + installPath.completeChildPath(cppInc).getAbsolutePath());
 
       boost::format bitsIncFmt("%1%/%2%-w64-mingw32");
       std::string bitsInc = boost::str(bitsIncFmt % cppInc % arch);
       clangArgs.push_back(
-            "-I" + installPath.childPath(bitsInc).absolutePath());
+            "-I" + installPath.completeChildPath(bitsInc).getAbsolutePath());
    }
 
    // build version predicate and path list if we can
@@ -196,7 +196,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
 
       for (const std::string& relativePath : relativePathEntries)
       {
-         pathEntries_.push_back(installPath_.childPath(relativePath));
+         pathEntries_.push_back(installPath_.completeChildPath(relativePath));
       }
 
       clangArgs_ = clangArgs;
@@ -241,7 +241,8 @@ Error scanRegistryForRTools(HKEY key,
                              KEY_READ | KEY_WOW64_32KEY);
    if (error)
    {
-      if (error.code() != boost::system::errc::no_such_file_or_directory)
+      if ((error.getCode() != boost::system::errc::no_such_file_or_directory) &&
+         (error.getName() == boost::system::system_category().name()))
          return error;
       else
          return Success();
@@ -311,18 +312,18 @@ Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTool
 
    // find sub-directories
    std::vector<FilePath> buildDirs;
-   Error error = buildDirRoot.children(&buildDirs);
+   Error error = buildDirRoot.getChildren(buildDirs);
    if (error)
       LOG_ERROR(error);
 
    // infer Rtools information from each directory
    for (const FilePath& buildDir : buildDirs)
    {
-      RToolsInfo toolsInfo(buildDir.filename(), buildDir, usingMingwGcc49);
+      RToolsInfo toolsInfo(buildDir.getFilename(), buildDir, usingMingwGcc49);
       if (toolsInfo.isRecognized())
          pRTools->push_back(toolsInfo);
       else
-         LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.filename());
+         LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.getFilename());
    }
 
    return Success();

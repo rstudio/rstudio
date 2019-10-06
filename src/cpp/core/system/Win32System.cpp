@@ -175,7 +175,7 @@ void initHook()
 }
 
 Error initializeSystemLog(const std::string& programIdentity,
-                          int logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload)
 {
    return Success();
@@ -322,7 +322,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
    }
 
    FilePath settingsPath = FilePath(std::wstring(path));
-   FilePath completePath = settingsPath.complete(appName);
+   FilePath completePath = settingsPath.completePath(appName);
 
    if (create)
    {
@@ -423,7 +423,7 @@ Error realPath(const std::string& path, FilePath* pRealPath)
 
 bool isHiddenFile(const FilePath& filePath)
 {
-   return isHiddenFile(filePath.absolutePath());
+   return isHiddenFile(filePath.getAbsolutePath());
 }
 
 bool isHiddenFile(const FileInfo& fileInfo)
@@ -520,17 +520,17 @@ Error installPath(const std::string& relativeToExecutable,
 
    // resolve to install path using given relative path
    if (relativeToExecutable == "..") // common case
-     *pInstallationPath = exePath.parent().parent();
+     *pInstallationPath = exePath.getParent().getParent();
    else
-     *pInstallationPath = exePath.parent().complete(relativeToExecutable);
+     *pInstallationPath = exePath.getParent().completePath(relativeToExecutable);
 
    return Success();
 }
 
 void fixupExecutablePath(FilePath* pExePath)
 {
-   if (pExePath->extension().empty())
-     *pExePath = pExePath->parent().complete(pExePath->filename() + ".exe");
+   if (pExePath->getExtension().empty())
+     *pExePath = pExePath->getParent().completePath(pExePath->getFilename() + ".exe");
 }
 
 void abort()
@@ -746,7 +746,7 @@ void ensureLongPath(FilePath* pFilePath)
 {
    const std::size_t kBuffSize = (MAX_PATH*2) + 1;
    char buffer[kBuffSize];
-   std::string path = string_utils::utf8ToSystem(pFilePath->absolutePath());
+   std::string path = string_utils::utf8ToSystem(pFilePath->getAbsolutePath());
    if (::GetLongPathName(path.c_str(),
                          buffer,
                          kBuffSize) > 0)

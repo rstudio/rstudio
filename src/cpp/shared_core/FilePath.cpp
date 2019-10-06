@@ -23,11 +23,14 @@
 #include <algorithm>
 #include <fstream>
 
-
 #ifdef _WIN32
 #include <windows.h>
-#else
-#include <shared_core/system/User.hpp>
+
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/system/windows_error.hpp>
+
+#include <shared_core/system/Win32StringUtils.hpp>
 #endif
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -43,6 +46,7 @@
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 typedef boost::filesystem::path path_t;
 
@@ -684,10 +688,10 @@ std::string FilePath::getAbsolutePathNative() const
 #if _WIN32
 std::wstring FilePath::getAbsolutePathW() const
 {
-   if (empty())
+   if (isEmpty())
       return std::wstring();
    else
-      return m_impl->path.wstring();
+      return m_impl->Path.wstring();
 }
 #endif
 
@@ -945,7 +949,7 @@ bool FilePath::isJunction() const
    if (!exists())
       return false;
 
-   const wchar_t* path = m_impl->path.c_str();
+   const wchar_t* path = m_impl->Path.c_str();
    DWORD fa = GetFileAttributesW(path);
    if (fa == INVALID_FILE_ATTRIBUTES)
    {
@@ -1078,7 +1082,7 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
       std::istream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
-      HANDLE hFile = ::CreateFileW(m_impl->path.wstring().c_str(),
+      HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
                                    GENERIC_READ,
                                    FILE_SHARE_READ,
                                    nullptr,
@@ -1088,7 +1092,7 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
       if (hFile == INVALID_HANDLE_VALUE)
       {
          Error error = LAST_SYSTEM_ERROR();
-         error.addProperty("path", absolutePath());
+         error.addProperty("path", getAbsolutePath());
          return error;
       }
       boost::iostreams::file_descriptor_source fd;
@@ -1129,17 +1133,17 @@ Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_
       std::ostream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
-      HANDLE hFile = ::CreateFileW(m_impl->path.wstring().c_str(),
-                                   truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
+      HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
+                                   in_truncate ? GENERIC_WRITE : FILE_APPEND_DATA,
                                    0, // exclusive access
                                    nullptr,
-                                   truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
+                                   in_truncate ? CREATE_ALWAYS : OPEN_ALWAYS,
                                    0,
                                    nullptr);
       if (hFile == INVALID_HANDLE_VALUE)
       {
          Error error = LAST_SYSTEM_ERROR();
-         error.addProperty("path", absolutePath());
+         error.addProperty("path", getAbsolutePath());
          return error;
       }
       file_descriptor_sink fd;

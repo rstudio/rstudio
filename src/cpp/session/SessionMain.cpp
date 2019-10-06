@@ -983,7 +983,7 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
    else // (rsession::options().programMode() == kSessionProgramModeDesktop
    {
 #ifdef _WIN32
-    if (!filePath.extension().empty())
+    if (!filePath.getExtension().empty())
     {
        module_context::showFile(filePath);
        del = false;

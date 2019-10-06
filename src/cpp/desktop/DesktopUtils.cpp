@@ -402,7 +402,7 @@ void openUrl(const QUrl& url)
 
       core::system::ProcessResult result;
       Error error = core::system::runProgram(
-            desktop::options().urlopenerPath().absolutePath(),
+            desktop::options().urlopenerPath().getAbsolutePath(),
             args,
             "",
             options,

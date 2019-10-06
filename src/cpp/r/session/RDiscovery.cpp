@@ -45,8 +45,8 @@ Error discoverR(RLocations* pLocations)
 
    // set paths
    FilePath rHome(lpszRHome);
-   pLocations->homePath = rHome.absolutePath();
-   pLocations->docPath = rHome.complete("doc").absolutePath();
+   pLocations->homePath = rHome.getAbsolutePath();
+   pLocations->docPath = rHome.completePath("doc").getAbsolutePath();
 
    return Success();
 }

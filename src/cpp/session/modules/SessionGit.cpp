@@ -209,7 +209,7 @@ std::string gitBin()
 {
    if (!s_gitExePath.empty())
    {
-      return FilePath(s_gitExePath).absolutePathNative();
+      return FilePath(s_gitExePath).getAbsolutePathNative();
    }
    else
       return "git.exe";
@@ -2703,10 +2703,10 @@ bool detectGitExeDirOnPath(FilePath* pPath)
       // git.exe wrapper that, if used by us, causes console windows to
       // flash
       FilePath filePath(&(path[0]));
-      if (filePath.parent().filename() == "cmd")
+      if (filePath.getParent().getFilename() == "cmd")
         return false;
 
-      *pPath = filePath.parent();
+      *pPath = filePath.getParent();
       return true;
    }
    else
@@ -2729,7 +2729,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2738,7 +2738,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2815,7 +2815,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // go up a level then down to bin
-      *pPath = pPath->parent().childPath("bin");
+      *pPath = pPath->getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2828,7 +2828,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // this is located in \cmd so we need to go up two levels
-      *pPath = pPath->parent().parent().childPath("bin");
+      *pPath = pPath->getParent().getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2842,7 +2842,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       *pPath = FilePath(std::wstring(&(pathbuff[0])));
       if (!pPath->exists())
          return E_FAIL;
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2869,7 +2869,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // The path we have is to sh.exe or wish.exe, we want the parent
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2928,7 +2928,7 @@ Error detectAndSaveGitExePath()
       return error;
 
    // save it
-   s_gitExePath = path.complete("git.exe").absolutePath();
+   s_gitExePath = path.completePath("git.exe").getAbsolutePath();
 
    return Success();
 }
@@ -3131,14 +3131,14 @@ FilePath detectedGitExePath()
    FilePath path;
    if (detectGitExeDirOnPath(&path))
    {
-      return path.complete("git.exe");
+      return path.completePath("git.exe");
    }
    else
    {
       Error error = discoverGitBinDir(&path);
       if (!error)
       {
-         return path.complete("git.exe");
+         return path.completePath("git.exe");
       }
       else
       {

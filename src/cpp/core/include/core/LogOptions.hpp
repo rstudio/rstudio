@@ -16,6 +16,8 @@
 #ifndef CORE_LOG_OPTIONS_HPP
 #define CORE_LOG_OPTIONS_HPP
 
+#include <string>
+
 #include <boost/variant.hpp>
 
 #include <core/ConfigProfile.hpp>

@@ -123,7 +123,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
    // on windows add gnudiff directory to the path
 #ifdef _WIN32
    core::system::addToPath(&childEnv,
-                           session::options().gnudiffPath().absolutePath());
+                           session::options().gnudiffPath().getAbsolutePath());
 #endif
 
    // on windows add msys_ssh to the path if we need ssh
@@ -131,7 +131,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
    if (requiresSsh)
    {
       core::system::addToPath(&childEnv,
-                              session::options().msysSshPath().absolutePath());
+                              session::options().msysSshPath().getAbsolutePath());
    }
 #endif
 
@@ -166,7 +166,7 @@ void initEnvironment()
 #ifdef _WIN32
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam("RSTUDIO_MSYS_SSH",
-                      session::options().msysSshPath().absolutePath());
+                      session::options().msysSshPath().getAbsolutePath());
    Error error = sysSetenv.call();
    if (error)
       LOG_ERROR(error);

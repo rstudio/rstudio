@@ -14,9 +14,13 @@
  */
 
 #include <core/LogOptions.hpp>
+
+#include <vector>
+
 #include <core/system/System.hpp>
 
 #include "config.h"
+
 
 namespace rstudio {
 namespace core {
@@ -52,6 +56,7 @@ const FilePath kDefaultLogPath("/var/log/rstudio-server");
 // desktop - store logs under user dir
 const FilePath kDefaultLogPath = core::system::userSettingsPath(core::system::userHomePath(),
                                                                "RStudio-Desktop",
+                                                                false).completePath("logs");
 #endif
 
 std::string logLevelToString(LogLevel logLevel)
@@ -209,10 +214,10 @@ Error LogOptions::read()
    // desktop - read user file first, and only read admin file if the user file does not exist
    FilePath optionsFile = core::system::userSettingsPath(core::system::userHomePath(),
                                                          "RStudio-Desktop",
-                                                         false).complete("logging.conf");
+                                                         false).completePath("logging.conf");
    if (!optionsFile.exists())
 #ifdef _WIN32
-         optionsFile = core::system::systemSettingsPath("RStudio", false).complete("logging.conf");
+         optionsFile = core::system::systemSettingsPath("RStudio", false).completePath("logging.conf");
 #else
          optionsFile = FilePath("/etc/rstudio/logging.conf");
 #endif

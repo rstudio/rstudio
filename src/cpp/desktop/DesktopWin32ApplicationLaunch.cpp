@@ -225,7 +225,7 @@ void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
    }
 
    core::Error error = core::system::runProgram(
-      desktop::options().executablePath().absolutePath(),
+      desktop::options().executablePath().getAbsolutePath(),
       args,
       "",
       options,

@@ -46,17 +46,17 @@ r_util::RToolsInfo scanPathForRTools()
    // first confirm ls.exe is in Rtools
    r_util::RToolsInfo noToolsFound;
    FilePath lsPath = module_context::findProgram("ls.exe");
-   if (lsPath.empty())
+   if (lsPath.isEmpty())
       return noToolsFound;
 
    // we have a candidate installPath
-   FilePath installPath = lsPath.parent().parent();
+   FilePath installPath = lsPath.getParent().getParent();
    core::system::ensureLongPath(&installPath);
-   if (!installPath.childPath("Rtools.txt").exists())
+   if (!installPath.completeChildPath("Rtools.txt").exists())
       return noToolsFound;
 
    // find the version path
-   FilePath versionPath = installPath.childPath("VERSION.txt");
+   FilePath versionPath = installPath.completeChildPath("VERSION.txt");
    if (!versionPath.exists())
       return noToolsFound;
 
@@ -64,7 +64,7 @@ r_util::RToolsInfo scanPathForRTools()
    FilePath gccPath = module_context::findProgram("gcc.exe");
    if (!gccPath.exists())
       return noToolsFound;
-   if (!gccPath.parent().parent().parent().childPath("Rtools.txt").exists())
+   if (!gccPath.getParent().getParent().getParent().completeChildPath("Rtools.txt").exists())
       return noToolsFound;
 
    // Rtools is in the path -- now crack the VERSION file
@@ -93,7 +93,7 @@ std::string formatPath(const FilePath& filePath)
    FilePath displayPath = filePath;
    core::system::ensureLongPath(&displayPath);
    return boost::algorithm::replace_all_copy(
-                                 displayPath.absolutePath(), "/", "\\");
+                                 displayPath.getAbsolutePath(), "/", "\\");
 }
 
 template <typename T>

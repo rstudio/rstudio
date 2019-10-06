@@ -462,7 +462,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    FilePath gnuGrepPath = session::options().gnugrepPath();
    core::system::addToPath(
             &childEnv,
-            string_utils::utf8ToSystem(gnuGrepPath.absolutePath()));
+            string_utils::utf8ToSystem(gnuGrepPath.getAbsolutePath()));
 #endif
    options.environment = childEnv;
 
@@ -496,7 +496,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                        ptrGrepOp->createProcessCallbacks();
 
 #ifdef _WIN32
-   shell_utils::ShellCommand cmd(gnuGrepPath.complete("grep"));
+   shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif

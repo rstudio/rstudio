@@ -158,9 +158,9 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // set paths (copy to new string so we can provide char*)
    std::string* pRHome = new std::string(
-            core::string_utils::utf8ToSystem(rHome.absolutePath()));
+            core::string_utils::utf8ToSystem(rHome.getAbsolutePath()));
    std::string* pUserHome = new std::string(
-            core::string_utils::utf8ToSystem(userHome.absolutePath()));
+            core::string_utils::utf8ToSystem(userHome.getAbsolutePath()));
    pRP->rhome = const_cast<char*>(pRHome->c_str());
    pRP->home = const_cast<char*>(pUserHome->c_str());
 

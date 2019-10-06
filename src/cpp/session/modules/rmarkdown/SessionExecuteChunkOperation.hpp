@@ -85,7 +85,7 @@ std::string scriptPathForShellCommand(
       {
          FilePath resolvedPath =
                module_context::resolveAliasedPath(chunkOptions.at("engine.path"));
-         bashPath = resolvedPath.absolutePathNative();
+         bashPath = resolvedPath.getAbsolutePathNative();
       }
 
       system::ProcessOptions options;
@@ -105,7 +105,7 @@ std::string scriptPathForShellCommand(
       std::string path =
             string_utils::trimWhitespace(result.stdOut) +
             "/" +
-            scriptPath.filename();
+            scriptPath.getFilename();
       return string_utils::utf8ToSystem(path);
    }
    else

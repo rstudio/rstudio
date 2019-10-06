@@ -468,10 +468,10 @@ FilePath Options::urlopenerPath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("urlopener");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("urlopener");
 
-   return parentDir.complete("urlopener.exe");
+   return parentDir.completePath("urlopener.exe");
 }
 
 FilePath Options::rsinversePath() const
@@ -479,10 +479,10 @@ FilePath Options::rsinversePath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("synctex/rsinverse");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("synctex/rsinverse");
 
-   return parentDir.complete("rsinverse.exe");
+   return parentDir.completePath("rsinverse.exe");
 }
 
 #endif
