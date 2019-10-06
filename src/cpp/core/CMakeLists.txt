@@ -280,7 +280,6 @@ else()
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-      Win32StringUtils.cpp
       http/NamedPipeProtocol.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
