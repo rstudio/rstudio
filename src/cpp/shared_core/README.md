@@ -11,3 +11,5 @@ Currently this library is shared with the [Launcher Plugin SDK](https://github.c
 ## Licensing
 
 Because the Launcher Plugin SDK uses an MIT license and the source will be distributed, files added to this library must also use an MIT license.
+
+As an exception to this, Windows only files will not be shared with the Launcher Plugin SDK and may be licensed as usual (e.g. Win32StringUtils.cpp/hpp).
