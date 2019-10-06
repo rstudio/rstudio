@@ -211,7 +211,7 @@ unsigned int effectiveUserId()
    return 0; // no concept of this on Win32
 }
 
-bool effectivedIsRoot()
+bool effectiveUserIsRoot()
 {
    // on Windows, treat built-in administrator account, or elevation to it, to be the
    // equivalent of Posix "root"
