@@ -1679,7 +1679,7 @@ int main (int argc, char * const argv[])
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       core::system::initializeSystemLog("rsession-" + core::system::username(),
-                                        core::log::LogLevel::WARNING);
+                                        core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1757,12 +1757,12 @@ int main (int argc, char * const argv[])
          if (options.verifyInstallation())
          {
             core::system::initializeStderrLog(options.programIdentity(),
-                                core::log::LogLevel::WARNING);
+                                core::log::LogLevel::WARN);
          }
          else
          {
             core::system::initializeLog(options.programIdentity(),
-                                        core::log::LogLevel::WARNING,
+                                        core::log::LogLevel::WARN,
                                         options.userLogPath());
          }
       }

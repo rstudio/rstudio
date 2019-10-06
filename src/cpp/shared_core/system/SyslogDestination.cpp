@@ -35,9 +35,9 @@ int logLevelToLogPriority(log::LogLevel in_logLevel)
 {
    switch(in_logLevel)
    {
-      case log::LogLevel::ERROR:
+      case log::LogLevel::ERR:
          return LOG_ERR;
-      case log::LogLevel::WARNING:
+      case log::LogLevel::WARN:
          return LOG_WARNING;
       case log::LogLevel::DEBUG:
          return LOG_DEBUG;

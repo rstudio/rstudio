@@ -49,12 +49,12 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
 {
    switch (in_logLevel)
    {
-      case LogLevel::ERROR:
+      case LogLevel::ERR:
       {
          io_ostream << "ERROR";
          break;
       }
-      case LogLevel::WARNING:
+      case LogLevel::WARN:
       {
          io_ostream << "WARNING";
          break;
@@ -319,25 +319,25 @@ std::string cleanDelims(const std::string& in_toClean)
 void logError(const Error& in_error)
 {
    Logger& log = logger();
-   if (log.MaxLogLevel >= LogLevel::ERROR)
+   if (log.MaxLogLevel >= LogLevel::ERR)
    {
-      log.writeMessageToDestinations(LogLevel::ERROR, in_error.asString());
+      log.writeMessageToDestinations(LogLevel::ERR, in_error.asString());
    }
 }
 
 void logError(const Error& in_error, const ErrorLocation& in_location)
 {
    Logger& log = logger();
-   if (log.MaxLogLevel >= LogLevel::ERROR)
-      log.writeMessageToDestinations(LogLevel::ERROR, in_error.asString(), "", in_location);
+   if (log.MaxLogLevel >= LogLevel::ERR)
+      log.writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
 }
 
 void logErrorAsWarning(const Error& in_error)
 {
    Logger& log = logger();
-   if (log.MaxLogLevel >= LogLevel::WARNING)
+   if (log.MaxLogLevel >= LogLevel::WARN)
    {
-      log.writeMessageToDestinations(LogLevel::WARNING, in_error.asString());
+      log.writeMessageToDestinations(LogLevel::WARN, in_error.asString());
    }
 }
 
@@ -372,8 +372,8 @@ void logErrorMessage(const std::string& in_message, const ErrorLocation& in_logg
 void logErrorMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
 {
    Logger& log = logger();
-   if (log.MaxLogLevel >= LogLevel::ERROR)
-      log.writeMessageToDestinations(LogLevel::ERROR, in_message, in_section, in_loggedFrom);
+   if (log.MaxLogLevel >= LogLevel::ERR)
+      log.writeMessageToDestinations(LogLevel::ERR, in_message, in_section, in_loggedFrom);
 }
 
 void logWarningMessage(const std::string& in_message, const std::string& in_section)
@@ -389,8 +389,8 @@ void logWarningMessage(const std::string& in_message, const ErrorLocation& in_lo
 void logWarningMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
 {
    Logger& log = logger();
-   if (log.MaxLogLevel >= LogLevel::WARNING)
-      log.writeMessageToDestinations(LogLevel::WARNING, in_message, in_section, in_loggedFrom);
+   if (log.MaxLogLevel >= LogLevel::WARN)
+      log.writeMessageToDestinations(LogLevel::WARN, in_message, in_section, in_loggedFrom);
 }
 
 void logDebugMessage(const std::string& in_message, const std::string& in_section)
@@ -496,7 +496,7 @@ std::ostream& writeError(const Error& in_error, std::ostream& io_os)
 
 std::string writeError(const Error& in_error)
 {
-   return formatLogMessage(LogLevel::ERROR, in_error.asString(), logger().ProgramId);
+   return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId);
 }
 
 } // namespace log

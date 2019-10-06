@@ -53,7 +53,7 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      core::system::initializeSystemLog("rpostback", core::log::LogLevel::WARNING);
+      core::system::initializeSystemLog("rpostback", core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

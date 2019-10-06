@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
 
       // initialize log
       core::system::initializeLog("rdesktop",
-                                  core::log::LogLevel::WARNING,
+                                  core::log::LogLevel::WARN,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
@@ -759,7 +759,7 @@ int main(int argc, char* argv[])
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARNING);
+         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARN);
       }
 
       initializeSharedSecret();

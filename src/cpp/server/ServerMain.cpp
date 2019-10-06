@@ -271,7 +271,7 @@ void httpServerAddHandlers()
 
 Error initLog()
 {
-   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARNING, false);
+   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARN, false);
 }
 
 bool reloadLoggingConfiguration()

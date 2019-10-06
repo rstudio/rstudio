@@ -42,7 +42,7 @@ int main(int argc, const char* argv[])
    // note: we log all errors and attempt to launch the crashpad handler
    // regardless, as this is a best effort proxy attempt
 
-   initializeStderrLog("crash-handler-proxy", log::LogLevel::WARNING);
+   initializeStderrLog("crash-handler-proxy", log::LogLevel::WARN);
 
    Error error = ignoreSignal(SigPipe);
    if (error)
