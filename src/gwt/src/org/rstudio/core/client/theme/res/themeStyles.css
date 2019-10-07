@@ -1312,7 +1312,7 @@ body.windows .toolbar {
    overflow: hidden;
 }
 
-.toolbarButton:focus {
+.toolbarButton:focus:not(.focus-visible) {
    outline: none;
 }
 

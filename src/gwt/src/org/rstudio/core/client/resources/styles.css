@@ -76,7 +76,7 @@
    color: #0000AA;
 }
 
-.rstudio-HyperlinkLabel:focus {
+.rstudio-HyperlinkLabel:focus:not(.focus-visible) {
    outline: none;
 }
 
@@ -92,7 +92,7 @@
    background-color: transparent;
 }
 
-.rstudio-HelpButton:focus {
+.rstudio-HelpButton:focus:not(.focus-visible) {
    outline:none;
 }
 
@@ -103,7 +103,7 @@
    background-color: transparent;
 }
 
-.rstudio-ImageButton:focus {
+.rstudio-ImageButton:focus:not(.focus-visible) {
    outline:none;
 }
 

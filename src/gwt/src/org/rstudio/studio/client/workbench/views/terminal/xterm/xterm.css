@@ -44,7 +44,7 @@
 }
 
 .xterm.focus,
-.xterm:focus {
+.xterm:focus:not(.focus-visible) {
     outline: none;
 }
 

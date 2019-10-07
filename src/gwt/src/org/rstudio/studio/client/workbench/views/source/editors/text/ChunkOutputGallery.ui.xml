@@ -24,7 +24,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    opacity: 1;
 }
 
-.thumbnail:focus {
+.thumbnail:focus:not(.focus-visible) {
    outline: none;
 }
 
