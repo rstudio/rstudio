@@ -6,7 +6,7 @@
    <ui:style>
       @external .gwt-TextBox;
 
-      .panel input[type=checkbox]{
+      .panel input[type=checkbox] {
          margin-left: 0;
       }
 
