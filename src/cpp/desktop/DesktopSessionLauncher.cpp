@@ -261,7 +261,7 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
 
    // No logs found
    *pLogFile = "Log File";
-   *pLogContents = "None";
+   *pLogContents = "[No logs available]";
    return Success();
 }
 
@@ -277,7 +277,7 @@ void SessionLauncher::showLaunchErrorPage()
    }
    else
    {
-      vars["launch_failed"] = "None";
+      vars["launch_failed"] = "[No error available]";
    }
 
    // Collect the rsession process exit code
@@ -286,12 +286,12 @@ void SessionLauncher::showLaunchErrorPage()
    // Read standard output and standard error streams
    std::string stdout = pRSessionProcess_->readAllStandardOutput().toStdString();
    if (stdout.empty())
-       stdout = "None";
+       stdout = "[No output emitted]";
    vars["process_output"] = stdout;
 
    std::string stderr = pRSessionProcess_->readAllStandardError().toStdString();
    if (stderr.empty())
-       stderr = "None";
+       stderr = "[No errors emitted]";
    vars["process_error"] = stderr;
 
    // Read recent entries from the rsession log file

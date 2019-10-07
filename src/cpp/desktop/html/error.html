@@ -71,9 +71,7 @@
         </div>
         <h1>Error Starting R</h1>
         <p>
-            The R session failed to start. This typically indicates a problem
-            with your installation of R, and is often caused by mixing
-            incompatible R versions or R packages. 
+            The R session failed to start.
         </p>
         <h2>Error Message</h2>
         <code>#launch_failed#</code>
@@ -90,9 +88,14 @@
         <code>#log_content#</code>
         <h2>Next Steps</h2>
         <p>
-          Investigate any errors above, and make sure that R works correctly
-          outside RStudio (using RGui, R.app, or R in a terminal). 
+            R can fail to start up for many reasons. The following may help you resolve the problem:
         </p>
+        <ul>
+            <li>Investigate any errors above.</li> 
+            <li>Make sure that R starts up correctly outside RStudio (using RGui, R.app, or R in a terminal).</li>
+            <li>Fully uninstall all versions of R from your machine, and reinstall the version you wish to use with RStudio.</li>
+            <li>Remove startup customizations such as an <tt>.Rprofile</tt> file, if present.</li>
+        </ul>
         <p>
           Further troubleshooting help can be found on our website:
         </p>

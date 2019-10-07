@@ -67,7 +67,18 @@
            <li>RStudio is unable to communicate with R over a local network port, possibly because of firewall restrictions or anti-virus software.</li>
         </ul>
         <p>
-            Please try cleaning up any code that runs when R starts, running R from a terminal with a project on a local disk, and adding an exclusion for RStudio to any security software that guards access to your machine's local network interface.
+            Please try the following:
+        </p>
+        <ul>
+            <li>If you've customized R session creation by creating an R profile (e.g. located at <tt>~/.Rprofile</tt>), consider temporarily removing it.</li>
+            <li>If you are using a firewall or antivirus software which guards access to local network ports, add an exclusion for the RStudio and rsession executables.</li>
+            <li>Run RGui, R.app, or R in a terminal to ensure that R itself starts up correctly.</li>
+        </ul>
+        <p>
+          Further troubleshooting help can be found on our website:
+        </p>
+        <p>
+          <a href="https://www.rstudio.org/links/troubleshooting_startup">Troubleshooting RStudio Startup</a>
         </p>
         <p style="text-align: center; margin-top: 50px;">
             <a href="#url#" class="reload">
