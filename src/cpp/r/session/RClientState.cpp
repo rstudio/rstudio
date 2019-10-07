@@ -257,7 +257,7 @@ json::Value ClientState::getProjectPersistent(std::string scope,
       if (!json::isType<core::json::Object>((*i).getValue()))
          return json::Value();
       json::Object scopeObject = (*i).getValue().getObject();
-      return json::Value(scopeObject[name]);
+      return scopeObject[name].clone();
    }
 }
 
