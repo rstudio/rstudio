@@ -12,5 +12,5 @@
 
 .js-focus-visible .focus-visible, input[type="checkbox"].focus-visible {
     outline: goldenrod solid 2px;
-    outline-offset: -2px;
+    outline-offset: -1px;
 }

@@ -40,7 +40,7 @@
    cursor: default;
 }
 
-.objectGrid td:focus
+.objectGrid td:focus:not(.focus-visible)
 {
    outline: none;
 }
