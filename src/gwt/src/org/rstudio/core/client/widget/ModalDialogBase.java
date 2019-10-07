@@ -209,13 +209,6 @@ public abstract class ModalDialogBase extends DialogBox
    {
       refreshFocusableElements();
       focusInitialControl();
-      
-      // try hard to make sure focus ends up in dialog
-      Element focused = DomUtils.getActiveElement();
-      if (focused == null || !DomUtils.contains(getElement(), focused))
-      {
-        focusFirstControl();
-      }
    }
 
    protected void addOkButton(ThemedButton okButton, String elementId)
