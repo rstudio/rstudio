@@ -27,6 +27,14 @@
 
 * New projects can be initialized with renv, giving them an isolated project environment
 
+### Server Security
+
+* New `auth-timeout-minutes` option signs users out after a defined period of inactivity (Pro #667)
+* CSRF hardening improvements including validation of the HTTP `Origin` header, on by default (Pro #1214)
+* Add option `auth-cookies-force-secure` to always mark auth cookies as secure when SSL is terminated upstream (Pro #995)
+* Set HTTP header `X-Content-Type-Options` to discourage MIME type sniffing (Pro #1219)
+* Authentication cookies are now revoked after signout (Pro #606)
+
 ### Miscellaneous
 
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
@@ -45,7 +53,6 @@
 * Add preference for changing font size on help pane (#3282)
 * Improved keyboard and touch support for iPadOS 13.1
 * Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
-* Added ability to mark auth cookies as secure via the `auth-cookies-force-secure` `rserver.conf` configuration setting
 * Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 
 ### Bugfixes
