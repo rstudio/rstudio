@@ -90,7 +90,7 @@ double devicePixelRatio(QMainWindow* pMainWindow)
    return 1.0;
 }
 
-bool isOSXMavericks()
+bool isMacOS()
 {
    return false;
 }

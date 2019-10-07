@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
-implements HasEnsureVisibleHandlers
+                                                   implements HasEnsureVisibleHandlers
 {
    public abstract ImageResource getIcon();
 
@@ -53,12 +53,8 @@ implements HasEnsureVisibleHandlers
 
    protected abstract void initialize(T prefs);
 
-   /**
-    * @return True if reload of the browser UI is required
-    */
-   public abstract boolean onApply(T prefs);
-   
-   
+   public abstract RestartRequirement onApply(T prefs);
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);

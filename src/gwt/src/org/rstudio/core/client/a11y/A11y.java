@@ -24,11 +24,6 @@ import org.rstudio.core.client.StringUtil;
  */
 public class A11y
 {
-   /**
-    * Typing delay before updating related aria-live message
-    */
-   public static int TypingStatusDelayMs = 2000;
-   
    public static void setARIADialogModal(Element element)
    {
       element.setAttribute("aria-modal", "true");

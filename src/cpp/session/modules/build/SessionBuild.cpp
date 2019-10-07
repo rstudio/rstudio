@@ -2013,17 +2013,15 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installBuildTools()
 {
-   if (module_context::isOSXMavericks())
+   if (module_context::isMacOS())
    {
-      if (!module_context::hasOSXMavericksDeveloperTools())
+      if (!module_context::hasMacOSCommandLineTools())
       {
-         // on mavericks we just need to invoke clang and the user will be
-         // prompted to install the command line tools
          core::system::ProcessResult result;
-         Error error = core::system::runCommand("clang --version",
-                                                "",
-                                                core::system::ProcessOptions(),
-                                                &result);
+         Error error = core::system::runCommand(
+                  "/usr/bin/xcode-select --install",
+                  core::system::ProcessOptions(),
+                  &result);
          if (error)
             LOG_ERROR(error);
       }
@@ -2113,7 +2111,7 @@ void onDeferredInit(bool newSession)
       // to clang if necessary
       using namespace module_context;
       FilePath makevarsPath = userHomePath().completeChildPath(".R/Makevars");
-      if (isOSXMavericks() && !makevarsPath.exists() && !canBuildCpp())
+      if (isMacOS() && !makevarsPath.exists() && !canBuildCpp())
       {
          Error error = makevarsPath.getParent().ensureDirectory();
          if (!error)
@@ -2197,11 +2195,15 @@ bool canBuildCpp()
 {
    if (s_canBuildCpp)
       return true;
-   
+
 #ifdef __APPLE__
-   if (isOSXMavericks() &&
+   // NOTE: on macOS, R normally requests user install and use its own
+   // LLVM toolchain; however, that toolchain still needs to re-use
+   // system headers provided by the default macOS toolchain, and so
+   // we still want to check for macOS command line tools here
+   if (isMacOS() &&
        usingSystemMake() &&
-       !hasOSXMavericksDeveloperTools())
+       !hasMacOSCommandLineTools())
    {
       return false;
    }
@@ -2247,7 +2249,10 @@ bool canBuildCpp()
    }
 
    if (result.exitStatus != EXIT_SUCCESS)
+   {
+      checkXcodeLicense();
       return false;
+   }
    
    s_canBuildCpp = true;
    return true;

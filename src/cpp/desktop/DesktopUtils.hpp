@@ -43,7 +43,7 @@ rstudio::core::FilePath userWebCachePath();
 double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isWindows();
-bool isOSXMavericks();
+bool isMacOS();
 bool isCentOS();
 bool isGnomeDesktop();
 

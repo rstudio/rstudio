@@ -485,19 +485,14 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
 bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
                                 std::string* pWarningMessage);
 
+bool isMacOS();
+bool hasMacOSDeveloperTools();
+bool hasMacOSCommandLineTools();
+void checkXcodeLicense();
+
 #ifdef __APPLE__
-bool isOSXMavericks();
-bool hasOSXMavericksDeveloperTools();
 core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath);
 #else
-inline bool isOSXMavericks()
-{
-   return false;
-}
-inline bool hasOSXMavericksDeveloperTools()
-{
-   return false;
-}
 inline core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
 {
    return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);

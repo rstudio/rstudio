@@ -19,8 +19,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -32,7 +30,6 @@ import com.google.gwt.event.dom.client.ContextMenuHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -57,7 +54,6 @@ import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
@@ -104,7 +100,6 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
@@ -143,7 +138,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Acti
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
@@ -261,22 +255,8 @@ public class AceEditor implements DocDisplay,
       private AceEditorChangeTracker()
       {
          super(AceEditor.this);
-         AceEditor.this.addFoldChangeHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler()
-         {
-            @Override
-            public void onFoldChange(FoldChangeEvent event)
-            {
-               changed_ = true;
-            }
-         });
-         AceEditor.this.addLineWidgetsChangedHandler(new org.rstudio.studio.client.workbench.views.source.editors.text.events.LineWidgetsChangedEvent.Handler()
-         {
-            @Override
-            public void onLineWidgetsChanged(LineWidgetsChangedEvent event)
-            {
-               changed_ = true;
-            }
-         });
+         AceEditor.this.addFoldChangeHandler(event -> changed_ = true);
+         AceEditor.this.addLineWidgetsChangedHandler(event -> changed_ = true);
       }
 
       @Override
@@ -295,40 +275,20 @@ public class AceEditor implements DocDisplay,
 
    public static void load(final Command command)
    {
-      aceLoader_.addCallback(new Callback()
-      {
-         public void onLoaded()
-         {
-            aceSupportLoader_.addCallback(new Callback()
-            {
-               public void onLoaded()
-               {
-                  extLanguageToolsLoader_.addCallback(new Callback()
-                  {
-                     public void onLoaded()
-                     {
-                        vimLoader_.addCallback(new Callback()
-                        {
-                           public void onLoaded()
-                           {
-                              emacsLoader_.addCallback(new Callback()
-                              {
-                                 public void onLoaded()
-                                 {
-                                    AceSupport.initialize();
+      aceLoader_.addCallback(() ->
+            aceSupportLoader_.addCallback(() ->
+                  extLanguageToolsLoader_.addCallback(() ->
+                        vimLoader_.addCallback(() ->
+                              emacsLoader_.addCallback(() -> {
+                                 AceSupport.initialize();
 
-                                    if (command != null)
-                                       command.execute();
-                                 }
-                              });
-                           }
-                        });
-                     }
-                  });
-               }
-            });
-         }
-      });
+                                 if (command != null)
+                                    command.execute();
+                              })
+                        )
+                  )
+            )
+      );
    }
 
    public static final native AceEditor getEditor(Element el)
@@ -353,7 +313,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
-      editorEventListeners_ = new ArrayList<HandlerRegistration>();
+      editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
       ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
@@ -368,122 +328,81 @@ public class AceEditor implements DocDisplay,
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       bgChunkHighlighter_ = new AceBackgroundHighlighter(this);
       
-      widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
-      {
-         public void onValueChange(ValueChangeEvent<Void> evt)
+      widget_.addValueChangeHandler(evt -> {
+         if (!valueChangeSuppressed_)
          {
-            if (!valueChangeSuppressed_)
-            {
-               ValueChangeEvent.fire(AceEditor.this, null);
-            }
+            ValueChangeEvent.fire(AceEditor.this, null);
          }
       });
       
-      widget_.addFoldChangeHandler(new FoldChangeEvent.Handler()
-      {
-         @Override
-         public void onFoldChange(FoldChangeEvent event)
-         {
-            AceEditor.this.fireEvent(new FoldChangeEvent());
-         }
-      });
+      widget_.addFoldChangeHandler(event -> AceEditor.this.fireEvent(new FoldChangeEvent()));
 
-      addPasteHandler(new PasteEvent.Handler()
-      {
-         @Override
-         public void onPaste(PasteEvent event)
-         {
-            if (completionManager_ != null)
-               completionManager_.onPaste(event);
+      addPasteHandler(event -> {
+         if (completionManager_ != null)
+            completionManager_.onPaste(event);
 
-            final Position start = getSelectionStart();
+         final Position start = getSelectionStart();
 
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  Range range = Range.fromPoints(start, getSelectionEnd());
-                  indentPastedRange(range);
-               }
-            });
-         }
+         Scheduler.get().scheduleDeferred(() -> {
+            Range range = Range.fromPoints(start, getSelectionEnd());
+            indentPastedRange(range);
+         });
       });
 
       // handle click events
-      addAceClickHandler(new AceClickEvent.Handler()
-      {
-         @Override
-         public void onAceClick(AceClickEvent event)
+      addAceClickHandler(event -> {
+         fixVerticalOffsetBug();
+         if (DomUtils.isCommandClick(event.getNativeEvent()))
          {
-            fixVerticalOffsetBug();
-            if (DomUtils.isCommandClick(event.getNativeEvent()))
-            {
-               // eat the event so ace doesn't do anything with it
-               event.preventDefault();
-               event.stopPropagation();
+            // eat the event so ace doesn't do anything with it
+            event.preventDefault();
+            event.stopPropagation();
 
-               // go to function definition
-               fireEvent(new CommandClickEvent(event));
-            }
-            else
-            {
-               // if the focus in the Help pane or another iframe
-               // we need to make sure to get it back
-               WindowEx.get().focus();
-            }
+            // go to function definition
+            fireEvent(new CommandClickEvent(event));
+         }
+         else
+         {
+            // if the focus in the Help pane or another iframe
+            // we need to make sure to get it back
+            WindowEx.get().focus();
          }
       });
 
       lastCursorChangedTime_ = 0;
-      addCursorChangedHandler(new CursorChangedHandler()
-      {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            fixVerticalOffsetBug();
-            clearLineHighlight();
-            lastCursorChangedTime_ = System.currentTimeMillis();
-         }
+      addCursorChangedHandler(event -> {
+         fixVerticalOffsetBug();
+         clearLineHighlight();
+         lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
       lastModifiedTime_ = 0;
-      addValueChangeHandler(new ValueChangeHandler<Void>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
-         {
-            lastModifiedTime_ = System.currentTimeMillis();
-            clearDebugLineHighlight();
-         }
+      addValueChangeHandler(event -> {
+         lastModifiedTime_ = System.currentTimeMillis();
+         clearDebugLineHighlight();
       });
       
-      widget_.addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
+      widget_.addAttachHandler(event -> {
+         if (event.isAttached())
+            attachToWidget(widget_.getElement(), AceEditor.this);
+         else
+            detachFromWidget(widget_.getElement());
+
+         if (!event.isAttached())
          {
-            if (event.isAttached())
-               attachToWidget(widget_.getElement(), AceEditor.this);
-            else
-               detachFromWidget(widget_.getElement());
-            
-            if (!event.isAttached())
+            for (HandlerRegistration handler : editorEventListeners_)
+               handler.removeHandler();
+            editorEventListeners_.clear();
+
+            if (completionManager_ != null)
             {
-               for (HandlerRegistration handler : editorEventListeners_)
-                  handler.removeHandler();
-               editorEventListeners_.clear();
-               
-               if (completionManager_ != null)
-               {
-                  completionManager_.detach();
-                  completionManager_ = null;
-               }
-               
-               if (s_lastFocusedEditor == AceEditor.this)
-               {
-                  s_lastFocusedEditor = null;
-               }
+               completionManager_.detach();
+               completionManager_ = null;
+            }
+
+            if (s_lastFocusedEditor == AceEditor.this)
+            {
+               s_lastFocusedEditor = null;
             }
          }
       });
@@ -493,54 +412,47 @@ public class AceEditor implements DocDisplay,
          MainWindowObject.lastFocusedEditorId().set(id);
       });
       
-      addFocusHandler((FocusEvent event) -> {
-         s_lastFocusedEditor = this;
-      });
+      addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
       
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
-            new AceEditorCommandEvent.Handler()
-            {
-               @Override
-               public void onEditorCommand(AceEditorCommandEvent event)
+            event -> {
+               // skip this if this is only for the actively focused Ace instance
+               // (note: in RStudio Server, the Ace Editor instance may become
+               // unfocused when e.g. executing commands from the menu, so we
+               // need to ensure this routes to the most recently focused editor)
+               boolean ignore =
+                     event.getExecutionPolicy() == AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED &&
+                     AceEditor.this != s_lastFocusedEditor;
+
+               if (ignore)
+                  return;
+
+               switch (event.getCommand())
                {
-                  // skip this if this is only for the actively focused Ace instance
-                  // (note: in RStudio Server, the Ace Editor instance may become
-                  // unfocused when e.g. executing commands from the menu, so we
-                  // need to ensure this routes to the most recently focused editor)
-                  boolean ignore = 
-                        event.getExecutionPolicy() == AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED &&
-                        AceEditor.this != s_lastFocusedEditor;
-                  
-                  if (ignore)
-                     return;
-                  
-                  switch (event.getCommand())
-                  {
-                  case AceEditorCommandEvent.YANK_REGION:                yankRegion();               break;
-                  case AceEditorCommandEvent.YANK_BEFORE_CURSOR:         yankBeforeCursor();         break;
-                  case AceEditorCommandEvent.YANK_AFTER_CURSOR:          yankAfterCursor();          break;
-                  case AceEditorCommandEvent.PASTE_LAST_YANK:            pasteLastYank();            break;
-                  case AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
-                  case AceEditorCommandEvent.INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
-                  case AceEditorCommandEvent.JUMP_TO_MATCHING:           jumpToMatching();           break;
-                  case AceEditorCommandEvent.SELECT_TO_MATCHING:         selectToMatching();         break;
-                  case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
-                  case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
-                  case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
-                  case AceEditorCommandEvent.EDIT_LINES_FROM_START:      editLinesFromStart();       break;
-                  case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
-                  case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
-                  case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
-                  case AceEditorCommandEvent.EXPAND_TO_LINE:             expandToLine();             break;
-                  case AceEditorCommandEvent.COPY_LINES_DOWN:            copyLinesDown();            break;
-                  case AceEditorCommandEvent.JOIN_LINES:                 joinLines();                break;
-                  case AceEditorCommandEvent.REMOVE_LINE:                removeLine();               break;
-                  case AceEditorCommandEvent.SPLIT_INTO_LINES:           splitIntoLines();           break;
-                  case AceEditorCommandEvent.BLOCK_INDENT:               blockIndent();              break;
-                  case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
-                  case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
-                  }
+               case AceEditorCommandEvent.YANK_REGION:                yankRegion();               break;
+               case AceEditorCommandEvent.YANK_BEFORE_CURSOR:         yankBeforeCursor();         break;
+               case AceEditorCommandEvent.YANK_AFTER_CURSOR:          yankAfterCursor();          break;
+               case AceEditorCommandEvent.PASTE_LAST_YANK:            pasteLastYank();            break;
+               case AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
+               case AceEditorCommandEvent.INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
+               case AceEditorCommandEvent.JUMP_TO_MATCHING:           jumpToMatching();           break;
+               case AceEditorCommandEvent.SELECT_TO_MATCHING:         selectToMatching();         break;
+               case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
+               case AceEditorCommandEvent.ADD_CURSOR_ABOVE:           addCursorAbove();           break;
+               case AceEditorCommandEvent.ADD_CURSOR_BELOW:           addCursorBelow();           break;
+               case AceEditorCommandEvent.EDIT_LINES_FROM_START:      editLinesFromStart();       break;
+               case AceEditorCommandEvent.INSERT_SNIPPET:             onInsertSnippet();          break;
+               case AceEditorCommandEvent.MOVE_LINES_UP:              moveLinesUp();              break;
+               case AceEditorCommandEvent.MOVE_LINES_DOWN:            moveLinesDown();            break;
+               case AceEditorCommandEvent.EXPAND_TO_LINE:             expandToLine();             break;
+               case AceEditorCommandEvent.COPY_LINES_DOWN:            copyLinesDown();            break;
+               case AceEditorCommandEvent.JOIN_LINES:                 joinLines();                break;
+               case AceEditorCommandEvent.REMOVE_LINE:                removeLine();               break;
+               case AceEditorCommandEvent.SPLIT_INTO_LINES:           splitIntoLines();           break;
+               case AceEditorCommandEvent.BLOCK_INDENT:               blockIndent();              break;
+               case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
+               case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
                }
             });
    }
@@ -1043,27 +955,13 @@ public class AceEditor implements DocDisplay,
       editorEventListeners_.add(AceEditorNative.addEventListener(
             widget_.getEditor().getCommandManager(),
             "afterExec",
-            new CommandWithArg<JavaScriptObject>()
-            {
-               @Override
-               public void execute(JavaScriptObject event)
-               {
-                  events_.fireEvent(new AceAfterCommandExecutedEvent(event));
-               }
-            }));
+            (CommandWithArg<JavaScriptObject>) event -> events_.fireEvent(new AceAfterCommandExecutedEvent(event))));
       
       // Listen for keyboard activity
       editorEventListeners_.add(AceEditorNative.addEventListener(
             widget_.getEditor(),
             "keyboardActivity",
-            new CommandWithArg<JavaScriptObject>()
-            {
-               @Override
-               public void execute(JavaScriptObject event)
-               {
-                  events_.fireEvent(new AceKeyboardActivityEvent(event));
-               }
-            }));
+            (CommandWithArg<JavaScriptObject>) event -> events_.fireEvent(new AceKeyboardActivityEvent(event))));
 
       if (useVimMode_)
          widget_.getEditor().setMarks(marks);
@@ -1116,14 +1014,9 @@ public class AceEditor implements DocDisplay,
                                                      false);
          scrollToY(scrollTop, 0);
          scrollToX(scrollLeft);
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               scrollToY(scrollTop, 0);
-               scrollToX(scrollLeft);
-            }
+         Scheduler.get().scheduleDeferred(() -> {
+            scrollToY(scrollTop, 0);
+            scrollToX(scrollLeft);
          });
       }
       else
@@ -1323,13 +1216,9 @@ public class AceEditor implements DocDisplay,
          // Preview". The only thing you could do is close the browser tab.
          // By inserting a 5-minute delay hopefully Firefox would be done with
          // whatever print related operations are important.
-         Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-         {
-            public boolean execute()
-            {
-               PrintIFrame.this.removeFromParent();
-               return false;
-            }
+         Scheduler.get().scheduleFixedDelay(() -> {
+            PrintIFrame.this.removeFromParent();
+            return false;
          }, 1000 * 60 * 5);
       }
 
@@ -1993,15 +1882,9 @@ public class AceEditor implements DocDisplay,
       final AnchoredSelection selection = new AnchoredSelectionImpl(start, end);
       if (hostWidget != null)
       {
-         hostWidget.addAttachHandler(new AttachEvent.Handler()
-         {
-            @Override
-            public void onAttachOrDetach(AttachEvent event)
-            {
-               if (!event.isAttached() && selection != null)
-                  selection.detach();
-            }
-            
+         hostWidget.addAttachHandler(event -> {
+            if (!event.isAttached() && selection != null)
+               selection.detach();
          });
       }
       
@@ -2076,14 +1959,10 @@ public class AceEditor implements DocDisplay,
 
    public void onActivate()
    {
-      Scheduler.get().scheduleFinally(new RepeatingCommand()
-      {
-         public boolean execute()
-         {
-            widget_.onResize();
-            widget_.onActivate();
-            return false;
-         }
+      Scheduler.get().scheduleFinally(() -> {
+         widget_.onResize();
+         widget_.onActivate();
+         return false;
       });
    }
 
@@ -3750,14 +3629,9 @@ public class AceEditor implements DocDisplay,
       if (infoBar_ == null)
       {
          infoBar_ = new AceInfoBar(widget_);
-         widget_.addKeyDownHandler(new KeyDownHandler()
-         {
-            @Override
-            public void onKeyDown(KeyDownEvent event)
-            {
-               if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
-                  infoBar_.hide();
-            }
+         widget_.addKeyDownHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
+               infoBar_.hide();
          });
       }
          
@@ -3876,14 +3750,7 @@ public class AceEditor implements DocDisplay,
       // keep up
       valueChangeSuppressed_ = true;
 
-      collab_.beginCollabSession(this, params, dirtyState, new Command()
-      {
-         @Override
-         public void execute()
-         {
-            valueChangeSuppressed_ = false;
-         }
-      });
+      collab_.beginCollabSession(this, params, dirtyState, () -> valueChangeSuppressed_ = false);
    }
    
    @Override
@@ -4116,16 +3983,11 @@ public class AceEditor implements DocDisplay,
             }
          };
          
-         editor_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
-         {
-            @Override
-            public void onDocumentChanged(DocumentChangedEvent event)
+         editor_.addDocumentChangedHandler(event -> {
+            if (editor_.hasCodeModelScopeTree())
             {
-               if (editor_.hasCodeModelScopeTree())
-               {
-                  row_ = event.getEvent().getRange().getStart().getRow();
-                  timer_.schedule(DELAY_MS);
-               }
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(DELAY_MS);
             }
          });
       }

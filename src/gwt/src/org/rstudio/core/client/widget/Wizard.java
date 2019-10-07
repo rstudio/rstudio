@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.RStudioGinjector;
 
 
 public class Wizard<I,T> extends ModalDialog<T>
@@ -354,8 +355,9 @@ public class Wizard<I,T> extends ModalDialog<T>
                                     width, Unit.PX);
       
       isAnimating_ = true;
-     
-      bodyPanel_.animate(300, new AnimationCallback()
+
+      int duration = (RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue() ? 0 : 300);
+      bodyPanel_.animate(duration, new AnimationCallback()
       {
          @Override
          public void onAnimationComplete()

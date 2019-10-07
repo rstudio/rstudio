@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.Date;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -25,6 +26,8 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.FireEvents;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -89,8 +92,29 @@ public class JobItem extends Composite implements JobItemView
       String failed();
    }
 
+   public interface Preferences
+   {
+      boolean reducedMotion();
+   }
+
+   public static class PreferencesImpl extends UserPrefsSubset
+                                       implements Preferences
+   {
+      @Inject
+      public PreferencesImpl(Provider<UserPrefs> pUserPrefs)
+      {
+         super(pUserPrefs);
+      }
+
+      @Override
+      public boolean reducedMotion()
+      {
+         return getUserPrefs().reducedMotion().getValue();
+      }
+   }
+
    @Inject
-   public JobItem(@Assisted Job job, FireEvents eventBus)
+   public JobItem(@Assisted Job job, FireEvents eventBus, Preferences prefs)
    {
       eventBus_ = eventBus;
       stop_ = new ToolbarButton(ToolbarButton.NoText, "Stop job", new ImageResource2x(RESOURCES.jobCancel()), evt ->
@@ -125,7 +149,7 @@ public class JobItem extends Composite implements JobItemView
             // ignore clicks occurring inside the progress area, or the stop button
             return;
          }
-         eventBus_.fireEvent(new JobSelectionEvent(job.id, job.type, true, true));
+         eventBus_.fireEvent(new JobSelectionEvent(job.id, job.type, true, !prefs.reducedMotion()));
       };
       select_.addClickHandler(selectJob);
       panel_.addClickHandler(selectJob);

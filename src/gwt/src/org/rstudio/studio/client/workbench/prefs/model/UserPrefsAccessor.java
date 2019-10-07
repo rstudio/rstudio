@@ -1533,6 +1533,38 @@ public class UserPrefsAccessor extends Prefs
       return integer("data_viewer_max_columns", 50);
    }
 
+   /**
+    * Support accessibility aids such as screen readers (RStudio Server).
+    */
+   public PrefValue<Boolean> enableScreenReader()
+   {
+      return bool("enable_screen_reader", false);
+   }
+
+   /**
+    * Number of milliseconds to wait after last keystroke before updating live region.
+    */
+   public PrefValue<Integer> typingStatusDelayMs()
+   {
+      return integer("typing_status_delay_ms", 2000);
+   }
+
+   /**
+    * Whether to tell screen readers that the entire page is an application.
+    */
+   public PrefValue<Boolean> ariaApplicationRole()
+   {
+      return bool("aria_application_role", true);
+   }
+
+   /**
+    * Reduce use of animations in the user interface.
+    */
+   public PrefValue<Boolean> reducedMotion()
+   {
+      return bool("reduced_motion", false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1861,6 +1893,14 @@ public class UserPrefsAccessor extends Prefs
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
          dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
+      if (source.hasKey("enable_screen_reader"))
+         enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
+      if (source.hasKey("typing_status_delay_ms"))
+         typingStatusDelayMs().setValue(layer, source.getInteger("typing_status_delay_ms"));
+      if (source.hasKey("aria_application_role"))
+         ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
+      if (source.hasKey("reduced_motion"))
+         reducedMotion().setValue(layer, source.getBool("reduced_motion"));
    }
    
 

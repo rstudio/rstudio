@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
@@ -105,13 +106,13 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectRenvOptions renvOptions = options.getRenvOptions();
       
       renvOptions.useRenv = chkUseRenv_.getValue();
       
-      return false;
+      return new RestartRequirement();
    }
    
    

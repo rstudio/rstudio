@@ -47,15 +47,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -114,14 +111,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       {
          public void onCursorChanged(CursorChangedEvent event)
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  input_.scrollToCursor(scrollPanel_, 8, 60);
-               }
-            });
+            Scheduler.get().scheduleDeferred(() -> input_.scrollToCursor(scrollPanel_, 8, 60));
          }
       });
       input_.addCapturingKeyDownHandler(new KeyDownHandler()
@@ -180,14 +170,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
             }
          }
       });
-      input_.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            scrollToBottom();
-         }
-      });
+      input_.addFocusHandler(event -> scrollToBottom());
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -257,13 +240,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!initialized_)
       {
          initialized_ = true;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            public void execute()
-            {
-               doOnLoad();
-               scrollPanel_.scrollToBottom();
-            }
+         Scheduler.get().scheduleDeferred(() -> {
+            doOnLoad();
+            scrollPanel_.scrollToBottom();
          });
       }
 
@@ -808,7 +787,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    
    // A list of errors that have occurred between console prompts. 
-   private Map<String, List<Element>> errorNodes_ = new TreeMap<String, List<Element>>();
+   private Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;

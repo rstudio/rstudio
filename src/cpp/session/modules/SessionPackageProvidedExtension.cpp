@@ -217,14 +217,23 @@ void onConsoleInput(const std::string& input)
       return;
    
    static const char* const commands[] = {
-      "install.packages",
-      "utils::install.packages",
-      "remove.packages",
-      "utils::remove.packages",
-      "install_github",
-      "devtools::install_github",
-      "load_all",
+      "devtools::install_",
       "devtools::load_all",
+      "install.packages",
+      "install_github",
+      "load_all",
+      "pak::pkg_install",
+      "pak::pkg_remove",
+      "pkg_install",
+      "pkg_remove",
+      "remotes::install_",
+      "remove.packages",
+      "renv::install",
+      "renv::rebuild",
+      "renv::remove",
+      "renv::restore",
+      "utils::install.packages",
+      "utils::remove.packages",
    };
    
    std::string inputTrimmed = boost::algorithm::trim_copy(input);

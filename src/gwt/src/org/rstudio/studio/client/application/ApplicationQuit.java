@@ -44,15 +44,17 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
-import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.TimedProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -560,6 +562,22 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    {
       prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(null, saveChanges));
+   }
+
+   public void doRestart(Session session)
+   {
+      prepareForQuit(
+            "Restarting RStudio",
+            saveChanges -> {
+               String project = session.getSessionInfo().getActiveProjectFile();
+               if (project == null)
+                  project = Projects.NONE;
+
+               final String finalProject = project;
+               performQuit(null, saveChanges, () -> {
+                  eventBus_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
+               });
+            });
    }
 
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()

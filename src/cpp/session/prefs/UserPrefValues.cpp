@@ -2142,6 +2142,58 @@ core::Error UserPrefValues::setDataViewerMaxColumns(int val)
    return writePref("data_viewer_max_columns", val);
 }
 
+/**
+ * Support accessibility aids such as screen readers (RStudio Server).
+ */
+bool UserPrefValues::enableScreenReader()
+{
+   return readPref<bool>("enable_screen_reader");
+}
+
+core::Error UserPrefValues::setEnableScreenReader(bool val)
+{
+   return writePref("enable_screen_reader", val);
+}
+
+/**
+ * Number of milliseconds to wait after last keystroke before updating live region.
+ */
+int UserPrefValues::typingStatusDelayMs()
+{
+   return readPref<int>("typing_status_delay_ms");
+}
+
+core::Error UserPrefValues::setTypingStatusDelayMs(int val)
+{
+   return writePref("typing_status_delay_ms", val);
+}
+
+/**
+ * Whether to tell screen readers that the entire page is an application.
+ */
+bool UserPrefValues::ariaApplicationRole()
+{
+   return readPref<bool>("aria_application_role");
+}
+
+core::Error UserPrefValues::setAriaApplicationRole(bool val)
+{
+   return writePref("aria_application_role", val);
+}
+
+/**
+ * Reduce use of animations in the user interface.
+ */
+bool UserPrefValues::reducedMotion()
+{
+   return readPref<bool>("reduced_motion");
+}
+
+core::Error UserPrefValues::setReducedMotion(bool val)
+{
+   return writePref("reduced_motion", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2308,6 +2360,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSubmitCrashReports,
       kDefaultRVersion,
       kDataViewerMaxColumns,
+      kEnableScreenReader,
+      kTypingStatusDelayMs,
+      kAriaApplicationRole,
+      kReducedMotion,
    });
 }
    

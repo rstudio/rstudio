@@ -33,6 +33,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -502,9 +503,9 @@ public class EditingPreferencesPane extends PreferencesPane
    }
    
    @Override
-   public boolean onApply(UserPrefs prefs)
+   public RestartRequirement onApply(UserPrefs prefs)
    {
-      boolean reload = super.onApply(prefs);
+      RestartRequirement restartRequirement = super.onApply(prefs);
       
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
@@ -535,7 +536,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       
-      return reload;
+      return restartRequirement;
    }
  
    @Override
