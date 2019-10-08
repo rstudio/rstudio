@@ -83,8 +83,14 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 install renv master rstudio
 
+RHOME=$(Rscript -e 'Sys.getenv("R_HOME")')
+if [[ ! -w $RHOME ]]; then
+  echo "$RHOME is not writable. Creating user R library directory."
+  mkdir -p $(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
+fi
+
 # Packages needed to run tests
-sudo Rscript -e "if(!require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
+Rscript -e "if(!require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
 
 # back to install-dir
 cd $INSTALL_DIR
