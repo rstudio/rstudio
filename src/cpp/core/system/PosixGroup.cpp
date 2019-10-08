@@ -105,7 +105,7 @@ Error groupFromId(gid_t gid, Group* pGroup)
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 {
    User user;
-   Error error = User::createUser(userName, user);
+   Error error = User::getUserFromIdentifier(userName, user);
    if (error)
       return error;
 

@@ -553,7 +553,7 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    else
    {
       core::system::User user;
-      Error error = core::system::User::createUser(username, user);
+      Error error = core::system::User::getUserFromIdentifier(username, user);
       if (error)
          return error;
 

@@ -43,7 +43,7 @@ inline std::string getEnvVariable(const std::string& in_name)
    return std::string();
 }
 
-}
+} // anonymous namespace
 
 struct User::Impl
 {
@@ -94,36 +94,6 @@ struct User::Impl
 
 PRIVATE_IMPL_DELETER_IMPL(User)
 
-#ifndef _WIN32
-
-Error User::createUser(UidType in_userId, User& out_user)
-{
-   User user;
-   Error error = user.m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
-   if (!error)
-      out_user = user;
-
-   return error;
-}
-
-Error User::getCurrentUser(User& out_currentUser)
-{
-   return createUser(::geteuid(), out_currentUser);
-}
-
-GidType User::getGroupId() const
-{
-   return m_impl->GroupId;
-}
-
-UidType User::getUserId() const
-{
-   return m_impl->UserId;
-}
-
-#endif
-
-
 User::User() :
    m_impl(new Impl())
 {
@@ -135,11 +105,26 @@ User::User(const User& in_other) :
 {
 }
 
-Error User::createUser(const std::string& in_username, User& out_user)
+Error User::getCurrentUser(User& out_currentUser)
+{
+   return getUserFromIdentifier(::geteuid(), out_currentUser);
+}
+
+Error User::getUserFromIdentifier(const std::string& in_username, User& out_user)
 {
    User user;
 
    Error error = user.m_impl->populateUser<const char*>(::getpwnam_r, in_username.c_str());
+   if (!error)
+      out_user = user;
+
+   return error;
+}
+
+Error User::getUserFromIdentifier(UidType in_userId, User& out_user)
+{
+   User user;
+   Error error = user.m_impl->populateUser<UidType>(::getpwuid_r, in_userId);
    if (!error)
       out_user = user;
 
@@ -189,6 +174,16 @@ bool User::isEmpty() const
 const FilePath& User::getHomePath() const
 {
    return m_impl->HomeDirectory;
+}
+
+GidType User::getGroupId() const
+{
+   return m_impl->GroupId;
+}
+
+UidType User::getUserId() const
+{
+   return m_impl->UserId;
 }
 
 const std::string& User::getUsername() const

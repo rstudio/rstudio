@@ -150,7 +150,7 @@ Error changeOwnership(const FilePath& file)
 {
    // changes ownership of file to the server user
    core::system::User serverUser;
-   Error error = core::system::User::createUser(options().serverUser(), serverUser);
+   Error error = core::system::User::getUserFromIdentifier(options().serverUser(), serverUser);
    if (error)
       return error;
 

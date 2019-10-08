@@ -82,40 +82,6 @@ public:
 #ifndef _WIN32
 
    /**
-    * @brief Creates a user by user ID.
-    *
-    * @param in_userId      The ID of the user to create.
-    * @param out_user       The created user.
-    *
-    * @return Success if the user could be retrieved; Error otherwise.
-    */
-   static Error createUser(UidType in_userId, User& out_user);
-
-   /**
-    * @brief Gets the current user.
-    *
-    * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
-    *                           user if this function returns an error.
-    *
-    * @return Success if the user could be retrieved; Error otherwise.
-    */
-   static Error getCurrentUser(User& out_currentUser);
-
-   /**
-    * @brief Gets the ID of this user's primary group.
-    *
-    * @return The ID of this user's primary group.
-    */
-   GidType getGroupId() const;
-
-   /**
-    * @brief Gets the ID of this user.
-    *
-    * @return The ID of this user.
-    */
-   UidType getUserId() const;
-
-   /**
     * @brief Default constructor.
     *
     * Creates a user object which represents all users.
@@ -130,14 +96,34 @@ public:
    User(const User& in_other);
 
    /**
-    * @brief Creates a user by username.
+    * @brief Gets the current user.
+    *
+    * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
+    *                           user if this function returns an error.
+    *
+    * @return Success if the user could be retrieved; Error otherwise.
+    */
+   static Error getCurrentUser(User& out_currentUser);
+
+   /**
+    * @brief Gets a user from its username.
     *
     * @param in_username    The name of the user to create.
     * @param out_user       The created user.
     *
     * @return Success if the user could be retrieved; Error otherwise.
     */
-   static Error createUser(const std::string& in_username, User& out_user);
+   static Error getUserFromIdentifier(const std::string& in_username, User& out_user);
+
+   /**
+    * @brief Gets a user from its user ID.
+    *
+    * @param in_userId      The ID of the user to create.
+    * @param out_user       The created user.
+    *
+    * @return Success if the user could be retrieved; Error otherwise.
+    */
+   static Error getUserFromIdentifier(UidType in_userId, User& out_user);
 
    /**
     * @brief Checks whether the user represented by this object exists.
@@ -168,6 +154,20 @@ public:
     * @return The user's home path, if it exists; empty path otherwise.
     */
    const FilePath& getHomePath() const;
+
+   /**
+    * @brief Gets the ID of this user's primary group.
+    *
+    * @return The ID of this user's primary group.
+    */
+   GidType getGroupId() const;
+
+   /**
+    * @brief Gets the ID of this user.
+    *
+    * @return The ID of this user.
+    */
+   UidType getUserId() const;
 
    /**
     * @brief Returns the name of this user.

@@ -389,7 +389,7 @@ ProgramStatus Options::read(int argc,
       else
       {
          system::User user;
-         Error error = system::User::createUser(serverUser_, user);
+         Error error = system::User::getUserFromIdentifier(serverUser_, user);
          if (error || !user.exists())
          {
             if (serverUser_ == kDefaultProgramUser)

@@ -44,7 +44,7 @@ bool validateUser(const std::string& username,
    
    // get the user
    core::system::User user;
-   Error error = core::system::User::createUser(username, user);
+   Error error = core::system::User::getUserFromIdentifier(username, user);
    if (error)
    {
       // log the error only if it is unexpected

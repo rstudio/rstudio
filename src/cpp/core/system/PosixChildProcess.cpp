@@ -476,7 +476,7 @@ Error ChildProcess::run()
       // fetch the user to switch to before forking, as the method is not
       // async signal safe and could cause lockups
       core::system::User user;
-      error = User::createUser(options_.runAsUser, user);
+      error = User::getUserFromIdentifier(options_.runAsUser, user);
       if (error)
          return error;
 
@@ -1726,7 +1726,7 @@ Error forkAndRun(const boost::function<int(void)>& func,
    {
       // get uid of user to switch to
       User user;
-      Error error = User::createUser(runAs, user);
+      Error error = User::getUserFromIdentifier(runAs, user);
       if (error)
          return error;
 
@@ -1739,7 +1739,7 @@ Error forkAndRun(const boost::function<int(void)>& func,
 Error forkAndRunPrivileged(const boost::function<int(void)>& func)
 {
    User rootUser;
-   Error error = User::createUser(UidType(0), rootUser);
+   Error error = User::getUserFromIdentifier(UidType(0), rootUser);
    if (error)
       return error;
    return forkAndRunImpl(func, rootUser);

@@ -174,7 +174,7 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       // stream path), which is why we do a username => username transform
       // here. See case 5413 for details.
       core::system::User user;
-      Error error = core::system::User::createUser(userIdentifier, user);
+      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
       if (error)
       {
          // log the error and return the PAM user identifier as a fallback
