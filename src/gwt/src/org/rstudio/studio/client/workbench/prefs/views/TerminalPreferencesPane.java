@@ -25,6 +25,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -309,9 +310,9 @@ public class TerminalPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
      
       if (haveBusyDetectionPref())
       {
@@ -331,7 +332,8 @@ public class TerminalPreferencesPane extends PreferencesPane
             UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND : UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE);
       prefs_.terminalRenderer().setGlobalValue(chkHardwareAcceleration_.getValue() ?
             UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
-      return restartRequired;
+
+      return restartRequirement;
    }
 
    private boolean haveLocalEchoPref()

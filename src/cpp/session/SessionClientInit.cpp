@@ -338,7 +338,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
    sessionInfo["sumatra_pdf_exe_path"] =
-               options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
+               options.sumatraPath().completePath("SumatraPDF.exe").getAbsolutePath();
 #endif
 
    // are build tools enabled

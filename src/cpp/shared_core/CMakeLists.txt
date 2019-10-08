@@ -28,6 +28,11 @@ set (SHARED_CORE_SOURCE_FILES
    json/Json.cpp
 )
 
+set (SHARED_INCLUDE_DIRS
+   include
+   ${BOOST_INCLUDEDIR}
+   )
+
 # UNIX specific
 if (UNIX)
 
@@ -37,12 +42,18 @@ if (UNIX)
       system/User.cpp
    )
 
-endif()
+else()
 
-set (SHARED_INCLUDE_DIRS
-   include
-   ${BOOST_INCLUDEDIR}
-)
+   set(SHARED_INCLUDE_DIRS
+      ${SHARED_INCLUDE_DIRS}
+      ${EXT_SOURCE_DIR})
+
+   set(SHARED_CORE_SOURCE_FILES
+      ${SHARED_CORE_SOURCE_FILES}
+      system/Win32StringUtils.cpp
+      system/Win32User.cpp)
+
+endif()
 
 include_directories(${SHARED_INCLUDE_DIRS})
 

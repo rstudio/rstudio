@@ -19,9 +19,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
@@ -48,6 +51,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             SpellingPreferencesPane spelling, 
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
+                            AccessibilityPreferencesPane accessibility,
+                            ApplicationQuit quit,
+                            GlobalDisplay globalDisplay,
                             UserPrefs userPrefs,
                             UserState userState)
    {
@@ -64,10 +70,13 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                                    spelling,
                                    sourceControl, 
                                    publishing,
-                                   terminal}); 
+                                   terminal,
+                                   accessibility});
       session_ = session;
       server_ = server;
       state_ = userState;
+      quit_ = quit;
+      globalDisplay_ = globalDisplay;
       
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(SourceControlPreferencesPane.class);
@@ -98,7 +107,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    protected void doSaveChanges(final UserPrefs rPrefs,
                                 final Operation onCompleted,
                                 final ProgressIndicator progressIndicator,
-                                final boolean reload)
+                                final RestartRequirement restartRequirement)
    {
       // save changes
       server_.setUserPrefs(
@@ -114,7 +123,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                progressIndicator.onCompleted();
                if (onCompleted != null)
                   onCompleted.execute();
-               if (reload)
+               if (restartRequirement.getDesktopRestartRequired())
+                  restart(globalDisplay_, quit_, session_);
+               if (restartRequirement.getUiReloadRequired())
                   reload();
             }
 
@@ -135,9 +146,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       GWT.<PreferencesDialogResources>create(PreferencesDialogResources.class).styles().ensureInjected();
    }
 
-
-  
    private final WorkbenchServerOperations server_;
    private final Session session_;
    private final UserState state_;
+   private final ApplicationQuit quit_;
+   private final GlobalDisplay globalDisplay_;
 }

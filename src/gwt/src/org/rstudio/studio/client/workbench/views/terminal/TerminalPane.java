@@ -1100,6 +1100,7 @@ public class TerminalPane extends WorkbenchPane
       return XTermOptions.create(
             UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
+            uiPrefs_.getScreenReaderEnabled(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),

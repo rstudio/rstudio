@@ -983,7 +983,7 @@ void rShowFile(const std::string& title, const FilePath& filePath, bool del)
    else // (rsession::options().programMode() == kSessionProgramModeDesktop
    {
 #ifdef _WIN32
-    if (!filePath.extension().empty())
+    if (!filePath.getExtension().empty())
     {
        module_context::showFile(filePath);
        del = false;
@@ -1679,7 +1679,7 @@ int main (int argc, char * const argv[])
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       core::system::initializeSystemLog("rsession-" + core::system::username(),
-                                        core::log::LogLevel::WARNING);
+                                        core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1757,12 +1757,12 @@ int main (int argc, char * const argv[])
          if (options.verifyInstallation())
          {
             core::system::initializeStderrLog(options.programIdentity(),
-                                core::log::LogLevel::WARNING);
+                                core::log::LogLevel::WARN);
          }
          else
          {
             core::system::initializeLog(options.programIdentity(),
-                                        core::log::LogLevel::WARNING,
+                                        core::log::LogLevel::WARN,
                                         options.userLogPath());
          }
       }

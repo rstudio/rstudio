@@ -29,9 +29,6 @@ namespace log {
 
 /**
  * @brief A class which logs messages to stderr.
- *
- * If stderr is not a TTY, no logs will be written. In that case, it is better not to register the destination.
- * Only one of these should be created per program.
  */
 class StderrLogDestination : public ILogDestination
 {

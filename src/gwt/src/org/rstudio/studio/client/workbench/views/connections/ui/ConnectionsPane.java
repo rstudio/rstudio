@@ -66,6 +66,7 @@ import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
@@ -83,12 +84,13 @@ public class ConnectionsPane extends WorkbenchPane
                                         ActiveConnectionsChangedEvent.Handler
 {
    @Inject
-   public ConnectionsPane(Commands commands, EventBus eventBus)
+   public ConnectionsPane(Commands commands, EventBus eventBus, UserPrefs userPrefs)
    {
       // initialize
       super("Connections");
       commands_ = commands;
       eventBus_ = eventBus;
+      userPrefs_ = userPrefs;
 
       // track activation events to update the toolbar
       eventBus_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
@@ -257,10 +259,10 @@ public class ConnectionsPane extends WorkbenchPane
       setConnection(connection, connectVia);
       
       installConnectionExplorerToolbar(connection);
-      
+
       // show the right panel (connection explorer)
       mainPanel_.slideWidgets(
-            SlidingLayoutPanel.Direction.SlideRight, true, () ->
+            SlidingLayoutPanel.Direction.SlideRight, !userPrefs_.reducedMotion().getValue(), () ->
             {
                connectionExplorer_.onResize();
             });
@@ -602,6 +604,7 @@ public class ConnectionsPane extends WorkbenchPane
    
    private final Commands commands_;
    private final EventBus eventBus_;
+   private final UserPrefs userPrefs_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

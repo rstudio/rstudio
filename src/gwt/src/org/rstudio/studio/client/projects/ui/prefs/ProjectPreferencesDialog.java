@@ -1,7 +1,7 @@
 /*
  * ProjectPreferencesDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,12 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -54,7 +57,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectSourceControlPreferencesPane source,
                                    ProjectBuildToolsPreferencesPane build,
                                    ProjectRenvPreferencesPane renv,
-                                   ProjectSharingPreferencesPane sharing)
+                                   ProjectSharingPreferencesPane sharing,
+                                   Provider<ApplicationQuit> pQuit,
+                                   Provider<GlobalDisplay> pGlobalDisplay)
    {      
       super("Project Options",
             RES.styles().panelContainer(),
@@ -66,6 +71,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       server_ = server;
       pUIPrefs_ = pUIPrefs;
       pEventBus_ = pEventBus;
+      pQuit_ = pQuit;
+      pGlobalDisplay_ = pGlobalDisplay;
    }
    
    @Override
@@ -93,7 +100,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    protected void doSaveChanges(final RProjectOptions options,
                                 final Operation onCompleted,
                                 final ProgressIndicator indicator,
-                                final boolean reload)
+                                final RestartRequirement restartRequirement)
    {
       
       server_.writeProjectOptions(
@@ -131,7 +138,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 
                 if (onCompleted != null)
                    onCompleted.execute();
-                if (reload)
+                if (restartRequirement.getDesktopRestartRequired())
+                   restart(pGlobalDisplay_.get(), pQuit_.get(), session_.get());
+                if (restartRequirement.getUiReloadRequired())
                    reload();
              }
 
@@ -139,7 +148,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
              public void onError(ServerError error)
              {
                 indicator.onError(error.getUserMessage());
-             }         
+             }
           });
       
    }
@@ -160,6 +169,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    private final ProjectsServerOperations server_;
    private final Provider<UserPrefs> pUIPrefs_;
    private final Provider<EventBus> pEventBus_;
+   private final Provider<ApplicationQuit> pQuit_;
+   private final Provider<GlobalDisplay> pGlobalDisplay_;
    
    private RProjectRenvOptions renvOptions_;
    

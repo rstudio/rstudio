@@ -45,7 +45,7 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("rsinverse", core::system::kLogLevelWarning);
+      core::system::initializeSystemLog("rsinverse", log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

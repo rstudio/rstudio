@@ -55,8 +55,8 @@ constexpr char s_delim = ';';
 enum class LogLevel
 {
    OFF = 0,       // No messages will be logged.
-   ERROR = 1,     // Error messages will be logged.
-   WARNING = 2,   // Warning and error messages will be logged.
+   ERR = 1,     // Error messages will be logged.
+   WARN = 2,   // Warning and error messages will be logged.
    INFO = 3,      // Info, warning, and error messages will be logged.
    DEBUG = 4      // All messages will be logged.
 };
@@ -169,7 +169,7 @@ std::string cleanDelims(const std::string& in_toClean);
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::ERROR, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
  *
  * @param in_error      The error to log.
  */
@@ -179,7 +179,7 @@ void logError(const Error& in_error);
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::ERROR, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
  *
  * @param in_error              The error to log.
  * @param in_errorLocation      A location higher in the stack than the ErrorLocation in in_error. Provides more
@@ -191,7 +191,7 @@ void logError(const Error& in_error, const ErrorLocation& in_location);
  * @brief Logs an error as a warning to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::WARNING, no log will be written.
+ * If the configured log level is below LogLevel::WARN, no log will be written.
  *
  * @param in_error      The error to log as a warning.
  */
@@ -221,7 +221,7 @@ void logErrorAsDebug(const Error& in_error);
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::ERROR, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
  *
  * @param in_message        The message to log as an error.
  * @param in_section        The section of the log that the message belongs in. Default: no section.
@@ -232,7 +232,7 @@ void logErrorMessage(const std::string& in_message, const std::string& in_sectio
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::ERROR, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
  *
  * @param in_message        The message to log as an error.
  * @param in_location       The location from which the error message was logged.
@@ -243,7 +243,7 @@ void logErrorMessage(const std::string& in_message, const ErrorLocation& in_logg
  * @brief Logs an error to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::ERROR, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
  *
  * @param in_message        The message to log as an error.
  * @param in_section        The section of the log that the message belongs in.
@@ -255,7 +255,7 @@ void logErrorMessage(const std::string& in_message, const std::string& in_sectio
  * @brief Logs a warning message to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::WARNING, no log will be written.
+ * If the configured log level is below LogLevel::WARN, no log will be written.
  *
  * @param in_message      The message to log as a warning.
  * @param in_section      The section of the log that the message belongs in. Default: no section.
@@ -266,7 +266,7 @@ void logWarningMessage(const std::string& in_message, const std::string& in_sect
  * @brief Logs a warning message to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::WARNING, no log will be written.
+ * If the configured log level is below LogLevel::WARN, no log will be written.
  *
  * @param in_message      The message to log as a warning.
  * @param in_location     The location from which the error message was logged.
@@ -277,7 +277,7 @@ void logWarningMessage(const std::string& in_message, const ErrorLocation& in_lo
  * @brief Logs a warning message to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
- * If the configured log level is below LogLevel::WARNING, no log will be written.
+ * If the configured log level is below LogLevel::WARN, no log will be written.
  *
  * @param in_message      The message to log as a warning.
  * @param in_section      The section of the log that the message belongs in.

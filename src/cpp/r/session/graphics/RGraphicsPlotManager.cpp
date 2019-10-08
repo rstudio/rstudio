@@ -412,7 +412,7 @@ Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  win.metafile(filename=\"%1%\", width=%2%, height=%3%, "
                      "               restoreConsole=FALSE); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.absolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.getAbsolutePath()) %
                                                      widthInches %
                                                      heightInches);
 

@@ -20,6 +20,8 @@
 
 #include <shared_core/json/Json.hpp>
 
+#include <sstream>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 

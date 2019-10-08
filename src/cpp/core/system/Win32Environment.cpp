@@ -22,7 +22,10 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
+
+#include <shared_core/system/User.hpp> // For detail::getenv
 
 namespace rstudio {
 namespace core {
@@ -78,27 +81,7 @@ void environment(Options* pEnvironment)
 // Value returned is UTF-8 encoded
 std::string getenv(const std::string& name)
 {
-   std::wstring nameWide(name.begin(), name.end());
-
-   // get the variable
-   DWORD nSize = 256;
-   std::vector<wchar_t> buffer(nSize);
-   DWORD result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
-   if (result == 0) // not found
-   {
-      return std::string();
-   }
-   if (result > nSize) // not enough space in buffer
-   {
-      nSize = result;
-      buffer.resize(nSize);
-      result = ::GetEnvironmentVariableW(nameWide.c_str(), &(buffer[0]), nSize);
-      if (result == 0 || result > nSize)
-         return std::string(); // VERY unexpected failure case
-   }
-
-   // return it
-   return string_utils::wideToUtf8(&(buffer[0]));
+   return detail::getenv(name);
 }
 
 void setenv(const std::string& name, const std::string& value)

@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
@@ -34,10 +35,12 @@ public class JobsPaneWidgets implements JobsPaneOperations
    @Inject
    public JobsPaneWidgets(Commands commands,
                           EventBus events,
+                          UserPrefs userPrefs,
                           JobsList list)
    {
       commands_ = commands;
       events_ = events;
+      userPrefs_ = userPrefs;
       list_ = list;
 
       toolbar_ = new Toolbar("Jobs Tab");
@@ -49,7 +52,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       {
          // deselect current job
          events_.fireEvent(new JobSelectionEvent(current_,
-               JobConstants.JOB_TYPE_SESSION, false, true));
+               JobConstants.JOB_TYPE_SESSION, false, !userPrefs_.reducedMotion().getValue()));
       });
       
       installMainToolbar();
@@ -231,5 +234,6 @@ public class JobsPaneWidgets implements JobsPaneOperations
    // injected
    private final Commands commands_;
    private final EventBus events_;
+   private final UserPrefs userPrefs_;
    private final JobsList list_;
 }

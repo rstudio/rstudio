@@ -7,6 +7,7 @@
   * Improved keyboard navigation
   * Compatibility with popular screen readers
   * Compliant contrast ratios and other accessibility improvements
+  * User preference for disabling user-interface animations such as when zooming panes
 
 ### Spell Check
 
@@ -45,6 +46,7 @@
 * Improved keyboard and touch support for iPadOS 13.1
 * Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 * Added ability to mark auth cookies as secure via the `auth-cookies-force-secure` `rserver.conf` configuration setting
+* Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 
 ### Bugfixes
 

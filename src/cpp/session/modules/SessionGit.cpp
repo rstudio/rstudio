@@ -209,7 +209,7 @@ std::string gitBin()
 {
    if (!s_gitExePath.empty())
    {
-      return FilePath(s_gitExePath).absolutePathNative();
+      return FilePath(s_gitExePath).getAbsolutePathNative();
    }
    else
       return "git.exe";
@@ -326,18 +326,30 @@ Error gitExec(const ShellArgs& args,
    if (string_utils::isTruthy(log))
       std::cout << gitText(args);
 
+   Error error;
+   
 #ifdef _WIN32
-      return runProgram(gitBin(),
-                        args.args(),
-                        "",
-                        options,
-                        pResult);
+   error = runProgram(
+            gitBin(),
+            args.args(),
+            "",
+            options,
+            pResult);
 #else
-      return runCommand(git() << args.args(),
-                        "",
-                        options,
-                        pResult);
+   error = runCommand(
+            git() << args.args(),
+            "",
+            options,
+            pResult);
 #endif
+
+#ifdef __APPLE__
+   if (pResult->exitStatus == 69)
+      module_context::checkXcodeLicense();
+#endif
+
+   return error;
+      
 }
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
@@ -2703,10 +2715,10 @@ bool detectGitExeDirOnPath(FilePath* pPath)
       // git.exe wrapper that, if used by us, causes console windows to
       // flash
       FilePath filePath(&(path[0]));
-      if (filePath.parent().filename() == "cmd")
+      if (filePath.getParent().getFilename() == "cmd")
         return false;
 
-      *pPath = filePath.parent();
+      *pPath = filePath.getParent();
       return true;
    }
    else
@@ -2729,7 +2741,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2738,7 +2750,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2815,7 +2827,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // go up a level then down to bin
-      *pPath = pPath->parent().childPath("bin");
+      *pPath = pPath->getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2828,7 +2840,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // this is located in \cmd so we need to go up two levels
-      *pPath = pPath->parent().parent().childPath("bin");
+      *pPath = pPath->getParent().getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2842,7 +2854,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       *pPath = FilePath(std::wstring(&(pathbuff[0])));
       if (!pPath->exists())
          return E_FAIL;
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2869,7 +2881,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // The path we have is to sh.exe or wish.exe, we want the parent
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2928,7 +2940,7 @@ Error detectAndSaveGitExePath()
       return error;
 
    // save it
-   s_gitExePath = path.complete("git.exe").absolutePath();
+   s_gitExePath = path.completePath("git.exe").getAbsolutePath();
 
    return Success();
 }
@@ -3065,28 +3077,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
 FilePath whichGitExe()
 {
-   // find git
-   FilePath whichGit = module_context::findProgram("git");
-   if (whichGit.isEmpty())
-   {
-      return whichGit;
-   }
-   else
-   {
-      // if we are on osx mavericks we need to do a further check to make
-      // sure this isn't the fake version of git installed by default
-      if (module_context::isOSXMavericks())
-      {
-         if (module_context::hasOSXMavericksDeveloperTools())
-            return whichGit;
-         else
-            return FilePath();
-      }
-      else
-      {
-         return whichGit;
-      }
-   }
+   return module_context::findProgram("git");
 }
 
 } // anonymous namespace
@@ -3096,22 +3087,18 @@ bool isGitInstalled()
    if (!prefs::userPrefs().vcsEnabled())
       return false;
 
-   // special handling for mavericks for case where there is /usr/bin/git
-   // but it's the fake on installed by osx
-   if ((s_gitExePath.empty() || s_gitExePath == "/usr/bin/git") &&
-       module_context::isOSXMavericks() &&
-       !module_context::hasOSXMavericksDeveloperTools() &&
-       whichGitExe().isEmpty())
-   {
-      return false;
-   }
-
    core::system::ProcessResult result;
    Error error = core::system::runCommand(git() << "--version",
                                           procOptions(),
                                           &result);
    if (error)
       return false;
+   
+#ifdef __APPLE__
+   if (result.exitStatus != EXIT_SUCCESS)
+      module_context::checkXcodeLicense();
+#endif
+   
    return result.exitStatus == EXIT_SUCCESS;
 }
 
@@ -3131,14 +3118,14 @@ FilePath detectedGitExePath()
    FilePath path;
    if (detectGitExeDirOnPath(&path))
    {
-      return path.complete("git.exe");
+      return path.completePath("git.exe");
    }
    else
    {
       Error error = discoverGitBinDir(&path);
       if (!error)
       {
-         return path.complete("git.exe");
+         return path.completePath("git.exe");
       }
       else
       {

@@ -433,7 +433,7 @@ FilePath rBinaryPath()
 {
    FilePath binPath = FilePath(R_HomeDir()).completePath("bin");
 #ifdef _WIN32
-   return binPath.complete("Rterm.exe");
+   return binPath.completePath("Rterm.exe");
 #else
    return binPath.completePath("R");
 #endif

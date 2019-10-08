@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
@@ -112,6 +113,7 @@ public class ConnectionsPresenter extends BasePresenter
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
+                               UserPrefs userPrefs,
                                UserState userState,
                                Binder binder,
                                final Commands commands,
@@ -125,6 +127,7 @@ public class ConnectionsPresenter extends BasePresenter
       commands_ = commands;
       server_ = server;
       state_ = userState;
+      userPrefs_ = userPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       applicationInterrupt_ = applicationInterrupt;
@@ -153,7 +156,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            showAllConnections(true);
+            showAllConnections(!userPrefs_.reducedMotion().getValue());
          }
       });
       
@@ -435,7 +438,7 @@ public class ConnectionsPresenter extends BasePresenter
                  {
                      exploredConnection_ = removingConnection;
                      disconnectConnection(false);
-                     showAllConnections(true);
+                     showAllConnections(!userPrefs_.reducedMotion().getValue());
                  }
                  @Override
                  protected void onFailure()
@@ -601,6 +604,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final EventBus eventBus_;
    private final Commands commands_;
    private UserState state_;
+   private UserPrefs userPrefs_;
    private final ConnectionsServerOperations server_ ;
    @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    

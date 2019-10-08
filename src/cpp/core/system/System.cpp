@@ -225,14 +225,14 @@ log::LogLevel lowestLogLevel()
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       if (!s_logOptions)
-         return log::LogLevel::WARNING;
+         return log::LogLevel::WARN;
 
       return s_logOptions->lowestLogLevel();
    }
    END_LOCK_MUTEX
 
    // default return - only occurs if we fail to lock mutex
-   return log::LogLevel::WARNING;
+   return log::LogLevel::WARN;
 }
 
 Error initLog()
@@ -319,12 +319,12 @@ void log(log::LogLevel logLevel,
 {
    switch (logLevel)
    {
-      case log::LogLevel::ERROR:
+      case log::LogLevel::ERR:
       {
          log::logErrorMessage(message, logSection);
          break;
       }
-      case log::LogLevel::WARNING:
+      case log::LogLevel::WARN:
       {
          log::logWarningMessage(message, logSection);
          break;
@@ -351,9 +351,9 @@ const char* logLevelToStr(log::LogLevel level)
 {
    switch(level)
    {
-      case log::LogLevel::ERROR:
+      case log::LogLevel::ERR:
          return "ERROR";
-      case log::LogLevel::WARNING:
+      case log::LogLevel::WARN:
          return "WARNING";
       case log::LogLevel::INFO:
          return "INFO";

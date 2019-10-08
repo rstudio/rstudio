@@ -90,7 +90,7 @@ double devicePixelRatio(QMainWindow* pMainWindow)
    return 1.0;
 }
 
-bool isOSXMavericks()
+bool isMacOS()
 {
    return false;
 }
@@ -402,7 +402,7 @@ void openUrl(const QUrl& url)
 
       core::system::ProcessResult result;
       Error error = core::system::runProgram(
-            desktop::options().urlopenerPath().absolutePath(),
+            desktop::options().urlopenerPath().getAbsolutePath(),
             args,
             "",
             options,

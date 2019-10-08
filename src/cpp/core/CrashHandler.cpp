@@ -99,7 +99,7 @@ FilePath adminConfFile()
 #ifndef _WIN32
    return FilePath("/etc/rstudio/crash-handler.conf");
 #else
-   return core::system::systemSettingsPath("RStudio", false).complete("crash-handler.conf");
+   return core::system::systemSettingsPath("RStudio", false).completePath("crash-handler.conf");
 #endif
 }
 
@@ -247,7 +247,7 @@ Error initialize(ProgramMode programMode)
       // desktop mode - default database path to user settings path
       databasePathStr = core::system::userSettingsPath(core::system::userHomePath(),
                                                        "R",
-                                                       true).childPath("crashpad_database").absolutePath();
+                                                       true).completeChildPath("crashpad_database").getAbsolutePath();
 #endif
    }
    base::FilePath databasePath = googleFilePath(databasePathStr);
@@ -284,7 +284,7 @@ Error initialize(ProgramMode programMode)
             handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler").absolutePath());
          #endif
       #else
-         handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler.exe").absolutePath());
+         handlerPath = googleFilePath(exePath.getParent().completeChildPath("crashpad_handler.exe").getAbsolutePath());
 #endif
    }
 

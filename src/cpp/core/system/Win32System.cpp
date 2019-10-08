@@ -38,16 +38,15 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
-#include <core/LogWriter.hpp>
-#include <shared_core/Error.hpp>
-#include <core/FileLogWriter.hpp>
-#include <core/StderrLogWriter.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
-#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/system/User.hpp>
 
 #ifndef JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
 #define JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE 0x2000
@@ -176,7 +175,7 @@ void initHook()
 }
 
 Error initializeSystemLog(const std::string& programIdentity,
-                          int logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload)
 {
    return Success();
@@ -212,7 +211,7 @@ unsigned int effectiveUserId()
    return 0; // no concept of this on Win32
 }
 
-bool effectivedIsRoot()
+bool effectiveUserIsRoot()
 {
    // on Windows, treat built-in administrator account, or elevation to it, to be the
    // equivalent of Posix "root"
@@ -274,150 +273,10 @@ bool effectivedIsRoot()
    return isAdmin;
 }
 
-// home path strategies
-namespace {
-
-FilePath environmentHomePath(std::string envVariables)
-{
-   using namespace boost::algorithm;
-
-   // use environment override if specified
-   if (!envVariables.empty())
-   {
-      for (split_iterator<std::string::iterator> it =
-           make_split_iterator(envVariables, first_finder("|", is_iequal()));
-           it != split_iterator<std::string::iterator>();
-           ++it)
-      {
-         std::string envHomePath =
-                  system::getenv(boost::copy_range<std::string>(*it));
-         if (!envHomePath.empty())
-         {
-            FilePath userHomePath(envHomePath);
-            if (userHomePath.exists())
-               return userHomePath;
-         }
-      }
-   }
-
-   // no override
-   return FilePath();
-}
-
-FilePath currentCSIDLPersonalHomePath()
-{
-   // query for My Documents directory
-   const DWORD SHGFP_TYPE_CURRENT = 0;
-   wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_PERSONAL,
-                                   nullptr,
-                                   SHGFP_TYPE_CURRENT,
-                                   homePath);
-   if (SUCCEEDED(hr))
-   {
-      return FilePath(homePath);
-   }
-   else
-   {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
-                          safe_convert::numberToString(hr));
-      return FilePath();
-   }
-}
-
-FilePath defaultCSIDLPersonalHomePath()
-{
-   // query for default and force creation (works around situations
-   // where redirected path is not available)
-   const DWORD SHGFP_TYPE_DEFAULT = 1;
-   wchar_t homePath[MAX_PATH];
-   HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
-                                   nullptr,
-                                   SHGFP_TYPE_DEFAULT,
-                                   homePath);
-   if (SUCCEEDED(hr))
-   {
-      return FilePath(homePath);
-   }
-   else
-   {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
-                          safe_convert::numberToString(hr));
-      return FilePath();
-   }
-}
-
-FilePath homepathHomePath()
-{
-   std::string homeDrive = core::system::getenv("HOMEDRIVE");
-   std::string homePath = core::system::getenv("HOMEPATH");
-   if (!homeDrive.empty() && !homePath.empty())
-      return FilePath(homeDrive + homePath);
-   else
-      return FilePath();
-}
-
-FilePath homedriveHomePath()
-{
-   std::string homeDrive = core::system::getenv("HOMEDRIVE");
-   if (homeDrive.empty())
-      homeDrive = "C:";
-   return FilePath(homeDrive);
-}
-
-typedef std::pair<std::string,boost::function<FilePath()> > HomePathSource;
-
-} // anonymous namespace
 
 FilePath userHomePath(std::string envOverride)
 {
-   using boost::bind;
-   std::vector<HomePathSource> sources;
-   sources.push_back(std::make_pair("R_USER|HOME",
-                                    bind(environmentHomePath, envOverride)));
-   sources.push_back(std::make_pair("SHGFP_TYPE_CURRENT",
-                                    currentCSIDLPersonalHomePath));
-   sources.push_back(std::make_pair("SHGFP_TYPE_DEFAULT",
-                                    defaultCSIDLPersonalHomePath));
-   std::string envFallback = "USERPROFILE";
-   sources.push_back(std::make_pair(envFallback,
-                                    bind(environmentHomePath, envFallback)));
-   sources.push_back(std::make_pair("HOMEPATH",
-                                    homepathHomePath));
-   sources.push_back(std::make_pair("HOMEDRIVE",
-                                    homedriveHomePath));
-
-   for (const HomePathSource& source : sources)
-   {
-      FilePath homePath = source.second();
-      if (!homePath.empty())
-      {
-         // return if we found one that exists
-         if (homePath.exists())
-         {
-            std::string path = homePath.absolutePath();
-
-            // standardize drive letter capitalization if in X:/y/z format
-            if (path.length() > 1 && path[1] == ':')
-            {
-               path[0] = toupper(path[0]);
-               homePath = FilePath(path);
-            }
-
-            return homePath;
-         }
-
-         // otherwise warn that we got a value that didn't exist
-         LOG_WARNING_MESSAGE("Home path returned by " + source.first + " (" +
-                             homePath.absolutePath() + ") does not exist.");
-      }
-   }
-
-   // no luck!
-   LOG_ERROR_MESSAGE("No valid home path found for user");
-   return FilePath();
+   return User::getUserHomePath(envOverride);
 }
 
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
@@ -463,7 +322,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
    }
 
    FilePath settingsPath = FilePath(std::wstring(path));
-   FilePath completePath = settingsPath.complete(appName);
+   FilePath completePath = settingsPath.completePath(appName);
 
    if (create)
    {
@@ -564,7 +423,7 @@ Error realPath(const std::string& path, FilePath* pRealPath)
 
 bool isHiddenFile(const FilePath& filePath)
 {
-   return isHiddenFile(filePath.absolutePath());
+   return isHiddenFile(filePath.getAbsolutePath());
 }
 
 bool isHiddenFile(const FileInfo& fileInfo)
@@ -661,17 +520,17 @@ Error installPath(const std::string& relativeToExecutable,
 
    // resolve to install path using given relative path
    if (relativeToExecutable == "..") // common case
-     *pInstallationPath = exePath.parent().parent();
+     *pInstallationPath = exePath.getParent().getParent();
    else
-     *pInstallationPath = exePath.parent().complete(relativeToExecutable);
+     *pInstallationPath = exePath.getParent().completePath(relativeToExecutable);
 
    return Success();
 }
 
 void fixupExecutablePath(FilePath* pExePath)
 {
-   if (pExePath->extension().empty())
-     *pExePath = pExePath->parent().complete(pExePath->filename() + ".exe");
+   if (pExePath->getExtension().empty())
+     *pExePath = pExePath->getParent().completePath(pExePath->getFilename() + ".exe");
 }
 
 void abort()
@@ -887,7 +746,7 @@ void ensureLongPath(FilePath* pFilePath)
 {
    const std::size_t kBuffSize = (MAX_PATH*2) + 1;
    char buffer[kBuffSize];
-   std::string path = string_utils::utf8ToSystem(pFilePath->absolutePath());
+   std::string path = string_utils::utf8ToSystem(pFilePath->getAbsolutePath());
    if (::GetLongPathName(path.c_str(),
                          buffer,
                          kBuffSize) > 0)

@@ -27,6 +27,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
@@ -187,16 +188,16 @@ public class SourceControlPreferencesPane extends PreferencesPane
    }
 
    @Override
-   public boolean onApply(UserPrefs prefs)
+   public RestartRequirement onApply(UserPrefs prefs)
    {
-      boolean restartRequired = super.onApply(prefs);
+      RestartRequirement restartRequirement = super.onApply(prefs);
       
       prefs.vcsEnabled().setGlobalValue(chkVcsEnabled_.getValue());
       prefs.gitExePath().setGlobalValue(gitExePathChooser_.getText());
       prefs.svnExePath().setGlobalValue(svnExePathChooser_.getText());
       prefs.terminalPath().setGlobalValue(terminalPathChooser_.getText());
 
-      return restartRequired;
+      return restartRequirement;
    }
    
    private boolean haveTerminalPathPref()

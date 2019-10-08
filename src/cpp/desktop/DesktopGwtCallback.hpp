@@ -243,7 +243,7 @@ public Q_SLOTS:
 
    QString getScrollingCompensationType();
 
-   bool isOSXMavericks();
+   bool isMacOS();
    bool isCentOS();
 
    void setBusy(bool busy);

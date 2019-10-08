@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -124,7 +125,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedIndex());
@@ -144,7 +145,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
       
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
-      return false;
+      return new RestartRequirement();
    }
    
    private class YesNoAskDefault extends ListBox

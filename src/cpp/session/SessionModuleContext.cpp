@@ -1178,7 +1178,7 @@ bool isTextFile(const FilePath& targetPath)
    if (error)
    {
       LOG_ERROR(error);
-      return error;
+      return !!error;
    }
 
    // does it have null bytes?
@@ -1212,7 +1212,7 @@ Error rScriptPath(FilePath* pRScriptPath)
       return error;
 
 #ifdef _WIN32
-*pRScriptPath = rHomeBinPath.complete("Rterm.exe");
+*pRScriptPath = rHomeBinPath.completePath("Rterm.exe");
 #else
 *pRScriptPath = rHomeBinPath.completePath("R");
 #endif
@@ -1222,7 +1222,7 @@ Error rScriptPath(FilePath* pRScriptPath)
 shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 {
 #ifdef _WIN32
-      return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
+      return shell_utils::ShellCommand(rBinDir.completeChildPath("Rcmd.exe"));
 #else
       shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
       rCmd << "CMD";
@@ -1351,7 +1351,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    // setup options and command
    core::system::ProcessOptions options;
 #ifdef _WIN32
-   shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
+   shell_utils::ShellCommand installCommand(rBinDir.completeChildPath("R.exe"));
 #else
    shell_utils::ShellCommand installCommand(rBinDir.completeChildPath("R"));
 #endif
@@ -2242,7 +2242,7 @@ bool haveSecureDownloadFileMethod()
 shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
-   shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
+   shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("Rcmd.exe"));
 #else
    shell_utils::ShellCommand rCmd(rBinDir.completeChildPath("R"));
    rCmd << "CMD";
@@ -2466,6 +2466,98 @@ bool usingMingwGcc49()
    return false;
 }
 #endif
+
+namespace {
+
+void warnXcodeLicense()
+{
+   const char* msg = 1 + R"EOF(
+Warning: macOS is reporting that you have not yet agreed to the Xcode license.
+This can occur if Xcode has been updated or reinstalled (e.g. as part of a macOS update).
+Some features (e.g. Git / SVN) may be disabled.
+
+Please run:
+
+    sudo xcodebuild -license accept
+
+in a terminal to accept the Xcode license, and then restart RStudio.
+)EOF";
+   
+   std::cerr << msg << std::endl;
+}
+
+} // end anonymous namespace
+
+bool isMacOS()
+{
+#ifdef __APPLE__
+   return true;
+#else
+   return false;
+#endif
+}
+
+bool hasMacOSDeveloperTools()
+{
+   if (!isMacOS())
+      return false;
+   
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "/usr/bin/xcrun --find --show-sdk-path",
+            core::system::ProcessOptions(),
+            &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   if (result.exitStatus == 69)
+      checkXcodeLicense();
+
+   return result.exitStatus == 0;
+}
+
+bool hasMacOSCommandLineTools()
+{
+   if (!isMacOS())
+      return false;
+   
+   return FilePath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk").exists();
+}
+
+void checkXcodeLicense()
+{
+#ifdef __APPLE__
+   
+   // avoid repeatedly warning the user
+   static bool s_licenseChecked;
+   if (s_licenseChecked)
+      return;
+   
+   s_licenseChecked = true;
+   
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "/usr/bin/xcrun --find --show-sdk-path",
+            core::system::ProcessOptions(),
+            &result);
+   
+   // if an error occurs, log it but avoid otherwise annoying the user
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   // exit code 69 implies license error
+   if (result.exitStatus == 69)
+      warnXcodeLicense();
+   
+#endif
+}
 
 Error initialize()
 {

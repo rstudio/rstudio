@@ -53,7 +53,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
    QString space = QString::fromUtf8(" ");
 
    // path to rsinverse binary
-   std::string rsinverse = desktop::options().rsinversePath().absolutePath();
+   std::string rsinverse = desktop::options().rsinversePath().getAbsolutePath();
    cmdFormat.append(quote + QString::fromStdString(rsinverse) + quote);
    cmdFormat.append(space);
 

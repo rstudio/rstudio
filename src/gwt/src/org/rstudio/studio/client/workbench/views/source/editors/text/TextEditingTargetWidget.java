@@ -21,15 +21,10 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
@@ -88,7 +83,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -104,8 +98,7 @@ public class TextEditingTargetWidget
                                   TextFileType fileType,
                                   String extendedType,
                                   EventBus events,
-                                  Session session,
-                                  SourceServerOperations server)
+                                  Session session)
    {
       target_ = target;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -219,15 +212,8 @@ public class TextEditingTargetWidget
       
       adaptToFileType(fileType);
       
-      editor.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            toggleDocOutlineButton_.setLatched(
-                  docOutlineWidget_.getOffsetWidth() > 0);
-         }
-      });
+      editor.addFocusHandler(event ->
+            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0));
 
       editor_.setTextInputAriaLabel("Text editor");
 
@@ -258,15 +244,8 @@ public class TextEditingTargetWidget
       compareTestButton_ = new ToolbarButton(
             "Compare Results", 
             ToolbarButton.NoTitle,
-            commands_.shinyCompareTest().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  commands_.shinyCompareTest().execute();
-               }
-            });
+            commands_.shinyCompareTest().getImageResource(),
+            event -> commands_.shinyCompareTest().execute());
       compareTestButton_.setTitle(commands_.shinyCompareTest().getDesc());
 
       toolbar.addRightWidget(compareTestButton_);
@@ -275,15 +254,8 @@ public class TextEditingTargetWidget
       testThatButton_ = new ToolbarButton(
             "Run Tests", 
             ToolbarButton.NoTitle,
-            commands_.testTestthatFile().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  commands_.testTestthatFile().execute();
-               }
-            });
+            commands_.testTestthatFile().getImageResource(),
+            event -> commands_.testTestthatFile().execute());
       testThatButton_.setTitle(commands_.testTestthatFile().getDesc());
 
       toolbar.addRightWidget(testThatButton_);
@@ -292,15 +264,8 @@ public class TextEditingTargetWidget
       testShinyButton_ = new ToolbarButton(
             "Run Tests", 
             ToolbarButton.NoTitle,
-            commands_.testShinytestFile().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  commands_.testShinytestFile().execute();
-               }
-            });
+            commands_.testShinytestFile().getImageResource(),
+            event -> commands_.testShinytestFile().execute());
       testShinyButton_.setTitle(commands_.testShinytestFile().getDesc());
 
       toolbar.addRightWidget(testShinyButton_);
@@ -418,17 +383,12 @@ public class TextEditingTargetWidget
       sourceButton_ = new ToolbarButton(
             "Source", 
             SOURCE_BUTTON_TITLE,
-            commands_.sourceActiveDocument().getImageResource(), 
-            new ClickHandler() 
-            {
-               @Override
-               public void onClick(ClickEvent event)
-               {
-                  if (userPrefs_.sourceWithEcho().getValue())
-                     commands_.sourceActiveDocumentWithEcho().execute();
-                  else
-                     commands_.sourceActiveDocument().execute();
-               }
+            commands_.sourceActiveDocument().getImageResource(),
+            event -> {
+               if (userPrefs_.sourceWithEcho().getValue())
+                  commands_.sourceActiveDocumentWithEcho().execute();
+               else
+                  commands_.sourceActiveDocument().execute();
             });
       toolbar.addRightWidget(sourceButton_);
       ElementIds.assignElementId(sourceButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON);
@@ -442,16 +402,12 @@ public class TextEditingTargetWidget
       createTestToolbarButtons(toolbar);
       
       userPrefs_.sourceWithEcho().addValueChangeHandler(
-                                       new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            if (event.getValue())
-               sourceButton_.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
-            else
-               sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
-         }
-      });
+            event -> {
+               if (event.getValue())
+                  sourceButton_.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
+               else
+                  sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
+            });
             
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
@@ -473,8 +429,8 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(commands_.executeNextChunk().createMenuItem(false));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeSetupChunk().createMenuItem(false));
-      chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<Boolean>(
-            userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically", 
+      chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<>(
+            userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically",
             userPrefs_));
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
@@ -536,50 +492,47 @@ public class TextEditingTargetWidget
             ToolbarButton.NoText,
             ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
-            new ClickHandler()
-            {
-               @Override
-               public void onClick(ClickEvent event)
+            event -> {
+               final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
+
+               // Clicking the icon toggles the outline widget's visibility. The
+               // 'destination' below is the width we would like to set -- we
+               // animate to that position for a slightly nicer visual treatment.
+               final double destination = docOutlineWidget_.getOffsetWidth() > 5
+                     ? 0
+                     : Math.min(editorPanel_.getOffsetWidth(), target_.getPreferredOutlineWidgetSize());
+
+               // Update tooltip ('Show'/'Hide' depending on current visibility)
+               String title = toggleDocOutlineButton_.getTitle();
+               if (destination != 0)
+                  title = title.replace("Show ", "Hide ");
+               else
+                  title = title.replace("Hide ", "Show ");
+               toggleDocOutlineButton_.setTitle(title);
+
+               toggleDocOutlineButton_.setLatched(destination != 0);
+
+               int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+               new Animation()
                {
-                  final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  
-                  // Clicking the icon toggles the outline widget's visibility. The
-                  // 'destination' below is the width we would like to set -- we
-                  // animate to that position for a slightly nicer visual treatment.
-                  final double destination = docOutlineWidget_.getOffsetWidth() > 5
-                        ? 0
-                        : Math.min(editorPanel_.getOffsetWidth(), target_.getPreferredOutlineWidgetSize());
-                  
-                  // Update tooltip ('Show'/'Hide' depending on current visibility)
-                  String title = toggleDocOutlineButton_.getTitle();
-                  if (destination != 0)
-                     title = title.replace("Show ", "Hide ");
-                  else
-                     title = title.replace("Hide ", "Show ");
-                  toggleDocOutlineButton_.setTitle(title);
-                  
-                  toggleDocOutlineButton_.setLatched(destination != 0);
-                  
-                  new Animation()
+                  @Override
+                  protected void onUpdate(double progress)
                   {
-                     @Override
-                     protected void onUpdate(double progress)
-                     {
-                        double size =
-                              destination * progress +
-                              initialSize * (1 - progress);
-                        editorPanel_.setWidgetSize(docOutlineWidget_, size);
-                        editor_.onResize();
-                     }
-                     
-                     @Override
-                     protected void onComplete()
-                     {
-                        if (destination == 0) editorPanel_.setWidgetSize(docOutlineWidget_, 0);
-                        target_.setPreferredOutlineWidgetVisibility(destination != 0);
-                     }
-                  }.run(500);
-               }
+                     double size =
+                           destination * progress +
+                           initialSize * (1 - progress);
+                     editorPanel_.setWidgetSize(docOutlineWidget_, size);
+                     editor_.onResize();
+                  }
+
+                  @Override
+                  protected void onComplete()
+                  {
+                     editorPanel_.setWidgetSize(docOutlineWidget_, destination);
+                     target_.setPreferredOutlineWidgetVisibility(destination != 0);
+                     editor_.onResize();
+                  }
+               }.run(duration);
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
@@ -606,9 +559,8 @@ public class TextEditingTargetWidget
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
-      showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
-         editor_.setShowInvisibles(event.getValue());
-      });
+      showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) ->
+            editor_.setShowInvisibles(event.getValue()));
       
       if (docUpdateSentinel_ != null && docUpdateSentinel_.getPath() != null)
       {
@@ -899,14 +851,7 @@ public class TextEditingTargetWidget
    {
       if (warningBar_ == null)
       {
-         warningBar_ = new InfoBar(InfoBar.WARNING, new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               hideWarningBar();
-            }
-            
-         });
+         warningBar_ = new InfoBar(InfoBar.WARNING, event -> hideWarningBar());
       }
       command.execute();
       panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
@@ -953,9 +898,7 @@ public class TextEditingTargetWidget
          hideWarningBar();
       };
       
-      showWarningImpl(() -> {
-         warningBar_.showRequiredPackagesMissingWarning(packages, onInstall, onDismiss);
-      });
+      showWarningImpl(() -> warningBar_.showRequiredPackagesMissingWarning(packages, onInstall, onDismiss));
    }
    
    @Override
@@ -1011,14 +954,7 @@ public class TextEditingTargetWidget
    {
       editor_.onActivate();
       
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-         @Override
-         public void execute()
-         {
-            manageToolbarSizes(); 
-         }
-      });
+      Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
 
    public void setFontSize(double size)
@@ -1035,42 +971,31 @@ public class TextEditingTargetWidget
    public void debug_dumpContents()
    {
       String dump = editor_.debug_getDocumentDump();
-      new EditDialog(dump, Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
-      {
-         @Override
-         public void execute(String input, ProgressIndicator indicator)
-         {
-            indicator.onCompleted();
-         }
-      }).showModal();
+      new EditDialog(dump, Roles.getAlertdialogRole(), false, false, (input, indicator) ->
+            indicator.onCompleted()).showModal();
    }
 
    @Override
    public void debug_importDump()
    {
-      new EditDialog("", Roles.getAlertdialogRole(), false, false, new ProgressOperationWithInput<String>()
-      {
-         @Override
-         public void execute(String input, ProgressIndicator indicator)
+      new EditDialog("", Roles.getAlertdialogRole(), false, false, (input, indicator) -> {
+         indicator.onCompleted();
+         if (input == null)
+            return;
+
+         input = input.replaceAll("[ \\r\\n]+", " ");
+         String[] chars = input.split(" ");
+
+         StringBuilder sb = new StringBuilder();
+         for (String s : chars)
          {
-            indicator.onCompleted();
-            if (input == null)
-               return;
-
-            input = input.replaceAll("[ \\r\\n]+", " ");
-            String[] chars = input.split(" ");
-
-            StringBuilder sb = new StringBuilder();
-            for (String s : chars)
-            {
-               if (s == ".")
-                  sb.append('\n');
-               else
-                  sb.append((char)Integer.parseInt(s));
-            }
-
-            editor_.debug_setSessionValueDirectly(sb.toString());
+            if (s == ".")
+               sb.append('\n');
+            else
+               sb.append((char)Integer.parseInt(s));
          }
+
+         editor_.debug_setSessionValueDirectly(sb.toString());
       }).showModal();
    }
 
@@ -1128,15 +1053,8 @@ public class TextEditingTargetWidget
                fileTypeRegistry_.getIconForFilename("output." + ext).getImageResource() :
                fileTypeRegistry_.getIconForFilename("Makefile").getImageResource();
          final String valueName = values.get(i);
-         ScheduledCommand cmd = new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               handlerManager_.fireEvent(
-                     new RmdOutputFormatChangedEvent(valueName));
-            }
-         };
+         ScheduledCommand cmd = () -> handlerManager_.fireEvent(
+               new RmdOutputFormatChangedEvent(valueName));
          String text = ext == ".nb.html" ? "Preview Notebook" :
             prefix + options.get(i);
             
@@ -1148,14 +1066,7 @@ public class TextEditingTargetWidget
       {
          final AppCommand knitWithParams = commands_.knitWithParameters();
          rmdFormatButton_.addSeparator();
-         ScheduledCommand cmd = new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               knitWithParams.execute();
-            }
-         };
+         ScheduledCommand cmd = () -> knitWithParams.execute();
          MenuItem item = new MenuItem(knitWithParams.getMenuHTML(false),
                                       true,
                                       cmd); 
@@ -1204,14 +1115,7 @@ public class TextEditingTargetWidget
    {
       final AppCommand clearKnitrCache = commands_.clearKnitrCache();
       menuButton.addSeparator();
-      ScheduledCommand cmd = new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            clearKnitrCache.execute();
-         }
-      };
+      ScheduledCommand cmd = () -> clearKnitrCache.execute();
       MenuItem item = new MenuItem(clearKnitrCache.getMenuHTML(false),
                                    true,
                                    cmd); 
@@ -1467,17 +1371,17 @@ public class TextEditingTargetWidget
          boolean isRmd, int type)
    {
       if (rmdViewerPaneMenuItem_ == null)
-         rmdViewerPaneMenuItem_ = new UserPrefMenuItem<String>(
+         rmdViewerPaneMenuItem_ = new UserPrefMenuItem<>(
                userPrefs_.rmdViewerType(),
-               UserPrefs.RMD_VIEWER_TYPE_PANE, 
+               UserPrefs.RMD_VIEWER_TYPE_PANE,
                "Preview in Viewer Pane", userPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
-         rmdViewerWindowMenuItem_ = new UserPrefMenuItem<String>(
+         rmdViewerWindowMenuItem_ = new UserPrefMenuItem<>(
                userPrefs_.rmdViewerType(),
-               UserPrefs.RMD_VIEWER_TYPE_WINDOW, 
+               UserPrefs.RMD_VIEWER_TYPE_WINDOW,
                "Preview in Window", userPrefs_);
       if (rmdViewerNoPreviewMenuItem_ == null)
-         rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<String>(
+         rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<>(
                userPrefs_.rmdViewerType(),
                UserPrefs.RMD_VIEWER_TYPE_NONE,
                "(No Preview)", userPrefs_);

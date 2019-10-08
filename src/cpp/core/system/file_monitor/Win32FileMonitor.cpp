@@ -139,12 +139,12 @@ void ensureLongFilePath(FilePath* pFilePath)
 {
    // get the filename, if it is 12 characters or less and it contains
    // a "~" then it may be a short file name. in that case do the conversion
-   std::string filename = pFilePath->filename();
+   std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
       const std::size_t kBuffSize = (MAX_PATH*2) + 1;
       char buffer[kBuffSize];
-      if (::GetLongPathName(pFilePath->absolutePath().c_str(),
+      if (::GetLongPathName(pFilePath->getAbsolutePath().c_str(),
                             buffer,
                             kBuffSize) > 0)
       {
@@ -169,13 +169,13 @@ void processFileChange(DWORD action,
    // does for any reason we want to prevent it from interfering
    // with the logic below (which assumes a child path)
    if (filePath.isDirectory() &&
-      (filePath.absolutePath() == pTree->begin()->absolutePath()))
+      (filePath.getAbsolutePath() == pTree->begin()->absolutePath()))
    {
       return;
    }
 
    // get an iterator to this file's parent
-   FileInfo parentFileInfo = FileInfo(filePath.parent());
+   FileInfo parentFileInfo = FileInfo(filePath.getParent());
    tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
                                                       pTree->end(),
                                                       parentFileInfo);
@@ -303,12 +303,12 @@ bool isRecoverableByRestart(const Error& error)
    return
       // undocumented return value that indicates we should do a restart
       // (see: http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
-      error.code().value() == ERROR_NOTIFY_ENUM_DIR ||
+      error.getCode() == ERROR_NOTIFY_ENUM_DIR ||
 
       // error which some users have observed occuring if a network
       // volume is being monitored and there are too many simultaneous
       // reads and writes
-      error.code().value() == ERROR_TOO_MANY_CMDS;
+      error.getCode() == ERROR_TOO_MANY_CMDS;
 }
 
 Error readDirectoryChanges(FileEventContext* pContext);
@@ -435,7 +435,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // make sure the root path still exists (if it doesn't then bail)
    if (!pContext->rootPath.exists())
    {
-      Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+      Error error = fileNotFoundError(pContext->rootPath.getAbsolutePath(),
                                       ERROR_LOCATION);
       terminateWithMonitoringError(pContext, error);
       return;

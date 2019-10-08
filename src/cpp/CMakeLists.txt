@@ -407,11 +407,11 @@ endif()
 # external libraries
 add_subdirectory(ext)
 
-# core library
-add_subdirectory(core)
-
 # shared library
 add_subdirectory(shared_core)
+
+# core library
+add_subdirectory(core)
 
 # server core library
 if (RSTUDIO_SERVER)

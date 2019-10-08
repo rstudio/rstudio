@@ -1467,9 +1467,9 @@ void GwtCallback::reloadViewerZoomWindow(QString url)
       pBrowser->webView()->setUrl(url);
 }
 
-bool GwtCallback::isOSXMavericks()
+bool GwtCallback::isMacOS()
 {
-   return desktop::isOSXMavericks();
+   return desktop::isMacOS();
 }
 
 bool GwtCallback::isCentOS()

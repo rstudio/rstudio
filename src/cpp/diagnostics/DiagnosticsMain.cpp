@@ -94,7 +94,7 @@ void writeUserPrefs(std::ostream& ostr)
 int main(int argc, char** argv)
 {
   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::log::LogLevel::WARNING);
+                                    core::log::LogLevel::WARN);
 
   // ignore SIGPIPE
   Error error = core::system::ignoreSignal(core::system::SigPipe);

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Label;
 
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
@@ -32,11 +33,11 @@ import java.util.ArrayList;
 public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPrefs>
 { 
    @Override
-   public boolean onApply(UserPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
       for (Command cmd : onApplyCommands_)
          cmd.execute();
-      return false;
+      return new RestartRequirement();
    }
    
    /**

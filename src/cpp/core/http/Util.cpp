@@ -446,7 +446,7 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
 #else
 
    // just complete the path straight away on Win32
-   return FilePath(wwwLocalPath).complete(relativePath);
+   return FilePath(wwwLocalPath).completePath(relativePath);
 
 #endif
 }

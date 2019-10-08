@@ -374,7 +374,7 @@ public class TypoSpellChecker
 
       // Don't spellcheck yaml
       Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
-      if (s.isYaml())
+      if (s != null && s.isYaml())
          return false;
 
       // This will capture all braced text in a way that the

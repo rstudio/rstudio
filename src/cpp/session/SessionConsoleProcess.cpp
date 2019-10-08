@@ -180,7 +180,7 @@ void ConsoleProcess::commonInit()
          args << args_;
 
          // fixup program_ and args_ so we run the consoleio.exe proxy
-         program_ = consoleIoPath.absolutePathNative();
+         program_ = consoleIoPath.getAbsolutePathNative();
          args_ = args;
       }
       // if this is a runCommand then prepend consoleio.exe to the command

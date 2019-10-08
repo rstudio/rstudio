@@ -1305,8 +1305,7 @@ public class TextEditingTarget implements
                                           fileType_,
                                           extendedType_,
                                           events_,
-                                          session_,
-                                          server_);
+                                          session_);
 
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);

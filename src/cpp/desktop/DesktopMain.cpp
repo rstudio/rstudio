@@ -99,11 +99,11 @@ Error removeStaleOptionsLockfile()
    if (!appDataPath.exists())
       return Success();
 
-   FilePath lockFilePath = appDataPath.childPath("RStudio/desktop.ini.lock");
+   FilePath lockFilePath = appDataPath.completeChildPath("RStudio/desktop.ini.lock");
    if (!lockFilePath.exists())
       return Success();
 
-   double diff = ::difftime(::time(nullptr), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.getLastWriteTime());
    if (diff < 10)
       return Success();
 
@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
 
       // initialize log
       core::system::initializeLog("rdesktop",
-                                  core::log::LogLevel::WARNING,
+                                  core::log::LogLevel::WARN,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
@@ -759,7 +759,7 @@ int main(int argc, char* argv[])
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARNING);
+         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARN);
       }
 
       initializeSharedSecret();
@@ -818,18 +818,18 @@ int main(int argc, char* argv[])
       if (devMode)
       {
          if (version.architecture() == ArchX86 &&
-             installPath.complete("session/x86").exists())
+             installPath.completePath("session/x86").exists())
          {
-            sessionPath = installPath.complete("session/x86/rsession");
+            sessionPath = installPath.completePath("session/x86/rsession");
          }
       }
       else
       {
          // check for win32 binary on windows
           if (version.architecture() == ArchX86 &&
-             installPath.complete("bin/x86").exists())
+             installPath.completePath("bin/x86").exists())
          {
-            sessionPath = installPath.complete("bin/x86/rsession");
+            sessionPath = installPath.completePath("bin/x86/rsession");
          }
       }
 #endif

@@ -93,7 +93,7 @@ TEST_CASE("Win32PtyTests")
             options.rows);
 
    FilePath cmd = expandComSpec();
-   std::string cmdExe = cmd.absolutePathNative();
+   std::string cmdExe = cmd.getAbsolutePathNative();
 
    SECTION("Agent not running")
    {

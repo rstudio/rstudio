@@ -30,6 +30,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.Rectangle.FailureMode;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
 
 public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Display
 {
@@ -199,7 +200,8 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
          bounds = bounds.attemptToMoveInto(screen, FailureMode.NO_CHANGE);
 
          // Now avoid the selected word
-         move(bounds.avoidBounds(boundsToAvoid_, screen), true);
+         move(bounds.avoidBounds(boundsToAvoid_, screen),
+               !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
       }
    }
 

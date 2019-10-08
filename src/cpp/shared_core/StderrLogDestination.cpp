@@ -21,7 +21,6 @@
 #include <shared_core/StderrLogDestination.hpp>
 
 #include <iostream>
-#include <unistd.h>
 
 namespace rstudio {
 namespace core {

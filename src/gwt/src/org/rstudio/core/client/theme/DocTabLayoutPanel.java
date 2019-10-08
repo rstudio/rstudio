@@ -236,7 +236,7 @@ public class DocTabLayoutPanel
    public void selectTab(int index)
    {
       super.selectTab(index);
-      ensureSelectedTabIsVisible(true);
+      ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
    }
 
    public void ensureSelectedTabIsVisible(boolean animate)
@@ -361,7 +361,7 @@ public class DocTabLayoutPanel
          return false;
 
       fireEvent(new TabClosedEvent(index));
-      ensureSelectedTabIsVisible(true);
+      ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
       return true;
    }
 

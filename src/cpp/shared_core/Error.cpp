@@ -242,6 +242,13 @@ bool Error::operator!() const
    return !isError();
 }
 
+bool Error::operator==(const Error& in_other) const
+{
+   return ((m_impl == nullptr) && (in_other.m_impl == nullptr)) ||
+      ((m_impl->Code == in_other.m_impl->Code) && (m_impl->Code == 0)) ||
+      ((m_impl->Code == in_other.m_impl->Code) && (m_impl->Name == in_other.m_impl->Name));
+}
+
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
 {
    copyOnWrite();

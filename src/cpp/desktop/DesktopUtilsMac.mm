@@ -79,19 +79,9 @@ double devicePixelRatio(QMainWindow* pMainWindow)
    }
 }
 
-bool isOSXMavericks()
+bool isMacOS()
 {
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   return boost::algorithm::starts_with(version, "10.9");
+   return true;
 }
 
 bool isCentOS()
