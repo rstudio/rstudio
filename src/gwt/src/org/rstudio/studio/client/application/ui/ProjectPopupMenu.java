@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -87,7 +88,8 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
                 new ImageResource2x(RESOURCES.projectMenu2x()),
                 this, 
                 true);
-          
+         ElementIds.assignElementId(toolbarButton_, ElementIds.PROJECT_MENUBUTTON);
+
          if (activeProjectFile_ != null)
          {
             toolbarButton_.setTitle(activeProjectFile_);

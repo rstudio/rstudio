@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
@@ -78,6 +79,7 @@ public class GlobalToolbar extends Toolbar
                                                           "New File",
                                                           new ImageResource2x(icons.stock_new2x()),
                                                           newMenu_);
+      ElementIds.assignElementId(newButton, ElementIds.NEW_FILE_MENUBUTTON);
       addLeftWidget(newButton);
       addLeftSeparator();
       
@@ -110,10 +112,10 @@ public class GlobalToolbar extends Toolbar
                                                           "Open recent files", 
                                                           mruMenu, 
                                                           false);
+      ElementIds.assignElementId(mruButton, ElementIds.OPEN_MRU_MENUBUTTON);
       addLeftWidget(mruButton);
       addLeftSeparator();
-      
-      
+
       addLeftWidget(commands.saveSourceDoc().createToolbarButton());
       addLeftWidget(commands.saveAllSourceDocs().createToolbarButton());
       addLeftSeparator();
@@ -140,14 +142,7 @@ public class GlobalToolbar extends Toolbar
          @Override
          public void onCompleted()
          {
-            Scheduler.get().scheduleFinally(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  codeSearchFocusContext_.clear();
-               }
-            });
+            Scheduler.get().scheduleFinally(() -> codeSearchFocusContext_.clear());
          }
          
          @Override
@@ -198,6 +193,7 @@ public class GlobalToolbar extends Toolbar
                "Version control",
                vcsIcon, 
                vcsMenu);
+         ElementIds.assignElementId(vcsButton, ElementIds.VCS_MENUBUTTON);
          addLeftWidget(vcsButton);
       }
       
@@ -233,7 +229,7 @@ public class GlobalToolbar extends Toolbar
             "Workspace Panes",
             paneLayoutIcon,
             paneLayoutMenu);
-      
+      ElementIds.assignElementId(paneLayoutButton, ElementIds.PANELAYOUT_MENUBUTTON);
       addLeftWidget(paneLayoutButton);
       
       // addins menu
@@ -242,8 +238,7 @@ public class GlobalToolbar extends Toolbar
       // project popup menu
       if (sessionInfo.getAllowFullUI())
       {
-         ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
-                                                          commands_);
+         ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo, commands_);
          addRightWidget(projectMenu.getToolbarButton());
       }
    }

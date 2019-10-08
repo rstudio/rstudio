@@ -48,7 +48,7 @@ public class ElementIds
    public static String idSafeString(String text)
    {
       // replace all non-alphanumerics with underscores
-      String id = text.replaceAll("[^a-zA-Z0-0]", "_");
+      String id = text.replaceAll("[^a-zA-Z0-9]", "_");
       
       // collapse multiple underscores to a single underscore
       id = id.replaceAll("_+", "_");
@@ -169,4 +169,18 @@ public class ElementIds
    public final static String TEXTBOXBUTTON_TEXT = "textboxbutton_text";
    public final static String TEXTBOXBUTTON_BUTTON = "textboxbutton_button";
    public final static String TEXTBOXBUTTON_HELP = "textboxbutton_help";
+
+   // TerminalPane
+   public final static String TERMINAL_DROPDOWN_MENUBUTTON = "terminal_dropdown_menubutton";
+
+   // GlobalToolbar
+   public final static String NEW_FILE_MENUBUTTON = "new_file_menubutton";
+   public final static String OPEN_MRU_MENUBUTTON = "open_mru_menubutton";
+   public final static String VCS_MENUBUTTON = "vcs_menubutton";
+   public final static String PANELAYOUT_MENUBUTTON = "panelayout_menubutton";
+   public final static String PROJECT_MENUBUTTON = "project_menubutton";
+
+   // BuildPane
+   public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
+   public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
 }
