@@ -21,7 +21,7 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
-#include <core/FileSerializer.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
@@ -127,6 +127,9 @@ MainWindow::MainWindow(QUrl url,
 
    connect(webView(), &WebView::urlChanged,
            this, &MainWindow::onUrlChanged);
+
+   connect(webView(), &WebView::loadFinished,
+           this, &MainWindow::onLoadFinished);
 
    connect(webPage(), &QWebEnginePage::loadFinished,
            &menuCallback_, &MenuCallback::cleanUpActions);
@@ -262,6 +265,11 @@ void MainWindow::loadUrl(const QUrl& url)
 {
    webView()->setBaseUrl(url);
    webView()->load(url);
+}
+
+void MainWindow::loadHtml(const QString& html)
+{
+   webView()->setHtml(html);
 }
 
 QWebEngineProfile* MainWindow::getPageProfile()
@@ -507,6 +515,22 @@ void MainWindow::onActivated()
 void MainWindow::onUrlChanged(QUrl url)
 {
    urlChanged(url);
+}
+
+void MainWindow::onLoadFinished(bool ok)
+{
+   if (ok)
+      return;
+
+   std::map<std::string,std::string> vars;
+   vars["url"] = webView()->url().url().toStdString();
+   std::ostringstream oss;
+   Error error = text::renderTemplate(options().resourcesPath().complete("html/connect.html"),
+                                      vars, oss);
+   if (error)
+       LOG_ERROR(error);
+   else
+      loadHtml(QString::fromStdString(oss.str()));
 }
 
 WebView* MainWindow::getWebView()

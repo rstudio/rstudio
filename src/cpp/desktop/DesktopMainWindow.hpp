@@ -57,6 +57,7 @@ public:
 public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
+   void loadHtml(const QString& html);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
    void openFileInRStudio(QString path);
@@ -107,6 +108,7 @@ private:
    void onActivated() override;
 
    void onUrlChanged(QUrl url);
+   void onLoadFinished(bool ok);
 
 private:
    bool isRemoteDesktop_;

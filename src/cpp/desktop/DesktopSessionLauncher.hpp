@@ -62,6 +62,7 @@ public Q_SLOTS:
 
 private:
    core::Error launchFirstSession();
+   void showLaunchErrorPage();
 
    QString collectAbendLogMessage() const;
 
