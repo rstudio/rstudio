@@ -401,6 +401,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to attempt code completion when Tab is pressed.
+    */
+   public PrefValue<Boolean> tabCompletion()
+   {
+      return bool("tab_completion", true);
+   }
+
+   /**
     * Whether to show help tooltips for functions when the cursor has not been recently moved.
     */
    public PrefValue<Boolean> showHelpTooltipOnIdle()
@@ -1635,6 +1643,8 @@ public class UserPrefsAccessor extends Prefs
          insertParensAfterFunctionCompletion().setValue(layer, source.getBool("insert_parens_after_function_completion"));
       if (source.hasKey("tab_multiline_completion"))
          tabMultilineCompletion().setValue(layer, source.getBool("tab_multiline_completion"));
+      if (source.hasKey("tab_completion"))
+         tabCompletion().setValue(layer, source.getBool("tab_completion"));
       if (source.hasKey("show_help_tooltip_on_idle"))
          showHelpTooltipOnIdle().setValue(layer, source.getBool("show_help_tooltip_on_idle"));
       if (source.hasKey("surround_selection"))

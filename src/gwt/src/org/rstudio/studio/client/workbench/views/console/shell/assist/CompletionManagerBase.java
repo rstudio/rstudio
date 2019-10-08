@@ -711,6 +711,10 @@ public abstract class CompletionManagerBase
    
    private boolean onTab()
    {
+      // Don't auto complete if tab auto completion was disabled
+      if (!userPrefs_.tabCompletion().getValue())
+         return false;
+
       // if the line is blank, don't request completions unless
       // the user has explicitly opted in
       String line = docDisplay_.getCurrentLineUpToCursor();

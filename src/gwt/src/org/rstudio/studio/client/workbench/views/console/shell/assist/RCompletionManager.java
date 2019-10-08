@@ -1138,6 +1138,12 @@ public class RCompletionManager implements CompletionManager
                                 boolean canAutoInsert)
    {
       suggestTimer_.cancel();
+
+      // Don't auto complete if tab was pressed and tab completion was disabled.
+      if (nativeEvent_ != null &&
+              nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB &&
+              !userPrefs_.tabCompletion().getValue())
+         return false;
       
       if (!input_.isSelectionCollapsed())
          return false ;
@@ -1802,8 +1808,9 @@ public class RCompletionManager implements CompletionManager
                   (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
             
             boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
-            
-            if (lastInputWasTab && lineIsWhitespace)
+
+            // Insert tab if tab auto completion was disabled or the line is all whitespace.
+            if (lastInputWasTab && (lineIsWhitespace || !userPrefs_.tabCompletion().getValue()))
             {
                docDisplay_.insertCode("\t");
                return;
