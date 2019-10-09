@@ -300,23 +300,30 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    # since we need to update the data structure as we read through)
    items <- as.list(plot[[1]])
    
-   # iterate through and update native symbols
+   # iterate through and update native symbols (this is necessary as the
+   # saved object will contain native routines with incorrect or null
+   # addresses; we need to re-discover the correct address for the routines
+   # required in generating the plot)
    restored <- lapply(items, function(item) {
       
+      # extract saved symbol
       symbol <- item[[2]][[1]]
       if (!inherits(symbol, "NativeSymbolInfo"))
          return(item)
       
+      # extract associated package name
       name <- if (is.null(symbol$package))
          symbol$dll[["name"]]
       else
          symbol$package[["name"]]
       
+      # re-construct the required symbol
       nativeSymbol <- getNativeSymbolInfo(
          name    = symbol$name,
          PACKAGE = dlls[[name]]
       )
       
+      # replace the old symbol
       item[[2]][[1]] <- nativeSymbol
       item
       
@@ -329,6 +336,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    # update plot items
    plot[[1]] <- restored
    
+   # tag plot with process pid
    plotPid <- attr(plot, "pid")
    if (is.null(plotPid) || (plotPid != Sys.getpid()))
       attr(plot, "pid") <- Sys.getpid()
