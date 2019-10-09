@@ -509,7 +509,21 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @Override
    public HasText getCommitMessage()
    {
-      return commitMessage_;
+      return new HasText()
+      {
+         @Override
+         public void setText(String text)
+         {
+            commitMessage_.setText(text);
+            updateCharCount();
+         }
+         
+         @Override
+         public String getText()
+         {
+            return commitMessage_.getText();
+         }
+      };
    }
 
    @Override
