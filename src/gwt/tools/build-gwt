@@ -15,7 +15,7 @@ fi
 
 # Build GWT disto with custom version
 cd ${RUN_DIR}/gwt/gwt
-ant clean elemental dist-dev -Dgwt.version="${RSTUDIO_VER}"
+ant clean elemental dist -Dgwt.version="${RSTUDIO_VER}"
 
 GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${RSTUDIO_VER}.zip
 if [ ! -f ${GWT_ZIP} ]; then
@@ -27,5 +27,9 @@ fi
 GWT_DIR=${RUN_DIR}/../lib/gwt
 rm -rf ${GWT_DIR}/gwt-${RSTUDIO_VER}
 unzip -qd ${GWT_DIR} ${RUN_DIR}/gwt/gwt/build/dist/gwt-${RSTUDIO_VER}.zip
+
+# Delete javadoc, samples
+rm -rf ${GWT_DIR}/gwt-${RSTUDIO_VER}/doc/javadoc
+find ${GWT_DIR}/gwt-${RSTUDIO_VER}/samples/* -maxdepth 0 -not -name "build.xml" -type d -exec rm -rf {} \;
 
 echo Success. GWT built and copied to ${GWT_DIR}.
