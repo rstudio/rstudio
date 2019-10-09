@@ -284,15 +284,15 @@ void SessionLauncher::showLaunchErrorPage()
    vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
 
    // Read standard output and standard error streams
-   std::string stdout = pRSessionProcess_->readAllStandardOutput().toStdString();
-   if (stdout.empty())
-       stdout = "[No output emitted]";
-   vars["process_output"] = stdout;
+   std::string procStdout = pRSessionProcess_->readAllStandardOutput().toStdString();
+   if (procStdout.empty())
+       procStdout = "[No output emitted]";
+   vars["process_output"] = procStdout;
 
-   std::string stderr = pRSessionProcess_->readAllStandardError().toStdString();
-   if (stderr.empty())
-       stderr = "[No errors emitted]";
-   vars["process_error"] = stderr;
+   std::string procStderr = pRSessionProcess_->readAllStandardError().toStdString();
+   if (procStderr.empty())
+       procStderr = "[No errors emitted]";
+   vars["process_error"] = procStderr;
 
    // Read recent entries from the rsession log file
    std::string logFile, logContent;
