@@ -66,5 +66,9 @@ void RemoteDesktopSessionLauncher::closeAllSatellites()
 {
 }
 
+void RemoteDesktopSessionLauncher::closeOnSignOut()
+{
+}
+
 } // namespace desktop
 } // namespace rstudio

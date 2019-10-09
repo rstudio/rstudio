@@ -1390,7 +1390,7 @@ void GwtCallback::showLicenseDialog()
 
 void GwtCallback::showSessionServerOptionsDialog()
 {
-   sessionServers().showSessionServerOptionsDialog();
+   sessionServers().showSessionServerOptionsDialog(pMainWindow_);
 }
 
 QString GwtCallback::getInitMessages()
@@ -1650,6 +1650,19 @@ void GwtCallback::validateJobsConfig()
 int GwtCallback::getProxyPortNumber()
 {
    return pLauncher_->getProxyPortNumber();
+}
+
+void GwtCallback::signOut()
+{
+   // set the currently connected session server as a pending reload
+   // this ensure that once we sign out, we can reconnect to the server
+   // with a completely clean state
+   if (pMainWindow_->getRemoteDesktopSessionLauncher() != nullptr)
+   {
+      sessionServers().setPendingSessionServerReconnect(
+               pMainWindow_->getRemoteDesktopSessionLauncher()->sessionServer());
+      pMainWindow_->getRemoteDesktopSessionLauncher()->closeOnSignOut();
+   }
 }
 
 } // namespace desktop

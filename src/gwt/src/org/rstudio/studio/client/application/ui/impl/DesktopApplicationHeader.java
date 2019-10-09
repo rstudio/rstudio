@@ -25,9 +25,12 @@ import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
@@ -36,6 +39,7 @@ import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -69,6 +73,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -121,6 +127,9 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             final SessionInfo sessionInfo = session.getSessionInfo();
             
             isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get());
+
+            if (Desktop.isRemoteDesktop())
+               addSignoutToolbar();
 
             overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
 
@@ -213,6 +222,39 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       eventBus_.fireEvent(new EditEvent(true, type));
    }
+
+   private void addSignoutToolbar()
+   {
+
+      if (session_.getSessionInfo().getShowIdentity() && session_.getSessionInfo().getAllowFullUI())
+      {
+         String userIdentity = session_.getSessionInfo().getUserIdentity();
+         ToolbarLabel usernameLabel = new ToolbarLabel();
+         usernameLabel.setTitle(userIdentity);
+         userIdentity = userIdentity.split("@")[0];
+         usernameLabel.setText(userIdentity);
+
+         addRightCommand(usernameLabel);
+
+         ToolbarButton signOutButton = new ToolbarButton(
+               ToolbarButton.NoText,
+               "Sign out",
+               new ImageResource2x(RESOURCES.signOut2x()),
+               event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
+
+
+         addRightCommand(signOutButton);
+         addRightCommandSeparator();
+      }
+   }
+
+   interface Resources extends ClientBundle
+   {
+      @Source("signOut_2x.png")
+      ImageResource signOut2x();
+   }
+
+   private static final DesktopApplicationHeader.Resources RESOURCES =  (DesktopApplicationHeader.Resources) GWT.create(DesktopApplicationHeader.Resources.class);
    
    @Handler
    void onUndoDummy()

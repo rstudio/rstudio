@@ -363,6 +363,12 @@ public class Application implements ApplicationEventHandlers
       // append the form to the document and submit it
       DocumentEx.get().getBody().appendChild(form);
       form.submit();
+
+      if (Desktop.isRemoteDesktop())
+      {
+         // let the desktop application know that we are signing out
+         Desktop.getFrame().signOut();
+      }
    }
    
    @Handler

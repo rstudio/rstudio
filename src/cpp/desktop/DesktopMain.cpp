@@ -928,7 +928,7 @@ int main(int argc, char* argv[])
 
          // keep the launcher object alive for the program's duration
          boost::shared_ptr<void> pSessionLauncher;
-
+         bool remoteLaunch = false;
          if (!launchServer)
          {
             // launch a local session
@@ -938,6 +938,8 @@ int main(int argc, char* argv[])
          }
          else
          {
+            remoteLaunch = true;
+
             // launch a remote session
             // first, check to make sure the server is reachable/valid
             Error error = launchServer->test();
@@ -1012,6 +1014,15 @@ int main(int argc, char* argv[])
 
             // clear activation's cached main window to allow relaunching of sessions
             desktop::activation().setMainWindow(nullptr);
+            continue;
+         }
+
+         // check to see if we had a remote launch error - if so, show the launch location dialog
+         if (remoteLaunch &&
+             boost::static_pointer_cast<RemoteDesktopSessionLauncher>(pSessionLauncher)->failedToLaunch())
+         {
+            forceSessionServerLaunch = false;
+            forceShowSessionLocationDialog = true;
             continue;
          }
 
