@@ -484,6 +484,20 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             (Boolean success) -> { if (success) command.execute(); });
    }
    
+   public void withTinyTeX(final String progressCaption,
+                           final String userPrompt,
+                           final Command command)
+   {
+      withDependencies(
+            progressCaption,
+            userPrompt,
+            new Dependency[] {
+                  Dependency.cranPackage("tinytex", "0.16")
+            },
+            true,
+            (Boolean success) -> { if (success) command.execute(); });
+   }
+   
    @Override
    public void onPackageStateChanged(PackageStateChangedEvent event)
    {

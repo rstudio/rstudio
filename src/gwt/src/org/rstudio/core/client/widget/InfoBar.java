@@ -142,6 +142,14 @@ public class InfoBar extends Composite
       }));
    }
    
+   public void showTexInstallationMissingWarning(String message,
+                                                 Command onInstall)
+   {
+      setText(message);
+      labelRight_.clear();
+      labelRight_.add(label("Install TinyTeX", () -> { onInstall.execute(); }));
+   }
+   
    public void showReadOnlyWarning(List<String> alternatives)
    {
       if (alternatives.size() == 0)

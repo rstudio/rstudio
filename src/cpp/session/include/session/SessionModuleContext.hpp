@@ -118,6 +118,7 @@ std::string rLibsUser();
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
+bool addTinytexToPathIfNecessary();
 bool isPdfLatexInstalled();
 
 // is the file a text file
