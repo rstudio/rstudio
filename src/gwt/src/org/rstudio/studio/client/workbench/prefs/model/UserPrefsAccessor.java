@@ -401,7 +401,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to attempt code completion when Tab is pressed.
+    * Whether to attempt completion of statements when pressing Tab.
     */
    public PrefValue<Boolean> tabCompletion()
    {
