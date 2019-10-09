@@ -794,7 +794,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
          <shortcut value="F2" title="Go To Function / File"/>
-         <shortcut value="Tab" title="Complete Code" />
+         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Meta+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="restartR" value="Cmd+Shift+F10"/>

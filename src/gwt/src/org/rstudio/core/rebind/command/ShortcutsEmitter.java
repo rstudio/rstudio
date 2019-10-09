@@ -245,6 +245,8 @@ public class ShortcutsEmitter
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEUP";
       if (val.equalsIgnoreCase("pagedown"))
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEDOWN";
+      if (val.equalsIgnoreCase("space"))
+         return "32";
       if (val.equalsIgnoreCase("F1"))
          return "112";
       if (val.equalsIgnoreCase("F2"))
@@ -285,6 +287,8 @@ public class ShortcutsEmitter
          return "219";
       if (val.equals("]"))
          return "221";
+
+      logger_.log(Type.WARN, "Returning null from toKeyCode for key " + val);
       return null;
    }
 
