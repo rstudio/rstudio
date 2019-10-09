@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -95,6 +96,7 @@ public class BuildPane extends WorkbenchPane
          BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
          ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
                "Build book options", buildPopupMenu, true);
+         ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
          toolbar.addLeftWidget(buildMenuButton);
       }
       
@@ -143,6 +145,7 @@ public class BuildPane extends WorkbenchPane
                ToolbarButton.NoTitle,
                new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
                moreMenu);
+         ElementIds.assignElementId(moreButton, ElementIds.BUILD_MORE_MENUBUTTON);
          toolbar.addLeftWidget(moreButton);
       }
       
