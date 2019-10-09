@@ -198,6 +198,11 @@ public:
    {
       return authRevocationListDir_;
    }
+   
+   bool authPamRequirePasswordPrompt() const
+   {
+      return authPamRequirePasswordPrompt_;
+   }
 
    bool authCookiesForceSecure() const
    {
@@ -318,6 +323,7 @@ private:
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
+   bool authPamRequirePasswordPrompt_;
    int authSignInThrottleSeconds_;
    std::string authRevocationListDir_;
    bool authCookiesForceSecure_;

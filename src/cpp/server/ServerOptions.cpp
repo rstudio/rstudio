@@ -309,6 +309,9 @@ ProgramStatus Options::read(int argc,
       ("auth-pam-helper-path",
         value<std::string>(&authPamHelperPath_)->default_value("rserver-pam"),
        "path to PAM helper binary")
+      ("auth-pam-require-password-prompt",
+        value<bool>(&authPamRequirePasswordPrompt_)->default_value(true),
+        "whether or not to require the Password: prompt before sending the password via PAM")
       ("auth-pam-requires-priv",
         value<bool>(&dep.authPamRequiresPriv)->default_value(
                                                    dep.authPamRequiresPriv),

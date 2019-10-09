@@ -525,6 +525,8 @@ bool pamLogin(const std::string& username, const std::string& password)
    // form args
    std::vector<std::string> args;
    args.push_back(username);
+   args.push_back("rstudio");
+   args.push_back(server::options().authPamRequirePasswordPrompt() ? "1" : "0");
 
    // don't try to login with an empty password (this hangs PAM as it waits for input)
    if (password.empty())

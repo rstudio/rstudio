@@ -39,7 +39,11 @@ namespace system {
 class PAM : boost::noncopyable
 {
 public:
-   PAM(const std::string& service, bool silent, bool closeOnDestroy = true);
+   PAM(const std::string& service,
+       bool silent,
+       bool closeOnDestroy = true,
+       bool requirePasswordPrompt = true);
+
    virtual ~PAM();
 
    std::pair<int, const std::string> lastError();
@@ -57,6 +61,13 @@ protected:
     pam_handle_t* pamh_;
     int status_;
     bool closeOnDestroy_;
+    bool requirePasswordPrompt_;
+
+    std::string password_;
+    friend int core::system::conv(int num_msg,
+                                  const struct pam_message** msg,
+                                  struct pam_response** resp,
+                                  void * appdata_ptr);
 };
 
 } // namespace system
