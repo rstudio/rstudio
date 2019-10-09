@@ -83,7 +83,7 @@
    background: #DAE7F6;
 }
 
-.wizardPageSelectorItem:focus:not(.focus-visible) {
+.wizardPageSelectorItem:focus {
    outline: none;
 }
 

@@ -62,7 +62,7 @@
    padding: 6px 2px 4px 2px;
 }
 
-.section:focus:not(.focus-visible) {
+.section:focus {
    outline:none;
 }
 
@@ -75,7 +75,7 @@
    background: #D6E9F8;
 }
 
-.activeSection:focus:not(.focus-visible) {
+.activeSection:focus {
    outline:none;
 }
 
