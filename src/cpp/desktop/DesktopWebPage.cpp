@@ -156,6 +156,11 @@ void WebPage::init()
    settings()->setAttribute(QWebEngineSettings::JavascriptCanAccessClipboard, true);
    settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
    settings()->setAttribute(QWebEngineSettings::WebGLEnabled, true);
+   
+#ifdef __APPLE__
+   settings()->setFontFamily(QWebEngineSettings::FixedFont,     QStringLiteral("Courier"));
+   settings()->setFontFamily(QWebEngineSettings::SansSerifFont, QStringLiteral("Helvetica"));
+#endif
 
    defaultSaveDir_ = QDir::home();
    connect(this, SIGNAL(windowCloseRequested()), SLOT(closeRequested()));
