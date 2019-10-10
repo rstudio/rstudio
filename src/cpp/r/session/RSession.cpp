@@ -276,9 +276,9 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // set suspend paths
    setSuspendPaths(
-      sessionScratch.completePath("suspended-session-data"), // session data
-                   s_options.userScratchPath.completePath("client-state"),             // client state
-                   s_options.scopedScratchPath.completePath("pcs"));                   // project client state
+      sessionScratch.completePath("suspended-session-data"),              // session data
+      s_options.userScratchPath.completePath("client-state"),             // client state
+      s_options.scopedScratchPath.completePath("pcs"));                   // project client state
 
    // one time migration of global suspend to default project suspend
    if (!suspendedSessionPath().exists() && oldSuspendedSessionPath.exists())
