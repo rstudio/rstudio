@@ -18,8 +18,7 @@
 # remove stream files/dirs
 cleanupStreams()
 {
-   rm -rf /tmp/rstudio-rsession
-   rm -rf /tmp/rstudio-rserver
+   rm -rf /tmp/rstudio-server
 }
 cleanupStreams
 

@@ -117,6 +117,9 @@
 #define kRunRprofileYes      1
 #define kRunRprofileDefault  2
 
+#define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
+#define kSessionTmpDir             "rstudio-rsession"
+
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kEditCompleted = "edit_completed";
