@@ -144,7 +144,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
       Error error = core::readStringFromFile(path, &fileContents);
       if (error)
          return error;
-      if (!!errorVal.parse(fileContents))
+      if (errorVal.parse(fileContents))
          return Error(json::errc::ParseError, ERROR_LOCATION);
 
      (*pObj)[kChunkOutputValue] = errorVal;

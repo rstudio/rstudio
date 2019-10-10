@@ -450,7 +450,7 @@ std::string jsonLiteralEscape(const std::string& str)
 std::string jsonLiteralUnescape(const std::string& str)
 {
    json::Value value;
-   if (!!value.parse(str) || !json::isType<std::string>(value))
+   if (value.parse(str) || !json::isType<std::string>(value))
    {
       LOG_ERROR_MESSAGE("Failed to unescape JS literal");
       return str;

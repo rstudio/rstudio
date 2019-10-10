@@ -495,7 +495,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 
    json::Value configJson;
-   if (!!configJson.parse(contents) ||
+   if (configJson.parse(contents) ||
        !json::isType<json::Object>(configJson))
    {
       LOG_ERROR_MESSAGE("Error parsing compilation config: " + contents);

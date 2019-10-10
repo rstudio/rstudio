@@ -767,7 +767,7 @@ TEST_CASE("Json")
       std::string invalid = R"({ key: value )";
       json::Value val;
       Error err = val.parse(invalid);
-      REQUIRE(!!err);
+      REQUIRE(err);
    }
 
    SECTION("Schema default parse") {
@@ -880,7 +880,7 @@ TEST_CASE("Json")
          { "first": 1, "second": "d" }
       )";
       err = val.parseAndValidate(invalid, schema);
-      REQUIRE(!!err);
+      REQUIRE(err);
 
       // finally, test the defaults:
       std::string partial = R"(

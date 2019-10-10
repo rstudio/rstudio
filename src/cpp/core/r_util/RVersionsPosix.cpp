@@ -496,7 +496,7 @@ Error readRVersionsFromFile(const FilePath& filePath,
    // parse json
    using namespace json;
    json::Value jsonValue;
-   if (!!jsonValue.parse(contents) || !isType<json::Array>(jsonValue))
+   if (jsonValue.parse(contents) || !isType<json::Array>(jsonValue))
    {
       Error error = systemError(boost::system::errc::bad_message,
                                 ERROR_LOCATION);

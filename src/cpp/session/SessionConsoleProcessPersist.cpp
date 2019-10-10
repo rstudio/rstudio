@@ -351,7 +351,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
    }
 
    json::Value envJson;
-   if (!!envJson.parse(jsonStr) ||
+   if (envJson.parse(jsonStr) ||
        !json::isType<json::Object>(envJson))
    {
       LOG_ERROR(systemError(boost::system::errc::protocol_error,

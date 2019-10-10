@@ -132,7 +132,7 @@ Error getChunkJson(const FilePath& defs, json::Object *pJson)
 
    // pull out the contents
    json::Value defContents;
-   if (!!defContents.parse(contents) ||
+   if (defContents.parse(contents) ||
        defContents.getType() != json::Type::OBJECT)
       return Error(json::errc::ParseError, ERROR_LOCATION);
 

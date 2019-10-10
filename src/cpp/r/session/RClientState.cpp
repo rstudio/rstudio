@@ -122,7 +122,7 @@ void restoreState(const core::FilePath& stateFilePath,
    
    // parse the json
    json::Value value;
-   if ( !!value.parse(contents) )
+   if ( value.parse(contents) )
    {
       LOG_ERROR_MESSAGE("Error parsing client state");
       return;

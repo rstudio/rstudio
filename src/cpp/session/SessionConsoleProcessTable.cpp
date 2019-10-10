@@ -59,7 +59,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    if (jsonStr.empty())
       return;
    json::Value value;
-   if (!!value.parse(jsonStr))
+   if (value.parse(jsonStr))
    {
       LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;

@@ -160,7 +160,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
          return error;
 
       json::Value parsedJson;
-      if (!!parsedJson.parse(contents) ||
+      if (parsedJson.parse(contents) ||
           !json::isType<json::Array>(parsedJson))
       {
          return systemError(boost::system::errc::protocol_error,

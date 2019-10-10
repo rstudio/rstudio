@@ -101,7 +101,7 @@ inline core::Error projectPathFromEntry(const core::FilePath& projectEntry,
 
    // read the contents
    core::json::Value projectEntryVal;
-   if (!!projectEntryVal.parse(entryContents))
+   if (projectEntryVal.parse(entryContents))
    {
       error = core::Error(core::json::errc::ParseError,
                                 ERROR_LOCATION);

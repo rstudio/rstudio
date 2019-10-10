@@ -35,7 +35,7 @@ Error parseJsonRpcRequest(const std::string& input, JsonRpcRequest* pRequest)
    {
       // parse data and verify it contains an object
       Value var;
-      if ( !!var.parse(input) || !var.isObject() )
+      if ( var.parse(input) || !var.isObject() )
       {
          return Error(json::errc::InvalidRequest, ERROR_LOCATION) ;
       }
@@ -331,7 +331,7 @@ bool JsonRpcResponse::parse(const std::string& input,
                             JsonRpcResponse* pResponse)
 {
    Value value;
-   if (!!value.parse(input))
+   if (value.parse(input))
       return false;
 
    return parse(value, pResponse);

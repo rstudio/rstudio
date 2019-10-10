@@ -167,7 +167,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // parse the json
    json::Value value;
-   if ( !!value.parse(contents) )
+   if ( value.parse(contents) )
       return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
 
    // return it

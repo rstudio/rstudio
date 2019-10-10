@@ -477,7 +477,7 @@ void loadDefinitionIndex()
    }
 
    json::Value indexValueJson;
-   if (!!indexValueJson.parse(contents) ||
+   if (indexValueJson.parse(contents) ||
        !json::isType<json::Array>(indexValueJson))
    {
       LOG_ERROR_MESSAGE("Error parsing definition index: " + contents);

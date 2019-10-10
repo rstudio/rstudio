@@ -144,7 +144,7 @@ void onResume(const Settings& settings)
    if (!state.empty())
    {
       json::Value stateJson;
-      if (!!stateJson.parse(state))
+      if (stateJson.parse(state))
       {
          LOG_WARNING_MESSAGE("invalid compile pdf state json");
          return;

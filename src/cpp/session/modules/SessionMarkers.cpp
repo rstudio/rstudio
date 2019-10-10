@@ -432,7 +432,7 @@ void readSourceMarkers()
    }
 
    json::Value stateJson;
-   if (!!stateJson.parse(contents))
+   if (stateJson.parse(contents))
    {
       LOG_WARNING_MESSAGE("invalid session markers json");
       return;
