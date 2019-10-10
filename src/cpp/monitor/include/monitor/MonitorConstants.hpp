@@ -16,7 +16,8 @@
 #ifndef MONITOR_CONSTANTS_HPP
 #define MONITOR_CONSTANTS_HPP
 
-#define kMonitorSocketPath         "/tmp/rstudio-rserver/rserver-monitor.socket"
+#define kMonitorSocket             "rserver-monitor.socket"
+#define kMonitorSocketPathEnvVar   "RS_MONITOR_SOCKET_PATH"
 #define kMonitorSharedSecretEnvVar "RS_MONITOR_SHARED_SECRET"
 #define kMonitorIntervalSeconds    "monitor-interval-seconds"
 

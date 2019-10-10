@@ -207,7 +207,10 @@ ProgramStatus Options::read(int argc,
          "set the umask to 022 on startup")
       ("secure-cookie-key-file",
         value<std::string>(&secureCookieKeyFile_)->default_value(""),
-        "path override for secure cookie key");
+        "path override for secure cookie key")
+      ("server-data-dir",
+         value<std::string>(&serverDataDir_)->default_value("/var/run/rstudio-server"),
+         "path to data directory where rstudio server will write run-time state");
 
    // www - web server options
    options_description www("www") ;
@@ -309,6 +312,9 @@ ProgramStatus Options::read(int argc,
       ("auth-pam-helper-path",
         value<std::string>(&authPamHelperPath_)->default_value("rserver-pam"),
        "path to PAM helper binary")
+      ("auth-pam-require-password-prompt",
+        value<bool>(&authPamRequirePasswordPrompt_)->default_value(true),
+        "whether or not to require the Password: prompt before sending the password via PAM")
       ("auth-pam-requires-priv",
         value<bool>(&dep.authPamRequiresPriv)->default_value(
                                                    dep.authPamRequiresPriv),
@@ -317,7 +323,7 @@ ProgramStatus Options::read(int argc,
         value<int>(&authSignInThrottleSeconds_)->default_value(5),
         "minimum amount of time a user must wait before attempting to sign in again")
       ("auth-revocation-list-dir",
-        value<std::string>(&authRevocationListDir_)->default_value("/var/run/rstudio-server"),
+        value<std::string>(&authRevocationListDir_)->default_value(""),
         "path to the directory which contains the revocation list to be used for storing expired auth tokens")
       ("auth-cookies-force-secure",
         value<bool>(&authCookiesForceSecure_)->default_value(false),
@@ -354,6 +360,10 @@ ProgramStatus Options::read(int argc,
 
    // report deprecation warnings
    reportDeprecationWarnings(dep, osWarnings);
+
+   // check auth revocation dir - if unspecified, it should be put under the server data dir
+   if (authRevocationListDir_.empty())
+      authRevocationListDir_ = serverDataDir_;
 
    // call overlay hooks
    resolveOverlayOptions();

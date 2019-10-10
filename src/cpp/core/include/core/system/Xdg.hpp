@@ -31,16 +31,22 @@ namespace xdg {
  * All of these can be configured with environment variables as described below.
  */
 
-// Returns the RStudio XDG user config directory. On Unix-alikes, this is ~/.config/rstudio, or
-// XDG_CONFIG_HOME.
+// Returns the RStudio XDG user config directory.
+//
+// On Unix-alikes, this is ~/.config/rstudio, or XDG_CONFIG_HOME.
+// On Windows, this is 'FOLDERID_RoamingAppData' (typically 'AppData/Roaming').
 FilePath userConfigDir();
 
-// Returns the RStudio XDG user data directory. On Unix-alikes, this is ~/.local/share/rstudio, or
-// XDG_DATA_HOME
+// Returns the RStudio XDG user data directory.
+//
+// On Unix-alikes, this is ~/.local/share/rstudio, or XDG_DATA_HOME.
+// On Windows, this is 'FOLDERID_LocalAppData' (typically 'AppData/Local').
 FilePath userDataDir();
 
-// Returns the RStudio XDG system config directory. On Unix-alikes, this is /etc/rstudio, or
-// XDG_CONFIG_DIRS
+// Returns the RStudio XDG system config directory.
+//
+// On Unix-alikes, this is /etc/rstudio, XDG_CONFIG_DIRS.
+// On Windows, this is 'FOLDERID_ProgramData' (typically 'C:/ProgramData').
 FilePath systemConfigDir();
 
 } // namespace xdg

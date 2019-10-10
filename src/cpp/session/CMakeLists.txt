@@ -31,7 +31,8 @@ endif()
 
 # verify embedded packages are available
 foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
-   if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/${PKG}")
+   file(GLOB PKG_FILES "${RSTUDIO_DEPENDENCIES_DIR}/common/${PKG}*.tar.gz")
+   if(NOT PKG_FILES)
       message(FATAL_ERROR "${PKG} package not found (re-run install-dependencies script to install)")
    endif()
 endforeach()

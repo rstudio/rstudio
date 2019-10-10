@@ -274,6 +274,8 @@ public Q_SLOTS:
    void validateJobsConfig();
    int getProxyPortNumber();
 
+   void signOut();
+
 private:
    void invokeReflowComment();
    Synctex& synctex();

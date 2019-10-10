@@ -25,6 +25,7 @@
 
 #include <core/text/TemplateFilter.hpp>
 
+#include <core/system/FileMode.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -51,6 +52,7 @@
 #include <server/ServerSessionProxy.hpp>
 #include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
+#include <server/ServerPaths.hpp>
 
 #include <shared_core/Error.hpp>
 
@@ -530,6 +532,51 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // initialize server data directory
+      FilePath serverDataDir = options.serverDataDir();
+      error = serverDataDir.ensureDirectory();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      if (core::system::effectiveUserIsRoot())
+      {
+         error = file_utils::changeOwnership(serverDataDir, options.serverUser());
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+      }
+
+      // ensure permissions - the folder needs to be readable and writeable
+      // by all users of the system, and the sticky bit must be set to ensure
+      // that users do not delete each others' sockets
+      struct stat st;
+      if (::stat(serverDataDir.absolutePath().c_str(), &st) == -1)
+      {
+         Error error = systemError(errno,
+                                   "Could not determine permissions on specified 'server-data-dir' "
+                                      "directory (" + serverDataDir.absolutePath() + ")",
+                                   ERROR_LOCATION);
+         return core::system::exitFailure(error, ERROR_LOCATION);
+      }
+
+      unsigned desiredMode = S_IRWXU | S_IRWXG | S_IRWXO | S_ISVTX;
+      if ((st.st_mode & desiredMode) != desiredMode)
+      {
+         // permissions aren't correct - attempt to fix them
+         Error error = core::system::changeFileMode(serverDataDir,
+                                                    core::system::EveryoneReadWriteExecuteMode,
+                                                    true);
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not change permissions for specified 'server-data-dir' - "
+                                 "the directory (" + serverDataDir.absolutePath() + ") must be "
+                                 "writeable by all users and have the sticky bit set");
+            return core::system::exitFailure(error, ERROR_LOCATION);
+         }
+      }
+
+      // export important environment variables
+      core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().absolutePath());
+
       // initialize File Lock
       FileLock::initialize();
 
@@ -559,7 +606,7 @@ int main(int argc, char * const argv[])
 
       // initialize monitor (needs to happen post http server init for access
       // to the server's io service)
-      monitor::initializeMonitorClient(kMonitorSocketPath,
+      monitor::initializeMonitorClient(monitorSocketPath().absolutePath(),
                                        server::options().monitorSharedSecret(),
                                        s_pHttpServer->ioService());
 

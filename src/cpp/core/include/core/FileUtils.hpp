@@ -33,7 +33,7 @@ FilePath uniqueFilePath(const core::FilePath& parent,
 
 std::string readFile(const core::FilePath& filePath);
 
-#ifdef WIN32
+#ifdef _WIN32
 bool isWindowsReservedName(const std::string& name);
 #endif
 
@@ -41,6 +41,11 @@ Error copyDirectory(const FilePath& sourceDirectory,
                     const FilePath& targetDirectory);
 
 bool isDirectoryWriteable(const FilePath& directory);
+
+#ifndef _WIN32
+Error changeOwnership(const FilePath& file,
+                      const std::string& owner);
+#endif
 
 } // namespace file_utils
 } // namespace core

@@ -902,6 +902,19 @@ public class TextEditingTargetWidget
    }
    
    @Override
+   public void showTexInstallationMissingWarning(String message)
+   {
+      final Command install = () -> {
+         target_.installTinyTeX();
+         hideWarningBar();
+      };
+      
+      showWarningImpl(() -> {
+         warningBar_.showTexInstallationMissingWarning(message, install);
+      });
+   }
+   
+   @Override
    public void showWarningBar(final String warning)
    {
       showWarningImpl(() -> warningBar_.setText(warning));

@@ -134,7 +134,7 @@ class DesktopSessionServers : public QObject
 public:
    DesktopSessionServers();
 
-   void showSessionServerOptionsDialog();
+   void showSessionServerOptionsDialog(QWidget* parent = nullptr);
    LaunchLocationResult showSessionLaunchLocationDialog();
 
    void setPendingSessionServerReconnect(const SessionServer& server);

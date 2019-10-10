@@ -146,22 +146,6 @@ Error readRevocationList(std::vector<std::string>* pEntries)
    return Success();
 }
 
-Error changeOwnership(const FilePath& file)
-{
-   // changes ownership of file to the server user
-   core::system::User serverUser;
-   Error error = core::system::User::getUserFromIdentifier(options().serverUser(), serverUser);
-   if (error)
-      return error;
-
-   return core::system::posixCall<int>(
-            boost::bind(::chown,
-                        file.getAbsolutePath().c_str(),
-                        serverUser.getUserId(),
-                        serverUser.getGroupId()),
-            ERROR_LOCATION);
-}
-
 } // anonymous namespace
 
 namespace overlay {
@@ -410,7 +394,7 @@ Error initialize()
    // create revocation list directory and ensure the server user has permission to write to it
    // if the directory already exists, we will not attempt to change ownership as this means
    // the directory was setup by an administrator and we should respect its permissions
-   FilePath rootDir(options().authRevocationListDir());
+   FilePath rootDir = options().authRevocationListDir();
    if (!rootDir.exists())
    {
       Error error = rootDir.ensureDirectory();
@@ -422,7 +406,7 @@ Error initialize()
 
       if (core::system::effectiveUserIsRoot())
       {
-         error = changeOwnership(rootDir);
+         error = file_utils::changeOwnership(rootDir, options().serverUser());
          if (error)
          {
             LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
@@ -464,7 +448,7 @@ Error initialize()
       {
          // ensure revocation file is owned by the server user
          // this ensures that it can be written to even when we drop privilege
-         error = changeOwnership(s_revocationList);
+         error = file_utils::changeOwnership(s_revocationList, options().serverUser());
          if (error)
             return error;
       }

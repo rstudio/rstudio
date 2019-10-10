@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -117,6 +118,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                 StandardIcons.INSTANCE.empty_command(),
                 this,
                 false);
+
+         ElementIds.assignElementId(toolbarButton_, ElementIds.TERMINAL_DROPDOWN_MENUBUTTON);
 
          setNoActiveTerminal();
       }

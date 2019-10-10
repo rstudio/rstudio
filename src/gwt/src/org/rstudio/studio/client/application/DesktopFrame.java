@@ -225,4 +225,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getJobContainerUser();
    void validateJobsConfig();
    void getProxyPortNumber(CommandWithArg<Integer> callback);
+
+   void signOut();
 }

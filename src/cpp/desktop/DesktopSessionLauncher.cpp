@@ -22,12 +22,14 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/r_util/RUserData.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -212,6 +214,102 @@ void SessionLauncher::closeAllSatellites()
    }
 }
 
+Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
+{
+   // Collect R session logs
+   std::vector<FilePath> logs;
+   Error error = userLogPath().children(&logs);
+   if (error)
+   {
+      return error;
+   }
+
+   // Sort by recency in case there are several session logs --
+   // inverse sort so most recent logs are first
+   std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
+   {
+      return a.lastWriteTime() < b.lastWriteTime();
+   });
+
+   // Loop over all the log files and stop when we find a session log
+   // (desktop logs are also in this folder)
+   for (const auto& log: logs)
+   {
+      if (log.filename().find("rsession") != std::string::npos)
+      {
+         // Record the path where we found the log file
+         *pLogFile = log.absolutePath();
+
+         // Read all the lines from a file into a string vector
+         std::vector<std::string> lines;
+         error = readStringVectorFromFile(log, &lines);
+         if (error)
+             return error;
+
+         // Combine the three most recent lines
+         std::string logContents;
+         for (size_t i = static_cast<size_t>(std::max(static_cast<int>(lines.size()) - 3, 0));
+              i < lines.size();
+              ++i)
+         {
+            logContents += lines[i] + "\n";
+         }
+         *pLogContents = logContents;
+         return Success();
+      }
+   }
+
+   // No logs found
+   *pLogFile = "Log File";
+   *pLogContents = "[No logs available]";
+   return Success();
+}
+
+void SessionLauncher::showLaunchErrorPage()
+{
+   // String mapping of template codes to diagnostic information
+   std::map<std::string,std::string> vars;
+
+   // Collect message from the abnormal end log path
+   if (abendLogPath().exists())
+   {
+      vars["launch_failed"] = launchFailedErrorMessage().toStdString();
+   }
+   else
+   {
+      vars["launch_failed"] = "[No error available]";
+   }
+
+   // Collect the rsession process exit code
+   vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
+
+   // Read standard output and standard error streams
+   std::string procStdout = pRSessionProcess_->readAllStandardOutput().toStdString();
+   if (procStdout.empty())
+       procStdout = "[No output emitted]";
+   vars["process_output"] = procStdout;
+
+   std::string procStderr = pRSessionProcess_->readAllStandardError().toStdString();
+   if (procStderr.empty())
+       procStderr = "[No errors emitted]";
+   vars["process_error"] = procStderr;
+
+   // Read recent entries from the rsession log file
+   std::string logFile, logContent;
+   Error error = getRecentSessionLogs(&logFile, &logContent);
+   if (error)
+       LOG_ERROR(error);
+   vars["log_file"] = logFile;
+   vars["log_content"] = logContent;
+
+   // Read text template, substitute variables, and load HTML into the main window
+   std::ostringstream oss;
+   error = text::renderTemplate(options().resourcesPath().complete("html/error.html"), vars, oss);
+   if (error)
+       LOG_ERROR(error);
+   else
+      pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+}
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 {
@@ -228,16 +326,18 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
-      pMainWindow_->webView()->webPage()->runJavaScript(
-               QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
-
-      if (abendLogPath().exists())
+      try
       {
-         showMessageBox(QMessageBox::Critical,
-                        pMainWindow_,
-                        desktop::activation().editionName(),
-                        launchFailedErrorMessage(), QString());
+         pMainWindow_->webView()->webPage()->runJavaScript(
+                  QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
       }
+      catch (...)
+      {
+         // The above can throw if the window has no desktop hooks; this is normal
+         // if we haven't loaded the initial session.
+      }
+
+      showLaunchErrorPage();
    }
 
    // quit and exit means close the main window

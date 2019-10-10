@@ -435,7 +435,7 @@ private:
 
                if (!originator.empty() && originator != host)
                {
-                  LOG_ERROR_MESSAGE("Rejecting request with mistmatched originator " + originator + " - "
+                  LOG_ERROR_MESSAGE("Rejecting request with mismatched originator " + originator + " - "
                                     "expected: " + host + " for URI " + pRequest->uri());
                   pConnection->response().setStatusCode(http::status::BadRequest);
                   return false;

@@ -17,10 +17,12 @@
 #define SERVER_CONSTANTS_HPP
 
 #define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
-#define kRStudioServerLocalStream     "/tmp/rstudio-rserver/rserver.socket"
-#define kServerTmpDir                 "/tmp/rstudio-rserver"
+#define kServerLocalSocket            "rserver.socket"
+#define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
+#define kServerTmpDir                 "rstudio-rserver"
 #define kUserIdCookie                 "user-id"
 #define kPersistAuthCookie            "persist-auth"
+#define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
 
 #endif // SERVER_CONSTANTS_HPP
 

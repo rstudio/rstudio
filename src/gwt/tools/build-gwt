@@ -5,8 +5,14 @@ set -e
 # in ant's build.xml.
 RSTUDIO_VER=rstudio-1.3
 
+# Update this when updating to a new base GWT release
+GWT_VER=2.8.2
+
 # This script is intended to run from the rstudio/gwt/tools folder
 RUN_DIR=`pwd`
+
+GWT_DIR=${RUN_DIR}/../lib/gwt
+INST_DIR=${GWT_DIR}/gwt-${RSTUDIO_VER}
 
 if [ ! -d gwt ] || [ ! -d gwt/gwt ] || [ ! -d gwt/tools ]; then
     echo Error: gwt sources not found, use "sync-gwt" script to clone
@@ -15,17 +21,21 @@ fi
 
 # Build GWT disto with custom version
 cd ${RUN_DIR}/gwt/gwt
-ant clean elemental dist-dev -Dgwt.version="${RSTUDIO_VER}"
+ant clean elemental dist -Dgwt.version="${GWT_VER}"
 
-GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${RSTUDIO_VER}.zip
+GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${GWT_VER}.zip
 if [ ! -f ${GWT_ZIP} ]; then
     echo Error: GWT build unsuccessful
     exit 1
 fi
 
 # Delete existing distro, extract new one
-GWT_DIR=${RUN_DIR}/../lib/gwt
-rm -rf ${GWT_DIR}/gwt-${RSTUDIO_VER}
-unzip -qd ${GWT_DIR} ${RUN_DIR}/gwt/gwt/build/dist/gwt-${RSTUDIO_VER}.zip
+rm -rf ${INST_DIR}
+unzip -qd ${GWT_DIR} ${GWT_ZIP}
+mv ${GWT_DIR}/gwt-${GWT_VER} ${INST_DIR}
 
-echo Success. GWT built and copied to ${GWT_DIR}.
+# Delete javadoc, samples
+rm -rf ${INST_DIR}/doc/javadoc
+find ${INST_DIR}/samples/* -maxdepth 0 -not -name "build.xml" -type d -exec rm -rf {} \;
+
+echo Success. GWT built and installed to ${INST_DIR}

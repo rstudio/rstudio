@@ -594,6 +594,9 @@ private:
       if (error)
          LOG_ERROR(error);
 
+      // add tinytex to the PATH if appropriate
+      module_context::addTinytexToPathIfNecessary();
+
       // determine tex program path
       std::string userErrMsg;
       if (!pdflatex::latexProgramForFile(magicComments_,

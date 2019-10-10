@@ -28,7 +28,7 @@ DesktopSessionServers& sessionServers()
 
 DesktopSessionServers::DesktopSessionServers() = default;
 
-void DesktopSessionServers::showSessionServerOptionsDialog()
+void DesktopSessionServers::showSessionServerOptionsDialog(QWidget* parent)
 {
 }
 

@@ -286,61 +286,66 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 # restore an object from a file
 .rs.addFunction( "restoreGraphics", function(filename)
 {
-   load(filename)
+   # load the 'plot' object
+   envir <- new.env(parent = emptyenv())
+   load(filename, envir = envir)
+   plot <- envir$plot
    
-   # restore native symbols for R >= 3.0
+   # restore native symbols
+   dlls <- getLoadedDLLs()
    rVersion <- getRversion()
-   if (rVersion >= "3.0")
-   {
-      for(i in 1:length(plot[[1]]))
-      {
-         # get the symbol then test if it's a native symbol
-         symbol <- plot[[1]][[i]][[2]][[1]]
-         if("NativeSymbolInfo" %in% class(symbol))
-         {
-            # determine the dll that the symbol lives in
-            if (!is.null(symbol$package))
-               name = symbol$package[["name"]]
-            else
-               name = symbol$dll[["name"]]
-            pkgDLL <- getLoadedDLLs()[[name]]
-
-            # reconstruct the native symbol and assign it into the plot
-            nativeSymbol <-getNativeSymbolInfo(name = symbol$name,
-                                               PACKAGE = pkgDLL,
-                                               withRegistrationInfo = TRUE);
-            plot[[1]][[i]][[2]][[1]] <- nativeSymbol;
-         }
-      }
-   }
-   # restore native symbols for R >= 2.14
-   else if (rVersion >= "2.14")
-   {
-     try({
-       for(i in 1:length(plot[[1]])) 
-       {
-         if("NativeSymbolInfo" %in% class(plot[[1]][[i]][[2]][[1]]))
-         {
-           nativeSymbol <-getNativeSymbolInfo(plot[[1]][[i]][[2]][[1]]$name);
-           plot[[1]][[i]][[2]][[1]] <- nativeSymbol;         
-         }
-       }
-     },
-     silent = TRUE);
-   }
-
-   # set the pid attribute to the current pid if necessary
-   if (rVersion >= "3.0.2")
-   {
-      plotPid <- attr(plot, "pid")
-      if (is.null(plotPid) || (plotPid != Sys.getpid()))
-        attr(plot, "pid") <- Sys.getpid()
-   }
+   wasPairlist <- is.pairlist(plot[[1]])
+   
+   # convert to list (iterating large pairlist in R is slow; especially
+   # since we need to update the data structure as we read through)
+   items <- as.list(plot[[1]])
+   
+   # iterate through and update native symbols (this is necessary as the
+   # saved object will contain native routines with incorrect or null
+   # addresses; we need to re-discover the correct address for the routines
+   # required in generating the plot)
+   restored <- lapply(items, function(item) {
+      
+      # extract saved symbol
+      symbol <- item[[2]][[1]]
+      if (!inherits(symbol, "NativeSymbolInfo"))
+         return(item)
+      
+      # extract associated package name
+      name <- if (is.null(symbol$package))
+         symbol$dll[["name"]]
+      else
+         symbol$package[["name"]]
+      
+      # re-construct the required symbol
+      nativeSymbol <- getNativeSymbolInfo(
+         name    = symbol$name,
+         PACKAGE = dlls[[name]]
+      )
+      
+      # replace the old symbol
+      item[[2]][[1]] <- nativeSymbol
+      item
+      
+   })
+   
+   # turn back into pairlist after
+   if (wasPairlist)
+      restored <- as.pairlist(restored)
+   
+   # update plot items
+   plot[[1]] <- restored
+   
+   # tag plot with process pid
+   plotPid <- attr(plot, "pid")
+   if (is.null(plotPid) || (plotPid != Sys.getpid()))
+      attr(plot, "pid") <- Sys.getpid()
    
    # we suppressWarnings so that R doesnt print a warning if we restore
    # a plot saved from a previous version of R (which will occur if we 
    # do a resume after upgrading the version of R on the server)
    suppressWarnings(grDevices::replayPlot(plot))
+   
 })
 
 # generate a uuid

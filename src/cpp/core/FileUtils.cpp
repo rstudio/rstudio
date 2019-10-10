@@ -25,6 +25,10 @@
 
 #include <core/system/System.hpp>
 
+#ifndef _WIN32
+#include <core/system/PosixUser.hpp>
+#endif
+
 namespace rstudio {
 namespace core {
 namespace file_utils {
@@ -99,7 +103,7 @@ std::string readFile(const FilePath& filePath)
    return content;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 // test a filename to see if it corresponds to a reserved device name on
 // Windows
 bool isWindowsReservedName(const std::string& name)
@@ -158,6 +162,24 @@ bool isDirectoryWriteable(const FilePath& directory)
    }
 }
 
+#ifndef _WIN32
+Error changeOwnership(const FilePath& file,
+                      const std::string& owner)
+{
+   // changes ownership of file to the server user
+   core::system::user::User user;
+   Error error = core::system::user::userFromUsername(owner, &user);
+   if (error)
+      return error;
+
+   return core::system::posixCall<int>(
+            boost::bind(::chown,
+                        file.absolutePath().c_str(),
+                        user.userId,
+                        user.groupId),
+            ERROR_LOCATION);
+}
+#endif
 
 } // namespace file_utils
 } // namespace core

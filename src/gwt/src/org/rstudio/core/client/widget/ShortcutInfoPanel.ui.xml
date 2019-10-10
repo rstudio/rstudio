@@ -34,7 +34,7 @@
      width: 100%;
    }
    
-   .shortcutPanel:focus 
+   .shortcutPanel:focus
    {
      outline:none
    }

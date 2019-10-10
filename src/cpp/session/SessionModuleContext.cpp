@@ -1077,9 +1077,35 @@ FilePath findProgram(const std::string& name)
    }
 }
 
+bool addTinytexToPathIfNecessary()
+{
+   // avoid some pathological cases where e.g. TinyTeX folder
+   // exists but doesn't have the pdflatex binary (don't
+   // attempt to re-add the folder multiple times)
+   static bool s_added = false;
+   if (s_added)
+      return true;
+   
+   if (!module_context::findProgram("pdflatex").empty())
+      return false;
+   
+   std::string binDir;
+   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDir);
+   if (error)
+      LOG_ERROR(error);
+   
+   FilePath binPath = module_context::resolveAliasedPath(binDir);
+   if (!binPath.exists())
+      return false;
+   
+   s_added = true;
+   core::system::addToSystemPath(binPath);
+   return true;
+}
 
 bool isPdfLatexInstalled()
 {
+   addTinytexToPathIfNecessary();
    return !module_context::findProgram("pdflatex").isEmpty();
 }
 

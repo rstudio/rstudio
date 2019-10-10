@@ -107,7 +107,8 @@ public:
         pAppLaunch_(pAppLaunch),
         pMainWindow_(nullptr),
         createNewSession_(createNewSession),
-        signingIn_(false)
+        signingIn_(false),
+        failedToLaunch_(false)
    {
    }
 
@@ -119,13 +120,18 @@ public:
         pMainWindow_(nullptr),
         createNewSession_(false),
         sessionUrl_(sessionUrl),
-        signingIn_(false)
+        signingIn_(false),
+        failedToLaunch_(false)
    {
    }
 
    void launchFirstSession();
 
    const SessionServer& sessionServer() const { return server_; }
+
+   bool failedToLaunch() const { return failedToLaunch_; }
+
+   void closeOnSignOut();
 
 public Q_SLOTS:
    void onCookieAdded(const QNetworkCookie& cookie);
@@ -158,7 +164,9 @@ private:
    bool createNewSession_;
    std::string sessionUrl_;
    bool signingIn_;
+   bool failedToLaunch_;
 
+   std::string workspacesUrl_;
    std::map<std::string, QNetworkCookie> authCookies_;
 };
 
