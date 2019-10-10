@@ -1086,7 +1086,7 @@ bool addTinytexToPathIfNecessary()
    if (s_added)
       return true;
    
-   if (!module_context::findProgram("pdflatex").empty())
+   if (!module_context::findProgram("pdflatex").isEmpty())
       return false;
    
    std::string binDir;

@@ -29,7 +29,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/r_util/RUserData.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -218,7 +218,7 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
 {
    // Collect R session logs
    std::vector<FilePath> logs;
-   Error error = userLogPath().children(&logs);
+   Error error = userLogPath().getChildren(logs);
    if (error)
    {
       return error;
@@ -228,17 +228,17 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
    // inverse sort so most recent logs are first
    std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
    {
-      return a.lastWriteTime() < b.lastWriteTime();
+      return a.getLastWriteTime() < b.getLastWriteTime();
    });
 
    // Loop over all the log files and stop when we find a session log
    // (desktop logs are also in this folder)
    for (const auto& log: logs)
    {
-      if (log.filename().find("rsession") != std::string::npos)
+      if (log.getFilename().find("rsession") != std::string::npos)
       {
          // Record the path where we found the log file
-         *pLogFile = log.absolutePath();
+         *pLogFile = log.getAbsolutePath();
 
          // Read all the lines from a file into a string vector
          std::vector<std::string> lines;
@@ -304,7 +304,7 @@ void SessionLauncher::showLaunchErrorPage()
 
    // Read text template, substitute variables, and load HTML into the main window
    std::ostringstream oss;
-   error = text::renderTemplate(options().resourcesPath().complete("html/error.html"), vars, oss);
+   error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
    if (error)
        LOG_ERROR(error);
    else

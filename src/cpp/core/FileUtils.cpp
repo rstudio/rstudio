@@ -167,16 +167,16 @@ Error changeOwnership(const FilePath& file,
                       const std::string& owner)
 {
    // changes ownership of file to the server user
-   core::system::user::User user;
-   Error error = core::system::user::userFromUsername(owner, &user);
+   core::system::User user;
+   Error error = core::system::User::getUserFromIdentifier(owner, user);
    if (error)
       return error;
 
    return core::system::posixCall<int>(
             boost::bind(::chown,
-                        file.absolutePath().c_str(),
-                        user.userId,
-                        user.groupId),
+                        file.getAbsolutePath().c_str(),
+                        user.getUserId(),
+                        user.getGroupId()),
             ERROR_LOCATION);
 }
 #endif

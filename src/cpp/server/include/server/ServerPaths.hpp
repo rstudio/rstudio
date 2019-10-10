@@ -16,7 +16,7 @@
 #ifndef SERVER_PATHS_HPP
 #define SERVER_PATHS_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -30,10 +30,10 @@ namespace server {
 
 using namespace core;
 
-inline FilePath serverTmpDir() { return options().serverDataDir().childPath(kServerTmpDir); }
-inline FilePath serverLocalSocketPath() { return serverTmpDir().childPath(kServerLocalSocket); }
-inline FilePath monitorSocketPath() { return serverTmpDir().childPath(kMonitorSocket); }
-inline FilePath sessionTmpDir() { return options().serverDataDir().childPath(kSessionTmpDir); }
+inline FilePath serverTmpDir() { return options().serverDataDir().completeChildPath(kServerTmpDir); }
+inline FilePath serverLocalSocketPath() { return serverTmpDir().completeChildPath(kServerLocalSocket); }
+inline FilePath monitorSocketPath() { return serverTmpDir().completeChildPath(kMonitorSocket); }
+inline FilePath sessionTmpDir() { return options().serverDataDir().completeChildPath(kSessionTmpDir); }
 
 } // namespace server
 } // namespace rstudio
