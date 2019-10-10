@@ -83,7 +83,9 @@ public interface ApplicationServerOperations extends PrefsServerOperations
 
    void getProductInfo(
          ServerRequestCallback<ProductInfo> requestCallback);
-   
+
+   void getProductNotice(ServerRequestCallback<ProductNotice> requestCallback);
+
    void getNewSessionUrl(String hostPageUrl,
          boolean isProject, 
          String directory,
