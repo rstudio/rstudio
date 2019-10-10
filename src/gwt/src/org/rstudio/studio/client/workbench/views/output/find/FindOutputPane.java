@@ -16,16 +16,19 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -60,6 +63,18 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
+      viewReplaceButton_ = new SmallButton("Replace");
+      toolbar.addLeftWidget(viewReplaceButton_);
+      viewReplaceButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            replaceToolbarVisible_ = !replaceToolbarVisible_;
+            setSecondaryToolbarVisible(replaceToolbarVisible_);
+         }
+      });
+
       stopSearch_ = new ToolbarButton(
             ToolbarButton.NoText,
             "Stop find in files",
@@ -74,19 +89,27 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Replace");
+      replaceToolbar_ = new SecondaryToolbar("Replace");
+      replaceToolbarVisible_ = true;
 
       replaceLabel_ = new Label();
-      toolbar.addLeftWidget(replaceLabel_);
+      replaceToolbar_.addLeftWidget(replaceLabel_);
 
-      replaceAll_ = new ToolbarButton(
-            ToolbarButton.NoText,
-            "Replace all",
-            null);
-      replaceAll_.setVisible(true);
-      toolbar.addRightWidget(replaceAll_);
+      replaceTextBox_ = new TextBoxWithCue("Replace all");
+      replaceToolbar_.addLeftWidget(replaceTextBox_);
 
-      return toolbar;
+      replaceRegex_ = new CheckBox();
+      replaceRegexLabel_ =
+                     new CheckboxLabel(replaceRegex_, "Regular expression").getLabel();
+      replaceRegex_.getElement().getStyle().setMarginRight(0, Unit.PX);
+      replaceToolbar_.addLeftWidget(replaceRegex_);
+      replaceRegexLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      replaceToolbar_.addLeftWidget(replaceRegexLabel_);
+
+      replaceAllButton_ = new SmallButton("Replace All");
+      replaceToolbar_.addLeftWidget(replaceAllButton_);
+
+      return replaceToolbar_;
    }
 
    @Override
@@ -130,6 +153,9 @@ public class FindOutputPane extends WorkbenchPane
             event.preventDefault();
          }
       });
+
+      replaceToolbarVisible_ = false;
+      setSecondaryToolbarVisible(replaceToolbarVisible_);
 
       container_ =  new SimplePanel();
       container_.addStyleName("ace_editor_theme");
@@ -292,14 +318,20 @@ public class FindOutputPane extends WorkbenchPane
    private FindResultContext context_;
    private final Commands commands_;
    private Label searchLabel_;
-   private Label replaceLabel_;
    private ToolbarButton stopSearch_;
-   private ToolbarButton replaceAll_;
    private SimplePanel container_;
    private ScrollPanel scrollPanel_;
    private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
+   private SmallButton viewReplaceButton_;
+   private SecondaryToolbar replaceToolbar_;
+   private boolean replaceToolbarVisible_;
+   private Label replaceLabel_;
+   private Label replaceRegexLabel_;
+   private CheckBox replaceRegex_;
+   private TextBoxWithCue replaceTextBox_;
+   private SmallButton replaceAllButton_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

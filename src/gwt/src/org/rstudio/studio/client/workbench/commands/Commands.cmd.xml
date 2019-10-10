@@ -192,6 +192,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="replaceAndFind"/>
          <separator/>
          <cmd refid="findInFiles"/>
+         <cmd refid="replaceInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
          <cmd refid="wordCount"/>
