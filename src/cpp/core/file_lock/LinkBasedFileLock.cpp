@@ -291,10 +291,10 @@ Error writeLockFile(const FilePath& lockFilePath)
       // verbose logging
       int errorNumber = errno;
       LOG("ERROR: ::link() failed (errno " << errorNumber << ")" << std::endl <<
-                                           "Attempted to link:" << std::endl << " - " <<
-                                           "'" << proxyPath.getAbsolutePathNative() << "'" <<
-                                           " => " <<
-                                           "'" << lockFilePath.getAbsolutePathNative() << "'");
+          "Attempted to link:" << std::endl << " - " <<
+          "'" << proxyPath.getAbsolutePathNative() << "'" <<
+          " => " <<
+          "'" << lockFilePath.getAbsolutePathNative() << "'");
       
       // if this failed, we should still make a best-effort attempt to acquire
       // a lock by creating a file using O_CREAT | O_EXCL. note that we prefer
