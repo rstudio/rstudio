@@ -113,10 +113,28 @@ boost::recursive_mutex s_loggingMutex;
 
 namespace {
 
-static std::atomic_uint s_fileLogId(3);
-static std::shared_ptr<log::ILogDestination> s_stdErrLogDest;
+int getNextFileLogId()
+{
+   static std::atomic_uint fileLogId(3);
+   return fileLogId.fetch_add(1);
+}
+
+std::shared_ptr<log::ILogDestination> getStdErrLogDest()
+{
+   using namespace log;
+   static std::shared_ptr<ILogDestination> stdErrLogDest(new StderrLogDestination());
+   return stdErrLogDest;
+}
+
 #ifndef _WIN32
-static std::shared_ptr<log::ILogDestination> s_syslogDest;
+
+std::shared_ptr<log::ILogDestination> getSysLogDest()
+{
+   using namespace log;
+   static std::shared_ptr<ILogDestination> syslogDest(new SyslogDestination(s_programIdentity));
+   return syslogDest;
+}
+
 #endif
 
 void initializeLogWriter()
@@ -135,25 +153,21 @@ void initializeLogWriter()
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
-               s_fileLogId.fetch_add(1),
+               getNextFileLogId(),
                s_programIdentity,
                boost::get<FileLogOptions>(options))));
          break;
       }
       case LoggerType::kStdErr:
       {
-         if (s_stdErrLogDest == nullptr)
-            s_stdErrLogDest.reset(new StderrLogDestination());
-         addLogDestination(s_stdErrLogDest);
+         addLogDestination(getStdErrLogDest());
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         if (s_syslogDest == nullptr)
-            s_syslogDest.reset(new SyslogDestination(s_programIdentity));
-         addLogDestination(s_syslogDest);
+         addLogDestination(getSysLogDest());
 #endif
       }
    }
@@ -175,7 +189,7 @@ void initializeLogWriter(const std::string& logSection)
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
-               s_fileLogId.fetch_add(1),
+               getNextFileLogId(),
                s_programIdentity,
                boost::get<FileLogOptions>(options))),
             LogSection(logSection, s_logOptions->logLevel(logSection)));
@@ -183,10 +197,8 @@ void initializeLogWriter(const std::string& logSection)
       }
       case LoggerType::kStdErr:
       {
-         if (s_stdErrLogDest == nullptr)
-            s_stdErrLogDest.reset(new StderrLogDestination());
          addLogDestination(
-            s_stdErrLogDest,
+            getStdErrLogDest(),
             LogSection(logSection, s_logOptions->logLevel(logSection)));
          break;
       }
@@ -194,10 +206,8 @@ void initializeLogWriter(const std::string& logSection)
       default:
       {
 #ifndef _WIN32
-         if (s_syslogDest == nullptr)
-            s_syslogDest.reset(new SyslogDestination(s_programIdentity));
          addLogDestination(
-            s_syslogDest,
+            getSysLogDest(),
             LogSection(logSection, s_logOptions->logLevel(logSection)));
 #endif
       }
