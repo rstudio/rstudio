@@ -72,6 +72,24 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar("Replace");
+
+      replaceLabel_ = new Label();
+      toolbar.addLeftWidget(replaceLabel_);
+
+      replaceAll_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Replace all",
+            null);
+      replaceAll_.setVisible(true);
+      toolbar.addRightWidget(replaceAll_);
+
+      return toolbar;
+   }
+
+   @Override
    protected Widget createMainWidget()
    {
       context_ = new FindResultContext();
@@ -274,7 +292,9 @@ public class FindOutputPane extends WorkbenchPane
    private FindResultContext context_;
    private final Commands commands_;
    private Label searchLabel_;
+   private Label replaceLabel_;
    private ToolbarButton stopSearch_;
+   private ToolbarButton replaceAll_;
    private SimplePanel container_;
    private ScrollPanel scrollPanel_;
    private StatusPanel statusPanel_;
