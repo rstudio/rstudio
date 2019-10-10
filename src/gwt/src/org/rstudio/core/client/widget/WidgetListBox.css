@@ -29,7 +29,7 @@
    -webkit-box-sizing: border-box;
 }
 
-.outerPanel:focus:not(.focus-visible)
+.outerPanel:focus
 {
    outline: none;
 }
@@ -42,7 +42,7 @@
    width: 100%;
 }
 
-.listPanel:focus:not(.focus-visible)
+.listPanel:focus
 {
    outline: none;
 }

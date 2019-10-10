@@ -58,6 +58,7 @@ public class HyperlinkLabel extends Label
    public void setClickHandler(Command clickHandler)
    {
       clickHandler_ = clickHandler;
+      registerClickHandler();
    }
 
    private class MouseHandlers implements MouseOverHandler,
@@ -99,7 +100,12 @@ public class HyperlinkLabel extends Label
    {
       releaseOnUnload_.add(addMouseOverHandler(mouseHandlers_));
       releaseOnUnload_.add(addMouseOutHandler(mouseHandlers_));
-      if (clickHandler_ != null)
+      registerClickHandler();
+   }
+
+   private void registerClickHandler()
+   {
+      if (isAttached() && clickHandler_ != null)
       {
          releaseOnUnload_.add(addClickHandler(event -> click()));
 

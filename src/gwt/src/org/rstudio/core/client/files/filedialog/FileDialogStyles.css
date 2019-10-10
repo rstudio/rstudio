@@ -236,7 +236,7 @@ body.windows .breadcrumb table.path span {
    margin-top: 0px;
 }
 
-button.browse:focus:not(.focus-visible) {
+button.browse:focus {
    outline:0;
 }
 

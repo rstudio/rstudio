@@ -1658,7 +1658,7 @@ void initMonitorClient()
 {
    if (!options().getBoolOverlayOption(kLauncherSessionOption))
    {
-      monitor::initializeMonitorClient(kMonitorSocketPath,
+      monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
                                        options().monitorSharedSecret());
    }
    else

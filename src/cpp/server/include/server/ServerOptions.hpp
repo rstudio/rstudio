@@ -82,6 +82,11 @@ public:
 
    bool serverSetUmask() const { return serverSetUmask_; }
 
+   core::FilePath serverDataDir() const
+   {
+      return core::FilePath(serverDataDir_);
+   }
+
    // www 
    std::string wwwAddress() const
    { 
@@ -194,9 +199,9 @@ public:
       return std::string(authPamHelperPath_.c_str());
    }
 
-   std::string authRevocationListDir() const
+   core::FilePath authRevocationListDir() const
    {
-      return authRevocationListDir_;
+      return core::FilePath(authRevocationListDir_);
    }
    
    bool authPamRequirePasswordPrompt() const
@@ -304,6 +309,7 @@ private:
    bool serverAppArmorEnabled_;
    bool serverSetUmask_;
    bool serverOffline_;
+   std::string serverDataDir_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;

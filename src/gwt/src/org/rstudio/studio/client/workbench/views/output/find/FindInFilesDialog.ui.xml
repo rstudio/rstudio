@@ -10,7 +10,7 @@
          margin-left: 0;
       }
 
-      .panel input:focus:not(.focus-visible) {
+      .panel input:focus {
          outline: none;
       }
 

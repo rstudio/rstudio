@@ -26,7 +26,6 @@ public class ProductInfo
    public String commit;
    public String build;
    public String release_name;
-   public String notice;
    public String date;
    public String copyright_year;
 }

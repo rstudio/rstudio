@@ -26,6 +26,11 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+int conv(int num_msg,
+         const struct pam_message** msg,
+         struct pam_response** resp,
+         void * appdata_ptr);
+
 // NOTE: Mac OS X supports PAM but ships with it in a locked-down config
 // which will cause all passwords to be rejected. To make it work run:
 //
@@ -33,7 +38,6 @@ namespace system {
 //
 // That configures PAM to send rstudio through the same authentication
 // stack as ftpd uses, which is similar to us.
-
 
 // Low-level C++ wrapper around PAM API.
 class PAM : boost::noncopyable

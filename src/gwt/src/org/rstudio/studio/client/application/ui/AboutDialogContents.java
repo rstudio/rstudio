@@ -18,6 +18,9 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Anchor;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -32,6 +35,9 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.application.model.ProductNotice;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class AboutDialogContents extends Composite
 {
@@ -68,10 +74,27 @@ public class AboutDialogContents extends Composite
       buildLabel.setText(
            "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
            info.date + ")");
-      noticeBox.setValue(info.notice);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
-      
+
+      showNoticelink_.setClickHandler(() ->
+      {
+         RStudioGinjector.INSTANCE.getServer().getProductNotice(new ServerRequestCallback<ProductNotice>()
+         {
+            @Override
+            public void onResponseReceived(ProductNotice notice)
+            {
+               AboutOpenSourceDialog about = new AboutOpenSourceDialog(notice);
+               about.showModal();
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      });
+
       if (editionInfo.proLicense())
       {
          // no need to show GPL notice in pro edition
@@ -80,7 +103,6 @@ public class AboutDialogContents extends Composite
          if (Desktop.hasDesktopFrame())
          {
             // load license status in desktop mode
-            noticeBox.setVisibleLines(9);
             licenseBox.setVisibleLines(3);
             licenseLabel.setVisible(true);
             licenseBox.setVisible(true);
@@ -102,7 +124,7 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField InlineLabel copyrightYearLabel;
-   @UiField TextArea noticeBox;
+   @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
    @UiField Label licenseLabel;
    @UiField TextArea licenseBox;

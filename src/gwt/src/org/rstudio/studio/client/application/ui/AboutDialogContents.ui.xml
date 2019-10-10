@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
    <ui:style>
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
@@ -29,13 +30,14 @@
       .userAgent {
          margin-bottom: 15px;
       }
-      
-      .noticeBox {
-         clear: both;
-         width: 100%;
-         font-family: fixedWidthFont;
+      .notice {
+         text-align: center;
          margin-top: 15px;
          margin-bottom: 15px;
+      }
+      .noticeLink {
+         font-size: 10pt;
+         text-decoration: underline;
       }
       .licenseBox {
          clear: both;
@@ -108,8 +110,12 @@
             <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
          </g:HTMLPanel>
       </g:HTMLPanel>
-      <g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
-         visibleLines="15" readOnly="true"></g:TextArea>
+      <g:HTMLPanel styleName="{style.notice}">
+         <rw:HyperlinkLabel
+               text="Open Source Components"
+               addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
+               ui:field="showNoticelink_"/>
+      </g:HTMLPanel>
       <g:Label ui:field="licenseLabel" visible="false" text="RStudio Pro License Status" styleName="{style.licenseLabel}"></g:Label>
         <g:TextArea ui:field="licenseBox" styleName="{style.licenseBox}"
            visibleLines="10" visible="false" readOnly="true"></g:TextArea>
