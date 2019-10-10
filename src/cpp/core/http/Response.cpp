@@ -688,19 +688,19 @@ void Response::ensureStatusMessage() const
             break;
 
          case SeeOther:
-				statusMessage_ = status::Message::SeeOther ;
+            statusMessage_ = status::Message::SeeOther ;
             break;
 
          case NotModified:
-				statusMessage_ = status::Message::NotModified ;
+            statusMessage_ = status::Message::NotModified ;
             break;
 
          case BadRequest:
-				statusMessage_ = status::Message::BadRequest ;
+            statusMessage_ = status::Message::BadRequest ;
             break;
 
          case Unauthorized:
-				statusMessage_ = status::Message::Unauthorized ;
+            statusMessage_ = status::Message::Unauthorized ;
             break;
 
          case Forbidden:
