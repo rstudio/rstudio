@@ -19,8 +19,10 @@
 #include <sstream>
 #include <algorithm>
 
-#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
@@ -48,6 +50,9 @@ void logAction(LogLevel logLevel,
       default:
       {
          assert(false);
+         logErrorMessage(
+            "Failed to log action. Invalid log level specified: " +
+            safe_convert::numberToString(static_cast<int>(logLevel)));
          return;
       }
    }
