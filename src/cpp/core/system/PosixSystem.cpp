@@ -1660,7 +1660,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
 
    // get the username
    core::system::User user;
-   error = User::createUser(st.st_uid, user);
+   error = User::getUserFromIdentifier(st.st_uid, user);
    if (error)
       return error;
 
@@ -2511,7 +2511,7 @@ Error temporarilyDropPriv(const std::string& newUsername)
 
    // get user info
    User user;
-   Error error = User::createUser(newUsername, user);
+   Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
 
