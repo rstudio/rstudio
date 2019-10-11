@@ -118,7 +118,7 @@ case "$1" in
         ;;
 
     version)
-        echo "${CPACK_PACKAGE_VERSION}"
+        echo "${CPACK_PACKAGE_VERSION} (${RSTUDIO_RELEASE_NAME})"
         ;;
 
     *)
