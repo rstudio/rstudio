@@ -4,6 +4,7 @@
 ### Misc
 
 * Fully reset Connections pane objects when refreshing (#2136)	
+* Fix incorrect `memory.limit()` result with R >= 3.6.0 (#4986)
 * Unset `DYLD_INSERT_LIBRARIES` after launch on macOS to prevent spurious library load errors (#5313)
 * Eliminate warnings when using `_R_CHECK_LENGTH_1_LOGIC2_` (#5268, #5363)
 * Fix plain serif/sans-serif font rendering on macOS Catalina (#5525)
