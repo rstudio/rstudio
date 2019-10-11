@@ -215,10 +215,20 @@ public class FindOutputPane extends WorkbenchPane
             container_.setWidget(scrollPanel_);
             
          table_.addItems(findResults.subList(0, matchesToAdd), false);
+         context_.addMatches(findResults.subList(0, matchesToAdd));
       }
       
       if (matchesToAdd != findResults.size())
          showOverflow();
+   }
+
+   public void addReplaceMatches(String value)
+   {
+      /*
+      table_.clear();
+      context_.updateFileMatches(value);
+      addMatches(context_.getFindResults());
+      */
    }
 
    @Override
@@ -351,6 +361,7 @@ public class FindOutputPane extends WorkbenchPane
    private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
+
    private SmallButton viewReplaceButton_;
    private SecondaryToolbar replaceToolbar_;
    private boolean replaceToolbarVisible_;

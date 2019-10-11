@@ -30,7 +30,8 @@ public class FindResult extends JavaScriptObject
       return ({
          file: file,
          line: line,
-         lineValue: lineValue
+         lineValue: lineValue,
+         replace: ""
       });
    }-*/;
 
@@ -48,6 +49,10 @@ public class FindResult extends JavaScriptObject
       return this.lineValue;
    }-*/;
 
+   public native final String getReplaceValue()/*-{
+      return this.replace;
+   }-*/;
+
    public final ArrayList<Integer> getMatchOns()
    {
       return getJavaArray("matchOn");
@@ -57,6 +62,11 @@ public class FindResult extends JavaScriptObject
    {
       return getJavaArray("matchOff");
    }
+
+   public final native void setReplace(String value) /*-{
+      this.replace = value;
+   }-*/;
+
 
    public final SafeHtml getLineHTML()
    {
@@ -93,6 +103,14 @@ public class FindResult extends JavaScriptObject
             else if (openTags > 0)
             {
                out.appendHtmlConstant("</strong>");
+               String replace = getReplaceValue();
+               if (!replace.isEmpty())
+               {
+                  out.appendHtmlConstant("<replace>");
+                  for (int j = 0; j < replace.length(); j++)
+                     out.append(replace.charAt(j));
+                  out.appendHtmlConstant("</replace>");
+               }
                openTags--;
             }
          }
@@ -103,6 +121,14 @@ public class FindResult extends JavaScriptObject
       {
          openTags--;
          out.appendHtmlConstant("</strong>");
+         String replace = getReplaceValue();
+         if (!replace.isEmpty())
+         {
+            out.appendHtmlConstant("<replace>");
+            for (int j = 0; j < replace.length(); j++)
+               out.append(replace.charAt(j));
+            out.appendHtmlConstant("</replace>");
+         }
       }
 
       return out.toSafeHtml();

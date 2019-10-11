@@ -20,6 +20,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 
 public class FindResultContext
 {
@@ -40,6 +41,14 @@ public class FindResultContext
          int lineWidth = (line + "").length();
          maxLineWidth_ = Math.max(lineWidth, maxLineWidth_);
          matchData_.getList().add(new Match(this, line, column, value));
+      }
+
+      public void updateMatches(String value)
+      {
+         for (Match match: matchData_.getList())
+         {
+            match.setReplace(value);
+         }
       }
 
       public int getCount()
@@ -104,10 +113,21 @@ public class FindResultContext
          return value_;
       }
 
+      public void setReplace(String value)
+      {
+         replace_ = value;
+      }
+
+      public String getReplace()
+      {
+         return replace_;
+      }
+
       private final File parent_;
       private final int line_;
       private final int column_;
       private final String value_;
+      private String replace_;
    }
 
    private File getFile(String path)
@@ -145,6 +165,7 @@ public class FindResultContext
 
       for (FindResult fr : findResults)
       {
+         //findResults_.add(fr);
          File file = getFile(fr.getFile());
 
          file.addMatch(fr.getLine(), 0, fr.getLineValue());
@@ -161,6 +182,17 @@ public class FindResultContext
       }
    }
 
+   public void updateFileMatches(String replace)
+   {
+      for (File file : data_.getList())
+         file.updateMatches(replace);
+   }
+
+   public ArrayList<FindResult> getFindResults()
+   {
+      return findResults_;
+   }
+
    private final ListDataProvider<File> data_ = new ListDataProvider<File>(new ProvidesKey<File>()
    {
       @Override
@@ -169,6 +201,7 @@ public class FindResultContext
          return item.getPath();
       }
    });
+   private ArrayList<FindResult> findResults_;
    private final HashMap<String, File> filesByName_ = new HashMap<String, File>();
    private int maxLineWidth_;
 }

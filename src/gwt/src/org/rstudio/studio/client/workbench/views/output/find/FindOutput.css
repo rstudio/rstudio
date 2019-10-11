@@ -80,6 +80,7 @@
 .findOutputReplace strong {
    font-weight: bold;
    background-color: #A81900;
+   text-decoration: line-through;
    color: white;
 }
 
