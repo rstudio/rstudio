@@ -70,8 +70,7 @@ public class FindOutputPane extends WorkbenchPane
          @Override
          public void onClick(ClickEvent event)
          {
-            replaceToolbarVisible_ = !replaceToolbarVisible_;
-            setSecondaryToolbarVisible(replaceToolbarVisible_);
+            toggleReplaceView();
          }
       });
 
@@ -108,6 +107,15 @@ public class FindOutputPane extends WorkbenchPane
 
       replaceAllButton_ = new SmallButton("Replace All");
       replaceToolbar_.addLeftWidget(replaceAllButton_);
+
+      /*
+      replaceTextBox_.addKeyDownHandler(new KeyDownHandler()
+      {
+         public void onKeyDown(KeyDownEvent event);
+         {
+         }
+      });
+      */
 
       return replaceToolbar_;
    }
@@ -166,6 +174,25 @@ public class FindOutputPane extends WorkbenchPane
       scrollPanel_.setSize("100%", "100%");
       container_.setWidget(scrollPanel_);
       return container_;
+   }
+
+   private void toggleReplaceView()
+   {
+      replaceToolbarVisible_ = !replaceToolbarVisible_;
+      setSecondaryToolbarVisible(replaceToolbarVisible_);
+
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      if (replaceToolbarVisible_)
+      {
+         table_.addStyleName(resources.styles().findOutputReplace());
+         // !!!
+         //table_.clear();
+         //table.addItems(findResults.subList(0,matchesToAdd),false);
+      }
+      else
+      {
+         table_.removeStyleName(resources.styles().findOutputReplace());
+      }
    }
 
    private void fireSelectionCommitted()

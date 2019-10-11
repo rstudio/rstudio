@@ -22,6 +22,8 @@ public interface FindOutputResources extends ClientBundle
    public interface Styles extends CssResource
    {
       String findOutput();
+      String findOutputReplace();
+      String replaceOutput();
       String headerRow();
       String line();
       String lineValue();

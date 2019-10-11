@@ -76,3 +76,16 @@
    font-weight: normal;
    color: #66A;
 }
+
+.findOutputReplace strong {
+   font-weight: bold;
+   background-color: #A81900;
+   color: white;
+}
+
+.replaceOutput {
+   font-weight: bold;
+   background-color: #006600;
+   color: white;
+}
+
