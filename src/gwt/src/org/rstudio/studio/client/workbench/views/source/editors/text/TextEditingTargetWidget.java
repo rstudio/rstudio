@@ -218,6 +218,13 @@ public class TextEditingTargetWidget
       editor_.setTextInputAriaLabel("Text editor");
 
       initWidget(panel_);
+      
+      userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
+      {
+         // Re-adapt to file type when this preference changes; it may bring
+         // back the Source on Save command in the toolbar
+         adaptToFileType(editor_.getFileType());
+      });
    }
    
    public void initWidgetSize()
@@ -637,7 +644,8 @@ public class TextEditingTargetWidget
       boolean canCompileNotebook = fileType.canCompileNotebook();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
-      boolean canSourceOnSave = fileType.canSourceOnSave();
+      boolean canSourceOnSave = fileType.canSourceOnSave() && 
+            !userPrefs_.autoSaveOnBlur().getValue();
       if (canSourceOnSave && fileType.isJS()) 
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       if (canSourceOnSave && fileType.isSql()) 

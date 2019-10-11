@@ -951,6 +951,11 @@
             "type": "boolean",
             "default": false,
             "description": "Reduce use of animations in the user interface."
+        },
+        "auto_save_on_blur": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to automatically save when the editor loses focus."
         }
     }
 }

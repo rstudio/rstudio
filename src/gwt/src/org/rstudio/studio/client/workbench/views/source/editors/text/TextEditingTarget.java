@@ -628,6 +628,16 @@ public class TextEditingTarget implements
          }
       });
       
+      docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
+      {
+         // When the editor loses focus, perform an autosave if enabled and the
+         // buffer is dirty
+         if (prefs.autoSaveOnBlur().getValue() && dirtyState_.getValue())
+         {
+            save();
+         }
+      });
+
       events_.addHandler(
             ShinyApplicationStatusEvent.TYPE, 
             new ShinyApplicationStatusEvent.Handler()
@@ -850,6 +860,18 @@ public class TextEditingTarget implements
                   }
                }
             });
+
+      releaseOnDismiss_.add(
+         prefs.autoSaveOnBlur().addValueChangeHandler((ValueChangeEvent<Boolean> val) ->
+         {
+            // When the user turns on autosave, disable Source on Save if it was
+            // previously enabled; otherwise documents which were open with this
+            // setting enabled will start sourcing themselves on blur.
+            if (val.getValue())
+            {
+               setSourceOnSave(false);
+            }
+         }));
    }
    
    static {
@@ -1393,8 +1415,13 @@ public class TextEditingTarget implements
 
       registerPrefs(releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
       
-      // Initialize sourceOnSave, and keep it in sync
-      view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
+      // Initialize sourceOnSave, and keep it in sync. Don't source on save
+      // (regardless of preference) in auto save mode, which is mutually
+      // exclusive with the manual source-and-save workflow.
+      boolean sourceOnSave = document.sourceOnSave();
+      if (prefs_.autoSaveOnBlur().getGlobalValue())
+         sourceOnSave = false;
+      view_.getSourceOnSave().setValue(sourceOnSave, false);
       view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -2299,6 +2326,7 @@ public class TextEditingTarget implements
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
+      Debug.log("deactivated " + this.id_);
 
       // switching tabs is a navigation action
       try
@@ -5265,10 +5293,6 @@ public class TextEditingTarget implements
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
-         // R 2.14 prints a warning when sourcing a file with no trailing \n
-         if (!code.endsWith("\n"))
-            code = code + "\n";
-
          boolean sweave = 
             fileType_.canCompilePDF() || 
             fileType_.canKnitToHTML() ||

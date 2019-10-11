@@ -294,6 +294,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kAutoSaveOnBlur "auto_save_on_blur"
 
 class UserPrefValues: public Preferences
 {
@@ -1300,6 +1301,12 @@ public:
     */
    bool reducedMotion();
    core::Error setReducedMotion(bool val);
+
+   /**
+    * Whether to automatically save when the editor loses focus.
+    */
+   bool autoSaveOnBlur();
+   core::Error setAutoSaveOnBlur(bool val);
 
 };
 

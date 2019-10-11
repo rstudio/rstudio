@@ -2194,6 +2194,19 @@ core::Error UserPrefValues::setReducedMotion(bool val)
    return writePref("reduced_motion", val);
 }
 
+/**
+ * Whether to automatically save when the editor loses focus.
+ */
+bool UserPrefValues::autoSaveOnBlur()
+{
+   return readPref<bool>("auto_save_on_blur");
+}
+
+core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
+{
+   return writePref("auto_save_on_blur", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2364,6 +2377,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kAutoSaveOnBlur,
    });
 }
    
