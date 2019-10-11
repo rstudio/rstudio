@@ -46,7 +46,12 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.*;
-import org.rstudio.core.client.command.*;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
