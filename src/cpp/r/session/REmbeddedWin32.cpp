@@ -117,8 +117,9 @@ void runEmbeddedR(const core::FilePath& rHome,
    // call cmdlineoptions (necessary to set memory limit)
    // use --vanilla here to avoid most processing R might normally do
    // (we'll re-initialize R below and have processing done then)
+   const int rargc = 2;
    const char* rargv[] = {"R.exe", "--vanilla"};
-   ::cmdlineoptions(1, const_cast<char**>(rargv));
+   ::cmdlineoptions(rargc, const_cast<char**>(rargv));
 
    // setup params structure
    structRstart rp;
