@@ -2544,7 +2544,7 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
    // get user info
    User user;
-   Error error = User::createUser(newUsername, user);
+   Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
 
