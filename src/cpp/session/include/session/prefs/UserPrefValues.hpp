@@ -294,6 +294,8 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kRememberUnsavedChanges "remember_unsaved_changes"
+#define kUnsavedChangesUpdateMs "unsaved_changes_update_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
 
 class UserPrefValues: public Preferences
@@ -1301,6 +1303,18 @@ public:
     */
    bool reducedMotion();
    core::Error setReducedMotion(bool val);
+
+   /**
+    * Whether to make a backup copy of unsaved changes as files are editied
+    */
+   bool rememberUnsavedChanges();
+   core::Error setRememberUnsavedChanges(bool val);
+
+   /**
+    * How often to update RStudio's backup copy of unsaved changes.
+    */
+   int unsavedChangesUpdateMs();
+   core::Error setUnsavedChangesUpdateMs(int val);
 
    /**
     * Whether to automatically save when the editor loses focus.

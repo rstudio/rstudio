@@ -251,6 +251,7 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref("Restore last cursor position when opening file", prefs_.restoreSourceDocumentCursorPosition()));
+      savePanel.add(checkboxPref("Remember unsaved changes during editing", prefs_.rememberUnsavedChanges()));
       savePanel.add(checkboxPref("Automatically save when editor loses focus", prefs_.autoSaveOnBlur()));
 
       Label serializationLabel = headerLabel("Serialization");

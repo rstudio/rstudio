@@ -2195,6 +2195,32 @@ core::Error UserPrefValues::setReducedMotion(bool val)
 }
 
 /**
+ * Whether to make a backup copy of unsaved changes as files are editied
+ */
+bool UserPrefValues::rememberUnsavedChanges()
+{
+   return readPref<bool>("remember_unsaved_changes");
+}
+
+core::Error UserPrefValues::setRememberUnsavedChanges(bool val)
+{
+   return writePref("remember_unsaved_changes", val);
+}
+
+/**
+ * How often to update RStudio's backup copy of unsaved changes.
+ */
+int UserPrefValues::unsavedChangesUpdateMs()
+{
+   return readPref<int>("unsaved_changes_update_ms");
+}
+
+core::Error UserPrefValues::setUnsavedChangesUpdateMs(int val)
+{
+   return writePref("unsaved_changes_update_ms", val);
+}
+
+/**
  * Whether to automatically save when the editor loses focus.
  */
 bool UserPrefValues::autoSaveOnBlur()
@@ -2377,6 +2403,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kRememberUnsavedChanges,
+      kUnsavedChangesUpdateMs,
       kAutoSaveOnBlur,
    });
 }

@@ -1,7 +1,7 @@
 /*
  * DocUpdateSentinel.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
@@ -118,7 +119,8 @@ public class DocUpdateSentinel
                             SourceDocument sourceDoc,
                             ProgressIndicator progress,
                             DirtyState dirtyState,
-                            EventBus events)
+                            EventBus events,
+                            UserPrefs prefs)
    {
       server_ = server;
       docDisplay_ = docDisplay;
@@ -126,18 +128,26 @@ public class DocUpdateSentinel
       progress_ = progress;
       dirtyState_ = dirtyState;
       eventBus_ = events;
+      prefs_ = prefs;
       changeTracker_ = docDisplay.getChangeTracker();
       propertyChangeHandlers_ = 
             new HashMap<String, ValueChangeHandlerManager<String>>();
 
-      autosaver_ = new DebouncedCommand(1000)
+      prefs_.rememberUnsavedChanges().bind((Boolean remember) ->
       {
-         @Override
-         protected void execute()
+         if (remember)
          {
-            maybeAutoSave();
+            // Set up the debounced auto-save method when the preference is
+            // enabled
+            createAutosaver();
          }
-      };
+         else if (autosaver_ != null)
+         {
+            // Turn off unsaved change tracking
+            autosaver_.suspend();
+            autosaver_ = null;
+         }
+      });
 
       docDisplay_.addValueChangeHandler(this);
       docDisplay_.addFoldChangeHandler(this);
@@ -283,7 +293,8 @@ public class DocUpdateSentinel
                                           String encoding,
                                           final ProgressIndicator progress)
    {
-      autosaver_.suspend();
+      if (autosaver_ != null)
+         autosaver_.suspend();
       doSave(path, fileType, encoding, new ProgressIndicator()
       {
          public void onProgress(String message)
@@ -299,21 +310,24 @@ public class DocUpdateSentinel
          
          public void clearProgress()
          {
-            autosaver_.resume();
+            if (autosaver_ != null)
+               autosaver_.resume();
             if (progress != null)
                progress.clearProgress();
          }
 
          public void onCompleted()
          {
-            autosaver_.resume();
+            if (autosaver_!= null)
+               autosaver_.resume();
             if (progress != null)
                progress.onCompleted();
          }
 
          public void onError(String message)
          {
-            autosaver_.resume();
+            if (autosaver_ != null)
+               autosaver_.resume();
             if (progress != null)
                progress.onError(message);
          }
@@ -701,14 +715,16 @@ public class DocUpdateSentinel
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       changesPending_ = true;
-      autosaver_.nudge();
+      if (autosaver_ != null)
+         autosaver_.nudge();
    }
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
    {
       changesPending_ = true;
-      autosaver_.nudge();
+      if (autosaver_ != null)
+         autosaver_.nudge();
    }
    
    public String getPath()
@@ -728,7 +744,8 @@ public class DocUpdateSentinel
 
    public void stop()
    {
-      autosaver_.suspend();
+      if (autosaver_ != null)
+         autosaver_.suspend();
       
       if (closeHandlerReg_ != null)
       {
@@ -791,6 +808,22 @@ public class DocUpdateSentinel
       return sourceDoc_.getId();
    }
    
+   private void createAutosaver()
+   {
+      if (autosaver_ == null)
+      {
+         autosaver_ = new DebouncedCommand(
+               prefs_.unsavedChangesUpdateMs().getValue())
+         {
+            @Override
+            protected void execute()
+            {
+               maybeAutoSave();
+            }
+         };
+      }
+   }
+   
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;
@@ -799,7 +832,8 @@ public class DocUpdateSentinel
    private final ProgressIndicator progress_;
    private final DirtyState dirtyState_;
    private final EventBus eventBus_;
-   private final DebouncedCommand autosaver_;
+   private DebouncedCommand autosaver_;
+   private final UserPrefs prefs_;
    private HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 

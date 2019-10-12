@@ -867,7 +867,7 @@ public class TextEditingTarget implements
             // When the user turns on autosave, disable Source on Save if it was
             // previously enabled; otherwise documents which were open with this
             // setting enabled will start sourcing themselves on blur.
-            if (val.getValue())
+            if (val.getValue() && view_ != null)
             {
                setSourceOnSave(false);
             }
@@ -1333,7 +1333,8 @@ public class TextEditingTarget implements
             document,
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
-            events_);
+            events_,
+            prefs_);
       
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,

@@ -952,6 +952,16 @@
             "default": false,
             "description": "Reduce use of animations in the user interface."
         },
+        "remember_unsaved_changes": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to make a backup copy of unsaved changes as files are edited"
+        },
+        "unsaved_changes_update_ms": {
+            "type": "integer",
+            "default": 1000,
+            "description": "How often to update RStudio's backup copy of unsaved changes."
+        },
         "auto_save_on_blur": {
             "type": "boolean",
             "default": false,

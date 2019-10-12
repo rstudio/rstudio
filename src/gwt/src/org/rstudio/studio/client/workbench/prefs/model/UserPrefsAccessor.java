@@ -1566,6 +1566,22 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to make a backup copy of unsaved changes as files are editied
+    */
+   public PrefValue<Boolean> rememberUnsavedChanges()
+   {
+      return bool("remember_unsaved_changes", true);
+   }
+
+   /**
+    * How often to update RStudio's backup copy of unsaved changes.
+    */
+   public PrefValue<Integer> unsavedChangesUpdateMs()
+   {
+      return integer("unsaved_changes_update_ms", 1000);
+   }
+
+   /**
     * Whether to automatically save when the editor loses focus.
     */
    public PrefValue<Boolean> autoSaveOnBlur()
@@ -1909,6 +1925,10 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
+      if (source.hasKey("remember_unsaved_changes"))
+         rememberUnsavedChanges().setValue(layer, source.getBool("remember_unsaved_changes"));
+      if (source.hasKey("unsaved_changes_update_ms"))
+         unsavedChangesUpdateMs().setValue(layer, source.getInteger("unsaved_changes_update_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
    }
