@@ -60,7 +60,8 @@ public class HelpLink extends Composite
       DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setMarginRight(4, Unit.PX);
       helpPanel.add(helpImage);
-      helpLink_ = new HyperlinkLabel(caption, () -> {
+      helpLink_ = new HyperlinkLabel(caption, () ->
+      {
          if (isRStudioLink_) {
             RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
                link_,

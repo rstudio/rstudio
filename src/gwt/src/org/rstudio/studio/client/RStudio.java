@@ -58,7 +58,6 @@ import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.LauncherSessionStatus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
-import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
@@ -407,7 +406,6 @@ public class RStudio implements EntryPoint
       BuildPaneResources.INSTANCE.styles().ensureInjected();
       
       ProgressDialog.ensureStylesInjected();
-      SupportPopupMenu.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();
       ThemedButton.ensureStylesInjected();
       ThemedPopupPanel.ensureStylesInjected();
