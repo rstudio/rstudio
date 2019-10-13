@@ -63,7 +63,6 @@ typedef std::pair<std::string,SEXP> Variable ;
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables);
       
 // object info
@@ -113,7 +112,7 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet);
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
-void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables);
+void listNamedAttributes(SEXP obj, std::vector<Variable>* pVariables);
 
 // weak/external pointers and finalizers
 bool isExternalPointer(SEXP object);

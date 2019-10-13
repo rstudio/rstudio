@@ -123,12 +123,11 @@ void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
    if (!hasEnvironment())
       return;
 
-   r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(getMonitoredEnvironment(),
-                            false,
-                            prefs::userPrefs().showLastDotValue(),
-                            &rProtect,
-                            pEnv);
+   r::sexp::listEnvironment(
+            getMonitoredEnvironment(),
+            false,
+            prefs::userPrefs().showLastDotValue(),
+            pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()

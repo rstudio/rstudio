@@ -121,15 +121,15 @@ bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
    // list the contents of this environment
    std::vector<r::sexp::Variable> vars;
-   r::sexp::Protect rProtect;
    if (TYPEOF(obj) == S4SXP)
    {
       // for S4 objects, list the attributes (which correspond to slots)
-      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
+      r::sexp::listNamedAttributes(obj, &vars);
    }
    else
    {
       // not S4, coerce to environment
+      r::sexp::Protect rProtect;
       SEXP envir = R_NilValue;
       if (TYPEOF(obj) == ENVSXP)
       {
@@ -151,7 +151,7 @@ bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       r::sexp::listEnvironment(envir,
                                true,  // include all values
                                false, // don't include last dot
-                               &rProtect, &vars);
+                               &vars);
    }
 
    // check for external pointers
@@ -186,7 +186,6 @@ bool hasExternalPtr(SEXP obj,      // environment to search for external pointer
 SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
 {
    bool nullPtr = r::sexp::asLogical(nullSEXP);
-   r::sexp::Protect protect;
    bool hasPtr = false;
    if (r::sexp::isExternalPointer(objSEXP))
    {
@@ -198,6 +197,7 @@ SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
       // object is an environment; check it for external pointers
       hasPtr = hasExternalPtr(objSEXP, nullPtr);
    }
+   r::sexp::Protect protect;
    return r::sexp::create(hasPtr, &protect);
 }
 
@@ -397,7 +397,6 @@ json::Array environmentListAsJson()
        listEnvironment(env,
                        false,
                        prefs::userPrefs().showLastDotValue(),
-                       &rProtect,
                        &vars);
 
        // get object details and transform to json

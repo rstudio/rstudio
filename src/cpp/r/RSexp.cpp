@@ -331,7 +331,6 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
    // reset passed vars
@@ -362,16 +361,15 @@ void listEnvironment(SEXP env,
    // populate pVariables
    for (const std::string& var : vars)
    {
-      SEXP varSEXP = R_NilValue;
       // Merely calling Rf_findVar on an active binding will fire the binding.
       // Don't try to get the SEXP for the variable in this case; leave the
       // value as nil.
-      if (!isActiveBinding(var, env))
-         varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
-
-      if (varSEXP != R_UnboundValue) // should never be unbound
+      if (isActiveBinding(var, env))
+         continue;
+      
+      SEXP varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
+      if (LIKELY(varSEXP != R_UnboundValue)) // should never be unbound
       {
-         pProtect->add(varSEXP);
          pVariables->push_back(std::make_pair(var, varSEXP));
       }
       else
@@ -383,7 +381,7 @@ void listEnvironment(SEXP env,
 }
 
 
-void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
+void listNamedAttributes(SEXP obj, std::vector<Variable>* pVariables)
 {
    // reset passed vars
    pVariables->clear();
@@ -403,7 +401,6 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    size_t i = 0;
    for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
    {
-      pProtect->add(attr);
       pVariables->push_back(std::make_pair(names.at(i), attr));
 
       // sanity: break if we run out of names
