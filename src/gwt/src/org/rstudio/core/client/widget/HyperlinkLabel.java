@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -26,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -54,11 +56,16 @@ public class HyperlinkLabel extends Label
       this(caption, null);
    }
    
-   // must call this before the element is loaded
    public void setClickHandler(Command clickHandler)
    {
       clickHandler_ = clickHandler;
       registerClickHandler();
+   }
+
+   @Override
+   public HandlerRegistration addClickHandler(ClickHandler handler) {
+      Debug.logWarning("HyperlinkLabel: for keyboard support use setClickHandler instead of addClickHandler");
+      return super.addClickHandler(handler);
    }
 
    private class MouseHandlers implements MouseOverHandler,
@@ -107,7 +114,7 @@ public class HyperlinkLabel extends Label
    {
       if (isAttached() && clickHandler_ != null)
       {
-         releaseOnUnload_.add(addClickHandler(event -> click()));
+         releaseOnUnload_.add(super.addClickHandler(event -> click()));
 
          releaseOnUnload_.add(addKeyPressHandler(event -> {
             char charCode = event.getCharCode();
