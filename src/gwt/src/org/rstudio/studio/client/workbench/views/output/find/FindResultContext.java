@@ -186,11 +186,8 @@ public class FindResultContext
 
    public void updateFileMatches(String replace)
    {
-      if (findResults_ != null)
-      {
-         for (FindResult fr : findResults_)
-            fr.setReplace(replace);
-      }
+      for (FindResult fr : findResults_)
+         fr.setReplace(replace);
    }
 
    public ArrayList<FindResult> getFindResults()

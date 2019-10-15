@@ -89,7 +89,7 @@ public class FindOutputPane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       replaceToolbar_ = new SecondaryToolbar("Replace");
-      replaceToolbarVisible_ = true;
+      replaceMode_ = true;
 
       replaceLabel_ = new Label();
       replaceToolbar_.addLeftWidget(replaceLabel_);
@@ -170,8 +170,8 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
 
-      replaceToolbarVisible_ = false;
-      setSecondaryToolbarVisible(replaceToolbarVisible_);
+      replaceMode_ = false;
+      setSecondaryToolbarVisible(replaceMode_);
 
       container_ =  new SimplePanel();
       container_.addStyleName("ace_editor_theme");
@@ -186,11 +186,11 @@ public class FindOutputPane extends WorkbenchPane
 
    private void toggleReplaceView()
    {
-      replaceToolbarVisible_ = !replaceToolbarVisible_;
-      setSecondaryToolbarVisible(replaceToolbarVisible_);
+      replaceMode_ = !replaceMode_;
+      setSecondaryToolbarVisible(replaceMode_);
 
       FindOutputResources resources = GWT.create(FindOutputResources.class);
-      if (replaceToolbarVisible_)
+      if (replaceMode_)
       {
          table_.addStyleName(resources.styles().findOutputReplace());
       }
@@ -219,7 +219,8 @@ public class FindOutputPane extends WorkbenchPane
          if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
             container_.setWidget(scrollPanel_);
             
-         context_.addMatches(findResults.subList(0, matchesToAdd));
+         if (!replaceMode_)
+            context_.addMatches(findResults.subList(0, matchesToAdd));
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
       
@@ -229,12 +230,9 @@ public class FindOutputPane extends WorkbenchPane
 
    public void addReplaceMatches(String value)
    {
-      if (context_.getFindResults() != null)
-      {
-         table_.clear();
-         context_.updateFileMatches(value);
-         addMatches(context_.getFindResults());
-      }
+      table_.clear();
+      context_.updateFileMatches(value);
+      addMatches(context_.getFindResults());
    }
 
    @Override
@@ -370,7 +368,7 @@ public class FindOutputPane extends WorkbenchPane
 
    private SmallButton viewReplaceButton_;
    private SecondaryToolbar replaceToolbar_;
-   private boolean replaceToolbarVisible_;
+   private boolean replaceMode_;
    private Label replaceLabel_;
    private Label replaceRegexLabel_;
    private CheckBox replaceRegex_;
