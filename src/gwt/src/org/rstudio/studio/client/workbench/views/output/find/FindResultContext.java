@@ -163,9 +163,10 @@ public class FindResultContext
    {
       int origMaxLineWidth = maxLineWidth_;
 
+      if (findResults_ == null)
+         findResults_ = new ArrayList<FindResult>();
       for (FindResult fr : findResults)
       {
-         //findResults_.add(fr);
          File file = getFile(fr.getFile());
 
          file.addMatch(fr.getLine(), 0, fr.getLineValue());
@@ -173,6 +174,7 @@ public class FindResultContext
          int index = data_.getList().indexOf(file);
          if (index >= 0) // not that we are expecting otherwise...
             data_.getList().set(index, file);
+         findResults_.add(fr.clone());
       }
 
       if (maxLineWidth_ != origMaxLineWidth)
@@ -184,8 +186,11 @@ public class FindResultContext
 
    public void updateFileMatches(String replace)
    {
-      for (File file : data_.getList())
-         file.updateMatches(replace);
+      if (findResults_ != null)
+      {
+         for (FindResult fr : findResults_)
+            fr.setReplace(replace);
+      }
    }
 
    public ArrayList<FindResult> getFindResults()

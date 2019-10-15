@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.StringUtil;
 
 import java.util.ArrayList;
 
@@ -36,6 +37,17 @@ public class FindResult extends JavaScriptObject
    }-*/;
 
    protected FindResult() {}
+
+   public native final FindResult clone() /*-{
+      return ({
+         file: this.file,
+         line: this.line,
+         lineValue: this.lineValue,
+         replace: this.replace,
+         matchOn: this.matchOn,
+         matchOff: this.matchOff
+      });
+   }-*/;
 
    public native final String getFile() /*-{
       return this.file;
@@ -64,7 +76,8 @@ public class FindResult extends JavaScriptObject
    }
 
    public final native void setReplace(String value) /*-{
-      this.replace = value;
+      if (value)
+         this.replace = value;
    }-*/;
 
 
@@ -103,15 +116,15 @@ public class FindResult extends JavaScriptObject
             else if (openTags > 0)
             {
                out.appendHtmlConstant("</strong>");
+               openTags--;
                String replace = getReplaceValue();
-               if (!replace.isEmpty())
+               if (!StringUtil.isNullOrEmpty(replace))
                {
-                  out.appendHtmlConstant("<replace>");
+                  out.appendHtmlConstant("<em>");
                   for (int j = 0; j < replace.length(); j++)
                      out.append(replace.charAt(j));
-                  out.appendHtmlConstant("</replace>");
+                  out.appendHtmlConstant("</em>");
                }
-               openTags--;
             }
          }
          out.append(line.charAt(i));
@@ -122,12 +135,12 @@ public class FindResult extends JavaScriptObject
          openTags--;
          out.appendHtmlConstant("</strong>");
          String replace = getReplaceValue();
-         if (!replace.isEmpty())
+         if (!StringUtil.isNullOrEmpty(replace))
          {
-            out.appendHtmlConstant("<replace>");
+            out.appendHtmlConstant("<em>");
             for (int j = 0; j < replace.length(); j++)
                out.append(replace.charAt(j));
-            out.appendHtmlConstant("</replace>");
+            out.appendHtmlConstant("</em>");
          }
       }
 

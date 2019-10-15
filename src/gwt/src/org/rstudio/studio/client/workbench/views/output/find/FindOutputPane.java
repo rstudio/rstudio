@@ -94,7 +94,7 @@ public class FindOutputPane extends WorkbenchPane
       replaceLabel_ = new Label();
       replaceToolbar_.addLeftWidget(replaceLabel_);
 
-      replaceTextBox_ = new TextBoxWithCue("Replace all");
+      replaceTextBox_ = new TextBoxWithCue("Replace in Files");
       replaceToolbar_.addLeftWidget(replaceTextBox_);
 
       replaceRegex_ = new CheckBox();
@@ -106,6 +106,14 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_.addLeftWidget(replaceRegexLabel_);
 
       replaceAllButton_ = new SmallButton("Replace All");
+      replaceAllButton_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            addReplaceMatches(replaceTextBox_.getValue());
+         }
+      });
       replaceToolbar_.addLeftWidget(replaceAllButton_);
 
       /*
@@ -185,9 +193,6 @@ public class FindOutputPane extends WorkbenchPane
       if (replaceToolbarVisible_)
       {
          table_.addStyleName(resources.styles().findOutputReplace());
-         // !!!
-         //table_.clear();
-         //table.addItems(findResults.subList(0,matchesToAdd),false);
       }
       else
       {
@@ -214,8 +219,8 @@ public class FindOutputPane extends WorkbenchPane
          if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
             container_.setWidget(scrollPanel_);
             
-         table_.addItems(findResults.subList(0, matchesToAdd), false);
          context_.addMatches(findResults.subList(0, matchesToAdd));
+         table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
       
       if (matchesToAdd != findResults.size())
@@ -224,11 +229,12 @@ public class FindOutputPane extends WorkbenchPane
 
    public void addReplaceMatches(String value)
    {
-      /*
-      table_.clear();
-      context_.updateFileMatches(value);
-      addMatches(context_.getFindResults());
-      */
+      if (context_.getFindResults() != null)
+      {
+         table_.clear();
+         context_.updateFileMatches(value);
+         addMatches(context_.getFindResults());
+      }
    }
 
    @Override
