@@ -45,6 +45,8 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
+      core::log::setLogLevel(log::LogLevel::WARN);
+      core::log::setProgramId("rsinverse");
       core::system::initializeSystemLog("rsinverse", log::LogLevel::WARN);
 
       // ignore SIGPIPE

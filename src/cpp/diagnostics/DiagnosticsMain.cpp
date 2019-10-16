@@ -93,17 +93,19 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-  core::system::initializeStderrLog("rstudio-diagnostics",
+   core::log::setLogLevel(core::log::LogLevel::WARN);
+   core::log::setProgramId("rstudio-diagnostics");
+   core::system::initializeStderrLog("rstudio-diagnostics",
                                     core::log::LogLevel::WARN);
 
-  // ignore SIGPIPE
-  Error error = core::system::ignoreSignal(core::system::SigPipe);
-  if (error)
+   // ignore SIGPIPE
+   Error error = core::system::ignoreSignal(core::system::SigPipe);
+   if (error)
      LOG_ERROR(error);
 
-  writeLogFile("rdesktop.log", std::cout);
-  writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
-  writeUserPrefs(std::cout);
+   writeLogFile("rdesktop.log", std::cout);
+   writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
+   writeUserPrefs(std::cout);
 
-  return EXIT_SUCCESS;
+   return EXIT_SUCCESS;
 }
