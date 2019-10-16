@@ -466,6 +466,19 @@ core::Error UserPrefValues::setTabMultilineCompletion(bool val)
 }
 
 /**
+ * Whether to attempt completion of statements when pressing Tab.
+ */
+bool UserPrefValues::tabCompletion()
+{
+   return readPref<bool>("tab_completion");
+}
+
+core::Error UserPrefValues::setTabCompletion(bool val)
+{
+   return writePref("tab_completion", val);
+}
+
+/**
  * Whether to show help tooltips for functions when the cursor has not been recently moved.
  */
 bool UserPrefValues::showHelpTooltipOnIdle()
@@ -2231,6 +2244,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kInsertSpacesAroundEquals,
       kInsertParensAfterFunctionCompletion,
       kTabMultilineCompletion,
+      kTabCompletion,
       kShowHelpTooltipOnIdle,
       kSurroundSelection,
       kEnableSnippets,

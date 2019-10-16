@@ -95,6 +95,7 @@ namespace prefs {
 #define kInsertSpacesAroundEquals "insert_spaces_around_equals"
 #define kInsertParensAfterFunctionCompletion "insert_parens_after_function_completion"
 #define kTabMultilineCompletion "tab_multiline_completion"
+#define kTabCompletion "tab_completion"
 #define kShowHelpTooltipOnIdle "show_help_tooltip_on_idle"
 #define kSurroundSelection "surround_selection"
 #define kSurroundSelectionNever "never"
@@ -502,6 +503,12 @@ public:
     */
    bool tabMultilineCompletion();
    core::Error setTabMultilineCompletion(bool val);
+
+   /**
+    * Whether to attempt completion of statements when pressing Tab.
+    */
+   bool tabCompletion();
+   core::Error setTabCompletion(bool val);
 
    /**
     * Whether to show help tooltips for functions when the cursor has not been recently moved.
