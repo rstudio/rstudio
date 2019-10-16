@@ -591,7 +591,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
-      prefs_.autoSaveIdleMs().setGlobalValue(Integer.parseInt(autoSaveIdleMs_.getValue()));
+      prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
       
       return restartRequirement;
    }

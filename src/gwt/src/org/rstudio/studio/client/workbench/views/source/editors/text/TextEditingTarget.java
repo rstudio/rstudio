@@ -637,7 +637,15 @@ public class TextEditingTarget implements
              getPath() != null &&
              !docDisplay_.hasActiveCollabSession())
          {
-            save();
+            try
+            {
+               save();
+            }
+            catch(Exception e)
+            {
+               // Autosave exceptions are logged rather than displayed
+               Debug.logException(e);
+            }
          }
       });
 
@@ -884,7 +892,7 @@ public class TextEditingTarget implements
                setSourceOnSave(false);
                nudgeAutosave();
             }
-            else if (autoSaveTimer_.isRunning())
+            else
             {
                // When leaving it, stop the timer
                autoSaveTimer_.cancel();
@@ -7399,8 +7407,7 @@ public class TextEditingTarget implements
    private void nudgeAutosave()
    {
       // Cancel any existing autosave timer
-      if (autoSaveTimer_.isRunning())
-         autoSaveTimer_.cancel();
+      autoSaveTimer_.cancel();
       
       // Start new timer if enabled
       if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
@@ -7505,10 +7512,19 @@ public class TextEditingTarget implements
 
          // Save (and keep track of when we initiated it)
          saving_ = System.currentTimeMillis();
-         save(() ->
+         try
          {
+            save(() ->
+            {
+               saving_ = 0;
+            });
+         }
+         catch(Exception e)
+         {
+            // Autosave exceptions are logged rather than displayed
             saving_ = 0;
-         });
+            Debug.logException(e);
+         }
       }
       
       // The time at which we attempted the current autosave operation, or zero
