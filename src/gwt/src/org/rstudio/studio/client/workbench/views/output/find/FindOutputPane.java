@@ -64,13 +64,14 @@ public class FindOutputPane extends WorkbenchPane
       toolbar.addLeftWidget(searchLabel_);
 
       viewReplaceButton_ = new SmallButton("Replace");
+      viewReplaceButton_.getElement().getStyle().setMarginLeft(9, Unit.PX);
       toolbar.addLeftWidget(viewReplaceButton_);
       viewReplaceButton_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            toggleReplaceView();
+            toggleReplaceToolbar();
          }
       });
 
@@ -100,10 +101,19 @@ public class FindOutputPane extends WorkbenchPane
       replaceRegex_ = new CheckBox();
       replaceRegexLabel_ =
                      new CheckboxLabel(replaceRegex_, "Regular expression").getLabel();
+      replaceRegex_.getElement().getStyle().setMarginLeft(9, Unit.PX);
       replaceRegex_.getElement().getStyle().setMarginRight(0, Unit.PX);
       replaceToolbar_.addLeftWidget(replaceRegex_);
       replaceRegexLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(replaceRegexLabel_);
+
+      useGitIgnore_ = new CheckBox();
+      useGitIgnoreLabel_ =
+                     new CheckboxLabel(useGitIgnore_, "Use .gitignore").getLabel();
+      useGitIgnore_.getElement().getStyle().setMarginRight(0, Unit.PX);
+      replaceToolbar_.addLeftWidget(useGitIgnore_);
+      useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
 
       replaceAllButton_ = new SmallButton("Replace All");
       replaceAllButton_.addClickHandler(new ClickHandler()
@@ -111,19 +121,21 @@ public class FindOutputPane extends WorkbenchPane
          @Override
          public void onClick(ClickEvent event)
          {
-            addReplaceMatches(replaceTextBox_.getValue());
+            //addReplaceMatches(replaceTextBox_.getValue());
          }
       });
       replaceToolbar_.addLeftWidget(replaceAllButton_);
 
-      /*
-      replaceTextBox_.addKeyDownHandler(new KeyDownHandler()
+      replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
-         public void onKeyDown(KeyDownEvent event);
+         public void onKeyUp(KeyUpEvent event)
          {
+            // !!! currently not acting properly when backspacing the last character
+            addReplaceMatches(replaceTextBox_.getValue());
+            if (!replaceMode_)
+               toggleReplaceMode();
          }
       });
-      */
 
       return replaceToolbar_;
    }
@@ -184,19 +196,25 @@ public class FindOutputPane extends WorkbenchPane
       return container_;
    }
 
-   private void toggleReplaceView()
+   private void toggleReplaceToolbar()
+   {
+      boolean isToolbarVisible =  secondaryToolbar_.isVisible();
+      if (isToolbarVisible ||
+          !replaceTextBox_.getValue().isEmpty())
+         toggleReplaceMode();
+      setSecondaryToolbarVisible(!isToolbarVisible);
+   }
+
+   private void toggleReplaceMode()
    {
       replaceMode_ = !replaceMode_;
-      setSecondaryToolbarVisible(replaceMode_);
-
       FindOutputResources resources = GWT.create(FindOutputResources.class);
       if (replaceMode_)
-      {
          table_.addStyleName(resources.styles().findOutputReplace());
-      }
       else
       {
          table_.removeStyleName(resources.styles().findOutputReplace());
+         addReplaceMatches(new String());
       }
    }
 
@@ -370,8 +388,10 @@ public class FindOutputPane extends WorkbenchPane
    private SecondaryToolbar replaceToolbar_;
    private boolean replaceMode_;
    private Label replaceLabel_;
-   private Label replaceRegexLabel_;
    private CheckBox replaceRegex_;
+   private Label replaceRegexLabel_;
+   private CheckBox useGitIgnore_;
+   private Label useGitIgnoreLabel_;
    private TextBoxWithCue replaceTextBox_;
    private SmallButton replaceAllButton_;
 
