@@ -98,14 +98,14 @@ public class FindOutputPane extends WorkbenchPane
       replaceTextBox_ = new TextBoxWithCue("Replace in Files");
       replaceToolbar_.addLeftWidget(replaceTextBox_);
 
-      replaceRegex_ = new CheckBox();
-      replaceRegexLabel_ =
-                     new CheckboxLabel(replaceRegex_, "Regular expression").getLabel();
-      replaceRegex_.getElement().getStyle().setMarginLeft(9, Unit.PX);
-      replaceRegex_.getElement().getStyle().setMarginRight(0, Unit.PX);
-      replaceToolbar_.addLeftWidget(replaceRegex_);
-      replaceRegexLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
-      replaceToolbar_.addLeftWidget(replaceRegexLabel_);
+      regexCheckbox_ = new CheckBox();
+      regexCheckboxLabel_ =
+                     new CheckboxLabel(regexCheckbox_, "Regular expression").getLabel();
+      regexCheckbox_.getElement().getStyle().setMarginLeft(9, Unit.PX);
+      regexCheckbox_.getElement().getStyle().setMarginRight(0, Unit.PX);
+      replaceToolbar_.addLeftWidget(regexCheckbox_);
+      regexCheckboxLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      replaceToolbar_.addLeftWidget(regexCheckboxLabel_);
 
       useGitIgnore_ = new CheckBox();
       useGitIgnoreLabel_ =
@@ -130,10 +130,15 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
-            // !!! currently not acting properly when backspacing the last character
-            addReplaceMatches(replaceTextBox_.getValue());
-            if (!replaceMode_)
-               toggleReplaceMode();
+            if (regexCheckbox_.getValue())
+            {
+            }
+            else
+            {
+               addReplaceMatches(replaceTextBox_.getValue());
+               if (!replaceMode_)
+                  toggleReplaceMode();
+            }
          }
       });
 
@@ -374,6 +379,12 @@ public class FindOutputPane extends WorkbenchPane
       
    }
    
+   @Override
+   public HasClickHandlers getReplaceAllButton()
+   {
+      return replaceAllButton_;
+   }
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
@@ -389,8 +400,8 @@ public class FindOutputPane extends WorkbenchPane
    private SecondaryToolbar replaceToolbar_;
    private boolean replaceMode_;
    private Label replaceLabel_;
-   private CheckBox replaceRegex_;
-   private Label replaceRegexLabel_;
+   private CheckBox regexCheckbox_;
+   private Label regexCheckboxLabel_;
    private CheckBox useGitIgnore_;
    private Label useGitIgnoreLabel_;
    private TextBoxWithCue replaceTextBox_;

@@ -73,6 +73,8 @@ public class FindOutputPresenter extends BasePresenter
 
       void updateSearchLabel(String query, String path);
       void clearSearchLabel();
+
+      HasClickHandlers getReplaceAllButton();
    }
 
    @Inject
@@ -119,6 +121,21 @@ public class FindOutputPresenter extends BasePresenter
          public void onClick(ClickEvent event)
          {
             stop();
+         }
+      });
+
+      view_.getReplaceAllButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            /* !!!
+            server_.completeReplace(input.getInput(),
+                                    input.getReplaceText(),
+                                    input.isReplaceRegex(),
+                                    input.useGitIgnore(),
+                                    new VoidServerRequestCallback());
+                                    */
          }
       });
 

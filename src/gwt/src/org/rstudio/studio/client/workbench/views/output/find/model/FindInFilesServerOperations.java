@@ -32,4 +32,18 @@ public interface FindInFilesServerOperations
                  ServerRequestCallback<Void> requestCallback);
 
    void clearFindResults(ServerRequestCallback<Void> requestCallback);
+
+   void previewReplace(String searchString,
+                       String replaceString,
+                       boolean regex,
+                       boolean gitIgnore,
+                       ServerRequestCallback<Void> requestCallback);
+
+   void completeReplace(String searchString,
+                        String replaaceString,
+                        boolean regex,
+                        boolean gitIgnore,
+                        ServerRequestCallback<Void> requestCallback);
+
+   void stopReplace(ServerRequestCallback<Void> requestCallback);
 }

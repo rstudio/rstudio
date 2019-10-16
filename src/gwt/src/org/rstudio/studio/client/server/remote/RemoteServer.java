@@ -4369,6 +4369,44 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void previewReplace(String searchString,
+                              String replaceString,
+                              boolean regex,
+                              boolean gitIgnore,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(searchString));
+      params.set(1, new JSONString(replaceString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(gitIgnore));
+
+      sendRequest(RPC_SCOPE, "preview_replace", requestCallback);
+   }
+
+   @Override
+   public void completeReplace(String searchString,
+                               String replaceString,
+                               boolean regex,
+                               boolean gitIgnore,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(searchString));
+      params.set(1, new JSONString(replaceString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(gitIgnore));
+
+      sendRequest(RPC_SCOPE, "complete_replace", requestCallback);
+   }
+
+   @Override
+   public void stopReplace(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "stop_replace", requestCallback);
+   }
+
+   @Override
    public void getCppCapabilities(
                      ServerRequestCallback<CppCapabilities> requestCallback)
    {
