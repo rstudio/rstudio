@@ -39,20 +39,38 @@
 namespace rstudio {
 namespace core {
 namespace safe_convert {
-   
+
+/**
+ * @brief Converts a string value to the specified type. Returns the specified default value if a conversion error
+ *        occurs.
+ *
+ * @tparam T                The type to convert the string to.
+ * @param in_strValue       The value to convert to type T.
+ * @param in_defaultValue   The default value to use if conversion fails.
+ *
+ * @return The converted value, on successful conversion; the default value otherwise.
+ */
 template <typename T>
-T stringTo(const std::string& str, T defaultValue)
+T stringTo(const std::string& in_strValue, T in_defaultValue)
 {
    try
    {
-      return boost::lexical_cast<T>(str);
+      return boost::lexical_cast<T>(in_strValue);
    }
    catch(boost::bad_lexical_cast&)
    {
-      return defaultValue;
+      return in_defaultValue;
    }
 }
 
+/**
+ * @brief Converts a string value to the specified type.
+ *
+ * @tparam T                The type to convert the string to.
+ * @param in_strValue       The value to convert to type T.
+ *
+ * @return The converted value, on successful conversion; an empty optional value otherwise.
+ */
 template <typename T>
 boost::optional<T> stringTo(const std::string& str)
 {
@@ -69,27 +87,46 @@ boost::optional<T> stringTo(const std::string& str)
    return result;
 }
 
+/**
+ * @brief Converts a string value to the specified type using the provided stream conversion function. Returns the
+ *        specified default value if a conversion error occurs.
+ *
+ * @tparam T                The type to convert the string to.
+ * @param in_strValue       The value to convert to type T.
+ * @param in_defaultValue   The default value to use if conversion fails.
+ * @param in_f              The conversion function.
+ *
+ * @return The converted value, on successful conversion; the default value otherwise.
+ */
 template <typename T>
-T stringTo(const std::string& str,
-           T defaultValue,
-           std::ios_base& (*f)(std::ios_base&))
+T stringTo(const std::string& in_strValue,
+           T in_defaultValue,
+           std::ios_base& (*in_f)(std::ios_base&))
 {
-   std::istringstream iss(str);
+   std::istringstream iss(in_strValue);
    T result;
-   if ((iss >> f >> result).fail())
-      return defaultValue;
+   if ((iss >> in_f >> result).fail())
+      return in_defaultValue;
    return result;
 }
 
-inline std::string numberToString(double input, bool localeIndependent = true)
+/**
+ * @brief Coverts a number to string value.
+ *
+ * @param in_input                  The number to convert.
+ * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
+ *
+ * @return The converted string on successful conversion; empty string otherwise.
+ */
+inline std::string numberToString(double in_input, bool in_localeIndependent = true)
 {
    try
    {
       std::ostringstream stream;
-      if (localeIndependent)
+      if (in_localeIndependent)
          stream.imbue(std::locale::classic()); // force locale-independence
       stream << std::fixed;
-      stream << input;
+      stream << in_input;
       return stream.str();
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -98,6 +135,15 @@ inline std::string numberToString(double input, bool localeIndependent = true)
    return std::string();
 }
 
+/**
+ * @brief Coverts a number to string value.
+ *
+ * @tparam T                        The type of the number.
+ * @param in_input                  The number to convert.
+ * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
+ *
+ * @return The converted string on successful conversion; empty string otherwise.
+ */
 template <typename T>
 std::string numberToString(T input, bool localeIndependent = true)
 {
@@ -116,6 +162,16 @@ std::string numberToString(T input, bool localeIndependent = true)
    return std::string();
 }
 
+/**
+ * @brief Coverts a number to the specified type.
+ *
+ * @tparam TInput                   The type of the number.
+ * @tparam TOutput                  The type to which to convert the number.
+ * @param in_input                  The number to convert.
+ * @param in_defaultValue           The default value to return on failed conversion.
+ *
+ * @return The converted value on successful conversion; the default value otherwise.
+ */
 template <typename TInput, typename TOutput>
 TOutput numberTo(TInput input, TOutput defaultValue)
 {
@@ -129,6 +185,15 @@ TOutput numberTo(TInput input, TOutput defaultValue)
    }
 }
 
+/**
+ * @brief Coverts a number to the specified type.
+ *
+ * @tparam TInput                   The type of the number.
+ * @tparam TOutput                  The type to which to convert the number.
+ * @param in_input                  The number to convert.
+ *
+ * @return The converted value on successful conversion; an empty optional value otherwise.
+ */
 template <typename TInput, typename TOutput>
 boost::optional<TOutput> numberTo(TInput input)
 {
@@ -149,4 +214,4 @@ boost::optional<TOutput> numberTo(TInput input)
 } // namespace core 
 } // namespace rstudio
 
-#endif // CORE_SAFE_CONVERT_HPP
+#endif // SHARED_CORE_SAFE_CONVERT_HPP
