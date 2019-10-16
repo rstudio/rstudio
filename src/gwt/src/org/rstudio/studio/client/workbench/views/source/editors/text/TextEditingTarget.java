@@ -2352,7 +2352,6 @@ public class TextEditingTarget implements
 
       commandHandlerReg_.removeHandler();
       commandHandlerReg_ = null;
-      Debug.log("deactivated " + this.id_);
 
       // switching tabs is a navigation action
       try
