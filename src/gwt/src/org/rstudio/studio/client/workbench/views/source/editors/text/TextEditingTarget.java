@@ -7405,7 +7405,7 @@ public class TextEditingTarget implements
       
       // Start new timer if enabled
       if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
-         autoSaveTimer_.schedule(prefs_.autoSaveIdleMs().getValue());
+         autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
 
    private StatusBar statusBar_;

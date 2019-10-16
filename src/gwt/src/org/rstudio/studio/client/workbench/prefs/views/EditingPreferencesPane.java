@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
@@ -321,8 +322,32 @@ public class EditingPreferencesPane extends PreferencesPane
             true,
             false);
       savePanel.add(autoSaveOnIdle_);
-      savePanel.add(numericPref("Idle period (in milliseconds)", prefs_.autoSaveIdleMs()));
-
+      autoSaveIdleMs_ = new SelectWidget(
+            "Idle period: ",
+            new String[] {
+               "500ms",
+               "1000ms",
+               "1500ms",
+               "2000ms",
+               "3000ms",
+               "4000ms",
+               "5000ms",
+               "10000ms",
+            }, 
+            new String[] {
+                "500",
+                "1000",
+                "1500",
+                "2000",
+                "3000",
+                "4000",
+                "5000",
+                "10000"
+            },
+            false,
+            true,
+            false);
+      savePanel.add(autoSaveIdleMs_);
 
       VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
       
@@ -522,6 +547,14 @@ public class EditingPreferencesPane extends PreferencesPane
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
       autoSaveOnIdle_.setValue(prefs_.autoSaveOnIdle().getValue());
+      
+      // To prevent users from choosing nonsensical or pathological values for
+      // the sensitive autosave idle option, act like they selected 1000ms (the
+      // default) if they've managed to load something invalid.
+      if (!autoSaveIdleMs_.setValue(prefs_.autoSaveIdleMs().getValue().toString()))
+      {
+         autoSaveIdleMs_.setValue("1000");
+      }
    }
    
    @Override
@@ -558,6 +591,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
+      prefs_.autoSaveIdleMs().setGlobalValue(Integer.parseInt(autoSaveIdleMs_.getValue()));
       
       return restartRequirement;
    }
@@ -611,6 +645,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;
+   private final SelectWidget autoSaveIdleMs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
 }

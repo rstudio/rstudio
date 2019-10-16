@@ -126,10 +126,30 @@ public class UserPrefs extends UserPrefsComputed
          });
    }
    
+   /**
+    * Indicates whether autosave is enabled, via any pref that turns it on.
+    * 
+    * @return Whether auto save is enabled.
+    */
    public boolean autoSaveEnabled()
    {
       return autoSaveOnBlur().getValue() || 
              autoSaveOnIdle().getValue() == AUTO_SAVE_ON_IDLE_COMMIT;
+   }
+   
+   /**
+    * Indicates the number of milliseconds after which to autosave. Won't return
+    * a value less than 500 since autosaves typically require a network call and
+    * other synchronization.
+    * 
+    * @return The number of milliseconds. 
+    */
+   public int autoSaveMs()
+   {
+      Integer ms = autoSaveIdleMs().getValue();
+      if (ms < 500)
+         return 500;
+      return ms;
    }
    
    @Override

@@ -822,8 +822,7 @@ public class DocUpdateSentinel
    {
       if (autosaver_ == null)
       {
-         autosaver_ = new DebouncedCommand(
-               prefs_.autoSaveIdleMs().getValue())
+         autosaver_ = new DebouncedCommand(prefs_.autoSaveMs())
          {
             @Override
             protected void execute()
