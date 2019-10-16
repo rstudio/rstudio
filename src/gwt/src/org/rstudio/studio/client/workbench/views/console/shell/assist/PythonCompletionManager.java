@@ -96,9 +96,10 @@ public class PythonCompletionManager extends CompletionManagerBase
    }
 
    @Override
-   public void getCompletions(String line, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {
       server_.pythonGetCompletions(buildCompletionLine(), completionContext(), context);
+      return true;
    }
    
    @Override

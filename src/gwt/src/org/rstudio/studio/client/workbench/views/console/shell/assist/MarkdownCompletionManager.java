@@ -47,11 +47,13 @@ public class MarkdownCompletionManager extends CompletionManagerBase
    }
 
    @Override
-   public void getCompletions(String line, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {
       // check for completion of href
       if (getCompletionsHref(context))
-         return;
+         return true;
+      
+      return false;
    }
    
    private boolean getCompletionsHref(CompletionRequestContext context)
