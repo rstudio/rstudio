@@ -225,6 +225,12 @@ public class TextEditingTargetWidget
          // back the Source on Save command in the toolbar
          adaptToFileType(editor_.getFileType());
       });
+      
+      userPrefs_.autoSaveOnIdle().addValueChangeHandler((evt) ->
+      {
+         // Same behavior when modifying auto-save on idle
+         adaptToFileType(editor_.getFileType());
+      });
    }
    
    public void initWidgetSize()
@@ -645,7 +651,7 @@ public class TextEditingTargetWidget
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canSourceOnSave = fileType.canSourceOnSave() && 
-            !userPrefs_.autoSaveOnBlur().getValue();
+            !userPrefs_.autoSaveEnabled();
       if (canSourceOnSave && fileType.isJS()) 
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       if (canSourceOnSave && fileType.isSql()) 
