@@ -40,7 +40,7 @@ public interface FindInFilesServerOperations
                        ServerRequestCallback<Void> requestCallback);
 
    void completeReplace(String searchString,
-                        String replaaceString,
+                        String replaceString,
                         boolean regex,
                         boolean gitIgnore,
                         ServerRequestCallback<Void> requestCallback);

@@ -565,6 +565,24 @@ core::Error clearFindResults(const json::JsonRpcRequest& request,
    return Success();
 }
 
+core::Error previewReplace(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+core::Error completeReplace(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
+core::Error stopReplace(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   return Success();
+}
+
 void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
@@ -608,7 +626,10 @@ core::Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "begin_find", beginFind))
       (bind(registerRpcMethod, "stop_find", stopFind))
-      (bind(registerRpcMethod, "clear_find_results", clearFindResults));
+      (bind(registerRpcMethod, "clear_find_results", clearFindResults))
+      (bind(registerRpcMethod, "preview_replace", previewReplace))
+      (bind(registerRpcMethod, "complete_replace", completeReplace))
+      (bind(registerRpcMethod, "stop_replace", stopReplace));
    return initBlock.execute();
 }
 

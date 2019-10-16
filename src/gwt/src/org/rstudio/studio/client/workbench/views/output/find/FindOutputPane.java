@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
@@ -63,15 +64,17 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
-      viewReplaceButton_ = new SmallButton("Replace");
-      viewReplaceButton_.getElement().getStyle().setMarginLeft(9, Unit.PX);
-      toolbar.addLeftWidget(viewReplaceButton_);
+      viewReplaceButton_ = new ToolbarButton("Replace", "Replace", null);
+      toolbar.addRightWidget(viewReplaceButton_);
       viewReplaceButton_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
             toggleReplaceToolbar();
+            if (!replaceTextBox_.getValue().isEmpty() &&
+                replaceToolbar_.isVisible())
+               addReplaceMatches(replaceTextBox_.getValue());
          }
       });
 
@@ -115,16 +118,8 @@ public class FindOutputPane extends WorkbenchPane
       useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
 
-      replaceAllButton_ = new SmallButton("Replace All");
-      replaceAllButton_.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            //addReplaceMatches(replaceTextBox_.getValue());
-         }
-      });
-      replaceToolbar_.addLeftWidget(replaceAllButton_);
+      replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
+      replaceToolbar_.addRightWidget(replaceAllButton_);
 
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
@@ -135,9 +130,9 @@ public class FindOutputPane extends WorkbenchPane
             }
             else
             {
-               addReplaceMatches(replaceTextBox_.getValue());
                if (!replaceMode_)
                   toggleReplaceMode();
+               addReplaceMatches(replaceTextBox_.getValue());
             }
          }
       });
@@ -385,6 +380,24 @@ public class FindOutputPane extends WorkbenchPane
       return replaceAllButton_;
    }
 
+   @Override
+   public String getReplaceText()
+   {
+      return replaceTextBox_.getValue();
+   }
+
+   @Override
+   public boolean isReplaceRegex()
+   {
+      return regexCheckbox_.getValue();
+   }
+
+   @Override
+   public boolean useGitIgnore()
+   {
+      return useGitIgnore_.getValue();
+   }
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
@@ -396,7 +409,7 @@ public class FindOutputPane extends WorkbenchPane
    private boolean overflow_ = false;
    private int matchCount_;
 
-   private SmallButton viewReplaceButton_;
+   private ToolbarButton viewReplaceButton_;
    private SecondaryToolbar replaceToolbar_;
    private boolean replaceMode_;
    private Label replaceLabel_;
@@ -405,7 +418,7 @@ public class FindOutputPane extends WorkbenchPane
    private CheckBox useGitIgnore_;
    private Label useGitIgnoreLabel_;
    private TextBoxWithCue replaceTextBox_;
-   private SmallButton replaceAllButton_;
+   private ToolbarButton replaceAllButton_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

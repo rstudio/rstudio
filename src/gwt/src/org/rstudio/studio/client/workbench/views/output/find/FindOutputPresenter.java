@@ -75,6 +75,9 @@ public class FindOutputPresenter extends BasePresenter
       void clearSearchLabel();
 
       HasClickHandlers getReplaceAllButton();
+      String getReplaceText();
+      boolean isReplaceRegex();
+      boolean useGitIgnore();
    }
 
    @Inject
@@ -129,13 +132,12 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            /* !!!
-            server_.completeReplace(input.getInput(),
-                                    input.getReplaceText(),
-                                    input.isReplaceRegex(),
-                                    input.useGitIgnore(),
+            FindInFilesState state = session.getSessionInfo().getFindInFilesState();
+            server_.completeReplace(state.getInput(),
+                                    view_.getReplaceText(),
+                                    view_.isReplaceRegex(),
+                                    view_.useGitIgnore(),
                                     new VoidServerRequestCallback());
-                                    */
          }
       });
 
