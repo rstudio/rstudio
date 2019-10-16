@@ -63,8 +63,12 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(perProjectLabel);
        
       add(headerLabel("LaTeX Editing and Compilation"));
-      chkCleanTexi2DviOutput_ = new CheckBox(
-                                     "Clean auxiliary output after compile");
+      
+      chkUseTinytex_ = new CheckBox("Use tinytex when compiling .tex files");
+      spaced(chkUseTinytex_);
+      add(chkUseTinytex_);
+      
+      chkCleanTexi2DviOutput_ = new CheckBox("Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
       add(chkCleanTexi2DviOutput_);
       
@@ -128,6 +132,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
+      chkUseTinytex_.setValue(prefs.useTinytex().getValue());
       chkCleanTexi2DviOutput_.setValue(prefs.cleanTexi2dviOutput().getValue());
       chkEnableShellEscape_.setValue(prefs.latexShellEscape().getValue());
       
@@ -161,6 +166,8 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       
       prefs_.pdfPreviewer().setGlobalValue(pdfPreview_.getValue());
       
+      prefs_.useTinytex().setGlobalValue(chkUseTinytex_.getValue());
+      
       prefs_.cleanTexi2dviOutput().setGlobalValue(
             chkCleanTexi2DviOutput_.getValue());
       
@@ -177,6 +184,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
+   private CheckBox chkUseTinytex_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;
    private PdfPreviewSelectWidget pdfPreview_;

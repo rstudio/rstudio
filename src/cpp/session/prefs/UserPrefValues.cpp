@@ -2065,6 +2065,19 @@ core::Error UserPrefValues::setRestoreLastProject(bool val)
 }
 
 /**
+ * Use tinytex to compile .tex files.
+ */
+bool UserPrefValues::useTinytex()
+{
+   return readPref<bool>("use_tinytex");
+}
+
+core::Error UserPrefValues::setUseTinytex(bool val)
+{
+   return writePref("use_tinytex", val);
+}
+
+/**
  * Whether to clean output after running Texi2Dvi.
  */
 bool UserPrefValues::cleanTexi2dviOutput()
@@ -2406,6 +2419,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kViewDirAfterRCmdCheck,
       kHideObjectFiles,
       kRestoreLastProject,
+      kUseTinytex,
       kCleanTexi2dviOutput,
       kLatexShellEscape,
       kRestoreProjectRVersion,

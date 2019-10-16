@@ -1468,6 +1468,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Use tinytex to compile .tex files.
+    */
+   public PrefValue<Boolean> useTinytex()
+   {
+      return bool("use_tinytex", false);
+   }
+
+   /**
     * Whether to clean output after running Texi2Dvi.
     */
    public PrefValue<Boolean> cleanTexi2dviOutput()
@@ -1917,6 +1925,8 @@ public class UserPrefsAccessor extends Prefs
          hideObjectFiles().setValue(layer, source.getBool("hide_object_files"));
       if (source.hasKey("restore_last_project"))
          restoreLastProject().setValue(layer, source.getBool("restore_last_project"));
+      if (source.hasKey("use_tinytex"))
+         useTinytex().setValue(layer, source.getBool("use_tinytex"));
       if (source.hasKey("clean_texi2dvi_output"))
          cleanTexi2dviOutput().setValue(layer, source.getBool("clean_texi2dvi_output"));
       if (source.hasKey("latex_shell_escape"))
