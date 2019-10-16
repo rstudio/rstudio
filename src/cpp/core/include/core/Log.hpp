@@ -25,6 +25,7 @@
 
 namespace rstudio {
 namespace core {
+namespace log {
 
 enum class LoggerType
 {
@@ -33,6 +34,14 @@ enum class LoggerType
    kFile = 2
 };
 
+void logDebugAction(const boost::function<std::string()>& action,
+                    const ErrorLocation& loggedFromLocation = ErrorLocation());
+
+void logDebugAction(const std::string& logSection,
+                    const boost::function<std::string()>& action,
+                    const ErrorLocation& loggedFromLocation = ErrorLocation());
+
+std::string errorAsLogEntry(const Error& error);
 
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls
@@ -76,6 +85,7 @@ enum class LoggerType
 // define named logging sections
 #define kFileLockingLogSection "file-locking"
 
+} // namespace log
 } // namespace core
 } // namespace rstudio
 

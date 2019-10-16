@@ -277,7 +277,7 @@ Error initializeStderrLog(const std::string& programIdentity,
    {
       // create default stderr logger options
       log::StdErrLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, LoggerType::kStdErr, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -301,7 +301,7 @@ Error initializeLog(const std::string& programIdentity,
    {
       // create default file logger options
       log::FileLogOptions options(logDir);
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, LoggerType::kFile, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();

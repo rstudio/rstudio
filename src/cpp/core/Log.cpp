@@ -82,7 +82,6 @@ std::string errorAsLogEntry(const Error& error)
 {
    return writeError(error);
 }
-   
 
 } // namespace log
 } // namespace core 
