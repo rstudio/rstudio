@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
@@ -98,6 +99,11 @@ public class ChunkOutputStream extends FlowPanel
    public void showConsoleOutput(JsArray<JsArrayEx> output)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
+      
+      // track number of newlines in output
+      int newlineCount = 0;
+      int maxCount = Satellite.isCurrentWindowSatellite() ? 10000 : 2000;
+      
       for (int i = 0; i < output.length(); i++)
       {
          // the first element is the output, and the second is the text; if we
@@ -127,6 +133,17 @@ public class ChunkOutputStream extends FlowPanel
             }
 
             vconsole_.submit(outputText, classOfOutput(outputType));
+         }
+         
+         // avoid hanging the IDE by displaying too much output
+         // https://github.com/rstudio/rstudio/issues/5518
+         newlineCount += StringUtil.countMatches(outputText, '\n');
+         if (newlineCount >= maxCount)
+         {
+            vconsole_.submit(
+                  "\n[Output truncated]",
+                  classOfOutput(ChunkConsolePage.CONSOLE_ERROR));
+            break;
          }
       }
    }
