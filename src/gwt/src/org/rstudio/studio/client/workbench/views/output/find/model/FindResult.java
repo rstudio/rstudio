@@ -78,6 +78,8 @@ public class FindResult extends JavaScriptObject
    public final native void setReplace(String value) /*-{
       if (value)
          this.replace = value;
+      else
+         this.replace = "";
    }-*/;
 
 

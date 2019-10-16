@@ -249,6 +249,7 @@ public class FindOutputPane extends WorkbenchPane
    public void addReplaceMatches(String value)
    {
       table_.clear();
+      matchCount_ = 0;
       context_.updateFileMatches(value);
       addMatches(context_.getFindResults());
    }
