@@ -630,9 +630,12 @@ public class TextEditingTarget implements
       
       docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
       {
-         // When the editor loses focus, perform an autosave if enabled and the
-         // buffer is dirty
-         if (prefs.autoSaveOnBlur().getValue() && dirtyState_.getValue())
+         // When the editor loses focus, perform an autosave if enabled, the
+         // buffer is dirty, and we have a file to save to
+         if (prefs.autoSaveOnBlur().getValue() && 
+             dirtyState_.getValue() && 
+             getPath() != null &&
+             !docDisplay_.hasActiveCollabSession())
          {
             save();
          }
@@ -867,9 +870,24 @@ public class TextEditingTarget implements
             // When the user turns on autosave, disable Source on Save if it was
             // previously enabled; otherwise documents which were open with this
             // setting enabled will start sourcing themselves on blur.
-            if (val.getValue() && view_ != null)
+            if (val.getValue())
             {
                setSourceOnSave(false);
+            }
+         }));
+      releaseOnDismiss_.add(
+         prefs.autoSaveOnIdle().bind((String behavior) ->
+         {
+            if (behavior == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+            {
+               // When switching into autosave on idle mode, start the timer
+               setSourceOnSave(false);
+               nudgeAutosave();
+            }
+            else if (autoSaveTimer_.isRunning())
+            {
+               // When leaving it, stop the timer
+               autoSaveTimer_.cancel();
             }
          }));
    }
@@ -1115,7 +1133,10 @@ public class TextEditingTarget implements
    @Override
    public void setSourceOnSave(boolean sourceOnSave)
    {
-      view_.getSourceOnSave().setValue(sourceOnSave, true);
+      if (view_ != null)
+      {
+         view_.getSourceOnSave().setValue(sourceOnSave, true);
+      }
    }
    
    @Override
@@ -1420,7 +1441,7 @@ public class TextEditingTarget implements
       // (regardless of preference) in auto save mode, which is mutually
       // exclusive with the manual source-and-save workflow.
       boolean sourceOnSave = document.sourceOnSave();
-      if (prefs_.autoSaveOnBlur().getGlobalValue())
+      if (prefs_.autoSaveEnabled())
          sourceOnSave = false;
       view_.getSourceOnSave().setValue(sourceOnSave, false);
       view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
@@ -1443,6 +1464,10 @@ public class TextEditingTarget implements
          {
             dirtyState_.markDirty(true);
             docDisplay_.clearSelectionHistory();
+
+            // Nudge autosave timer (so it doesn't fire while the document is
+            // actively mutating)
+            nudgeAutosave();
          }
       });
 
@@ -7371,6 +7396,17 @@ public class TextEditingTarget implements
    }
 
    public TextEditingTargetSpelling getSpellingTarget() { return this.spelling_; }
+   
+   private void nudgeAutosave()
+   {
+      // Cancel any existing autosave timer
+      if (autoSaveTimer_.isRunning())
+         autoSaveTimer_.cancel();
+      
+      // Start new timer if enabled
+      if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+         autoSaveTimer_.schedule(prefs_.autoSaveIdleMs().getValue());
+   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
@@ -7436,7 +7472,51 @@ public class TextEditingTarget implements
    private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
    
-   
+   // Timer for autosave
+   private Timer autoSaveTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // It's unlikely, but if we attempt to autosave while running a
+         // previous autosave, just nudge the timer so we try again.
+         if (saving_ != 0)
+         {
+            // If we've been trying to save for more than 5 seconds, we won't
+            // nudge (just fall through and we'll attempt again below)
+            if (System.currentTimeMillis() - saving_ < 5000)
+            {
+               nudgeAutosave();
+               return;
+            }
+         }
+         
+         if (getPath() == null)
+         {
+            // This editor isn't file-backed yet, so there's no save to do.
+            return;
+         }
+         
+         if (docDisplay_.hasActiveCollabSession())
+         {
+            // Everyone's autosave gets turned off during a collab session --
+            // otherwise the autosaves all fire at once and fight
+            return;
+         }
+
+         // Save (and keep track of when we initiated it)
+         saving_ = System.currentTimeMillis();
+         save(() ->
+         {
+            saving_ = 0;
+         });
+      }
+      
+      // The time at which we attempted the current autosave operation, or zero
+      // if no autosave operation is in progress.
+      private long saving_ = 0;
+   };
+
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;

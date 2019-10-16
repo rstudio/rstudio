@@ -133,9 +133,9 @@ public class DocUpdateSentinel
       propertyChangeHandlers_ = 
             new HashMap<String, ValueChangeHandlerManager<String>>();
 
-      prefs_.rememberUnsavedChanges().bind((Boolean remember) ->
+      prefs_.autoSaveOnIdle().bind((String behavior) ->
       {
-         if (remember)
+         if (behavior == UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP)
          {
             // Set up the debounced auto-save method when the preference is
             // enabled
@@ -146,6 +146,16 @@ public class DocUpdateSentinel
             // Turn off unsaved change tracking
             autosaver_.suspend();
             autosaver_ = null;
+         }
+      });
+      prefs_.autoSaveIdleMs().bind((Integer ms) -> 
+      {
+         // If we have an auto-saver, re-create it with the new idle timeout
+         if (autosaver_ != null)
+         {
+            autosaver_.suspend();
+            autosaver_ = null;
+            createAutosaver();
          }
       });
 
@@ -813,7 +823,7 @@ public class DocUpdateSentinel
       if (autosaver_ == null)
       {
          autosaver_ = new DebouncedCommand(
-               prefs_.unsavedChangesUpdateMs().getValue())
+               prefs_.autoSaveIdleMs().getValue())
          {
             @Override
             protected void execute()

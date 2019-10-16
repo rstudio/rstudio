@@ -2195,29 +2195,29 @@ core::Error UserPrefValues::setReducedMotion(bool val)
 }
 
 /**
- * Whether to make a backup copy of unsaved changes as files are editied
+ * How to deal with changes to documents on idle.
  */
-bool UserPrefValues::rememberUnsavedChanges()
+std::string UserPrefValues::autoSaveOnIdle()
 {
-   return readPref<bool>("remember_unsaved_changes");
+   return readPref<std::string>("auto_save_on_idle");
 }
 
-core::Error UserPrefValues::setRememberUnsavedChanges(bool val)
+core::Error UserPrefValues::setAutoSaveOnIdle(std::string val)
 {
-   return writePref("remember_unsaved_changes", val);
+   return writePref("auto_save_on_idle", val);
 }
 
 /**
- * How often to update RStudio's backup copy of unsaved changes.
+ * The idle period, in milliseconds, after which documents should be auto-saved.
  */
-int UserPrefValues::unsavedChangesUpdateMs()
+int UserPrefValues::autoSaveIdleMs()
 {
-   return readPref<int>("unsaved_changes_update_ms");
+   return readPref<int>("auto_save_idle_ms");
 }
 
-core::Error UserPrefValues::setUnsavedChangesUpdateMs(int val)
+core::Error UserPrefValues::setAutoSaveIdleMs(int val)
 {
-   return writePref("unsaved_changes_update_ms", val);
+   return writePref("auto_save_idle_ms", val);
 }
 
 /**
@@ -2403,8 +2403,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
-      kRememberUnsavedChanges,
-      kUnsavedChangesUpdateMs,
+      kAutoSaveOnIdle,
+      kAutoSaveIdleMs,
       kAutoSaveOnBlur,
    });
 }

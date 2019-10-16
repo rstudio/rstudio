@@ -126,6 +126,12 @@ public class UserPrefs extends UserPrefsComputed
          });
    }
    
+   public boolean autoSaveEnabled()
+   {
+      return autoSaveOnBlur().getValue() || 
+             autoSaveOnIdle().getValue() == AUTO_SAVE_ON_IDLE_COMMIT;
+   }
+   
    @Override
    public void onUserPrefsChanged(UserPrefsChangedEvent e)
    {

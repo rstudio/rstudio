@@ -251,8 +251,6 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref("Restore last cursor position when opening file", prefs_.restoreSourceDocumentCursorPosition()));
-      savePanel.add(checkboxPref("Remember unsaved changes during editing", prefs_.rememberUnsavedChanges()));
-      savePanel.add(checkboxPref("Automatically save when editor loses focus", prefs_.autoSaveOnBlur()));
 
       Label serializationLabel = headerLabel("Serialization");
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
@@ -305,6 +303,27 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
       
+      savePanel.add(spacedBefore(headerLabel("Auto-save")));
+      savePanel.add(checkboxPref("Automatically save when editor loses focus", prefs_.autoSaveOnBlur()));
+      autoSaveOnIdle_ = new SelectWidget(
+            "When editor is idle: ", 
+            new String[] {
+               "Backup unsaved changes",
+               "Save and write changes",
+               "Do nothing"
+            },
+            new String[] {
+               UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP,
+               UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT,
+               UserPrefs.AUTO_SAVE_ON_IDLE_NONE
+            },
+            false,
+            true,
+            false);
+      savePanel.add(autoSaveOnIdle_);
+      savePanel.add(numericPref("Idle period (in milliseconds)", prefs_.autoSaveIdleMs()));
+
+
       VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
       
       completionPanel.add(headerLabel("R and C/C++"));
@@ -502,6 +521,7 @@ public class EditingPreferencesPane extends PreferencesPane
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
+      autoSaveOnIdle_.setValue(prefs_.autoSaveOnIdle().getValue());
    }
    
    @Override
@@ -537,6 +557,7 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
+      prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       
       return restartRequirement;
    }
@@ -589,6 +610,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget consoleColorMode_;
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
+   private final SelectWidget autoSaveOnIdle_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
 }

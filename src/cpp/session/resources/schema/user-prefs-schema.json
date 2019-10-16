@@ -952,15 +952,16 @@
             "default": false,
             "description": "Reduce use of animations in the user interface."
         },
-        "remember_unsaved_changes": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to make a backup copy of unsaved changes as files are edited"
+        "auto_save_on_idle": {
+            "type": "string",
+            "enum": ["commit", "backup", "none"],
+            "default": "backup",
+            "description": "How to deal with changes to documents on idle."
         },
-        "unsaved_changes_update_ms": {
+        "auto_save_idle_ms": {
             "type": "integer",
             "default": 1000,
-            "description": "How often to update RStudio's backup copy of unsaved changes."
+            "description": "The idle period, in milliseconds, after which documents should be auto-saved."
         },
         "auto_save_on_blur": {
             "type": "boolean",

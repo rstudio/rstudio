@@ -1566,19 +1566,23 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to make a backup copy of unsaved changes as files are editied
+    * How to deal with changes to documents on idle.
     */
-   public PrefValue<Boolean> rememberUnsavedChanges()
+   public PrefValue<String> autoSaveOnIdle()
    {
-      return bool("remember_unsaved_changes", true);
+      return string("auto_save_on_idle", "backup");
    }
 
+   public final static String AUTO_SAVE_ON_IDLE_COMMIT = "commit";
+   public final static String AUTO_SAVE_ON_IDLE_BACKUP = "backup";
+   public final static String AUTO_SAVE_ON_IDLE_NONE = "none";
+
    /**
-    * How often to update RStudio's backup copy of unsaved changes.
+    * The idle period, in milliseconds, after which documents should be auto-saved.
     */
-   public PrefValue<Integer> unsavedChangesUpdateMs()
+   public PrefValue<Integer> autoSaveIdleMs()
    {
-      return integer("unsaved_changes_update_ms", 1000);
+      return integer("auto_save_idle_ms", 1000);
    }
 
    /**
@@ -1925,10 +1929,10 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
-      if (source.hasKey("remember_unsaved_changes"))
-         rememberUnsavedChanges().setValue(layer, source.getBool("remember_unsaved_changes"));
-      if (source.hasKey("unsaved_changes_update_ms"))
-         unsavedChangesUpdateMs().setValue(layer, source.getInteger("unsaved_changes_update_ms"));
+      if (source.hasKey("auto_save_on_idle"))
+         autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
+      if (source.hasKey("auto_save_idle_ms"))
+         autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
    }

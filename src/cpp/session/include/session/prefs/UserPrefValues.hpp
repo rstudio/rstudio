@@ -294,8 +294,11 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
-#define kRememberUnsavedChanges "remember_unsaved_changes"
-#define kUnsavedChangesUpdateMs "unsaved_changes_update_ms"
+#define kAutoSaveOnIdle "auto_save_on_idle"
+#define kAutoSaveOnIdleCommit "commit"
+#define kAutoSaveOnIdleBackup "backup"
+#define kAutoSaveOnIdleNone "none"
+#define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
 
 class UserPrefValues: public Preferences
@@ -1305,16 +1308,16 @@ public:
    core::Error setReducedMotion(bool val);
 
    /**
-    * Whether to make a backup copy of unsaved changes as files are editied
+    * How to deal with changes to documents on idle.
     */
-   bool rememberUnsavedChanges();
-   core::Error setRememberUnsavedChanges(bool val);
+   std::string autoSaveOnIdle();
+   core::Error setAutoSaveOnIdle(std::string val);
 
    /**
-    * How often to update RStudio's backup copy of unsaved changes.
+    * The idle period, in milliseconds, after which documents should be auto-saved.
     */
-   int unsavedChangesUpdateMs();
-   core::Error setUnsavedChangesUpdateMs(int val);
+   int autoSaveIdleMs();
+   core::Error setAutoSaveIdleMs(int val);
 
    /**
     * Whether to automatically save when the editor loses focus.
