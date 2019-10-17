@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -154,20 +155,18 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      /*
-      view_.addPreviewReplaceHandler(new PreviewReplaceEventHandler<CodeNavigationTarget>()
+      events_.addHandler(PreviewReplaceEvent.TYPE, new PreviewReplaceEvent.Handler()
       {
          @Override
-         public void onPreviewReplace(PreviewReplaceEvent<CodeNavigationTarget> event)
+         public void onPreviewReplace(PreviewReplaceEvent event)
          {
             server_.previewReplace(session.getSessionInfo().getFindInFilesState().getInput(),
                                    view_.getReplaceText(),
                                    view_.isReplaceRegex(),
-                                   vview_.useGitIngore(),
+                                   view_.useGitIgnore(),
                                    new VoidServerRequestCallback());
          }
       });
-      */
 
       events_.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
       {

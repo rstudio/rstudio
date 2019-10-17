@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
 import java.util.ArrayList;
 
@@ -134,9 +135,7 @@ public class FindOutputPane extends WorkbenchPane
          public void onKeyUp(KeyUpEvent event)
          {
             if (regexCheckbox_.getValue())
-            {
-               //PreviewReplaceEvent.fire(this);
-            }
+               replaceTextBox_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
             else
             {
                if (!replaceMode_)
@@ -412,6 +411,18 @@ public class FindOutputPane extends WorkbenchPane
    {
       return stopReplace_;
    }
+
+   /*
+   @Override
+   public HasClickHandlers getPreviewReplaceButton()
+   {
+
+      if (regexCheckbox_.getValue())
+         return replaceTextBox_;
+      else
+         return HasClickHandlers();
+   }
+   */
 
    @Override
    public void setStopReplaceButtonVisible(boolean visible)
