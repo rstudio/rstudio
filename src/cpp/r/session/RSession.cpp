@@ -559,7 +559,8 @@ FilePath tempDir()
    Error error = r::exec::RFunction("tempdir").call(&tempDir);
    if (error)
       LOG_ERROR(error);
-   FilePath filePath(r::util::fixPath(tempDir));
+
+   FilePath filePath(string_utils::systemToUtf8(r::util::fixPath(tempDir)));
    return filePath;
 }
 
