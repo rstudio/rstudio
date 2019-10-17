@@ -274,6 +274,37 @@ FilePath getLocalCustomThemePath()
 }
 
 /**
+ * @brief Gets the local custom theme from either the configured location or one of the two default locations (legacy or
+ *        current.
+ *
+ * @param themeFileName     The name of the theme file to get.
+ *
+ * @return The theme FilePath.
+ */
+FilePath getLocalCustomTheme(std::string themeFileName)
+{
+   // Check if there is an local custom theme path override configured in the environment.
+   FilePath envDir = getEnvCustomThemePath();
+
+   // Look in the configured location, if there was a configured value. Other wise check the defaults.
+   FilePath requestedTheme;
+   if (envDir.empty())
+   {
+      // Check first in the local custom theme path; if the theme isn't found there, try the legacy
+      // theme path (where RStudio 1.2 wrote custom themes)
+      requestedTheme = getLocalCustomThemePath().childPath(themeFileName);
+      if (!requestedTheme.exists())
+         requestedTheme = getLegacyLocalCustomThemePath().childPath(themeFileName);
+   }
+   else
+   {
+      requestedTheme = envDir.childPath(themeFileName);
+   }
+
+   return requestedTheme;
+}
+
+/**
  * @brief Gets a map of all available themes, keyed by the unique name of the theme. If a theme is
  *        found in multiple locations, the theme in the most specific folder will be given
  *        precedence.
@@ -585,11 +616,7 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    std::string prefix = "/" + kLocalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
 
-   // Check first in the local custom theme path; if the theme isn't found there, try the legacy
-   // theme path (where RStudio 1.2 wrote custom themes)
-   FilePath requestedTheme = getLocalCustomThemePath().childPath(fileName);
-   if (!requestedTheme.exists())
-      requestedTheme = getLegacyLocalCustomThemePath().childPath(fileName);
+   FilePath requestedTheme = getLocalCustomTheme(fileName);
 
    pResponse->setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
@@ -642,8 +669,30 @@ SEXP rs_getGlobalThemeDir()
 
 SEXP rs_getLocalThemeDir()
 {
+   // Check for a configured custom location before returning the default custom location. Never return the legacy
+   // default custom location because we don't want to add new files there.
+   FilePath themeDir = getEnvCustomThemePath();
+   if (themeDir.empty())
+      themeDir = getLocalCustomThemePath();
+
    r::sexp::Protect protect;
-   return r::sexp::create(getLocalCustomThemePath().absolutePath(), &protect);
+   return r::sexp::create(themeDir.absolutePath(), &protect);
+}
+
+SEXP rs_getLocalThemePath(SEXP themeFileSEXP)
+{
+   std::string themeFile = r::sexp::asString(themeFileSEXP);
+
+   if (themeFile.empty())
+      return R_NilValue;
+
+   FilePath requestedTheme = getLocalCustomTheme(themeFile);
+   if (requestedTheme.empty())
+      return R_NilValue;
+
+
+   r::sexp::Protect protect;
+   return r::sexp::create(requestedTheme.absolutePath(), &protect);
 }
 
 Error initialize()
@@ -657,6 +706,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getLocalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getGlobalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getThemeColors);
+   RS_REGISTER_CALL_METHOD(rs_getLocalThemePath);
 
    events().onDeferredInit.connect(onDeferredInit);
 
