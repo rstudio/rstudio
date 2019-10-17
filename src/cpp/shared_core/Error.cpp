@@ -264,6 +264,21 @@ bool Error::operator==(const boost::system::error_condition& in_ec) const
       ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
 }
 
+bool Error::operator!=(const rstudio::core::Error& in_other) const
+{
+   return !(*this == in_other);
+}
+
+bool Error::operator!=(const boost::system::error_code& in_ec) const
+{
+   return !(*this == in_ec);
+}
+
+bool Error::operator!=(const boost::system::error_condition& in_ec) const
+{
+   return !(*this == in_ec);
+}
+
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
 {
    copyOnWrite();
