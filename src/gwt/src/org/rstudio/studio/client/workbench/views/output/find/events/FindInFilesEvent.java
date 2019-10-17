@@ -34,6 +34,16 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
       return searchPattern_;
    }
 
+   public boolean getReplace()
+   {
+      return replace_;
+   }
+
+   public String getReplacePatter()
+   {
+      return replacePattern_;
+   }
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,6 +57,8 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    }
 
    private final String searchPattern_;
+   private String replacePattern_;
+   private boolean replace_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

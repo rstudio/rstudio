@@ -412,18 +412,6 @@ public class FindOutputPane extends WorkbenchPane
       return stopReplace_;
    }
 
-   /*
-   @Override
-   public HasClickHandlers getPreviewReplaceButton()
-   {
-
-      if (regexCheckbox_.getValue())
-         return replaceTextBox_;
-      else
-         return HasClickHandlers();
-   }
-   */
-
    @Override
    public void setStopReplaceButtonVisible(boolean visible)
    {
