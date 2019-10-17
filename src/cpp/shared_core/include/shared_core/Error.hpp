@@ -241,6 +241,20 @@ public:
    bool operator==(const Error& in_other) const;
 
    /**
+    * \defgroup FunctionGroup operator==
+    * @brief Equality operator. Two errors are equal if their codes and names are the same.
+    *
+    * @param in_ec   The boost error code to compare with this error.
+    *
+    * @return True if in_ec has the same error code and category name as this error; false otherwise.
+    *
+    * @{
+    */
+   bool operator==(const boost::system::error_code& in_ec) const;
+   bool operator==(const boost::system::error_condition& in_ec) const;
+   /** @} */
+
+   /**
     * \defgroup FunctionGroup addOrUpdateProperty
     *
     * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be

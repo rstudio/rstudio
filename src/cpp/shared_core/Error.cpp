@@ -247,9 +247,21 @@ bool Error::operator!() const
 
 bool Error::operator==(const Error& in_other) const
 {
-   return ((m_impl == nullptr) && (in_other.m_impl == nullptr)) ||
-      ((m_impl->Code == in_other.m_impl->Code) && (m_impl->Code == 0)) ||
+   return (((m_impl == nullptr) || (m_impl->Code == 0)) &&
+         ((in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0))) ||
       ((m_impl->Code == in_other.m_impl->Code) && (m_impl->Name == in_other.m_impl->Name));
+}
+
+bool Error::operator==(const boost::system::error_code& in_ec) const
+{
+   return (((m_impl == nullptr) || (m_impl->Code == 0)) && (in_ec.value() == 0)) ||
+      ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
+}
+
+bool Error::operator==(const boost::system::error_condition& in_ec) const
+{
+   return (((m_impl == nullptr) || m_impl->Code == 0) && (in_ec.value() == 0)) ||
+      ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
 }
 
 void Error::addOrUpdateProperty(const std::string& in_name, const std::string& in_value)
