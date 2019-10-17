@@ -22,6 +22,7 @@
 #cmakedefine HAVE_SO_PEERCRED
 #cmakedefine HAVE_GETPEEREID
 #cmakedefine HAVE_PROCSELF
+#cmakedefine HAVE_CURPROC
 #cmakedefine HAVE_SETRESUID
 #cmakedefine HAVE_SCANDIR_POSIX
 #cmakedefine RSTUDIO_SERVER

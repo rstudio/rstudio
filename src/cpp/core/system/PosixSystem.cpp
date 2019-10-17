@@ -937,6 +937,10 @@ Error executablePath(const char * argv0,
 
    executablePath = std::string("/proc/self/exe");
 
+#elif defined(HAVE_CURPROC)
+   
+   executablePath = std::string("/proc/curproc/file");
+   
 #else
 
    // Note that this technique will NOT work if the executable was located
@@ -944,9 +948,15 @@ Error executablePath(const char * argv0,
    // need to also search the PATH for the exe name in argv[0]
    //
 
-   // use argv[0] and initial path
-   FilePath initialPath = FilePath::initialPath();
-   executablePath = initialPath.complete(argv0).absolutePath();
+   if (argv0 == nullptr)
+   {
+      Error error = systemError(
+               boost::system::errc::function_not_supported,
+               ERROR_LOCATION);
+      return error;
+   }
+   
+   executablePath = std::string(argv0);
 
 #endif
 

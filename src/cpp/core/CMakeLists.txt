@@ -162,8 +162,13 @@ if (UNIX)
    check_function_exists(inotify_init1 HAVE_INOTIFY_INIT1)
    check_function_exists(getpeereid HAVE_GETPEEREID)
    check_function_exists(setresuid HAVE_SETRESUID)
+   
    if(EXISTS "/proc/self")
       set(HAVE_PROCSELF TRUE)
+   endif()
+   
+   if(EXISTS "/proc/curproc")
+      set(HAVE_CURPROC TRUE)
    endif()
 
    # find packages and libraries
