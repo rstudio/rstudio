@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
@@ -226,6 +227,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
+   HandlerRegistration addEditorBlurHandler(BlurHandler handler);
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);

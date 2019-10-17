@@ -2207,6 +2207,45 @@ core::Error UserPrefValues::setReducedMotion(bool val)
    return writePref("reduced_motion", val);
 }
 
+/**
+ * How to deal with changes to documents on idle.
+ */
+std::string UserPrefValues::autoSaveOnIdle()
+{
+   return readPref<std::string>("auto_save_on_idle");
+}
+
+core::Error UserPrefValues::setAutoSaveOnIdle(std::string val)
+{
+   return writePref("auto_save_on_idle", val);
+}
+
+/**
+ * The idle period, in milliseconds, after which documents should be auto-saved.
+ */
+int UserPrefValues::autoSaveIdleMs()
+{
+   return readPref<int>("auto_save_idle_ms");
+}
+
+core::Error UserPrefValues::setAutoSaveIdleMs(int val)
+{
+   return writePref("auto_save_idle_ms", val);
+}
+
+/**
+ * Whether to automatically save when the editor loses focus.
+ */
+bool UserPrefValues::autoSaveOnBlur()
+{
+   return readPref<bool>("auto_save_on_blur");
+}
+
+core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
+{
+   return writePref("auto_save_on_blur", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2378,6 +2417,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kAutoSaveOnIdle,
+      kAutoSaveIdleMs,
+      kAutoSaveOnBlur,
    });
 }
    

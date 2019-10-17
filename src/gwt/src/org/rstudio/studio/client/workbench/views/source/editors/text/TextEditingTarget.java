@@ -628,6 +628,27 @@ public class TextEditingTarget implements
          }
       });
       
+      docDisplay_.addEditorBlurHandler((BlurEvent evt) ->
+      {
+         // When the editor loses focus, perform an autosave if enabled, the
+         // buffer is dirty, and we have a file to save to
+         if (prefs.autoSaveOnBlur().getValue() && 
+             dirtyState_.getValue() && 
+             getPath() != null &&
+             !docDisplay_.hasActiveCollabSession())
+         {
+            try
+            {
+               save();
+            }
+            catch(Exception e)
+            {
+               // Autosave exceptions are logged rather than displayed
+               Debug.logException(e);
+            }
+         }
+      });
+
       events_.addHandler(
             ShinyApplicationStatusEvent.TYPE, 
             new ShinyApplicationStatusEvent.Handler()
@@ -850,6 +871,33 @@ public class TextEditingTarget implements
                   }
                }
             });
+
+      releaseOnDismiss_.add(
+         prefs.autoSaveOnBlur().addValueChangeHandler((ValueChangeEvent<Boolean> val) ->
+         {
+            // When the user turns on autosave, disable Source on Save if it was
+            // previously enabled; otherwise documents which were open with this
+            // setting enabled will start sourcing themselves on blur.
+            if (val.getValue())
+            {
+               setSourceOnSave(false);
+            }
+         }));
+      releaseOnDismiss_.add(
+         prefs.autoSaveOnIdle().bind((String behavior) ->
+         {
+            if (behavior == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+            {
+               // When switching into autosave on idle mode, start the timer
+               setSourceOnSave(false);
+               nudgeAutosave();
+            }
+            else
+            {
+               // When leaving it, stop the timer
+               autoSaveTimer_.cancel();
+            }
+         }));
    }
    
    static {
@@ -1093,7 +1141,10 @@ public class TextEditingTarget implements
    @Override
    public void setSourceOnSave(boolean sourceOnSave)
    {
-      view_.getSourceOnSave().setValue(sourceOnSave, true);
+      if (view_ != null)
+      {
+         view_.getSourceOnSave().setValue(sourceOnSave, true);
+      }
    }
    
    @Override
@@ -1311,7 +1362,8 @@ public class TextEditingTarget implements
             document,
             globalDisplay_.getProgressIndicator("Save File"),
             dirtyState_,
-            events_);
+            events_,
+            prefs_);
       
       view_ = new TextEditingTargetWidget(this,
                                           docUpdateSentinel_,
@@ -1393,8 +1445,13 @@ public class TextEditingTarget implements
 
       registerPrefs(releaseOnDismiss_, prefs_, projConfig_, docDisplay_, document);
       
-      // Initialize sourceOnSave, and keep it in sync
-      view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
+      // Initialize sourceOnSave, and keep it in sync. Don't source on save
+      // (regardless of preference) in auto save mode, which is mutually
+      // exclusive with the manual source-and-save workflow.
+      boolean sourceOnSave = document.sourceOnSave();
+      if (prefs_.autoSaveEnabled())
+         sourceOnSave = false;
+      view_.getSourceOnSave().setValue(sourceOnSave, false);
       view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -1415,6 +1472,10 @@ public class TextEditingTarget implements
          {
             dirtyState_.markDirty(true);
             docDisplay_.clearSelectionHistory();
+
+            // Nudge autosave timer (so it doesn't fire while the document is
+            // actively mutating)
+            nudgeAutosave();
          }
       });
 
@@ -5265,10 +5326,6 @@ public class TextEditingTarget implements
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
-         // R 2.14 prints a warning when sourcing a file with no trailing \n
-         if (!code.endsWith("\n"))
-            code = code + "\n";
-
          boolean sweave = 
             fileType_.canCompilePDF() || 
             fileType_.canKnitToHTML() ||
@@ -7346,6 +7403,16 @@ public class TextEditingTarget implements
    }
 
    public TextEditingTargetSpelling getSpellingTarget() { return this.spelling_; }
+   
+   private void nudgeAutosave()
+   {
+      // Cancel any existing autosave timer
+      autoSaveTimer_.cancel();
+      
+      // Start new timer if enabled
+      if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+         autoSaveTimer_.schedule(prefs_.autoSaveMs());
+   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
@@ -7411,7 +7478,60 @@ public class TextEditingTarget implements
    private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
    
-   
+   // Timer for autosave
+   private Timer autoSaveTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // It's unlikely, but if we attempt to autosave while running a
+         // previous autosave, just nudge the timer so we try again.
+         if (saving_ != 0)
+         {
+            // If we've been trying to save for more than 5 seconds, we won't
+            // nudge (just fall through and we'll attempt again below)
+            if (System.currentTimeMillis() - saving_ < 5000)
+            {
+               nudgeAutosave();
+               return;
+            }
+         }
+         
+         if (getPath() == null)
+         {
+            // This editor isn't file-backed yet, so there's no save to do.
+            return;
+         }
+         
+         if (docDisplay_.hasActiveCollabSession())
+         {
+            // Everyone's autosave gets turned off during a collab session --
+            // otherwise the autosaves all fire at once and fight
+            return;
+         }
+
+         // Save (and keep track of when we initiated it)
+         saving_ = System.currentTimeMillis();
+         try
+         {
+            save(() ->
+            {
+               saving_ = 0;
+            });
+         }
+         catch(Exception e)
+         {
+            // Autosave exceptions are logged rather than displayed
+            saving_ = 0;
+            Debug.logException(e);
+         }
+      }
+      
+      // The time at which we attempted the current autosave operation, or zero
+      // if no autosave operation is in progress.
+      private long saving_ = 0;
+   };
+
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;

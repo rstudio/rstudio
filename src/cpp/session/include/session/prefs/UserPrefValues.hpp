@@ -295,6 +295,12 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kAutoSaveOnIdle "auto_save_on_idle"
+#define kAutoSaveOnIdleCommit "commit"
+#define kAutoSaveOnIdleBackup "backup"
+#define kAutoSaveOnIdleNone "none"
+#define kAutoSaveIdleMs "auto_save_idle_ms"
+#define kAutoSaveOnBlur "auto_save_on_blur"
 
 class UserPrefValues: public Preferences
 {
@@ -1307,6 +1313,24 @@ public:
     */
    bool reducedMotion();
    core::Error setReducedMotion(bool val);
+
+   /**
+    * How to deal with changes to documents on idle.
+    */
+   std::string autoSaveOnIdle();
+   core::Error setAutoSaveOnIdle(std::string val);
+
+   /**
+    * The idle period, in milliseconds, after which documents should be auto-saved.
+    */
+   int autoSaveIdleMs();
+   core::Error setAutoSaveIdleMs(int val);
+
+   /**
+    * Whether to automatically save when the editor loses focus.
+    */
+   bool autoSaveOnBlur();
+   core::Error setAutoSaveOnBlur(bool val);
 
 };
 

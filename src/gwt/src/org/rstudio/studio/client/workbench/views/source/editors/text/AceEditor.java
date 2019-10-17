@@ -2232,10 +2232,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addAttachHandler(handler);
    }
-
+   
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
    {
       return widget_.addFocusHandler(handler);
+   }
+   
+   public HandlerRegistration addEditorBlurHandler(BlurHandler handler)
+   {
+      return widget_.addBlurHandler(handler);
    }
 
    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
