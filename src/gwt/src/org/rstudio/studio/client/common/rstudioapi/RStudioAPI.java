@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common.rstudioapi;
 
-import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
@@ -94,14 +93,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       
       if (!StringUtil.isNullOrEmpty(url))
       {
-         HyperlinkLabel link = new HyperlinkLabel(url, new Command() {
-            @Override
-            public void execute()
-            {
-               RStudioGinjector.INSTANCE.getGlobalDisplay()
-                  .openWindow(url);
-            }
-
+         HyperlinkLabel link = new HyperlinkLabel(url, () ->
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(url);
          });
          link.addStyleName(RES.styles().installLink());
          verticalPanel.add(link);

@@ -254,6 +254,11 @@
             "default": false,
             "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
         },
+        "tab_completion": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to attempt completion of statements when pressing Tab."
+        },
         "show_help_tooltip_on_idle": {
             "type": "boolean",
             "default": false,

@@ -191,25 +191,29 @@ public class AceEditor implements DocDisplay,
    {
       public boolean shouldComplete(NativeEvent event)
       {
-         // Never complete if there's an active selection
+         // Never complete if there's an active selection.
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
 
-         // Don't consider Tab to be a completion if we're at the start of a
-         // line (e.g. only zero or more whitespace characters between the
-         // beginning of the line and the cursor)
+         // If the user explicitly requested an auto-complete by pressing 'ctrl-space' instead of 'tab', always attempt auto-complete.
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
 
-         // Short-circuit if the user has explicitly opted in
+         // Tab was pressed. Don't attempt auto-complete if the user opted out of tab completions.
+         if (!userPrefs_.tabCompletion().getValue())
+            return false;
+
+         // If the user opted in to multi-line tab completion, there is no case where we don't attempt auto-complete.
          if (userPrefs_.tabMultilineCompletion().getValue())
             return true;
 
+         // Otherwise, don't complete if we're at the start of the line...
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
 
+         // ... or if there is nothing but whitespace between the start of the line and the cursor.
          String line = getSession().getLine(range.getStart().getRow());
          return line.substring(0, col).trim().length() != 0;
 

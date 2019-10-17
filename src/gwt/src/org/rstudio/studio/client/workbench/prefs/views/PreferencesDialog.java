@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
@@ -94,8 +95,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       {
          hidePane(TerminalPreferencesPane.class);
       }
+
+      ElementIds.assignElementId(this, ElementIds.DIALOG_GLOBAL_PREFS);
    }
-   
 
    @Override
    protected UserPrefs createEmptyPrefs()

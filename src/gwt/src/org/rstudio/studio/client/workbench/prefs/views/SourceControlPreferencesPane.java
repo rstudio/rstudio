@@ -31,7 +31,6 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -110,7 +109,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                   onGitExePathChosen);
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo.getAllowVcsExeEdit())
-         addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
+         addTextBoxChooser(gitExePathLabel_, gitExePathChooser_);
  
       // svn exe path chooser
       svnExePathLabel_ = new FormLabel("SVN executable:");
@@ -120,7 +119,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                   null,
                                                   null);
       if (sessionInfo.getAllowVcsExeEdit())
-         addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
+         addTextBoxChooser(svnExePathLabel_, svnExePathChooser_);
       
       // terminal path
       terminalPathLabel_ = new FormLabel("Terminal executable:");
@@ -130,7 +129,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                     null, 
                                                     null);
       if (haveTerminalPathPref())
-         addTextBoxChooser(terminalPathLabel_, null, null, terminalPathChooser_);
+         addTextBoxChooser(terminalPathLabel_, terminalPathChooser_);
      
       // ssh key widget
       sshKeyWidget_ = new SshKeyWidget(server, "330px");
@@ -205,30 +204,17 @@ public class SourceControlPreferencesPane extends PreferencesPane
       return Desktop.isDesktop() && BrowseCap.isLinux();
    }
    
-   private void addTextBoxChooser(Label captionLabel, HyperlinkLabel link,
-         String captionPanelStyle, TextBoxWithButton chooser)
+   private void addTextBoxChooser(Label captionLabel, TextBoxWithButton chooser)
    {
       String textWidth = "250px";
 
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.setWidth(textWidth);
       nudgeRight(captionPanel);
-      if (captionPanelStyle != null)
-         captionPanel.addStyleName(captionPanelStyle);
 
       captionPanel.add(captionLabel);
       captionPanel.setCellHorizontalAlignment(captionLabel,
             HasHorizontalAlignment.ALIGN_LEFT);
-
-      if (link != null)
-      {
-         HorizontalPanel linkPanel = new HorizontalPanel();
-         linkPanel.add(link);
-         captionPanel.add(linkPanel);
-         captionPanel.setCellHorizontalAlignment(linkPanel,
-               HasHorizontalAlignment.ALIGN_RIGHT);
-
-      }
 
       add(tight(captionPanel));
 

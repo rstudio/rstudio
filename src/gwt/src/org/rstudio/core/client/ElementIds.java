@@ -183,4 +183,7 @@ public class ElementIds
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
+
+   // Modal Dialogs
+   public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
 }

@@ -60,9 +60,8 @@ public class SshKeyWidget extends Composite
             HasHorizontalAlignment.ALIGN_LEFT);
 
       HorizontalPanel linkPanel = new HorizontalPanel();
-      publicKeyLink_ = new HyperlinkLabel("View public key");
+      publicKeyLink_ = new HyperlinkLabel("View public key", () -> viewPublicKey());
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
-      publicKeyLink_.addClickHandler(event -> viewPublicKey());
       linkPanel.add(publicKeyLink_);
       captionPanel.add(publicKeyLink_);
       captionPanel.setCellHorizontalAlignment(

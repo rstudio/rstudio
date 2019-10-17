@@ -405,6 +405,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showHelpTooltipOnIdle()));
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
+      completionPanel.add(checkboxPref("Use tab for autocompletions", prefs.tabCompletion()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.tabMultilineCompletion()));
       
       
