@@ -241,6 +241,10 @@ void MenuCallback::addCommand(QString commandId,
    {
       keySequence = QKeySequence(QKeySequence::Paste);
    }
+   else if (commandId == QStringLiteral("pasteWithIndentDummy"))
+   {
+      keySequence = QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V);
+   }
    else if (commandId == QStringLiteral("undoDummy"))
    {
       keySequence = QKeySequence(QKeySequence::Undo);

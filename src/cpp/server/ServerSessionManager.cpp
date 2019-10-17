@@ -28,7 +28,7 @@
 #include <session/SessionConstants.hpp>
 
 #include <server/ServerOptions.hpp>
-
+#include <server/ServerPaths.hpp>
 #include <server/ServerErrorCategory.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -184,6 +184,11 @@ core::system::ProcessConfig sessionProcessConfig(
 
    if (!core::system::getenv(kCrashpadHandlerEnvVar).empty())
       environment.push_back({kCrashpadHandlerEnvVar, core::system::getenv(kCrashpadHandlerEnvVar)});
+
+
+   // forward path for session temp dir (used for local stream path)
+   environment.push_back(
+         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().absolutePath()));
 
    // build the config object and return it
    core::system::ProcessConfig config;

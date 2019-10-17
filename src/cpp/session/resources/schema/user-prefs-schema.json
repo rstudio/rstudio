@@ -254,6 +254,11 @@
             "default": false,
             "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
         },
+        "tab_completion": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to attempt completion of statements when pressing Tab."
+        },
         "show_help_tooltip_on_idle": {
             "type": "boolean",
             "default": false,
@@ -951,6 +956,22 @@
             "type": "boolean",
             "default": false,
             "description": "Reduce use of animations in the user interface."
+        },
+        "auto_save_on_idle": {
+            "type": "string",
+            "enum": ["commit", "backup", "none"],
+            "default": "backup",
+            "description": "How to deal with changes to documents on idle."
+        },
+        "auto_save_idle_ms": {
+            "type": "integer",
+            "default": 1000,
+            "description": "The idle period, in milliseconds, after which documents should be auto-saved."
+        },
+        "auto_save_on_blur": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to automatically save when the editor loses focus."
         }
     }
 }

@@ -401,6 +401,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to attempt completion of statements when pressing Tab.
+    */
+   public PrefValue<Boolean> tabCompletion()
+   {
+      return bool("tab_completion", true);
+   }
+
+   /**
     * Whether to show help tooltips for functions when the cursor has not been recently moved.
     */
    public PrefValue<Boolean> showHelpTooltipOnIdle()
@@ -1565,6 +1573,34 @@ public class UserPrefsAccessor extends Prefs
       return bool("reduced_motion", false);
    }
 
+   /**
+    * How to deal with changes to documents on idle.
+    */
+   public PrefValue<String> autoSaveOnIdle()
+   {
+      return string("auto_save_on_idle", "backup");
+   }
+
+   public final static String AUTO_SAVE_ON_IDLE_COMMIT = "commit";
+   public final static String AUTO_SAVE_ON_IDLE_BACKUP = "backup";
+   public final static String AUTO_SAVE_ON_IDLE_NONE = "none";
+
+   /**
+    * The idle period, in milliseconds, after which documents should be auto-saved.
+    */
+   public PrefValue<Integer> autoSaveIdleMs()
+   {
+      return integer("auto_save_idle_ms", 1000);
+   }
+
+   /**
+    * Whether to automatically save when the editor loses focus.
+    */
+   public PrefValue<Boolean> autoSaveOnBlur()
+   {
+      return bool("auto_save_on_blur", false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1635,6 +1671,8 @@ public class UserPrefsAccessor extends Prefs
          insertParensAfterFunctionCompletion().setValue(layer, source.getBool("insert_parens_after_function_completion"));
       if (source.hasKey("tab_multiline_completion"))
          tabMultilineCompletion().setValue(layer, source.getBool("tab_multiline_completion"));
+      if (source.hasKey("tab_completion"))
+         tabCompletion().setValue(layer, source.getBool("tab_completion"));
       if (source.hasKey("show_help_tooltip_on_idle"))
          showHelpTooltipOnIdle().setValue(layer, source.getBool("show_help_tooltip_on_idle"));
       if (source.hasKey("surround_selection"))
@@ -1901,6 +1939,12 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
+      if (source.hasKey("auto_save_on_idle"))
+         autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
+      if (source.hasKey("auto_save_idle_ms"))
+         autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
+      if (source.hasKey("auto_save_on_blur"))
+         autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
    }
    
 

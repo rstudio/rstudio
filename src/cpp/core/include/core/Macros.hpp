@@ -19,6 +19,14 @@
 #include <iostream>
 #include <iomanip>
 
+#define RS_CALL_ONCE()                                                         \
+   do                                                                          \
+   {                                                                           \
+      static bool s_once = false;                                              \
+      if (s_once) return;                                                      \
+      s_once = true;                                                           \
+   } while (0)
+
 /* Work around Xcode indentation rules */
 #define RS_BEGIN_NAMESPACE(__X__) namespace __X__ {
 #define RS_END_NAMESPACE(__X__) }

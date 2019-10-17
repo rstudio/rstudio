@@ -79,9 +79,10 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
-   public void getCompletions(String line, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {
       server_.stanGetCompletions(line, context);
+      return true;
    }
    
    @Override

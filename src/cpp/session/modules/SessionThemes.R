@@ -778,7 +778,7 @@
    }
    else if (.rs.isLocalTheme(decodedUrl))
    {
-      file.path(.rs.getThemeInstallDir(FALSE), basename(decodedUrl))
+      .Call("rs_getLocalThemePath", basename(decodedUrl), PACKAGE="(embedding)")
    }
    else
    {
