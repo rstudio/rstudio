@@ -159,23 +159,19 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
+   
 #ifdef Q_OS_MAC
-   if (pEvent->key() == Qt::Key_W &&
-       pEvent->modifiers() == Qt::CTRL)
+   // on macOS, intercept Cmd+W and emit the window close signal
+   if (pEvent->key() == Qt::Key_W && pEvent->modifiers() == Qt::CTRL)
    {
-      // on macOS, intercept Cmd+W and emit the window close signal
       onCloseWindowShortcut();
+      return;
    }
-   else
-   {
-      // pass other key events through to WebEngine
-      QWebEngineView::keyPressEvent(pEvent);
-   }
-#else
-
+#endif
+   
+   // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);
    
-#endif
 }
 
 void WebView::openFile(QString fileName)
