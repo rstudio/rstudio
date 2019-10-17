@@ -520,7 +520,7 @@ void MainWindow::onUrlChanged(QUrl url)
 
 void MainWindow::onLoadFinished(bool ok)
 {
-   if (ok)
+   if (ok || pRemoteSessionLauncher_)
       return;
 
    RS_CALL_ONCE();

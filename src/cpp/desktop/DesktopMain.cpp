@@ -945,6 +945,8 @@ int main(int argc, char* argv[])
             Error error = launchServer->test();
             if (error)
             {
+               LOG_ERROR(error);
+
                bool continueConnecting =
                      showYesNoDialog(QMessageBox::Warning,
                                      nullptr,
@@ -954,6 +956,7 @@ int main(int argc, char* argv[])
                                                        "Do you want to attempt to connect anyway?"),
                                      QString::fromStdString(error.getProperty("description")),
                                      false);
+
                if (!continueConnecting)
                {
                   if (forceSessionServerLaunch)
@@ -982,7 +985,7 @@ int main(int argc, char* argv[])
                                                             sessionUrl);
             }
 
-            pLauncher->launchFirstSession();
+            pLauncher->launchFirstSession(installPath, devMode, pApp->arguments());
             pSessionLauncher.reset(pLauncher);
          }
 
@@ -1023,6 +1026,7 @@ int main(int argc, char* argv[])
          {
             forceSessionServerLaunch = false;
             forceShowSessionLocationDialog = true;
+            desktop::activation().setMainWindow(nullptr);
             continue;
          }
 

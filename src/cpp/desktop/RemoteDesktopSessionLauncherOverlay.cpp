@@ -20,7 +20,17 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace desktop {
 
-void RemoteDesktopSessionLauncher::launchFirstSession()
+void RemoteDesktopSessionLauncher::launchFirstSession(const core::FilePath& installPath,
+                                                      bool devMode,
+                                                      const QStringList& arguments)
+{
+}
+
+void RemoteDesktopSessionLauncher::onLaunchError(QString message)
+{
+}
+
+void RemoteDesktopSessionLauncher::onLaunchFirstSession()
 {
 }
 
