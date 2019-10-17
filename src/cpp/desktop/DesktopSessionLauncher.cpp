@@ -340,7 +340,12 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
          // if we haven't loaded the initial session.
       }
 
-      showLaunchErrorPage();
+      if (!pMainWindow_->workbenchInitialized())
+      {
+         // If the R session exited without initializing the workbench, treat it as
+         // a boot failure.
+         showLaunchErrorPage();
+      }
    }
 
    // quit and exit means close the main window
