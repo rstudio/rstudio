@@ -188,7 +188,7 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // forward path for session temp dir (used for local stream path)
    environment.push_back(
-         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().absolutePath()));
+         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath()));
 
    // build the config object and return it
    core::system::ProcessConfig config;
