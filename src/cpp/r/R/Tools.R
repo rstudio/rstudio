@@ -300,7 +300,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction("GEplayDisplayList", function()
 {
    tryCatch(
-      .Call("rs_GEplayDisplayList"),
+      .Call("rs_GEplayDisplayList", PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })
@@ -308,7 +308,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction("GEcopyDisplayList", function(fromDevice)
 {
    tryCatch(
-      .Call("rs_GEcopyDisplayList", fromDevice),
+      .Call("rs_GEcopyDisplayList", fromDevice, PACKAGE = "(embedding)"),
       error = function(e) warning(e)
    )
 })

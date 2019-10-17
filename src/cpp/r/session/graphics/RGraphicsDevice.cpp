@@ -643,8 +643,10 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
       return error ;
    
    // save snaphot file
-   error = r::exec::RFunction(".rs.saveGraphics",
-                              string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+   error = r::exec::RFunction(".rs.saveGraphics")
+         .addParam(string_utils::utf8ToSystem(snapshotFile.absolutePath()))
+         .call();
+   
    if (error)
       return error;
 

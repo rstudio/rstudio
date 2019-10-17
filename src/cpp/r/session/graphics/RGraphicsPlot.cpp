@@ -168,9 +168,11 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
  
    // generate snapshot file
    FilePath snapshotFile = snapshotFilePath(storageUuid);
-   Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
-                                    snapshot,
-                                    string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+   Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot")
+         .addParam(snapshot)
+         .addParam(string_utils::utf8ToSystem(snapshotFile.absolutePath()))
+         .call();
+   
    if (error)
       return error ;
 
