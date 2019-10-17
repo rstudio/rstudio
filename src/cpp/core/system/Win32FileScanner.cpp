@@ -127,9 +127,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          if (options.recursive && !childFileInfo.isSymlink())
          {
             Error error = scanFiles(child, options, pTree);
-            if (error &&
-               (error.getCode() != boost::system::windows_error::path_not_found) &&
-               (error.getName() == boost::system::system_category().name()))
+            if (error && (error != boost::system::windows_error::path_not_found))
                LOG_ERROR(error);
          }
       }

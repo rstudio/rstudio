@@ -298,8 +298,7 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
    if (error)
    {
       // log any error which isn't no such file or directory
-      if (error.getCode() !=
-          boost::system::errc::no_such_file_or_directory)
+      if (error != boost::system::errc::no_such_file_or_directory)
       {
          LOG_ERROR(error);
       }

@@ -450,7 +450,7 @@ Error system(const std::string& command, std::string* pOutput)
    if (error)
    {
       // if it is NoDataAvailable this means empty output
-      if (error.getCode() == r::errc::NoDataAvailableError)
+      if (error == r::errc::NoDataAvailableError)
       {
          pOutput->clear();
          return Success();

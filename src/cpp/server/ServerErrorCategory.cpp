@@ -64,7 +64,7 @@ std::string ServerErrorCategory::message( int ev ) const
 
 bool isAuthenticationError(const core::Error& error)
 {
-   if (error.getCode() == server::errc::AuthenticationError)
+   if (error == server::errc::AuthenticationError)
       return true;
    else
       return false;
@@ -72,7 +72,7 @@ bool isAuthenticationError(const core::Error& error)
 
 bool isSessionUnavailableError(const core::Error& error)
 {
-   if (error.getCode() == server::errc::SessionUnavailableError)
+   if (error == server::errc::SessionUnavailableError)
       return true;
    else
       return false;
@@ -80,7 +80,7 @@ bool isSessionUnavailableError(const core::Error& error)
 
 bool isInvalidSessionScopeError(const core::Error& error)
 {
-   if (error.getCode() == server::errc::InvalidSessionScopeError)
+   if (error == server::errc::InvalidSessionScopeError)
       return true;
    else
       return false;

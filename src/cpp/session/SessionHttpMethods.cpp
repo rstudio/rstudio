@@ -802,7 +802,7 @@ WaitResult startHttpConnectionListenerWithTimeout()
    // available; therefore, retry connection, but only for address_in_use error
    if (!error)
        return WaitResult(WaitSuccess, Success());
-   else if (error.getCode() != boost::system::errc::address_in_use)
+   else if (error != boost::system::errc::address_in_use)
       return WaitResult(WaitError, error);
    else
       return WaitResult(WaitContinue, error);

@@ -610,7 +610,7 @@ void proxyRequest(
    }
    else
    {
-      if (error.getCode() != boost::system::errc::permission_denied)
+      if (error != boost::system::errc::permission_denied)
       {
          // if the error returned was permission_denied then no user was found
          // we consider user not found to be an acceptable error as it should

@@ -218,7 +218,7 @@ core::Error getNamedListElement(SEXP listSEXP,
   core:: Error error = getNamedListElement(listSEXP, name, pValue);
   if (error)
   {
-     if (error.getCode() == r::errc::ListElementNotFoundError)
+     if (error == r::errc::ListElementNotFoundError)
      {
         *pValue = defaultValue;
         return core::Success();

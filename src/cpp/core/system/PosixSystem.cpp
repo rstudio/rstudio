@@ -2406,7 +2406,7 @@ Error terminateChildProcesses(pid_t pid,
          // suppress that particular error to prevent bogus error states.
          Error error = systemError(errno, ERROR_LOCATION);
 #ifdef __APPLE__
-         if (error.getCode() != boost::system::errc::no_such_process)
+         if (error != boost::system::errc::no_such_process)
 #endif
             LOG_ERROR(error);
       }
@@ -2419,7 +2419,7 @@ Error terminateChildProcesses(pid_t pid,
 
 bool isUserNotFoundError(const Error& error)
 {
-   return error.getCode() == boost::system::errc::permission_denied;
+   return error == boost::system::errc::permission_denied;
 }
 
 Error userBelongsToGroup(const User& user,

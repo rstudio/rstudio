@@ -218,7 +218,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.getCode() != core::json::errc::ParamTypeMismatch)
+   if (error && error != core::json::errc::ParamTypeMismatch)
       return error ;
 
    if (encoding.empty())

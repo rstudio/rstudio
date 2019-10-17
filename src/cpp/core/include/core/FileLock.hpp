@@ -94,7 +94,7 @@ public:
    static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool isNoLockAvailable(const Error& error)
    {
-      return error.getCode() == boost::system::errc::no_lock_available;
+      return error == boost::system::errc::no_lock_available;
    }
    
 protected:

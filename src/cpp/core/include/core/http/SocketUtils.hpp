@@ -65,20 +65,17 @@ Error closeSocket(SocketService& socket)
 
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
-
-   bool isSystemCategory = error.getName() == boost::asio::error::get_system_category().name();
-   bool isMiscCategory = error.getName() == boost::asio::error::get_misc_category().name();
    // look for errors that indicate the client closing the connection
-   bool timedOut = (error.getCode() == boost::asio::error::timed_out) && isSystemCategory;
-   bool eof = (error.getCode() == boost::asio::error::eof) && isMiscCategory;
-   bool reset = (error.getCode() == boost::asio::error::connection_reset) && isSystemCategory;
-   bool badFile = (error.getCode() == boost::asio::error::bad_descriptor) && isSystemCategory;
-   bool brokenPipe = (error.getCode() == boost::asio::error::broken_pipe) && isSystemCategory;
-   bool noFile = (error.getCode() == boost::system::errc::no_such_file_or_directory) && isSystemCategory;
+   bool timedOut = error == boost::asio::error::timed_out;
+   bool eof = error == boost::asio::error::eof;
+   bool reset = error == boost::asio::error::connection_reset;
+   bool badFile = error == boost::asio::error::bad_descriptor;
+   bool brokenPipe = error == boost::asio::error::broken_pipe;
+   bool noFile = error == boost::system::errc::no_such_file_or_directory;
 
 #ifdef _WIN32
    int ec = error.getCode();
-   bool noData = isSystemCategory && (ec == ERROR_NO_DATA);
+   bool noData = (error.getName() == boost::system::system_category().name()) && (ec == ERROR_NO_DATA);
 #else
    bool noData = false;
 #endif
@@ -92,21 +89,18 @@ inline bool isConnectionUnavailableError(const Error& error)
    // not currently existing (and thus remediable by launching a new one)
    
    return (
-      error.getName() == boost::system::system_category().name() &&
-      (
          // for unix domain sockets
-         error.getCode() == boost::system::errc::no_such_file_or_directory ||
+         error == boost::system::errc::no_such_file_or_directory ||
 
          // for tcp-ip and unix domain sockets
-         error.getCode() == boost::asio::error::connection_refused
+         error == boost::asio::error::connection_refused
 
          // for windows named pipes
  #ifdef _WIN32
-         || error.getCode() == boost::system::windows_error::file_not_found
-         || error.getCode() == boost::system::windows_error::broken_pipe
-         || error.getCode() == ERROR_PIPE_BUSY
+         || error == boost::system::windows_error::file_not_found
+         || error == boost::system::windows_error::broken_pipe
+         || error == boost::system::error_code(ERROR_PIPE_BUSY, boost::system::system_category())
  #endif
-      )
    );
 }
 

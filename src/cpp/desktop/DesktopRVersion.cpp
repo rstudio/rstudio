@@ -237,8 +237,7 @@ void enumRegistry(Architecture architecture, HKEY key, QList<RVersion>* pResults
                              KEY_READ | flags);
    if (error)
    {
-      if ((error.getCode() != boost::system::errc::no_such_file_or_directory) &&
-         (error.getName() == boost::system::generic_category().name()))
+      if (error != boost::system::errc::no_such_file_or_directory)
          LOG_ERROR(error);
       return;
    }
@@ -320,8 +319,7 @@ RVersion detectPreferredFromRegistry(HKEY key, Architecture architecture)
                              KEY_READ | flags);
    if (error)
    {
-      if ((error.getCode() != boost::system::errc::no_such_file_or_directory) &&
-         (error.getName() == boost::system::generic_category().name()))
+      if (error != boost::system::errc::no_such_file_or_directory)
          LOG_ERROR(error);
       return RVersion();
    }

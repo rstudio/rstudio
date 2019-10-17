@@ -241,8 +241,7 @@ Error scanRegistryForRTools(HKEY key,
                              KEY_READ | KEY_WOW64_32KEY);
    if (error)
    {
-      if ((error.getCode() != boost::system::errc::no_such_file_or_directory) &&
-         (error.getName() == boost::system::system_category().name()))
+      if (error != boost::system::errc::no_such_file_or_directory)
          return error;
       else
          return Success();
