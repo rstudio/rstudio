@@ -258,23 +258,12 @@ bool Error::operator==(const boost::system::error_code& in_ec) const
       ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
 }
 
-bool Error::operator==(const boost::system::error_condition& in_ec) const
-{
-   return (((m_impl == nullptr) || m_impl->Code == 0) && (in_ec.value() == 0)) ||
-      ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
-}
-
 bool Error::operator!=(const rstudio::core::Error& in_other) const
 {
    return !(*this == in_other);
 }
 
 bool Error::operator!=(const boost::system::error_code& in_ec) const
-{
-   return !(*this == in_ec);
-}
-
-bool Error::operator!=(const boost::system::error_condition& in_ec) const
 {
    return !(*this == in_ec);
 }

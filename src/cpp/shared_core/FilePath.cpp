@@ -1336,7 +1336,7 @@ bool isFileNotFoundError(const Error& in_error)
 #ifdef _WIN32
    return in_error == boost::system::windows_error::file_not_found;
 #else
-   return in_error == boost::system::errc::no_such_file_or_directory;
+   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
 #endif
 }
 
@@ -1368,7 +1368,7 @@ bool isPathNotFoundError(const Error& in_error)
 #ifdef _WIN32
    return in_error == boost::system::windows_error::path_not_found;
 #else
-   return in_error == boost::system::errc::no_such_file_or_directory;
+   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
 #endif
 }
 
@@ -1394,7 +1394,7 @@ bool isNotFoundError(const Error& in_error)
    return in_error == boost::system::windows_error::file_not_found ||
           in_error == boost::system::windows_error::path_not_found;
 #else
-   return in_error == boost::system::errc::no_such_file_or_directory;
+   return in_error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
 #endif
 }
 

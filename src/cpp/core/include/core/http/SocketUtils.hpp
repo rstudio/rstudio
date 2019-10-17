@@ -71,7 +71,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool reset = error == boost::asio::error::connection_reset;
    bool badFile = error == boost::asio::error::bad_descriptor;
    bool brokenPipe = error == boost::asio::error::broken_pipe;
-   bool noFile = error == boost::system::errc::no_such_file_or_directory;
+   bool noFile = error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
 
 #ifdef _WIN32
    int ec = error.getCode();
@@ -90,7 +90,7 @@ inline bool isConnectionUnavailableError(const Error& error)
    
    return (
          // for unix domain sockets
-         error == boost::system::errc::no_such_file_or_directory ||
+         error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()) ||
 
          // for tcp-ip and unix domain sockets
          error == boost::asio::error::connection_refused

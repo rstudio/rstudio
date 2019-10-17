@@ -245,7 +245,7 @@ SEXP rs_stopScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = stopScriptJob(id);
-   if (error == boost::system::errc::no_such_file_or_directory)
+   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
