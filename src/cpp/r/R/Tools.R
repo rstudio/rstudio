@@ -110,12 +110,34 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    path
 })
 
-.rs.addFunction("save", function(..., file) {
-   save(..., file = .rs.safePath(file))
+.rs.addFunction("save", function(...,
+                                 list = character(),
+                                 file = NULL,
+                                 ascii = FALSE,
+                                 version = NULL,
+                                 envir = parent.frame(),
+                                 compress = identical(ascii, TRUE))
+{
+   save(
+      ...,
+      list = list,
+      file = .rs.safePath(file),
+      ascii = ascii,
+      version = version,
+      envir = envir,
+      compress = compress
+   )
 })
 
-.rs.addFunction("load", function(file, ...) {
-   load(.rs.safePath(file), ...)
+.rs.addFunction("load", function(file,
+                                 envir = parent.frame(),
+                                 verbose = FALSE)
+{
+   load(
+      file = .rs.safePath(file),
+      envir = envir,
+      verbose = FALSE
+   )
 })
 
 .rs.addFunction("evalInGlobalEnv", function(code)
