@@ -2419,7 +2419,7 @@ Error terminateChildProcesses(pid_t pid,
 
 bool isUserNotFoundError(const Error& error)
 {
-   return error == boost::system::errc::permission_denied;
+   return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
 Error userBelongsToGroup(const User& user,
