@@ -118,6 +118,14 @@ public class FindOutputPane extends WorkbenchPane
       useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
 
+
+      stopReplace_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Stop replace",
+            commands_.interruptR().getImageResource());
+      stopReplace_.setVisible(false);
+      replaceToolbar_.addRightWidget(stopReplace_);
+
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
       replaceToolbar_.addRightWidget(replaceAllButton_);
 
@@ -127,6 +135,7 @@ public class FindOutputPane extends WorkbenchPane
          {
             if (regexCheckbox_.getValue())
             {
+               //PreviewReplaceEvent.fire(this);
             }
             else
             {
@@ -398,6 +407,18 @@ public class FindOutputPane extends WorkbenchPane
       return useGitIgnore_.getValue();
    }
 
+   @Override
+   public HasClickHandlers getStopReplaceButton()
+   {
+      return stopReplace_;
+   }
+
+   @Override
+   public void setStopReplaceButtonVisible(boolean visible)
+   {
+      stopReplace_.setVisible(visible);
+   }
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
@@ -419,6 +440,7 @@ public class FindOutputPane extends WorkbenchPane
    private Label useGitIgnoreLabel_;
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
+   private ToolbarButton stopReplace_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

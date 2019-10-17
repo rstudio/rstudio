@@ -78,6 +78,9 @@ public class FindOutputPresenter extends BasePresenter
       String getReplaceText();
       boolean isReplaceRegex();
       boolean useGitIgnore();
+
+      HasClickHandlers getStopReplaceButton();
+      void setStopReplaceButtonVisible(boolean visible);
    }
 
    @Inject
@@ -132,6 +135,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            view_.setStopReplaceButtonVisible(true);
             FindInFilesState state = session.getSessionInfo().getFindInFilesState();
             server_.completeReplace(state.getInput(),
                                     view_.getReplaceText(),
@@ -140,6 +144,30 @@ public class FindOutputPresenter extends BasePresenter
                                     new VoidServerRequestCallback());
          }
       });
+
+      view_.getStopReplaceButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.stopReplace(new VoidServerRequestCallback());
+         }
+      });
+
+      /*
+      view_.addPreviewReplaceHandler(new PreviewReplaceEventHandler<CodeNavigationTarget>()
+      {
+         @Override
+         public void onPreviewReplace(PreviewReplaceEvent<CodeNavigationTarget> event)
+         {
+            server_.previewReplace(session.getSessionInfo().getFindInFilesState().getInput(),
+                                   view_.getReplaceText(),
+                                   view_.isReplaceRegex(),
+                                   vview_.useGitIngore(),
+                                   new VoidServerRequestCallback());
+         }
+      });
+      */
 
       events_.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
       {
