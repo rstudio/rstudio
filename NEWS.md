@@ -15,6 +15,12 @@
 * Customizable dictionaries and word ignore lists preloaded with common R terms
 * Inline correction suggestions
 
+### Auto Save
+
+* Changes automatically (and optionally) saved to disk after a few seconds or when editor loses focus (#5263)
+* Option to disable real-time backup of unsaved changes to avoid conflicts with Google Drive, Dropbox, etc. (#3837)
+* Option to adjust idle interval for backup or saving changes
+
 ### Preferences and Configuration
 
 * All user preferences and settings can now be set using a plain JSON file
@@ -62,6 +68,7 @@
 * Fix plot history when plot() called immediately after dev.off() (#3117)
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
+* Fixed an issue where help tooltips could become corrupt when using prettycode. (#5561)
 
 ### RStudio Professional
 

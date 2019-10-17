@@ -358,6 +358,8 @@ public class AceEditorWidget extends Composite
          unmapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
          unmapForEditImpl("<C-v>", "c-v");
+      else if (type == EditEvent.TYPE_PASTE_WITH_INDENT)
+         unmapForEditImpl("<C-S-v>", "c-s-v");
    }
    
    private final void remapForEdit(int type)
@@ -368,6 +370,8 @@ public class AceEditorWidget extends Composite
          remapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
          remapForEditImpl("<C-v>", "c-v");
+      else if (type == EditEvent.TYPE_PASTE_WITH_INDENT)
+         remapForEditImpl("<C-S-v>", "c-s-v");
    }
    
    private static final native void unmapForEditImpl(String vimKeys, String emacsKeys)

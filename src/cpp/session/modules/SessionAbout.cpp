@@ -41,9 +41,17 @@ Error productInfo(const json::JsonRpcRequest& request,
    result["commit"] = RSTUDIO_GIT_COMMIT;
    result["build"] = RSTUDIO_BUILD_ID;
    result["release_name"] = RSTUDIO_RELEASE_NAME;
-   result["notice"] = module_context::resourceFileAsString("NOTICE");
    result["date"] = RSTUDIO_BUILD_DATE;
    result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error productNotice(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+   result["notice"] = module_context::resourceFileAsString("NOTICE");
    pResponse->setResult(result);
    return Success();
 }
@@ -58,6 +66,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_product_info", productInfo))
+      (bind(registerRpcMethod, "get_product_notice", productNotice))
    ;
    return initBlock.execute();
 }

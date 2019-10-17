@@ -103,7 +103,8 @@ public abstract class ModalDialogBase extends DialogBox
          setWidget(mainPanel_);
       }
 
-      addDomHandler(event -> {
+      addDomHandler(event ->
+      {
          // Is this too aggressive? Alternatively we could only filter out
          // keycodes that are known to be problematic (pgup/pgdown)
          event.stopPropagation();
@@ -189,7 +190,8 @@ public abstract class ModalDialogBase extends DialogBox
          originallyActiveElement_.blur();
 
       // position the dialog
-      positionAndShowDialog(() -> {
+      positionAndShowDialog(() ->
+      {
          // defer shown notification to allow all elements to render
          // before attempting to interact w/ them programmatically (e.g. setFocus)
          Timers.singleShot(100, () -> onDialogShown());
@@ -310,7 +312,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected ThemedButton createCancelButton(final Operation cancelOperation)
    {
-      return new ThemedButton("Cancel", event -> {
+      return new ThemedButton("Cancel", clickEvent ->
+      {
          if (cancelOperation != null)
             cancelOperation.execute();
          closeDialog();
@@ -528,7 +531,7 @@ public abstract class ModalDialogBase extends DialogBox
                break;
             onEscapeKeyDown(event);
             break;
-            
+
          case KeyCodes.KEY_TAB:
             if (nativeEvent.getShiftKey() && DomUtils.getActiveElement().hasClassName(firstFocusClass))
             {
@@ -739,7 +742,8 @@ public abstract class ModalDialogBase extends DialogBox
     */
    public void deferRefreshFocusableElements()
    {
-      Scheduler.get().scheduleDeferred(() -> {
+      Scheduler.get().scheduleDeferred(() ->
+      {
          refreshFocusableElements();
          focusInitialControl();
       });

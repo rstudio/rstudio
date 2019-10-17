@@ -21,6 +21,7 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
+#include <core/Macros.hpp>
 #include <core/text/TemplateFilter.hpp>
 
 #include "DesktopOptions.hpp"
@@ -522,13 +523,15 @@ void MainWindow::onLoadFinished(bool ok)
    if (ok)
       return;
 
+   RS_CALL_ONCE();
+   
    std::map<std::string,std::string> vars;
    vars["url"] = webView()->url().url().toStdString();
    std::ostringstream oss;
    Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
                                       vars, oss);
    if (error)
-       LOG_ERROR(error);
+      LOG_ERROR(error);
    else
       loadHtml(QString::fromStdString(oss.str()));
 }

@@ -284,8 +284,14 @@ public abstract class CompletionManagerBase
       if (completionCache_.satisfyRequest(line, context_))
          return true;
       
-      getCompletions(line, context_);
-      return true;
+      boolean canComplete = getCompletions(line, context_);
+      
+      // if tab was used to trigger the completion, but no completions
+      // are available in that context, then insert a literal tab
+      if (!canComplete && isTabTriggered)
+         docDisplay_.insertCode("\t");
+      
+      return canComplete;
    }
    
    public Invalidation.Token getInvalidationToken()
@@ -315,7 +321,7 @@ public abstract class CompletionManagerBase
    
    public abstract void goToHelp();
    public abstract void goToDefinition();
-   public abstract void getCompletions(String line, CompletionRequestContext context);
+   public abstract boolean getCompletions(String line, CompletionRequestContext context);
    
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
@@ -711,6 +717,10 @@ public abstract class CompletionManagerBase
    
    private boolean onTab()
    {
+      // Don't auto complete if tab auto completion was disabled
+      if (!userPrefs_.tabCompletion().getValue())
+         return false;
+
       // if the line is blank, don't request completions unless
       // the user has explicitly opted in
       String line = docDisplay_.getCurrentLineUpToCursor();

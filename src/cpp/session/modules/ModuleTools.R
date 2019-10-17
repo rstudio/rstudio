@@ -40,12 +40,12 @@
    .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("getSignature", function(obj)
+.rs.addFunction("getSignature", function(object)
 {
-   sig = capture.output(print(args(obj)))
-   sig = sig[1:length(sig)-1]
-   sig = gsub('^\\s+', '', sig)
-   paste(sig, collapse='')
+   signature <- base::format.default(base::args(object))
+   length(signature) <- length(signature) - 1
+   trimmed <- gsub("^\\s+", "", signature)
+   paste(trimmed, collapse = "")
 })
 
 # Wrap a return value in this to give a hint to the

@@ -168,6 +168,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="cutDummy"/>
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
+         <cmd refid="pasteWithIndentDummy"/>
          <separator/>
          <menu label="_Folding">
             <cmd refid="fold"/>
@@ -572,6 +573,10 @@ well as menu structures (for main menu and popup menus).
       <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
       <shortcutgroup name="Source Editor">
+         <shortcut refid="cutDummy" value="Cmd+X" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="copyDummy" value="Cmd+C" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="pasteDummy" value="Cmd+V" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="pasteWithIndentDummy" value="Cmd+Shift+V" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
          <shortcut refid="insertSection" value="Ctrl+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -794,7 +799,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
          <shortcut value="F2" title="Go To Function / File"/>
-         <shortcut value="Tab" title="Complete Code" />
+         <shortcut value="Tab|Ctrl+Space" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="restartR" value="Meta+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="restartR" value="Cmd+Shift+F10"/>
@@ -3087,6 +3092,10 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="pasteDummy"
         menuLabel="_Paste"
+        rebindable="false"/>
+        
+   <cmd id="pasteWithIndentDummy"
+        menuLabel="Paste with Indent"
         rebindable="false"/>
         
    <cmd id="yankBeforeCursor"

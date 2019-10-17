@@ -1,5 +1,5 @@
 /*
- * ProductInfo.java
+ * ProductNotice.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -18,14 +18,9 @@ import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsPackage;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class ProductInfo
+public class ProductNotice
 {
-   protected ProductInfo() {}
-   
-   public String version;
-   public String commit;
-   public String build;
-   public String release_name;
-   public String date;
-   public String copyright_year;
+   protected ProductNotice() {}
+
+   public String notice;
 }

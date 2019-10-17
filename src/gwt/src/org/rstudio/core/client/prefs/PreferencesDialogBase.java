@@ -18,29 +18,20 @@ package org.rstudio.core.client.prefs;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.projects.Projects;
-import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 
 public abstract class PreferencesDialogBase<T> extends ModalDialogBase
@@ -59,30 +50,17 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       
       sectionChooser_ = new SectionChooser(caption);
       
-      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
-         public void onClick(ClickEvent event) 
-         {
-            attemptSaveChanges(new Operation() {
-               @Override
-               public void execute()
-               {
-                  closeDialog();
-               }
-            });
-         }
-      });
+      ThemedButton okButton = new ThemedButton(
+            "OK",
+            clickEvent -> attemptSaveChanges(() -> closeDialog()));
       addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
       
       if (showApplyButton)
       {
-         addButton(new ThemedButton("Apply", new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               attemptSaveChanges();
-            }
-         }), ElementIds.DIALOG_APPLY_BUTTON);
+         addButton(new ThemedButton("Apply",
+                                    clickEvent -> attemptSaveChanges()),
+                                    ElementIds.DIALOG_APPLY_BUTTON);
       }
       
       progressIndicator_ = addProgressIndicator(false);
@@ -93,7 +71,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
       addStyleName(res.styles().preferencesDialog());
 
-       
       for (final PreferencesDialogPaneBase<T> pane : panes_)
       {
          Id sectionTabId = sectionChooser_.addSection(pane.getIcon(), pane.getName());
@@ -104,32 +81,24 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          pane.setProgressIndicator(progressIndicator_);
          container_.add(pane);
          setPaneVisibility(pane, false);
-         pane.addEnsureVisibleHandler(new EnsureVisibleHandler()
-         {
-            public void onEnsureVisible(EnsureVisibleEvent event)
-            {
-               sectionChooser_.select(container_.getWidgetIndex(pane));
-            }
-         });
+         pane.addEnsureVisibleHandler(
+               ensureVisibleEvent -> sectionChooser_.select(container_.getWidgetIndex(pane)));
       }
 
       panel_.addWest(sectionChooser_, sectionChooser_.getDesiredWidth());
       panel_.add(container_);
 
-      sectionChooser_.addSelectionHandler(new SelectionHandler<Integer>()
+      sectionChooser_.addSelectionHandler(selectionEvent ->
       {
-         public void onSelection(SelectionEvent<Integer> e)
-         {
-            Integer index = e.getSelectedItem();
+         Integer index = selectionEvent.getSelectedItem();
 
-            if (currentIndex_ != null)
-               setPaneVisibility(panes_[currentIndex_], false);
+         if (currentIndex_ != null)
+            setPaneVisibility(panes_[currentIndex_], false);
 
-            currentIndex_ = index;
+         currentIndex_ = index;
 
-            if (currentIndex_ != null)
-               setPaneVisibility(panes_[currentIndex_], true);
-         }
+         if (currentIndex_ != null)
+            setPaneVisibility(panes_[currentIndex_], true);
       });
 
       sectionChooser_.select(0);
@@ -236,14 +205,11 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
    void forceClosed(final Command onClosed)
    {
-      attemptSaveChanges(new Operation() {
-         @Override
-         public void execute()
-         {
-            closeDialog();
-            onClosed.execute();
-         }
-      });      
+      attemptSaveChanges(() ->
+      {
+         closeDialog();
+         onClosed.execute();
+      });
    }
    
    private boolean validate()

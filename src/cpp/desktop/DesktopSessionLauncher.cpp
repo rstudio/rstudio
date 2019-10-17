@@ -19,6 +19,7 @@
 
 #include <boost/bind.hpp>
 
+#include <core/Macros.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
@@ -267,6 +268,8 @@ Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
 
 void SessionLauncher::showLaunchErrorPage()
 {
+   RS_CALL_ONCE();
+   
    // String mapping of template codes to diagnostic information
    std::map<std::string,std::string> vars;
 

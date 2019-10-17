@@ -54,9 +54,12 @@ import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -74,6 +77,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -191,25 +195,29 @@ public class AceEditor implements DocDisplay,
    {
       public boolean shouldComplete(NativeEvent event)
       {
-         // Never complete if there's an active selection
+         // Never complete if there's an active selection.
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
 
-         // Don't consider Tab to be a completion if we're at the start of a
-         // line (e.g. only zero or more whitespace characters between the
-         // beginning of the line and the cursor)
+         // If the user explicitly requested an auto-complete by pressing 'ctrl-space' instead of 'tab', always attempt auto-complete.
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
 
-         // Short-circuit if the user has explicitly opted in
+         // Tab was pressed. Don't attempt auto-complete if the user opted out of tab completions.
+         if (!userPrefs_.tabCompletion().getValue())
+            return false;
+
+         // If the user opted in to multi-line tab completion, there is no case where we don't attempt auto-complete.
          if (userPrefs_.tabMultilineCompletion().getValue())
             return true;
 
+         // Otherwise, don't complete if we're at the start of the line...
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
 
+         // ... or if there is nothing but whitespace between the start of the line and the cursor.
          String line = getSession().getLine(range.getStart().getRow());
          return line.substring(0, col).trim().length() != 0;
 
@@ -336,6 +344,25 @@ public class AceEditor implements DocDisplay,
       });
       
       widget_.addFoldChangeHandler(event -> AceEditor.this.fireEvent(new FoldChangeEvent()));
+      
+      events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
+      {
+         @Override
+         public void onEdit(EditEvent event)
+         {
+            if (event.isBeforeEdit())
+            {
+               activeEditEventType_ = event.getType();
+            }
+            else
+            {
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  activeEditEventType_ = EditEvent.TYPE_NONE;
+               });
+            }
+         }
+      });
 
       addPasteHandler(event -> {
          if (completionManager_ != null)
@@ -345,7 +372,8 @@ public class AceEditor implements DocDisplay,
 
          Scheduler.get().scheduleDeferred(() -> {
             Range range = Range.fromPoints(start, getSelectionEnd());
-            indentPastedRange(range);
+            if (shouldIndentOnPaste())
+               indentPastedRange(range);
          });
       });
 
@@ -603,16 +631,27 @@ public class AceEditor implements DocDisplay,
       else
          insertCode(" %>% ", false);
    }
+   
+   private boolean shouldIndentOnPaste()
+   {
+      if (fileType_ == null || !fileType_.canAutoIndent())
+         return false;
+      
+      // if the user has requested reindent on paste, then we reindent
+      boolean indentPref = RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue();
+      if (indentPref)
+         return true;
+      
+      // if the user has explicitly executed a paste with indent command, we reindent
+      if (activeEditEventType_ == EditEvent.TYPE_PASTE_WITH_INDENT)
+         return true;
+      
+      // finally, infer based on whether shift key is down
+      return keyboard_.isShiftKeyDown();
+   }
 
    private void indentPastedRange(Range range)
    {
-      if (fileType_ == null ||
-          !fileType_.canAutoIndent() ||
-          !RStudioGinjector.INSTANCE.getUserPrefs().reindentOnPaste().getValue())
-      {
-         return;
-      }
-
       String firstLinePrefix = getSession().getTextRange(
             Range.fromPoints(Position.create(range.getStart().getRow(), 0),
                              range.getStart()));
@@ -654,12 +693,14 @@ public class AceEditor implements DocDisplay,
    void initialize(CodeToolsServerOperations server,
                    UserPrefs uiPrefs,
                    CollabEditor collab,
+                   KeyboardTracker keyboard,
                    Commands commands,
                    EventBus events)
    {
       server_ = server;
       userPrefs_ = uiPrefs;
       collab_ = collab;
+      keyboard_ = keyboard;
       commands_ = commands;
       events_ = events;
    }
@@ -2228,10 +2269,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addAttachHandler(handler);
    }
-
+   
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
    {
       return widget_.addFocusHandler(handler);
+   }
+   
+   public HandlerRegistration addEditorBlurHandler(BlurHandler handler)
+   {
+      return widget_.addBlurHandler(handler);
    }
 
    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
@@ -2918,10 +2964,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addUndoRedoHandler(handler);
    }
-
+   
    public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
    {
       return widget_.addPasteHandler(handler);
+   }
+   
+   public HandlerRegistration addEditHandler(EditEvent.Handler handler)
+   {
+      return widget_.addHandler(handler, EditEvent.TYPE);
    }
 
    public HandlerRegistration addAceClickHandler(Handler handler)
@@ -4061,6 +4112,7 @@ public class AceEditor implements DocDisplay,
    private ScopeTreeManager scopes_;
    private CodeToolsServerOperations server_;
    private UserPrefs userPrefs_;
+   private KeyboardTracker keyboard_;
    private CollabEditor collab_;
    private Commands commands_;
    private EventBus events_;
@@ -4127,6 +4179,8 @@ public class AceEditor implements DocDisplay,
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
    private String yankedText_ = null;
+   
+   private int activeEditEventType_ = EditEvent.TYPE_NONE;
    
    private static AceEditor s_lastFocusedEditor = null;
    
