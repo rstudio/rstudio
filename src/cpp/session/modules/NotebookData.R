@@ -86,15 +86,13 @@
     }
 
     x <- as.data.frame(head(x, max.print))
-
-    save(
-      x,
-      options,
-      file = output)
-
-    .Call("rs_recordData", output, list(classes = className,
-                                        nrow = nRow, 
-                                        ncol = nCol))
+    .rs.save(x, options, file = output)
+    
+    data <- list(classes = className,
+                 nrow = nRow, 
+                 ncol = nCol)
+    
+    .Call("rs_recordData", output, data, PACKAGE = "(embedding)")
     invisible(original)
   }
 
@@ -236,7 +234,7 @@
   }
 
   e <- new.env(parent = emptyenv())
-  load(file = path, envir = e)
+  .rs.load(file = path, envir = e)
   
   # this works around a strange bug in R 3.5.1 on Windows
   # where output can be mis-encoded after a save / load
@@ -436,10 +434,7 @@
   }
   else if(!is.null(data)) {
     x <- data
-    save(
-      x, 
-      file = outputFile
-    )
+    .rs.save(x,  file = outputFile)
   }
 })
 

@@ -83,9 +83,44 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    exists(fullName, envir = .rs.Env)
 })
 
-.rs.addFunction( "evalInGlobalEnv", function(code)
+.rs.addFunction("safePath", function(path)
 {
-   eval(parse(text=code), envir=globalenv())
+   # on Windows, use short path names when possible
+   # as these are better handled by most R APIs
+   if (Sys.info()[["sysname"]] == "Windows") {
+      
+      # if the file already exists, we can directly
+      # try and call shortPathName()
+      if (file.exists(path))
+         return(utils::shortPathName(path))
+
+      # otherwise, try to get short path components
+      # up to the parent directory
+      short <- file.path(
+         utils::shortPathName(dirname(path)),
+         basename(path),
+         fsep = "\\"
+      )
+      
+      return(short)
+      
+   }
+   
+   # nothing to do on other OSes
+   path
+})
+
+.rs.addFunction("save", function(..., file) {
+   save(..., file = .rs.safePath(file))
+})
+
+.rs.addFunction("load", function(file, ...) {
+   load(.rs.safePath(file), ...)
+})
+
+.rs.addFunction("evalInGlobalEnv", function(code)
+{
+   eval(parse(text = code), envir = globalenv())
 })
 
 # attempts to restore the global environment from a file
@@ -93,7 +128,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 # the error message
 .rs.addFunction("restoreGlobalEnvFromFile", function(path)
 {
-   status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
+   status <- try(.rs.load(path, envir = .GlobalEnv), silent = TRUE)
    if (!inherits(status, "try-error"))
       return("")
    
@@ -117,28 +152,28 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 # save current state of options() to file
 .rs.addFunction( "saveOptions", function(filename)
 {
-   opt = options();
-   suppressWarnings(save(opt, file=filename))
+   opt = options()
+   suppressWarnings(.rs.save(opt, file = filename))
 })
 
 # restore options() from file
 .rs.addFunction( "restoreOptions", function(filename)
 {
-   load(filename)
+   .rs.load(filename)
    options(opt)
 })
 
 # save current state of .libPaths() to file
 .rs.addFunction( "saveLibPaths", function(filename)
 {
-  libPaths = .libPaths();
-  save(libPaths, file=filename)
+  libPaths = .libPaths()
+  .rs.save(libPaths, file = filename)
 })
 
 # restore .libPaths() from file
 .rs.addFunction( "restoreLibPaths", function(filename)
 {
-  load(filename)
+  .rs.load(filename)
   .libPaths(libPaths)
 })
 
@@ -189,9 +224,11 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    # suppress warnings emitted here, as they are not actionable
    # by the user (and seem to be harmless)
    suppressWarnings(
-      save(list = ls(envir = env, all.names = TRUE),
-           file = filename,
-           envir = env)
+      .rs.save(
+         list = ls(envir = env, all.names = TRUE),
+         file = filename,
+         envir = env
+      )
    )
    
    invisible (NULL)
@@ -209,7 +246,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
       stop(gettextf("file '%s' not found", filename), domain = NA)
    
    .Internal(attach(NULL, pos, name))
-   load(filename, envir = as.environment(pos)) 
+   .rs.load(filename, envir = as.environment(pos)) 
    
    invisible (NULL)
 })
@@ -257,7 +294,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    attr(plot, "version") <- as.character(getRversion())
    class(plot) <- "recordedplot"
    
-   save(plot, file=filename)
+   .rs.save(plot, file = filename)
 })
 
 .rs.addFunction("GEplayDisplayList", function()
@@ -280,7 +317,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 .rs.addFunction( "saveGraphics", function(filename)
 {
    plot = grDevices::recordPlot()
-   save(plot, file=filename)
+   .rs.save(plot, file = filename)
 })
 
 # restore an object from a file
@@ -288,7 +325,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 {
    # load the 'plot' object
    envir <- new.env(parent = emptyenv())
-   load(filename, envir = envir)
+   .rs.load(filename, envir = envir)
    plot <- envir$plot
    
    # restore native symbols

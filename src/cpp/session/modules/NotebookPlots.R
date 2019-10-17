@@ -61,7 +61,7 @@
 
 .rs.addFunction("saveNotebookGraphics", function(plot, filename)
 {
-   save(plot, file = filename)
+  .rs.save(plot, file = filename)
 })
 
 .rs.addFunction("setNotebookMargins", function() {

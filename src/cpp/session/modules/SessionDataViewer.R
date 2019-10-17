@@ -495,7 +495,7 @@
   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
   if (file.exists(cacheFile))
   {
-    status <- try(load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
+    status <- try(.rs.load(cacheFile, envir = .rs.CachedDataEnv), silent = TRUE)
     if (inherits(status, "try-error"))
        return(NULL)
      
@@ -721,9 +721,11 @@
 
   # save each active cache file from the cache environment
   lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
-    save(list = cacheKey, 
-         file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
-         envir = .rs.CachedDataEnv)
+    .rs.save(
+      list = cacheKey,
+      file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
+      envir = .rs.CachedDataEnv
+    )
   })
 
   # clean the cache environment
