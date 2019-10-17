@@ -292,7 +292,7 @@ inline std::string join(Iterator begin,
                         const std::string& delim)
 {
    auto callback = [](const std::string& string) { return string; };
-   return join(begin, end, delim, callback);
+   return join(begin, end, delim, std::move(callback));
 }
 
 } // namespace algorithm
