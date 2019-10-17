@@ -83,7 +83,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    exists(fullName, envir = .rs.Env)
 })
 
-.rs.addFunction("safePath", function(path)
+.rs.addFunction("safeFilePath", function(path)
 {
    # on Windows, use short path names when possible
    # as these are better handled by most R APIs
@@ -91,18 +91,12 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
       
       # if the file already exists, we can directly
       # try and call shortPathName()
-      if (file.exists(path))
-         return(utils::shortPathName(path))
-
-      # otherwise, try to get short path components
-      # up to the parent directory
-      short <- file.path(
-         utils::shortPathName(dirname(path)),
-         basename(path),
-         fsep = "\\"
-      )
+      if (!file.exists(path)) {
+         dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+         file.create(path, showWarnings = FALSE)
+      }
       
-      return(short)
+      return(utils::shortPathName(path))
       
    }
    
@@ -121,7 +115,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
    save(
       ...,
       list = list,
-      file = .rs.safePath(file),
+      file = .rs.safeFilePath(file),
       ascii = ascii,
       version = version,
       envir = envir,
@@ -134,7 +128,7 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
                                  verbose = FALSE)
 {
    load(
-      file = .rs.safePath(file),
+      file = .rs.safeFilePath(file),
       envir = envir,
       verbose = FALSE
    )
