@@ -23,7 +23,7 @@
 
 #include <core/collection/Tree.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/FileMonitor.hpp>
 
 namespace rstudio {

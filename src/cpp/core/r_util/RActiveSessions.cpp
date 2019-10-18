@@ -41,7 +41,7 @@ namespace {
 void ActiveSession::writeProperty(const std::string& name,
                                  const std::string& value) const
 {
-   FilePath propertyFile = propertiesPath_.childPath(name);
+   FilePath propertyFile = propertiesPath_.completeChildPath(name);
    Error error = core::writeStringToFile(propertyFile, value);
    if (error)
       LOG_ERROR(error);
@@ -50,7 +50,7 @@ void ActiveSession::writeProperty(const std::string& name,
 std::string ActiveSession::readProperty(const std::string& name) const
 {
    using namespace rstudio::core;
-   FilePath readPath = propertiesPath_.childPath(name);
+   FilePath readPath = propertiesPath_.completeChildPath(name);
    if (readPath.exists())
    {
       std::string value;
@@ -79,7 +79,7 @@ Error ActiveSessions::create(const std::string& project,
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
-      dir = storagePath_.childPath(kSessionDirPrefix + candidateId);
+      dir = storagePath_.completeChildPath(kSessionDirPrefix + candidateId);
       if (!dir.exists())
          id = candidateId;
    }
@@ -142,7 +142,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
 
    // enumerate children and check for sessions
    std::vector<FilePath> children;
-   Error error = storagePath_.children(&children);
+   Error error = storagePath_.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -151,9 +151,9 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
    std::string prefix = kSessionDirPrefix;
    for (const FilePath& child : children)
    {
-      if (boost::algorithm::starts_with(child.filename(), prefix))
+      if (boost::algorithm::starts_with(child.getFilename(), prefix))
       {
-         std::string id = child.filename().substr(prefix.length());
+         std::string id = child.getFilename().substr(prefix.length());
          boost::shared_ptr<ActiveSession> pSession = get(id);
          if (!pSession->empty())
          {
@@ -191,7 +191,7 @@ size_t ActiveSessions::count(const FilePath& userHomePath,
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
 {
-   FilePath scratchPath = storagePath_.childPath(kSessionDirPrefix + id);
+   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
                                                                 scratchPath));
@@ -217,7 +217,7 @@ GlobalActiveSessions::list() const
       return sessions; // no active sessions exist
 
    std::vector<FilePath> sessionFiles;
-   Error error = activeSessionsDir.children(&sessionFiles);
+   Error error = activeSessionsDir.getChildren(sessionFiles);
    if (error)
    {
       LOG_ERROR(error);
@@ -235,7 +235,7 @@ GlobalActiveSessions::list() const
 boost::shared_ptr<GlobalActiveSession>
 GlobalActiveSessions::get(const std::string& id) const
 {
-   FilePath sessionFile = rootPath_.childPath(id);
+   FilePath sessionFile = rootPath_.completeChildPath(id);
    if (!sessionFile.exists())
       return boost::shared_ptr<GlobalActiveSession>();
 

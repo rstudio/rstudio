@@ -18,7 +18,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/Process.hpp>
 
 namespace rstudio {

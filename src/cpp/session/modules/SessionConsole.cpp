@@ -19,9 +19,9 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/OutputCapture.hpp>
 
@@ -98,7 +98,7 @@ FilePath s_lastWorkingDirectory;
 void detectWorkingDirectoryChanged()
 {
    FilePath currentWorkingDirectory = module_context::safeCurrentPath();
-   if ( s_lastWorkingDirectory.empty() ||
+   if ( s_lastWorkingDirectory.isEmpty() ||
         (currentWorkingDirectory != s_lastWorkingDirectory) )
    {
       // fire event

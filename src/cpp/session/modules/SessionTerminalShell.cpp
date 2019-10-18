@@ -246,10 +246,10 @@ bool AvailableTerminalShells::getInfo(TerminalShell::ShellType type,
 core::FilePath getGitBashShell()
 {
    core::FilePath gitExePath = modules::git::detectedGitExePath();
-   if (!gitExePath.empty())
+   if (!gitExePath.isEmpty())
    {
       core::FilePath gitBashPath =
-            gitExePath.parent().parent().complete("usr/bin/bash.exe");
+            gitExePath.getParent().getParent().completePath("usr/bin/bash.exe");
       if (gitBashPath.exists())
          return gitBashPath;
       else

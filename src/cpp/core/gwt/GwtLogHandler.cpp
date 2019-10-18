@@ -20,7 +20,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -62,7 +62,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
       StackElement element;
-      Error error = json::readObject(elementJson.get_obj(),
+      Error error = json::readObject(elementJson.getObject(),
                                      "file_name", &element.fileName,
                                      "class_name", &element.className,
                                      "method_name", &element.methodName,
@@ -166,13 +166,13 @@ void handleLogExceptionRequest(const std::string& username,
    std::string logEntry = boost::str(
                         fmt % log::cleanDelims("rsession-" + username)
                             % log::cleanDelims(ex.message)
-                            % log::DELIM
+                            % log::s_delim
                             % log::cleanDelims(ostr.str())
                             % log::cleanDelims(jsonRpcRequest.clientId)
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(core::system::kLogLevelError, logEntry);
+   core::system::log(log::LogLevel::ERR, logEntry);
 
 
    // set void result
@@ -196,27 +196,27 @@ void handleLogMessageRequest(const std::string& username,
    }
    
    // convert level to appropriate enum and str
-   using namespace rstudio::core::system;
-   LogLevel logLevel;
+   using namespace rstudio::core;
+   log::LogLevel logLevel;
    std::string logLevelStr;
    switch(level)
    {
       case 0:
-         logLevel = kLogLevelError; 
+         logLevel = log::LogLevel::ERR;
          logLevelStr = "ERROR";
          break;
       case 1:
-         logLevel = kLogLevelWarning;
+         logLevel = log::LogLevel::WARN;
          logLevelStr = "WARNING";
          break;
       case 2:
-         logLevel = kLogLevelInfo;
+         logLevel = log::LogLevel::INFO;
          logLevelStr = "INFO";
          break;
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " + 
                              safe_convert::numberToString(level));
-         logLevel = kLogLevelError; 
+         logLevel = log::LogLevel::ERR;
          logLevelStr = "ERROR";
          break;
    }

@@ -21,7 +21,7 @@
 #include <boost/bind.hpp>
 
 #include <core/Scope.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/BoostThread.hpp>
 

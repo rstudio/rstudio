@@ -18,9 +18,8 @@
 #include <signal.h>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
 #include <core/FileLock.hpp>
-#include <core/LogWriter.hpp>
+#include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
@@ -54,6 +53,8 @@
 #include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
 #include <server/ServerPaths.hpp>
+
+#include <shared_core/Error.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
@@ -170,7 +171,7 @@ void pageNotFoundHandler(const http::Request& request,
    std::map<std::string, std::string> vars;
    vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
 
-   FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).childPath("404.htm");
+   FilePath notFoundTemplate = FilePath(options().wwwLocalPath()).completeChildPath("404.htm");
    core::Error err = core::text::renderTemplate(notFoundTemplate, vars, os);
 
    if (err)
@@ -249,7 +250,7 @@ void httpServerAddHandlers()
 
    // establish progress handler
    FilePath wwwPath(server::options().wwwLocalPath());
-   FilePath progressPagePath = wwwPath.complete("progress.htm");
+   FilePath progressPagePath = wwwPath.completePath("progress.htm");
    uri_handlers::addBlocking("/progress",
                                secureHttpHandler(boost::bind(
                                core::text::handleSecureTemplateRequest,
@@ -272,7 +273,7 @@ void httpServerAddHandlers()
 
 Error initLog()
 {
-   return initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning, false);
+   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARN, false);
 }
 
 bool reloadLoggingConfiguration()
@@ -548,11 +549,11 @@ int main(int argc, char * const argv[])
       // by all users of the system, and the sticky bit must be set to ensure
       // that users do not delete each others' sockets
       struct stat st;
-      if (::stat(serverDataDir.absolutePath().c_str(), &st) == -1)
+      if (::stat(serverDataDir.getAbsolutePath().c_str(), &st) == -1)
       {
          Error error = systemError(errno,
                                    "Could not determine permissions on specified 'server-data-dir' "
-                                      "directory (" + serverDataDir.absolutePath() + ")",
+                                      "directory (" + serverDataDir.getAbsolutePath() + ")",
                                    ERROR_LOCATION);
          return core::system::exitFailure(error, ERROR_LOCATION);
       }
@@ -567,14 +568,14 @@ int main(int argc, char * const argv[])
          if (error)
          {
             LOG_ERROR_MESSAGE("Could not change permissions for specified 'server-data-dir' - "
-                                 "the directory (" + serverDataDir.absolutePath() + ") must be "
+                                 "the directory (" + serverDataDir.getAbsolutePath() + ") must be "
                                  "writeable by all users and have the sticky bit set");
             return core::system::exitFailure(error, ERROR_LOCATION);
          }
       }
 
       // export important environment variables
-      core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().absolutePath());
+      core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
 
       // initialize File Lock
       FileLock::initialize();
@@ -605,15 +606,14 @@ int main(int argc, char * const argv[])
 
       // initialize monitor (needs to happen post http server init for access
       // to the server's io service)
-      monitor::initializeMonitorClient(monitorSocketPath().absolutePath(),
+      monitor::initializeMonitorClient(monitorSocketPath().getAbsolutePath(),
                                        server::options().monitorSharedSecret(),
                                        s_pHttpServer->ioService());
 
       if (!options.verifyInstallation())
       {
          // add a monitor log writer
-         core::system::addLogWriter(
-                   monitor::client().createLogWriter(kProgramIdentity));
+         core::log::addLogDestination(monitor::client().createLogDestination(kProgramIdentity));
       }
 
       // call overlay initialize

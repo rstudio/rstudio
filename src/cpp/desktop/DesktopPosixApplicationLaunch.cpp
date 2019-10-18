@@ -204,7 +204,7 @@ void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
    }
 
    QString exePath = QString::fromUtf8(
-      desktop::options().executablePath().absolutePath().c_str());
+      desktop::options().executablePath().getAbsolutePath().c_str());
 
    // temporarily restore the library path to the one we were launched with
    std::string ldPath = core::system::getenv("LD_LIBRARY_PATH");

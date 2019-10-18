@@ -22,7 +22,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/RVersionSettings.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/CrashHandler.hpp>
 
 #include <r/session/RSession.hpp>
@@ -47,19 +47,19 @@ Error UserPrefsComputedLayer::readPrefs()
    json::Object layer;
 
    // VCS executable paths ---------------------------------------------------
-   layer[kGitExePath] = modules::git::detectedGitExePath().absolutePath();
-   layer[kSvnExePath] = modules::svn::detectedSvnExePath().absolutePath();
+   layer[kGitExePath] = modules::git::detectedGitExePath().getAbsolutePath();
+   layer[kSvnExePath] = modules::svn::detectedSvnExePath().getAbsolutePath();
 
    // System terminal path (Linux) -------------------------------------------
-   layer[kTerminalPath] = detectedTerminalPath().absolutePath();
+   layer[kTerminalPath] = detectedTerminalPath().getAbsolutePath();
 
    // Initial working directory ----------------------------------------------
    layer[kInitialWorkingDirectory] = session::options().defaultWorkingDir();
 
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
-   FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
-   layer[kRsaKeyPath] = rsaSshKeyPath.absolutePath();
+   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath("id_rsa");
+   layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
 
    // Crash reporting --------------------------------------------------------

@@ -30,7 +30,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -98,7 +98,7 @@ bool proxyLocalhostRequest(http::Request& request,
                            const LocalhostResponseHandler& responseHandler,
                            const http::ErrorHandler& errorHandler);
 
-Error runVerifyInstallationSession(core::system::user::User& user,
+Error runVerifyInstallationSession(core::system::User& user,
                                    bool* pHandled);
 
 } // namespace overlay
@@ -452,7 +452,7 @@ void handleRpcError(
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
-      json::setJsonRpcError(json::errc::Unauthorized,
+      json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                             &(ptrConnection->response()));
       ptrConnection->writeResponse();
       return;
@@ -476,7 +476,7 @@ void handleRpcError(
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse ;
-      jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
+      jsonRpcResponse.setError(Error(json::errc::InvalidSession, ERROR_LOCATION), clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
       return;
@@ -488,12 +488,12 @@ void handleRpcError(
    // distinguish between connection and other error types
    if (http::isConnectionUnavailableError(error))
    {
-      json::setJsonRpcError(json::errc::ConnectionError,
+      json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
    else
    {
-      json::setJsonRpcError(json::errc::TransmissionError,
+      json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response())) ;
    }
 
@@ -520,13 +520,13 @@ void handleEventsError(
       }
       else
       {
-         json::setJsonRpcError(json::errc::Unavailable,
+         json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                               &(ptrConnection->response()));
       }
    }
    else if (server::isInvalidSessionScopeError(error))
    {
-      json::setJsonRpcError(json::errc::Unavailable,
+      json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
    else
@@ -534,7 +534,7 @@ void handleEventsError(
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());
 
-      json::setJsonRpcError(json::errc::TransmissionError,
+      json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response())) ;
    }
 
@@ -552,12 +552,12 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    }
    else
    {
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(username, &user);
+      core::system::User user;
+      Error error = core::system::User::getUserFromIdentifier(username, user);
       if (error)
          return error;
 
-      *pUID = user.userId;
+      *pUID = user.getUserId();
       cache.set(username, *pUID);
    }
 
@@ -610,7 +610,7 @@ void proxyRequest(
    }
    else
    {
-      if (error.code() != boost::system::errc::permission_denied)
+      if (error != systemError(boost::system::errc::permission_denied, ErrorLocation()))
       {
          // if the error returned was permission_denied then no user was found
          // we consider user not found to be an acceptable error as it should
@@ -678,7 +678,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
    else
    {
-       json::setJsonRpcError(json::errc::Unauthorized,
+       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                              &(ptrConnection->response()));
        ptrConnection->writeResponse();
        return false;
@@ -720,8 +720,8 @@ Error initialize()
 Error runVerifyInstallationSession()
 {
    // get current user
-   core::system::user::User user;
-   Error error = currentUser(&user);
+   core::system::User user;
+   Error error = core::system::User::getCurrentUser(user);
    if (error)
       return error;
 
@@ -736,7 +736,7 @@ Error runVerifyInstallationSession()
       core::system::Options args;
       args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
       PidType sessionPid;
-      error = server::launchSession(r_util::SessionContext(user.username),
+      error = server::launchSession(r_util::SessionContext(user.getUsername()),
                                     args,
                                     &sessionPid);
       if (error)

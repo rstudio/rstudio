@@ -15,8 +15,8 @@
 
 #include "SessionSynctex.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -80,8 +80,8 @@ void applyForwardConcordance(const FilePath& mainFile,
                              core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
-   if (pLoc->file().extensionLowerCase() != ".rnw" && 
-       pLoc->file().extensionLowerCase() != ".rtex")
+   if (pLoc->file().getExtensionLowerCase() != ".rnw" && 
+       pLoc->file().getExtensionLowerCase() != ".rtex")
       return;
 
    // try to read concordance
@@ -325,7 +325,7 @@ Error forwardSearch(const FilePath& rootFile,
    FilePath inputFile = module_context::resolveAliasedPath(file);
 
    // determine pdf
-   FilePath pdfFile = rootFile.parent().complete(rootFile.stem() + ".pdf");
+   FilePath pdfFile = rootFile.getParent().completePath(rootFile.getStem() + ".pdf");
 
    core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))

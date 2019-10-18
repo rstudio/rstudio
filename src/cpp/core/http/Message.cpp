@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 #include <boost/asio/buffer.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {

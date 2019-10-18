@@ -14,7 +14,7 @@
  */
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <tests/TestThat.hpp>

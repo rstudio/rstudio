@@ -19,7 +19,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -33,6 +32,8 @@
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include <shared_core/Error.hpp>
 
 #define kDictionariesPath "dictionaries/"
 #define kSystemLanguages kDictionariesPath "languages-system"
@@ -79,7 +80,7 @@ json::Object dictionaryAsJson(const core::spelling::HunspellDictionary& dict)
 
 FilePath userDictionariesDir()
 {
-   return module_context::userScratchPath().childPath("dictionaries");
+   return module_context::userScratchPath().completeChildPath("dictionaries");
 }
 
 
@@ -103,7 +104,7 @@ core::spelling::HunspellDictionaryManager hunspellDictionaryManager()
  * */
 FilePath legacyAllLanguagesDir()
 {
-   return module_context::userScratchPath().childPath(kSystemLanguages);
+   return module_context::userScratchPath().completeChildPath(kSystemLanguages);
 }
 
 /*
@@ -112,17 +113,17 @@ FilePath legacyAllLanguagesDir()
  * */
 FilePath legacyCustomDictionariesDir()
 {
-   return module_context::userScratchPath().childPath(kCustomDictionaries);
+   return module_context::userScratchPath().completeChildPath(kCustomDictionaries);
 }
 
 FilePath allLanguagesDir()
 {
-   return core::system::xdg::userConfigDir().childPath(kSystemLanguages);
+   return core::system::xdg::userConfigDir().completeChildPath(kSystemLanguages);
 }
 
 FilePath customDictionariesDir()
 {
-   return core::system::xdg::userConfigDir().childPath(kCustomDictionaries);
+   return core::system::xdg::userConfigDir().completeChildPath(kCustomDictionaries);
 }
 
 // This responds to the request path of /dictionaries/<dict>/<dict>.dic
@@ -141,41 +142,41 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    }
 
    // preference order: custom -> system -> pre-installed
-   if (customDictionariesDir().complete(splat[1]).exists())
+   if (customDictionariesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(customDictionariesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(customDictionariesDir().completePath(splat[1]), request);
    }
-   else if (allLanguagesDir().complete(splat[1]).exists())
+   else if (allLanguagesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(allLanguagesDir().complete(splat[1]), request);
-   }
-   else if (core::system::xdg::systemConfigDir()
-               .complete(kCustomDictionaries).complete(splat[1]).exists())
-   {
-      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().complete(
-               kCustomDictionaries).complete(splat[1]), request);
+      pResponse->setCacheableFile(allLanguagesDir().completePath(splat[1]), request);
    }
    else if (core::system::xdg::systemConfigDir()
-               .complete(kSystemLanguages).complete(splat[1]).exists())
+               .completePath(kCustomDictionaries).completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().complete(
-               kSystemLanguages).complete(splat[1]), request);
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+               kCustomDictionaries).completePath(splat[1]), request);
+   }
+   else if (core::system::xdg::systemConfigDir()
+               .completePath(kSystemLanguages).completePath(splat[1]).exists())
+   {
+      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+               kSystemLanguages).completePath(splat[1]), request);
    }
    /*
     * \deprecated
     * Calls to old deprecated dictionary locations for RStudio 1.2 and earlier
     */
-   else if (legacyCustomDictionariesDir().complete(splat[1]).exists())
+   else if (legacyCustomDictionariesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(legacyCustomDictionariesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(legacyCustomDictionariesDir().completePath(splat[1]), request);
    }
-   else if (legacyAllLanguagesDir().complete(splat[1]).exists())
+   else if (legacyAllLanguagesDir().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(legacyAllLanguagesDir().complete(splat[1]), request);
+      pResponse->setCacheableFile(legacyAllLanguagesDir().completePath(splat[1]), request);
    }
-   else if (options().hunspellDictionariesPath().complete(splat[1]).exists())
+   else if (options().hunspellDictionariesPath().completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(options().hunspellDictionariesPath().complete(splat[1]), request);
+      pResponse->setCacheableFile(options().hunspellDictionariesPath().completePath(splat[1]), request);
    }
    else
    {
@@ -192,7 +193,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       return error;
 
    json::Array misspelledIndexes;
-   for (std::size_t i=0; i<words.size(); i++)
+   for (std::size_t i=0; i<words.getSize(); i++)
    {
       if (!json::isType<std::string>(words[i]))
       {
@@ -200,7 +201,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
          continue;
       }
 
-      std::string word = words[i].get_str();
+      std::string word = words[i].getString();
       bool isCorrect = true;
       error = s_pSpellingEngine->checkSpelling(word, &isCorrect);
       if (error)
@@ -212,7 +213,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       }
       else if (!isCorrect) 
       {
-         misspelledIndexes.push_back(gsl::narrow_cast<int>(i));
+         misspelledIndexes.push_back(json::Value(gsl::narrow_cast<int>(i)));
       }
    }
 
@@ -322,7 +323,7 @@ Error installAllDictionaries(const json::JsonRpcRequest& request,
 {
    // form system path to all languages dir
    std::string targetDir = string_utils::utf8ToSystem(
-                                    allLanguagesDir().absolutePath());
+      allLanguagesDir().getAbsolutePath());
 
    // perform the download
    r::exec::RFunction dlFunc(".rs.downloadAllDictionaries",
@@ -355,7 +356,7 @@ SEXP rs_dictionariesPath()
 {
    r::sexp::Protect protect;
    return r::sexp::create(
-            options().hunspellDictionariesPath().absolutePath(),
+      options().hunspellDictionariesPath().getAbsolutePath(),
             &protect);
 }
 
@@ -363,7 +364,7 @@ SEXP rs_userDictionariesPath()
 {
    r::sexp::Protect protect;
    return r::sexp::create(
-            userDictionariesDir().absolutePath(),
+      userDictionariesDir().getAbsolutePath(),
             &protect);
 }
 

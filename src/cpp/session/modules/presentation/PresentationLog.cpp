@@ -21,10 +21,10 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
@@ -204,12 +204,12 @@ Error ensureTargetFile(const std::string& filename,
                        FilePath* pTargetFile)
 {
    using namespace module_context;
-   FilePath presDir =  userScratchPath().childPath("presentation");
+   FilePath presDir = userScratchPath().completeChildPath("presentation");
    Error error = presDir.ensureDirectory();
    if (error)
       return error;
 
-   *pTargetFile = presDir.childPath(filename);
+   *pTargetFile = presDir.completeChildPath(filename);
    if (!pTargetFile->exists())
    {
       Error error = core::writeStringToFile(*pTargetFile, header + "\n");

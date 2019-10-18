@@ -18,9 +18,9 @@
 #include <string>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/system/System.hpp>
@@ -45,7 +45,9 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("rsinverse", core::system::kLogLevelWarning);
+      core::log::setLogLevel(log::LogLevel::WARN);
+      core::log::setProgramId("rsinverse");
+      core::system::initializeSystemLog("rsinverse", log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

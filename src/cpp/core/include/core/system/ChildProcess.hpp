@@ -18,7 +18,7 @@
 
 #include <core/system/Process.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -110,7 +110,7 @@ public:
       : ChildProcess()
    {
       init(exe, args, options);
-      if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+      if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
       {
          LOG_ERROR_MESSAGE(
                   "stdOutFile/stdErrFile options cannot be used with runProgram");

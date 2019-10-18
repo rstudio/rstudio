@@ -23,10 +23,10 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -104,8 +104,8 @@ Error groupFromId(gid_t gid, Group* pGroup)
 
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 {
-   user::User user;
-   Error error = user::userFromUsername(userName, &user);
+   User user;
+   Error error = User::getUserFromIdentifier(userName, user);
    if (error)
       return error;
 
@@ -122,7 +122,7 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 #endif
 
    boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[100]);
-   while (!getgrouplist(userName.c_str(), user.groupId, pGids.get(), &numGroups))
+   while (!getgrouplist(userName.c_str(), user.getGroupId(), pGids.get(), &numGroups))
    {
       // defensive break out in case the OS somehow returns 0 groups for the user
       if (numGroups == 0)
@@ -135,7 +135,7 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    for (int i = 0; i < numGroups; i++)
    {
       Group group;
-      error = groupFromId(*(pGids.get() + i), &group);
+      Error error = groupFromId(*(pGids.get() + i), &group);
       if (error)
          return error;
 

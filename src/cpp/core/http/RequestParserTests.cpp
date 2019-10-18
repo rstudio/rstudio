@@ -18,7 +18,7 @@
 #include <boost/make_shared.hpp>
 
 #include <core/http/RequestParser.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <tests/TestThat.hpp>

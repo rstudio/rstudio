@@ -26,9 +26,9 @@
 
 #include <core/Macros.hpp>
 #include <core/BoostThread.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileLock.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/system/System.hpp>
 

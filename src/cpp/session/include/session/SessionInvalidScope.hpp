@@ -19,7 +19,7 @@
 #ifndef SESSION_INVALID_SCOPE_HPP
 #define SESSION_INVALID_SCOPE_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #ifndef _WIN32

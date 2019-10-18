@@ -22,8 +22,8 @@
 
 #include <boost/utility.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/tex/TexLogParser.hpp>
 
 namespace rstudio {
@@ -137,7 +137,7 @@ public:
    ~FileAndLine() {}
    // COPYING: via compiler
 
-   bool empty() const { return filePath_.empty(); }
+   bool empty() const { return filePath_.isEmpty(); }
 
    const core::FilePath& filePath() const { return filePath_; }
    int line() const { return line_; }

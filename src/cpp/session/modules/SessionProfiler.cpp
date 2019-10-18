@@ -20,7 +20,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
@@ -45,8 +45,8 @@ namespace {
 
 std::string profilesCacheDir() 
 {
-   return module_context::scopedScratchPath().childPath(kProfilesCacheDir)
-      .absolutePath();
+   return module_context::scopedScratchPath().completeChildPath(kProfilesCacheDir)
+      .getAbsolutePath();
 }
 
 SEXP rs_profilesPath()
@@ -64,7 +64,7 @@ void handleProfilerResReq(const http::Request& request,
    std::string resourceName = http::util::pathAfterPrefix(request, "/" kProfilesUrlPath "/");
 
    core::FilePath profilesPath = core::FilePath(profilesCacheDir());
-   core::FilePath profileResource = profilesPath.childPath(resourceName);
+   core::FilePath profileResource = profilesPath.completeChildPath(resourceName);
 
    pResponse->setCacheableFile(profileResource, request);
 }
@@ -75,7 +75,7 @@ void handleProfilerResourceResReq(const http::Request& request,
    std::string path("profiler/");
    path.append(http::util::pathAfterPrefix(request, kProfilerResourceLocation));
 
-   core::FilePath profilerResource = options().rResourcesPath().childPath(path);
+   core::FilePath profilerResource = options().rResourcesPath().completeChildPath(path);
    pResponse->setCacheableFile(profilerResource, request);
 }
 

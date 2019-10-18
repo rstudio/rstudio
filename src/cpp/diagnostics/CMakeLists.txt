@@ -21,6 +21,7 @@ file(GLOB_RECURSE DIAGNOSTICS_HEADER_FILES "*.h*")
 # set include directories
 include_directories(
    ${CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${EXT_SOURCE_DIR}
 )

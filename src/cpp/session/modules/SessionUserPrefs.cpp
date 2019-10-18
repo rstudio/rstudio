@@ -56,7 +56,7 @@ Error setPreferences(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return userPrefs().writeLayer(PREF_LAYER_USER, val.get_obj()); 
+   return userPrefs().writeLayer(PREF_LAYER_USER, val.getObject());
 }
 
 Error setState(const json::JsonRpcRequest& request,
@@ -67,7 +67,7 @@ Error setState(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   userState().writeLayer(STATE_LAYER_USER, val.get_obj()); 
+   userState().writeLayer(STATE_LAYER_USER, val.getObject());
 
    module_context::events().onPreferencesSaved();
 
@@ -80,7 +80,7 @@ Error editPreferences(const json::JsonRpcRequest& ,
    // Invoke an editor on the user-level config file
    r::exec::RFunction editor(".rs.editor");
    editor.addParam("file",
-         core::system::xdg::userConfigDir().complete(kUserPrefsFile).absolutePath());
+         core::system::xdg::userConfigDir().completePath(kUserPrefsFile).getAbsolutePath());
    return editor.call();
 }
 
@@ -89,7 +89,7 @@ Error clearPreferences(const json::JsonRpcRequest& ,
 {
    json::Value result;
    FilePath prefsFile = 
-      core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+      core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
    if (!prefsFile.exists())
    {
       // No prefs file = no work to do
@@ -99,7 +99,7 @@ Error clearPreferences(const json::JsonRpcRequest& ,
 
    // Create a backup path for the old prefs so they can be restored
    FilePath backup;
-   Error error = FilePath::uniqueFilePath(prefsFile.parent().absolutePath(), ".json", &backup);
+   Error error = FilePath::uniqueFilePath(prefsFile.getParent().getAbsolutePath(), ".json", backup);
    if (error)
    {
       pResponse->setResult(result);
@@ -115,7 +115,7 @@ Error clearPreferences(const json::JsonRpcRequest& ,
    }
 
    // Return the backup filename to the client
-   result = backup.absolutePath();
+   result = backup.getAbsolutePath();
    pResponse->setResult(result);
    return Success();
 }
@@ -139,7 +139,7 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    Error error = r::json::jsonValueFromObject(value, &prefValue);
    if (error)
    {
-      r::exec::error("Unexpected value: " + error.summary());
+      r::exec::error("Unexpected value: " + error.getSummary());
       return false;
    }
 
@@ -148,11 +148,11 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    boost::optional<json::Value> previous = prefs.readValue(pref);
    if (previous)
    {
-      if ((*previous).type() != prefValue.type())
+      if ((*previous).getType() != prefValue.getType())
       {
          r::exec::error("Type mismatch: expected " + 
-                  json::typeAsString((*previous).type()) + "; got " +
-                  json::typeAsString(prefValue.type()));
+                  json::typeAsString((*previous).getType()) + "; got " +
+                  json::typeAsString(prefValue.getType()));
          return false;
       }
    }
@@ -161,7 +161,7 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    error = prefs.writeValue(pref, prefValue);
    if (error)
    {
-      r::exec::error("Could not save preferences: " + error.description());
+      r::exec::error("Could not save preferences: " + error.asString());
       return false;
    }
 
@@ -181,7 +181,7 @@ SEXP rs_removePref(SEXP prefName)
    Error error = userPrefs().clearValue(pref);
    if (error)
    {
-      r::exec::error("Could not save preferences: " + error.description());
+      r::exec::error("Could not save preferences: " + error.asString());
    }
 
    module_context::events().onPreferencesSaved();
@@ -265,10 +265,7 @@ SEXP rs_allPrefs()
       if (val)
       {
          sources.push_back(layer);
-
-         std::ostringstream oss;
-         json::write(*val, oss);
-         values.push_back(oss.str());
+         values.push_back(val->write());
       }
       else
       {
@@ -290,7 +287,7 @@ SEXP rs_allPrefs()
    Error error = asDataFrame.call(&frame, &protect);
    if (error)
    {
-      r::exec::error(error.description());
+      r::exec::error(error.asString());
    }
    else
    {
@@ -307,7 +304,7 @@ SEXP rs_allPrefs()
 Error migrateUserPrefs()
 {
    // Check to see whether there's a preferences file at the new location
-   FilePath prefsFile = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+   FilePath prefsFile = core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
    if (prefsFile.exists())
    {
       // We already have prefs; don't try to overwrite them
@@ -316,9 +313,9 @@ Error migrateUserPrefs()
 
    // Check to see whether there's a preferences file at the old location
    FilePath userSettings = module_context::userScratchPath()
-      .complete(kMonitoredPath)
-      .complete("user-settings")
-      .complete("user-settings");
+      .completePath(kMonitoredPath)
+      .completePath("user-settings")
+      .completePath("user-settings");
 
    if (userSettings.exists())
    {

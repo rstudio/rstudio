@@ -17,9 +17,9 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
 
@@ -45,7 +45,7 @@ namespace {
 
 FilePath contentUrlPath()
 {
-   FilePath filePath = module_context::userScratchPath().complete("content_urls");
+   FilePath filePath = module_context::userScratchPath().completePath("content_urls");
    Error error = filePath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -99,7 +99,7 @@ Error contentFileInfo(const std::string& contentUrl,
    std::string contentFile = http::util::fieldValue(fields, "file");
    if (contentFile.empty())
        return systemError(ENOENT, ERROR_LOCATION);
-   *pFilePath = contentUrlPath().complete(contentFile);
+   *pFilePath = contentUrlPath().completePath(contentFile);
 
    // return success
    return Success();
@@ -113,8 +113,8 @@ std::string provision(const std::string& title, const FilePath& filePath)
 {
    // calculate content path
    std::string contentFile = core::system::generateUuid(false) +
-                             filePath.extension();
-   FilePath contentPath = contentUrlPath().complete(contentFile);
+                             filePath.getExtension();
+   FilePath contentPath = contentUrlPath().completePath(contentFile);
 
    // copy the file
    Error error = filePath.copy(contentPath);
@@ -131,7 +131,7 @@ std::string provision(const std::string& title,
 {
    // calculate content path
    std::string contentFile = core::system::generateUuid(false) + extension;
-   FilePath contentPath = contentUrlPath().complete(contentFile);
+   FilePath contentPath = contentUrlPath().completePath(contentFile);
 
    // write the file
    Error error = writeStringToFile(contentPath, content);
@@ -189,11 +189,11 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    }
 
    // set contents
-   pResponse->setContentType(contentFilePath.mimeContentType());
+   pResponse->setContentType(contentFilePath.getMimeContentType());
    pResponse->setBody(contents);
 
    bool isUtf8 = true;
-   if (boost::algorithm::starts_with(contentFilePath.mimeContentType(), "text/"))
+   if (boost::algorithm::starts_with(contentFilePath.getMimeContentType(), "text/"))
    {
       // If the content looks like valid UTF-8, assume it is. Otherwise, assume
       // it's the system encoding.
@@ -214,7 +214,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    }
 
    // reset content-type with charset
-   pResponse->setContentType(contentFilePath.mimeContentType() +
+   pResponse->setContentType(contentFilePath.getMimeContentType() +
                              std::string("; charset=") +
                              (isUtf8 ? "UTF-8" : ::locale2charset(nullptr)));
 

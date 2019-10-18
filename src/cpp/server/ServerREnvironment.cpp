@@ -15,7 +15,7 @@
 
 #include "ServerREnvironment.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/r_util/REnvironment.hpp>

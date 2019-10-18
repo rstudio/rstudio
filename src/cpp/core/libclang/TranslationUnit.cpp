@@ -17,7 +17,7 @@
 
 #include <gsl/gsl>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/libclang/Utils.hpp>
 #include <core/libclang/LibClang.hpp>
@@ -171,7 +171,7 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed) cons
       }
    }
    ostr << "TOTAL MEMORY: " << formatBytes(totalBytes)
-        << " (" << FilePath(getSpelling()).filename() << ")" << std::endl;
+        << " (" << FilePath(getSpelling()).getFilename() << ")" << std::endl;
 
    clang().disposeCXTUResourceUsage(usage);
 }

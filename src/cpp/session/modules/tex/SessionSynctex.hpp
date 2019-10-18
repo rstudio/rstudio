@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_TEX_SYNCTEX_HPP
 #define SESSION_MODULES_TEX_SYNCTEX_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

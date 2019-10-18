@@ -17,7 +17,7 @@
 #define SESSION_JOBS_JOB_HPP
 
 #include <string>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <r/RSexp.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 

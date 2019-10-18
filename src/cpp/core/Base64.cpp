@@ -13,12 +13,17 @@
  *
  */
 
+#include <string>
+#include <atomic>
+
 #include <core/Macros.hpp>
-#include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>
+
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

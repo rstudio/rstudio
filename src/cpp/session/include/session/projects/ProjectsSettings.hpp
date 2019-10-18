@@ -72,8 +72,8 @@ public:
 
    void setLastProjectPath(const core::FilePath& lastProjectPath)
    {
-      if (!lastProjectPath.empty())
-         writeSetting(kLastProjectPath, lastProjectPath.absolutePath());
+      if (!lastProjectPath.isEmpty())
+         writeSetting(kLastProjectPath, lastProjectPath.getAbsolutePath());
       else
          writeSetting(kLastProjectPath, "");
    }
@@ -84,7 +84,7 @@ private:
                      const core::FilePath& userScratchPath)
    {
       using namespace rstudio::core;
-      FilePath settingsPath = userScratchPath.complete(kProjectsSettings);
+      FilePath settingsPath = userScratchPath.completePath(kProjectsSettings);
       Error error = settingsPath.ensureDirectory();
       if (error)
          LOG_ERROR(error);

@@ -24,7 +24,7 @@
 #include <boost/regex.hpp>
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
@@ -321,7 +321,7 @@ public:
       if (error)
       {
          // log error if it wasn't merly a null return value
-         if (error.code() != r::errc::UnexpectedDataTypeError)
+         if (error != r::errc::UnexpectedDataTypeError)
             LOG_ERROR(error);
          return;
       }
@@ -403,7 +403,7 @@ Error availablePackages(const core::json::JsonRpcRequest&,
    // return as json
    json::Array jsonResults;
    for (size_t i = 0; i < availablePackages.size(); i++)
-      jsonResults.push_back(availablePackages.at(i));
+      jsonResults.push_back(json::Value(availablePackages.at(i)));
    pResponse->setResult(jsonResults);
    return Success();
 }
@@ -421,7 +421,7 @@ Error getPackageStateJson(json::Object* pJson)
    r::sexp::Protect protect;
    SEXP packageList;
 
-   bool renvActive = renvContext.get_obj()["active"].get_bool();
+   bool renvActive = renvContext.getObject()["active"].getBool();
 
    // determine the appropriate package listing method from the current
    // packrat mode status
@@ -430,14 +430,14 @@ Error getPackageStateJson(json::Object* pJson)
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.listPackagesPackrat",
                                  string_utils::utf8ToSystem(
-                                    projectDir.absolutePath()))
+                                    projectDir.getAbsolutePath()))
               .call(&packageList, &protect);
    }
    else if (renvActive)
    {
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.renv.listPackages")
-            .addParam(string_utils::utf8ToSystem(projectDir.absolutePath()))
+            .addParam(string_utils::utf8ToSystem(projectDir.getAbsolutePath()))
             .call(&packageList, &protect);
    }
    else

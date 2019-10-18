@@ -20,7 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/PosixProcess.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
@@ -359,7 +359,7 @@ test_context("ProcessTests")
       }
 
       if (lastError)
-         std::cout << lastError.summary() << " " << lastError.location().asString() << std::endl;
+         std::cout << lastError.getSummary() << " " << lastError.getLocation().asString() << std::endl;
 
       CHECK(numError == 0);
 

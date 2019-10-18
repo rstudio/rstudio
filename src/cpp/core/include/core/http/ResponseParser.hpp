@@ -25,7 +25,7 @@
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Response.hpp>
 
 namespace rstudio {

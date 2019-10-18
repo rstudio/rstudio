@@ -18,7 +18,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 // per-platform synctex implemetnations
 #if defined(Q_OS_MAC)

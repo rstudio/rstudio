@@ -27,8 +27,8 @@
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
@@ -184,7 +184,7 @@ Error newDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type)) ;
 
    if (json::isType<std::string>(jsonContents))
-      pDoc->setContents(jsonContents.get_str());
+      pDoc->setContents(jsonContents.getString());
 
    pDoc->editProperties(properties);
 
@@ -218,7 +218,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+   if (error && error != core::json::errc::ParamTypeMismatch)
       return error ;
 
    if (encoding.empty())
@@ -260,8 +260,8 @@ Error openDocument(const json::JsonRpcRequest& request,
          return error ;
 
       module_context::consoleWriteError(
-                 "Not all characters in " + documentPath.absolutePath() +
-                 " could be decoded using " + encoding + ". To try a "
+         "Not all characters in " + documentPath.getAbsolutePath() +
+         " could be decoded using " + encoding + ". To try a "
                  "different encoding, choose \"File | Reopen with "
                  "Encoding...\" from the main menu.");
    }
@@ -311,7 +311,7 @@ Error saveDocumentCore(const std::string& contents,
    if (hasPath)
    {
       oldPath = pDoc->path();
-      path = jsonPath.get_str();
+      path = jsonPath.getString();
       fullDocPath = module_context::resolveAliasedPath(path);
    }
 
@@ -323,7 +323,7 @@ Error saveDocumentCore(const std::string& contents,
    bool hasType = json::isType<std::string>(jsonType);
    if (hasType)
    {
-      pDoc->setType(jsonType.get_str());
+      pDoc->setType(jsonType.getString());
    }
    
    Error error;
@@ -331,13 +331,13 @@ Error saveDocumentCore(const std::string& contents,
    bool hasEncoding = json::isType<std::string>(jsonEncoding);
    if (hasEncoding)
    {
-      pDoc->setEncoding(jsonEncoding.get_str());
+      pDoc->setEncoding(jsonEncoding.getString());
    }
 
    bool hasFoldSpec = json::isType<std::string>(jsonFoldSpec);
    if (hasFoldSpec)
    {
-      pDoc->setFolds(jsonFoldSpec.get_str());
+      pDoc->setFolds(jsonFoldSpec.getString());
    }
 
    // note that it's entirely possible for the chunk output to be null if the
@@ -347,7 +347,7 @@ Error saveDocumentCore(const std::string& contents,
    if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
       error = rmarkdown::notebook::setChunkDefs(pDoc, 
-            jsonChunkOutput.get_array());
+            jsonChunkOutput.getArray());
       if (error)
          LOG_ERROR(error);
    }
@@ -394,7 +394,7 @@ Error saveDocumentCore(const std::string& contents,
          return error ;
 
       // enque file changed event if we need to
-      if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
+      if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
       {
          using core::system::FileChangeEvent;
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
@@ -811,23 +811,23 @@ Error processSourceTemplate(const std::string& name,
    FilePath templatePath;
 
    // First, check user template path
-   templatePath = core::system::xdg::userConfigDir().complete("templates")
-      .complete(templateName); 
+   templatePath = core::system::xdg::userConfigDir().completePath("templates")
+                                                    .completePath(templateName);
    if (!templatePath.exists())
    {
       // Next, check the system template path.
-      templatePath = core::system::xdg::systemConfigDir().complete("templates")
-         .complete(templateName); 
+      templatePath = core::system::xdg::systemConfigDir().completePath("templates")
+                                                         .completePath(templateName);
       if (!templatePath.exists())
       {
          // No user or system template; check for a built-in template.
-         templatePath = session::options().rResourcesPath().complete("templates")
-            .complete(templateName);
+         templatePath = session::options().rResourcesPath().completePath("templates")
+                                          .completePath(templateName);
 
 #ifdef __APPLE__
          // Special case: built-in templates can have an OSX variant; prefer that if it exists
-         FilePath osxTemplatePath = templatePath.parent().complete(
-               templatePath.stem() + "_osx" + templatePath.extension());
+         FilePath osxTemplatePath = templatePath.getParent().completePath(
+               templatePath.getStem() + "_osx" + templatePath.getExtension());
          if (osxTemplatePath.exists())
             templatePath = osxTemplatePath;
 #endif
@@ -926,8 +926,8 @@ Error createRdShell(const json::JsonRpcRequest& request,
       if (!filePath.empty())
       {
          FilePath rdFilePath(string_utils::systemToUtf8(filePath));
-         FilePath manFilePath = packageDir.childPath("man").childPath(
-                                                      rdFilePath.filename());
+         FilePath manFilePath = packageDir.completeChildPath("man").completeChildPath(
+            rdFilePath.getFilename());
          if (!manFilePath.exists())
          {
             Error error = rdFilePath.copy(manFilePath);
@@ -1017,7 +1017,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    FilePath currentPath = module_context::safeCurrentPath();
    if (filePath.isWithin(currentPath))
    {
-      path = filePath.relativePath(currentPath);
+      path = filePath.getRelativePath(currentPath);
       if (interpreter.empty())
       {
 #ifndef _WIN32
@@ -1028,7 +1028,7 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    }
    else
    {
-      path = filePath.absolutePath();
+      path = filePath.getAbsolutePath();
    }
 
    // quote if necessary
@@ -1073,11 +1073,11 @@ Error setDocOrder(const json::JsonRpcRequest& request,
 
    for (boost::shared_ptr<SourceDocument>& pDoc : docs)
    {
-      for (unsigned i = 0; i < ids.size(); i++) 
+      for (unsigned i = 0; i < ids.getSize(); i++)
       {
          // docs are ordered starting at 1; the special value 0 indicates a
          // document with no order
-         if (pDoc->id() == ids[i].get_str() && 
+         if (pDoc->id() == ids[i].getString() &&
              pDoc->relativeOrder() != gsl::narrow_cast<int>(i + 1))
          {
             pDoc->setRelativeOrder(i + 1);
@@ -1138,7 +1138,7 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
       // don't move the write time backwards (the intent is to sync an edit
       // which has just occurred)
       std::time_t writeTime =
-            module_context::resolveAliasedPath(pDoc->path()).lastWriteTime();
+            module_context::resolveAliasedPath(pDoc->path()).getLastWriteTime();
       if (writeTime > pDoc->lastKnownWriteTime())
          pDoc->setLastKnownWriteTime(writeTime);
    }
@@ -1161,7 +1161,7 @@ void enqueFileEditEvent(const std::string& file)
    // construct file path from full path
    FilePath filePath = (boost::algorithm::starts_with(file, "~"))
          ? module_context::resolveAliasedPath(file)
-         : module_context::safeCurrentPath().complete(file);
+         : module_context::safeCurrentPath().completePath(file);
 
    // if it doesn't exist then create it
    if (!filePath.exists())
@@ -1178,7 +1178,7 @@ void enqueFileEditEvent(const std::string& file)
 
    // construct file system item (also tag with mime type)
    json::Object fileJson = module_context::createFileSystemItem(filePath);
-   fileJson["mime_type"] = filePath.mimeContentType();
+   fileJson["mime_type"] = filePath.getMimeContentType();
    
    // fire event
    ClientEvent event(client_events::kFileEdit, fileJson);
@@ -1234,7 +1234,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
       std::vector<std::string> filenames;
       Error error = r::sexp::extract(fileSEXP, &filenames, true);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
 
       // fire events
       std::for_each(filenames.begin(), filenames.end(), enqueFileEditEvent);

@@ -67,7 +67,7 @@ std::size_t listSize(const char* const name)
 
 FilePath listPath(const std::string& name)
 {
-   return s_listsPath.complete(name);
+   return s_listsPath.completePath(name);
 }
 
 Error readList(const std::string& name,
@@ -93,7 +93,7 @@ json::Array listToJson(const std::list<std::string>& list)
    json::Array jsonArray;
    for (const std::string& val : list)
    {
-      jsonArray.push_back(val);
+      jsonArray.push_back(json::Value(val));
    }
    return jsonArray;
 }
@@ -105,12 +105,12 @@ void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
       return;
 
    // ignore if it is the lists directory
-   if (fileChange.fileInfo().absolutePath() == s_listsPath.absolutePath())
+   if (fileChange.fileInfo().absolutePath() == s_listsPath.getAbsolutePath())
       return;
 
    // get the name of the list
    FilePath filePath(fileChange.fileInfo().absolutePath());
-   std::string name = filePath.filename();
+   std::string name = filePath.getFilename();
 
    // read it
    boost::shared_ptr<MruList> list;
@@ -191,10 +191,10 @@ Error listSetContents(const json::JsonRpcRequest& request,
          continue;
       }
 
-      list.push_back(val.get_str());
+      list.push_back(val.getString());
    }
 
-   return writeCollectionToFile<std::list<std::string>>(listPath(name), list, stringifyString);
+   return writeCollectionToFile<std::list<std::string> >(listPath(name), list, stringifyString);
 }
 
 Error listInsertItem(bool prepend,

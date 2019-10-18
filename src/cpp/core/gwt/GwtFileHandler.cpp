@@ -18,7 +18,7 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/System.hpp>
@@ -95,7 +95,7 @@ void handleFileRequest(const FileRequestOptions& options,
    // get the requested file 
    std::string relativePath = uri.substr(options.baseUri.length());
    FilePath filePath = http::util::requestedFile(options.wwwLocalPath, relativePath);
-   if (filePath.empty())
+   if (filePath.isEmpty())
    {
       pResponse->setNotFoundError(request);
       return;

@@ -35,7 +35,7 @@ UserPrefsLayer::UserPrefsLayer():
 Error UserPrefsLayer::readPrefs()
 {
    Error err;
-   prefsFile_ = core::system::xdg::userConfigDir().complete(kUserPrefsFile);
+   prefsFile_ = core::system::xdg::userConfigDir().completePath(kUserPrefsFile);
 
    // After deferred init, start monitoring the prefs file for changes
    module_context::events().onDeferredInit.connect([&](bool)
@@ -44,14 +44,14 @@ Error UserPrefsLayer::readPrefs()
    });
 
    // Mark the last sync time 
-   lastSync_ = prefsFile_.lastWriteTime();
+   lastSync_ = prefsFile_.getLastWriteTime();
 
    return loadPrefsFromFile(prefsFile_);
 }
 
 void UserPrefsLayer::onPrefsFileChanged()
 {
-   if (prefsFile_.lastWriteTime() <= lastSync_)
+   if (prefsFile_.getLastWriteTime() <= lastSync_)
    {
       // No work to do; we wrote this update ourselves.
       return;
@@ -59,7 +59,7 @@ void UserPrefsLayer::onPrefsFileChanged()
 
    // Make a copy of the prefs prior to reloading, so we can diff against the old copy
    const json::Value oldVal = cache_->clone();
-   const json::Object old = oldVal.get_obj();
+   const json::Object old = oldVal.getObject();
 
    // Reload the prefs from the file
    Error error = loadPrefsFromFile(prefsFile_);
@@ -79,7 +79,7 @@ void UserPrefsLayer::onPrefsFileChanged()
       // didn't exist in the old set, or existed there with a new value. This does not currently
       // emit events for pref values that have been removed.
       if (itNew != cache_->end() &&
-          (itOld == old.end() || !((*itNew).value() == (*itOld).value())))
+          (itOld == old.end() || !((*itNew).getValue() == (*itOld).getValue())))
       {
          onChanged(key);
       }
@@ -88,7 +88,7 @@ void UserPrefsLayer::onPrefsFileChanged()
 
 Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
 {
-   if (prefsFile_.empty())
+   if (prefsFile_.isEmpty())
    {
       return fileNotFoundError(ERROR_LOCATION);
    }
@@ -104,7 +104,7 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    if (!error)
    {
       // If we successfully wrote the contents, mark the last sync time
-      lastSync_ = prefsFile_.lastWriteTime();
+      lastSync_ = prefsFile_.getLastWriteTime();
    }
 
    return error;
@@ -113,7 +113,7 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
 Error UserPrefsLayer::validatePrefs()
 {
    return validatePrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserPrefsSchemaFile));
+      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 
 } // namespace prefs

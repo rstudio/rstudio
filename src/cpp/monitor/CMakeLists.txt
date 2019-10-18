@@ -35,6 +35,7 @@ include_directories(
    ${EXT_SOURCE_DIR}
    ${CORE_SOURCE_DIR}/include
    ${SERVER_CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # define library

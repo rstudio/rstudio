@@ -14,7 +14,7 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
@@ -173,16 +173,16 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       // view of the username (as that's what the session uses to form the
       // stream path), which is why we do a username => username transform
       // here. See case 5413 for details.
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(userIdentifier, &user);
-      if (error) 
+      core::system::User user;
+      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
+      if (error)
       {
          // log the error and return the PAM user identifier as a fallback
          LOG_ERROR(error);
       }
       else
       {
-         username = user.username;
+         username = user.getUsername();
       }
 
       // cache the username -- we do this even if the lookup fails since
@@ -266,7 +266,7 @@ void signIn(const http::Request& request,
    // get the path to the JS file
    Options& options = server::options();
    FilePath wwwPath(options.wwwLocalPath());
-   FilePath signInPath = wwwPath.complete("templates/encrypted-sign-in.htm");
+   FilePath signInPath = wwwPath.completePath("templates/encrypted-sign-in.htm");
 
    text::TemplateFilter filter(variables);
 
@@ -518,7 +518,7 @@ bool pamLogin(const std::string& username, const std::string& password)
    if (!pamHelperPath.exists())
    {
       LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
+                           pamHelperPath.getAbsolutePath());
       return false;
    }
 
@@ -541,11 +541,12 @@ bool pamLogin(const std::string& username, const std::string& password)
 
    // run pam helper
    core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
+   Error error = core::system::runProgram(
+      pamHelperPath.getAbsolutePath(),
+      args,
+      password,
+      options,
+      &result);
    if (error)
    {
       LOG_ERROR(error);

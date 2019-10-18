@@ -37,10 +37,7 @@ namespace core {
 namespace rstudio {
 namespace core {
 namespace system {
-
-namespace user {
-   struct User;
-}
+    class User;
 
 // daemonize the process
 core::Error daemonize(const std::string& pidFile = std::string());
@@ -192,7 +189,7 @@ core::Error waitForProcessExit(PidType processId);
 
 // filter to call after the setuid has occurred (i.e. after
 // the user's home directory has become visible)
-typedef boost::function<void(const user::User&, ProcessConfig*)>
+typedef boost::function<void(const User&, ProcessConfig*)>
                                                    ProcessConfigFilter;
 
 core::Error launchChildProcess(std::string path,
@@ -230,7 +227,7 @@ Error terminateChildProcesses(pid_t pid,
 
 bool isUserNotFoundError(const core::Error& error);
 
-core::Error userBelongsToGroup(const user::User& user,
+core::Error userBelongsToGroup(const User& user,
                                const std::string& groupName,
                                bool* pBelongs);
 

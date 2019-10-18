@@ -16,7 +16,7 @@
 #ifndef SESSION_BUILD_HPP
 #define SESSION_BUILD_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

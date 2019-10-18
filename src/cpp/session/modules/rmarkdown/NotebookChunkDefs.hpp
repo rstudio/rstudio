@@ -16,11 +16,11 @@
 #ifndef SESSION_NOTEBOOK_CHUNK_DEFS_HPP
 #define SESSION_NOTEBOOK_CHUNK_DEFS_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <ctime>
@@ -135,7 +135,7 @@ core::Error setChunkValue(const std::string& docPath,
    if (!defFile.exists())
    {
       defFile = chunkDefinitionsPath(docPath, docId, notebookCtxId());
-      error = defFile.parent().ensureDirectory();
+      error = defFile.getParent().ensureDirectory();
       if (error)
          return error;
    }
@@ -151,9 +151,7 @@ core::Error setChunkValue(const std::string& docPath,
 
    // update key and write out new contents
    defs[key] = value;
-   std::ostringstream oss;
-   core::json::write(defs, oss);
-   return core::writeStringToFile(defFile, oss.str());
+   return core::writeStringToFile(defFile, defs.write());
 }
 
 core::Error initChunkDefs();

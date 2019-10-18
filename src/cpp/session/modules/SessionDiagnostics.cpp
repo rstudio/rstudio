@@ -28,7 +28,7 @@
 
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/YamlUtil.hpp>
 
@@ -418,12 +418,12 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    
    if (projects::projectContext().isPackageProject() && filePath.isWithin(projDir))
    {
-      DEBUG("- Package file: '" << filePath.absolutePath() << "'");
+      DEBUG("- Package file: '" << filePath.getAbsolutePath() << "'");
       error = getAvailableSymbolsForPackage(filePath, documentId, pSymbols);
    }
    else
    {
-      DEBUG("- Project file: '" << filePath.absolutePath() << "'");
+      DEBUG("- Project file: '" << filePath.getAbsolutePath() << "'");
       error = getAvailableSymbolsForProject(filePath, documentId, pSymbols);
    }
    
@@ -432,13 +432,13 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // Add common 'testing' packages, based on the DESCRIPTION's
    // 'Imports' and 'Suggests' fields, and use that if we're within a
    // common 'test'ing directory.
-   if (filePath.isWithin(projDir.childPath("inst")) ||
-       filePath.isWithin(projDir.childPath("tests")))
+   if (filePath.isWithin(projDir.completeChildPath("inst")) ||
+       filePath.isWithin(projDir.completeChildPath("tests")))
    {
       addTestPackageSymbols(pSymbols);
    }
    
-   if (filePath.isWithin(projects::projectContext().directory().childPath("tests/testthat")))
+   if (filePath.isWithin(projects::projectContext().directory().completeChildPath("tests/testthat")))
    {
       PackageSymbolRegistry& registry = packageSymbolRegistry();
       registry.fillNamespaceSymbols("testthat", pSymbols, false);
@@ -447,7 +447,7 @@ Error getAllAvailableRSymbols(const FilePath& filePath,
    // If the file is named 'server.R', 'ui.R' or 'app.R', we'll implicitly
    // assume that it depends on Shiny.
    std::string basename = boost::algorithm::to_lower_copy(
-            filePath.filename());
+            filePath.getFilename());
    
    if (basename == "server.r" ||
        basename == "ui.r" ||
@@ -902,12 +902,12 @@ void onNAMESPACEchanged()
    if (!projects::projectContext().hasProject())
       return;
    
-   FilePath NAMESPACE(projects::projectContext().directory().complete("NAMESPACE"));
+   FilePath NAMESPACE(projects::projectContext().directory().completePath("NAMESPACE"));
    if (!NAMESPACE.exists())
       return;
    
    RFunction parseNamespace(".rs.parseNamespaceImports");
-   parseNamespace.addParam(NAMESPACE.absolutePath());
+   parseNamespace.addParam(NAMESPACE.getAbsolutePath());
    
    r::sexp::Protect protect;
    SEXP result;
@@ -944,7 +944,7 @@ void onNAMESPACEchanged()
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    std::string namespacePath =
-         projects::projectContext().directory().complete("NAMESPACE").absolutePath();
+      projects::projectContext().directory().completePath("NAMESPACE").getAbsolutePath();
    
    for (const core::system::FileChangeEvent& event : events)
    {
@@ -957,7 +957,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 void afterSessionInitHook(bool newSession)
 {
    if (projects::projectContext().hasProject() &&
-       projects::projectContext().directory().complete("NAMESPACE").exists())
+      projects::projectContext().directory().completePath("NAMESPACE").exists())
    {
       onNAMESPACEchanged();
    }
@@ -974,7 +974,7 @@ bool collectLint(int depth,
                  const FilePath& path,
                  std::map<FilePath, LintItems>* pLint)
 {
-   if (path.extensionLowerCase() != ".r")
+   if (path.getExtensionLowerCase() != ".r")
       return true;
    
    std::string contents;
@@ -1007,7 +1007,7 @@ SEXP rs_lintDirectory(SEXP directorySEXP)
       return R_NilValue;
    
    std::map<FilePath, LintItems> lint;
-   Error error = dirPath.childrenRecursive(
+   Error error = dirPath.getChildrenRecursive(
             boost::bind(collectLint, _1, _2, &lint));
    if (error)
    {

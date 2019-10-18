@@ -13,8 +13,8 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <windows.h>
 #include <shellapi.h>
@@ -27,7 +27,7 @@ namespace recycle_bin {
 Error sendTo(const FilePath& filePath)
 {
    // get the path and double-null terminate
-   std::wstring wPath = filePath.absolutePathW();
+   std::wstring wPath = filePath.getAbsolutePathW();
    std::vector<wchar_t> buffPath;
    std::copy(wPath.begin(), wPath.end(), std::back_inserter(buffPath));
    buffPath.push_back(L'\0');

@@ -60,7 +60,7 @@ private:
    FilePath pathFromModulesSource(std::string sourceFile)
    {
       FilePath modulesPath = session::options().modulesRSourcePath();
-      FilePath srcPath = modulesPath.complete(sourceFile);
+      FilePath srcPath = modulesPath.completePath(sourceFile);
 
       return srcPath;
    }
@@ -68,7 +68,7 @@ private:
    FilePath pathFromSource(std::string sourceFile)
    {
       FilePath sourcesPath = session::options().coreRSourcePath();
-      FilePath srcPath = sourcesPath.complete(sourceFile);
+      FilePath srcPath = sourcesPath.completePath(sourceFile);
 
       return srcPath;
    }
@@ -87,8 +87,8 @@ private:
 
    void start()
    {
-      inputLocation_ = module_context::tempFile("input", "rds").absolutePath();
-      outputLocation_ = module_context::tempFile("output", "rds").absolutePath();
+      inputLocation_ = module_context::tempFile("input", "rds").getAbsolutePath();
+      outputLocation_ = module_context::tempFile("output", "rds").getAbsolutePath();
 
       Error err = saveRDS(request_);
       if (err)

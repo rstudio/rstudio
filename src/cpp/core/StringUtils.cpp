@@ -29,8 +29,8 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
-#include <core/SafeConvert.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -208,8 +208,8 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
    if (!filePath.exists())
       return false;
 
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = filePath.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = filePath.openForRead(pIfs);
    if (error)
    {
       LOG_ERROR(error);
@@ -245,7 +245,7 @@ bool detectLineEndings(const FilePath& filePath, LineEnding* pType)
          else if (pIfs->fail())
          {
             LOG_WARNING_MESSAGE("I/O Error reading file " +
-                                filePath.absolutePath());
+                                   filePath.getAbsolutePath());
             break;
          }
       }
@@ -450,13 +450,13 @@ std::string jsonLiteralEscape(const std::string& str)
 std::string jsonLiteralUnescape(const std::string& str)
 {
    json::Value value;
-   if (!json::parse(str, &value) || !json::isType<std::string>(value))
+   if (value.parse(str) || !json::isType<std::string>(value))
    {
       LOG_ERROR_MESSAGE("Failed to unescape JS literal");
       return str;
    }
 
-   return value.get_str();
+   return value.getString();
 }
 
 std::string singleQuotedStrEscape(const std::string& str)

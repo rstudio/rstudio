@@ -19,7 +19,7 @@
 
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/collection/Tree.hpp>

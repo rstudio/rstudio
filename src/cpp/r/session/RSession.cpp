@@ -22,7 +22,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/Scope.hpp>
@@ -117,7 +117,7 @@ SEXP rs_showFile(SEXP titleSEXP, SEXP fileSEXP, SEXP delSEXP)
    try
    {
       std::string file = r::util::fixPath(r::sexp::asString(fileSEXP));
-      FilePath filePath = utils::safeCurrentPath().complete(file);
+      FilePath filePath = utils::safeCurrentPath().completePath(file);
       if (!filePath.exists())
       {
           throw r::exec::RErrorException(
@@ -172,8 +172,8 @@ SEXP rs_browseURL(SEXP urlSEXP)
       else if (URL.find("://") == std::string::npos)
       {
          std::string file = r::util::expandFileName(URL);
-         FilePath filePath = utils::safeCurrentPath().complete(
-                                                   r::util::fixPath(file));
+         FilePath filePath = utils::safeCurrentPath().completePath(
+            r::util::fixPath(file));
          rCallbacks().browseFile(filePath);
       }
       else
@@ -271,13 +271,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
      
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
-   FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
+   FilePath oldSuspendedSessionPath = userScratch.completePath("suspended-session");
    FilePath sessionScratch = s_options.sessionScratchPath;
 
    // set suspend paths
-   setSuspendPaths(sessionScratch.complete("suspended-session-data"), // session data
-      s_options.userScratchPath.complete("client-state"),             // client state
-      s_options.scopedScratchPath.complete("pcs"));                   // project client state
+   setSuspendPaths(
+      sessionScratch.completePath("suspended-session-data"),              // session data
+      s_options.userScratchPath.completePath("client-state"),             // client state
+      s_options.scopedScratchPath.completePath("pcs"));                   // project client state
 
    // one time migration of global suspend to default project suspend
    if (!suspendedSessionPath().exists() && oldSuspendedSessionPath.exists())

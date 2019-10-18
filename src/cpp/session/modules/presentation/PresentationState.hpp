@@ -16,7 +16,7 @@
 #ifndef SESSION_PRESENTATION_STATE_HPP
 #define SESSION_PRESENTATION_STATE_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

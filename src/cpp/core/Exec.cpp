@@ -15,7 +15,7 @@
 
 #include <core/Exec.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

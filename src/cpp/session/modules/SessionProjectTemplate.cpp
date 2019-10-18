@@ -20,9 +20,9 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 
@@ -72,7 +72,7 @@ void reportErrorsToConsole(const std::vector<Error>& errors,
       return;
    
    std::cout
-         << "Error(s) found while parsing '" + resourcePath.filename() + "':"
+         << "Error(s) found while parsing '" + resourcePath.getFilename() + "':"
          << std::endl;
    
    for (const Error& error : localErrors)
@@ -217,11 +217,11 @@ Error fromJson(
       if (!json::isType<json::Object>(value))
          return json::errors::typeMismatch(
                   value,
-                  json::ObjectType,
+                  json::Type::OBJECT,
                   ERROR_LOCATION);
       
       ProjectTemplateWidgetDescription widget;
-      error = fromJson(value.get_obj(), &widget);
+      error = fromJson(value.getObject(), &widget);
       if (error)
          return error;
       
@@ -329,10 +329,10 @@ core::Error populate(
       else if (key == "Icon")
       {
          // read icon file from disk
-         FilePath iconPath = resourcePath.parent().complete(value);
+         FilePath iconPath = resourcePath.getParent().completePath(value);
          
          // skip if the file is too large
-         uintmax_t fileSize = iconPath.size();
+         uintmax_t fileSize = iconPath.getSize();
          if (fileSize > 1024 * 1024)
          {
             return systemError(
@@ -524,14 +524,14 @@ private:
       
       // loop over discovered files and attempt to read template descriptions
       std::vector<FilePath> children;
-      error = resourcePath.children(&children);
+      error = resourcePath.getChildren(children);
       if (error)
          LOG_ERROR(error);
       
       for (const FilePath& childPath : children)
       {
          // skip files that don't have a dcf extension
-         if (childPath.extension() != ".dcf")
+         if (childPath.getExtension() != ".dcf")
             continue;
          
          ProjectTemplateDescription description;

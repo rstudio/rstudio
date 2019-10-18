@@ -13,31 +13,31 @@
  *
  */
 
-#include <core/StringUtils.hpp>
+#include <shared_core/system/Win32StringUtils.hpp>
 
 #include <gsl/gsl>
 
 #include <windows.h>
 
-#include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Logger.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {
 namespace string_utils {
 
-std::string wideToUtf8(const std::wstring& value)
+std::string wideToUtf8(const std::wstring& in_value)
 {
-   if (value.size() == 0)
+   if (in_value.size() == 0)
       return std::string();
 
-   const wchar_t * cstr = value.c_str();
+   const wchar_t * cstr = in_value.c_str();
    int chars = ::WideCharToMultiByte(CP_UTF8, 0,
                                      cstr, -1,
                                      nullptr, 0, nullptr, nullptr);
    if (chars == 0)
    {
-      LOG_ERROR(LAST_SYSTEM_ERROR());
+      log::logError(LAST_SYSTEM_ERROR());
       return std::string();
    }
 
@@ -53,13 +53,13 @@ std::string wideToUtf8(const std::wstring& value)
    return std::string(&(result[0]));
 }
 
-std::wstring utf8ToWide(const std::string& value,
+std::wstring utf8ToWide(const std::string& in_value,
                         const std::string& context)
 {
-   if (value.size() == 0)
+   if (in_value.size() == 0)
       return std::wstring();
 
-   const char * cstr = value.c_str();
+   const char * cstr = in_value.c_str();
    int chars = ::MultiByteToWideChar(CP_UTF8, 0,
                                      cstr, -1,
                                      nullptr, 0);
@@ -68,7 +68,7 @@ std::wstring utf8ToWide(const std::string& value,
       Error error = LAST_SYSTEM_ERROR();
       if (!context.empty())
          error.addProperty("context", context);
-      LOG_ERROR(error);
+      log::logError(error);
       return std::wstring();
    }
 

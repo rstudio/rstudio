@@ -68,7 +68,7 @@ void AsyncRProcess::start(const char* rCommand,
       const core::FilePath rPath =
             session::options().coreRSourcePath();
       
-      const core::FilePath rTools = rPath.childPath("Tools.R");
+      const core::FilePath rTools = rPath.completeChildPath("Tools.R");
       
       // insert at begin as Tools.R needs to be sourced first
       rSourceFiles.insert(rSourceFiles.begin(), rTools);
@@ -121,7 +121,7 @@ void AsyncRProcess::start(const char* rCommand,
            it != rSourceFiles.end();
            ++it)
       {
-         command << "source('" << it->absolutePath() << "');";
+         command << "source('" << it->getAbsolutePath() << "');";
       }
       
       command << escapedCommand;
@@ -143,7 +143,7 @@ void AsyncRProcess::start(const char* rCommand,
       options.redirectStdErrToStdOut = true;
 
    // if a working directory was specified, use it
-   if (!workingDir.empty())
+   if (!workingDir.isEmpty())
    {
       options.workingDir = workingDir;
    }
@@ -165,8 +165,8 @@ void AsyncRProcess::start(const char* rCommand,
    }
    
    // set environment variables used for IPC
-   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.absolutePath());
-   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.absolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.getAbsolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.getAbsolutePath());
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
    
    // update environment used for child process
@@ -193,7 +193,7 @@ void AsyncRProcess::start(const char* rCommand,
    input_ = input;
 
    error = module_context::processSupervisor().runProgram(
-            rProgramPath.absolutePath(),
+      rProgramPath.getAbsolutePath(),
             args,
             options,
             cb);
@@ -242,8 +242,8 @@ bool AsyncRProcess::onContinue()
    if (ipcRequests_.exists())
    {
       core::Error error = r::exec::RFunction(".rs.rstudioapi.processRequest")
-            .addParam(ipcRequests_.absolutePathNative())
-            .addParam(ipcResponse_.absolutePathNative())
+            .addParam(ipcRequests_.getAbsolutePathNative())
+            .addParam(ipcResponse_.getAbsolutePathNative())
             .addParam(sharedSecret_)
             .call();
 

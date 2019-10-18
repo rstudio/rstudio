@@ -19,7 +19,7 @@
 #include <boost/format.hpp>
 
 #include <server_core/UrlPorts.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 #include <iomanip>
 

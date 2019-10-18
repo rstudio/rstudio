@@ -41,8 +41,8 @@ To create a new postback handler for an action 'foo' do the following:
 
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -104,7 +104,7 @@ Error registerPostbackHandler(const std::string& name,
                                                     
    // compute the shell command required to invoke this handler and return it
    Options& options = session::options();
-   *pShellCommand = options.rpostbackPath().absolutePath() + "-" + name ;
+   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name ;
    
    // return success
    return Success();

@@ -31,6 +31,7 @@ include_directories(
    ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
    ${SERVER_CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
    ${PAM_INCLUDE_DIR}
 )
 

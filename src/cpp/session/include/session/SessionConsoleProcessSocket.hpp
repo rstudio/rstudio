@@ -26,7 +26,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/strand.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
 #include <websocketpp/config/asio_no_tls.hpp>

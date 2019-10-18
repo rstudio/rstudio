@@ -44,7 +44,7 @@ const core::json::Object& ChunkOptions::defaultOptions() const
 core::json::Object ChunkOptions::mergedOptions() const
 {
    json::Object merged(defaultOptions_);
-   for (json::Object::iterator it = chunkOptions_.begin();
+   for (json::Object::Iterator it = chunkOptions_.begin();
         it != chunkOptions_.end();
         it ++)
    {

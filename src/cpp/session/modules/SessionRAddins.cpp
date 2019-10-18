@@ -20,9 +20,9 @@
 #include <core/Macros.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 
@@ -118,15 +118,15 @@ public:
    
    void saveToFile(const core::FilePath& filePath) const
    {
-      boost::shared_ptr<std::ostream> pStream;
-      Error error = filePath.open_w(&pStream);
+      std::shared_ptr<std::ostream> pStream;
+      Error error = filePath.openForWrite(pStream);
       if (error)
       {
          LOG_ERROR(error);
          return;
       }
 
-      json::writeFormatted(toJson(), *pStream);
+      toJson().writeFormatted(*pStream);
    }
 
    void loadFromFile(const core::FilePath& filePath)
@@ -147,20 +147,20 @@ public:
       // check but don't log for unexpected input because we are the only ones
       // that write this file
       json::Value parsedJson;
-      if (json::parse(contents, &parsedJson) &&
+      if (!parsedJson.parse(contents) &&
           json::isType<json::Object>(parsedJson))
       {
-         const json::Object& addinsJson = parsedJson.get_obj();
+         const json::Object& addinsJson = parsedJson.getObject();
 
-         for(const json::Member& member : addinsJson)
+         for(const json::Object::Member& member : addinsJson)
          {
-            const std::string& key = member.name();
-            const json::Value& valueJson = member.value();
+            const std::string& key = member.getName();
+            const json::Value& valueJson = member.getValue();
             if (json::isType<json::Object>(valueJson))
             {
                bool interactive;
                std::string name, package, title, description, binding;
-               Error error = json::readObject(valueJson.get_obj(),
+               Error error = json::readObject(valueJson.getObject(),
                                               "name", &name,
                                               "package", &package,
                                               "title", &title,
@@ -178,7 +178,7 @@ public:
                // we don't log errors as they're rather noisy and otherwise
                // harmless)
                int ordinal = 0;
-               json::readObject(valueJson.get_obj(), "ordinal", &ordinal);
+               json::readObject(valueJson.getObject(), "ordinal", &ordinal);
                addins_[key] = AddinSpecification(name,
                                                  package,
                                                  title,
@@ -306,7 +306,7 @@ boost::shared_ptr<AddinRegistry> s_pCurrentRegistry =
 
 FilePath addinRegistryPath()
 {
-   return module_context::userScratchPath().childPath("addin_registry");
+   return module_context::userScratchPath().completeChildPath("addin_registry");
 }
 
 void updateAddinRegistry(boost::shared_ptr<AddinRegistry> pRegistry)
@@ -349,7 +349,7 @@ class AddinWorker : public ppe::Worker
       if (isDevtoolsLoadAllActive())
       {
          FilePath pkgPath = projects::projectContext().buildTargetPath();
-         FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+         FilePath addinPath = pkgPath.completeChildPath("inst/rstudio/addins.dcf");
          if (addinPath.exists())
          {
             std::string pkgName = projects::projectContext().packageInfo().name();
@@ -467,7 +467,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    if (!addinRegistry().contains(pkgName, cmdName))
    {
       std::string message = "no addin with id '" + commandId + "' registered";
-      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), json::Value(message));
       return Success();
    }
    
@@ -476,7 +476,7 @@ Error executeRAddin(const json::JsonRpcRequest& request,
    {
       std::string message =
             "no function '" + cmdName + "' found in package '" + pkgName + "'";
-      pResponse->setError(noSuchAddin(ERROR_LOCATION), message);
+      pResponse->setError(noSuchAddin(ERROR_LOCATION), json::Value(message));
       return Success();
    }
    

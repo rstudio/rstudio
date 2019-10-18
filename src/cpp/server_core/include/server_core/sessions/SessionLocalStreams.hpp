@@ -18,8 +18,8 @@
 
 #include <string>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
@@ -42,8 +42,8 @@ inline core::Error ensureStreamsDir()
 inline core::FilePath streamPath(const std::string& file)
 {
    core::FilePath sessionStreamsPath(core::system::getenv(kSessionTmpDirEnvVar));
-   core::FilePath path = sessionStreamsPath.complete(file);
-   core::Error error = core::http::initializeStreamDir(path.parent());
+   core::FilePath path = sessionStreamsPath.completePath(file);
+   core::Error error = core::http::initializeStreamDir(path.getParent());
    if (error)
       LOG_ERROR(error);
    return path;

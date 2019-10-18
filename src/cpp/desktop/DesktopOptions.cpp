@@ -402,7 +402,7 @@ void Options::setScriptsPath(const FilePath& scriptsPath)
 
 FilePath Options::executablePath() const
 {
-   if (executablePath_.empty())
+   if (executablePath_.isEmpty())
    {
       Error error = core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
                                                  &executablePath_);
@@ -414,7 +414,7 @@ FilePath Options::executablePath() const
 
 FilePath Options::supportingFilePath() const
 {
-   if (supportingFilePath_.empty())
+   if (supportingFilePath_.isEmpty())
    {
       // default to install path
       core::system::installPath("..",
@@ -423,8 +423,8 @@ FilePath Options::supportingFilePath() const
 
       // adapt for OSX resource bundles
 #ifdef __APPLE__
-         if (supportingFilePath_.complete("Info.plist").exists())
-            supportingFilePath_ = supportingFilePath_.complete("Resources");
+         if (supportingFilePath_.completePath("Info.plist").exists())
+            supportingFilePath_ = supportingFilePath_.completePath("Resources");
 #endif
    }
    return supportingFilePath_;
@@ -432,7 +432,7 @@ FilePath Options::supportingFilePath() const
 
 FilePath Options::resourcesPath() const
 {
-   if (resourcesPath_.empty())
+   if (resourcesPath_.isEmpty())
    {
 #ifdef RSTUDIO_PACKAGE_BUILD
       // release configuration: the 'resources' folder is
@@ -441,7 +441,7 @@ FilePath Options::resourcesPath() const
 #else
       // developer configuration: the 'resources' folder is
       // a sibling of the RStudio executable
-      resourcesPath_ = scriptsPath().complete("resources");
+      resourcesPath_ = scriptsPath().completePath("resources");
 #endif
    }
 
@@ -451,12 +451,12 @@ FilePath Options::resourcesPath() const
 FilePath Options::wwwDocsPath() const
 {
    FilePath supportingFilePath = desktop::options().supportingFilePath();
-   FilePath wwwDocsPath = supportingFilePath.complete("www/docs");
+   FilePath wwwDocsPath = supportingFilePath.completePath("www/docs");
    if (!wwwDocsPath.exists())
-      wwwDocsPath = supportingFilePath.complete("../gwt/www/docs");
+      wwwDocsPath = supportingFilePath.completePath("../gwt/www/docs");
 #ifdef __APPLE__
    if (!wwwDocsPath.exists())
-      wwwDocsPath = supportingFilePath.complete("../../../../../gwt/www/docs");
+      wwwDocsPath = supportingFilePath.completePath("../../../../../gwt/www/docs");
 #endif
    return wwwDocsPath;
 }
@@ -468,10 +468,10 @@ FilePath Options::urlopenerPath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("urlopener");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("urlopener");
 
-   return parentDir.complete("urlopener.exe");
+   return parentDir.completePath("urlopener.exe");
 }
 
 FilePath Options::rsinversePath() const
@@ -479,10 +479,10 @@ FilePath Options::rsinversePath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("synctex/rsinverse");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("synctex/rsinverse");
 
-   return parentDir.complete("rsinverse.exe");
+   return parentDir.completePath("rsinverse.exe");
 }
 
 #endif
@@ -501,9 +501,9 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 {
    core::FilePath dir(scratchPath.toUtf8().constData());
 
-   if (!dir.empty() && dir.exists())
+   if (!dir.isEmpty() && dir.exists())
    {
-      dir = dir.childPath("tmp");
+      dir = dir.completeChildPath("tmp");
       core::Error error = dir.ensureDirectory();
       if (!error)
          return dir;
@@ -514,7 +514,7 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 void Options::cleanUpScratchTempDir()
 {
    core::FilePath temp = scratchTempDir(core::FilePath());
-   if (!temp.empty())
+   if (!temp.isEmpty())
       temp.removeIfExists();
 }
 

@@ -39,7 +39,7 @@ bool isConnection(const ConnectionId& id, json::Value valueJson)
       return false;
    }
 
-   const json::Object& connJson = valueJson.get_obj();
+   const json::Object& connJson = valueJson.getObject();
    return hasConnectionId(id, connJson);
 }
 
@@ -81,7 +81,7 @@ void ConnectionHistory::update(const Connection& connection)
 
    // look for a matching connection and update it
    bool foundConnection = false;
-   for (size_t i = 0; i<connectionsJson.size(); i++)
+   for (size_t i = 0; i<connectionsJson.getSize(); i++)
    {
       json::Value valueJson = connectionsJson[i];
       if (isConnection(connection.id, valueJson))
@@ -151,7 +151,7 @@ const char* const kConnectionListFile = "connection-history-database.json";
 
 Error ConnectionHistory::readConnections(json::Array* pConnections)
 {
-   FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
+   FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
    if (connectionListFile.exists())
    {
       std::string contents;
@@ -160,7 +160,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
          return error;
 
       json::Value parsedJson;
-      if (!json::parse(contents, &parsedJson) ||
+      if (parsedJson.parse(contents) ||
           !json::isType<json::Array>(parsedJson))
       {
          return systemError(boost::system::errc::protocol_error,
@@ -168,7 +168,7 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
                             ERROR_LOCATION);
       }
 
-      *pConnections = parsedJson.get_value<json::Array>();
+      *pConnections = parsedJson.getValue<json::Array>();
    }
 
    return Success();
@@ -176,13 +176,13 @@ Error ConnectionHistory::readConnections(json::Array* pConnections)
 
 Error ConnectionHistory::writeConnections(const json::Array& connectionsJson)
 {
-   FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
-   boost::shared_ptr<std::ostream> pStream;
-   Error error = connectionListFile.open_w(&pStream);
+   FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
+   std::shared_ptr<std::ostream> pStream;
+   Error error = connectionListFile.openForWrite(pStream);
    if (error)
       return error;
 
-   json::writeFormatted(connectionsJson, *pStream);
+   connectionsJson.writeFormatted(*pStream);
 
    return Success();
 }

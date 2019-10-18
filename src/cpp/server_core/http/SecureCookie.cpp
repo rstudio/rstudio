@@ -315,7 +315,7 @@ Error initialize()
 
 Error initialize(const FilePath& secureKeyFile)
 {
-   if (secureKeyFile.empty())
+   if (secureKeyFile.isEmpty())
       return initialize();
 
    Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey);

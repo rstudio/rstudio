@@ -21,7 +21,7 @@
 #include <boost/regex.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

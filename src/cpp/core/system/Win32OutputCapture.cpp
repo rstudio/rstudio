@@ -22,7 +22,7 @@
 #include <fcntl.h>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
 #ifndef STDOUT_FILENO

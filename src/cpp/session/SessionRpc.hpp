@@ -16,7 +16,7 @@
 #ifndef SESSION_RPC_HPP
 #define SESSION_RPC_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <session/SessionHttpConnection.hpp>
 

@@ -16,7 +16,7 @@
 #ifdef _WIN32
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
@@ -67,7 +67,7 @@ TEST_CASE("Win32SystemTests")
    SECTION("ComSpec")
    {
       FilePath command = expandComSpec();
-      CHECK_FALSE(command.empty());
+      CHECK_FALSE(command.isEmpty());
       CHECK(command.exists());
    }
 
@@ -208,7 +208,7 @@ TEST_CASE("Win32SystemTests")
 
       // API is not implemented on Windows and should always return an empty
       // FilePath. See currentWorkingDir in Win32System.cpp for more info.
-      CHECK(cwd.empty());
+      CHECK(cwd.isEmpty());
 
       TerminateProcess(pi.hProcess, 1);
       WaitForSingleObject(pi.hProcess, INFINITE);

@@ -117,7 +117,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       // create PNG device (completely bail on error)
       boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
       std::string code = boost::str(fmt %
-                                    string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
+                                    string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()) %
                                     width %
                                     height %
                                     res %
@@ -148,7 +148,7 @@ pDevDesc shadowDevDesc(pDevDesc dev)
       if (error)
       {
          LOG_ERROR(error);
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
 
       return shadowDev;
@@ -166,8 +166,9 @@ pDevDesc shadowDevDesc(pDevDesc dev)
 FilePath tempFile(const std::string& extension)
 {
    FilePath tempFileDir(string_utils::systemToUtf8(R_TempDir));
-   FilePath tempFilePath = tempFileDir.complete(core::system::generateUuid(false) +
-                                                "." + extension);
+   FilePath tempFilePath = tempFileDir.completePath(
+      core::system::generateUuid(false) +
+      "." + extension);
    return tempFilePath;
 }
 

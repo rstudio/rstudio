@@ -18,7 +18,7 @@
 
 #include <boost/asio/ip/tcp.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <core/http/SocketAcceptorService.hpp>
 

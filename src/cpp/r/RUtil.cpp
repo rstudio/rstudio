@@ -22,9 +22,9 @@
 #include <boost/regex.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/RegexUtils.hpp>
 
 #include <r/RExec.hpp>

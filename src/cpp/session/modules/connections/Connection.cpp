@@ -48,9 +48,9 @@ std::string iconData(const std::string& iconGroup,
             boost::regex("\\s"), "") + ".png";
 
       // the package did not supply an icon; see if there's one baked in
-      FilePath path = options().rResourcesPath().childPath("connections")
-         .childPath(iconGroup)
-         .childPath(iconFilename);
+      FilePath path = options().rResourcesPath().completeChildPath("connections")
+                               .completeChildPath(iconGroup)
+                               .completeChildPath(iconFilename);
       if (path.exists())
          return std::string("connections/") + iconGroup + "/" + iconFilename;
 
@@ -66,7 +66,7 @@ std::string iconData(const std::string& iconGroup,
    std::string iconData;
 
    // ensure that the icon file exists and is a small GIF, JPG, or PNG image
-   if (icon.exists() && icon.size() < kMaxIconSize &&
+   if (icon.exists() && icon.getSize() < kMaxIconSize &&
        (icon.hasExtensionLowerCase(".gif") ||
         icon.hasExtensionLowerCase(".png") ||
         icon.hasExtensionLowerCase(".jpg") ||
@@ -77,7 +77,7 @@ std::string iconData(const std::string& iconGroup,
          LOG_ERROR(error);
       else
       {
-         iconData = "data:" + icon.mimeContentType("image/png") + 
+         iconData = "data:" + icon.getMimeContentType("image/png") +
                     ";base64," + iconData;
       }
    }
@@ -191,10 +191,10 @@ Error connectionFromJson(const json::Object& connectionJson,
    // read each action
    for (const json::Value& action : actions)
    {
-      if (action.type() != json::ObjectType)
+      if (action.getType() != json::Type::OBJECT)
          continue;
       ConnectionAction act;
-      error = actionFromJson(action.get_obj(), &act);
+      error = actionFromJson(action.getObject(), &act);
       if (error)
       {
          // be fault-tolerant here (we can still use the connection even if the
@@ -208,10 +208,10 @@ Error connectionFromJson(const json::Object& connectionJson,
    // read each object type
    for (const json::Value& objectType : objectTypes)
    {
-      if (objectType.type() != json::ObjectType)
+      if (objectType.getType() != json::Type::OBJECT)
          continue;
       ConnectionObjectType type;
-      error = objectTypeFromJson(objectType.get_obj(), &type);
+      error = objectTypeFromJson(objectType.getObject(), &type);
       if (error)
       {
          LOG_ERROR(error);

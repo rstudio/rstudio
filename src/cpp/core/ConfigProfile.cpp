@@ -59,7 +59,7 @@ Error ConfigProfile::load(const FilePath& filePath)
    if (error)
    {
       std::string description = error.getProperty("description");
-      description += " in file " + filePath.absolutePath();
+      description += " in file " + filePath.getAbsolutePath();
       error.addOrUpdateProperty("description", description);
    }
 

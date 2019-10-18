@@ -20,8 +20,8 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/BoostSignals.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/RSexp.hpp>
@@ -43,7 +43,7 @@ namespace {
 
 struct SourceCppState
 {
-   bool empty() const { return errors.empty() && outputs.empty(); }
+   bool empty() const { return errors.isEmpty() && outputs.isEmpty(); }
 
    void clear()
    {
@@ -91,7 +91,7 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
 
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;
-   CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
+   CompileErrorParser errorParser = gccErrorParser(sourceFile.getParent());
    std::vector<SourceMarker> errors = errorParser(allOutput);
    sourceCppState.errors = sourceMarkersAsJson(errors);
 

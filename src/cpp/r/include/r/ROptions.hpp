@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <r/RSexp.hpp>

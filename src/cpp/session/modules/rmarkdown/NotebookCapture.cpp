@@ -62,8 +62,8 @@ bool NotebookCapture::onCondition(Condition condition,
    if (capturingConditions())
    {
       json::Array cond;
-      cond.push_back(static_cast<int>(condition));
-      cond.push_back(message);
+      cond.push_back(json::Value(static_cast<int>(condition)));
+      cond.push_back(json::Value(message));
       conditions_->push_back(cond);
       return true;
    }

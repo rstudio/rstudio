@@ -538,7 +538,7 @@ void MainWindow::onLoadFinished(bool ok)
    std::map<std::string,std::string> vars;
    vars["url"] = webView()->url().url().toStdString();
    std::ostringstream oss;
-   Error error = text::renderTemplate(options().resourcesPath().complete("html/connect.html"),
+   Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
                                       vars, oss);
    if (error)
       LOG_ERROR(error);

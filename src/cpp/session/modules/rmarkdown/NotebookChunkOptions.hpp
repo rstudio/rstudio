@@ -16,8 +16,8 @@
 #ifndef SESSION_NOTEBOOK_CHUNK_OPTIONS_HPP
 #define SESSION_NOTEBOOK_CHUNK_OPTIONS_HPP
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
  
 namespace rstudio {
