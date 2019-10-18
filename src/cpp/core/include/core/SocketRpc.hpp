@@ -18,7 +18,7 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/function.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"

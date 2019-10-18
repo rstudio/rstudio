@@ -13,8 +13,8 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #ifndef _WIN32
@@ -27,7 +27,7 @@
 #include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/Environment.hpp>
 
@@ -47,15 +47,11 @@ void constructRequest(const std::string& endpoint,
                       const json::Object& payload,
                       http::Request* pRequest)
 {
-   // serialize the payload
-   std::ostringstream oss;
-   json::write(payload, oss);
-
-   // form the request
+   // serialize the payload form the request
    pRequest->setMethod("POST");
    pRequest->setUri(endpoint);
    pRequest->setHeader("Connection", "close");
-   pRequest->setBody(oss.str());
+   pRequest->setBody(payload.write());
 }
 
 Error handleResponse(const std::string& endpoint,
@@ -77,7 +73,7 @@ Error handleResponse(const std::string& endpoint,
       *pResult = json::Value();
       return Success();
    }
-   else if (!json::parse(response.body(), pResult))
+   else if (pResult->parse(response.body()))
    {
       LOG_WARNING_MESSAGE("Received unparseable result from rserver RPC:\n" +
             endpoint + "\n" +
