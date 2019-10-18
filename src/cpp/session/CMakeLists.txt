@@ -108,6 +108,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
+   modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp

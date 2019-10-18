@@ -24,6 +24,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionDependencyList.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
@@ -498,6 +499,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["job_state"] = modules::jobs::jobState();
 
    sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
+
+   json::Object packageDependencies;
+   error = modules::dependency_list::getDependencyList(&packageDependencies);
+   if (error)
+      LOG_ERROR(error);
+   sessionInfo["package_dependencies"] = packageDependencies;
 
    // crash handler settings
    bool canModifyCrashSettings =

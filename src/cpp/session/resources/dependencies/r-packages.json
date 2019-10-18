@@ -1,0 +1,526 @@
+{
+    "packages": {
+        "DBI": {
+            "version": "0.8",
+            "location": "cran",
+            "source": false
+        },
+        "R6": {
+            "version": "2.0",
+            "location": "cran",
+            "source": false
+        },
+        "RJDBC": {
+            "version": "0.2-5",
+            "location": "cran",
+            "source": false
+        },
+        "RODBC": {
+            "version": "1.3-12",
+            "location": "cran",
+            "source": false
+        },
+        "RSQLite": {
+            "version": "2.1.0",
+            "location": "cran",
+            "source": false
+        },
+        "Rcpp": {
+            "version": "0.11.5",
+            "location": "cran",
+            "source": false
+        },
+        "base64enc": {
+            "version": "0.1-3",
+            "location": "cran",
+            "source": false
+        },
+        "crayon": {
+            "version": "1.3.4",
+            "location": "cran",
+            "source": false
+        },
+        "curl": {
+            "version": "4.2",
+            "location": "cran",
+            "source": false
+        },
+        "devtools": {
+            "version": "1.11.1",
+            "location": "cran",
+            "source": false
+        },
+        "digest": {
+            "version": "0.6",
+            "location": "cran",
+            "source": false
+        },
+        "evaluate": {
+            "version": "0.13",
+            "location": "cran",
+            "source": false
+        },
+        "glue": {
+            "version": "1.3.0",
+            "location": "cran",
+            "source": false
+        },
+        "haven": {
+            "version": "0.2.0",
+            "location": "cran",
+            "source": false
+        },
+        "highr": {
+            "version": "0.3",
+            "location": "cran",
+            "source": false
+        },
+        "htmltools": {
+            "version": "0.3.6",
+            "location": "cran",
+            "source": false
+        },
+        "htmlwidgets": {
+            "version": "1.2",
+            "location": "cran",
+            "source": true
+        },
+        "httpuv": {
+            "version": "1.3.3",
+            "location": "cran",
+            "source": false
+        },
+        "jsonlite": {
+            "version": "0.9.19",
+            "location": "cran",
+            "source": false
+        },
+        "keyring": {
+            "version": "1.1.0",
+            "location": "cran",
+            "source": true
+        },
+        "knitr": {
+            "version": "1.22",
+            "location": "cran",
+            "source": false
+        },
+        "later": {
+            "version": "0.7.2",
+            "location": "cran",
+            "source": false
+        },
+        "magrittr": {
+            "version": "1.5",
+            "location": "cran",
+            "source": false
+        },
+        "markdown": {
+            "version": "0.7",
+            "location": "cran",
+            "source": false
+        },
+        "mime": {
+            "version": "0.5",
+            "location": "cran",
+            "source": false
+        },
+        "miniUI": {
+            "version": "0.1.1",
+            "location": "cran",
+            "source": true
+        },
+        "mongolite": {
+            "version": "0.8",
+            "location": "cran",
+            "source": false
+        },
+        "odbc": {
+            "version": "1.1.6",
+            "location": "cran",
+            "source": false
+        },
+        "openssl": {
+            "version": "1.0.2",
+            "location": "cran",
+            "source": false
+        },
+        "packrat": {
+            "version": "0.4.8-1",
+            "location": "cran",
+            "source": true
+        },
+        "plumber": {
+            "version": "0.4.6",
+            "location": "cran",
+            "source": true
+        },
+        "png": {
+            "version": "0.1-7",
+            "location": "cran",
+            "source": false
+        },
+        "profvis": {
+            "version": "0.3.2",
+            "location": "cran",
+            "source": false
+        },
+        "promises": {
+            "version": "1.0.1",
+            "location": "cran",
+            "source": false
+        },
+        "r2d3": {
+            "version": "0.2.2",
+            "location": "cran",
+            "source": true
+        },
+        "rJava": {
+            "version": "0.4-15",
+            "location": "cran",
+            "source": false
+        },
+        "readr": {
+            "version": "1.1.0",
+            "location": "cran",
+            "source": false
+        },
+        "readxl": {
+            "version": "0.1.0",
+            "location": "cran",
+            "source": false
+        },
+        "renv": {
+            "version": "0.0.0",
+            "location": "embedded",
+            "source": true
+        },
+        "reticulate": {
+            "version": "1.10",
+            "location": "cran",
+            "source": false
+        },
+        "rlang": {
+            "version": "0.2.2",
+            "location": "cran",
+            "source": false
+        },
+        "rmarkdown": {
+            "version": "1.12",
+            "location": "cran",
+            "source": false
+        },
+        "roxygen2": {
+            "version": "6.0.1",
+            "location": "cran",
+            "source": false
+        },
+        "rprojroot": {
+            "version": "1.0",
+            "location": "cran",
+            "source": false
+        },
+        "rsconnect": {
+            "version": "0.8.15",
+            "location": "cran",
+            "source": false
+        },
+        "rstan": {
+            "version": "2.15.1",
+            "location": "cran",
+            "source": false
+        },
+        "rstudioapi": {
+            "version": "0.10",
+            "location": "cran",
+            "source": false
+        },
+        "shiny": {
+            "version": "1.2.0",
+            "location": "cran",
+            "source": true
+        },
+        "shinytest": {
+            "version": "1.3.1",
+            "location": "cran",
+            "source": false
+        },
+        "sourcetools": {
+            "version": "0.1.5",
+            "location": "cran",
+            "source": false
+        },
+        "stringi": {
+            "version": "0.3.0",
+            "location": "cran",
+            "source": false
+        },
+        "stringr": {
+            "version": "1.2.0",
+            "location": "cran",
+            "source": false
+        },
+        "testthat": {
+            "version": "2.0.0",
+            "location": "cran",
+            "source": false
+        },
+        "tinytex": {
+            "version": "0.16",
+            "location": "cran",
+            "source": false
+        },
+        "xfun": {
+            "version": "0.3",
+            "location": "cran",
+            "source": false
+        },
+        "xml2": {
+            "version": "1.2.0",
+            "location": "cran",
+            "source": false
+        },
+        "xtable": {
+            "version": "1.7",
+            "location": "cran",
+            "source": false
+        },
+        "yaml": {
+            "version": "2.1.5",
+            "location": "cran",
+            "source": false
+        }
+    },
+    "features": {
+        "roxygen": {
+            "description": "R Package Documentation",
+            "packages": [ 
+                "roxygen2" 
+            ]
+        },
+        "theme_conversion": {
+            "description": "Theme Conversion",
+            "packages": [ 
+                "xm2" 
+            ]
+        },
+        "r2d3": {
+            "description": "R2D3",
+            "packages": [ 
+                "htmltools", 
+                "htmlwidgets", 
+                "jsonlite", 
+                "r2d3" 
+            ]
+        },
+        "packrat": {
+            "description": "Packrat",
+            "packages": [
+                "packrat"
+            ]
+        },
+        "plumber": {
+            "description": "Plumber R APIs",
+            "packages": [ 
+                "R6", 
+                "stringi", 
+                "jsonlite", 
+                "httpuv",
+                "crayon",
+                "plumber"
+            ]
+        },
+        "renv": {
+            "description": "renv",
+            "packages": [
+                "renv"
+            ]
+        },
+        "rsconnect": {
+            "description": "Publishing",
+            "packages": [
+                "curl",
+                "jsonlite",
+                "openssl",
+                "rstudioapi",
+                "yaml",
+                "packrat",
+                "rsconnect"
+            ]
+        },
+        "rmarkdown": {
+            "description": "R Markdown",
+            "packages": [
+                "Rcpp",
+                "base64enc",
+                "digest",
+                "evaluate",
+                "glue",
+                "highr",
+                "htmltools",
+                "jsonlite",
+                "knitr",
+                "magrittr",
+                "markdown",
+                "mime",
+                "rmarkdown",
+                "rprojroot",
+                "stringi",
+                "stringr",
+                "tinytex",
+                "xfun",
+                "yaml"
+            ]
+        },
+        "shiny_addins": {
+            "description": "Shiny Add-Ins",
+            "packages": [
+                "miniUI",
+                "rstudioapi"
+            ]
+        },
+        "shiny": {
+            "description": "Shiny",
+            "packages": [
+                "Rcpp",
+                "httpuv",
+                "mime",
+                "jsonlite",
+                "xtable",
+                "digest",
+                "R6",
+                "sourcetools",
+                "htmltools",
+                "promises",
+                "crayon",
+                "rlang",
+                "later",
+                "shiny"
+            ]
+        },
+        "reticulate": {
+            "description": "Python/Reticulate",
+            "packages": [
+                "jsonlite",
+                "png",
+                "reticulate"
+            ]
+        },
+        "stan": {
+            "description": "Stan",
+            "packages": [
+                "rstan"
+            ]
+        },
+        "tinytex": {
+            "description": "TinyTeX",
+            "packages": [
+                "tinytex"
+            ]
+        },
+        "import_csv": {
+            "description": "CSV Import",
+            "packages": [
+                "readr",
+                "Rcpp"
+            ]
+        },
+        "import_sav": {
+            "description": "SPSS/SAS/Stata Import",
+            "packages": [
+                "haven",
+                "Rcpp"
+            ]
+        },
+        "import_xls": {
+            "description": "Excel Import",
+            "packages": [
+                "readxl",
+                "Rcpp"
+            ]
+        },
+        "import_xml": {
+            "description": "XML Import",
+            "packages": [
+                "xml2"
+            ]
+        },
+        "import_json": {
+            "description": "JSON Import",
+            "packages": [
+                "jsonlite"
+            ]
+        },
+        "import_jdbc": {
+            "description": "JDBC Import",
+            "packages": [
+                "RJDBC",
+                "rJava"
+            ]
+        },
+        "import_odbc": {
+            "description": "ODBC Import",
+            "packages": [
+                "RODBC"
+            ]
+        },
+        "import_mongo": {
+            "description": "Mongo DB Import",
+            "packages": [
+                "mogolite",
+                "jsonlite"
+            ]
+        },
+        "profvis": {
+            "description": "Visual Profiling",
+            "packages": [
+                "stringr",
+                "jsonlite",
+                "htmltools",
+                "yaml",
+                "htmlwidgets",
+                "profvis"
+            ]
+        },
+        "keyring": {
+            "description": "Secret Management",
+            "packages": [
+                "keyring"
+            ]
+        },
+        "odbc": {
+            "description": "ODBC Connections",
+            "packages": [
+                "odbc",
+                "rstudioapi"
+            ]
+        },
+        "shinytest": {
+            "description": "Shiny Tests",
+            "packages": [
+                "shinytest"
+            ]
+        },
+        "testthat": {
+            "description": "R Unit Testing",
+            "packages": [
+                "testthat",
+                "devtools"
+            ]
+        },
+        "dbi": {
+            "description": "Database Interface",
+            "packages": [
+                "DBI"
+            ]
+        },
+        "rsqlite": {
+            "description": "RSQLite",
+            "packages": [
+                "DBI",
+                "RSQLite"
+            ]
+        }
+    }
+}
+
