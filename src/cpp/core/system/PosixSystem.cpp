@@ -2406,7 +2406,7 @@ Error terminateChildProcesses(pid_t pid,
          // suppress that particular error to prevent bogus error states.
          Error error = systemError(errno, ERROR_LOCATION);
 #ifdef __APPLE__
-         if (error != boost::system::errc::no_such_process)
+         if (error != systemError(boost::system::errc::no_such_process, ErrorLocation()))
 #endif
             LOG_ERROR(error);
       }
