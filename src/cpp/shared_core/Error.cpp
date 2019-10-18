@@ -247,15 +247,18 @@ bool Error::operator!() const
 
 bool Error::operator==(const Error& in_other) const
 {
-   return (((m_impl == nullptr) || (m_impl->Code == 0)) &&
-         ((in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0))) ||
-      ((m_impl->Code == in_other.m_impl->Code) && (m_impl->Name == in_other.m_impl->Name));
+   if ((m_impl == nullptr) || (m_impl->Code == 0))
+      return (in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0);
+   if ((in_other.m_impl == nullptr) || (in_other.m_impl->Code == 0))
+      return false; // This error is neither empty nor 0.
+   return (m_impl->Code == in_other.m_impl->Code) && (m_impl->Name == in_other.m_impl->Name);
 }
 
 bool Error::operator==(const boost::system::error_code& in_ec) const
 {
-   return (((m_impl == nullptr) || (m_impl->Code == 0)) && (in_ec.value() == 0)) ||
-      ((m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name()));
+   if ((m_impl == nullptr) || (m_impl->Code == 0))
+      return in_ec.value() == 0;
+   return (m_impl->Code == in_ec.value()) && (m_impl->Name == in_ec.category().name());
 }
 
 bool Error::operator!=(const rstudio::core::Error& in_other) const
