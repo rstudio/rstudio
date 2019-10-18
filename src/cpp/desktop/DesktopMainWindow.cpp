@@ -169,6 +169,10 @@ QString MainWindow::getSumatraPdfExePath()
 
 void MainWindow::launchSession(bool reload)
 {
+   // we're about to start another session, so clear the workbench init flag
+   // (will get set again once the new session has initialized the workbench)
+   workbenchInitialized_ = false;
+
    Error error = pSessionLauncher_->launchNextSession(reload);
    if (error)
    {
@@ -210,6 +214,11 @@ void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
    pAppLauncher_->launchRStudio(args);
 }
 
+bool MainWindow::workbenchInitialized()
+{
+    return workbenchInitialized_;
+}
+
 void MainWindow::onWorkbenchInitialized()
 {
    //QTimer::singleShot(300, this, SLOT(resetMargins()));
@@ -218,6 +227,7 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
    geometrySaved_ = false;
+   workbenchInitialized_ = true;
 
    webPage()->runJavaScript(
             QStringLiteral("window.desktopHooks.getActiveProjectDir()"),
@@ -520,7 +530,7 @@ void MainWindow::onUrlChanged(QUrl url)
 
 void MainWindow::onLoadFinished(bool ok)
 {
-   if (ok)
+   if (ok || pRemoteSessionLauncher_)
       return;
 
    RS_CALL_ONCE();

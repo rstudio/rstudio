@@ -125,7 +125,9 @@ public:
    {
    }
 
-   void launchFirstSession();
+   void launchFirstSession(const core::FilePath& installPath,
+                           bool devMode,
+                           const QStringList& arguments);
 
    const SessionServer& sessionServer() const { return server_; }
 
@@ -135,6 +137,8 @@ public:
 
 public Q_SLOTS:
    void onCookieAdded(const QNetworkCookie& cookie);
+   void onLaunchFirstSession();
+   void onLaunchError(QString message);
 
 private:
    core::Error loadSession();

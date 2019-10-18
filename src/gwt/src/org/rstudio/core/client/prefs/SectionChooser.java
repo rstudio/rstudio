@@ -59,14 +59,14 @@ import java.util.Set;
 class SectionChooser extends SimplePanel implements
                                                 HasSelectionHandlers<Integer>
 {
-   private class ClickableVerticalPanel extends VerticalPanel
+   private static class ClickableVerticalPanel extends VerticalPanel
    {
-      public HandlerRegistration addClickHandler(ClickHandler handler)
+      HandlerRegistration addClickHandler(ClickHandler handler)
       {
          return addDomHandler(handler, ClickEvent.getType());
       }
 
-      public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
+      HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
       {
          return addDomHandler(handler, KeyDownEvent.getType());
       }
@@ -108,7 +108,8 @@ class SectionChooser extends SimplePanel implements
       panel.getElement().setId(sectionTabId.getAriaValue());
 
       panel.addClickHandler(event -> select(inner_.getWidgetIndex(panel)));
-      panel.addKeyDownHandler(event -> {
+      panel.addKeyDownHandler(event ->
+      {
          switch(event.getNativeKeyCode())
          {
             case KeyCodes.KEY_UP:
@@ -285,5 +286,5 @@ class SectionChooser extends SimplePanel implements
    private Integer selectedIndex_;
    private final VerticalPanel inner_ = new VerticalPanel();
    private static final PreferencesDialogBaseResources res_ = PreferencesDialogBaseResources.INSTANCE;
-   private Set<Id> tabIds_ = new LinkedHashSet<>();
+   private final Set<Id> tabIds_ = new LinkedHashSet<>();
 }

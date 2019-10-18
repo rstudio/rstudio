@@ -105,8 +105,9 @@ public class WarningBar extends Composite
 
    public void showLicenseButton(boolean show)
    {
-      // never show the license button in server mode
-      if (Desktop.hasDesktopFrame())
+      // never show the license button in server mode or remote desktop mode
+      // license button should only be visible when error is purely the result of a local license problem
+      if (Desktop.isDesktop())
          moreButton_.setVisible(show);
    }
 

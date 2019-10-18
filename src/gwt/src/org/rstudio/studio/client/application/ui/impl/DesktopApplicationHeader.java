@@ -139,6 +139,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             {
                overlay_.addRVersionsToolbar(DesktopApplicationHeader.this);
                overlay_.addSessionsToolbar(DesktopApplicationHeader.this);
+               addQuitSessionButton(commands);
             }
 
             new JSObjectStateValue(
@@ -246,6 +247,16 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          addRightCommand(signOutButton);
          addRightCommandSeparator();
       }
+   }
+
+   private void addQuitSessionButton(Commands commands)
+   {
+      if (session_.getSessionInfo().getAllowFullUI())
+      {
+         addRightCommandSeparator();
+         addRightCommand(commands.quitSession().createToolbarButton());
+      }
+
    }
 
    interface Resources extends ClientBundle

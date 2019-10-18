@@ -92,6 +92,12 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       {
          Integer index = selectionEvent.getSelectedItem();
 
+         // SectionChooser is first focusable control in the modal dialog, and it
+         // uses a roving tabindex to determine the focused section tab, so notify dialog
+         // when focus leaves or arrives at first tab
+         if ((currentIndex_ != null && currentIndex_ == 0) || index == 0)
+            refreshFocusableElements();
+
          if (currentIndex_ != null)
             setPaneVisibility(panes_[currentIndex_], false);
 
