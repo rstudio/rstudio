@@ -676,7 +676,7 @@ SEXP rs_getLocalThemeDir()
       themeDir = getLocalCustomThemePath();
 
    r::sexp::Protect protect;
-   return r::sexp::create(getLocalCustomThemePath().getAbsolutePath(), &protect);
+   return r::sexp::create(themeDir.getAbsolutePath(), &protect);
 }
 
 SEXP rs_getLocalThemePath(SEXP themeFileSEXP)
