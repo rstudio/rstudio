@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -30,7 +32,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -114,6 +115,20 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_.addLeftWidget(regexCheckbox_);
       regexCheckboxLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(regexCheckboxLabel_);
+      regexCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               if (replaceMode_)
+               {
+                  addReplaceMatches(new String());
+                  if (regexCheckbox_.getValue())
+                     eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+                  else
+                     addReplaceMatches(replaceTextBox_.getValue());
+            }
+         }
+      });
 
       useGitIgnore_ = new CheckBox();
       useGitIgnoreLabel_ =
@@ -138,10 +153,8 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
-            Debug.logToConsole("This is a test");
             if (regexCheckbox_.getValue())
             {
-               Debug.logToConsole("regex checkbox " + replaceTextBox_.getValue());
                eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
             }
             else

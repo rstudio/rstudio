@@ -139,8 +139,7 @@ public class FindOutputPresenter extends BasePresenter
          {
             view_.setStopReplaceButtonVisible(true);
 
-            Debug.logToConsole("view_.getReplaceText");
-            Debug.logToConsole(view_.getReplaceText());
+            Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
             server_.completeReplace(dialogState_.getQuery(),
                                     view_.getReplaceText(),
                                     view_.isReplaceRegex(),
@@ -151,7 +150,7 @@ public class FindOutputPresenter extends BasePresenter
                                        public void onResponseReceived(String handle)
                                        {
                                           view_.setStopReplaceButtonVisible(false);
-                                          Debug.logToConsole("Response received");
+                                          Debug.logToConsole("Complete replace esponse received");
                                           Debug.logToConsole(handle);
                                        }
                                     });
@@ -182,6 +181,7 @@ public class FindOutputPresenter extends BasePresenter
                                       public void onResponseReceived(String handle)
                                       {
                                          Debug.logToConsole("Preview replace response received");
+                                         Debug.logToConsole(handle);
                                       }
                                    });
          }
