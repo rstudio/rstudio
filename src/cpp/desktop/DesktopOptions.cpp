@@ -437,7 +437,7 @@ FilePath Options::resourcesPath() const
 #ifdef RSTUDIO_PACKAGE_BUILD
       // release configuration: the 'resources' folder is
       // part of the supporting files folder
-      resourcesPath_ = supportingFilePath().complete("resources");
+      resourcesPath_ = supportingFilePath().completePath("resources");
 #else
       // developer configuration: the 'resources' folder is
       // a sibling of the RStudio executable
