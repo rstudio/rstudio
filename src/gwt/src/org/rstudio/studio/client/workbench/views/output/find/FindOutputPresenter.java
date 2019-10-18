@@ -172,7 +172,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
-            server_.previewReplace(dialogState.getQuery(),
+            server_.previewReplace(dialogState_.getQuery(),
                                    view_.getReplaceText(),
                                    view_.isReplaceRegex(),
                                    view_.useGitIgnore(),
@@ -182,7 +182,6 @@ public class FindOutputPresenter extends BasePresenter
                                       public void onResponseReceived(String handle)
                                       {
                                          Debug.logToConsole("Preview replace response received");
-                                         Debug.logToConsole(string);
                                       }
                                    });
          }
