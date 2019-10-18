@@ -62,7 +62,7 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
    if (!core::system::getenv("RSTUDIO_SESSION_RPC_DEBUG").empty())
    {
       std::cout << "<<<" << std::endl;
-      core::json::writeFormatted(response.getRawResponse(), std::cout);
+      response.getRawResponse().writeFormatted(std::cout);
       std::cout << std::endl;
    }
 
@@ -72,9 +72,9 @@ SEXP rs_invokeServerRpc(SEXP name, SEXP args)
    result = r::sexp::create(rpcResult, &protect);
 
    // log an R error if the RPC returns an error
-   if (response.error().type() == json::ObjectType)
+   if (response.error().isObject())
    {
-      r::exec::error(json::write(response.error()));
+      r::exec::error(response.error().write());
    }
 
    return result;

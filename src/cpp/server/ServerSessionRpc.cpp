@@ -18,7 +18,7 @@
 #include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <server_core/SecureKeyFile.hpp>
 #include <core/SocketRpc.hpp>
 #include <core/system/Crypto.hpp>
@@ -139,8 +139,8 @@ void validationHandler(
       int uid = pConnection->request().remoteUid();
       if (uid != -1)
       {
-         core::system::user::User user;
-         Error error = core::system::user::userFromId(uid, &user);
+         core::system::User user;
+         Error error = core::system::User::getUserFromIdentifier(uid, user);
          if (error)
          {
             LOG_WARNING_MESSAGE("Couldn't determine user for Server RPC request");
@@ -149,7 +149,7 @@ void validationHandler(
             return;
          }
 
-         username = user.username;
+         username = user.getUsername();
       }
    }
 
@@ -297,7 +297,7 @@ Error initialize()
    // inject the shared secret into the session
    sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
 
-   bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).empty();
+   bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).isEmpty();
    bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
 
    if (!hasSharedStorage || !projectSharingEnabled)

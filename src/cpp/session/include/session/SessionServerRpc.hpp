@@ -16,8 +16,8 @@
 #ifndef SESSION_SERVER_RPC_HPP
 #define SESSION_SERVER_RPC_HPP
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/SocketRpc.hpp>
 
 namespace rstudio {
