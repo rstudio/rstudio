@@ -43,7 +43,7 @@ public interface FindInFilesServerOperations
                         String replaceString,
                         boolean regex,
                         boolean gitIgnore,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<String> requestCallback);
 
    void stopReplace(ServerRequestCallback<Void> requestCallback);
 }

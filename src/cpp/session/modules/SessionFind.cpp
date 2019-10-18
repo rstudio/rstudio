@@ -325,9 +325,11 @@ private:
 
          if (replace)
          {
-            boost::regex_replace(matchedString,
+            std::string newString;
+            newString = boost::regex_replace(matchedString,
                                  boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?"),
                                  *pReplace);
+            LOG_ERROR_MESSAGE(newString);
          }
       }
       
@@ -600,6 +602,19 @@ core::Error clearFindResults(const json::JsonRpcRequest& request,
 core::Error previewReplace(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   std::string searchString;
+   std::string replaceString;
+   bool replaceRegex, useGitIgnore;
+
+   LOG_ERROR_MESSAGE(std::string("previewReplace"));
+   Error error = json::readParams(request.params,
+                                  &searchString,
+                                  &replaceString,
+                                  &replaceRegex,
+                                  &useGitIgnore);
+   if (error)
+      return error;
+
    return Success();
 }
 
@@ -614,7 +629,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    std::string directory;
    json::Array filePatterns;
 
-  /*
+
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &replaceString,
@@ -713,7 +728,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                              asRegex);
    findResults().onReplaceBegin(replaceString);
    pResponse->setResult(ptrGrepOp->handle());
-*/
+
    return Success();
 }
 

@@ -4373,7 +4373,7 @@ public class RemoteServer implements Server
                               String replaceString,
                               boolean regex,
                               boolean gitIgnore,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
@@ -4381,7 +4381,7 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(regex));
       params.set(3, JSONBoolean.getInstance(gitIgnore));
 
-      sendRequest(RPC_SCOPE, "preview_replace", requestCallback);
+      sendRequest(RPC_SCOPE, "preview_replace", params, requestCallback);
    }
 
    @Override
@@ -4389,7 +4389,7 @@ public class RemoteServer implements Server
                                String replaceString,
                                boolean regex,
                                boolean gitIgnore,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
@@ -4397,7 +4397,7 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(regex));
       params.set(3, JSONBoolean.getInstance(gitIgnore));
 
-      sendRequest(RPC_SCOPE, "complete_replace", requestCallback);
+      sendRequest(RPC_SCOPE, "complete_replace", params, requestCallback);
    }
 
    @Override

@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -37,6 +38,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -50,10 +52,12 @@ public class FindOutputPane extends WorkbenchPane
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
-   public FindOutputPane(Commands commands)
+   public FindOutputPane(Commands commands,
+                         EventBus eventBus)
    {
       super("Find Results");
       commands_ = commands;
+      eventBus_ = eventBus;
       ensureWidget();
    }
 
@@ -134,8 +138,12 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
+            Debug.logToConsole("This is a test");
             if (regexCheckbox_.getValue())
-               replaceTextBox_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            {
+               Debug.logToConsole("regex checkbox " + replaceTextBox_.getValue());
+               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            }
             else
             {
                if (!replaceMode_)
@@ -421,6 +429,7 @@ public class FindOutputPane extends WorkbenchPane
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
+   private final EventBus eventBus_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
    private SimplePanel container_;

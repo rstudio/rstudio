@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -137,12 +138,23 @@ public class FindOutputPresenter extends BasePresenter
          public void onClick(ClickEvent event)
          {
             view_.setStopReplaceButtonVisible(true);
-            FindInFilesState state = session.getSessionInfo().getFindInFilesState();
-            server_.completeReplace(state.getInput(),
+
+            Debug.logToConsole("view_.getReplaceText");
+            Debug.logToConsole(view_.getReplaceText());
+            server_.completeReplace(dialogState_.getQuery(),
                                     view_.getReplaceText(),
                                     view_.isReplaceRegex(),
                                     view_.useGitIgnore(),
-                                    new VoidServerRequestCallback());
+                                    new SimpleRequestCallback<String>()
+                                    {
+                                       @Override
+                                       public void onResponseReceived(String handle)
+                                       {
+                                          view_.setStopReplaceButtonVisible(false);
+                                          Debug.logToConsole("Response received");
+                                          Debug.logToConsole(handle);
+                                       }
+                                    });
          }
       });
 
@@ -160,11 +172,19 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
-            server_.previewReplace(session.getSessionInfo().getFindInFilesState().getInput(),
+            server_.previewReplace(dialogState.getQuery(),
                                    view_.getReplaceText(),
                                    view_.isReplaceRegex(),
                                    view_.useGitIgnore(),
-                                   new VoidServerRequestCallback());
+                                   new SimpleRequestCallback<String>()
+                                   {
+                                      @Override
+                                      public void onResponseReceived(String handle)
+                                      {
+                                         Debug.logToConsole("Preview replace response received");
+                                         Debug.logToConsole(string);
+                                      }
+                                   });
          }
       });
 
