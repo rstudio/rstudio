@@ -70,7 +70,10 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
-      viewReplaceButton_ = new ToolbarButton("Replace", "Replace", null);
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+
+      viewReplaceButton_ = new ToolbarButton("Replace", "Replace",
+                                             resources.collapseReplaceIcon());
       toolbar.addRightWidget(viewReplaceButton_);
       viewReplaceButton_.addClickHandler(new ClickHandler()
       {
@@ -78,9 +81,13 @@ public class FindOutputPane extends WorkbenchPane
          public void onClick(ClickEvent event)
          {
             toggleReplaceToolbar();
+            toggleChevron();
             if (!replaceTextBox_.getValue().isEmpty() &&
                 replaceToolbar_.isVisible())
+            {
+               addReplaceMatches(new String());
                addReplaceMatches(replaceTextBox_.getValue());
+            }
          }
       });
 
@@ -232,6 +239,15 @@ public class FindOutputPane extends WorkbenchPane
           !replaceTextBox_.getValue().isEmpty())
          toggleReplaceMode();
       setSecondaryToolbarVisible(!isToolbarVisible);
+   }
+
+   private void toggleChevron()
+   {
+     FindOutputResources resources = GWT.create(FindOutputResources.class);
+     if (secondaryToolbar_.isVisible())
+        viewReplaceButton_.setLeftImage(resources.collapseReplaceIcon());
+     else
+        viewReplaceButton_.setLeftImage(resources.expandReplaceIcon());
    }
 
    private void toggleReplaceMode()

@@ -16,9 +16,22 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface FindOutputResources extends ClientBundle
 {
+   @Source("ExpandReplaceIcon_2x.png")
+   ImageResource expandReplaceIcon2x();
+
+   @Source("CollapseReplaceIcon_2x.png")
+   ImageResource collapseReplaceIcon2x();
+
+   @Source("ExpandReplaceIcon.png")
+   ImageResource expandReplaceIcon();
+
+   @Source("CollapseReplaceIcon.png")
+   ImageResource collapseReplaceIcon();
+
    public interface Styles extends CssResource
    {
       String findOutput();
