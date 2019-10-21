@@ -82,11 +82,21 @@ public class FindOutputPane extends WorkbenchPane
          {
             toggleReplaceToolbar();
             toggleChevron();
-            if (!replaceTextBox_.getValue().isEmpty() &&
-                replaceToolbar_.isVisible())
+            if (replaceMode_ ||
+                !replaceTextBox_.getValue().isEmpty())
             {
-               addReplaceMatches(new String());
-               addReplaceMatches(replaceTextBox_.getValue());
+               if (secondaryToolbar_.isVisible())
+               {
+                  toggleReplaceMode();
+                  addReplaceMatches(replaceTextBox_.getValue());
+               }
+               else
+               {
+                  if (replaceMode_)
+                     toggleReplaceMode();
+                  else if (!replaceTextBox_.getValue().isEmpty())
+                     addReplaceMatches(new String());
+               }
             }
          }
       });
@@ -235,9 +245,6 @@ public class FindOutputPane extends WorkbenchPane
    private void toggleReplaceToolbar()
    {
       boolean isToolbarVisible =  secondaryToolbar_.isVisible();
-      if (isToolbarVisible ||
-          !replaceTextBox_.getValue().isEmpty())
-         toggleReplaceMode();
       setSecondaryToolbarVisible(!isToolbarVisible);
    }
 
