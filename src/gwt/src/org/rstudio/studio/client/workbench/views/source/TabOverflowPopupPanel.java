@@ -60,7 +60,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    {
       public MenuKeyHandler(BaseMenuBar menu)
       {
-         menu_ = menu;
+         menuBar_ = menu;
       }
 
       public void onKeyDown(KeyDownEvent event)
@@ -72,7 +72,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
                event.preventDefault();
                event.stopPropagation();
 
-               ArrayList<MenuItem> items = menu_.getVisibleItems();
+               ArrayList<MenuItem> items = menuBar_.getVisibleItems();
 
                if (items.size() == 0)
                   return;
@@ -81,24 +81,24 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
                int index = up ? items.size() + 1 : -1;
 
-               MenuItem selectedItem = menu_.getSelectedItem();
+               MenuItem selectedItem = menuBar_.getSelectedItem();
                if (selectedItem != null && items.contains(selectedItem))
                   index = items.indexOf(selectedItem);
 
                index = (index + (up ? -1 : 1) + items.size()) % items.size();
 
-               menu_.selectItem(items.get(index));
+               menuBar_.selectItem(items.get(index));
                break;
             case KeyCodes.KEY_ENTER:
                event.preventDefault();
                event.stopPropagation();
 
-               MenuItem selected = menu_.getSelectedItem();
+               MenuItem selected = menuBar_.getSelectedItem();
                if (selected != null && selected.isVisible())
                   selected.getScheduledCommand().execute();
                else
                {
-                  ArrayList<MenuItem> visibleItems = menu_.getVisibleItems();
+                  ArrayList<MenuItem> visibleItems = menuBar_.getVisibleItems();
                   if (visibleItems.size() == 1)
                      visibleItems.get(0).getScheduledCommand().execute();
                }
@@ -106,7 +106,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
          }
       }
 
-      private final BaseMenuBar menu_;
+      private final BaseMenuBar menuBar_;
    }
 
    public TabOverflowPopupPanel()
@@ -121,15 +121,15 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       search_.getElement().getStyle().setMarginRight(0, Unit.PX);
       dockPanel.add(search_, DockPanel.NORTH);
 
-      menu_ = new DocsMenu();
-      menu_.setOwnerPopupPanel(this);
-      menu_.setWidth("100%");
-      dockPanel.add(menu_, DockPanel.CENTER);
+      menuBar_ = new DocsMenu();
+      ((DocsMenu)menuBar_).setOwnerPopupPanel(this);
+      menuBar_.setWidth("100%");
+      dockPanel.add(menuBar_, DockPanel.CENTER);
       setWidget(dockPanel);
 
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
-      addDomHandler(new MenuKeyHandler(menu_), KeyDownEvent.getType());
+      addDomHandler(new MenuKeyHandler(menuBar_), KeyDownEvent.getType());
       
       addAttachHandler(new AttachEvent.Handler()
       {
@@ -189,8 +189,8 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
             search_.setText("", true);
-            menu_.filter(null);
-            menu_.selectItem(null);
+            ((DocsMenu)menuBar_).filter(null);
+            menuBar_.selectItem(null);
          }
       }, CloseEvent.getType());
    }
@@ -198,7 +198,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    public void onValueChange(ValueChangeEvent<String> event)
    {
       String value = event.getValue();
-      menu_.filter(value);
+      ((DocsMenu)menuBar_).filter(value);
    }
 
    @Override
@@ -214,7 +214,6 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       });
    }
 
-   private final DocsMenu menu_;
    private final SearchWidget search_;
    private HandlerRegistration nativePreviewHandler_;
    private Element lastFocusedElement_;

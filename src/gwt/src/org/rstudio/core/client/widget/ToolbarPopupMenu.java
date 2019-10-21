@@ -82,10 +82,10 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       super.onUnload();
       menuBar_.selectItem(null);
    }
-   
+
    public void selectFirst()
    {
-      menuBar_.selectFirst();
+      ((ToolbarMenuBar)menuBar_).selectFirst();
    }
 
    public void selectItem(MenuItem menuItem)
@@ -118,7 +118,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       if (command.isEnabled())
          addItem(command.createMenuItem(false), popup);
    }
-   
+
    public void setAutoOpen(boolean autoOpen)
    {
       menuBar_.setAutoOpen(autoOpen);
@@ -172,7 +172,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return menuBar_.getItemCount() ;
    }
 
-   public List<MenuItem> getMenuItems() { return menuBar_.getMenuItems(); }
+   public List<MenuItem> getMenuItems() { return ((ToolbarMenuBar)menuBar_).getMenuItems(); }
 
    public void focus()
    {
@@ -303,7 +303,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
          }
          return -1;
       }
-      
+
       private void moveSelectionFwd(int numElements)
       {
          selectItem(getSelectedIndex() + numElements);
@@ -349,7 +349,6 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return tableNode.<Element>cast();
       
    }
-   
-   protected ToolbarMenuBar menuBar_;
+
    private ToolbarPopupMenu parent_;
 }

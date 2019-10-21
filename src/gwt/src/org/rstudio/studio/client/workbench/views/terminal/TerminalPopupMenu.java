@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -44,6 +45,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 {
    public TerminalPopupMenu(TerminalList terminals)
    {
+      super();
       RStudioGinjector.INSTANCE.injectMembers(this);
       terminals_ = terminals;
    }
