@@ -40,7 +40,7 @@ SEXP rs_packageDependencies()
    Error error = getDependencyList(&packageList);
    if (error)
    {
-      r::exec::error(error.summary());
+      r::exec::error(error.getSummary());
       return R_NilValue;
    }
 
@@ -51,16 +51,16 @@ SEXP rs_packageDependencies()
    {
       // Read each field; we ship this JSON file so can reasonably expect it will be well-formed
       // (we will just bail generically below if it isn't)
-      for (const auto& it: packageList["packages"].get_obj())
+      for (const auto& it: packageList["packages"].getObject())
       {
           // The map key is the name of the package
-          name.push_back(it.name());
+          name.push_back(it.getName());
 
           // The value object forms the rest of the package metadata
-          json::Object pkg = it.value().get_obj();
-          version.push_back(pkg["version"].get_str());
-          location.push_back(pkg["location"].get_str());
-          source.push_back(pkg["source"].get_bool());
+          json::Object pkg = it.getValue().getObject();
+          version.push_back(pkg["version"].getString());
+          location.push_back(pkg["location"].getString());
+          source.push_back(pkg["source"].getBool());
       }
    }
    catch (...)
@@ -79,7 +79,7 @@ SEXP rs_packageDependencies()
    error = frame.call(&packageFrame, &protect);
    if (error)
    {
-       r::exec::error(error.summary());
+       r::exec::error(error.getSummary());
    }
 
    return packageFrame;
@@ -92,18 +92,19 @@ Error getDependencyList(json::Object *pList)
    // Get the contents of the dependency list JSON database (shipped in our resources folder)
    std::string contents;
    Error error = readStringFromFile(
-         options().rResourcesPath().complete("dependencies").complete("r-packages.json"),
+         options().rResourcesPath().completeChildPath("dependencies")
+                                   .completeChildPath("r-packages.json"),
          &contents);
    if (error)
       return error;
 
    // Parse and ensure we got an object
    json::Value val;
-   error = json::parse(contents, ERROR_LOCATION, &val);
+   error = val.parse(contents);
    if (error)
       return error;
 
-   if (val.type() != json::ObjectType)
+   if (val.getType() != json::Type::OBJECT)
    {
       // It's unlikely to parse successfully and not get an object, but avoid throwing by bailing if
       // this occurs.
@@ -111,7 +112,7 @@ Error getDependencyList(json::Object *pList)
    }
 
    // Return the parsed dependency list.
-   *pList = val.get_obj();
+   *pList = val.getObject();
    return Success();
 }
 

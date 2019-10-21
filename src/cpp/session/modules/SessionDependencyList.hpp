@@ -17,10 +17,10 @@
 #define SESSION_DEPENDENCY_LIST_HPP
 
 #include <string>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
-namespace core {
+namespace shared_core {
    class Error;
 }
 }
