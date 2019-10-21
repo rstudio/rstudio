@@ -17,7 +17,7 @@
 
 #include <ostream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -150,7 +150,7 @@ Error metricFromJson(const json::Object& multiMetricJson,
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
       MetricData dataItem;
-      const json::Object& valueObj = value.get_obj();
+      const json::Object& valueObj = value.getObject();
       Error error = json::readObject(valueObj,
                                      "name", &dataItem.name,
                                      "value", &dataItem.value);

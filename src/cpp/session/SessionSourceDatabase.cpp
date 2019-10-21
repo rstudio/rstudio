@@ -25,8 +25,8 @@
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Hash.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
@@ -89,12 +89,12 @@ struct PropertiesDatabase
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
-   pDatabase->path = module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/prop");
+   pDatabase->path = module_context::scopedScratchPath().completePath(kSessionSourceDatabasePrefix "/prop");
    Error error = pDatabase->path.ensureDirectory();
    if (error)
       return error;
 
-   pDatabase->indexFile = pDatabase->path.complete("INDEX");
+   pDatabase->indexFile = pDatabase->path.completePath("INDEX");
 
    if (pDatabase->indexFile.exists())
       return readStringMapFromFile(pDatabase->indexFile, &(pDatabase->index));
@@ -119,16 +119,14 @@ Error putProperties(const std::string& path, const json::Object& properties)
    if (propertiesFile.empty())
    {
       FilePath propFile = file_utils::uniqueFilePath(propertiesDB.path);
-      propertiesFile = propFile.filename();
+      propertiesFile = propFile.getFilename();
       propertiesDB.index[escapedPath] = propertiesFile;
       updateIndex = true;
    }
 
    // write the file
-   std::ostringstream ostr ;
-   json::writeFormatted(properties, ostr);
-   FilePath propertiesFilePath = propertiesDB.path.complete(propertiesFile);
-   error = writeStringToFile(propertiesFilePath, ostr.str());
+   FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
+   error = writeStringToFile(propertiesFilePath, properties.writeFormatted());
    if (error)
       return error;
 
@@ -161,7 +159,7 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // read the properties file
    std::string contents ;
-   FilePath propertiesFilePath = propertiesDB.path.complete(propertiesFile);
+   FilePath propertiesFilePath = propertiesDB.path.completePath(propertiesFile);
    error = readStringFromFile(propertiesFilePath, &contents,
                               options().sourceLineEnding());
    if (error)
@@ -169,12 +167,12 @@ Error getProperties(const std::string& path, json::Object* pProperties)
 
    // parse the json
    json::Value value;
-   if ( !json::parse(contents, &value) )
+   if ( value.parse(contents) )
       return systemError(boost::system::errc::bad_message, ERROR_LOCATION);
 
    // return it
    if (json::isType<json::Object>(value))
-      *pProperties = value.get_value<json::Object>();
+      *pProperties = value.getValue<json::Object>();
    return Success();
 }
 
@@ -192,7 +190,7 @@ json::Value pathToProjectPath(const std::string& path)
    // return relative path if we are within the project directory
    FilePath filePath = module_context::resolveAliasedPath(path);
    if (filePath.isWithin(projectContext.directory()))
-      return filePath.relativePath(projectContext.directory());
+      return json::Value(filePath.getRelativePath(projectContext.directory()));
    else
       return json::Value();
 }
@@ -205,13 +203,13 @@ std::string pathFromProjectPath(json::Value projPathJson)
       return std::string();
 
    // no proj path
-   std::string projPath = !projPathJson.is_null() ? projPathJson.get_str() :
+   std::string projPath = !projPathJson.isNull() ? projPathJson.getString() :
                                                     std::string();
    if (projPath.empty())
       return std::string();
 
    // interpret path relative to project directory
-   FilePath filePath = projectContext.directory().childPath(projPath);
+   FilePath filePath = projectContext.directory().completeChildPath(projPath);
    if (filePath.exists())
       return module_context::createAliasedPath(filePath);
    else
@@ -231,12 +229,12 @@ Error attemptContentsMigration(json::Object& propertiesJson,
    
    // if the contents string is empty, bail (no need to migrate empty document;
    // also signals that an earlier migration occurred)
-   std::string contents = contentsJson.get_str();
+   std::string contents = contentsJson.getString();
    if (contents.empty())
       return Success();
    
    // if we already have a contents file, bail (migration already occurred)
-   FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+   FilePath contentsPath(propertiesPath.getAbsolutePath() + kContentsSuffix);
    if (contentsPath.exists())
       return Success();
    
@@ -297,7 +295,7 @@ SourceDocument::SourceDocument(const std::string& type)
 {
    FilePath srcDBPath = source_database::path();
    FilePath docPath = file_utils::uniqueFilePath(srcDBPath);
-   id_ = docPath.filename();
+   id_ = docPath.getFilename();
    type_ = type;
    setContents("");
    dirty_ = false;
@@ -310,12 +308,12 @@ SourceDocument::SourceDocument(const std::string& type)
 
 std::string SourceDocument::getProperty(const std::string& name) const
 {
-   json::Object::iterator it = properties_.find(name);
+   json::Object::Iterator it = properties_.find(name);
    if (it != properties_.end())
    {
-      json::Value valueJson = (*it).value();
+      json::Value valueJson = (*it).getValue();
       if (json::isType<std::string>(valueJson))
-         return valueJson.get_str();
+         return valueJson.getString();
       else
          return "";
    }
@@ -356,7 +354,7 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    // update path and contents
    path_ = path;
    setContents(contents);
-   lastKnownWriteTime_ = docPath.lastWriteTime();
+   lastKnownWriteTime_ = docPath.getLastWriteTime();
 
    // rewind the last content update to the file's write time
    lastContentUpdate_ = lastKnownWriteTime_;
@@ -368,7 +366,7 @@ Error SourceDocument::contentsMatchDisk(bool *pMatches)
 {
    *pMatches = false;
    FilePath docPath = module_context::resolveAliasedPath(path());
-   if (docPath.exists() && docPath.size() <= (1024*1024))
+   if (docPath.exists() && docPath.getSize() <= (1024*1024))
    {
       std::string contents;
       Error error = module_context::readAndDecodeFile(docPath,
@@ -436,7 +434,7 @@ void SourceDocument::checkForExternalEdit(std::time_t* pTime)
    if (!filePath.exists())
       return;
 
-   std::time_t newTime = filePath.lastWriteTime();
+   std::time_t newTime = filePath.getLastWriteTime();
    if (newTime != lastKnownWriteTime_)
       *pTime = newTime;
 }
@@ -451,7 +449,7 @@ void SourceDocument::updateLastKnownWriteTime()
    if (!filePath.exists())
       return;
 
-   lastKnownWriteTime_ = filePath.lastWriteTime();
+   lastKnownWriteTime_ = filePath.getLastWriteTime();
 }
 
 void SourceDocument::setLastKnownWriteTime(std::time_t time)
@@ -471,9 +469,9 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
    {
       json::Object& docJson = *pDocJson;
 
-      id_ = docJson["id"].get_str();
+      id_ = docJson["id"].getString();
       json::Value path = docJson["path"];
-      path_ = !path.is_null() ? path.get_str() : std::string();
+      path_ = !path.isNull() ? path.getString() : std::string();
 
       // if we have a project_path field then it supercedes the path field
       // (since it would correctly survive a moved project folder)
@@ -482,41 +480,41 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
          path_ = projPath;
 
       json::Value type = docJson["type"];
-      type_ = !type.is_null() ? type.get_str() : std::string();
+      type_ = !type.isNull() ? type.getString() : std::string();
 
-      setContents(docJson["contents"].get_str());
-      dirty_ = docJson["dirty"].get_bool();
-      created_ = docJson["created"].get_real();
-      sourceOnSave_ = docJson["source_on_save"].get_bool();
+      setContents(docJson["contents"].getString());
+      dirty_ = docJson["dirty"].getBool();
+      created_ = docJson["created"].getDouble();
+      sourceOnSave_ = docJson["source_on_save"].getBool();
 
       // read safely (migration)
       json::Value properties = docJson["properties"];
-      properties_ = !properties.is_null() ? properties.get_value<json::Object>() : json::Object();
+      properties_ = !properties.isNull() ? properties.getValue<json::Object>() : json::Object();
 
       json::Value lastKnownWriteTime = docJson["lastKnownWriteTime"];
-      lastKnownWriteTime_ = !lastKnownWriteTime.is_null()
-                               ? lastKnownWriteTime.get_int64()
+      lastKnownWriteTime_ = !lastKnownWriteTime.isNull()
+                               ? lastKnownWriteTime.getInt64()
                                : 0;
 
       json::Value encoding = docJson["encoding"];
-      encoding_ = !encoding.is_null() ? encoding.get_str() : std::string();
+      encoding_ = !encoding.isNull() ? encoding.getString() : std::string();
 
       json::Value folds = docJson["folds"];
-      folds_ = !folds.is_null() ? folds.get_str() : std::string();
+      folds_ = !folds.isNull() ? folds.getString() : std::string();
 
       json::Value order = docJson["relative_order"];
-      relativeOrder_ = !order.is_null() ? order.get_int() : 0;
+      relativeOrder_ = !order.isNull() ? order.getInt() : 0;
 
       json::Value lastContentUpdate = docJson["last_content_update"];
-      lastContentUpdate_ = !lastContentUpdate.is_null() ? 
-                               lastContentUpdate.get_int64() : 0;
+      lastContentUpdate_ = !lastContentUpdate.isNull() ? 
+                               lastContentUpdate.getInt64() : 0;
 
       json::Value collabServer = docJson["collab_server"];
-      collabServer_ = !collabServer.is_null() ? collabServer.get_str() : 
+      collabServer_ = !collabServer.isNull() ? collabServer.getString() : 
                                                 std::string();
 
       json::Value sourceWindow = docJson["source_window"];
-      sourceWindow_ = !sourceWindow.is_null() ? sourceWindow.get_str() :
+      sourceWindow_ = !sourceWindow.isNull() ? sourceWindow.getString() :
                                                 std::string();
 
       return Success();
@@ -533,9 +531,9 @@ void SourceDocument::writeToJson(json::Object* pDocJson, bool includeContents) c
 {
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
-   jsonDoc["path"] = !path().empty() ? path_ : json::Value();
+   jsonDoc["path"] = !path().empty() ? json::Value(path_) : json::Value();
    jsonDoc["project_path"] = pathToProjectPath(path_);
-   jsonDoc["type"] = !type().empty() ? type_ : json::Value();
+   jsonDoc["type"] = !type().empty() ? json::Value(type_) : json::Value();
    jsonDoc["hash"] = hash();
    jsonDoc["contents"] = includeContents ? contents() : std::string();
    jsonDoc["dirty"] = dirty();
@@ -576,7 +574,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    // write contents to file
    if (writeContents)
    {
-      FilePath contentsPath(filePath.absolutePath() + kContentsSuffix);
+      FilePath contentsPath(filePath.getAbsolutePath() + kContentsSuffix);
       Error error = writeStringToFile(contentsPath, contents_);
       if (error)
          return error;
@@ -587,17 +585,15 @@ Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) 
    writeToJson(&jsonProperties, false);
    
    // write properties to file
-   std::ostringstream oss;
-   json::writeFormatted(jsonProperties, oss);
-   Error error = writeStringToFile(filePath, oss.str());
+   Error error = writeStringToFile(filePath, jsonProperties.writeFormatted());
    return error;
 }
 
-void SourceDocument::editProperty(const json::Member& property)
+void SourceDocument::editProperty(const json::Object::Member& property)
 {
-   if (property.value().is_null())
+   if (property.getValue().isNull())
    {
-      properties_.erase(property.name());
+      properties_.erase(property.getName());
    }
    else
    {
@@ -639,13 +635,13 @@ Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
    
 Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceDocument> pDoc)
 {
-   FilePath propertiesPath = source_database::path().complete(id);
+   FilePath propertiesPath = source_database::path().completePath(id);
    
    // attempt to read file contents from sidecar file if available
    std::string contents;
    if (includeContents)
    {
-      FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+      FilePath contentsPath(propertiesPath.getAbsolutePath() + kContentsSuffix);
       if (contentsPath.exists())
       {
          Error error = readStringFromFile(contentsPath,
@@ -668,14 +664,14 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
    
       // parse the json
       json::Value value;
-      if (!json::parse(properties, &value))
+      if (value.parse(properties))
       {
          return systemError(boost::system::errc::invalid_argument,
                             ERROR_LOCATION);
       }
       
       // initialize doc from json
-      json::Object jsonDoc = value.get_obj();
+      json::Object jsonDoc = value.getObject();
       
       // migration: if we have a 'contents' field, but no '-contents' side-car
       // file, perform a one-time generation of that sidecar file from contents
@@ -708,7 +704,7 @@ bool isSourceDocument(const FilePath& filePath)
    if (filePath.isDirectory())
       return false;
    
-   std::string filename = filePath.filename();
+   std::string filename = filePath.getFilename();
    if (filename == ".DS_Store" ||
        filename == "lock_file" ||
        filename == "suspend_file" ||
@@ -725,8 +721,8 @@ void logUnsafeSourceDocument(const FilePath& filePath,
                              const std::string& reason)
 {
    std::string msg = "Excluded unsafe source document";
-   if (!filePath.empty())
-      msg += " (" + filePath.absolutePath() + ")";
+   if (!filePath.isEmpty())
+      msg += " (" + filePath.getAbsolutePath() + ")";
    msg += ": " + reason;
    LOG_WARNING_MESSAGE(msg);
 }
@@ -747,7 +743,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    if (!pDoc->path().empty())
    {
       filePath = FilePath(pDoc->path());
-      if (filePath.extensionLowerCase() == ".rdata")
+      if (filePath.getExtensionLowerCase() == ".rdata")
       {
          logUnsafeSourceDocument(filePath, ".RData file");
          return false;
@@ -755,7 +751,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    }
 
    // get the size of the file in KB
-   uintmax_t docSizeKb = docDbPath.size() / 1024;
+   uintmax_t docSizeKb = docDbPath.getSize() / 1024;
    std::string kbStr = safe_convert::numberToString(docSizeKb);
 
    // if it's larger than 5MB then always drop it (that's the limit
@@ -792,7 +788,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
 {
    std::vector<FilePath> files ;
-   Error error = source_database::path().children(&files);
+   Error error = source_database::path().getChildren(files);
    if (error)
       return error ;
    
@@ -802,7 +798,7 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
       {
          // get the source doc
          boost::shared_ptr<SourceDocument> pDoc(new SourceDocument()) ;
-         Error error = source_database::get(filePath.filename(), pDoc);
+         Error error = source_database::get(filePath.getFilename(), pDoc);
          if (!error)
          {
             // safety filter
@@ -821,7 +817,7 @@ Error list(std::vector<FilePath>* pPaths)
 {
    // list children
    std::vector<FilePath> children;
-   Error error = source_database::path().children(&children);
+   Error error = source_database::path().getChildren(children);
    if (error)
       return error;
    
@@ -838,7 +834,7 @@ Error list(std::vector<FilePath>* pPaths)
 Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
 {   
    // write to file
-   FilePath filePath = source_database::path().complete(pDoc->id());
+   FilePath filePath = source_database::path().completePath(pDoc->id());
    Error error = pDoc->writeToFile(filePath, writeContents);
    if (error)
       return error ;
@@ -856,13 +852,13 @@ Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
    
 Error remove(const std::string& id)
 {
-   return source_database::path().complete(id).removeIfExists();
+   return source_database::path().completePath(id).removeIfExists();
 }
    
 Error removeAll()
 {
    std::vector<FilePath> files ;
-   Error error = source_database::path().children(&files);
+   Error error = source_database::path().getChildren(files);
    if (error)
       return error ;
    

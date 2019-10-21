@@ -21,7 +21,7 @@
 #include <core/tex/TexLogParser.hpp>
 #include <core/tex/TexMagicComment.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include "SessionRnwConcordance.hpp"
 

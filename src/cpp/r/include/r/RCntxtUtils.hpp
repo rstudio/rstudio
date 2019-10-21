@@ -16,7 +16,7 @@
 #ifndef R_CONTEXT_UTILS_HPP
 #define R_CONTEXT_UTILS_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include "RCntxt.hpp"
 
 namespace rstudio {

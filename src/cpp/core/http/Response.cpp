@@ -46,13 +46,13 @@ namespace {
 #define kDeflateWindow 15
 #define kDefaultMemoryUsage 8
 
-boost::shared_ptr<StreamBuffer> makePaddingBuffer(size_t numPadding)
+std::shared_ptr<StreamBuffer> makePaddingBuffer(size_t numPadding)
 {
    // create a padding buffer
    char* buffer = new char[numPadding];
    std::fill_n(buffer, numPadding, '0');
 
-   return boost::make_shared<StreamBuffer>(buffer, numPadding);
+   return std::make_shared<StreamBuffer>(buffer, numPadding);
 }
 
 class FileStreamResponse : public StreamResponse
@@ -76,10 +76,10 @@ public:
 
    Error initialize()
    {
-      return file_.open_r(&fileStream_);
+      return file_.openForRead(fileStream_);
    }
 
-   boost::shared_ptr<StreamBuffer> nextBuffer()
+   std::shared_ptr<StreamBuffer> nextBuffer()
    {
       // create buffer to hold the file data
       char* buffer = new char[bufferSize_];
@@ -103,17 +103,17 @@ public:
          else
          {
             // no data read and no need for pad - return empty buffer
-            return boost::shared_ptr<StreamBuffer>();
+            return std::shared_ptr<StreamBuffer>();
          }
       }
 
       // return buffer representing the data with how much we actually read
-      return boost::make_shared<StreamBuffer>(buffer, read);
+      return std::make_shared<StreamBuffer>(buffer, read);
    }
 
 private:
    FilePath file_;
-   boost::shared_ptr<std::istream> fileStream_;
+   std::shared_ptr<std::istream> fileStream_;
    std::streamsize bufferSize_;
    bool padding_;
 
@@ -175,10 +175,10 @@ public:
       return Success();
    }
 
-   boost::shared_ptr<StreamBuffer> nextBuffer()
+   std::shared_ptr<StreamBuffer> nextBuffer()
    {
       if (finished_)
-         return boost::shared_ptr<StreamBuffer>();
+         return std::shared_ptr<StreamBuffer>();
 
       uint64_t written = 0;
       int flush = Z_NO_FLUSH;
@@ -193,7 +193,7 @@ public:
       {
          // check to see if the last file buffer was fully consumed by zlib
          // if not, we need to keep using it
-         boost::shared_ptr<StreamBuffer> fileBuffer;
+         std::shared_ptr<StreamBuffer> fileBuffer;
          if (fileBuffer_)
          {
             fileBuffer = fileBuffer_;
@@ -226,11 +226,11 @@ public:
          res = deflate(zStream_.get(), flush);
          if (res == Z_STREAM_ERROR)
          {
-            LOG_ERROR_MESSAGE("Could not compress file " + fileStream_->file_.absolutePath() +
+            LOG_ERROR_MESSAGE("Could not compress file " + fileStream_->file_.getAbsolutePath() +
                               " - zlib stream error");
             delete [] buffer;
 
-            return boost::shared_ptr<StreamBuffer>();
+            return std::shared_ptr<StreamBuffer>();
          }
 
          written = bufferSize_ - zStream_->avail_out;
@@ -249,7 +249,7 @@ public:
       if (res == Z_STREAM_END)
          finished_ = true;
 
-      return boost::make_shared<StreamBuffer>(buffer, written);
+      return std::make_shared<StreamBuffer>(buffer, written);
    }
 
 private:
@@ -258,7 +258,7 @@ private:
    CompressionType compressionType_;
 
    boost::shared_ptr<struct z_stream_s> zStream_;
-   boost::shared_ptr<StreamBuffer> fileBuffer_;
+   std::shared_ptr<StreamBuffer> fileBuffer_;
    bool finished_;
 };
 #endif
@@ -451,7 +451,7 @@ void Response::setRangeableFile(const FilePath& filePath,
       return;
    }
 
-   setRangeableFile(contents, filePath.mimeContentType(), request);
+   setRangeableFile(contents, filePath.getMimeContentType(), request);
 }
 
 void Response::setRangeableFile(const std::string& contents,
@@ -550,7 +550,7 @@ void Response::setNotFoundError(const std::string& uri,
    
 void Response::setError(const Error& error)
 {
-   setError(status::InternalServerError, error.code().message());
+   setError(status::InternalServerError, error.getMessage());
 }
 
 namespace {
@@ -688,19 +688,19 @@ void Response::ensureStatusMessage() const
             break;
 
          case SeeOther:
-            statusMessage_ = status::Message::SeeOther;
+            statusMessage_ = status::Message::SeeOther ;
             break;
 
          case NotModified:
-            statusMessage_ = status::Message::NotModified;
+            statusMessage_ = status::Message::NotModified ;
             break;
 
          case BadRequest:
-            statusMessage_ = status::Message::BadRequest;
+            statusMessage_ = status::Message::BadRequest ;
             break;
 
          case Unauthorized:
-            statusMessage_ = status::Message::Unauthorized;
+            statusMessage_ = status::Message::Unauthorized ;
             break;
 
          case Forbidden:
@@ -761,7 +761,7 @@ void Response::setStreamFile(const FilePath& filePath,
                              const Request& request,
                              std::streamsize buffSize)
 {
-   std::string contentType = filePath.mimeContentType("application/octet-stream");
+   std::string contentType = filePath.getMimeContentType("application/octet-stream");
    setContentType(contentType);
 
    // if content type indicates compression, do not compress it again
@@ -813,7 +813,7 @@ void Response::setStreamFile(const FilePath& filePath,
 
    Error error = streamResponse_->initialize();
    if (error)
-      setError(status::InternalServerError, error.code().message());
+      setError(status::InternalServerError, error.getMessage());
 }
 
 } // namespacc http

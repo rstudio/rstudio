@@ -20,8 +20,8 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 namespace rstudio {
@@ -42,7 +42,7 @@ public:
    static std::string readSettingFromPath(const core::FilePath& settingsPath, const std::string& settingName)
    {
       using namespace rstudio::core;
-      FilePath readPath = settingsPath.complete(settingName);
+      FilePath readPath = settingsPath.completePath(settingName);
       if (readPath.exists())
       {
          std::string value;
@@ -67,7 +67,7 @@ public:
                                   const std::string& value)
    {
       using namespace rstudio::core;
-      FilePath writePath = settingsPath.complete(settingName);
+      FilePath writePath = settingsPath.completePath(settingName);
       Error error = core::writeStringToFile(writePath, value);
       if (error)
          LOG_ERROR(error);

@@ -208,7 +208,11 @@ json::Object Job::toJson() const
       error = r::sexp::getNames(actions_.get(), &names);
       if (!error)
       {
-         std::copy(names.begin(), names.end(), std::back_inserter(actions));
+         std::transform(
+            names.begin(),
+            names.end(),
+            std::back_inserter(actions),
+            [](const std::string& val) { return json::Value(val); });
       }
    }
 
@@ -351,12 +355,12 @@ bool Job::saveOutput() const
 
 FilePath Job::jobCacheFolder()
 {
-   return module_context::sessionScratchPath().complete("jobs");
+   return module_context::sessionScratchPath().completePath("jobs");
 }
 
 FilePath Job::outputCacheFile()
 {
-   return jobCacheFolder().complete(id_ + "-output.json");
+   return jobCacheFolder().completePath(id_ + "-output.json");
 }
 
 void Job::addOutput(const std::string& output, bool asError)
@@ -375,9 +379,9 @@ void Job::addOutput(const std::string& output, bool asError)
    if (listening_)
    {
       json::Array data;
-      data.push_back(id_);
-      data.push_back(type);
-      data.push_back(output);
+      data.push_back(json::Value(id_));
+      data.push_back(json::Value(type));
+      data.push_back(json::Value(output));
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobOutput, data));
    }
@@ -390,9 +394,9 @@ void Job::addOutput(const std::string& output, bool asError)
    FilePath outputFile = outputCacheFile();
 
    // create parent folder if necessary
-   if (!outputFile.parent().exists())
+   if (!outputFile.getParent().exists())
    {
-      error = outputFile.parent().ensureDirectory();
+      error = outputFile.getParent().ensureDirectory();
       if (error)
       {
          LOG_ERROR(error);
@@ -401,8 +405,8 @@ void Job::addOutput(const std::string& output, bool asError)
    }
 
    // open output file for writing
-   boost::shared_ptr<std::ostream> file;
-   error = outputFile.open_w(&file, false /* don't truncate */);
+   std::shared_ptr<std::ostream> file;
+   error = outputFile.openForWrite(file, false /* don't truncate */);
    if (error)
    {
       LOG_ERROR(error);
@@ -411,9 +415,9 @@ void Job::addOutput(const std::string& output, bool asError)
 
    // create json array with output and write it to the file
    json::Array contents;
-   contents.push_back(type);
-   contents.push_back(output);
-   json::write(contents, *file);
+   contents.push_back(json::Value(type));
+   contents.push_back(json::Value(output));
+   contents.write(*file);
 
    // append a newline (the file is newline-delimited JSON)
    *file << std::endl;
@@ -424,8 +428,8 @@ json::Array Job::output(int position)
    // read the lines from the file
    json::Array output;
    FilePath outputFile = outputCacheFile();
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = outputFile.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = outputFile.openForRead(pIfs);
    if (error)
    {
       // path not found is expected if the job hasn't produced any output yet
@@ -450,7 +454,7 @@ json::Array Job::output(int position)
          std::getline(*pIfs, content);
          if (++line > position)
          {
-            if (json::parse(content, &val))
+            if (!val.parse(content))
             {
                output.push_back(val);
             }
@@ -462,7 +466,7 @@ json::Array Job::output(int position)
       error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", outputFile.absolutePath());
+      error.addProperty("path", outputFile.getAbsolutePath());
       LOG_ERROR(error);
    }
 

@@ -16,15 +16,15 @@
 
 #include "SessionConfigFile.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -39,6 +39,29 @@ namespace modules {
 namespace config_file {
 
 namespace {
+
+enum class ConfigErrorCode
+{
+   SUCCESS = 0,
+   READ_ERROR = 1,
+   WRITE_ERROR = 2
+};
+
+Error configError(ConfigErrorCode code, const Error& cause, const ErrorLocation& location)
+{
+   static constexpr const char* errorName = { "config_error" };
+   switch (code)
+   {
+      case ConfigErrorCode::SUCCESS:
+         return Success();
+      case ConfigErrorCode::READ_ERROR:
+         return Error(static_cast<int>(code), errorName, "Error while reading config file.", cause, location);
+      case ConfigErrorCode::WRITE_ERROR:
+         return Error(static_cast<int>(code), errorName, "Error while writing config file.", cause, location);
+      default:
+         return Error(static_cast<int>(code), errorName, "Unknown config error.", cause, location);
+   }
+}
 
 // Writes JSON configuration data to the user configuration folder.
 Error writeConfigJSON(const core::json::JsonRpcRequest& request,
@@ -56,8 +79,8 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    }
    
    // Compute the user config directory path, and ensure it exists.
-   FilePath filePath = core::system::xdg::userConfigDir().complete(path);
-   error = filePath.parent().ensureDirectory();
+   FilePath filePath = core::system::xdg::userConfigDir().completePath(path);
+   error = filePath.getParent().ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
@@ -65,8 +88,7 @@ Error writeConfigJSON(const core::json::JsonRpcRequest& request,
    }
    
    // Write the new configuration data.
-   std::string contents = json::writeFormatted(object);
-   error = writeStringToFile(filePath, contents);
+   error = writeStringToFile(filePath, object.writeFormatted());
    if (error)
    {
       LOG_ERROR(error);
@@ -93,16 +115,16 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
    }
 
    // First, check for the user config file at the XDG location
-   FilePath userConfig = core::system::xdg::userConfigDir().complete(path);
+   FilePath userConfig = core::system::xdg::userConfigDir().completePath(path);
    if (!userConfig.exists())
    {
       // If it's not there, check the legacy location (RStudio 1.2 and prior stored per-user data in
       // this hardcoded location)
-      userConfig = module_context::resolveAliasedPath("~/.R/rstudio").complete(path);
+      userConfig = module_context::resolveAliasedPath("~/.R/rstudio").completePath(path);
    }
 
    // System config is always in the XDG location (if it exists at all)
-   FilePath systemConfig = core::system::xdg::systemConfigDir().complete(path);
+   FilePath systemConfig = core::system::xdg::systemConfigDir().completePath(path);
 
    // If neither config file exists, no work to do; raise an error if requested.
    if (!userConfig.exists() && !systemConfig.exists())
@@ -135,9 +157,10 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
          }
       }
       
-      error = json::parse(contents, ERROR_LOCATION, &configJson);
+      error = configJson.parse(contents);
       if (error)
       {
+         error = configError(ConfigErrorCode::READ_ERROR, error, ERROR_LOCATION);
          LOG_ERROR(error);
          if (!systemConfig.exists())
          {
@@ -161,20 +184,21 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
       else
       {
          json::Value systemJson;
-         error = json::parse(contents, ERROR_LOCATION, &systemJson);
+         error = systemJson.parse(contents);
          if (error)
          {
+            error = configError(ConfigErrorCode::READ_ERROR, error, ERROR_LOCATION);
             LOG_ERROR(error);
             if (!userConfig.exists())
             {
                return error;
             }
          }
-         else if (systemJson.type() == json::ObjectType &&
-                  configJson.type() == json::ObjectType)
+         else if (systemJson.getType() == json::Type::OBJECT &&
+                  configJson.getType() == json::Type::OBJECT)
          {
             // If we have successfully read two config sources, merge them
-            configJson = json::merge(configJson.get_obj(), systemJson.get_obj());
+            configJson = json::Object::mergeObjects(configJson.getObject(), systemJson.getObject());
          }
       }
    }

@@ -17,7 +17,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
@@ -45,7 +45,7 @@ void onDownloadCompleted(const core::system::ProcessResult& result,
    {
       json::Object data;
       data["version"] = version;
-      data["installer_path"] = installerPath.absolutePath();
+      data["installer_path"] = installerPath.getAbsolutePath();
       ClientEvent event(client_events::kInstallRtools, data);
       module_context::enqueClientEvent(event);
    }
@@ -99,7 +99,7 @@ Error installRtools()
 
    // get a temp file path to download into
    FilePath tempPath;
-   error = FilePath::tempFilePath(&tempPath);
+   error = FilePath::tempFilePath(tempPath);
    if (error)
       return error;
    error = tempPath.ensureDirectory();
@@ -109,8 +109,8 @@ Error installRtools()
    // create the command
    std::string rtoolsBinary =
        "Rtools" + boost::algorithm::replace_all_copy(version, ".", "") + ".exe";
-   FilePath installerPath = tempPath.childPath(rtoolsBinary);
-   std::string dest = string_utils::utf8ToSystem(installerPath.absolutePath());
+   FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
+   std::string dest = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
    boost::format fmt("utils::download.file('%1%', '%2%', mode = 'wb')");
    std::string cmd = boost::str(fmt % url % dest);
 
@@ -127,7 +127,7 @@ Error installRtools()
    // fire the event
    json::Object data;
    data["version"] = version;
-   data["installer_path"] = installerPath.absolutePath();
+   data["installer_path"] = installerPath.getAbsolutePath();
    ClientEvent event(client_events::kInstallRtools, data);
    module_context::enqueClientEvent(event);
 

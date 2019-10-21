@@ -20,7 +20,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/Environment.hpp>
 #include <core/CrashHandler.hpp>
 

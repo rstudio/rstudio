@@ -19,7 +19,7 @@
 #include <string>
 #include <iosfwd>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {

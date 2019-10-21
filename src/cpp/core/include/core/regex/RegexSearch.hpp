@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 

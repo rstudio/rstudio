@@ -41,7 +41,7 @@ public:
 
    core::Error readPrefs()
    {
-      prefsFile_ = core::system::xdg::userConfigDir().complete(kApiPrefsFile);
+      prefsFile_ = core::system::xdg::userConfigDir().completePath(kApiPrefsFile);
       return loadPrefsFromFile(prefsFile_);
    }
 

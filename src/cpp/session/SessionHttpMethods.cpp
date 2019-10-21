@@ -31,7 +31,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Crypto.hpp>
@@ -634,7 +634,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                if (switchToProject != kProjectNone)
                {
                   FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                  if (projFile.parent().exists() && !projFile.exists())
+                  if (projFile.getParent().exists() && !projFile.exists())
                   {
                      Error error = r_util::writeProjectFile(
                               projFile,
@@ -657,7 +657,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                else
                {
                   FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                  std::string projDir = createAliasedPath(projFile.parent());
+                  std::string projDir = createAliasedPath(projFile.getParent());
                   activeSession().setProject(projDir);
                   activeSession().setWorkingDir(projDir);
                }
@@ -675,7 +675,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      // extract the directory (aliased)
                      using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-                     std::string projDir = createAliasedPath(projFile.parent());
+                     std::string projDir = createAliasedPath(projFile.getParent());
                      scope = r_util::SessionScope::fromProject(
                               projDir,
                               options().sessionScope().id(),
@@ -700,7 +700,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   using namespace module_context;
                   std::string version, rHome, label;
                   Error error = json::readObject(
-                                            switchToVersionJson.get_obj(),
+                                            switchToVersionJson.getObject(),
                                             "version", &version,
                                             "r_home", &rHome,
                                             "label", &label);
@@ -715,7 +715,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                      if (switchToProject != kProjectNone)
                      {
                         FilePath projFile = resolveAliasedPath(switchToProject);
-                        std::string projDir = createAliasedPath(projFile.parent());
+                        std::string projDir = createAliasedPath(projFile.getParent());
                         RVersionSettings verSettings(
                                             options().userScratchPath(),
                                             FilePath(options().getOverlayOption(
@@ -802,7 +802,7 @@ WaitResult startHttpConnectionListenerWithTimeout()
    // available; therefore, retry connection, but only for address_in_use error
    if (!error)
        return WaitResult(WaitSuccess, Success());
-   else if (error.code() != boost::system::errc::address_in_use)
+   else if (error != boost::system::error_code(boost::system::errc::address_in_use, boost::system::generic_category()))
       return WaitResult(WaitError, error);
    else
       return WaitResult(WaitContinue, error);
@@ -821,7 +821,7 @@ void registerGwtHandlers()
 
    // establish progress handler
    FilePath wwwPath(options.wwwLocalPath());
-   FilePath progressPagePath = wwwPath.complete("progress.htm");
+   FilePath progressPagePath = wwwPath.completePath("progress.htm");
    module_context::registerUriHandler(
          "/progress",
           boost::bind(text::handleTemplateRequest, progressPagePath, _1, _2));

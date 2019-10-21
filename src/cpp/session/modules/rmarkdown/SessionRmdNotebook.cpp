@@ -36,7 +36,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Algorithm.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
@@ -143,7 +143,7 @@ void emitOutputFinished(const std::string& docId, const std::string& chunkId,
 
 bool fixChunkFilename(int, const core::FilePath& path)
 {
-   std::string name = path.filename();
+   std::string name = path.getFilename();
    if (name.empty())
       return true;
    
@@ -160,7 +160,7 @@ bool fixChunkFilename(int, const core::FilePath& path)
    // rename file if we had to change it
    if (transformed != name)
    {
-      FilePath target = path.parent().childPath(transformed);
+      FilePath target = path.getParent().completeChildPath(transformed);
       Error error = path.move(target);
       if (error)
          LOG_ERROR(error);
@@ -184,11 +184,11 @@ void onDeferredInit(bool)
    
    // Fix up chunk entries in the cache that were generated
    // with leading spaces on Windows
-   FilePath patchPath = root.complete("patch-chunk-names");
+   FilePath patchPath = root.completePath("patch-chunk-names");
    if (!patchPath.exists())
    {
       patchPath.ensureFile();
-      Error error = root.childrenRecursive(fixChunkFilename);
+      Error error = root.getChildrenRecursive(fixChunkFilename);
       if (error)
          LOG_ERROR(error);
    }

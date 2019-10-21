@@ -19,6 +19,7 @@
 #include <boost/bind.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
 namespace rstudio {
 namespace core {
@@ -72,12 +73,12 @@ KnownDictionary s_knownDictionaries[] =
 
 FilePath dicPathForAffPath(const FilePath& affPath)
 {
-   return affPath.parent().childPath(affPath.stem() + ".dic");
+   return affPath.getParent().completeChildPath(affPath.getStem() + ".dic");
 }
 
 bool isDictionaryAff(const FilePath& filePath)
 {
-   return (filePath.extensionLowerCase() == ".aff") &&
+   return (filePath.getExtensionLowerCase() == ".aff") &&
           dicPathForAffPath(filePath).exists();
 }
 
@@ -92,7 +93,7 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
       return Success();
 
    std::vector<FilePath> children;
-   Error error = baseDir.children(&children);
+   Error error = baseDir.getChildren(children);
    if (error)
       return error;
 
@@ -177,13 +178,13 @@ HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
    std::string affFile = langId + ".aff";
 
    // first check to see whether it exists in the user languages directory
-   FilePath customLangsAff = customLanguagesDir().complete(affFile);
+   FilePath customLangsAff = customLanguagesDir().completePath(affFile);
    if (customLangsAff.exists())
       return HunspellDictionary(customLangsAff);
    else if (allLanguagesInstalled())
-      return HunspellDictionary(allLanguagesDir().complete(affFile));
+      return HunspellDictionary(allLanguagesDir().completePath(affFile));
    else
-      return HunspellDictionary(coreLanguagesDir_.complete(affFile));
+      return HunspellDictionary(coreLanguagesDir_.completePath(affFile));
 }
 
 const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
@@ -197,7 +198,7 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
  * */
 FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
 {
-   return userDir_.childPath("languages-system");
+   return userDir_.completeChildPath("languages-system");
 }
 
 /*
@@ -206,17 +207,17 @@ FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
  * */
 FilePath HunspellDictionaryManager::legacyCustomLanguagesDir() const
 {
-   return userDir_.childPath("custom");
+   return userDir_.completeChildPath("custom");
 }
 
 FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
-   return core::system::xdg::userConfigDir().childPath("dictionaries/languages-system");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/languages-system");
 }
 
 FilePath HunspellDictionaryManager::customLanguagesDir() const
 {
-   return core::system::xdg::userConfigDir().childPath("dictionaries/custom");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/custom");
 }
 
 } // namespace spelling

@@ -28,8 +28,8 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 
@@ -155,8 +155,8 @@ Error parseDcfFile(const FilePath& dcfFilePath,
                                     string_utils::LineEndingPosix);
    if (error)
    {
-      error.addProperty("dcf-file", dcfFilePath.absolutePath());
-      *pUserErrMsg = error.summary();
+      error.addProperty("dcf-file", dcfFilePath.getAbsolutePath());
+      *pUserErrMsg = error.getSummary();
       return error;
    }
 

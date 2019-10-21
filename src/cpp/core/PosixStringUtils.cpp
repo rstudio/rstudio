@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push

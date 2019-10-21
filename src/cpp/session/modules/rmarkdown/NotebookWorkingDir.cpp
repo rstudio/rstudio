@@ -18,7 +18,7 @@
 
 #include <r/RExec.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -57,22 +57,22 @@ Error DirCapture::connectDir(const std::string& docId,
       source_database::getPath(docId, &docPath);
       if (!docPath.empty())
       {
-         workingDir_ = module_context::resolveAliasedPath(docPath).parent();
+         workingDir_ = module_context::resolveAliasedPath(docPath).getParent();
       }
    }
 
-   if (!workingDir_.empty())
+   if (!workingDir_.isEmpty())
    {
       // if we have a working directory, switch to it, and save directory we're
       // changing from (so we can detect changes)
       FilePath currentDir = FilePath::safeCurrentPath(workingDir_);
       if (currentDir != workingDir_)
       {
-         Error error = FilePath::makeCurrent(workingDir_.absolutePath());
+         Error error = FilePath::makeCurrent(workingDir_.getAbsolutePath());
          if (error)
             return error;
       }
-      prevWorkingDir_ = currentDir.absolutePath();
+      prevWorkingDir_ = currentDir.getAbsolutePath();
    }
 
    NotebookCapture::connect();
@@ -94,15 +94,15 @@ void DirCapture::disconnect()
 
 void DirCapture::onExprComplete()
 {
-   if (!warned_ && !workingDir_.empty())
+   if (!warned_ && !workingDir_.isEmpty())
    {
       // raise a warning when changing a working directory inside the notebook
       // (this leads to unexpected behavior)
       FilePath currentDir = FilePath::safeCurrentPath(workingDir_);
       if (!currentDir.isEquivalentTo(workingDir_))
       {
-         r::exec::warning("The working directory was changed to " + 
-               currentDir.absolutePath() + " inside a notebook chunk. The "
+         r::exec::warning("The working directory was changed to " +
+                             currentDir.getAbsolutePath() + " inside a notebook chunk. The "
                "working directory will be reset when the chunk is finished "
                "running. Use the knitr root.dir option in the setup chunk " 
                "to change the working directory for notebook chunks.\n");

@@ -18,11 +18,11 @@
 #include <boost/format.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/Predicate.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -294,7 +294,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    // save small plot
    using namespace rstudio::r::session::graphics;
    Display& display = r::session::graphics::display();
-   FilePath smallPlotPath = tempPath.childPath("plot-small.png");
+   FilePath smallPlotPath = tempPath.completeChildPath("plot-small.png");
    error = display.savePlotAsImage(smallPlotPath, "png", width, height);
    if (error)
    {
@@ -303,7 +303,7 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    }
 
    // save full plot
-   FilePath fullPlotPath = tempPath.childPath("plot-full.png");
+   FilePath fullPlotPath = tempPath.completeChildPath("plot-full.png");
    error = display.savePlotAsImage(fullPlotPath, "png", 1024, 768, 2.0);
    if (error)
    {
@@ -312,13 +312,13 @@ Error plotsCreateRPubsHtml(const json::JsonRpcRequest& request,
    }
 
    // copy source file to temp dir
-   FilePath sourceFilePath = tempPath.childPath("source.html");
+   FilePath sourceFilePath = tempPath.completeChildPath("source.html");
    FilePath resPath = session::options().rResourcesPath();
-   FilePath plotFilePath = resPath.complete("plot_publish.html");
+   FilePath plotFilePath = resPath.completePath("plot_publish.html");
    error = plotFilePath.copy(sourceFilePath);
 
    // perform the base64 encode using pandoc
-   FilePath targetFilePath = tempPath.childPath("target.html");
+   FilePath targetFilePath = tempPath.completeChildPath("target.html");
    error = module_context::createSelfContainedHtml(sourceFilePath,
                                                    targetFilePath);
    if (error)
@@ -455,7 +455,7 @@ void setImageFileResponse(const FilePath& imageFilePath,
                           http::Response* pResponse)
 {
    // set content type
-   pResponse->setContentType(imageFilePath.mimeContentType());
+   pResponse->setContentType(imageFilePath.getMimeContentType());
    
    // attempt gzip
    if (request.acceptsEncoding(http::kGzipEncoding))
@@ -468,7 +468,7 @@ void setImageFileResponse(const FilePath& imageFilePath,
       if (!core::isPathNotFoundError(error))
          LOG_ERROR(error);
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
 }
 
@@ -575,7 +575,7 @@ void handleZoomPngRequest(const http::Request& request,
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 
-                          saveError.code().message());
+                          saveError.getMessage());
       return;
    }
    
@@ -606,7 +606,7 @@ void handlePngRequest(const http::Request& request,
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
       return;
    }
 
@@ -616,7 +616,7 @@ void handlePngRequest(const http::Request& request,
    {
       pResponse->setHeader("Content-Disposition",
                            "attachment; filename=rstudio-plot" +
-                           imagePath.extension());
+                           imagePath.getExtension());
    }
 
    // return it

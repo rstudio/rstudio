@@ -29,6 +29,7 @@ set(SESSION_WORKERS_SOURCE_FILES
 # include directories
 include_directories(
    ${CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include/session/worker_safe
 )
 

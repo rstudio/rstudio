@@ -21,13 +21,22 @@
 #include <boost/asio/io_service.hpp>
 
 #include <core/system/System.hpp>
-#include <core/LogWriter.hpp>
 
 #include <monitor/audit/ConsoleAction.hpp>
 #include <monitor/events/Event.hpp>
 #include <monitor/metrics/Metric.hpp>
 
 #include "MonitorConstants.hpp"
+
+namespace rstudio {
+namespace core {
+namespace log {
+
+class ILogDestination;
+
+} // namespace log
+} // namespace core
+} // namespace rstudio
 
 namespace rstudio {
 namespace monitor {
@@ -63,11 +72,10 @@ public:
    virtual ~Client() {}
 
    virtual void logMessage(const std::string& programIdentity,
-                           core::system::LogLevel level,
+                           core::log::LogLevel level,
                            const std::string& message) = 0;
 
-   boost::shared_ptr<core::LogWriter> createLogWriter(
-                                       const std::string& programIdentity);
+   static std::shared_ptr<core::log::ILogDestination> createLogDestination(const std::string& programIdentity);
 
    virtual void sendMetrics(const std::vector<metrics::Metric>& metrics) = 0;
 

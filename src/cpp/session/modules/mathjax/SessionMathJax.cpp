@@ -15,8 +15,8 @@
 
 #include "SessionMathJax.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/http/Util.hpp>
@@ -41,7 +41,7 @@ void handleMathJax(const http::Request& request, http::Response* pResponse)
    
    // construct path to resource
    FilePath mathjaxPath = options().mathjaxPath();
-   FilePath resourcePath = mathjaxPath.complete(path);
+   FilePath resourcePath = mathjaxPath.completePath(path);
    pResponse->setCacheableFile(resourcePath, request);
 }
 

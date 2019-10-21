@@ -16,7 +16,7 @@
 #include "SessionCompilePdfSupervisor.hpp"
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
@@ -120,7 +120,7 @@ Error runProgram(const core::FilePath& programFilePath,
 {
    // get system program file path
    std::string programPath = string_utils::utf8ToSystem(
-                                          programFilePath.absolutePath());
+      programFilePath.getAbsolutePath());
 
    // setup options
    core::system::ProcessOptions options;

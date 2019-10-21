@@ -83,17 +83,17 @@ class JumpToTopException
 FilePath rSaveGlobalEnvironmentFilePath()
 {
    FilePath rEnvironmentDir = utils::rEnvironmentDir();
-   return rEnvironmentDir.complete(".RData");
+   return rEnvironmentDir.completePath(".RData");
 }
 
 void rSuicideError(const Error& error)
 {
    // provide error message if the error was unexpected
-   std::string msg;
-   if (!error.expected())
-      msg = core::log::errorAsLogEntry(error);
+   std::string errorStr;
+   if (!error.isExpected())
+      errorStr = core::log::writeError(error);
 
-   rSuicide(msg);
+   rSuicide(errorStr);
 }
 
 SA_TYPE saveAsk()
@@ -158,7 +158,7 @@ void doHistoryFileOperation(SEXP args,
    // perform operation
    Error error = fileOp(historyFilePath);
    if (error)
-      throw r::exec::RErrorException(error.code().message());
+      throw r::exec::RErrorException(error.getMessage());
 }
    
 bool consoleInputHook(const std::string& prompt,
@@ -219,7 +219,7 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+   std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
    Error error = r::exec::executeSafely(
                     boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
    
@@ -291,7 +291,7 @@ int RReadConsole (const char *pmt,
                error = initError;
 
             // log the error if it was unexpected
-            if (!error.expected())
+            if (!error.isExpected())
                LOG_ERROR(error);
             
             // terminate the session (use suicide so that no special
@@ -477,10 +477,10 @@ int RChooseFile (int newFile, char *buf, int len)
    try 
    {
       FilePath filePath = s_callbacks.chooseFile(newFile == TRUE);
-      if (!filePath.empty())
+      if (!filePath.isEmpty())
       {
          // get absolute path
-         std::string absolutePath = filePath.absolutePath();
+         std::string absolutePath = filePath.getAbsolutePath();
          
          // trunate file if it is too long
          std::string::size_type maxLen = len - 1; 
@@ -519,7 +519,7 @@ int RShowFiles (int nfile,
       {
          // determine file path and title
          std::string fixedPath = r::util::fixPath(file[i]);
-         FilePath filePath = utils::safeCurrentPath().complete(fixedPath);
+         FilePath filePath = utils::safeCurrentPath().completePath(fixedPath);
          if (filePath.exists())
          {
             std::string title(headers[i]);
@@ -584,7 +584,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
       std::vector<std::string> commands ;
       Error error = sexp::extract(CAR(args), &commands);
       if (error)
-         throw r::exec::RErrorException(error.code().message());
+         throw r::exec::RErrorException(error.getMessage());
       
       // append them
       ConsoleHistory& history = consoleHistory();
@@ -611,8 +611,8 @@ void rSuicide(const std::string& msg)
    // log abort message if we are in desktop mode
    if (!utils::isServerMode())
    {
-      FilePath abendLogPath = utils::logPath().complete(
-                                                 "rsession_abort_msg.log");
+      FilePath abendLogPath = utils::logPath().completePath(
+         "rsession_abort_msg.log");
       Error error = core::writeStringToFile(abendLogPath, msg);
       if (error)
          LOG_ERROR(error);

@@ -18,9 +18,9 @@
 
 #include <map>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include "vcs/SessionVCSCore.hpp"
 

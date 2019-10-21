@@ -17,8 +17,8 @@
 #define R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 
 #include <core/BoostSignals.hpp>
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 

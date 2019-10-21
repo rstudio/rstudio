@@ -65,14 +65,14 @@ FilePath userLogPath()
 {
    FilePath userHomePath = core::system::userHomePath("R_USER|HOME");
    FilePath logPath = core::system::userSettingsPath(
-         userHomePath,
-         "RStudio-Desktop").childPath("log");
+      userHomePath,
+      "RStudio-Desktop").completeChildPath("log");
    return logPath;
 }
 
 FilePath userWebCachePath()
 {
-   return core::system::xdg::userDataDir().childPath("web-cache");
+   return core::system::xdg::userDataDir().completeChildPath("web-cache");
 }
 
 bool isWindows()
@@ -171,8 +171,8 @@ void applyDesktopTheme(QWidget* window, bool isDark)
          : "rstudio-gnome-dark.qss";
 
    FilePath stylePath = isDark
-         ? options().resourcesPath().complete("stylesheets").complete(darkSheetName)
-         : options().resourcesPath().complete("stylesheets").complete(lightSheetName);
+         ? options().resourcesPath().completePath("stylesheets").completePath(darkSheetName)
+         : options().resourcesPath().completePath("stylesheets").completePath(lightSheetName);
 
    std::string stylesheet;
    Error error = core::readStringFromFile(stylePath, &stylesheet);
@@ -402,7 +402,7 @@ void openUrl(const QUrl& url)
 
       core::system::ProcessResult result;
       Error error = core::system::runProgram(
-            desktop::options().urlopenerPath().absolutePath(),
+            desktop::options().urlopenerPath().getAbsolutePath(),
             args,
             "",
             options,
@@ -459,7 +459,7 @@ QString resolveAliasedPath(const QString& path)
 {
    FilePath resolved(FilePath::resolveAliasedPath(path.toUtf8().constData(),
                                                   userHomePath()));
-   return QString::fromUtf8(resolved.absolutePath().c_str());
+   return QString::fromUtf8(resolved.getAbsolutePath().c_str());
 }
 
 } // namespace desktop

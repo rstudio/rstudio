@@ -29,7 +29,7 @@ std::string escape(const std::string& arg)
 
 std::string escape(const core::FilePath &path)
 {
-   return escape(string_utils::utf8ToSystem(path.absolutePath()));
+   return escape(string_utils::utf8ToSystem(path.getAbsolutePath()));
 }
 
 std::string join(const std::string& command1, const std::string& command2)

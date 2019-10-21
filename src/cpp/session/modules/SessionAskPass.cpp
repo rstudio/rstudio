@@ -19,7 +19,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -127,7 +127,7 @@ Error askForPassword(const std::string& prompt,
 
    // read inputs
    pInput->remember = remember;
-   pInput->password = value.get_value<std::string>();
+   pInput->password = value.getValue<std::string>();
 
    // decrypt if necessary
 #ifdef RSTUDIO_SERVER

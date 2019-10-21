@@ -16,8 +16,8 @@
 #include <session/SessionPersistentState.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -57,14 +57,14 @@ Error PersistentState::initialize()
 
    // scoped/project settings
    FilePath scratchPath = module_context::scopedScratchPath();
-   FilePath statePath = scratchPath.complete("persistent-state");
+   FilePath statePath = scratchPath.completePath("persistent-state");
    Error error = settings_.initialize(statePath);
    if (error)
       return error;
 
    // session settings
    scratchPath = module_context::sessionScratchPath();
-   statePath = scratchPath.complete("session-persistent-state");
+   statePath = scratchPath.completePath("session-persistent-state");
    return sessionSettings_.initialize(statePath);
 }
 

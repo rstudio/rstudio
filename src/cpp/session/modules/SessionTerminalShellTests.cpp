@@ -37,7 +37,7 @@ test_context("session terminal shell tests")
       expect_true(origCount > 0);
       core::json::Array arr;
       shells.toJson(&arr);
-      expect_true(origCount == arr.size());
+      expect_true(origCount == arr.getSize());
    }
 
    test_that("64-bit Windows has 64-bit command prompt")

@@ -21,7 +21,7 @@
 
 #include "clang-c/Index.h"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -41,7 +41,7 @@ struct FileLocation
    {
    }
 
-   bool empty() const { return filePath.empty(); }
+   bool empty() const { return filePath.isEmpty(); }
 
    bool operator==(const FileLocation& other) const
    {

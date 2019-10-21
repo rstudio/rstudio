@@ -19,8 +19,8 @@
 #include <boost/format.hpp>
 
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -40,12 +40,12 @@ int s_buildWidth = -1;
 
 Error saveOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.saveOptions", filePath.absolutePath()).call();
+   return exec::RFunction(".rs.saveOptions", filePath.getAbsolutePath()).call();
 }
    
 Error restoreOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.restoreOptions", filePath.absolutePath()).call();
+   return exec::RFunction(".rs.restoreOptions", filePath.getAbsolutePath()).call();
 }
    
 const int kDefaultWidth = 80;   

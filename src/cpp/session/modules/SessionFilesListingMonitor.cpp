@@ -19,10 +19,10 @@
 
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -189,7 +189,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 {
    // enumerate the files
    pFiles->clear();
-   core::Error error = rootPath.children(pFiles);
+   core::Error error = rootPath.getChildren(*pFiles);
    if (error)
       return error;
 
@@ -198,7 +198,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
                   source_control::fileDecorationContext(rootPath);
 
    // sort the files by name
-   std::sort(pFiles->begin(), pFiles->end(), core::compareAbsolutePathNoCase);
+   std::sort(pFiles->begin(), pFiles->end(), FilePath::isEqualCaseInsensitive);
 
    // produce json listing
    for (core::FilePath& filePath : *pFiles)

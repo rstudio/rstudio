@@ -19,7 +19,7 @@
 #include <winuser.h>
 #include <oleauto.h>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 #include "DesktopComUtils.hpp"

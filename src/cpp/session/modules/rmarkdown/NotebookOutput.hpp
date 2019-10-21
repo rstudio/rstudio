@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #define kChunkOutputType     "output_type"
 #define kChunkOutputValue    "output_val"

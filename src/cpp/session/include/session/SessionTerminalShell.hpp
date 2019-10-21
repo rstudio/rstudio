@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <core/json/JsonRpc.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {

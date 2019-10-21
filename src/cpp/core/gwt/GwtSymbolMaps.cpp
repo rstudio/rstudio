@@ -27,7 +27,7 @@
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 // NOTE: this is a port of the following GWT class:
@@ -158,7 +158,7 @@ struct SymbolMaps::Impl
       std::set<std::string> symbolsLeftToFind = requiredSymbols;
 
       // read it from disk if it exists
-      FilePath mapPath = symbolMapsPath.childPath(strongName + ".symbolMap");
+      FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
       if (mapPath.exists())
       {
          Error error = readCollectionFromFile

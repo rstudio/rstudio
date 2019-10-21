@@ -15,8 +15,8 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/StringUtils.hpp>
 
@@ -50,7 +50,7 @@ Error errorForStatus(OSStatus status,
 Error sendTo(const FilePath& filePath)
 {
    FSRef ref;
-   std::string sysPath = string_utils::utf8ToSystem(filePath.absolutePath());
+   std::string sysPath = string_utils::utf8ToSystem(filePath.getAbsolutePath());
    OSStatus status = ::FSPathMakeRefWithOptions(
                                         (const UInt8*)sysPath.c_str(),
                                         kFSPathMakeRefDoNotFollowLeafSymlink,

@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/text/DcfParser.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES

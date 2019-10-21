@@ -19,7 +19,7 @@
 #include <string>
 
 #include <core/http/AsyncClient.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include "DesktopMainWindow.hpp"
 #include "DesktopSessionServersOverlay.hpp"

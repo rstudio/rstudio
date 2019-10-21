@@ -23,7 +23,7 @@
 #include <string>
 #include <iosfwd>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 // TODO: satisfy outselves that it is safe to query for symlink status
 // in all cases and eliminate its "optional" semantics

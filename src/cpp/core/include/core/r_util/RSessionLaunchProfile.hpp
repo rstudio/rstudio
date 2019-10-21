@@ -20,7 +20,7 @@
 
 #include <core/system/PosixSystem.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 

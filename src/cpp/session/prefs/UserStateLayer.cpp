@@ -33,14 +33,14 @@ UserStateLayer::UserStateLayer():
 
 core::Error UserStateLayer::readPrefs()
 {
-   prefsFile_ = core::system::xdg::userDataDir().complete(kUserStateFile);
+   prefsFile_ = core::system::xdg::userDataDir().completePath(kUserStateFile);
 
    return loadPrefsFromFile(prefsFile_);
 }
 
 core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
 {
-   if (prefsFile_.empty())
+   if (prefsFile_.isEmpty())
    {
       return fileNotFoundError(ERROR_LOCATION);
    }
@@ -57,7 +57,7 @@ core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
 core::Error UserStateLayer::validatePrefs()
 {
    return validatePrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+      options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
 }
 
 } // namespace prefs

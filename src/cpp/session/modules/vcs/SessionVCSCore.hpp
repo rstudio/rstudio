@@ -21,8 +21,8 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <core/json/Json.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {
@@ -66,7 +66,7 @@ public:
            it != files_.end();
            it++)
       {
-         filesByPath_[it->path.absolutePath()] = it->status;
+         filesByPath_[it->path.getAbsolutePath()] = it->status;
       }
    }
 

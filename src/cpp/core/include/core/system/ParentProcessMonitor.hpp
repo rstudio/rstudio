@@ -16,7 +16,7 @@
 #ifndef PARENT_PROCESS_MONITOR_HPP
 #define PARENT_PROCESS_MONITOR_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <boost/function.hpp>
 
 namespace rstudio {

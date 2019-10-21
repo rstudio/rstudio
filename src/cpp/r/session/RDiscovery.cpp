@@ -15,8 +15,8 @@
 
 #include <r/session/RDiscovery.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -45,8 +45,8 @@ Error discoverR(RLocations* pLocations)
 
    // set paths
    FilePath rHome(lpszRHome);
-   pLocations->homePath = rHome.absolutePath();
-   pLocations->docPath = rHome.complete("doc").absolutePath();
+   pLocations->homePath = rHome.getAbsolutePath();
+   pLocations->docPath = rHome.completePath("doc").getAbsolutePath();
 
    return Success();
 }

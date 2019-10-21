@@ -23,7 +23,7 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -42,7 +42,7 @@
 #include <core/system/PosixUser.hpp>
 #endif
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "config.h"
@@ -160,7 +160,7 @@ bool isSharedPath(const std::string& projectPath,
       return false;
 
    struct stat st;
-   if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
+   if (::stat(projectDir.getAbsolutePath().c_str(), &st) == 0)
    {
       // not shared if we own the directory
       if (st.st_uid == ::geteuid())
@@ -170,8 +170,8 @@ bool isSharedPath(const std::string& projectPath,
       if (st.st_mode & (S_IROTH | S_IWOTH | S_IXOTH)) 
          return false;
 
-      core::system::user::User user;
-      error = core::system::user::currentUser(&user);
+      core::system::User user;
+      error = core::system::User::getCurrentUser(user);
       if (error)
       {
          LOG_ERROR(error);
@@ -179,7 +179,7 @@ bool isSharedPath(const std::string& projectPath,
       }
 
       // not shared if our group owns the directory 
-      if (st.st_gid == user.groupId)
+      if (st.st_gid == user.getGroupId())
          return false;
 
 #ifndef __APPLE__
@@ -197,7 +197,7 @@ bool isSharedPath(const std::string& projectPath,
    else
    {
       error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", projectDir.absolutePath());
+      error.addProperty("path", projectDir.getAbsolutePath());
       LOG_ERROR(error);
    }
 
@@ -245,7 +245,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
          return ScopeMissingProject;
 
       // record path to project file
-      *pProjectFilePath = projectPath.absolutePath();
+      *pProjectFilePath = projectPath.getAbsolutePath();
    }
    else
    {

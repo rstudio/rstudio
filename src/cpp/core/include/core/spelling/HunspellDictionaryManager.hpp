@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/spelling/HunspellCustomDictionaries.hpp>
 
@@ -48,14 +48,14 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return affPath_.empty(); }
+   bool empty() const { return affPath_.isEmpty(); }
 
    bool operator==(const HunspellDictionary& other) const
    {
       return affPath_ == other.affPath_;
    }
 
-   std::string id() const { return affPath_.stem(); }
+   std::string id() const { return affPath_.getStem(); }
    std::string name() const;
 
    FilePath dicPath() const;

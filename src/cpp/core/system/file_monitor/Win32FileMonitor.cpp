@@ -23,7 +23,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
@@ -139,12 +139,12 @@ void ensureLongFilePath(FilePath* pFilePath)
 {
    // get the filename, if it is 12 characters or less and it contains
    // a "~" then it may be a short file name. in that case do the conversion
-   std::string filename = pFilePath->filename();
+   std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
       const std::size_t kBuffSize = (MAX_PATH*2) + 1;
       char buffer[kBuffSize];
-      if (::GetLongPathName(pFilePath->absolutePath().c_str(),
+      if (::GetLongPathName(pFilePath->getAbsolutePath().c_str(),
                             buffer,
                             kBuffSize) > 0)
       {
@@ -169,13 +169,13 @@ void processFileChange(DWORD action,
    // does for any reason we want to prevent it from interfering
    // with the logic below (which assumes a child path)
    if (filePath.isDirectory() &&
-      (filePath.absolutePath() == pTree->begin()->absolutePath()))
+      (filePath.getAbsolutePath() == pTree->begin()->absolutePath()))
    {
       return;
    }
 
    // get an iterator to this file's parent
-   FileInfo parentFileInfo = FileInfo(filePath.parent());
+   FileInfo parentFileInfo = FileInfo(filePath.getParent());
    tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
                                                       pTree->end(),
                                                       parentFileInfo);
@@ -255,7 +255,7 @@ void processFileChanges(FileEventContext* pContext,
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      FilePath filePath(pContext->rootPath.absolutePathW() + L"\\" + name);
+      FilePath filePath(pContext->rootPath.getAbsolutePathW() + L"\\" + name);
 
       // ensure this is a long file name (docs say it could be short or long!)
       // (note that the call to GetLongFileNameW will fail if the file has
@@ -303,12 +303,12 @@ bool isRecoverableByRestart(const Error& error)
    return
       // undocumented return value that indicates we should do a restart
       // (see: http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
-      error.code().value() == ERROR_NOTIFY_ENUM_DIR ||
+      error.getCode() == ERROR_NOTIFY_ENUM_DIR ||
 
       // error which some users have observed occuring if a network
       // volume is being monitored and there are too many simultaneous
       // reads and writes
-      error.code().value() == ERROR_TOO_MANY_CMDS;
+      error.getCode() == ERROR_TOO_MANY_CMDS;
 }
 
 Error readDirectoryChanges(FileEventContext* pContext);
@@ -435,7 +435,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // make sure the root path still exists (if it doesn't then bail)
    if (!pContext->rootPath.exists())
    {
-      Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+      Error error = fileNotFoundError(pContext->rootPath.getAbsolutePath(),
                                       ERROR_LOCATION);
       terminateWithMonitoringError(pContext, error);
       return;
@@ -534,14 +534,14 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // save the wide absolute path (notifications only come in wide strings)
    // strip any trailing slash for predictable append semantics
-   std::wstring wpath = filePath.absolutePathW();
+   std::wstring wpath = filePath.getAbsolutePathW();
    removeTrailingSlash(&wpath);
    pContext->rootPath = FilePath(wpath);
    pContext->recursive = recursive;
 
    // open the directory
    pContext->hDirectory = ::CreateFileW(
-                     filePath.absolutePathW().c_str(),
+                     filePath.getAbsolutePathW().c_str(),
                      FILE_LIST_DIRECTORY,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      nullptr,

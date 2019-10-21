@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_HPP
 #define SESSION_MODULES_CLANG_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

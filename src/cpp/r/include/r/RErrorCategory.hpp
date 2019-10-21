@@ -50,7 +50,7 @@ struct is_error_code_enum<rstudio::r::errc::errc_t>
 
 
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace r {

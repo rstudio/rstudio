@@ -50,7 +50,7 @@
 #include <r/ROptions.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -188,8 +188,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // only send log_dir and scratch_dir if we are in desktop mode
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      sessionInfo["log_dir"] = options.userLogPath().absolutePath();
-      sessionInfo["scratch_dir"] = options.userScratchPath().absolutePath();
+      sessionInfo["log_dir"] = options.userLogPath().getAbsolutePath();
+      sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
    // temp dir
@@ -197,13 +197,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    Error error = tempDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.absolutePath();
+   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
 
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
    // user home path
-   sessionInfo["user_home_path"] = session::options().userHomePath().absolutePath();
+   sessionInfo["user_home_path"] = session::options().userHomePath().getAbsolutePath();
    
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
@@ -339,7 +339,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
    sessionInfo["sumatra_pdf_exe_path"] =
-               options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
+               options.sumatraPath().completePath("SumatraPDF.exe").getAbsolutePath();
 #endif
 
    // are build tools enabled
@@ -352,15 +352,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               module_context::isBookdownWebsite();
 
       FilePath buildTargetDir = projects::projectContext().buildTargetPath();
-      if (!buildTargetDir.empty())
+      if (!buildTargetDir.isEmpty())
       {
          sessionInfo["build_target_dir"] = module_context::createAliasedPath(
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
-                                      buildTargetDir.childPath("src").exists();
+            buildTargetDir.completeChildPath("src").exists();
          sessionInfo["has_pkg_vig"] =
                (type == r_util::kBuildTypePackage) &&
-               buildTargetDir.childPath("vignettes").exists();
+                  buildTargetDir.completeChildPath("vignettes").exists();
       }
       else
       {

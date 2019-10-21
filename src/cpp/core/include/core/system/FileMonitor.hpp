@@ -22,7 +22,7 @@
 
 #include <boost/function.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/ScheduledCommand.hpp>
 #include <core/collection/Tree.hpp>
 

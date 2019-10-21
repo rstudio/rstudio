@@ -16,8 +16,8 @@
 #ifndef SERVER_CORE_R_VERSIONS_SCANNER_HPP
 #define SERVER_CORE_R_VERSIONS_SCANNER_HPP
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 

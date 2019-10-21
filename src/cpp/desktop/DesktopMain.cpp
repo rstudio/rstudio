@@ -29,7 +29,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -99,11 +99,11 @@ Error removeStaleOptionsLockfile()
    if (!appDataPath.exists())
       return Success();
 
-   FilePath lockFilePath = appDataPath.childPath("RStudio/desktop.ini.lock");
+   FilePath lockFilePath = appDataPath.completeChildPath("RStudio/desktop.ini.lock");
    if (!lockFilePath.exists())
       return Success();
 
-   double diff = ::difftime(::time(nullptr), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.getLastWriteTime());
    if (diff < 10)
       return Success();
 
@@ -139,9 +139,9 @@ void initializeWorkingDirectory(int argc,
       if (filePath.exists())
       {
          if (filePath.isDirectory())
-            workingDir = filePath.absolutePath();
+            workingDir = filePath.getAbsolutePath();
          else
-            workingDir = filePath.parent().absolutePath();
+            workingDir = filePath.getParent().getAbsolutePath();
       }
    }
 
@@ -165,7 +165,7 @@ void initializeWorkingDirectory(int argc,
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
-            workingDir = currentPath.absolutePath();
+            workingDir = currentPath.getAbsolutePath();
       }
       else
       {
@@ -179,7 +179,7 @@ void initializeWorkingDirectory(int argc,
       if (core::system::stdoutIsTerminal() &&
          (currentPath != core::system::userHomePath()))
       {
-         workingDir = currentPath.absolutePath();
+         workingDir = currentPath.getAbsolutePath();
       }
 
 #endif
@@ -193,7 +193,7 @@ void initializeWorkingDirectory(int argc,
 
 void setInitialProject(const FilePath& projectFile, QString* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   core::system::setenv(kRStudioInitialProject, projectFile.getAbsolutePath());
    pFilename->clear();
 }
 
@@ -207,14 +207,14 @@ void initializeStartupEnvironment(QString* pFilename)
    FilePath filePath(pFilename->toUtf8().constData());
    if (filePath.exists())
    {
-      std::string ext = filePath.extensionLowerCase();
+      std::string ext = filePath.getExtensionLowerCase();
 
       // if it is a directory or just an .rdata file then we can see
       // whether there is a project file we can automatically attach to
       if (filePath.isDirectory())
       {
          FilePath projectFile = r_util::projectFromDirectory(filePath);
-         if (!projectFile.empty())
+         if (!projectFile.isEmpty())
          {
             setInitialProject(projectFile, pFilename);
          }
@@ -225,7 +225,7 @@ void initializeStartupEnvironment(QString* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
+         core::system::setenv(kRStudioInitialEnvironment, filePath.getAbsolutePath());
          pFilename->clear();
       }
 
@@ -250,7 +250,7 @@ bool isNonProjectFilename(const QString &filename)
       return false;
 
    FilePath filePath(filename.toUtf8().constData());
-   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+   return filePath.exists() && filePath.getExtensionLowerCase() != ".rproj";
 }
 
 bool useRemoteDevtoolsDebugging()
@@ -502,7 +502,7 @@ int main(int argc, char* argv[])
 
       // initialize log
       core::system::initializeLog("rdesktop",
-                                  core::system::kLogLevelWarning,
+                                  core::log::LogLevel::WARN,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
@@ -702,7 +702,7 @@ int main(int argc, char* argv[])
       std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
       {
-         if (openFile.extension() == ".rdprsp")
+         if (openFile.getExtensionLowerCase() == ".rdprsp")
          {
             std::string contents;
             Error error = readStringFromFile(openFile, &contents);
@@ -713,20 +713,20 @@ int main(int argc, char* argv[])
             else
             {
                json::Value val;
-               error = json::parse(contents, ERROR_LOCATION, &val);
+               error = val.parse(contents);
                if (error)
                {
-                  LOG_ERROR(error);
+                  log::logError(error, ERROR_LOCATION);
                }
                else
                {
-                  if (val.type() != json::ObjectType)
+                  if (!val.isObject())
                   {
                      LOG_ERROR_MESSAGE("Invalid .rdprsp file");
                   }
                   else
                   {
-                     error = json::readObject(val.get_obj(),
+                     error = json::readObject(val.getObject(),
                                               "sessionUrl", &sessionUrl,
                                               "serverUrl", &serverUrl);
                      if (error)
@@ -759,7 +759,7 @@ int main(int argc, char* argv[])
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARN);
       }
 
       initializeSharedSecret();
@@ -781,27 +781,27 @@ int main(int argc, char* argv[])
 
       // check for debug configuration
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
-      if (currentPath.complete("conf/rdesktop-dev.conf").exists())
+      if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
       {
-         confPath = currentPath.complete("conf/rdesktop-dev.conf");
-         sessionPath = currentPath.complete("session/rsession");
-         scriptsPath = currentPath.complete("desktop");
+         confPath = currentPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = currentPath.completePath("session/rsession");
+         scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
 
       // if there is no conf path then release mode
-      if (confPath.empty())
+      if (confPath.isEmpty())
       {
          // default paths (then tweak)
-         sessionPath = installPath.complete("bin/rsession");
-         scriptsPath = installPath.complete("bin");
+         sessionPath = installPath.completePath("bin/rsession");
+         scriptsPath = installPath.completePath("bin");
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
-         if (installPath.complete("Info.plist").exists())
+         if (installPath.completePath("Info.plist").exists())
          {
-            sessionPath = installPath.complete("MacOS/rsession");
-            scriptsPath = installPath.complete("MacOS");
+            sessionPath = installPath.completePath("MacOS/rsession");
+            scriptsPath = installPath.completePath("MacOS");
          }
 #endif
       }
@@ -818,18 +818,18 @@ int main(int argc, char* argv[])
       if (devMode)
       {
          if (version.architecture() == ArchX86 &&
-             installPath.complete("session/x86").exists())
+             installPath.completePath("session/x86").exists())
          {
-            sessionPath = installPath.complete("session/x86/rsession");
+            sessionPath = installPath.completePath("session/x86/rsession");
          }
       }
       else
       {
          // check for win32 binary on windows
           if (version.architecture() == ArchX86 &&
-             installPath.complete("bin/x86").exists())
+             installPath.completePath("bin/x86").exists())
          {
-            sessionPath = installPath.complete("bin/x86/rsession");
+            sessionPath = installPath.completePath("bin/x86/rsession");
          }
       }
 #endif

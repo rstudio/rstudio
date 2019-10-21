@@ -16,7 +16,7 @@
 #include <r/RVersionInfo.hpp>
 #include <r/RExec.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;

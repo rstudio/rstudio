@@ -23,7 +23,7 @@
 #include <QThread>
 
 #include <core/Algorithm.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -119,7 +119,7 @@ void buildFontDatabase()
                &result);
 
       bool didReturnFonts =
-            error == Success() &&
+            !error &&
             result.exitStatus == EXIT_SUCCESS &&
             !result.stdOut.empty();
 

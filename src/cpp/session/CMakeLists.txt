@@ -296,6 +296,7 @@ endif()
 set(CORE_INCLUDE_DIRS
     ${CORE_SOURCE_DIR}/include
     ${SERVER_CORE_SOURCE_DIR}/include
+    ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # include addins

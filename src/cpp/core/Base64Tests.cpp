@@ -15,7 +15,7 @@
 
 #include <tests/TestThat.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Base64.hpp>
 #include <core/StringUtils.hpp>
 
@@ -80,11 +80,11 @@ test_context("Base64 Encoding")
          
          std::string encoded;
          error = encode(random, &encoded);
-         expect_true(error == Success());
+         expect_true(!error);
          
          std::string decoded;
          error = decode(encoded, &decoded);
-         expect_true(error == Success());
+         expect_true(!error);
          
          expect_true(random == decoded);
       }

@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #define kConsoleActionPrompt        0
 #define kConsoleActionInput         1

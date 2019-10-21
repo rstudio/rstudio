@@ -18,9 +18,9 @@
 #include <boost/format.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <DesktopMainWindow.hpp>
 #include <DesktopUtils.hpp>

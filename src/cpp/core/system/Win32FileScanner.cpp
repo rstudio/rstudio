@@ -17,10 +17,12 @@
 
 #include <boost/system/windows_error.hpp>
 
-#include <core/Error.hpp>
-#include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
 #include <core/BoostThread.hpp>
+#include <core/FileInfo.hpp>
+#include <core/Log.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -42,19 +44,19 @@ FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 
    if (filePath.isDirectory())
    {
-      return FileInfo(filePath.absolutePath(), true, filePath.isSymlink());
+      return FileInfo(filePath.getAbsolutePath(), true, filePath.isSymlink());
    }
    else if (filePath.exists())
    {
-      return FileInfo(filePath.absolutePath(),
+      return FileInfo(filePath.getAbsolutePath(),
                       false,
-                      filePath.size(),
-                      filePath.lastWriteTime(),
+                      filePath.getSize(),
+                      filePath.getLastWriteTime(),
                       filePath.isSymlink());
    }
    else
    {
-      return FileInfo(filePath.absolutePath(), false);
+      return FileInfo(filePath.getAbsolutePath(), false);
    }
 }
 
@@ -93,7 +95,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
    // read directory entries
    std::vector<FilePath> children;
-   Error error = rootPath.children(&children);
+   Error error = rootPath.getChildren(children);
    if (error)
       return error;
 
@@ -125,8 +127,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
          if (options.recursive && !childFileInfo.isSymlink())
          {
             Error error = scanFiles(child, options, pTree);
-            if (error &&
-               (error.code() != boost::system::windows_error::path_not_found))
+            if (error && (error != boost::system::windows_error::path_not_found))
                LOG_ERROR(error);
          }
       }

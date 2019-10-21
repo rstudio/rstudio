@@ -20,10 +20,10 @@
 #include <boost/regex.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/BrowserUtils.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -53,7 +53,7 @@ namespace {
 
 FilePath pdfFilePath(const FilePath& texFilePath)
 {
-   return texFilePath.parent().complete(texFilePath.stem() + ".pdf");
+   return texFilePath.getParent().completePath(texFilePath.getStem() + ".pdf");
 }
 
 void viewPdfExternal(const FilePath& texPath)

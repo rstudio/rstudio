@@ -20,7 +20,7 @@
 
 #include <core/FileUtils.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/system/System.hpp>
@@ -40,8 +40,8 @@ bool copySourceFile(const FilePath& sourceDir,
                     const FilePath& sourceFilePath)
 {
    // compute the target path
-   std::string relativePath = sourceFilePath.relativePath(sourceDir);
-   FilePath targetPath = destDir.complete(relativePath);
+   std::string relativePath = sourceFilePath.getRelativePath(sourceDir);
+   FilePath targetPath = destDir.completePath(relativePath);
 
    // if the copy item is a directory just create it
    if (sourceFilePath.isDirectory())
@@ -72,7 +72,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
       std::string shortentedUuid = core::system::generateShortenedUuid();
 
       // form full path
-      FilePath uniqueDir = parent.childPath(prefix + shortentedUuid);
+      FilePath uniqueDir = parent.completeChildPath(prefix + shortentedUuid);
 
       // return if it doesn't exist
       if (!uniqueDir.exists())
@@ -80,13 +80,13 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    }
 
    // if we didn't succeed then return prefix + uuid
-   return parent.childPath(prefix + core::system::generateUuid(false));
+   return parent.completeChildPath(prefix + core::system::generateUuid(false));
 }
 
 std::string readFile(const FilePath& filePath)
 {
    std::ifstream stream(
-            filePath.absolutePath().c_str(),
+      filePath.getAbsolutePath().c_str(),
             std::ios::in | std::ios::binary);
    
    std::string content;
@@ -134,7 +134,7 @@ Error copyDirectory(const FilePath& sourceDirectory,
       return error ;
 
    // iterate over the source
-   return sourceDirectory.childrenRecursive(
+   return sourceDirectory.getChildrenRecursive(
      boost::bind(copySourceFile, sourceDirectory, targetDirectory, _2));
 }
 
@@ -146,7 +146,7 @@ bool isDirectoryWriteable(const FilePath& directory)
 #endif
    "write-test-");
 
-   FilePath testFile = directory.complete(prefix + core::system::generateUuid());
+   FilePath testFile = directory.completePath(prefix + core::system::generateUuid());
    Error error = core::writeStringToFile(testFile, "test");
    if (error)
    {
@@ -167,16 +167,16 @@ Error changeOwnership(const FilePath& file,
                       const std::string& owner)
 {
    // changes ownership of file to the server user
-   core::system::user::User user;
-   Error error = core::system::user::userFromUsername(owner, &user);
+   core::system::User user;
+   Error error = core::system::User::getUserFromIdentifier(owner, user);
    if (error)
       return error;
 
    return core::system::posixCall<int>(
             boost::bind(::chown,
-                        file.absolutePath().c_str(),
-                        user.userId,
-                        user.groupId),
+                        file.getAbsolutePath().c_str(),
+                        user.getUserId(),
+                        user.getGroupId()),
             ERROR_LOCATION);
 }
 #endif

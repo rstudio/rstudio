@@ -18,7 +18,7 @@
 
 #include <session/prefs/UserPrefValues.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {

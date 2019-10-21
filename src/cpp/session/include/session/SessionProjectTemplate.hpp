@@ -19,7 +19,7 @@
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/text/CsvParser.hpp>
 

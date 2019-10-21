@@ -21,7 +21,7 @@
 
 #include "UserStateValues.hpp"
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #define kUserStateDefaultLayer  "default"
 #define kUserStateComputedLayer "computed"

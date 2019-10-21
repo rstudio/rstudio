@@ -21,7 +21,7 @@
 
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
@@ -111,7 +111,7 @@ unsigned int resolveMinimumUserId(std::string minimumUserId,
       if (loginDefs.exists())
       {
          const char uidMin[] = "UID_MIN";
-         std::ifstream defStream(loginDefs.absolutePath().c_str());
+         std::ifstream defStream(loginDefs.getAbsolutePath().c_str());
          std::string line;
          while (std::getline(defStream, line))
          {
@@ -152,20 +152,20 @@ ProgramStatus Options::read(int argc,
    Error error = core::system::installPath("..", argv[0], &installPath_);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
+      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
       return ProgramStatus::exitFailure();
    }
 
    // compute the resource and binary paths
    FilePath resourcePath = installPath_;
-   FilePath binaryPath = installPath_.childPath("bin");
+   FilePath binaryPath = installPath_.completeChildPath("bin");
 
    // detect running in OSX bundle and tweak paths
 #ifdef __APPLE__
-   if (installPath_.complete("Info.plist").exists())
+   if (installPath_.completePath("Info.plist").exists())
    {
-      resourcePath = installPath_.complete("Resources");
-      binaryPath = installPath_.complete("MacOS");
+      resourcePath = installPath_.completePath("Resources");
+      binaryPath = installPath_.completePath("MacOS");
    }
 #endif
 
@@ -338,7 +338,7 @@ ProgramStatus Options::read(int argc,
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
-                                 defaultConfigPath.absolutePath() : "";
+                            defaultConfigPath.getAbsolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook
@@ -396,18 +396,23 @@ ProgramStatus Options::read(int argc,
          serverUser_ = "";
       }
       // if there is a program user specified and it doesn't exist....
-      else if (!core::system::user::exists(serverUser_))
+      else
       {
-         if (serverUser_ == kDefaultProgramUser)
+         system::User user;
+         Error error = system::User::getUserFromIdentifier(serverUser_, user);
+         if (error || !user.exists())
          {
-            // administrator hasn't created an rserver system account yet
-            // so we'll end up running as root
-            serverUser_ = "";
-         }
-         else
-         {
-            LOG_ERROR_MESSAGE("Server user "+ serverUser_ +" does not exist");
-            return ProgramStatus::exitFailure();
+            if (serverUser_ == kDefaultProgramUser)
+            {
+               // administrator hasn't created an rserver system account yet
+               // so we'll end up running as root
+               serverUser_ = "";
+            }
+            else
+            {
+               LOG_ERROR_MESSAGE("Server user " + serverUser_ + " does not exist");
+               return ProgramStatus::exitFailure();
+            }
          }
       }
    }
@@ -442,7 +447,7 @@ void Options::resolvePath(const FilePath& basePath,
                           std::string* pPath) const
 {
    if (!pPath->empty())
-      *pPath = basePath.complete(*pPath).absolutePath();
+      *pPath = basePath.completePath(*pPath).getAbsolutePath();
 }
 
 } // namespace server

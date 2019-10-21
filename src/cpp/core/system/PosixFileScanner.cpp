@@ -18,9 +18,9 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
 #include "config.h"
@@ -125,7 +125,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    for (const std::string& name : names)
    {
       // compute the path
-      std::string path = rootPath.childPath(name).absolutePath();
+      std::string path = rootPath.completeChildPath(name).getAbsolutePath();
 
       // get the attributes
       struct stat st;

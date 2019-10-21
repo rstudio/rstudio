@@ -18,7 +18,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/YamlUtil.hpp>
@@ -146,7 +146,7 @@ Error installShinyTestDependencies(const json::JsonRpcRequest& request,
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
    pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
             args,
             options,
             pCPI);

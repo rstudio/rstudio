@@ -21,8 +21,8 @@
 
 #include <boost/make_shared.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 
 namespace rstudio {

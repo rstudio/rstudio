@@ -16,7 +16,7 @@
 #ifndef NOTEBOOK_ALTERNATE_ENGINES_HPP
 #define NOTEBOOK_ALTERNATE_ENGINES_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace session {

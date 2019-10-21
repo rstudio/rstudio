@@ -15,6 +15,8 @@
 
 #include <core/libclang/UnsavedFiles.hpp>
 
+#include <algorithm>
+
 #include <core/StringUtils.hpp>
 
 namespace rstudio {

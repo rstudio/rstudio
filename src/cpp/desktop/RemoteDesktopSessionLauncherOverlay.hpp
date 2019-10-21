@@ -22,11 +22,11 @@
 
 #include <QNetworkCookie>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include "DesktopApplicationLaunch.hpp"
 #include "DesktopMainWindow.hpp"

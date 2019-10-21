@@ -23,7 +23,7 @@
 #include <boost/optional.hpp>
 #include <boost/signals2.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

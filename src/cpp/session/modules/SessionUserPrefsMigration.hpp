@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULE_USER_PREFS_MIGRATION_HPP
 #define SESSION_MODULE_USER_PREFS_MIGRATION_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
    namespace core {

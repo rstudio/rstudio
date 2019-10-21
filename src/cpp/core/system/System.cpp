@@ -13,28 +13,31 @@
  *
  */
 
+#include <atomic>
+
 #include <boost/variant.hpp>
 
 #include <core/system/System.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/FileLogWriter.hpp>
 #include <core/Hash.hpp>
 #include <core/Log.hpp>
 #include <core/LogOptions.hpp>
-#include <core/SafeConvert.hpp>
-#include <core/StderrLogWriter.hpp>
 
 #include <core/system/Environment.hpp>
 
 #ifndef _WIN32
-#include <core/SyslogLogWriter.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 #endif
+
+#include <shared_core/FileLogDestination.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 namespace rstudio {
 namespace core {
 namespace system {
-     
+
 #ifdef _WIN32
 #define kPathSeparator ";"
 #else
@@ -67,16 +70,16 @@ void addToSystemPath(const FilePath& path, bool prepend)
 {
    std::string systemPath = system::getenv("PATH");
    if (prepend)
-      systemPath = path.absolutePath() + kPathSeparator + systemPath;
+      systemPath = path.getAbsolutePath() + kPathSeparator + systemPath;
    else
-      systemPath = systemPath + kPathSeparator + path.absolutePath();
+      systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
    system::setenv("PATH", systemPath);
 }
 
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
-   if (!error.expected())
+   if (!error.isExpected())
       core::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }
@@ -103,99 +106,143 @@ std::string generateShortenedUuid()
 std::string s_programIdentity;
 
 // logging options representing the latest state of the logging configuration file
-boost::shared_ptr<LogOptions> s_logOptions;
+boost::shared_ptr<log::LogOptions> s_logOptions;
 
 // mutex for logging synchronization
 boost::recursive_mutex s_loggingMutex;
 
 namespace {
 
-// main log writer for the binary
-LogWriter* s_pLogWriter = nullptr;
-
-// lazy initalized named loggers
-// these are secondary loggers to the main binary logger
-// useful for isolating specific sections of code within the binary
-typedef std::map<std::string, boost::shared_ptr<LogWriter> > SecondaryLoggerMap;
-SecondaryLoggerMap s_secondaryLogWriters;
-
-// additional log writers
-// these are created entirely in code and are not modifiable by the
-// logging configuration file
-std::vector<boost::shared_ptr<LogWriter> > s_additionalLogWriters;
-
-LogWriter* initializeLogWriter(const std::string& logSection = std::string())
+int getNextFileLogId()
 {
-   // requires prior synchronization
+   static std::atomic_uint fileLogId(3);
+   return fileLogId.fetch_add(1);
+}
 
-   int logLevel = s_logOptions->logLevel(logSection);
-   int loggerType = s_logOptions->loggerType(logSection);
+std::shared_ptr<log::ILogDestination> getStdErrLogDest()
+{
+   using namespace log;
+   static std::shared_ptr<ILogDestination> stdErrLogDest(new StderrLogDestination());
+   return stdErrLogDest;
+}
+
+#ifndef _WIN32
+
+std::shared_ptr<log::ILogDestination> getSysLogDest()
+{
+   using namespace log;
+   static std::shared_ptr<ILogDestination> syslogDest(new SyslogDestination(s_programIdentity));
+   return syslogDest;
+}
+
+#endif
+
+void initializeLogWriter()
+{
+   using namespace log;
+
+   // requires prior synchronization
+   LoggerType loggerType = s_logOptions->loggerType();
+
+   // options currently only used for file logging
+   LoggerOptions options = s_logOptions->loggerOptions();
+
+   switch (loggerType)
+   {
+      case LoggerType::kFile:
+      {
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new FileLogDestination(
+               getNextFileLogId(),
+               s_programIdentity,
+               boost::get<FileLogOptions>(options))));
+         break;
+      }
+      case LoggerType::kStdErr:
+      {
+         addLogDestination(getStdErrLogDest());
+         break;
+      }
+      case LoggerType::kSysLog:
+      default:
+      {
+#ifndef _WIN32
+         addLogDestination(getSysLogDest());
+#endif
+      }
+   }
+}
+
+void initializeLogWriter(const std::string& logSection)
+{
+   using namespace log;
+
+   // requires prior synchronization
+   LoggerType loggerType = s_logOptions->loggerType(logSection);
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions(logSection);
 
    switch (loggerType)
    {
-      case kLoggerTypeFile:
-         return new FileLogWriter(s_programIdentity, logLevel, boost::get<FileLoggerOptions>(options), logSection);
-      case kLoggerTypeStdErr:
-         return new StderrLogWriter(s_programIdentity, logLevel);
-      case kLoggerTypeSysLog:
+      case LoggerType::kFile:
+      {
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new FileLogDestination(
+               getNextFileLogId(),
+               s_programIdentity,
+               boost::get<FileLogOptions>(options))),
+            LogSection(logSection, s_logOptions->logLevel(logSection)));
+         break;
+      }
+      case LoggerType::kStdErr:
+      {
+         addLogDestination(
+            getStdErrLogDest(),
+            LogSection(logSection, s_logOptions->logLevel(logSection)));
+         break;
+      }
+      case LoggerType::kSysLog:
       default:
+      {
 #ifndef _WIN32
-         return new SyslogLogWriter(s_programIdentity, logLevel);
-#else
-         return nullptr;
+         addLogDestination(
+            getSysLogDest(),
+            LogSection(logSection, s_logOptions->logLevel(logSection)));
 #endif
+      }
    }
 }
 
-void initializeMainLogWriter()
+void initializeLogWriters()
 {
    // requires prior synchronization
+   log::setProgramId(s_programIdentity);
+   log::setLogLevel(s_logOptions->logLevel());
 
-   if (s_pLogWriter)
-      delete s_pLogWriter;
+   // Initialize primary log writer
+   initializeLogWriter();
 
-   s_pLogWriter = initializeLogWriter();
-}
-
-void initializeSecondaryLogWriters()
-{
-   // requires prior synchronization
-
-   s_secondaryLogWriters.clear();
-
+   // Initialize secondary log writers
    std::vector<std::string> logSections = s_logOptions->loggerOverrides();
    for (const std::string& loggerName : logSections)
-   {
-      LogWriter* pLogWriter = initializeLogWriter(loggerName);
-      if (pLogWriter)
-         s_secondaryLogWriters.emplace(loggerName, boost::shared_ptr<LogWriter>(pLogWriter));
-   }
+      initializeLogWriter(loggerName);
 }
-
 } // anonymous namespace
 
-LogLevel lowestLogLevel()
+log::LogLevel lowestLogLevel()
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       if (!s_logOptions)
-         return kLogLevelWarning;
+         return log::LogLevel::WARN;
 
-      int lowestLevel = s_logOptions->lowestLogLevel();
-      for (const boost::shared_ptr<LogWriter>& logWriter : s_additionalLogWriters)
-      {
-         if (logWriter->logLevel() < lowestLevel)
-            lowestLevel = logWriter->logLevel();
-      }
-      return static_cast<LogLevel>(lowestLevel);
+      return s_logOptions->lowestLogLevel();
    }
    END_LOCK_MUTEX
 
    // default return - only occurs if we fail to lock mutex
-   return kLogLevelWarning;
+   return log::LogLevel::WARN;
 }
 
 Error initLog()
@@ -206,8 +253,7 @@ Error initLog()
    if (error)
       return error;
 
-   initializeMainLogWriter();
-   initializeSecondaryLogWriters();
+   initializeLogWriters();
 
    return Success();
 }
@@ -224,14 +270,14 @@ Error reinitLog()
 }
 
 Error initializeStderrLog(const std::string& programIdentity,
-                          int logLevel,
+                          log::LogLevel logLevel,
                           bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default stderr logger options
-      StdErrLoggerOptions options;
-      s_logOptions.reset(new LogOptions(programIdentity, logLevel, kLoggerTypeStdErr, options));
+      log::StdErrLogOptions options;
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -247,16 +293,15 @@ Error initializeStderrLog(const std::string& programIdentity,
 }
 
 Error initializeLog(const std::string& programIdentity,
-                    int logLevel,
+                    log::LogLevel logLevel,
                     const FilePath& logDir,
                     bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default file logger options
-      FileLoggerOptions options;
-      options.logDir = logDir;
-      s_logOptions.reset(new LogOptions(programIdentity, logLevel, kLoggerTypeFile, options));
+      log::FileLogOptions options(logDir);
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -271,75 +316,64 @@ Error initializeLog(const std::string& programIdentity,
    return Success();
 }
 
-void setLogToStderr(bool logToStderr)
-{
-   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
-   {
-      if (s_pLogWriter)
-         s_pLogWriter->setLogToStderr(logToStderr);
-   }
-   END_LOCK_MUTEX
-}
-
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
-{
-   s_additionalLogWriters.push_back(pLogWriter);
-}
-
-void log(LogLevel logLevel,
+void log(log::LogLevel logLevel,
          const char* message,
          const std::string& logSection)
 {
    log(logLevel, std::string(message), logSection);
 }
 
-void log(LogLevel logLevel,
+void log(log::LogLevel logLevel,
          const std::string& message,
          const std::string& logSection)
 {
-   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
+   switch (logLevel)
    {
-      bool logToMainLogger = true;
-
-      if (!logSection.empty())
+      case log::LogLevel::ERR:
       {
-         // check to see if this log section has a logger dedicated to it
-         // if so, we will use it to log, instead of using the main binary logger
-         SecondaryLoggerMap::iterator iter = s_secondaryLogWriters.find(logSection);
-         if (iter != s_secondaryLogWriters.end())
-         {
-            iter->second->log(logLevel, message);
-            logToMainLogger = false;
-         }
+         log::logErrorMessage(message, logSection);
+         break;
       }
-
-      if (s_pLogWriter && logToMainLogger)
-         s_pLogWriter->log(logLevel, message);
+      case log::LogLevel::WARN:
+      {
+         log::logWarningMessage(message, logSection);
+         break;
+      }
+      case log::LogLevel::DEBUG:
+      {
+         log::logDebugMessage(message, logSection);
+         break;
+      }
+      case log::LogLevel::INFO:
+      {
+         log::logInfoMessage(message, logSection);
+         break;
+      }
+      case log::LogLevel::OFF:
+      default:
+      {
+         return;
+      }
    }
-   END_LOCK_MUTEX
-
-   // not synchronized because additional log writers are static
-   // and do not change at run-time
-   std::for_each(s_additionalLogWriters.begin(),
-                 s_additionalLogWriters.end(),
-                 boost::bind(&LogWriter::log, _1, logLevel, message));
 }
 
-const char* logLevelToStr(LogLevel level)
+const char* logLevelToStr(log::LogLevel level)
 {
    switch(level)
    {
-      case kLogLevelError:
+      case log::LogLevel::ERR:
          return "ERROR";
-      case kLogLevelWarning:
+      case log::LogLevel::WARN:
          return "WARNING";
-      case kLogLevelInfo:
+      case log::LogLevel::INFO:
          return "INFO";
-      case kLogLevelDebug:
+      case log::LogLevel::DEBUG:
          return "DEBUG";
+      case log::LogLevel::OFF:
+         return "OFF";
       default:
          LOG_WARNING_MESSAGE("Unexpected log level: " +
-                             safe_convert::numberToString(level));
+                             safe_convert::numberToString(static_cast<int>(level)));
          return "ERROR";
    }
 }

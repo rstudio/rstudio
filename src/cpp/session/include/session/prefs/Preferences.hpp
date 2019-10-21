@@ -16,7 +16,7 @@
 #ifndef SESSION_PREFERENCES_HPP
 #define SESSION_PREFERENCES_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <boost/range/adaptor/reversed.hpp>
 

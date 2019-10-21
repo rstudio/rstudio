@@ -17,7 +17,7 @@
 #define SESSION_USER_PREF_LAYER_HPP
 
 #include <session/prefs/PrefLayer.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {

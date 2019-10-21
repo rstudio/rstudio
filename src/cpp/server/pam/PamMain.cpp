@@ -20,7 +20,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>
@@ -57,7 +57,9 @@ int main(int argc, char * const argv[])
    try
    { 
       // initialize log
-      initializeSystemLog("rserver-pam", core::system::kLogLevelWarning);
+      core::log::setLogLevel(core::log::LogLevel::WARN);
+      core::log::setProgramId("rserver-pam");
+      core::system::initializeSystemLog("rserver-pam", core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

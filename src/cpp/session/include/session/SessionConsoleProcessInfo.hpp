@@ -18,7 +18,7 @@
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Types.hpp>
