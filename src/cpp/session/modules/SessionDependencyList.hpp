@@ -21,7 +21,7 @@
 
 namespace rstudio {
 namespace core {
-   class Error ;
+   class Error;
 }
 }
 
@@ -31,6 +31,7 @@ namespace modules {
 namespace dependency_list {
 
 core::Error getDependencyList(core::json::Object *pList);
+core::Error initialize();
 
 } // namespace dependency_list
 } // namespace modules

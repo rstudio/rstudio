@@ -809,3 +809,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
   .Call("rs_executeAppCommand", commandId, quiet, PACKAGE = "(embedding)")
 })
 
+# return a list of all the R packages RStudio depends on in in some way
+.rs.addApiFunction("getPackageDependencies", function() {
+  .Call("rs_packageDependencies", PACKAGE = "(embedding)")
+})
+

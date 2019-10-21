@@ -19,6 +19,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
+
 #include <session/SessionOptions.hpp>
 
 using namespace rstudio::core;
@@ -27,6 +30,62 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace dependency_list {
+namespace {
+
+// Return a list of all the packages RStudio depends on
+SEXP rs_packageDependencies()
+{
+   r::sexp::Protect protect;
+   json::Object packageList;
+   Error error = getDependencyList(&packageList);
+   if (error)
+   {
+      r::exec::error(error.summary());
+      return R_NilValue;
+   }
+
+   // Process the JSON object into columns
+   std::vector<std::string> name, version, location;
+   std::vector<bool> source;
+   try
+   {
+      // Read each field; we ship this JSON file so can reasonably expect it will be well-formed
+      // (we will just bail generically below if it isn't)
+      for (const auto& it: packageList["packages"].get_obj())
+      {
+          // The map key is the name of the package
+          name.push_back(it.name());
+
+          // The value object forms the rest of the package metadata
+          json::Object pkg = it.value().get_obj();
+          version.push_back(pkg["version"].get_str());
+          location.push_back(pkg["location"].get_str());
+          source.push_back(pkg["source"].get_bool());
+      }
+   }
+   catch (...)
+   {
+      r::exec::error("Could not process dependency information.");
+      return R_NilValue;
+   }
+
+   // Assemble the metadata into a data frame
+   r::exec::RFunction frame("data.frame");
+   frame.addParam("name", r::sexp::create(name, &protect));
+   frame.addParam("version", r::sexp::create(version, &protect));
+   frame.addParam("location", r::sexp::create(location, &protect));
+   frame.addParam("source", r::sexp::create(source, &protect));
+   SEXP packageFrame = R_NilValue;
+   error = frame.call(&packageFrame, &protect);
+   if (error)
+   {
+       r::exec::error(error.summary());
+   }
+
+   return packageFrame;
+}
+
+} // anonymous namespace
 
 Error getDependencyList(json::Object *pList)
 {
@@ -55,6 +114,14 @@ Error getDependencyList(json::Object *pList)
    *pList = val.get_obj();
    return Success();
 }
+
+Error initialize()
+{         
+   RS_REGISTER_CALL_METHOD(rs_packageDependencies);
+
+   return Success();
+}
+
 
 } // namespace dependency_list
 } // namespace modules
