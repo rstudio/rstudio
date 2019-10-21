@@ -44,6 +44,7 @@
 #include <mach-o/dyld.h>
 #include <sys/proc_info.h>
 #include <libproc.h>
+#include <gsl/gsl>
 #endif
 
 #ifndef __APPLE__
@@ -1217,14 +1218,14 @@ FilePath currentWorkingDirMac(PidType pid)
             &info, PROC_PIDVNODEPATHINFO_SIZE);
 
    // check for explicit failure
-   if (size == -1)
+   if (size <= 0)
    {
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
       return FilePath();
    }
 
    // check for failure to write all required bytes
-   if (size != PROC_PIDVNODEPATHINFO_SIZE)
+   if (size < gsl::narrow_cast<int>(PROC_PIDVNODEPATHINFO_SIZE))
    {
       using namespace boost::system::errc;
       LOG_ERROR(systemError(not_enough_memory, ERROR_LOCATION));
