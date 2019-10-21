@@ -90,8 +90,12 @@ public class RmdTemplateChooser extends Composite
             JsArrayUtil.fillList(templates, templates_);
             templates_.sort((RmdDocumentTemplate a, RmdDocumentTemplate b) ->
             {
-               return (a.getPackage() + a.getName()).compareTo(
-                      (b.getPackage() + b.getName()));
+               int result = a.getPackage().compareTo(b.getPackage());
+               if (result == 0)
+               {
+                  return a.getName().compareTo(b.getName());
+               }
+               return result;
             });
 
             // Add each to the UI
