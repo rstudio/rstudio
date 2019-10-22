@@ -134,6 +134,7 @@
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
 #include "modules/SessionDependencies.hpp"
+#include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionHelp.hpp"
@@ -537,6 +538,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::find::initialize)
       (modules::environment::initialize)
       (modules::dependencies::initialize)
+      (modules::dependency_list::initialize)
       (modules::dirty::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)

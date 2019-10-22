@@ -108,6 +108,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
+   modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
@@ -512,6 +513,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
 
    # JSON schema files
    install(DIRECTORY "resources/schema"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # dependency data
+   install(DIRECTORY "resources/dependencies"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
