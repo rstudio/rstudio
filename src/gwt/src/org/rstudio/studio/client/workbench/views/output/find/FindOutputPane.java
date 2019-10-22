@@ -183,6 +183,10 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
 
+      progress_ = new ReplaceProgress();
+      progress_.setVisible(false);
+      replaceToolbar_.addLeftWidget(progress_);
+
       return replaceToolbar_;
    }
 
@@ -485,6 +489,7 @@ public class FindOutputPane extends WorkbenchPane
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
    private ToolbarButton stopReplace_;
+   private ReplaceProgress progress_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
