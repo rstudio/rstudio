@@ -345,6 +345,8 @@ private:
    Error processReplace(std::string* file,
                         int lineNum,
                         std::string* pContent,
+                        json::Array* pReplaceMatchOn,
+                        json::Array* pReplaceMatchOff,
                         std::string* pSearch,
                         std::string* pReplace)
    {
@@ -362,22 +364,39 @@ private:
       if (pStream->good())
       {
          std::string line;
-         int linePos=0;
+         int currentLine=0;
          int seekPos=0;
-         while (std::getline(*pStream, line) && linePos<lineNum)
+         while (std::getline(*pStream, line) && currentLine<lineNum)
          {
-            ++linePos;
-            if (linePos == lineNum)
+            ++currentLine;
+            if (currentLine == lineNum)
             {
                std::string newLine;
                size_t linePos = line.find(*pSearch);
+
+               pReplaceMatchOn->push_back(gsl::narrow_cast<int>(linePos));
+               pReplaceMatchOff->push_back(gsl::narrow_cast<int>(linePos) +
+                                           gsl::narrow_cast<int>(pReplace->size()));
+
                newLine = boost::regex_replace(line,
                                               boost::regex(*pSearch),
                                               *pReplace);
    
                pStream->seekg(seekPos + linePos);
+               //pStream->seekg(0);
                if (linePos != std::string::npos)
-                  pStream->write(newLine.c_str(), pSearch->size());
+               {
+                  try
+                  {
+                      pStream->write(newLine.c_str(), pSearch->size());
+                  }
+                  catch (const std::ios_base::failure& e)
+                  {
+                     std::string text("failed to write to file ");
+                     text.append(e.code().message());
+                     LOG_ERROR_MESSAGE(text);
+                  }
+               }
             }
             seekPos += line.size();
          }
@@ -394,6 +413,8 @@ private:
       json::Array contents;
       json::Array matchOns;
       json::Array matchOffs;
+      json::Array replaceMatchOns;
+      json::Array replaceMatchOffs;
 
       int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
       if (recordsToProcess < 0)
@@ -443,10 +464,12 @@ private:
             json::Array matchOn, matchOff;
             processContents(&lineContents, &matchOn, &matchOff,
                             findResults().getReplacePattern(), findResults().getReplace());
+
+            json::Array replaceMatchOn, replaceMatchOff;
             if (findResults().getReplace())
             {
-               json::Array replaceMatchOn, replaceMatchOff;
                processReplace(&file, lineNum, &lineContents,
+                              &replaceMatchOn, &replaceMatchOff,
                               findResults().getSearchPattern(),
                               findResults().getReplacePattern());
             }
@@ -454,9 +477,16 @@ private:
             files.push_back(file);
             lineNums.push_back(lineNum);
             contents.push_back(lineContents);
-            matchOns.push_back(matchOn);
-            matchOffs.push_back(matchOff);
-   
+            if (findResults().getReplace())
+            {
+               matchOns.push_back(replaceMatchOn);
+               matchOffs.push_back(replaceMatchOff);
+            }
+            else
+            {  
+               matchOns.push_back(matchOn);
+               matchOffs.push_back(matchOff);
+            }
             recordsToProcess--;
          }
       }
@@ -485,8 +515,12 @@ private:
                                  matchOns,
                                  matchOffs);
 
-         module_context::enqueClientEvent(
-                  ClientEvent(client_events::kFindResult, result));
+         if (!findResults().replace())
+            module_context::enqueClientEvent(
+                     ClientEvent(client_events::kFindResult, result));
+         else
+            module_context::enqueClientEvent(
+                    ClientEvent(client_events::kReplaceResult, result));
       }
 
       if (recordsToProcess <= 0)
