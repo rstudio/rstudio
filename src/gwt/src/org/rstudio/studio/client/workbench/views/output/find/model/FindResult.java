@@ -32,7 +32,8 @@ public class FindResult extends JavaScriptObject
          file: file,
          line: line,
          lineValue: lineValue,
-         replace: ""
+         replace: "",
+         replaceIndicator: false
       });
    }-*/;
 
@@ -63,6 +64,14 @@ public class FindResult extends JavaScriptObject
 
    public native final String getReplaceValue()/*-{
       return this.replace;
+   }-*/;
+
+   public native final boolean getReplaceIndicator()/*-{
+      return this.replaceIndicator;
+   }-*/;
+
+   public native final void setReplaceIndicator()/*-{
+      this.replaceIndicator = true;
    }-*/;
 
    public final ArrayList<Integer> getMatchOns()
@@ -144,6 +153,59 @@ public class FindResult extends JavaScriptObject
                out.append(replace.charAt(j));
             out.appendHtmlConstant("</em>");
          }
+      }
+
+      return out.toSafeHtml();
+   }
+
+
+   public final SafeHtml getLineReplaceHTML()
+   {
+      SafeHtmlBuilder out = new SafeHtmlBuilder();
+
+      ArrayList<Integer> on = getMatchOns();
+      ArrayList<Integer> off = getMatchOffs();
+      ArrayList<Pair<Boolean, Integer>> parts
+                                      = new ArrayList<Pair<Boolean, Integer>>();
+      while (on.size() + off.size() > 0)
+      {
+         int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
+         int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
+         if (onVal <= offVal)
+            parts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
+         else
+            parts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
+      }
+
+      String line = getLineValue();
+
+      // Use a counter to ensure tags are balanced.
+      int openTags = 0;
+
+      for (int i = 0; i < line.length(); i++)
+      {
+         while (parts.size() > 0 && parts.get(0).second == i)
+         {
+            if (parts.remove(0).first)
+            {
+               out.appendHtmlConstant("<em>");
+               openTags++;
+            }
+            else if (openTags > 0)
+            {
+               out.appendHtmlConstant("</em>");
+               openTags--;
+               String replace = getReplaceValue();
+            }
+         }
+         out.append(line.charAt(i));
+      }
+
+      while (openTags > 0)
+      {
+         openTags--;
+         out.appendHtmlConstant("</em>");
+                  String replace = getReplaceValue();
       }
 
       return out.toSafeHtml();

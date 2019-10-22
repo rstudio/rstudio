@@ -190,6 +190,11 @@ public:
       return replace_;
    }
 
+   void setReplace(bool value)
+   {
+      replace_ = value;
+   }
+
    std::string* getSearchPattern()
    {
       return &input_;
@@ -382,13 +387,14 @@ private:
                                               boost::regex(*pSearch),
                                               *pReplace);
    
-               pStream->seekg(seekPos + linePos);
+               pStream->seekg(linePos);
                //pStream->seekg(0);
                if (linePos != std::string::npos)
                {
                   try
                   {
-                      pStream->write(newLine.c_str(), pSearch->size());
+                      pStream->write(newLine.c_str(), line.size());
+                      *pContent = newLine;
                   }
                   catch (const std::ios_base::failure& e)
                   {
@@ -515,12 +521,15 @@ private:
                                  matchOns,
                                  matchOffs);
 
-         if (!findResults().replace())
+         if (!findResults().getReplace())
             module_context::enqueClientEvent(
                      ClientEvent(client_events::kFindResult, result));
          else
+         {
             module_context::enqueClientEvent(
                     ClientEvent(client_events::kReplaceResult, result));
+            findResults().setReplace(false);
+         }
       }
 
       if (recordsToProcess <= 0)

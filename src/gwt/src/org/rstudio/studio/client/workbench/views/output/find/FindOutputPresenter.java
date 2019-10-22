@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesE
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -227,6 +228,23 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
+      events_.addHandler(ReplaceResultEvent.TYPE, new ReplaceResultEvent.Handler()
+      {
+         @Override
+         public void onReplaceResult(ReplaceResultEvent event)
+         {
+            //if (event.getHandle() != currentReplaceHandle_)
+            //   return;
+            ArrayList<FindResult> results = event.getResults();
+            for (FindResult fr : results)
+               fr.setReplaceIndicator();
+            view_.clearMatches();
+            view_.addMatches(results);
+            
+            view_.ensureVisible(true);
+         }
+      });
+
       new JSObjectStateValue(GROUP_FIND_IN_FILES, KEY_DIALOG_STATE,
                              ClientState.PROJECT_PERSISTENT,
                              session.getSessionInfo().getClientState(),
@@ -394,6 +412,7 @@ public class FindOutputPresenter extends BasePresenter
    }
    
    private String currentFindHandle_;
+   private String currentReplaceHandle_;
 
    private FindInFilesDialog.State dialogState_;
 

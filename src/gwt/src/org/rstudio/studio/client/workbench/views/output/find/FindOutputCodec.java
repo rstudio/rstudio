@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputResources.Styles;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -58,7 +59,10 @@ public class FindOutputCodec
 
       TableCellElement td2 = Document.get().createTDElement();
       td2.setClassName(styles_.lineValue());
-      td2.setInnerHTML(entry.getLineHTML().asString());
+      if (!entry.getReplaceIndicator())
+         td2.setInnerHTML(entry.getLineHTML().asString());
+      else
+         td2.setInnerHTML(entry.getLineReplaceHTML().asString());
       tr.appendChild(td2);
 
       return tr;
