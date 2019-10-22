@@ -29,11 +29,9 @@
 
 #include <sstream>
 
-// We do a little special handling for syslog because it does its own formatting.
 #include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
 #include <shared_core/ILogDestination.hpp>
-#include <shared_core/system/SyslogDestination.hpp>
 
 namespace rstudio {
 namespace core {
@@ -97,30 +95,21 @@ std::string formatLogMessage(
    const ErrorLocation& in_loggedFrom = ErrorLocation(),
    bool in_formatForSyslog = false)
 {
+   // Add the time.
+   using namespace boost::posix_time;
+   ptime time = microsec_clock::universal_time();
+
    std::ostringstream oss;
-
-   if (!in_formatForSyslog)
-   {
-      // Add the time.
-      using namespace boost::posix_time;
-      ptime time = microsec_clock::universal_time();
-
-      oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
-          << " [" << in_programId << "] ";
-   }
-
-   oss << in_logLevel << " " << in_message;
+   oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
+       << " [" << in_programId << "] "
+       << in_logLevel
+       << " "
+       << in_message;
 
    if (in_loggedFrom.hasLocation())
       oss << s_delim << " " << s_loggedFrom << ": " << cleanDelims(in_loggedFrom.asString());
 
    oss << std::endl;
-
-   if (in_formatForSyslog)
-   {
-      // Newlines delimit logs in syslog, so replace them with |||
-      return boost::replace_all_copy(oss.str(), "\n", "|||");
-   }
 
    return oss.str();
 }
@@ -251,12 +240,7 @@ void Logger::writeMessageToDestinations(
    const auto destEnd = logMap->end();
    for (auto iter = logMap->begin(); iter != destEnd; ++iter)
    {
-#ifndef _WIN32
-      if (iter->first == system::SyslogDestination::getSyslogId())
-         iter->second->writeLog(in_logLevel, formatLogMessage(in_logLevel, in_message, ProgramId, in_loggedFrom, true));
-      else
-#endif
-         iter->second->writeLog(in_logLevel, formattedMessage);
+      iter->second->writeLog(in_logLevel, formattedMessage);
    }
 }
 
