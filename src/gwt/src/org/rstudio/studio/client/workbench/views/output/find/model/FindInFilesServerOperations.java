@@ -40,8 +40,12 @@ public interface FindInFilesServerOperations
                        ServerRequestCallback<String> requestCallback);
 
    void completeReplace(String searchString,
+                        boolean searchRegex,
+                        boolean searchIgnoreCase,
+                        FileSystemItem dictionary,
+                        JsArrayString filePatterns,
                         String replaceString,
-                        boolean regex,
+                        boolean replaceRegex,
                         boolean gitIgnore,
                         ServerRequestCallback<String> requestCallback);
 

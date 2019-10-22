@@ -140,7 +140,19 @@ public class FindOutputPresenter extends BasePresenter
             view_.setStopReplaceButtonVisible(true);
 
             Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
+
+            FileSystemItem searchPath =
+                                      FileSystemItem.createDir(dialogState_.getPath());
+
+            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            for (String pattern : dialogState_.getFilePatterns())
+               filePatterns.push(pattern);
+
             server_.completeReplace(dialogState_.getQuery(),
+                                    dialogState_.isRegex(),
+                                    !dialogState_.isCaseSensitive(),
+                                    searchPath,
+                                    filePatterns,
                                     view_.getReplaceText(),
                                     view_.isReplaceRegex(),
                                     view_.useGitIgnore(),
@@ -150,7 +162,7 @@ public class FindOutputPresenter extends BasePresenter
                                        public void onResponseReceived(String handle)
                                        {
                                           view_.setStopReplaceButtonVisible(false);
-                                          Debug.logToConsole("Complete replace esponse received");
+                                          Debug.logToConsole("Complete replace response received");
                                           Debug.logToConsole(handle);
                                        }
                                     });

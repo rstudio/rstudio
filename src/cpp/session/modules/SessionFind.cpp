@@ -16,6 +16,7 @@
 #include "SessionFind.hpp"
 
 #include <algorithm>
+#include <fstream>
 #include <gsl/gsl>
 
 #include <boost/algorithm/string.hpp>
@@ -189,6 +190,11 @@ public:
       return replace_;
    }
 
+   std::string* getSearchPattern()
+   {
+      return &input_;
+   }
+
    std::string* getReplacePattern()
    {
       return &replacePattern_;
@@ -322,15 +328,6 @@ private:
             pMatchOn->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
          else
             pMatchOff->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
-
-         if (replace)
-         {
-            std::string newString;
-            newString = boost::regex_replace(matchedString,
-                                 boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?"),
-                                 *pReplace);
-            LOG_ERROR_MESSAGE(newString);
-         }
       }
       
       if (inputPos != end)
@@ -345,55 +342,100 @@ private:
       *pContent = decodedLine;
    }
 
+   Error processReplace(std::string* file,
+                        int lineNum,
+                        std::string* pContent,
+                        std::string* pSearch,
+                        std::string* pReplace)
+   {
+      boost::shared_ptr<std::fstream> pStream(new std::fstream);
+      size_t pos=0;
+      if ((pos = file->find("~")) != std::string::npos)
+      {
+         std::string home(std::getenv("HOME"));
+         file->replace(pos, 1, home);
+      }
+
+      const char* cfile = file->c_str();
+      pStream->open(cfile, std::fstream::in | std::fstream::out);
+
+      if (pStream->good())
+      {
+         std::string line;
+         int linePos=0;
+         int seekPos=0;
+         while (std::getline(*pStream, line) && linePos<lineNum)
+         {
+            ++linePos;
+            if (linePos == lineNum)
+            {
+               std::string newLine;
+               size_t linePos = line.find(*pSearch);
+               newLine = boost::regex_replace(line,
+                                              boost::regex(*pSearch),
+                                              *pReplace);
+   
+               pStream->seekg(seekPos + linePos);
+               if (linePos != std::string::npos)
+                  pStream->write(newLine.c_str(), pSearch->size());
+            }
+            seekPos += line.size();
+         }
+      }
+      pStream->close();
+
+      return Success();
+   }
+
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
    {
       json::Array files;
       json::Array lineNums;
       json::Array contents;
       json::Array matchOns;
-         json::Array matchOffs;
+      json::Array matchOffs;
 
-         int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
-         if (recordsToProcess < 0)
-            recordsToProcess = 0;
+      int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
+      if (recordsToProcess < 0)
+         recordsToProcess = 0;
 
-         std::string websiteOutputDir = module_context::websiteOutputDir();
-         if (!websiteOutputDir.empty())
-            websiteOutputDir = "/" + websiteOutputDir + "/";
+      std::string websiteOutputDir = module_context::websiteOutputDir();
+      if (!websiteOutputDir.empty())
+         websiteOutputDir = "/" + websiteOutputDir + "/";
 
-         stdOutBuf_.append(data);
-         size_t nextLineStart = 0;
-         size_t pos = -1;
-         while (recordsToProcess &&
-                std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
+      stdOutBuf_.append(data);
+      size_t nextLineStart = 0;
+      size_t pos = -1;
+      while (recordsToProcess &&
+             std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
+      {
+         std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
+         nextLineStart = pos + 1;
+
+         boost::smatch match;
+         if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
          {
-            std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
-            nextLineStart = pos + 1;
+            std::string file = module_context::createAliasedPath(
+                  FilePath(string_utils::systemToUtf8(match[1])));
 
-            boost::smatch match;
-            if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
-            {
-               std::string file = module_context::createAliasedPath(
-                     FilePath(string_utils::systemToUtf8(match[1])));
-
-               if (file.find("/.Rproj.user/") != std::string::npos)
-                  continue;
-               if (file.find("/.git/") != std::string::npos)
-                  continue;
-               if (file.find("/.svn/") != std::string::npos)
-                  continue;
-               if (file.find("/packrat/lib/") != std::string::npos)
-                  continue;
-               if (file.find("/packrat/src/") != std::string::npos)
-                  continue;
-               if (file.find("/renv/library/") != std::string::npos)
-                  continue;
-               if (file.find("/.Rhistory") != std::string::npos)
+            if (file.find("/.Rproj.user/") != std::string::npos)
+               continue;
+            if (file.find("/.git/") != std::string::npos)
+               continue;
+            if (file.find("/.svn/") != std::string::npos)
+               continue;
+            if (file.find("/packrat/lib/") != std::string::npos)
+               continue;
+            if (file.find("/packrat/src/") != std::string::npos)
+               continue;
+            if (file.find("/renv/library/") != std::string::npos)
+               continue;
+            if (file.find("/.Rhistory") != std::string::npos)
                continue;
 
             if (!websiteOutputDir.empty() &&
                 file.find(websiteOutputDir) != std::string::npos)
-               continue;
+            continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
@@ -401,13 +443,20 @@ private:
             json::Array matchOn, matchOff;
             processContents(&lineContents, &matchOn, &matchOff,
                             findResults().getReplacePattern(), findResults().getReplace());
+            if (findResults().getReplace())
+            {
+               json::Array replaceMatchOn, replaceMatchOff;
+               processReplace(&file, lineNum, &lineContents,
+                              findResults().getSearchPattern(),
+                              findResults().getReplacePattern());
+            }
 
             files.push_back(file);
             lineNums.push_back(lineNum);
             contents.push_back(lineContents);
             matchOns.push_back(matchOn);
             matchOffs.push_back(matchOff);
-
+   
             recordsToProcess--;
          }
       }
@@ -470,8 +519,6 @@ private:
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   LOG_ERROR_MESSAGE(std::string("beginFind..."));
-   LOG_ERROR_MESSAGE(std::string("beginFind..."));
    std::string searchString;
    bool asRegex, ignoreCase;
    std::string directory;
@@ -606,7 +653,6 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    std::string replaceString;
    bool replaceRegex, useGitIgnore;
 
-   LOG_ERROR_MESSAGE(std::string("previewReplace"));
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &replaceString,
@@ -621,8 +667,6 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
-   LOG_ERROR_MESSAGE(std::string("completeReplace"));
-
    std::string searchString;
    std::string replaceString;
    bool asRegex, ignoreCase, replaceRegex, useGitIgnore = false;
@@ -632,6 +676,10 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
 
    Error error = json::readParams(request.params,
                                   &searchString,
+                                  &asRegex,
+                                  &ignoreCase,
+                                  &directory,
+                                  &filePatterns,
                                   &replaceString,
                                   &replaceRegex,
                                   &useGitIgnore);
@@ -770,7 +818,6 @@ json::Object findInFilesStateAsJson()
 
 core::Error initialize()
 {
-   LOG_ERROR_MESSAGE(std::string("initializing"));
    using boost::bind;
    using namespace session::module_context;
 

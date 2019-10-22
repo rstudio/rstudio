@@ -4386,16 +4386,25 @@ public class RemoteServer implements Server
 
    @Override
    public void completeReplace(String searchString,
+                               boolean searchRegex,
+                               boolean searchIgnoreCase,
+                               FileSystemItem directory,
+                               JsArrayString filePatterns,
                                String replaceString,
-                               boolean regex,
+                               boolean replaceRegex,
                                boolean gitIgnore,
                                ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
-      params.set(1, new JSONString(replaceString));
-      params.set(2, JSONBoolean.getInstance(regex));
-      params.set(3, JSONBoolean.getInstance(gitIgnore));
+      params.set(1, JSONBoolean.getInstance(searchRegex));
+      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(3, new JSONString(directory == null ? ""
+                                                     : directory.getPath()));
+      params.set(4, new JSONArray(filePatterns));
+      params.set(5, new JSONString(replaceString));
+      params.set(6, JSONBoolean.getInstance(replaceRegex));
+      params.set(7, JSONBoolean.getInstance(gitIgnore));
 
       sendRequest(RPC_SCOPE, "complete_replace", params, requestCallback);
    }
