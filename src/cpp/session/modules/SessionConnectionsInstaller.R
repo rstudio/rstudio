@@ -472,6 +472,11 @@
          ),
          list(
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Setup",
+            value = driverPath
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Version",
             value = version
          ),
