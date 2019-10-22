@@ -73,19 +73,19 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
 
    protected Widget createMainWidget()
    {
-      return menuBar_;
+      return getMenuBar();
    }
    
    @Override
    protected void onUnload()
    {
       super.onUnload();
-      menuBar_.selectItem(null);
+      getMenuBar().selectItem(null);
    }
 
    public void selectFirst()
    {
-      ((ToolbarMenuBar)menuBar_).selectFirst();
+      getMenuBar().selectFirst();
    }
 
    public void selectItem(MenuItem menuItem)
@@ -105,12 +105,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    
    public void addItem(SafeHtml html, MenuBar popup)
    {
-      menuBar_.addItem(html, popup);
+      getMenuBar().addItem(html, popup);
    }
    
    public void addItem(MenuItem menuItem, final ToolbarPopupMenu popup)
    {
-      menuBar_.addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup.menuBar_);
+      getMenuBar().addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup.menuBar_);
    }
    
    public void addItem(AppCommand command, ToolbarPopupMenu popup)
@@ -121,7 +121,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
 
    public void setAutoOpen(boolean autoOpen)
    {
-      menuBar_.setAutoOpen(autoOpen);
+      getMenuBar().setAutoOpen(autoOpen);
    }
    
    public void insertItem(MenuItem menuItem, int beforeIndex)
@@ -129,65 +129,66 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
      ScheduledCommand command = menuItem.getScheduledCommand() ;
       if (command != null)
          menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
-      menuBar_.insertItem(menuItem, beforeIndex) ;
+      getMenuBar().insertItem(menuItem, beforeIndex) ;
    }
    
    public void removeItem(MenuItem menuItem)
    {
-      menuBar_.removeItem(menuItem) ;
+      getMenuBar().removeItem(menuItem) ;
    }
    
    public boolean containsItem(MenuItem menuItem)
    {
-      return menuBar_.getItemIndex(menuItem) >= 0 ;
+      return getMenuBar().getItemIndex(menuItem) >= 0 ;
    }
    
    public void clearItems()
    {
-      menuBar_.clearItems() ;
+      getMenuBar().clearItems() ;
    }
    
    public void addSeparator()
    {
-      menuBar_.addSeparator();
+      getMenuBar().addSeparator();
    }
    
    public void addSeparator(MenuItemSeparator separator)
    {
-      menuBar_.addSeparator(separator);
+      getMenuBar().addSeparator(separator);
    }
    
    public void addSeparator(String label)
    {
-      menuBar_.addSeparator(new LabelledMenuSeparator(label));
+      getMenuBar().addSeparator(new LabelledMenuSeparator(label));
    }
    
    public void addSeparator(int minPx)
    {
-      menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
+      getMenuBar().addSeparator(new MinWidthMenuSeparator(minPx));
    }
    
    public int getItemCount()
    {
-      return menuBar_.getItemCount() ;
+      return getMenuBar().getItemCount() ;
    }
 
-   public List<MenuItem> getMenuItems() { return ((ToolbarMenuBar)menuBar_).getMenuItems(); }
+   public List<MenuItem> getMenuItems() { return getMenuBar().getMenuItems(); }
 
    public void focus()
    {
-      menuBar_.focus();
+      getMenuBar().focus();
    }
    
    public void setAutoHideRedundantSeparators(boolean value)
    {
-      menuBar_.setAutoHideRedundantSeparators(value);
+      getMenuBar().setAutoHideRedundantSeparators(value);
    }
 
    public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)
    {
       callback.onPopupMenu(this);
    }
+
 
    private class ToolbarPopupMenuCommand implements ScheduledCommand
    {
@@ -349,6 +350,9 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       return tableNode.<Element>cast();
       
    }
+
+   @Override
+   protected ToolbarMenuBar getMenuBar() { return (ToolbarMenuBar)menuBar_; }
 
    private ToolbarPopupMenu parent_;
 }

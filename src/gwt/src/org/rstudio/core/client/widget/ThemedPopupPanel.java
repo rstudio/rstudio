@@ -100,7 +100,7 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
    // Size the table to the window
    private void sizeToWindow(int top, Style.Overflow overflowY)
    {
-      NodeList<Element> e = this.menuBar_.getElement().getElementsByTagName("table");
+      NodeList<Element> e = menuBar_.getElement().getElementsByTagName("table");
       if (e.getLength() < 1)
          return;
 
@@ -111,6 +111,8 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
       table.getStyle().setDisplay(Style.Display.BLOCK);
       table.getStyle().setPropertyPx("maxHeight", windowHeight - top - 30);
    }
+
+   protected BaseMenuBar getMenuBar() { return menuBar_; }
 
    private static Resources RES = GWT.create(Resources.class);
    public static void ensureStylesInjected()

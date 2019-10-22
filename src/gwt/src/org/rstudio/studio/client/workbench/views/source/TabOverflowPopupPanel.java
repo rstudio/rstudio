@@ -122,14 +122,14 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
       dockPanel.add(search_, DockPanel.NORTH);
 
       menuBar_ = new DocsMenu();
-      ((DocsMenu)menuBar_).setOwnerPopupPanel(this);
-      menuBar_.setWidth("100%");
-      dockPanel.add(menuBar_, DockPanel.CENTER);
+      getMenuBar().setOwnerPopupPanel(this);
+      getMenuBar().setWidth("100%");
+      dockPanel.add(getMenuBar(), DockPanel.CENTER);
       setWidget(dockPanel);
 
       setStylePrimaryName(ThemeStyles.INSTANCE.tabOverflowPopup());
 
-      addDomHandler(new MenuKeyHandler(menuBar_), KeyDownEvent.getType());
+      addDomHandler(new MenuKeyHandler(getMenuBar()), KeyDownEvent.getType());
       
       addAttachHandler(new AttachEvent.Handler()
       {
@@ -189,8 +189,8 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
             search_.setText("", true);
-            ((DocsMenu)menuBar_).filter(null);
-            menuBar_.selectItem(null);
+            getMenuBar().filter(null);
+            getMenuBar().selectItem(null);
          }
       }, CloseEvent.getType());
    }
@@ -198,7 +198,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    public void onValueChange(ValueChangeEvent<String> event)
    {
       String value = event.getValue();
-      ((DocsMenu)menuBar_).filter(value);
+      getMenuBar().filter(value);
    }
 
    @Override
@@ -213,6 +213,9 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
          }
       });
    }
+
+   @Override
+   protected DocsMenu getMenuBar() { return (DocsMenu)menuBar_; }
 
    private final SearchWidget search_;
    private HandlerRegistration nativePreviewHandler_;
