@@ -464,7 +464,7 @@ public class TerminalPane extends WorkbenchPane
    {
       if (tabClosing)
       {
-         // don't want terminal tab to show by default next time we startup'
+         // don't show terminal tab by default at next startup
          setShowTerminalPref(false);
       }
       closingAll_ = true;

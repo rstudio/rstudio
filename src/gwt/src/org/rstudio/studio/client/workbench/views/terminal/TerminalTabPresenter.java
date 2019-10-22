@@ -268,15 +268,18 @@ public class TerminalTabPresenter extends BasePresenter
 
    public void confirmClose(boolean tabClosing, final Command onConfirmed)
    {
-      final String caption = "Close All Terminals";
-      terminalHelper_.warnBusyTerminalBeforeCommand(() ->
-         {
-            shutDownTerminals(tabClosing);
-            if (onConfirmed != null)
-               onConfirmed.execute();
-         },
-         caption, "Are you sure you want to close all terminals? Any running jobs will be stopped",
-         userPrefs_.busyDetection().getValue()
+      Command command = () ->
+      {
+         shutDownTerminals(tabClosing);
+         if (onConfirmed != null)
+            onConfirmed.execute();
+      };
+
+      terminalHelper_.warnBusyTerminalBeforeCommand(
+            command,
+            "Close All Terminals",
+            "Are you sure you want to close all terminals? Any running jobs will be stopped",
+            userPrefs_.busyDetection().getValue()
       );
    }
 
