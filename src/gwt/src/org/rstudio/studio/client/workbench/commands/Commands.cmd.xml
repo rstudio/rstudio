@@ -466,6 +466,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="interruptTerminal"/>
             <cmd refid="clearTerminalScrollbackBuffer"/>
             <cmd refid="closeTerminal"/>
+            <separator/>
+            <cmd refid="closeAllTerminals"/>
           </menu>
          <menu label="_Jobs">
             <cmd refid="startJob"/>
@@ -2698,6 +2700,11 @@ well as menu structures (for main menu and popup menus).
         label="Close Terminal"
         menuLabel="Cl_ose Terminal"
         desc="Close current terminal session"/>
+
+   <cmd id="closeAllTerminals"
+        buttonLabel=""
+        label="Close _All Terminals"
+        menuLabel="Close All Terminals"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
         buttonLabel=""
