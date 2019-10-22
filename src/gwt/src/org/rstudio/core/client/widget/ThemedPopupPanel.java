@@ -14,6 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.Window;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 
 import com.google.gwt.core.client.GWT;
@@ -76,10 +80,34 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
 
    private void commonInit(Resources res)
    {
+      autoConstrain_ = true;
       addStyleName(res.styles().themedPopupPanel());
 
       if (RStudioThemes.usesScrollbars())
          addStyleName("rstudio-themes-scrollbars");
+   }
+   @Override
+   public void setPopupPosition(int left, int top)
+   {
+      super.setPopupPosition(left, top);
+
+      if (autoConstrain_)
+         sizeToWindow(top, Style.Overflow.AUTO);
+   }
+
+   // Size the table to the window
+   private void sizeToWindow(int top, Style.Overflow overflowY)
+   {
+      NodeList<Element> e = getElement().getElementsByTagName("table");
+      if (e.getLength() < 1)
+         return;
+
+      Element table = e.getItem(0);
+      int windowHeight = Window.getClientHeight();
+
+      table.getStyle().setOverflowY(overflowY);
+      table.getStyle().setDisplay(Style.Display.BLOCK);
+      table.getStyle().setPropertyPx("maxHeight", windowHeight - top - 30);
    }
 
    private static Resources RES = GWT.create(Resources.class);
@@ -87,4 +115,7 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
    {
       RES.styles().ensureInjected();
    }
+
+   // fit the popup and its overflow inside the app body as best as possible
+   protected boolean autoConstrain_;
 }

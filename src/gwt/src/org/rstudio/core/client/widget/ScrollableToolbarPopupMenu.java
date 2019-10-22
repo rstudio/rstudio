@@ -23,13 +23,18 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
 {
    @Override
    protected ToolbarMenuBar createMenuBar()
    {
+      // This class may now be partially/entirely deprecated with the autoContrain
+      // functionality but since ScrollableToolbarPopupMenu touches so many
+      // parts of the app it is best to leave autoConstrain turned
+      // off and defaulting to what exists now until it's thoroughly tested
+      autoConstrain_ = false;
+
       final ScrollableToolbarMenuBar menuBar = new ScrollableToolbarMenuBar(true);
       menuBar.addSelectionHandler(new SelectionHandler<MenuItem>()
       {
