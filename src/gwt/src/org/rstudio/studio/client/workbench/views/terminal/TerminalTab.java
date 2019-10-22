@@ -61,6 +61,9 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       public abstract void onCloseTerminal();
 
       @Handler
+      public abstract void onCloseAllTerminals();
+
+      @Handler
       public abstract void onRenameTerminal();
 
       @Handler
@@ -87,7 +90,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
        */
       abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
-      abstract void confirmClose(Command onConfirmed);
+      abstract void confirmClose(boolean tabClosing, Command onConfirmed);
    }
 
    @Inject
@@ -109,7 +112,8 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       events.addHandler(RemoveTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
 
-      events.addHandler(SessionInitEvent.TYPE, sie -> {
+      events.addHandler(SessionInitEvent.TYPE, sie ->
+      {
          JsArray<ConsoleProcessInfo> procs =
                session.getSessionInfo().getConsoleProcesses();
          final ArrayList<ConsoleProcessInfo> procList = new ArrayList<>();
@@ -136,7 +140,8 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    @Override
    public void confirmClose(Command onConfirmed)
    {
-      shim_.confirmClose(onConfirmed);
+      // closing the entire Terminal pane
+      shim_.confirmClose(true, onConfirmed);
    }
 
    /**
@@ -180,7 +185,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       procInfoList.add(procInfo);
    }
 
-   private Shim shim_;
+   private final Shim shim_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
 }

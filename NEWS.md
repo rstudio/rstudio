@@ -62,6 +62,7 @@
 * Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 * Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 * Improved browser tab names (project name first, complete product name) (Pro #1172)
+* Add 'Close All Terminals' command to Terminal menu (#3564)
 
 ### Bugfixes
 

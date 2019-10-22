@@ -460,9 +460,13 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void terminateAllTerminals()
+   public void terminateAllTerminals(boolean tabClosing)
    {
-      setShowTerminalPref(false);
+      if (tabClosing)
+      {
+         // don't show terminal tab by default at next startup
+         setShowTerminalPref(false);
+      }
       closingAll_ = true;
 
       // kill any terminal server processes, and remove them from the server-
