@@ -2,16 +2,14 @@
 
 checkUnitTestFailure() {
    RET_CODE=$?
-   if [ $RET_CODE != 0 ];
-   then
+   if [ $RET_CODE != 0 ]; then
       UNIT_TEST_FAILURE=true
    fi
 }
 
 checkRUnitTestFailure() {
-    FAILURES=$(cat ${CMAKE_CURRENT_BINARY_DIR}/testthat-failures.log)
-    if [[ $FAILURES != 0 ]];
-    then
+    FAILURES=$(cat "${CMAKE_CURRENT_BINARY_DIR}/testthat-failures.log")
+    if [[ $FAILURES != 0 ]]; then
         UNIT_TEST_FAILURE=true
     fi
 }
