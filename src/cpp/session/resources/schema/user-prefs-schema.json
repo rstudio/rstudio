@@ -889,6 +889,11 @@
             "default": true,
             "description": "Whether to restore the last project when starting RStudio."
         },
+        "use_tinytex": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use tinytex to compile .tex files."
+        },
         "clean_texi2dvi_output": {
             "type": "boolean",
             "default": true,

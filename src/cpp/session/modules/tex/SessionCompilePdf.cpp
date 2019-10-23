@@ -44,6 +44,7 @@
 #include "SessionSynctex.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 #include "SessionViewPdf.hpp"
+#include "SessionTexUtils.hpp"
 
 using namespace rstudio::core;
 
@@ -625,6 +626,10 @@ private:
                               &AsyncPdfCompiler::onWeaveCompleted,
                                  AsyncPdfCompiler::shared_from_this(), _1));
       }
+      else if (prefs::userPrefs().useTinytex())
+      {
+         runTinytex();
+      }
       else
       {
          runLatexCompiler(false);
@@ -642,6 +647,84 @@ private:
          terminateWithErrorLogEntries(result.errorLogEntries);
       else
          terminateWithError(result.errorMessage);
+   }
+   
+   void onTinytexOutput(const std::string& output)
+   {
+      enqueOutputEvent(output);
+   }
+   
+   void onTinytexCompileCompleted(int status, const std::string& output)
+   {
+      onLatexCompileCompleted(status, targetFilePath_);
+   }
+   
+   void runTinytex()
+   {
+      // build arguments
+      using Argument = std::pair<std::string, std::string>;
+      std::vector<Argument> latexmkArgs;
+      
+      std::string file = string_utils::utf8ToSystem(targetFilePath_.absolutePathNative());
+      latexmkArgs.push_back({std::string(), shell_utils::escape(file)});
+      
+      std::string engine = string_utils::toLower(prefs::userPrefs().defaultLatexProgram());
+      latexmkArgs.push_back({"engine", shell_utils::escape(engine)});
+      
+      bool clean = prefs::userPrefs().cleanTexi2dviOutput();
+      latexmkArgs.push_back({"clean", clean ? "TRUE" : "FALSE"});
+      
+      if (prefs::userPrefs().latexShellEscape())
+      {
+         latexmkArgs.push_back({"engine_args", shell_utils::escape("-shell-escape")});
+      }
+      
+      auto collapse = [](const Argument& argument)
+      {
+         return argument.first.empty()
+               ? argument.second
+               : argument.first + " = " + argument.second;
+      };
+      
+      std::string arguments = core::algorithm::join(
+               latexmkArgs.begin(),
+               latexmkArgs.end(),
+               ", ",
+               collapse);
+      
+      std::string code = "cat(\"Compiling document with tinytex ... \"); invisible(tinytex::latexmk(" + arguments + "))";
+      
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError(error.summary());
+         return;
+      }
+      
+      std::vector<std::string> args;
+      args.push_back("--slave");
+      args.push_back("-e");
+      args.push_back(code);
+      
+      error = compile_pdf_supervisor::runProgram(
+               rScriptPath,
+               args,
+               tex::utils::rTexInputsEnvVars(),
+               targetFilePath_.parent(),
+               boost::bind(
+                  &AsyncPdfCompiler::onTinytexOutput,
+                  AsyncPdfCompiler::shared_from_this(),
+                  _1),
+               boost::bind(
+                  &AsyncPdfCompiler::onTinytexCompileCompleted,
+                  AsyncPdfCompiler::shared_from_this(),
+                  _1,
+                  _2));
+      
+      if (error)
+         terminateWithError("Unable to compile pdf: " + error.summary());
+      
    }
 
    void runLatexCompiler(bool targetWeaved,
@@ -722,7 +805,7 @@ private:
 
    void onLatexCompileCompleted(int exitStatus,
                                 const FilePath& texFilePath,
-                                const rnw_concordance::Concordances& concords)
+                                const rnw_concordance::Concordances& concords = rnw_concordance::Concordances())
    {
       // collect errors from the log
       core::tex::LogEntries logEntries;

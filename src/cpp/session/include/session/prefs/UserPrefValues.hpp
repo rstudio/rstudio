@@ -281,6 +281,7 @@ namespace prefs {
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
 #define kHideObjectFiles "hide_object_files"
 #define kRestoreLastProject "restore_last_project"
+#define kUseTinytex "use_tinytex"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
@@ -1247,6 +1248,12 @@ public:
     */
    bool restoreLastProject();
    core::Error setRestoreLastProject(bool val);
+
+   /**
+    * Use tinytex to compile .tex files.
+    */
+   bool useTinytex();
+   core::Error setUseTinytex(bool val);
 
    /**
     * Whether to clean output after running Texi2Dvi.
