@@ -49,5 +49,6 @@ public interface FindInFilesServerOperations
                         boolean gitIgnore,
                         ServerRequestCallback<String> requestCallback);
 
-   void stopReplace(ServerRequestCallback<Void> requestCallback);
+   void stopReplace(String findOperationHandle,
+                    ServerRequestCallback<Void> requestCallback);
 }

@@ -4410,9 +4410,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void stopReplace(ServerRequestCallback<Void> requestCallback)
+   public void stopReplace(String findOperationHandle,
+                           ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "stop_replace", requestCallback);
+      sendRequest(RPC_SCOPE, "stop_replace", findOperationHandle, requestCallback);
    }
 
    @Override

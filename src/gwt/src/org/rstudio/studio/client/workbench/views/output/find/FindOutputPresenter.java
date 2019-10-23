@@ -166,6 +166,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
+            stopAndClear();
             server_.previewReplace(dialogState_.getQuery(),
                                    view_.getReplaceText(),
                                    view_.isReplaceRegex(),
@@ -187,7 +188,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            server_.stopReplace(new VoidServerRequestCallback());
+            stopReplace();
          }
       });
 
@@ -197,6 +198,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onClick(ClickEvent event)
          {
             view_.setStopReplaceButtonVisible(true);
+            stopAndClear();
 
             Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
 
@@ -396,6 +398,7 @@ public class FindOutputPresenter extends BasePresenter
    private void stopAndClear()
    {
       stop();
+      stopReplace();
       view_.clearMatches();
       view_.clearSearchLabel();
    }
@@ -411,8 +414,18 @@ public class FindOutputPresenter extends BasePresenter
       view_.setStopSearchButtonVisible(false);
    }
    
+   private void stopReplace()
+   {
+      if (currentFindHandle_ != null)
+      {
+         server_.stopReplace(currentFindHandle_,
+                             new VoidServerRequestCallback());
+         currentFindHandle_ = null;
+      }
+      view_.setStopReplaceButtonVisible(false);
+   }
+
    private String currentFindHandle_;
-   private String currentReplaceHandle_;
 
    private FindInFilesDialog.State dialogState_;
 

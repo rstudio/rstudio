@@ -153,6 +153,7 @@ public:
          preview_ = previewFlag;
          replacePattern_ = replacePattern;
          replaceRegex_ = asRegex;
+         running_ = true;
       }
    }
 
@@ -399,8 +400,9 @@ private:
          std::string line;
          int currentLine=0;
          int seekPos=0;
-         while (currentLine < lineNum && std::getline(*pStream, line))
+         while (findResults().isRunning() && currentLine < lineNum && std::getline(*pStream, line))
          {
+            boost::this_thread::sleep(boost::posix_time::seconds(5));
             ++currentLine;
             if (currentLine == lineNum)
             {
@@ -409,6 +411,7 @@ private:
                pReplaceMatchOff->push_back(gsl::narrow_cast<int>(linePos) +
                                            gsl::narrow_cast<int>(pReplace->size()));
    
+               /*
                std::string newLine;
                if (findResults().replaceRegex())
                   newLine = boost::regex_replace(line,
@@ -431,6 +434,7 @@ private:
                      LOG_ERROR_MESSAGE(text);
                   }
                }
+               */
             }
             seekPos += line.size();
          }
@@ -809,8 +813,15 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
 }
 
 core::Error stopReplace(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+                        json::JsonRpcResponse* pResponse)
 {
+   std::string handle;
+   Error error = json::readParams(request.params, &handle);
+   if (error)
+      return error;
+
+   findResults().onReplaceEnd(handle);
+
    return Success();
 }
 

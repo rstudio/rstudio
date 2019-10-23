@@ -478,7 +478,6 @@ public class FindOutputPane extends WorkbenchPane
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
    private ToolbarButton stopReplace_;
-   //private ReplaceProgress progress_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
