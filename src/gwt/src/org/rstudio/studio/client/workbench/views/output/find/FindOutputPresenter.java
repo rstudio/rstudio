@@ -133,73 +133,6 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      view_.getReplaceAllButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            view_.setStopReplaceButtonVisible(true);
-
-            Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
-
-            FileSystemItem searchPath =
-                                      FileSystemItem.createDir(dialogState_.getPath());
-
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
-            for (String pattern : dialogState_.getFilePatterns())
-               filePatterns.push(pattern);
-
-            server_.completeReplace(dialogState_.getQuery(),
-                                    dialogState_.isRegex(),
-                                    !dialogState_.isCaseSensitive(),
-                                    searchPath,
-                                    filePatterns,
-                                    view_.getReplaceText(),
-                                    view_.isReplaceRegex(),
-                                    view_.useGitIgnore(),
-                                    new SimpleRequestCallback<String>()
-                                    {
-                                       @Override
-                                       public void onResponseReceived(String handle)
-                                       {
-                                          view_.setStopReplaceButtonVisible(false);
-                                          Debug.logToConsole("Complete replace response received");
-                                          Debug.logToConsole(handle);
-                                       }
-                                    });
-         }
-      });
-
-      view_.getStopReplaceButton().addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            server_.stopReplace(new VoidServerRequestCallback());
-         }
-      });
-
-      events_.addHandler(PreviewReplaceEvent.TYPE, new PreviewReplaceEvent.Handler()
-      {
-         @Override
-         public void onPreviewReplace(PreviewReplaceEvent event)
-         {
-            server_.previewReplace(dialogState_.getQuery(),
-                                   view_.getReplaceText(),
-                                   view_.isReplaceRegex(),
-                                   view_.useGitIgnore(),
-                                   new SimpleRequestCallback<String>()
-                                   {
-                                      @Override
-                                      public void onResponseReceived(String handle)
-                                      {
-                                         Debug.logToConsole("Preview replace response received");
-                                         Debug.logToConsole(handle);
-                                      }
-                                   });
-         }
-      });
-
       events_.addHandler(FindResultEvent.TYPE, new FindResultEvent.Handler()
       {
          @Override
@@ -228,13 +161,80 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
+      events_.addHandler(PreviewReplaceEvent.TYPE, new PreviewReplaceEvent.Handler()
+      {
+         @Override
+         public void onPreviewReplace(PreviewReplaceEvent event)
+         {
+            server_.previewReplace(dialogState_.getQuery(),
+                                   view_.getReplaceText(),
+                                   view_.isReplaceRegex(),
+                                   view_.useGitIgnore(),
+                                   new SimpleRequestCallback<String>()
+                                   {
+                                      @Override
+                                      public void onResponseReceived(String handle)
+                                      {
+                                         Debug.logToConsole("Preview replace response received");
+                                         Debug.logToConsole(handle);
+                                      }
+                                   });
+         }
+      });
+
+      view_.getStopReplaceButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.stopReplace(new VoidServerRequestCallback());
+         }
+      });
+
+      view_.getReplaceAllButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            view_.setStopReplaceButtonVisible(true);
+
+            Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
+
+            FileSystemItem searchPath =
+                                      FileSystemItem.createDir(dialogState_.getPath());
+            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            for (String pattern : dialogState_.getFilePatterns())
+               filePatterns.push(pattern);
+
+            server_.completeReplace(dialogState_.getQuery(),
+                                    dialogState_.isRegex(),
+                                    !dialogState_.isCaseSensitive(),
+                                    searchPath,
+                                    filePatterns,
+                                    view_.getReplaceText(),
+                                    view_.isReplaceRegex(),
+                                    view_.useGitIgnore(),
+                                    new SimpleRequestCallback<String>()
+                                    {
+                                       @Override
+                                       public void onResponseReceived(String handle)
+                                       {
+                                          currentFindHandle_ = handle;
+                                          view_.setStopReplaceButtonVisible(false);
+                                          Debug.logToConsole("Complete replace response received");
+                                          Debug.logToConsole(handle);
+                                       }
+                                    });
+         }
+      });
+
       events_.addHandler(ReplaceResultEvent.TYPE, new ReplaceResultEvent.Handler()
       {
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
-            //if (event.getHandle() != currentReplaceHandle_)
-            //   return;
+            if (event.getHandle() != currentFindHandle_)
+               return;
             ArrayList<FindResult> results = event.getResults();
             for (FindResult fr : results)
                fr.setReplaceIndicator();

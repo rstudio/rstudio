@@ -43,14 +43,6 @@ public class FindResultContext
          matchData_.getList().add(new Match(this, line, column, value));
       }
 
-      public void updateMatches(String value)
-      {
-         for (Match match: matchData_.getList())
-         {
-            match.setReplace(value);
-         }
-      }
-
       public int getCount()
       {
          return matchData_.getList().size();

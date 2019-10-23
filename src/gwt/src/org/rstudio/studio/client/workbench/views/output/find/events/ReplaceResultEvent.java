@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.workbench.views.output.find.model.ReplaceResult;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 import java.util.ArrayList;
 

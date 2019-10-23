@@ -39,7 +39,7 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
       return replace_;
    }
 
-   public String getReplacePatter()
+   public String getReplacePattern()
    {
       return replacePattern_;
    }

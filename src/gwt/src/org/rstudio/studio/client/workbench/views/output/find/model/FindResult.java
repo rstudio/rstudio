@@ -44,6 +44,7 @@ public class FindResult extends JavaScriptObject
          file: this.file,
          line: this.line,
          lineValue: this.lineValue,
+         replaceIndicator: this.replaceIndicator,
          replace: this.replace,
          matchOn: this.matchOn,
          matchOff: this.matchOff

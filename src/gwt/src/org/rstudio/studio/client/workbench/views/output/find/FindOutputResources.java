@@ -36,7 +36,6 @@ public interface FindOutputResources extends ClientBundle
    {
       String findOutput();
       String findOutputReplace();
-      //String replaceOutput();
       String headerRow();
       String line();
       String lineValue();

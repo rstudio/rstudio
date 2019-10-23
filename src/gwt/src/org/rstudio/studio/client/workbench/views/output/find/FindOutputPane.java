@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
@@ -31,7 +30,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -71,7 +69,6 @@ public class FindOutputPane extends WorkbenchPane
       toolbar.addLeftWidget(searchLabel_);
 
       FindOutputResources resources = GWT.create(FindOutputResources.class);
-
       viewReplaceButton_ = new ToolbarButton("Replace", "Replace",
                                              resources.collapseReplaceIcon());
       toolbar.addRightWidget(viewReplaceButton_);
@@ -90,13 +87,10 @@ public class FindOutputPane extends WorkbenchPane
                   toggleReplaceMode();
                   addReplaceMatches(replaceTextBox_.getValue());
                }
-               else
-               {
-                  if (replaceMode_)
-                     toggleReplaceMode();
-                  else if (!replaceTextBox_.getValue().isEmpty())
-                     addReplaceMatches(new String());
-               }
+               else if (replaceMode_)
+                  toggleReplaceMode();
+               else if (!replaceTextBox_.getValue().isEmpty())
+                  addReplaceMatches(new String());
             }
          }
       });
@@ -106,7 +100,6 @@ public class FindOutputPane extends WorkbenchPane
             "Stop find in files",
             commands_.interruptR().getImageResource());
       stopSearch_.setVisible(false);
-
       toolbar.addRightWidget(stopSearch_);
 
       return toolbar;
@@ -121,8 +114,22 @@ public class FindOutputPane extends WorkbenchPane
       replaceLabel_ = new Label();
       replaceToolbar_.addLeftWidget(replaceLabel_);
 
-      replaceTextBox_ = new TextBoxWithCue("Replace in Files");
+      replaceTextBox_ = new TextBoxWithCue("Replace all");
       replaceToolbar_.addLeftWidget(replaceTextBox_);
+      replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
+      {
+         public void onKeyUp(KeyUpEvent event)
+         {
+            if (regexCheckbox_.getValue())
+               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            else
+            {
+               if (!replaceMode_)
+                  toggleReplaceMode();
+               addReplaceMatches(replaceTextBox_.getValue());
+            }
+         }
+      });
 
       regexCheckbox_ = new CheckBox();
       regexCheckboxLabel_ =
@@ -155,7 +162,6 @@ public class FindOutputPane extends WorkbenchPane
       useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
 
-
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
             "Stop replace",
@@ -166,26 +172,9 @@ public class FindOutputPane extends WorkbenchPane
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
       replaceToolbar_.addRightWidget(replaceAllButton_);
 
-      replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
-      {
-         public void onKeyUp(KeyUpEvent event)
-         {
-            if (regexCheckbox_.getValue())
-            {
-               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-            }
-            else
-            {
-               if (!replaceMode_)
-                  toggleReplaceMode();
-               addReplaceMatches(replaceTextBox_.getValue());
-            }
-         }
-      });
-
-      progress_ = new ReplaceProgress();
-      progress_.setVisible(false);
-      replaceToolbar_.addLeftWidget(progress_);
+      //progress_ = new ReplaceProgress();
+      //progress_.setVisible(false);
+      //replaceToolbar_.addLeftWidget(progress_);
 
       return replaceToolbar_;
    }
@@ -478,8 +467,8 @@ public class FindOutputPane extends WorkbenchPane
    private boolean overflow_ = false;
    private int matchCount_;
 
-   private ToolbarButton viewReplaceButton_;
    private SecondaryToolbar replaceToolbar_;
+   private ToolbarButton viewReplaceButton_;
    private boolean replaceMode_;
    private Label replaceLabel_;
    private CheckBox regexCheckbox_;
@@ -489,7 +478,7 @@ public class FindOutputPane extends WorkbenchPane
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
    private ToolbarButton stopReplace_;
-   private ReplaceProgress progress_;
+   //private ReplaceProgress progress_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

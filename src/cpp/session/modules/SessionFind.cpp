@@ -24,7 +24,6 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Exec.hpp>
-#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -58,7 +57,9 @@ public:
 
    explicit FindInFilesState() :
       regex_(false),
-      running_(false)
+      running_(false),
+      replace_(false),
+      replaceRegex_(false)
    {
    }
 
@@ -75,6 +76,26 @@ public:
    bool isRunning() const
    {
       return running_;
+   }
+
+   bool replace()
+   {
+      return replace_;
+   }
+
+   bool replaceRegex()
+   {
+      return replaceRegex_;
+   }
+
+   std::string* searchPattern()
+   {
+      return &input_;
+   }
+
+   std::string* replacePattern()
+   {
+      return &replacePattern_;
    }
 
    bool addResult(const std::string& handle,
@@ -102,7 +123,6 @@ public:
                     const std::string& path,
                     bool asRegex)
    {
-      LOG_ERROR_MESSAGE(std::string("onFindBegin"));
       handle_ = handle;
       input_ = input;
       path_ = path;
@@ -110,16 +130,32 @@ public:
       running_ = true;
    }
 
-   void onReplaceBegin(const std::string& replacePattern)
-   {
-      replacePattern_ = replacePattern;
-      replace_ = true;
-   }
-
    void onFindEnd(const std::string& handle)
    {
       if (handle_ == handle)
          running_ = false;
+   }
+
+   void onReplaceBegin(const std::string& handle,
+                       const std::string& replacePattern,
+                       bool asRegex)
+   {
+      if (handle_ == handle)
+      {
+         replace_ = true;
+         replacePattern_ = replacePattern;
+         replaceRegex_ = asRegex;
+      }
+   }
+
+   void onReplaceEnd(const std::string& handle)
+   {
+      if (handle_ == handle)
+      {
+         onFindEnd(handle);
+         replace_ = false;
+         replacePattern_.clear();
+      }
    }
 
    void clear()
@@ -130,6 +166,8 @@ public:
       contents_.clear();
       matchOns_.clear();
       matchOffs_.clear();
+      replace_ = false;
+      replacePattern_.clear();
    }
 
    Error readFromJson(const json::Object& asJson)
@@ -185,26 +223,6 @@ public:
       return obj;
    }
 
-   bool getReplace()
-   {
-      return replace_;
-   }
-
-   void setReplace(bool value)
-   {
-      replace_ = value;
-   }
-
-   std::string* getSearchPattern()
-   {
-      return &input_;
-   }
-
-   std::string* getReplacePattern()
-   {
-      return &replacePattern_;
-   }
-
 private:
    std::string handle_;
    std::string input_;
@@ -217,6 +235,7 @@ private:
    json::Array matchOffs_;
    bool running_;
    bool replace_;
+   bool replaceRegex_;
    std::string replacePattern_;
 };
 
@@ -297,9 +316,7 @@ private:
 
    void processContents(std::string* pContent,
                         json::Array* pMatchOn,
-                        json::Array* pMatchOff,
-                        std::string* pReplace,
-                        bool replace)
+                        json::Array* pMatchOff)
    {
       // initialize some state
       std::string decodedLine;
@@ -355,53 +372,50 @@ private:
                         std::string* pSearch,
                         std::string* pReplace)
    {
-      boost::shared_ptr<std::fstream> pStream(new std::fstream);
-      size_t pos=0;
-      if ((pos = file->find("~")) != std::string::npos)
       {
-         std::string home(std::getenv("HOME"));
-         file->replace(pos, 1, home);
+         size_t pos=0;
+         if ((pos = file->find("~")) != std::string::npos)
+            file->replace(pos, 1, session::options().userHomePath().absolutePath());
       }
-
       const char* cfile = file->c_str();
+      boost::shared_ptr<std::fstream> pStream(new std::fstream);
       pStream->open(cfile, std::fstream::in | std::fstream::out);
 
-      if (pStream->good())
+      if (!pStream->good())
+         LOG_ERROR_MESSAGE(std::string("Could not open file ") + *file);
+      else
       {
          std::string line;
          int currentLine=0;
          int seekPos=0;
-         while (std::getline(*pStream, line) && currentLine<lineNum)
+         while (currentLine < lineNum && std::getline(*pStream, line))
          {
             ++currentLine;
             if (currentLine == lineNum)
             {
-               std::string newLine;
                size_t linePos = line.find(*pSearch);
-
                pReplaceMatchOn->push_back(gsl::narrow_cast<int>(linePos));
                pReplaceMatchOff->push_back(gsl::narrow_cast<int>(linePos) +
                                            gsl::narrow_cast<int>(pReplace->size()));
-
-               newLine = boost::regex_replace(line,
-                                              boost::regex(*pSearch),
-                                              *pReplace);
    
-               pStream->seekg(linePos);
-               //pStream->seekg(0);
-               if (linePos != std::string::npos)
+               std::string newLine;
+               if (findResults().replaceRegex())
+                  newLine = boost::regex_replace(line,
+                                                 boost::regex(*pSearch),
+                                                *pReplace);
+               else
+                  newLine = line.replace(linePos, pSearch->size(), *pReplace);
+               pStream->seekg(seekPos + linePos);
+               try
                {
-                  try
-                  {
-                      pStream->write(newLine.c_str(), line.size());
-                      *pContent = newLine;
-                  }
-                  catch (const std::ios_base::failure& e)
-                  {
-                     std::string text("failed to write to file ");
-                     text.append(e.code().message());
-                     LOG_ERROR_MESSAGE(text);
-                  }
+                   pStream->write(newLine.c_str(), line.size());
+                   *pContent = newLine;
+               }
+               catch (const std::ios_base::failure& e)
+               {
+                  std::string text("Failed to write to file ");
+                  text.append(e.code().message());
+                  LOG_ERROR_MESSAGE(text);
                }
             }
             seekPos += line.size();
@@ -462,36 +476,35 @@ private:
 
             if (!websiteOutputDir.empty() &&
                 file.find(websiteOutputDir) != std::string::npos)
-            continue;
+               continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
             boost::algorithm::trim(lineContents);
             json::Array matchOn, matchOff;
-            processContents(&lineContents, &matchOn, &matchOff,
-                            findResults().getReplacePattern(), findResults().getReplace());
-
             json::Array replaceMatchOn, replaceMatchOff;
-            if (findResults().getReplace())
+
+            processContents(&lineContents, &matchOn, &matchOff);
+            if (findResults().replace())
             {
                processReplace(&file, lineNum, &lineContents,
                               &replaceMatchOn, &replaceMatchOff,
-                              findResults().getSearchPattern(),
-                              findResults().getReplacePattern());
+                              findResults().searchPattern(),
+                              findResults().replacePattern());
             }
 
             files.push_back(file);
             lineNums.push_back(lineNum);
             contents.push_back(lineContents);
-            if (findResults().getReplace())
+            if (!findResults().replace())
             {
-               matchOns.push_back(replaceMatchOn);
-               matchOffs.push_back(replaceMatchOff);
+               matchOns.push_back(matchOn);
+               matchOffs.push_back(matchOff);
             }
             else
             {  
-               matchOns.push_back(matchOn);
-               matchOffs.push_back(matchOff);
+               matchOns.push_back(replaceMatchOn);
+               matchOffs.push_back(replaceMatchOff);
             }
             recordsToProcess--;
          }
@@ -521,19 +534,21 @@ private:
                                  matchOns,
                                  matchOffs);
 
-         if (!findResults().getReplace())
+         if (!findResults().replace())
             module_context::enqueClientEvent(
                      ClientEvent(client_events::kFindResult, result));
          else
-         {
             module_context::enqueClientEvent(
                     ClientEvent(client_events::kReplaceResult, result));
-            findResults().setReplace(false);
-         }
       }
 
       if (recordsToProcess <= 0)
-         findResults().onFindEnd(handle());
+      {
+         if (!findResults().replace())
+            findResults().onFindEnd(handle());
+         else
+            findResults().onReplaceEnd(handle());
+      }
    }
 
    void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
@@ -711,11 +726,10 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
-   std::string replaceString;
+   std::string replacePattern;
    bool asRegex, ignoreCase, replaceRegex, useGitIgnore = false;
    std::string directory;
    json::Array filePatterns;
-
 
    Error error = json::readParams(request.params,
                                   &searchString,
@@ -723,7 +737,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &filePatterns,
-                                  &replaceString,
+                                  &replacePattern,
                                   &replaceRegex,
                                   &useGitIgnore);
    if (error)
@@ -817,7 +831,9 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                              searchString,
                              directory,
                              asRegex);
-   findResults().onReplaceBegin(replaceString);
+   findResults().onReplaceBegin(ptrGrepOp->handle(),
+                                replacePattern,
+                                replaceRegex);
    pResponse->setResult(ptrGrepOp->handle());
 
    return Success();
