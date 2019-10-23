@@ -13,5 +13,5 @@ runAllTests <- function(sourceDir, outputDir, filter = NA)
       tests <- testthat::test_dir(testThatDir)
    }
    
-   cat(sum(as.data.frame(tests)$failed), file = file(file.path(outputDir, "testthat-failures.log")))
+   cat(sum(as.data.frame(tests)$failed), file = file.path(outputDir, "testthat-failures.log"))
 }
