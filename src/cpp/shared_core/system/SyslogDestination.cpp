@@ -104,7 +104,7 @@ void SyslogDestination::writeLog(
 
    // Also log to stderr if there is a tty attached.
    if (::isatty(STDERR_FILENO) == 1)
-      std::cout << in_message;
+      std::cerr << in_message;
 }
 
 } // namespace system
