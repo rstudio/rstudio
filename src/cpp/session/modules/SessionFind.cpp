@@ -59,6 +59,7 @@ public:
       regex_(false),
       running_(false),
       replace_(false),
+      preview_(false),
       replaceRegex_(false)
    {
    }
@@ -81,6 +82,11 @@ public:
    bool replace()
    {
       return replace_;
+   }
+
+   bool preview()
+   {
+      return preview_;
    }
 
    bool replaceRegex()
@@ -137,12 +143,14 @@ public:
    }
 
    void onReplaceBegin(const std::string& handle,
+                       bool previewFlag,
                        const std::string& replacePattern,
                        bool asRegex)
    {
       if (handle_ == handle)
       {
          replace_ = true;
+         preview_ = previewFlag;
          replacePattern_ = replacePattern;
          replaceRegex_ = asRegex;
       }
@@ -154,6 +162,7 @@ public:
       {
          onFindEnd(handle);
          replace_ = false;
+         preview_ = false;
          replacePattern_.clear();
       }
    }
@@ -167,6 +176,7 @@ public:
       matchOns_.clear();
       matchOffs_.clear();
       replace_ = false;
+      preview_ = false;
       replacePattern_.clear();
    }
 
@@ -235,6 +245,7 @@ private:
    json::Array matchOffs_;
    bool running_;
    bool replace_;
+   bool preview_;
    bool replaceRegex_;
    std::string replacePattern_;
 };
@@ -405,17 +416,20 @@ private:
                                                 *pReplace);
                else
                   newLine = line.replace(linePos, pSearch->size(), *pReplace);
-               pStream->seekg(seekPos + linePos);
-               try
+               if (!findResults().preview())
                {
-                   pStream->write(newLine.c_str(), line.size());
-                   *pContent = newLine;
-               }
-               catch (const std::ios_base::failure& e)
-               {
-                  std::string text("Failed to write to file ");
-                  text.append(e.code().message());
-                  LOG_ERROR_MESSAGE(text);
+                  pStream->seekg(seekPos + linePos);
+                  try
+                  {
+                      pStream->write(newLine.c_str(), line.size());
+                      *pContent = newLine;
+                  }
+                  catch (const std::ios_base::failure& e)
+                  {
+                     std::string text("Failed to write to file ");
+                     text.append(e.code().message());
+                     LOG_ERROR_MESSAGE(text);
+                  }
                }
             }
             seekPos += line.size();
@@ -574,22 +588,13 @@ private:
 
 } // namespace
 
-core::Error beginFind(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
+      bool previewFlag, bool replaceFlag, std::string searchString, std::string replacePattern,
+      bool asRegex, bool ignoreCase, bool replaceRegex, bool useGitIgnore,
+      std::string directory, json::Array filePatterns)
 {
-   std::string searchString;
-   bool asRegex, ignoreCase;
-   std::string directory;
-   json::Array filePatterns;
-
-   Error error = json::readParams(request.params,
-                                  &searchString,
-                                  &asRegex,
-                                  &ignoreCase,
-                                  &directory,
-                                  &filePatterns);
-   if (error)
-      return error;
+   if (previewFlag && !replaceFlag)
+      LOG_ERROR_MESSAGE("replaceFlag must be true when previewFlag is true");
 
    core::system::ProcessOptions options;
 
@@ -608,7 +613,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    // Put the grep pattern in a file
    FilePath tempFile = module_context::tempFile("rs_grep", "txt");
    boost::shared_ptr<std::ostream> pStream;
-   error = tempFile.open_w(&pStream);
+   Error error = tempFile.open_w(&pStream);
    if (error)
       return error;
    std::string encoding = projects::projectContext().hasProject() ?
@@ -679,7 +684,40 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                              searchString,
                              directory,
                              asRegex);
+   if (replaceFlag)
+      findResults().onReplaceBegin(ptrGrepOp->handle(),
+                                   previewFlag,
+                                   replacePattern,
+                                   replaceRegex);
    pResponse->setResult(ptrGrepOp->handle());
+
+   return Success();
+}
+
+core::Error beginFind(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string searchString;
+   bool asRegex, ignoreCase;
+   std::string directory;
+   json::Array filePatterns;
+
+   Error error = json::readParams(request.params,
+                                  &searchString,
+                                  &asRegex,
+                                  &ignoreCase,
+                                  &directory,
+                                  &filePatterns);
+   if (error)
+      return error;
+
+   error = retrieveFindReplaceResponse(pResponse,
+      false, false, searchString, std::string(),
+      asRegex, ignoreCase, false, false,
+      directory, filePatterns);
+
+   if (error)
+      return error;
 
    return Success();
 }
@@ -708,14 +746,30 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
-   std::string replaceString;
-   bool replaceRegex, useGitIgnore;
+   std::string replacePattern;
+   bool asRegex, ignoreCase, replaceRegex, useGitIgnore = false;
+   std::string directory;
+   json::Array filePatterns;
 
    Error error = json::readParams(request.params,
                                   &searchString,
-                                  &replaceString,
+                                  &asRegex,
+                                  &ignoreCase,
+                                  &directory,
+                                  &filePatterns,
+                                  &replacePattern,
                                   &replaceRegex,
                                   &useGitIgnore);
+   if (error)
+      return error;
+   if (!replaceRegex)
+      LOG_ERROR_MESSAGE("Replace Regex must be true during preview");
+
+   error = retrieveFindReplaceResponse(pResponse,
+      true, true, searchString, replacePattern,
+      asRegex, ignoreCase, replaceRegex, useGitIgnore,
+      directory, filePatterns);
+
    if (error)
       return error;
 
@@ -743,98 +797,13 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   core::system::ProcessOptions options;
+   error = retrieveFindReplaceResponse(pResponse,
+         false, true, searchString, replacePattern,
+         asRegex, ignoreCase, replaceRegex, useGitIgnore,
+         directory, filePatterns);
 
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
-   core::system::setenv(&childEnv, "GREP_COLOR", "01");
-   core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
-#ifdef _WIN32
-   FilePath gnuGrepPath = session::options().gnugrepPath();
-   core::system::addToPath(
-            &childEnv,
-            string_utils::utf8ToSystem(gnuGrepPath.absolutePath()));
-#endif
-   options.environment = childEnv;
-
-   // Put the grep pattern in a file
-   FilePath tempFile = module_context::tempFile("rs_grep", "txt");
-   boost::shared_ptr<std::ostream> pStream;
-   error = tempFile.open_w(&pStream);
    if (error)
       return error;
-   std::string encoding = projects::projectContext().hasProject() ?
-                          projects::projectContext().defaultEncoding() :
-                          prefs::userPrefs().defaultEncoding();
-   std::string encodedString;
-   error = r::util::iconvstr(searchString,
-                             "UTF-8",
-                             encoding,
-                             false,
-                             &encodedString);
-   if (error)
-   {
-      LOG_ERROR(error);
-      encodedString = searchString;
-   }
-
-   *pStream << encodedString << std::endl;
-   pStream.reset(); // release file handle
-
-   boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(encoding,
-                                                                      tempFile);
-   core::system::ProcessCallbacks callbacks =
-                                       ptrGrepOp->createProcessCallbacks();
-
-#ifdef _WIN32
-   shell_utils::ShellCommand cmd(gnuGrepPath.complete("grep"));
-#else
-   shell_utils::ShellCommand cmd("grep");
-#endif
-   cmd << "-rHn" << "--binary-files=without-match" << "--color=always";
-#ifndef _WIN32
-   cmd << "--devices=skip";
-#endif
-
-   if (ignoreCase)
-      cmd << "-i";
-
-   // Use -f to pass pattern via file, so we don't have to worry about
-   // escaping double quotes, etc.
-   cmd << "-f";
-   cmd << tempFile;
-   if (!asRegex)
-      cmd << "-F";
-
-   for (json::Value filePattern : filePatterns)
-   {
-      cmd << "--include=" + filePattern.get_str();
-   }
-
-   cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-   
-   // Filepaths received from the client will be UTF-8 encoded;
-   // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(directory);
-   cmd << string_utils::utf8ToSystem(dirPath.absolutePath());
-
-   // Clear existing results
-   findResults().clear();
-
-   error = module_context::processSupervisor().runCommand(cmd,
-                                                          options,
-                                                          callbacks);
-   if (error)
-      return error;
-
-   findResults().onFindBegin(ptrGrepOp->handle(),
-                             searchString,
-                             directory,
-                             asRegex);
-   findResults().onReplaceBegin(ptrGrepOp->handle(),
-                                replacePattern,
-                                replaceRegex);
-   pResponse->setResult(ptrGrepOp->handle());
 
    return Success();
 }
