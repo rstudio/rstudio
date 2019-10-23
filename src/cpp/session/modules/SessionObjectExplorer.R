@@ -383,7 +383,7 @@
       (is.atomic(.$object) && !is.null(names(.$object)) && n > 0) ||
       
       # do we have relevant attributes?
-      .rs.explorer.hasRelevantAttributes(.$object)
+      context$recursive && .rs.explorer.hasRelevantAttributes(.$object)
    
    # extract attributes when relevant
    attributes <- NULL
