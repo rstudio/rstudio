@@ -480,7 +480,7 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="activateLauncherJobs"/>
          </menu>
-         <menu label="Addins">
+         <menu label="_Addins">
             <cmd refid="browseAddins"/>
          </menu>
          <separator/>
@@ -1122,7 +1122,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="mru14" visible="false" rebindable="false"/>
    
    <cmd id="clearRecentFiles"
-        menuLabel="Clear List"
+        menuLabel="_Clear List"
         rebindable="false"/>
 
    <cmd id="newProject"
@@ -1141,7 +1141,7 @@ well as menu structures (for main menu and popup menus).
    
    <cmd id="openProjectInNewWindow"
         label="Open Project with New R Session"
-        menuLabel="Open Project in New Session..."
+        menuLabel="Open Project in Ne_w Session..."
         buttonLabel=""
         desc="Open project in a new R session"
         windowMode="main"/>
@@ -1176,7 +1176,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="projectMru14" visible="false" rebindable="false" windowMode="main"/>
    
    <cmd id="clearRecentProjects"
-        menuLabel="Clear Project List"
+        menuLabel="_Clear Project List"
         rebindable="false"
         windowMode="main"/>
         
@@ -1212,7 +1212,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Toggle Toolbar"/>
         
    <cmd id="zoomActualSize"
-        menuLabel="Actual Size"/>
+        menuLabel="Actual _Size"/>
         
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
@@ -1507,16 +1507,16 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="fold"
-        menuLabel="Collapse"/>
+        menuLabel="_Collapse"/>
         
    <cmd id="unfold"
-        menuLabel="Expand"/>
+        menuLabel="E_xpand"/>
         
    <cmd id="foldAll"
-        menuLabel="Collapse All"/>
+        menuLabel="Collapse _All"/>
         
    <cmd id="unfoldAll"
-        menuLabel="Expand All"/>
+        menuLabel="Ex_pand All"/>
         
    <cmd id="jumpToMatching"
         label="Jump to Matching Bracket"
@@ -1915,7 +1915,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="toggleDocumentOutline"
         label="Toggle Document Outline"
-        menuLabel="Show Document Outline"
+        menuLabel="_Show Document Outline"
         desc="Show document outline"/>
 
    <cmd id="usingRMarkdownHelp"
@@ -1929,62 +1929,62 @@ well as menu structures (for main menu and popup menus).
         context="help"/>
 
     <cmd id="openRStudioIDECheatSheet"
-         menuLabel="RStudio IDE Cheat Sheet"
+         menuLabel="_RStudio IDE Cheat Sheet"
          desc="RStudio IDE cheat sheet"
          context="help"/>
 
     <cmd id="openDataVisualizationCheatSheet"
-         menuLabel="Data Visualization with ggplot2"
+         menuLabel="Data Visualization with _ggplot2"
          desc="Data visualization with ggplot2"
          context="help"/>
          
     <cmd id="openPurrrCheatSheet"
-         menuLabel="List manipulation with purrr"
+         menuLabel="List manipulation with _purrr"
          desc="List manipulation with purrr"
          context="help"/>
 
     <cmd id="openPackageDevelopmentCheatSheet"
-         menuLabel="Package Development with devtools"
+         menuLabel="Package De_velopment with devtools"
          desc="Package development with devtools"
          context="help"/>
          
     <cmd id="openDataImportCheatSheet"
-         menuLabel="Import Data with readr"
+         menuLabel="_Import Data with readr"
          desc="Import data with readr"
          context="help"/>
 
     <cmd id="openDataWranglingCheatSheet"
-         menuLabel="Data Manipulation with dplyr, tidyr"
+         menuLabel="Data Manipulation with dplyr, tid_yr"
          desc="Data manipulation with dplyr and tidyr"
          context="help"/>
          
     <cmd id="openDataTransformationCheatSheet"
-          menuLabel="Data Transformation with dplyr"
+          menuLabel="Data Transformation with _dplyr"
           desc="Data transformation with dplyr"
           context="help"/>
           
-    <cmd id="openSparklyrCheatSheet"
+    <cmd id="openSpar_klyrCheatSheet"
          menuLabel="Interfacing Spark with sparklyr"
          desc="Interfacing Apache Spark with sparklyr"
          context="help"/>
 
-    <cmd id="openRMarkdownCheatSheet"
+    <cmd id="openR_MarkdownCheatSheet"
          menuLabel="R Markdown Cheat Sheet"
          desc="R Markdown cheat sheet"
          context="help"/>
 
-    <cmd id="openRMarkdownReferenceGuide"
+    <cmd id="open_RMarkdownReferenceGuide"
          menuLabel="R Markdown Reference Guide"
          desc="R Markdown reference guide"
          context="help"/>
 
-    <cmd id="openShinyCheatSheet"
+    <cmd id="open_ShinyCheatSheet"
          menuLabel="Web Applications with shiny"
          desc="Build web applications with Shiny"
          context="help"/>
          
     <cmd id="browseCheatSheets"
-         menuLabel="Browse Cheatsheets..."
+         menuLabel="_Browse Cheatsheets..."
          desc="Browse available cheatsheets in your web browser"
          context="help"/>
 
@@ -2704,7 +2704,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="closeAllTerminals"
         buttonLabel=""
         label="Close _All Terminals"
-        menuLabel="Close All Terminals"/>
+        menuLabel="Close _All Terminals"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
         buttonLabel=""
@@ -2745,7 +2745,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="sendToTerminal"
         label="Send Selection to Terminal"
         buttonLabel=""
-        menuLabel="Send to Terminal"
+        menuLabel="Send to _Terminal"
         desc="Send the current line or selection to terminal"/>
 
    <cmd id="browseAddins"
@@ -2762,7 +2762,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="modifyKeyboardShortcuts"
-        menuLabel="Modify Keyboard Shortcuts..."
+        menuLabel="_Modify Keyboard Shortcuts..."
         desc="Modify keyboard shortcuts"
         windowMode="main"/>
 
@@ -2875,11 +2875,11 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="raiseException"
-        menuLabel="Raise Exception"
+        menuLabel="Raise E_xception"
         rebindable="false"/>
         
    <cmd id="raiseException2"
-        menuLabel="Raise Exception JS"
+        menuLabel="Raise Exception _JS"
         rebindable="false"/>
         
    <cmd id="showWarningBar"
@@ -2900,7 +2900,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="reloadUi"
-        menuLabel="Reload UI"
+        menuLabel="Reload _UI"
         rebindable="false"/>
 
    <cmd id="logFocusedElement"
@@ -3102,7 +3102,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="pasteWithIndentDummy"
-        menuLabel="Paste with Indent"
+        menuLabel="Pa_ste with Indent"
         rebindable="false"/>
         
    <cmd id="yankBeforeCursor"
@@ -3200,12 +3200,12 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="startProfiler"
-        menuLabel="Start Profiling"
+        menuLabel="_Start Profiling"
         desc="Start profiling R code"
         rebindable="false"/>
         
    <cmd id="stopProfiler"
-        menuLabel="Stop Profiling"
+        menuLabel="Stop Profilin_g"
         buttonLabel="Stop Profiling"
         desc="Stop profiling R code"
         rebindable="false"/>
@@ -3322,7 +3322,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="background"/>
     
    <cmd id="rsconnectDeploy"
-        menuLabel="_Publish..."
+        menuLabel="P_ublish..."
         desc="Publish the application or document"
         visible="false"
         rebindable="false"/>
@@ -3340,11 +3340,11 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="showGpuDiagnostics"
-        menuLabel="Show GPU Diagnostics"
+        menuLabel="Show _GPU Diagnostics"
         rebindable="false"/>
         
    <cmd id="toggleEditorTokenInfo"
-        menuLabel="Toggle Editor Token Information"
+        menuLabel="_Toggle Editor Token Information"
         rebindable="false"/>
         
    <cmd id="newConnection"
@@ -3388,7 +3388,7 @@ well as menu structures (for main menu and popup menus).
          windowMode="main"/>
 
     <cmd id="startJob"
-         menuLabel="Start Local Job..."
+         menuLabel="_Start Local Job..."
          buttonLabel="Start Local Job"
          desc="Run a background local job"
          windowMode="main"/>
@@ -3399,12 +3399,12 @@ well as menu structures (for main menu and popup menus).
          windowMode="any"/>
 
     <cmd id="clearJobs"
-         menuLabel="Clear Local Jobs"
+         menuLabel="_Clear Local Jobs"
          desc="Clean up all completed local jobs"
          windowMode="main"/>
         
     <cmd id="runSelectionAsJob"
-         menuLabel="Run Selection as Local Job"
+         menuLabel="Ru_n Selection as Local Job"
          desc="Run the selected code as a local job"
          windowMode="any"/>
 
@@ -3483,27 +3483,27 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="editUserPrefs"
-        menuLabel="Edit User Prefs File"
+        menuLabel="_Edit User Prefs File"
         windowMode="main"
         rebindable="false"/>
 
    <cmd id="clearUserPrefs"
-        menuLabel="Clear User Prefs"
+        menuLabel="_Clear User Prefs"
         windowMode="main"
         rebindable="false"/>
 
    <cmd id="viewAllPrefs"
-        menuLabel="View All Prefs"
+        menuLabel="_View All Prefs"
         windowMode="main"
         rebindable="false"/>
 
    <cmd id="toggleScreenReaderSupport"
-        menuLabel="Screen Reader Support"
+        menuLabel="_Screen Reader Support"
         checkable="true"
         windowMode="main"
         rebindable="false"/>
 
    <cmd id="showAccessibilityOptions"
-        menuLabel="Accessibility Options..."
+        menuLabel="Accessibility _Options..."
         windowMode="main"/>
 </commands>
