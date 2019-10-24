@@ -461,7 +461,7 @@ namespace {
 
 FilePath compilationConfigFilePath()
 {
-   return module_context::scopedScratchPath().completePath("cpp-complilation-config-v2");
+   return module_context::scopedScratchPath().completePath("cpp-compilation-config");
 }
 
 
