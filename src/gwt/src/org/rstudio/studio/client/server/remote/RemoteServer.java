@@ -2080,6 +2080,7 @@ public class RemoteServer implements Server
                                 String replacement,
                                 int offset,
                                 int length,
+                                boolean valid,
                                 String hash,
                                 ServerRequestCallback<String> requestCallback)
    {
@@ -2095,7 +2096,8 @@ public class RemoteServer implements Server
       params.set(6, new JSONString(replacement));
       params.set(7, new JSONNumber(offset));
       params.set(8, new JSONNumber(length));
-      params.set(9, new JSONString(hash));
+      params.set(9, JSONBoolean.getInstance(valid));
+      params.set(10, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 

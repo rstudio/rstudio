@@ -476,6 +476,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // current document. It replaces the subrange [offset, offset+length).
    std::string replacement;
    int offset, length;
+   bool valid;
    
    // This is the expected hash of the current document. If the
    // current hash value is different than this value, then the
@@ -493,6 +494,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &replacement,
                                   &offset,
                                   &length,
+                                  &valid,
                                   &hash);
    if (error)
       return error ;
@@ -513,21 +515,14 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    if (pDoc->hash() == hash)
    {
       std::string contents(pDoc->contents());
-
-      // Offset and length are specified in characters, but contents
-      // is in UTF8 bytes. Convert before using.
-      std::string::iterator rangeBegin = contents.begin();
-      error = utf8Advance(rangeBegin, offset, contents.end(), &rangeBegin);
-      if (error)
-         return Success(); // UTF8 decoding failed. Abort differential save.
-
-      std::string::iterator rangeEnd = rangeBegin;
-      error = utf8Advance(rangeEnd, length, contents.end(), &rangeEnd);
-      if (error)
-         return Success(); // UTF8 decoding failed. Abort differential save.
-
-      contents.erase(rangeBegin, rangeEnd);
-      contents.insert(rangeBegin, replacement.begin(), replacement.end());
+      
+      // the offsets we receive are in bytes, so we can replace the contents
+      // of the string directly at the supplied offset + length (the contents
+      // string itself is already UTF-8 encoded)
+      if (valid)
+      {
+         contents.replace(offset, length, replacement);
+      }
       
       // track if we're updating the document contents
       bool hasChanges = contents != pDoc->contents();
