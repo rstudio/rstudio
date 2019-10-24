@@ -154,7 +154,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
          }
       }
    }
-   CATCH_UNEXPECTED_EXCEPTION;
+   CATCH_UNEXPECTED_EXCEPTION
 
    return compileArgs;
 }
@@ -322,8 +322,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (!pkgInfo.linkingTo().empty())
    {
       // Get includes implied by the LinkingTo field
-      std::vector<std::string> includes = includesForLinkingTo(
-                                                      pkgInfo.linkingTo());
+      std::vector<std::string> includes = includesForLinkingTo(pkgInfo.linkingTo());
 
       // add them to args
       std::copy(includes.begin(), includes.end(), std::back_inserter(args));
@@ -332,7 +331,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    // get the build environment (e.g. Rtools config)
    core::system::Options env = compilationEnvironment();
 
-   // Check for C++11 in SystemRequirements
+   // check for C++ standard requirements
    if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
    {
       env.push_back(std::make_pair("USE_CXX1X", "1"));
@@ -351,7 +350,8 @@ void RCompilationDatabase::updateForCurrentPackage()
 
    // Run R CMD SHLIB
    FilePath srcDir = pkgPath.completeChildPath("src");
-   std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir);
+   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
+   std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
    if (!compileArgs.empty())
    {
       // do path substitutions
@@ -373,8 +373,7 @@ void RCompilationDatabase::updateForCurrentPackage()
       // set the args and build file hash (to avoid recomputation)
       packageCompilationConfig_.args = args;
       packageCompilationConfig_.PCH = packagePCH(pkgInfo.linkingTo());
-      packageCompilationConfig_.isCpp = packageIsCpp(pkgInfo.linkingTo(),
-                                                     srcDir);
+      packageCompilationConfig_.isCpp = isCpp;
       packageBuildFileHash_ = buildFileHash;
 
       // save them to disk
@@ -384,8 +383,9 @@ void RCompilationDatabase::updateForCurrentPackage()
 }
 
 std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
-                                  const core::system::Options& env,
-                                  const FilePath& srcDir)
+      const core::system::Options& env,
+      const FilePath& srcDir,
+      bool isCpp)
 {
    // empty compile args to return on error
    std::vector<std::string> emptyCompileArgs;
@@ -429,14 +429,14 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    // need OBJECT-specific compilation configs but in practice one
    // often just enumerates each OBJECT explicitly and re-uses the
    // same compilation config for each file)
-   std::string filename =
-         kCompilationDbPrefix + core::system::generateUuid() + ".cpp";
+   std::string ext = isCpp ? ".cpp" : ".c";
+   std::string filename = kCompilationDbPrefix + core::system::generateUuid() + ext;
 
    std::vector<FilePath> children;
    srcDir.getChildren(children);
    for (const FilePath& child : children)
    {
-      if (child.getExtension() == ".cpp")
+      if (child.getExtension() == ext)
       {
          filename = child.getFilename();
          break;
@@ -461,7 +461,7 @@ namespace {
 
 FilePath compilationConfigFilePath()
 {
-   return module_context::scopedScratchPath().completePath("cpp-complilation-config");
+   return module_context::scopedScratchPath().completePath("cpp-compilation-config");
 }
 
 
@@ -656,7 +656,11 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    core::system::ProcessOptions options;
    options.workingDir = srcPath.getParent();
    options.environment = env;
-   return core::system::runCommand(rCmd.shellCommand(), options, pResult);
+   Error result = core::system::runCommand(
+            rCmd.shellCommand(),
+            options,
+            pResult);
+   return result;
 }
 
 bool RCompilationDatabase::isProjectTranslationUnit(
