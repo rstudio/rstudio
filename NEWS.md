@@ -46,6 +46,7 @@
 * Show detailed logs and process output when R fails to start (#2097)
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
 * Files with extension '.q' are no longer indexed or parsed as R files (#4696)
+* Add support for an API command to return the list of R packages RStudio depends on (#2332)
 * Add automated crash handling and reporting
 * Upgrade internal JSON parsing engine for speed improvements (#1830)
 * Improved ergonomics for history prefix navigation (#2771)
@@ -65,6 +66,8 @@
 * Add 'Close All Terminals' command to Terminal menu (#3564)
 * The diagnostics system now understands referenced symbols in glue strings (#5270)
 * Add preference for compiling .tex files with tinytex (#2788)
+* Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
+* Sort package-installed R Markdown templates alphabetically (#4929)
 
 ### Bugfixes
 
