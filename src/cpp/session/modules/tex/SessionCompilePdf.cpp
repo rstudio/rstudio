@@ -665,7 +665,7 @@ private:
       using Argument = std::pair<std::string, std::string>;
       std::vector<Argument> latexmkArgs;
       
-      std::string file = string_utils::utf8ToSystem(targetFilePath_.absolutePathNative());
+      std::string file = string_utils::utf8ToSystem(targetFilePath_.getAbsolutePathNative());
       latexmkArgs.push_back({std::string(), shell_utils::escape(file)});
       
       std::string engine = string_utils::toLower(prefs::userPrefs().defaultLatexProgram());
@@ -698,7 +698,7 @@ private:
       Error error = module_context::rScriptPath(&rScriptPath);
       if (error)
       {
-         terminateWithError(error.summary());
+         terminateWithError(error.getSummary());
          return;
       }
       
@@ -711,7 +711,7 @@ private:
                rScriptPath,
                args,
                tex::utils::rTexInputsEnvVars(),
-               targetFilePath_.parent(),
+               targetFilePath_.getParent(),
                boost::bind(
                   &AsyncPdfCompiler::onTinytexOutput,
                   AsyncPdfCompiler::shared_from_this(),
@@ -723,7 +723,7 @@ private:
                   _2));
       
       if (error)
-         terminateWithError("Unable to compile pdf: " + error.summary());
+         terminateWithError("Unable to compile pdf: " + error.getSummary());
       
    }
 
