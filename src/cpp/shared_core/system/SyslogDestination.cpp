@@ -24,7 +24,11 @@
 #include <shared_core/system/SyslogDestination.hpp>
 
 #include <cassert>
+#include <iostream>
 #include <syslog.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Logger.hpp>
 
@@ -90,7 +94,17 @@ void SyslogDestination::writeLog(
    log::LogLevel in_logLevel,
    const std::string& in_message)
 {
-   ::syslog(logLevelToLogPriority(in_logLevel), "%s", in_message.c_str());
+   // Don't allow newlines in syslog messages since they delimit distinct log entries. Strip trailing whitespace first.
+   std::string forSyslog = boost::algorithm::trim_right_copy(in_message);
+   boost::algorithm::replace_all_copy(forSyslog, "\n", "|||");
+
+   // Also remove the leading date and program ID, since those are set by syslog directly.
+   forSyslog = boost::regex_replace(forSyslog, boost::regex("^[^\\]]*\\]\\s"), "");
+   ::syslog(logLevelToLogPriority(in_logLevel), "%s", forSyslog.c_str());
+
+   // Also log to stderr if there is a tty attached.
+   if (::isatty(STDERR_FILENO) == 1)
+      std::cerr << in_message;
 }
 
 } // namespace system
