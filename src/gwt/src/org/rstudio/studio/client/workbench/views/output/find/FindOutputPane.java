@@ -250,7 +250,15 @@ public class FindOutputPane extends WorkbenchPane
         viewReplaceButton_.setLeftImage(resources.expandReplaceIcon());
    }
 
-   private void toggleReplaceMode()
+   private void fireSelectionCommitted()
+   {
+      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
+      if (values.size() == 1)
+         SelectionCommitEvent.fire(this, values.get(0));
+   }
+
+   @Override
+   public void toggleReplaceMode()
    {
       replaceMode_ = !replaceMode_;
       FindOutputResources resources = GWT.create(FindOutputResources.class);
@@ -261,13 +269,6 @@ public class FindOutputPane extends WorkbenchPane
          table_.removeStyleName(resources.styles().findOutputReplace());
          addReplaceMatches(new String());
       }
-   }
-
-   private void fireSelectionCommitted()
-   {
-      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
-      if (values.size() == 1)
-         SelectionCommitEvent.fire(this, values.get(0));
    }
 
    @Override
@@ -417,8 +418,14 @@ public class FindOutputPane extends WorkbenchPane
       
       private final Label label_;
       
-   }
+      }
    
+   @Override
+   public  boolean getReplaceMode()
+   {
+      return replaceMode_;
+   }
+
    @Override
    public HasClickHandlers getReplaceAllButton()
    {

@@ -402,7 +402,6 @@ private:
          int seekPos=0;
          while (findResults().isRunning() && currentLine < lineNum && std::getline(*pStream, line))
          {
-            boost::this_thread::sleep(boost::posix_time::seconds(5));
             ++currentLine;
             if (currentLine == lineNum)
             {
@@ -411,7 +410,6 @@ private:
                pReplaceMatchOff->push_back(gsl::narrow_cast<int>(linePos) +
                                            gsl::narrow_cast<int>(pReplace->size()));
    
-               /*
                std::string newLine;
                if (findResults().replaceRegex())
                   newLine = boost::regex_replace(line,
@@ -421,7 +419,7 @@ private:
                   newLine = line.replace(linePos, pSearch->size(), *pReplace);
                if (!findResults().preview())
                {
-                  pStream->seekg(seekPos + linePos);
+                  pStream->seekg(seekPos);
                   try
                   {
                       pStream->write(newLine.c_str(), line.size());
@@ -434,7 +432,6 @@ private:
                      LOG_ERROR_MESSAGE(text);
                   }
                }
-               */
             }
             seekPos += line.size();
          }

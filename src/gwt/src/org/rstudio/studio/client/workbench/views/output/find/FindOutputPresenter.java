@@ -77,6 +77,8 @@ public class FindOutputPresenter extends BasePresenter
       void updateSearchLabel(String query, String path);
       void clearSearchLabel();
 
+      boolean getReplaceMode();
+      public void toggleReplaceMode();
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
       boolean isReplaceRegex();
@@ -138,6 +140,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onFindResult(FindResultEvent event)
          {
+            Debug.logToConsole("Find result event");
             if (event.getHandle() != currentFindHandle_)
                return;
             view_.addMatches(event.getResults());
@@ -224,7 +227,6 @@ public class FindOutputPresenter extends BasePresenter
                                           currentFindHandle_ = handle;
                                           view_.setStopReplaceButtonVisible(false);
                                           Debug.logToConsole("Complete replace response received");
-                                          Debug.logToConsole(handle);
                                        }
                                     });
          }
@@ -235,8 +237,12 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
+            Debug.logToConsole("on Replace Result Event");
             if (event.getHandle() != currentFindHandle_)
                return;
+            if (!view_.getReplaceMode())
+               view_.toggleReplaceMode();
+
             ArrayList<FindResult> results = event.getResults();
             for (FindResult fr : results)
                fr.setReplaceIndicator();
