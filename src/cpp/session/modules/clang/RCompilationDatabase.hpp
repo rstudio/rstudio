@@ -33,6 +33,14 @@
 #define kCompilationDbPrefix "clang-compilation-db-"
 
 namespace rstudio {
+namespace core {
+namespace r_util {
+class RPackageInfo;
+} // namespace r_util
+} // namespace core
+} // namespace rstudio
+
+namespace rstudio {
 namespace session {
 namespace modules {      
 namespace clang {
@@ -89,7 +97,10 @@ private:
                                              core::FilePath tempSrcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
-   std::vector<std::string> commonCompilationArgs();
+   std::vector<std::string> commonCompilationArgs(
+         core::r_util::RPackageInfo* pPkgInfo = nullptr,
+         bool* pIsCpp = nullptr);
+
    std::vector<std::string> rToolsArgs() const;
    core::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,

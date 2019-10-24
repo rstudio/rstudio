@@ -30,7 +30,6 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
-#include <core/r_util/RPackageInfo.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/FileScanner.hpp>
@@ -104,7 +103,7 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
          info.hash.append(attrib);
       }
    }
-   CATCH_UNEXPECTED_EXCEPTION;
+   CATCH_UNEXPECTED_EXCEPTION
 
    // using RcppNT2/Boost.SIMD means don't index (expression templates
    // are too much for the way we do indexing)
@@ -308,72 +307,11 @@ void RCompilationDatabase::updateForCurrentPackage()
       return;
 
    // start with base args
-   std::vector<std::string> args = commonCompilationArgs();
-
-   // read the package description file
-   using namespace projects;
-   FilePath pkgPath = projectContext().buildTargetPath();
+   bool isCpp = false;
    core::r_util::RPackageInfo pkgInfo;
-   Error error = pkgInfo.read(pkgPath);
-   if (error)
+   std::vector<std::string> args = commonCompilationArgs(&pkgInfo, &isCpp);
+   if (!args.empty())
    {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // Discover all of the LinkingTo relationships and add -I
-   // arguments for them
-   if (!pkgInfo.linkingTo().empty())
-   {
-      // Get includes implied by the LinkingTo field
-      std::vector<std::string> includes = includesForLinkingTo(pkgInfo.linkingTo());
-
-      // add them to args
-      std::copy(includes.begin(), includes.end(), std::back_inserter(args));
-   }
-
-   // get the build environment (e.g. Rtools config)
-   core::system::Options env = compilationEnvironment();
-
-   // check for C++ standard requirements
-   if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
-   {
-      env.push_back(std::make_pair("USE_CXX1X", "1"));
-      env.push_back(std::make_pair("USE_CXX11", "1"));
-   }
-   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++14"))
-   {
-      env.push_back(std::make_pair("USE_CXX1Y", "1"));
-      env.push_back(std::make_pair("USE_CXX14", "1"));
-   }
-   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++17"))
-   {
-      env.push_back(std::make_pair("USE_CXX1Z", "1"));
-      env.push_back(std::make_pair("USE_CXX17", "1"));
-   }
-
-   // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.completeChildPath("src");
-   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
-   std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
-   if (!compileArgs.empty())
-   {
-      // do path substitutions
-      for (std::string arg : compileArgs)
-      {
-         // do path substitutions
-         boost::algorithm::replace_first(
-                  arg,
-                  "-I..",
-                  "-I" + srcDir.getParent().getAbsolutePath());
-         boost::algorithm::replace_first(
-                  arg,
-                  "-I.",
-                  "-I" + srcDir.getAbsolutePath());
-
-         args.push_back(arg);
-      }
-
       // set the args and build file hash (to avoid recomputation)
       packageCompilationConfig_.args = args;
       packageCompilationConfig_.PCH = packagePCH(pkgInfo.linkingTo());
@@ -951,7 +889,9 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
    return args;
 }
 
-std::vector<std::string> RCompilationDatabase::commonCompilationArgs()
+std::vector<std::string> RCompilationDatabase::commonCompilationArgs(
+      core::r_util::RPackageInfo* pPkgInfo,
+      bool* pIsCpp)
 {
    // start with base args
    std::vector<std::string> args = baseCompilationArgs(true);
@@ -1021,6 +961,12 @@ std::vector<std::string> RCompilationDatabase::commonCompilationArgs()
          args.push_back(arg);
       }
    }
+
+   if (pPkgInfo)
+      *pPkgInfo = pkgInfo;
+
+   if (pIsCpp)
+      *pIsCpp = isCpp;
 
    return args;
 
