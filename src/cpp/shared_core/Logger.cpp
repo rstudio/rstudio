@@ -42,9 +42,7 @@ typedef std::map<LogSection, LogMap> SectionLogMap;
 
 namespace {
 
-constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_loggedFrom = "LOGGED FROM";
-constexpr const char* s_causedBy = "CAUSED BY";
 
 std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
 {
