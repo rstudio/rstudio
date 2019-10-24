@@ -51,7 +51,7 @@ public class SubstringDiff
       var headLimit = Math.min(o.length, n.length);
       var head;
       for (head = 0;
-           head < headLimit && o[head] == n[head];
+           head < headLimit && o[head] === n[head];
            head++)
       {
       }
@@ -64,7 +64,7 @@ public class SubstringDiff
       
       var tail;
       for (tail = o.length;
-           tail > tailLimit && o[tail - 1] == n[tail + tailDelta - 1];
+           tail > tailLimit && o[tail - 1] === n[tail + tailDelta - 1];
            tail--)
       {
       }
