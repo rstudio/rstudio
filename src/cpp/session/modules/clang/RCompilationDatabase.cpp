@@ -23,6 +23,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 
+#include <core/Debug.hpp>
 #include <core/Hash.hpp>
 #include <core/Algorithm.hpp>
 #include <core/PerformanceTimer.hpp>
@@ -235,6 +236,12 @@ std::string packagePCH(const std::string& linkingTo)
       error.addProperty("linking-to", linkingTo);
       LOG_ERROR(error);
    }
+
+   if (rSourceIndex().verbose() > 0)
+   {
+      std::cerr << "PACKAGE PCH: " << pch << std::endl;
+   }
+
    return pch;
 }
 
@@ -278,9 +285,6 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
    return includes;
 }
 
-
-
-
 } // anonymous namespace
 
 
@@ -304,7 +308,7 @@ void RCompilationDatabase::updateForCurrentPackage()
       return;
 
    // start with base args
-   std::vector<std::string> args = baseCompilationArgs(true);
+   std::vector<std::string> args = commonCompilationArgs();
 
    // read the package description file
    using namespace projects;
@@ -387,16 +391,13 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       const FilePath& srcDir,
       bool isCpp)
 {
-   // empty compile args to return on error
-   std::vector<std::string> emptyCompileArgs;
-
    // create a temp dir to call R CMD SHLIB within
    FilePath tempDir = module_context::tempFile(kCompilationDbPrefix, "dir");
    Error error = tempDir.ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
-      return emptyCompileArgs;
+      return {};
    }
 
    // copy Makevars to tempdir if it exists
@@ -407,7 +408,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       if (error)
       {
          LOG_ERROR(error);
-         return emptyCompileArgs;
+         return {};
       }
    }
 
@@ -418,7 +419,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       if (error)
       {
          LOG_ERROR(error);
-         return emptyCompileArgs;
+         return {};
       }
    }
 
@@ -816,9 +817,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    {
       // extract any -std= argument
       std::string stdArg = extractStdArg(args);
-
-      std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH,
-                                                               stdArg);
+      std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH, stdArg);
       std::copy(pchArgs.begin(),
                 pchArgs.end(),
                 std::back_inserter(args));
@@ -853,8 +852,7 @@ RCompilationDatabase::CompilationConfig
       return CompilationConfig();
 
    // start with base args
-   std::vector<std::string> args = baseCompilationArgs(true);
-
+   std::vector<std::string> args = commonCompilationArgs();
 
    // if this is a header file we need to rename it as a temporary .cpp
    // file so that R CMD SHLIB is willing to compile it
@@ -953,6 +951,81 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
    return args;
 }
 
+std::vector<std::string> RCompilationDatabase::commonCompilationArgs()
+{
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(true);
+
+   // read the package description file
+   using namespace projects;
+   FilePath pkgPath = projectContext().buildTargetPath();
+   core::r_util::RPackageInfo pkgInfo;
+   Error error = pkgInfo.read(pkgPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return {};
+   }
+
+   // Discover all of the LinkingTo relationships and add -I
+   // arguments for them
+   if (!pkgInfo.linkingTo().empty())
+   {
+      // Get includes implied by the LinkingTo field
+      std::vector<std::string> includes = includesForLinkingTo(
+               pkgInfo.linkingTo());
+
+      // add them to args
+      std::copy(includes.begin(), includes.end(), std::back_inserter(args));
+   }
+
+   // get the build environment (e.g. Rtools config)
+   core::system::Options env = compilationEnvironment();
+
+   // Check for C++11 in SystemRequirements
+   if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
+   {
+      env.push_back(std::make_pair("USE_CXX1X", "1"));
+      env.push_back(std::make_pair("USE_CXX11", "1"));
+   }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++14"))
+   {
+      env.push_back(std::make_pair("USE_CXX1Y", "1"));
+      env.push_back(std::make_pair("USE_CXX14", "1"));
+   }
+   else if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++17"))
+   {
+      env.push_back(std::make_pair("USE_CXX1Z", "1"));
+      env.push_back(std::make_pair("USE_CXX17", "1"));
+   }
+
+   // Run R CMD SHLIB
+   FilePath srcDir = pkgPath.completeChildPath("src");
+   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
+   std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
+   if (!compileArgs.empty())
+   {
+      // do path substitutions
+      for (std::string arg : compileArgs)
+      {
+         // do path substitutions
+         boost::algorithm::replace_first(
+                  arg,
+                  "-I..",
+                  "-I" + srcDir.getParent().getAbsolutePath());
+         boost::algorithm::replace_first(
+                  arg,
+                  "-I.",
+                  "-I" + srcDir.getAbsolutePath());
+
+         args.push_back(arg);
+      }
+   }
+
+   return args;
+
+}
+
 std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 {
 
@@ -1034,8 +1107,11 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // platform/rcpp version specific directory name
    std::string clangVersion = clang().version().asString();
    std::string platformDir;
-   error = r::exec::RFunction(".rs.clangPCHPath", pkgName, clangVersion)
-                                                         .call(&platformDir);
+   error = r::exec::RFunction(".rs.clangPCHPath")
+         .addParam(pkgName)
+         .addParam(clangVersion)
+         .call(&platformDir);
+
    if (error)
    {
       LOG_ERROR(error);
@@ -1072,9 +1148,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    {
       // state cpp file for creating precompiled headers
       FilePath cppPath = platformPath.completeChildPath(pkgName + stdArg + ".cpp");
-      std::string contents;
       boost::format fmt("#include <%1%.h>\n");
-      contents.append(boost::str(fmt % pkgName));
+      std::string contents = boost::str(fmt % pkgName);
       error = core::writeStringToFile(cppPath, contents);
       if (error)
       {
@@ -1082,14 +1157,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          return std::vector<std::string>();
       }
 
-      // start with base args
-      std::vector<std::string> args = baseCompilationArgs(true);
-
-      // run R CMD SHLIB
-      core::system::Options env = compilationEnvironment();
-      FilePath tempSrcFile = module_context::tempFile("clang", "cpp");
-      std::vector<std::string> cArgs = argsForRCmdSHLIB(env, tempSrcFile);
-      std::copy(cArgs.begin(), cArgs.end(), std::back_inserter(args));
+      // get common compilation args
+      std::vector<std::string> args = commonCompilationArgs();
 
       // add this package's path to the args
       std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
@@ -1105,18 +1174,23 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          args.push_back(stdArg);
 
       // create args array
+      if (rSourceIndex().verbose() > 0)
+      {
+         std::cerr << "GENERATING PRECOMPILED HEADERS:" << std::endl;
+         core::debug::print(args);
+      }
+
       core::system::ProcessArgs argsArray(args);
 
-      CXIndex index = clang().createIndex(
-                                 0,
-                                 (rSourceIndex().verbose() > 0) ? 1 : 0);
+      int verboseCompile = (rSourceIndex().verbose() > 1) ? 1 : 0;
+      CXIndex index = clang().createIndex(0, verboseCompile);
 
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index,
                             cppPath.getAbsolutePath().c_str(),
                             argsArray.args(),
                             gsl::narrow_cast<int>(argsArray.argCount()),
-                            0,
+                            nullptr,
                             0,
                             CXTranslationUnit_ForSerialization);
       if (tu == nullptr)
