@@ -44,6 +44,7 @@
 ### Miscellaneous
 
 * Show detailed logs and process output when R fails to start (#2097)
+* Enable large file uploads (over 4GB) in RStudio Server (#3299)
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
 * Files with extension '.q' are no longer indexed or parsed as R files (#4696)
 * Add support for an API command to return the list of R packages RStudio depends on (#2332)
