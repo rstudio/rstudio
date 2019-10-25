@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -121,12 +122,8 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
-            if (!replaceMode_)
-               toggleReplaceMode();
-            if (regexCheckbox_.getValue())
-               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-            else
-               addReplaceMatches(replaceTextBox_.getValue());
+            createDisplayPreview();
+            displayPreview_.nudge();
          }
       });
 
@@ -232,6 +229,26 @@ public class FindOutputPane extends WorkbenchPane
       scrollPanel_.setSize("100%", "100%");
       container_.setWidget(scrollPanel_);
       return container_;
+   }
+
+   private void createDisplayPreview()
+   {
+      if (displayPreview_ == null)
+      {
+         displayPreview_ = new DebouncedCommand(500)
+         {
+            @Override
+            protected void execute()
+            {
+               if (!replaceMode_)
+                  toggleReplaceMode();
+               if (regexCheckbox_.getValue())
+                  eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+               else
+                  addReplaceMatches(replaceTextBox_.getValue());
+            }
+         };
+      }
    }
 
    private void toggleReplaceToolbar()
@@ -481,6 +498,7 @@ public class FindOutputPane extends WorkbenchPane
    private Label regexCheckboxLabel_;
    private CheckBox useGitIgnore_;
    private Label useGitIgnoreLabel_;
+   private DebouncedCommand displayPreview_;
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
    private ToolbarButton stopReplace_;
