@@ -174,7 +174,18 @@ public class FindOutputPresenter extends BasePresenter
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
             stopAndClear();
+
+            FileSystemItem searchPath =
+                                      FileSystemItem.createDir(dialogState_.getPath());
+            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            for (String pattern : dialogState_.getFilePatterns())
+               filePatterns.push(pattern);
+
             server_.previewReplace(dialogState_.getQuery(),
+                                   dialogState_.isRegex(),
+                                   !dialogState_.isCaseSensitive(),
+                                   searchPath,
+                                   filePatterns,
                                    view_.getReplaceText(),
                                    view_.isReplaceRegex(),
                                    view_.useGitIgnore(),
@@ -183,6 +194,7 @@ public class FindOutputPresenter extends BasePresenter
                                       @Override
                                       public void onResponseReceived(String handle)
                                       {
+                                         currentFindHandle_ = handle;
                                          Debug.logToConsole("Preview replace response received");
                                          Debug.logToConsole(handle);
                                       }
@@ -241,6 +253,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
+            Debug.logToConsole("Replace Result Event");
             if (event.getHandle() != currentFindHandle_)
                return;
 

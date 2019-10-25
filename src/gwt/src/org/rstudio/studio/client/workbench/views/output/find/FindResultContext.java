@@ -134,6 +134,11 @@ public class FindResultContext
       return file;
    }
 
+   FindResultContext()
+   {
+      findResults_ = new ArrayList<FindResult>();
+   }
+
    public int getMaxLineWidth()
    {
       return maxLineWidth_;
@@ -156,8 +161,6 @@ public class FindResultContext
    {
       int origMaxLineWidth = maxLineWidth_;
 
-      if (findResults_ == null)
-         findResults_ = new ArrayList<FindResult>();
       for (FindResult fr : findResults)
       {
          File file = getFile(fr.getFile());

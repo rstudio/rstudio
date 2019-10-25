@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 
@@ -47,7 +48,9 @@ public class FindResult extends JavaScriptObject
          replaceIndicator: this.replaceIndicator,
          replace: this.replace,
          matchOn: this.matchOn,
-         matchOff: this.matchOff
+         matchOff: this.matchOff,
+         replaceMatchOn: this.replaceMatchOn,
+         replaceMatchOff: this.replaceMatchOff
       });
    }-*/;
 
@@ -85,6 +88,16 @@ public class FindResult extends JavaScriptObject
       return getJavaArray("matchOff");
    }
 
+   public final ArrayList<Integer> getReplaceMatchOns()
+   {
+      return getJavaArray("replaceMatchOn");
+   }
+
+   public final ArrayList<Integer> getReplaceMatchOffs()
+   {
+      return getJavaArray("replaceMatchOff");
+   }
+
    public final native void setReplace(String value) /*-{
       if (value)
          this.replace = value;
@@ -113,8 +126,25 @@ public class FindResult extends JavaScriptObject
 
       String line = getLineValue();
 
+      ArrayList<Integer> replaceOn = getReplaceMatchOns();
+      ArrayList<Integer> replaceOff = getReplaceMatchOffs();
+      ArrayList<Pair<Boolean, Integer>> replaceParts
+                                      = new ArrayList<Pair<Boolean, Integer>>();
+
+      while (replaceOn.size() + replaceOff.size() > 0)
+      {
+         int replaceOnVal = replaceOn.size() == 0 ? Integer.MAX_VALUE : replaceOn.get(0);
+         int replaceOffVal = replaceOff.size() == 0 ? Integer.MAX_VALUE : replaceOff.get(0);
+         if (replaceOnVal <= replaceOffVal)
+            replaceParts.add(new Pair<Boolean, Integer>(true, replaceOn.remove(0)));
+         else
+            replaceParts.add(new Pair<Boolean, Integer>(false, replaceOff.remove(0)));
+      }
+
+
       // Use a counter to ensure tags are balanced.
-      int openTags = 0;
+      int openStrongTags = 0;
+      int openEmTags = 0;
 
       for (int i = 0; i < line.length(); i++)
       {
@@ -123,12 +153,12 @@ public class FindResult extends JavaScriptObject
             if (parts.remove(0).first)
             {
                out.appendHtmlConstant("<strong>");
-               openTags++;
+               openStrongTags++;
             }
-            else if (openTags > 0)
+            else if (openStrongTags > 0)
             {
                out.appendHtmlConstant("</strong>");
-               openTags--;
+               openStrongTags--;
                String replace = getReplaceValue();
                if (!StringUtil.isNullOrEmpty(replace))
                {
@@ -139,12 +169,25 @@ public class FindResult extends JavaScriptObject
                }
             }
          }
+         while (replaceParts.size() > 0 && replaceParts.get(0).second == i)
+         {
+            if (replaceParts.remove(0).first)
+            {
+               out.appendHtmlConstant("<em>");
+               openEmTags++;
+            }
+            else if (openEmTags > 0)
+            {
+               out.appendHtmlConstant("</em>");
+               openEmTags--;
+            }
+         }
          out.append(line.charAt(i));
       }
 
-      while (openTags > 0)
+      while (openStrongTags > 0)
       {
-         openTags--;
+         openStrongTags--;
          out.appendHtmlConstant("</strong>");
          String replace = getReplaceValue();
          if (!StringUtil.isNullOrEmpty(replace))
@@ -162,22 +205,28 @@ public class FindResult extends JavaScriptObject
 
    public final SafeHtml getLineReplaceHTML()
    {
+      Debug.logToConsole("getLineReplaceHTML");
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
       ArrayList<Integer> on = getMatchOns();
       ArrayList<Integer> off = getMatchOffs();
+
+      ArrayList<Integer> onReplace = getReplaceMatchOns();
+      ArrayList<Integer> offReplace = getReplaceMatchOffs();
+
       ArrayList<Pair<Boolean, Integer>> parts
                                       = new ArrayList<Pair<Boolean, Integer>>();
-      while (on.size() + off.size() > 0)
+      while (onReplace.size() + offReplace.size() > 0)
       {
-         int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
-         int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
-         if (onVal <= offVal)
-            parts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
+         int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
+         int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
+         if (onReplaceVal <= offReplaceVal)
+            parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
          else
-            parts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
+            parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
       }
 
+      Debug.logToConsole("parts.size(): " + parts.size());
       String line = getLineValue();
 
       // Use a counter to ensure tags are balanced.

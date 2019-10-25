@@ -124,6 +124,32 @@ public:
       return true;
    }
 
+   bool addReplaceResult(const std::string& handle,
+                         const json::Array& files,
+                         const json::Array& lineNums,
+                         const json::Array& contents,
+                         const json::Array& matchOns,
+                         const json::Array& matchOffs,
+                         const json::Array& replaceMatchOns,
+                         const json::Array& replaceMatchOffs)
+   {
+      if (handle_.empty())
+         handle_ = handle;
+      else if (handle_ != handle)
+         return false;
+
+      std::copy(files.begin(), files.end(), std::back_inserter(files_));
+      std::copy(lineNums.begin(), lineNums.end(), std::back_inserter(lineNums_));
+      std::copy(contents.begin(), contents.end(), std::back_inserter(contents_));
+      std::copy(matchOns.begin(), matchOns.end(), std::back_inserter(matchOns_));
+      std::copy(matchOffs.begin(), matchOffs.end(), std::back_inserter(matchOffs_));
+      std::copy(replaceMatchOns.begin(), replaceMatchOns.end(),
+               std::back_inserter(replaceMatchOns_));
+      std::copy(replaceMatchOffs.begin(), replaceMatchOffs.end(),
+                std::back_inserter(replaceMatchOffs_));
+      return true;
+   }
+
    void onFindBegin(const std::string& handle,
                     const std::string& input,
                     const std::string& path,
@@ -179,6 +205,8 @@ public:
       replace_ = false;
       preview_ = false;
       replacePattern_.clear();
+      replaceMatchOns_.clear();
+      replaceMatchOffs_.clear();
    }
 
    Error readFromJson(const json::Object& asJson)
@@ -199,7 +227,9 @@ public:
                                "line", &lineNums_,
                                "lineValue", &contents_,
                                "matchOn", &matchOns_,
-                               "matchOff", &matchOffs_);
+                               "matchOff", &matchOffs_,
+                               "replaceMatchOn", &replaceMatchOns_,
+                               "replaceMatchOff", &replaceMatchOffs_);
       if (error)
          return error;
 
@@ -227,6 +257,8 @@ public:
       results["lineValue"] = contents_;
       results["matchOn"] = matchOns_;
       results["matchOff"] = matchOffs_;
+      results["replaceMatchOn"] = replaceMatchOns_;
+      results["replaceMatchOff"] = replaceMatchOffs_;
       obj["results"] = results;
 
       obj["running"] = running_;
@@ -249,6 +281,8 @@ private:
    bool preview_;
    bool replaceRegex_;
    std::string replacePattern_;
+   json::Array replaceMatchOns_;
+   json::Array replaceMatchOffs_;
 };
 
 FindInFilesState& findResults()
@@ -411,19 +445,21 @@ private:
                                            gsl::narrow_cast<int>(pReplace->size()));
    
                std::string newLine;
+               if (findResults().preview())
+                  pReplace->insert(0, *pSearch);
                if (findResults().replaceRegex())
                   newLine = boost::regex_replace(line,
                                                  boost::regex(*pSearch),
                                                 *pReplace);
                else
                   newLine = line.replace(linePos, pSearch->size(), *pReplace);
+               *pContent = newLine;
                if (!findResults().preview())
                {
                   pStream->seekg(seekPos);
                   try
                   {
                       pStream->write(newLine.c_str(), line.size());
-                      *pContent = newLine;
                   }
                   catch (const std::ios_base::failure& e)
                   {
@@ -511,16 +547,10 @@ private:
             files.push_back(file);
             lineNums.push_back(lineNum);
             contents.push_back(lineContents);
-            if (!findResults().replace())
-            {
-               matchOns.push_back(matchOn);
-               matchOffs.push_back(matchOff);
-            }
-            else
-            {  
-               matchOns.push_back(replaceMatchOn);
-               matchOffs.push_back(replaceMatchOff);
-            }
+            matchOns.push_back(matchOn);
+            matchOffs.push_back(matchOff);
+            replaceMatchOns.push_back(replaceMatchOn);
+            replaceMatchOffs.push_back(replaceMatchOff);
             recordsToProcess--;
          }
       }
@@ -540,21 +570,31 @@ private:
          results["lineValue"] = contents;
          results["matchOn"] = matchOns;
          results["matchOff"] = matchOffs;
+         results["replaceMatchOn"] = replaceMatchOns;
+         results["replaceMatchOff"] = replaceMatchOffs;
          result["results"] = results;
 
-         findResults().addResult(handle(),
-                                 files,
-                                 lineNums,
-                                 contents,
-                                 matchOns,
-                                 matchOffs);
+         findResults().addReplaceResult(handle(),
+                                        files,
+                                        lineNums,
+                                        contents,
+                                        matchOns,
+                                        matchOffs,
+                                        replaceMatchOns,
+                                        replaceMatchOffs);
 
-         if (!findResults().replace())
+         if (!findResults().replace() || findResults().preview())
+         {
             module_context::enqueClientEvent(
                      ClientEvent(client_events::kFindResult, result));
+         }
          else
+         {
+            result["preview"] = findResults().preview();
+
             module_context::enqueClientEvent(
                     ClientEvent(client_events::kReplaceResult, result));
+         }
       }
 
       if (recordsToProcess <= 0)
