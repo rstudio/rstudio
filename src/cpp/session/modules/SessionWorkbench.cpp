@@ -464,7 +464,10 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
    // get the file path
    FilePath filePath = module_context::resolveAliasedPath(request.queryParamValue("path"));
-   if (!filePath.exists())
+
+   // treat disallowed paths identically to missing ones so this endpoint cannot be used to probe
+   // for existence
+   if (!filePath.exists() || !module_context::isPathViewAllowed(filePath))
    {
       pResponse->setNotFoundError(request);
       return;

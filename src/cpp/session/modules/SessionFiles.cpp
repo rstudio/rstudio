@@ -178,6 +178,10 @@ core::Error getFileContents(const json::JsonRpcRequest& request,
       return error;
 
    FilePath targetPath = module_context::resolveAliasedPath(path);
+   if (!module_context::isPathViewAllowed(targetPath))
+   {
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+   }
 
    std::string contents;
    error = module_context::readAndDecodeFile(targetPath,

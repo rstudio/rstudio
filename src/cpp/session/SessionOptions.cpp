@@ -254,7 +254,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "devtools check and devtools build output to package project folder")
       (kUseSecureCookiesSessionOption,
        value<bool>(&useSecureCookies_)->default_value(false),
-       "whether to mark cookies as secure");
+       "whether to mark cookies as secure")
+      ("directory-view-whitelist",
+       value<std::string>(&directoryViewWhitelist_)->default_value(""),
+       "list of directories where files can be viewed, separated by :");
 
    // allow options
    options_description allow("allow");

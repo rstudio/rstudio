@@ -231,13 +231,23 @@ Error openDocument(const json::JsonRpcRequest& request,
          encoding = ::locale2charset(nullptr);
    }
    
-   // ensure the file exists
    FilePath documentPath = module_context::resolveAliasedPath(path);
+   if (!module_context::isPathViewAllowed(documentPath))
+   {
+      Error error = systemError(boost::system::errc::operation_not_permitted,
+                                ERROR_LOCATION);
+      pResponse->setError(error, "The file is in a restricted path and cannot "
+                                 "be opened by the source editor.");
+      
+   }
+
+   // ensure the file exists
    if (!documentPath.exists())
    {
       return systemError(boost::system::errc::no_such_file_or_directory,
                          ERROR_LOCATION);
    }
+
    
    // ensure the file is not binary
    if (!module_context::isTextFile(documentPath))

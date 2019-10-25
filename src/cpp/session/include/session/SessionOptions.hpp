@@ -614,6 +614,11 @@ public:
    {
       return useSecureCookies_;
    }
+   
+   std::string directoryViewWhitelist() const
+   {
+      return directoryViewWhitelist_;
+   }
 
 private:
    void resolvePath(const core::FilePath& resourcePath,
@@ -688,6 +693,7 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   std::string directoryViewWhitelist_;
 
    // r
    std::string coreRSourcePath_;

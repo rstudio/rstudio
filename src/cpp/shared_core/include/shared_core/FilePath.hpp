@@ -235,7 +235,9 @@ public:
    /**
     * @brief Gets the provided relative path as a child of this path.
     *
-    * @param in_filePath        The path to get as a child of this path. Must be a relative path.
+    * @param in_filePath        The path to get as a child of this path. Must be a relative path
+    *                           that refers to a path strictly within this one (i.e. ".." isn't
+    *                           allowed)
     * @param out_childPath      The completed child path. Not valid if an error is returned.
     *
     * @return Success if the child path could be completed; Error otherwise.
@@ -244,7 +246,7 @@ public:
 
    /**
     * @brief Completes the provided path relative to this path. If the provided path is not relative, it will be
-    *        returned as is.
+    *        returned as is. Relative paths such as ".." are permitted.
     *
     * @param in_filePath    in_filePathThe path to complete.
     *
@@ -319,7 +321,8 @@ public:
 #endif
 
    /**
-    * @brief Gets the canonical representation of this file path.
+    * @brief Gets the canonical representation of this file path. The path must exist so that its
+    *    canonical location on disk can be obtained.
     *
     * @return The canonical representation of this file path.
     */
@@ -370,6 +373,14 @@ public:
     * @return The time of the last write.
     */
    std::time_t getLastWriteTime() const;
+
+   /**
+    * @brief Gets the lexically normal representation of this file path, with . and ..
+    *    components resolved and/or removed.
+    *
+    * @return The lexically normal representation of this file path. 
+    */
+   std::string getLexicallyNormalPath() const;
 
    /**
     * @brief Gets the mime content type of this file.

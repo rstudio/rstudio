@@ -546,7 +546,16 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                   boost::system::system_category()));
          }
 
-         out_childPath =  completePath(in_filePath);
+         out_childPath = completePath(in_filePath);
+
+         if (!out_childPath.isWithin(*this))
+         {
+            throw boost::filesystem::filesystem_error(
+               "child path must be inside parent path",
+               boost::system::error_code(
+                  boost::system::errc::no_such_file_or_directory,
+                  boost::system::system_category()));
+         }
       }
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -793,6 +802,14 @@ std::time_t FilePath::getLastWriteTime() const
    }
 }
 
+std::string FilePath::getLexicallyNormalPath() const
+{
+   if (isEmpty())
+      return std::string();
+   else
+      return BOOST_FS_PATH2STR(m_impl->Path.lexically_normal());
+}
+
 std::string FilePath::getMimeContentType(const std::string& in_defaultType) const
 {
    std::string ext = getExtensionLowerCase();
@@ -1003,12 +1020,33 @@ bool FilePath::isSymlink() const
 
 bool FilePath::isWithin(const FilePath& in_scopePath) const
 {
+   // Technically, we contain ourselves.
    if (*this == in_scopePath)
       return true;
 
-   return boost::algorithm::starts_with(
-      (*this).getAbsolutePath(),
-      in_scopePath.getAbsolutePath());
+   // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
+   FilePath child(getLexicallyNormalPath());
+   FilePath parent(in_scopePath.getLexicallyNormalPath());
+
+   // Easy test: We can't possibly be in this scope path if it has more components than we do
+   if (parent.m_impl->Path.size() >= child.m_impl->Path.size())
+      return false;
+
+   // Find the first path element that differs
+   for (boost::filesystem::path::iterator childIt = child.m_impl->Path.begin(),
+                                          parentIt = parent.m_impl->Path.begin();
+        parentIt != parent.m_impl->Path.end();
+        parentIt++, childIt++)
+   {
+      if (*parentIt != *childIt)
+      {
+         // Found a differing path element
+         return false;
+      }
+   }
+
+   // No differing path element found
+   return true;
 }
 
 Error FilePath::makeCurrentPath(bool in_autoCreate) const
