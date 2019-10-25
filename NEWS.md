@@ -40,6 +40,7 @@
 * Add option `auth-cookies-force-secure` to always mark auth cookies as secure when SSL is terminated upstream (Pro #995)
 * Set HTTP header `X-Content-Type-Options` to discourage MIME type sniffing (Pro #1219)
 * Authentication cookies are now revoked after signout (Pro #606)
+* File-serving resource endpoints are now more restrictive; added new `directory-view-whitelist` option (Pro #607)
 
 ### Miscellaneous
 
