@@ -18,3 +18,5 @@
 * Add ability to specify multiple R versions with same path but differing labels (#1034)
 * Include child processes and timing information in session diagnostic traces (#1192) 
 * Adds better Session UI/UX including sorting, label viewing, and creation visibility (#1215)
+* Respect user profile resource limits for local launcher R sessions (#1269)
+
