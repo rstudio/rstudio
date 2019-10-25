@@ -142,9 +142,6 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() != currentFindHandle_)
                return;
-            // find result always starts with !replaceMode
-            if (view_.getReplaceMode())
-                view_.toggleReplaceMode();
 
             view_.clearMatches();
             view_.addMatches(event.getResults());
@@ -363,6 +360,10 @@ public class FindOutputPresenter extends BasePresenter
             JsArrayString filePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
                filePatterns.push(pattern);
+
+            // find result always starts with !replaceMode
+            if (view_.getReplaceMode())
+                view_.toggleReplaceMode();
 
             server_.beginFind(input.getQuery(),
                               input.isRegex(),

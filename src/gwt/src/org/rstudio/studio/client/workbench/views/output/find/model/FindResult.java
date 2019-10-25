@@ -108,39 +108,45 @@ public class FindResult extends JavaScriptObject
 
    public final SafeHtml getLineHTML()
    {
+      // !!! entire function is sloppy
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
       ArrayList<Integer> on = getMatchOns();
       ArrayList<Integer> off = getMatchOffs();
       ArrayList<Pair<Boolean, Integer>> parts
                                       = new ArrayList<Pair<Boolean, Integer>>();
-      while (on.size() + off.size() > 0)
-      {
-         int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
-         int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
-         if (onVal <= offVal)
-            parts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
-         else
-            parts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
-      }
-
-      String line = getLineValue();
 
       ArrayList<Integer> replaceOn = getReplaceMatchOns();
       ArrayList<Integer> replaceOff = getReplaceMatchOffs();
       ArrayList<Pair<Boolean, Integer>> replaceParts
                                       = new ArrayList<Pair<Boolean, Integer>>();
 
-      while (replaceOn.size() + replaceOff.size() > 0)
+      int difference = 0;
+      while (on.size() + off.size() > 0)
       {
+         int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
+         int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
          int replaceOnVal = replaceOn.size() == 0 ? Integer.MAX_VALUE : replaceOn.get(0);
          int replaceOffVal = replaceOff.size() == 0 ? Integer.MAX_VALUE : replaceOff.get(0);
-         if (replaceOnVal <= replaceOffVal)
-            replaceParts.add(new Pair<Boolean, Integer>(true, replaceOn.remove(0)));
+
+         if (onVal <= offVal)
+            parts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
          else
-            replaceParts.add(new Pair<Boolean, Integer>(false, replaceOff.remove(0)));
+            parts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
+
+         if (replaceOn.size() + replaceOff.size() > 0)
+         {
+            if (replaceOnVal <= replaceOffVal)
+            {
+               difference = offVal - onVal;
+               replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
+            }
+            else
+               replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0) + difference)));
+         }
       }
 
+      String line = getLineValue();
 
       // Use a counter to ensure tags are balanced.
       int openStrongTags = 0;
@@ -197,6 +203,12 @@ public class FindResult extends JavaScriptObject
                out.append(replace.charAt(j));
             out.appendHtmlConstant("</em>");
          }
+      }
+
+      while (openEmTags > 0)
+      {
+         openEmTags--;
+         out.appendHtmlConstant("</em>");
       }
 
       return out.toSafeHtml();

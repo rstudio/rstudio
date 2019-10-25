@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -120,14 +121,12 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
+            if (!replaceMode_)
+               toggleReplaceMode();
             if (regexCheckbox_.getValue())
                eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
             else
-            {
-               if (!replaceMode_)
-                  toggleReplaceMode();
                addReplaceMatches(replaceTextBox_.getValue());
-            }
          }
       });
 
@@ -143,7 +142,7 @@ public class FindOutputPane extends WorkbenchPane
       {
             public void onValueChange(ValueChangeEvent<Boolean> event)
             {
-               if (replaceMode_)
+               if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
                {
                   addReplaceMatches(new String());
                   if (regexCheckbox_.getValue())

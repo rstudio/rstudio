@@ -445,14 +445,15 @@ private:
                                            gsl::narrow_cast<int>(pReplace->size()));
    
                std::string newLine;
+               std::string replaceString(*pReplace);
                if (findResults().preview())
-                  pReplace->insert(0, *pSearch);
+                  replaceString.insert(0, *pSearch);
                if (findResults().replaceRegex())
                   newLine = boost::regex_replace(line,
                                                  boost::regex(*pSearch),
-                                                *pReplace);
+                                                replaceString);
                else
-                  newLine = line.replace(linePos, pSearch->size(), *pReplace);
+                  newLine = line.replace(linePos, pSearch->size(), replaceString);
                *pContent = newLine;
                if (!findResults().preview())
                {
