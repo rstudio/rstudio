@@ -147,6 +147,7 @@ public class FindResultContext
    public void reset()
    {
       data_.getList().clear();
+      findResults_.clear();
       filesByName_.clear();
       maxLineWidth_ = 0;
    }

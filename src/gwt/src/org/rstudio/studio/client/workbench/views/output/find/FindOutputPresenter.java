@@ -140,11 +140,15 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onFindResult(FindResultEvent event)
          {
-            Debug.logToConsole("Find result event");
             if (event.getHandle() != currentFindHandle_)
                return;
+            // find result always starts with !replaceMode
+            if (view_.getReplaceMode())
+                view_.toggleReplaceMode();
+
+            view_.clearMatches();
             view_.addMatches(event.getResults());
-            
+
             view_.ensureVisible(true);
          }
       });
@@ -203,8 +207,6 @@ public class FindOutputPresenter extends BasePresenter
             view_.setStopReplaceButtonVisible(true);
             stopAndClear();
 
-            Debug.logToConsole("server_.completeReplace: " + view_.getReplaceText()); 
-
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(dialogState_.getPath());
             JsArrayString filePatterns = JsArrayString.createArray().cast();
@@ -225,8 +227,10 @@ public class FindOutputPresenter extends BasePresenter
                                        public void onResponseReceived(String handle)
                                        {
                                           currentFindHandle_ = handle;
+                                          updateSearchLabel(dialogState_.getQuery(),
+                                                            dialogState_.getPath(),
+                                                            dialogState_.isRegex());
                                           view_.setStopReplaceButtonVisible(false);
-                                          Debug.logToConsole("Complete replace response received");
                                        }
                                     });
          }
@@ -237,17 +241,19 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
-            Debug.logToConsole("on Replace Result Event");
             if (event.getHandle() != currentFindHandle_)
                return;
-            if (!view_.getReplaceMode())
-               view_.toggleReplaceMode();
+
+            // toggle replace mode so matches get added to context
+            if (view_.getReplaceMode())
+                view_.toggleReplaceMode();
 
             ArrayList<FindResult> results = event.getResults();
             for (FindResult fr : results)
                fr.setReplaceIndicator();
             view_.clearMatches();
             view_.addMatches(results);
+            view_.toggleReplaceMode();
             
             view_.ensureVisible(true);
          }
@@ -316,7 +322,9 @@ public class FindOutputPresenter extends BasePresenter
       view_.ensureVisible(false);
 
       currentFindHandle_ = state.getHandle();
+      view_.clearMatches();
       view_.addMatches(state.getResults().toArrayList());
+
       updateSearchLabel(state.getInput(), state.getPath(), state.isRegex());
 
       if (state.isRunning())
