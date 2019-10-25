@@ -33,13 +33,6 @@ include_directories(
 # define executable
 add_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rpostback PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
-
 # set link dependencies
 target_link_libraries(rpostback
    rstudio-core

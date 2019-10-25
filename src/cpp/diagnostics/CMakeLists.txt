@@ -54,13 +54,6 @@ add_stripped_executable(diagnostics
   ${DIAGNOSTICS_SOURCE_FILES}
 )
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(diagnostics PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
-
 # set link dependencies
 target_link_libraries(diagnostics
    rstudio-core
