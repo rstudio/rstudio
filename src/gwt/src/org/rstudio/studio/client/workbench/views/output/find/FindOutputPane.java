@@ -43,6 +43,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.model.LocalReplaceProgress;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
 import java.util.ArrayList;
@@ -168,9 +169,10 @@ public class FindOutputPane extends WorkbenchPane
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
       replaceToolbar_.addRightWidget(replaceAllButton_);
 
-      //progress_ = new ReplaceProgress();
-      //progress_.setVisible(false);
-      //replaceToolbar_.addLeftWidget(progress_);
+      replaceProgress_ = new ProgressBar();
+      replaceProgress_.setHeight("10px");
+      replaceProgress_.setVisible(false);
+      replaceToolbar_.addLeftWidget(replaceProgress_);
 
       return replaceToolbar_;
    }
@@ -235,7 +237,7 @@ public class FindOutputPane extends WorkbenchPane
    {
       if (displayPreview_ == null)
       {
-         displayPreview_ = new DebouncedCommand(500)
+         displayPreview_ = new DebouncedCommand(50)
          {
             @Override
             protected void execute()
@@ -478,6 +480,12 @@ public class FindOutputPane extends WorkbenchPane
       stopReplace_.setVisible(visible);
    }
 
+   @Override
+   public void showProgress(LocalReplaceProgress progress)
+   {
+      replaceProgress_.setVisible(true);
+   }
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
@@ -502,6 +510,7 @@ public class FindOutputPane extends WorkbenchPane
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
    private ToolbarButton stopReplace_;
+   private ProgressBar replaceProgress_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

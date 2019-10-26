@@ -46,10 +46,12 @@ import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesE
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.model.LocalReplaceProgress;
 
 import java.util.ArrayList;
 
@@ -86,6 +88,8 @@ public class FindOutputPresenter extends BasePresenter
 
       HasClickHandlers getStopReplaceButton();
       void setStopReplaceButtonVisible(boolean visible);
+
+      void showProgress(LocalReplaceProgress progress);
    }
 
    @Inject
@@ -242,6 +246,15 @@ public class FindOutputPresenter extends BasePresenter
                                           view_.setStopReplaceButtonVisible(false);
                                        }
                                     });
+         }
+      });
+
+      events_.addHandler(ReplaceProgressEvent.TYPE, new ReplaceProgressEvent.Handler()
+      {
+         @Override
+         public void onReplaceProgress(ReplaceProgressEvent event)
+         {
+            Debug.logToConsole("Replace progress event");
          }
       });
 
