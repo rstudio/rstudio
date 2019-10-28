@@ -20,8 +20,8 @@
 
 #include <boost/utility.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

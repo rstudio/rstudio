@@ -730,8 +730,7 @@ public abstract class CompletionManagerBase
             return false;
       }
       
-      beginSuggest(true, true, true);
-      return true;
+      return beginSuggest(true, true, true);
    }
    
    private void showPopupHelp(QualifiedName completion)

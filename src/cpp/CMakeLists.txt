@@ -407,6 +407,9 @@ endif()
 # external libraries
 add_subdirectory(ext)
 
+# shared library
+add_subdirectory(shared_core)
+
 # core library
 add_subdirectory(core)
 

@@ -29,7 +29,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -50,7 +50,7 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return file().empty(); }
+   bool empty() const { return file().isEmpty(); }
 
    const FilePath& file() const { return file_; }
 

@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -107,12 +107,12 @@ namespace {
 
 FilePath historyEntriesPath(const core::FilePath& serializationPath)
 {
-   return serializationPath.complete("history_entries");
+   return serializationPath.completePath("history_entries");
 }
 
 FilePath currentIndexPath(const core::FilePath& serializationPath)
 {
-   return serializationPath.complete("current_index");
+   return serializationPath.completePath("current_index");
 }
 
 std::string historyEntryToString(const module_context::ViewerHistoryEntry& entry)
@@ -248,8 +248,8 @@ core::Error ViewerHistoryEntry::copy(
              const core::FilePath& destinationDir) const
 {
    // copy enclosing directory to the destinationDir
-   FilePath entryPath = sourceDir.childPath(sessionTempPath_);
-   FilePath parentDir = entryPath.parent();
+   FilePath entryPath = sourceDir.completeChildPath(sessionTempPath_);
+   FilePath parentDir = entryPath.getParent();
    return module_context::recursiveCopyDirectory(parentDir, destinationDir);
 }
 

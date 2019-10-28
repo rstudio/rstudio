@@ -21,7 +21,7 @@
 #include <core/system/ChildProcess.hpp>
 #include <core/system/Process.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

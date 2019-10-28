@@ -18,12 +18,13 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/Xdg.hpp>
-#include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "config.h"
 
@@ -42,9 +43,9 @@ FilePath homePath()
 FilePath userLogPath()
 {
    FilePath logPath = core::system::userSettingsPath(
-         homePath(),
-         "RStudio-Desktop"
-         ).childPath("log");
+      homePath(),
+      "RStudio-Desktop"
+   ).completeChildPath("log");
    return logPath;
 }
 
@@ -73,16 +74,16 @@ void writeFile(const std::string& description, const core::FilePath& path, std::
 
 void writeLogFile(const std::string& logFileName, std::ostream& ostr)
 {
-   writeFile("Log file", userLogPath().childPath(logFileName), ostr);
+   writeFile("Log file", userLogPath().completeChildPath(logFileName), ostr);
 }
 
 void writeUserPrefs(std::ostream& ostr)
 {
-   writeFile("User prefs", core::system::xdg::userConfigDir().complete("rstudio-prefs.json"), 
+   writeFile("User prefs", core::system::xdg::userConfigDir().completePath("rstudio-prefs.json"),
          ostr);
-   writeFile("System prefs", core::system::xdg::systemConfigDir().complete("rstudio-prefs.json"),
+   writeFile("System prefs", core::system::xdg::systemConfigDir().completePath("rstudio-prefs.json"),
          ostr);
-   writeFile("User state", core::system::xdg::userDataDir().complete("rstudio-state.json"),
+   writeFile("User state", core::system::xdg::userDataDir().completePath("rstudio-state.json"),
          ostr);
 }
 
@@ -92,17 +93,19 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-  core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::system::kLogLevelWarning);
+   core::log::setLogLevel(core::log::LogLevel::WARN);
+   core::log::setProgramId("rstudio-diagnostics");
+   core::system::initializeStderrLog("rstudio-diagnostics",
+                                    core::log::LogLevel::WARN);
 
-  // ignore SIGPIPE
-  Error error = core::system::ignoreSignal(core::system::SigPipe);
-  if (error)
+   // ignore SIGPIPE
+   Error error = core::system::ignoreSignal(core::system::SigPipe);
+   if (error)
      LOG_ERROR(error);
 
-  writeLogFile("rdesktop.log", std::cout);
-  writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
-  writeUserPrefs(std::cout);
+   writeLogFile("rdesktop.log", std::cout);
+   writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
+   writeUserPrefs(std::cout);
 
-  return EXIT_SUCCESS;
+   return EXIT_SUCCESS;
 }

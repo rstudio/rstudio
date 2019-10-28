@@ -24,13 +24,13 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/collection/Tree.hpp>
 
@@ -96,7 +96,7 @@ public:
    core::Error initialize();
 
    // these functions can be called even when there is no project
-   bool hasProject() const { return !file_.empty(); }
+   bool hasProject() const { return !file_.isEmpty(); }
 
    // Path to the .RProj file representing the project
    const core::FilePath& file() const { return file_; }

@@ -15,12 +15,14 @@
 
 #include <core/collection/MruList.hpp>
 
-#include <core/Error.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/Log.hpp>
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
 #endif
+
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

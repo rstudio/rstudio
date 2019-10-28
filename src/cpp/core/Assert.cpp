@@ -14,8 +14,9 @@
  */
 
 
-#include <core/Error.hpp>
 #include <core/Log.hpp>
+
+#include <shared_core/Error.hpp>
 
 #ifdef _WIN32
 #include <windows.h>

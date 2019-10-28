@@ -15,7 +15,7 @@
 
 #include "ServerOffline.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -40,7 +40,7 @@ void handleOfflineRequest(const http::Request& request,
    // send error code for json responses
    if (request.acceptsContentType(json::kJsonContentType))
    {
-      json::setJsonRpcError(json::errc::ServerOffline, pResponse);
+      json::setJsonRpcError(Error(json::errc::ServerOffline, ERROR_LOCATION), pResponse);
    }
    
    // send error page for html responses
@@ -50,7 +50,7 @@ void handleOfflineRequest(const http::Request& request,
       std::map<std::string, std::string> vars;
       vars["request_uri"] = string_utils::jsLiteralEscape(request.uri());
 
-      FilePath offlineTemplate = FilePath(options().wwwLocalPath()).childPath("offline.htm");
+      FilePath offlineTemplate = FilePath(options().wwwLocalPath()).completeChildPath("offline.htm");
       core::Error err = core::text::renderTemplate(offlineTemplate, vars, os);
 
       if (err)

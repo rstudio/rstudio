@@ -22,6 +22,7 @@
 #include <boost/regex.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/system/Process.hpp>

@@ -20,7 +20,7 @@
 
 #include <boost/assert.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/Log.hpp>
 
 namespace rstudio {

@@ -15,7 +15,7 @@
 
 #include "Win32Pty.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/LibraryLoader.hpp>
@@ -106,7 +106,7 @@ Error tryLoad(const core::FilePath& libraryPath)
       return Success();
 
    Error error = core::system::loadLibrary(
-            libraryPath.absolutePath(),
+            libraryPath.getAbsolutePath(),
             reinterpret_cast<void**>(&hMod));
    if (error)
    {
@@ -278,7 +278,7 @@ public:
          lpEnv = &envBlock[0];
       }
 
-      std::wstring workingDir(options.workingDir.absolutePathW());
+      std::wstring workingDir(options.workingDir.getAbsolutePathW());
 
       if (spawn_config_new)
       {

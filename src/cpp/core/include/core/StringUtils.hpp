@@ -19,8 +19,9 @@
 #include <string>
 #include <cctype>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/system/Win32StringUtils.hpp>
 
 namespace rstudio {
 namespace core {
@@ -165,9 +166,6 @@ Error utf8Advance(InputIterator begin,
    *pResult = begin;
    return Success();
 }
-std::string wideToUtf8(const std::wstring& value);
-std::wstring utf8ToWide(const std::string& value,
-                        const std::string& context = std::string());
 
 template <typename Iterator, typename InputIterator>
 Error utf8Clean(Iterator begin,

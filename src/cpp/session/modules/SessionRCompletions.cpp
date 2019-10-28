@@ -490,7 +490,7 @@ SEXP rs_listIndexedPackages()
    pkgNames.reserve(pkgPaths.size());
    for (const FilePath& pkgPath : pkgPaths)
    {
-      pkgNames.push_back(pkgPath.absolutePath());
+      pkgNames.push_back(pkgPath.getAbsolutePath());
    }
    
    r::sexp::Protect protect;

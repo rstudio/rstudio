@@ -16,7 +16,7 @@
 #ifndef SERVER_CORE_SESSION_SIGNATURE_HPP
 #define SERVER_CORE_SESSION_SIGNATURE_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Request.hpp>
 
 #define kRStudioMessageSignature          "X-RS-Message-Signature"

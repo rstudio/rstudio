@@ -20,8 +20,8 @@
 
 #include <boost/utility.hpp>
 
-#include <core/SafeConvert.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
 #include <core/ProgramOptions.hpp>
@@ -478,7 +478,7 @@ public:
 
    core::FilePath userLogPath() const
    {
-      return userScratchPath().childPath("log");
+      return userScratchPath().completeChildPath("log");
    }
 
    core::FilePath initialWorkingDirOverride()
@@ -614,6 +614,11 @@ public:
    {
       return useSecureCookies_;
    }
+   
+   std::string directoryViewWhitelist() const
+   {
+      return directoryViewWhitelist_;
+   }
 
 private:
    void resolvePath(const core::FilePath& resourcePath,
@@ -688,6 +693,7 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   std::string directoryViewWhitelist_;
 
    // r
    std::string coreRSourcePath_;

@@ -22,7 +22,7 @@
 #include <boost/regex.hpp>
 
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #define kRVersionDefault   "Default"
 

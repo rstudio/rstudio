@@ -15,6 +15,8 @@
 
 #include "ServerMeta.hpp"
 
+#include <core/Log.hpp>
+
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 

@@ -20,7 +20,7 @@
 #include <boost/format.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
 #include <core/Algorithm.hpp>
@@ -44,6 +44,7 @@
 #include "SessionSynctex.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 #include "SessionViewPdf.hpp"
+#include "SessionTexUtils.hpp"
 
 using namespace rstudio::core;
 
@@ -134,9 +135,7 @@ CompilePdfState s_compilePdfState;
 
 void onSuspend(Settings* pSettings)
 {
-   std::ostringstream os;
-   json::write(s_compilePdfState.asJson(), os);
-   pSettings->set("compile_pdf_state", os.str());
+   pSettings->set("compile_pdf_state", s_compilePdfState.asJson().write());
 }
 
 
@@ -146,13 +145,13 @@ void onResume(const Settings& settings)
    if (!state.empty())
    {
       json::Value stateJson;
-      if (!json::parse(state, &stateJson))
+      if (stateJson.parse(state))
       {
          LOG_WARNING_MESSAGE("invalid compile pdf state json");
          return;
       }
 
-      Error error = s_compilePdfState.readFromJson(stateJson.get_obj());
+      Error error = s_compilePdfState.readFromJson(stateJson.getObject());
       if (error)
          LOG_ERROR(error);
    }
@@ -160,7 +159,7 @@ void onResume(const Settings& settings)
 
 FilePath ancillaryFilePath(const FilePath& texFilePath, const std::string& ext)
 {
-   return texFilePath.parent().childPath(texFilePath.stem() + ext);
+   return texFilePath.getParent().completeChildPath(texFilePath.getStem() + ext);
 }
 
 bool isSynctexAvailable(const FilePath& texFilePath)
@@ -303,7 +302,7 @@ void writeLogEntriesOutput(const core::tex::LogEntries& logEntries)
             break;
       }
 
-      output += logEntry.filePath().filename();
+      output += logEntry.filePath().getFilename();
       int line = logEntry.line();
       if (line >= 0)
          output += ":" + safe_convert::numberToString(line);
@@ -462,8 +461,8 @@ public:
 
    void init(const FilePath& targetFilePath)
    {
-      basePath_ = targetFilePath.parent().childPath(
-                                    targetFilePath.stem()).absolutePath();
+      basePath_ = targetFilePath.getParent().completeChildPath(
+         targetFilePath.getStem()).getAbsolutePath();
    }
 
    void preserveLog()
@@ -577,12 +576,12 @@ private:
       if (!targetFilePath_.exists())
       {
          terminateWithError("Target document not found: '" +
-                             targetFilePath_.absolutePath() +  "'");
+                               targetFilePath_.getAbsolutePath() + "'");
          return;
       }
 
       // ensure no spaces in path
-      std::string filename = targetFilePath_.filename();
+      std::string filename = targetFilePath_.getFilename();
       if (filename.find(' ') != std::string::npos)
       {
          terminateWithError("Invalid filename: '" + filename +
@@ -610,7 +609,7 @@ private:
       }
 
       // see if we need to weave
-      std::string ext = targetFilePath_.extensionLowerCase();
+      std::string ext = targetFilePath_.getExtensionLowerCase();
       bool isRnw = ext == ".rnw" || ext == ".snw" || ext == ".nw" || ext == ".rtex";
       if (isRnw)
       {
@@ -626,6 +625,10 @@ private:
                              boost::bind(
                               &AsyncPdfCompiler::onWeaveCompleted,
                                  AsyncPdfCompiler::shared_from_this(), _1));
+      }
+      else if (prefs::userPrefs().useTinytex())
+      {
+         runTinytex();
       }
       else
       {
@@ -645,6 +648,84 @@ private:
       else
          terminateWithError(result.errorMessage);
    }
+   
+   void onTinytexOutput(const std::string& output)
+   {
+      enqueOutputEvent(output);
+   }
+   
+   void onTinytexCompileCompleted(int status, const std::string& output)
+   {
+      onLatexCompileCompleted(status, targetFilePath_);
+   }
+   
+   void runTinytex()
+   {
+      // build arguments
+      using Argument = std::pair<std::string, std::string>;
+      std::vector<Argument> latexmkArgs;
+      
+      std::string file = string_utils::utf8ToSystem(targetFilePath_.getAbsolutePathNative());
+      latexmkArgs.push_back({std::string(), shell_utils::escape(file)});
+      
+      std::string engine = string_utils::toLower(prefs::userPrefs().defaultLatexProgram());
+      latexmkArgs.push_back({"engine", shell_utils::escape(engine)});
+      
+      bool clean = prefs::userPrefs().cleanTexi2dviOutput();
+      latexmkArgs.push_back({"clean", clean ? "TRUE" : "FALSE"});
+      
+      if (prefs::userPrefs().latexShellEscape())
+      {
+         latexmkArgs.push_back({"engine_args", shell_utils::escape("-shell-escape")});
+      }
+      
+      auto collapse = [](const Argument& argument)
+      {
+         return argument.first.empty()
+               ? argument.second
+               : argument.first + " = " + argument.second;
+      };
+      
+      std::string arguments = core::algorithm::join(
+               latexmkArgs.begin(),
+               latexmkArgs.end(),
+               ", ",
+               collapse);
+      
+      std::string code = "cat(\"Compiling document with tinytex ... \"); invisible(tinytex::latexmk(" + arguments + "))";
+      
+      FilePath rScriptPath;
+      Error error = module_context::rScriptPath(&rScriptPath);
+      if (error)
+      {
+         terminateWithError(error.getSummary());
+         return;
+      }
+      
+      std::vector<std::string> args;
+      args.push_back("--slave");
+      args.push_back("-e");
+      args.push_back(code);
+      
+      error = compile_pdf_supervisor::runProgram(
+               rScriptPath,
+               args,
+               tex::utils::rTexInputsEnvVars(),
+               targetFilePath_.getParent(),
+               boost::bind(
+                  &AsyncPdfCompiler::onTinytexOutput,
+                  AsyncPdfCompiler::shared_from_this(),
+                  _1),
+               boost::bind(
+                  &AsyncPdfCompiler::onTinytexCompileCompleted,
+                  AsyncPdfCompiler::shared_from_this(),
+                  _1,
+                  _2));
+      
+      if (error)
+         terminateWithError("Unable to compile pdf: " + error.getSummary());
+      
+   }
 
    void runLatexCompiler(bool targetWeaved,
                          const rnw_concordance::Concordances& concordances =
@@ -659,7 +740,7 @@ private:
       // get back-end version info
       core::system::ProcessResult result;
       Error error = core::system::runProgram(
-                  string_utils::utf8ToSystem(texProgramPath_.absolutePath()),
+                  string_utils::utf8ToSystem(texProgramPath_.getAbsolutePath()),
                   core::shell_utils::ShellArgs() << "--version",
                   "",
                   core::system::ProcessOptions(),
@@ -675,8 +756,8 @@ private:
       FilePath texFilePath;
       if (targetWeaved)
       {
-         texFilePath = targetFilePath_.parent().complete(
-                                          targetFilePath_.stem() + ".tex");
+         texFilePath = targetFilePath_.getParent().completePath(
+                                          targetFilePath_.getStem() + ".tex");
       }
       else
       {
@@ -701,8 +782,8 @@ private:
       // the (typically) async callback function onLatexCompileCompleted
       // directly after the function returns
 
-      enqueOutputEvent("Running " + texProgramPath_.filename() +
-                       " on " + texFilePath.filename() + "...");
+      enqueOutputEvent("Running " + texProgramPath_.getFilename() +
+                       " on " + texFilePath.getFilename() + "...");
 
       error = tex::pdflatex::texToPdf(texProgramPath_,
                                       texFilePath,
@@ -711,7 +792,7 @@ private:
 
       if (error)
       {
-         terminateWithError("Unable to compile pdf: " + error.summary());
+         terminateWithError("Unable to compile pdf: " + error.getSummary());
       }
       else
       {
@@ -724,7 +805,7 @@ private:
 
    void onLatexCompileCompleted(int exitStatus,
                                 const FilePath& texFilePath,
-                                const rnw_concordance::Concordances& concords)
+                                const rnw_concordance::Concordances& concords = rnw_concordance::Concordances())
    {
       // collect errors from the log
       core::tex::LogEntries logEntries;
@@ -781,7 +862,7 @@ private:
          if (logEntries.empty())
          {
             boost::format fmt("Error running %1% (exit code %2%)");
-            std::string msg(boost::str(fmt % texProgramPath_.absolutePath()
+            std::string msg(boost::str(fmt % texProgramPath_.getAbsolutePath()
                                            % exitStatus));
             enqueOutputEvent(msg + "\n");
          }
@@ -808,8 +889,8 @@ private:
 
    bool isTargetRnw() const
    {
-      return targetFilePath_.extensionLowerCase() == ".rnw" ||
-             targetFilePath_.extensionLowerCase() == ".rtex";
+      return targetFilePath_.getExtensionLowerCase() == ".rnw" ||
+             targetFilePath_.getExtensionLowerCase() == ".rtex";
    }
 
 private:

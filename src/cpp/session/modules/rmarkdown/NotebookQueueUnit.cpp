@@ -54,11 +54,11 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
    for (const json::Value val : in)
    {
       // ignore non-value types
-      if (val.type() != json::ObjectType)
+      if (!val.isObject())
          continue;
 
       ExecRange range(0, 0);
-      Error error = ExecRange::fromJson(val.get_obj(), &range);
+      Error error = ExecRange::fromJson(val.getObject(), &range);
       if (error)
          return error;
 
@@ -162,19 +162,19 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    // convert to JSON 
    json::Value jsonOptions;
    error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
-   if (jsonOptions.type() == json::ArrayType && 
-       jsonOptions.get_array().empty())
+   if (jsonOptions.isArray() &&
+       jsonOptions.getArray().isEmpty())
    {
       // treat empty array as empty object
       *pOptions = json::Object();
    }
-   else if (jsonOptions.type() != json::ObjectType)
+   else if (!jsonOptions.isObject())
    {
       return Error(json::errc::ParseError, ERROR_LOCATION);
    }
    else 
    {
-      *pOptions = jsonOptions.get_value<json::Object>();
+      *pOptions = jsonOptions.getObject();
    }
 
    return Success();

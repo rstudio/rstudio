@@ -96,7 +96,8 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
       }
       else
       {
-         Cursor cursor = tu.getCursor(location.filePath.absolutePath(),
+         Cursor cursor = tu.getCursor(
+            location.filePath.getAbsolutePath(),
                                       location.line,
                                       location.column);
 
@@ -143,7 +144,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
 
    // get diagnostics from translation unit
    TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                             filePath.absolutePath(),
+      filePath.getAbsolutePath(),
                                              true);
    if (!tu.empty())
    {

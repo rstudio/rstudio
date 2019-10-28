@@ -17,6 +17,8 @@
 
 #include <monitor/MonitorClient.hpp>
 
+#include <shared_core/ILogDestination.hpp>
+
 #include "MonitorClientImpl.hpp"
 
 namespace rstudio {
@@ -24,27 +26,25 @@ namespace monitor {
 
 namespace {
 
-class MonitorLogWriter : public core::LogWriter
+class MonitorLogDestination : public core::log::ILogDestination
 {
 public:
-   MonitorLogWriter(const std::string& programIdentity)
+   MonitorLogDestination(const std::string& programIdentity)
       : programIdentity_(programIdentity)
    {
    }
 
-   virtual void log(core::system::LogLevel level, const std::string& message)
+   unsigned int getId() const override
    {
-      log(programIdentity_, level, message);
+      // Return a unique ID that's not likely to be used by other log destination types (stderr and syslog are 0 & 1,
+      // and file log destinations in the server start at 3.
+      return 56;
    }
 
-   virtual void log(const std::string& programIdentity,
-                    core::system::LogLevel level,
-                    const std::string& message)
+   void writeLog(core::log::LogLevel logLevel, const std::string& message) override
    {
-      client().logMessage(programIdentity, level, message);
+      client().logMessage(programIdentity_, logLevel, message);
    }
-
-   virtual int logLevel() { return core::system::kLogLevelDebug; }
 
 private:
    std::string programIdentity_;
@@ -56,13 +56,11 @@ Client* s_pClient = NULL;
 
 } // anonymous namespace
 
-boost::shared_ptr<core::LogWriter> Client::createLogWriter(
+std::shared_ptr<core::log::ILogDestination> Client::createLogDestination(
                                     const std::string& programIdentity)
 {
-   return boost::shared_ptr<core::LogWriter>(
-                                 new MonitorLogWriter(programIdentity));
+   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(programIdentity));
 }
-
 
 void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& auth,

@@ -19,7 +19,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ssl.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 
@@ -64,11 +64,11 @@ public:
                            boost::asio::ssl::context::single_dh_use);
 
       boost::system::error_code ec;
-      context->use_certificate_chain_file(certFile.absolutePath(), ec);
+      context->use_certificate_chain_file(certFile.getAbsolutePath(), ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 
-      context->use_private_key_file(keyFile.absolutePath(), boost::asio::ssl::context::pem, ec);
+      context->use_private_key_file(keyFile.getAbsolutePath(), boost::asio::ssl::context::pem, ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 

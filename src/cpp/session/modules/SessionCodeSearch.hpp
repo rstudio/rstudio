@@ -61,7 +61,7 @@ public:
    
    boost::shared_ptr<RSourceIndex> get(const core::FilePath& filePath)
    {
-      std::string absPath = filePath.absolutePath();
+      std::string absPath = filePath.getAbsolutePath();
       if (filePathMap_.count(absPath))
          return filePathMap_[absPath];
       return boost::shared_ptr<RSourceIndex>();

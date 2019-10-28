@@ -20,7 +20,7 @@
 #include <ctime>
 
 #include <core/BoostSignals.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #define kChunkLibDir "lib"
 #define kNotebookExt ".nb.html"

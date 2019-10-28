@@ -123,8 +123,8 @@ core::system::ProcessOptions procOptions()
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().parent();
-   core::system::addToPath(&childEnv, postbackDir.absolutePath());
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
 
    options.workingDir = projects::projectContext().directory();
 
@@ -209,7 +209,7 @@ std::string gitBin()
 {
    if (!s_gitExePath.empty())
    {
-      return FilePath(s_gitExePath).absolutePathNative();
+      return FilePath(s_gitExePath).getAbsolutePathNative();
    }
    else
       return "git.exe";
@@ -249,7 +249,7 @@ bool waitForIndexLock(const FilePath& workingDir)
    // an index.lock file exists and is never cleaned up)
    static int retryCount = 0;
    
-   FilePath lockPath = workingDir.childPath(".git/index.lock");
+   FilePath lockPath = workingDir.completeChildPath(".git/index.lock");
    
    // first stab attempt to see if the lockfile exists
    if (!lockPath.exists())
@@ -282,7 +282,7 @@ bool waitForIndexLock(const FilePath& workingDir)
       // escape early
       else
       {
-         double diff = ::difftime(::time(nullptr), lockPath.lastWriteTime());
+         double diff = ::difftime(::time(nullptr), lockPath.getLastWriteTime());
          if (diff > 600)
          {
             Error error = lockPath.remove();
@@ -433,7 +433,7 @@ protected:
 #endif
       if (!workingDir)
          options.workingDir = root_;
-      else if (!workingDir.get().empty())
+      else if (!workingDir.get().isEmpty())
          options.workingDir = workingDir.get();
 
       boost::shared_ptr<ConsoleProcessInfo> pCPI =
@@ -474,7 +474,7 @@ protected:
       for (const FilePath& filePath : filePaths)
       {
          if (filePath.isWithin(root_))
-            *pArgs << filePath.relativePath(root_);
+            *pArgs << filePath.getRelativePath(root_);
          else
             *pArgs << filePath;
       }
@@ -550,7 +550,7 @@ public:
 
          // file paths are returned as UTF-8 encoded paths,
          // so no need to re-encode here
-         file.path = root_.childPath(filePath);
+         file.path = root_.completeChildPath(filePath);
 
          files.push_back(file);
       }
@@ -891,19 +891,19 @@ public:
 
       // write commit message to file
       FilePath tempFile = module_context::tempFile("git-commit-message-", "txt");
-      boost::shared_ptr<std::ostream> pStream;
+      std::shared_ptr<std::ostream> pStream;
 
-      error = tempFile.open_w(&pStream);
+      error = tempFile.openForWrite(pStream);
       if (error)
          return error;
 
       *pStream << message;
 
       // append merge commit message when appropriate
-      FilePath gitDir = root_.childPath(".git");
-      if (gitDir.childPath("MERGE_HEAD").exists())
+      FilePath gitDir = root_.completeChildPath(".git");
+      if (gitDir.completeChildPath("MERGE_HEAD").exists())
       {
-         FilePath mergeMsg = gitDir.childPath("MERGE_MSG");
+         FilePath mergeMsg = gitDir.completeChildPath("MERGE_MSG");
          if (mergeMsg.exists())
          {
             std::string mergeMsgStr;
@@ -1183,7 +1183,7 @@ public:
          if (!rev.empty())
             args << rev;
 
-         if (!fileFilter.empty())
+         if (!fileFilter.isEmpty())
             args << "--" << fileFilter;
 
          std::string output;
@@ -1219,13 +1219,13 @@ public:
       ShellArgs revListArgs = gitArgs() << "rev-list" << "--date-order" << "--parents";
       int revListSkip = skip;
 
-      if (!fileFilter.empty())
+      if (!fileFilter.isEmpty())
       {
          args << "--" << fileFilter;
          revListArgs << "--" << fileFilter;
       }
 
-      if (searchText.empty() && fileFilter.empty())
+      if (searchText.empty() && fileFilter.isEmpty())
       {
          // This is a way more efficient way to implement skip and maxentries
          // if we know that all commits are included.
@@ -1266,7 +1266,7 @@ public:
       output.clear();
 
       std::vector<std::string> graphLines;
-      if (searchText.empty() && fileFilter.empty())
+      if (searchText.empty() && fileFilter.isEmpty())
       {
          std::vector<std::string> revOutLines;
          std::string revOutput;
@@ -1480,7 +1480,7 @@ FilePath resolveAliasedPath(const std::string& path)
    if (boost::algorithm::starts_with(path, "~/"))
       return module_context::resolveAliasedPath(path);
    else
-      return s_git_.root().childPath(path);
+      return s_git_.root().completeChildPath(path);
 }
 
 bool splitRename(const std::string& path, std::string* pOld, std::string* pNew)
@@ -1504,12 +1504,12 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
                                           bool includeRenameNew = true)
 {
    std::vector<FilePath> results;
-   for (json::Array::iterator it = paths.begin();
+   for (json::Array::Iterator it = paths.begin();
         it != paths.end();
         it++)
    {
       std::string oldPath, newPath;
-      if (splitRename((*it).get_str(), &oldPath, &newPath))
+      if (splitRename((*it).getString(), &oldPath, &newPath))
       {
          if (includeRenameOld)
             results.push_back(resolveAliasedPath(oldPath));
@@ -1518,7 +1518,7 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
       }
       else
       {
-         results.push_back(resolveAliasedPath((*it).get_str()));
+         results.push_back(resolveAliasedPath((*it).getString()));
       }
    }
    return results;
@@ -1580,10 +1580,10 @@ void GitFileDecorationContext::decorateFile(const FilePath &filePath,
       FilePath parent = filePath;
       while (true)
       {
-         if (parent == parent.parent())
+         if (parent == parent.getParent())
             break;
 
-         parent = parent.parent();
+         parent = parent.getParent();
          if (vcsStatus_.getStatus(parent).status() == "??")
          {
             fullRefreshRequired_ = true;
@@ -1601,7 +1601,7 @@ void GitFileDecorationContext::decorateFile(const FilePath &filePath,
 
 core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 {
-   if (s_git_.root().empty())
+   if (s_git_.root().isEmpty())
       return Success();
 
    return s_git_.status(dir, pStatusResult);
@@ -1610,7 +1610,7 @@ core::Error status(const FilePath& dir, StatusResult* pStatusResult)
 Error fileStatus(const FilePath& filePath, VCSStatus* pStatus)
 {
    StatusResult statusResult;
-   Error error = git::status(filePath.parent(), &statusResult);
+   Error error = git::status(filePath.getParent(), &statusResult);
    if (error)
       return error;
 
@@ -1857,9 +1857,9 @@ Error vcsCommit(const json::JsonRpcRequest& request,
    error = s_git_.commit(commitMsg, amend, signOff, &pCP);
    if (error)
    {
-      if (error.code() == boost::system::errc::illegal_byte_sequence)
+      if (error == systemError(boost::system::errc::illegal_byte_sequence, ErrorLocation()))
       {
-         pResponse->setError(error, error.getProperty("description"));
+         pResponse->setError(error, json::Value(error.getProperty("description")));
          return Success();
       }
 
@@ -2037,7 +2037,7 @@ Error vcsGetIgnores(const json::JsonRpcRequest& request,
 
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(path);
-   FilePath gitIgnorePath = filePath.complete(".gitignore");
+   FilePath gitIgnorePath = filePath.completePath(".gitignore");
 
    // setup result (default to empty)
    core::system::ProcessResult result;
@@ -2072,7 +2072,7 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
 
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(path);
-   FilePath gitIgnorePath = filePath.complete(".gitignore");
+   FilePath gitIgnorePath = filePath.completePath(".gitignore");
 
    // write the .gitignore file
    error = core::writeStringToFile(gitIgnorePath,
@@ -2219,9 +2219,9 @@ std::string githubUrl(const std::string& view,
                      repo + "/" + view + "/" +
                      upstreamBranch;
 
-   if (!filePath.empty())
+   if (!filePath.isEmpty())
    {
-      std::string relative = filePath.relativePath(s_git_.root());
+      std::string relative = filePath.getRelativePath(s_git_.root());
       if (relative.empty())
          return std::string();
 
@@ -2316,20 +2316,28 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it != commits.end();
         it++)
    {
-      ids.push_back(it->id.substr(0, 8));
-      authors.push_back(string_utils::filterControlChars(it->author));
-      parents.push_back(string_utils::filterControlChars(it->parent));
-      subjects.push_back(string_utils::filterControlChars(it->subject));
-      descriptions.push_back(string_utils::filterControlChars(it->description));
-      dates.push_back(static_cast<double>(it->date));
-      graphs.push_back(it->graph);
+      ids.push_back(json::Value(it->id.substr(0, 8)));
+      authors.push_back(json::Value(string_utils::filterControlChars(it->author)));
+      parents.push_back(json::Value(string_utils::filterControlChars(it->parent)));
+      subjects.push_back(json::Value(string_utils::filterControlChars(it->subject)));
+      descriptions.push_back(json::Value(string_utils::filterControlChars(it->description)));
+      dates.push_back(json::Value(static_cast<double>(it->date)));
+      graphs.push_back(json::Value(it->graph));
 
       json::Array theseRefs;
-      std::copy(it->refs.begin(), it->refs.end(), std::back_inserter(theseRefs));
+      std::transform(
+         it->refs.begin(),
+         it->refs.end(),
+         std::back_inserter(theseRefs),
+         [](const std::string& val) { return json::Value(val); });
       refs.push_back(theseRefs);
 
       json::Array theseTags;
-      std::copy(it->tags.begin(), it->tags.end(), std::back_inserter(theseTags));
+      std::transform(
+         it->tags.begin(),
+         it->tags.end(),
+         std::back_inserter(theseTags),
+         [](const std::string& val) { return json::Value(val); });
       tags.push_back(theseTags);
    }
 
@@ -2442,7 +2450,8 @@ Error vcsSshPublicKey(const json::JsonRpcRequest& request,
    FilePath publicKeyPath = module_context::resolveAliasedPath(aliasedPath);
    if (!publicKeyPath.exists())
    {
-      return core::fileNotFoundError(publicKeyPath.absolutePath(),
+      return core::fileNotFoundError(
+         publicKeyPath.getAbsolutePath(),
                                      ERROR_LOCATION);
    }
 
@@ -2469,7 +2478,7 @@ Error vcsHasRepo(const json::JsonRpcRequest& request,
 
    FilePath gitDir = detectGitDir(dirPath);
 
-   pResponse->setResult(!gitDir.empty());
+   pResponse->setResult(!gitDir.isEmpty());
 
    return Success();
 }
@@ -2706,10 +2715,10 @@ bool detectGitExeDirOnPath(FilePath* pPath)
       // git.exe wrapper that, if used by us, causes console windows to
       // flash
       FilePath filePath(&(path[0]));
-      if (filePath.parent().filename() == "cmd")
+      if (filePath.getParent().getFilename() == "cmd")
         return false;
 
-      *pPath = filePath.parent();
+      *pPath = filePath.getParent();
       return true;
    }
    else
@@ -2732,7 +2741,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2741,7 +2750,7 @@ bool detectGitBinDirFromPath(FilePath* pPath)
 
    if (::PathFindOnPathW(&(path[0]), nullptr))
    {
-      *pPath = FilePath(&(path[0])).parent().parent().childPath("bin");
+      *pPath = FilePath(&(path[0])).getParent().getParent().completeChildPath("bin");
       return true;
    }
 
@@ -2818,7 +2827,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // go up a level then down to bin
-      *pPath = pPath->parent().childPath("bin");
+      *pPath = pPath->getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2831,7 +2840,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // this is located in \cmd so we need to go up two levels
-      *pPath = pPath->parent().parent().childPath("bin");
+      *pPath = pPath->getParent().getParent().completeChildPath("bin");
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2845,7 +2854,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       *pPath = FilePath(std::wstring(&(pathbuff[0])));
       if (!pPath->exists())
          return E_FAIL;
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2872,7 +2881,7 @@ HRESULT detectGitBinDirFromShortcut(FilePath* pPath)
       if (!pPath->exists())
          return E_FAIL;
       // The path we have is to sh.exe or wish.exe, we want the parent
-      *pPath = pPath->parent();
+      *pPath = pPath->getParent();
       if (!pPath->exists())
          return E_FAIL;
 
@@ -2931,7 +2940,7 @@ Error detectAndSaveGitExePath()
       return error;
 
    // save it
-   s_gitExePath = path.complete("git.exe").absolutePath();
+   s_gitExePath = path.completePath("git.exe").getAbsolutePath();
 
    return Success();
 }
@@ -2959,8 +2968,8 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
    if (filesToIgnore.empty())
       return Success();
 
-   boost::shared_ptr<std::ostream> ptrOs;
-   Error error = gitIgnoreFile.open_w(&ptrOs, false);
+   std::shared_ptr<std::ostream> ptrOs;
+   Error error = gitIgnoreFile.openForWrite(ptrOs, false);
    if (error)
       return error;
 
@@ -2997,10 +3006,10 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
-      FilePath gitIgnoreParent = gitIgnoreFile.parent();
-      if (gitIgnoreParent.childPath("DESCRIPTION").exists())
+      FilePath gitIgnoreParent = gitIgnoreFile.getParent();
+      if (gitIgnoreParent.completeChildPath("DESCRIPTION").exists())
       {
-         if (gitIgnoreParent.childPath("src").exists())
+         if (gitIgnoreParent.completeChildPath("src").exists())
          {
             filesToIgnore.push_back("src/*.o");
             filesToIgnore.push_back("src/*.so");
@@ -3040,7 +3049,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       if (session::options().packageOutputInPackageFolder())
       {
          // add any missing exclusions for package build/check output
-         std::string packageName = r_util::packageNameFromDirectory(gitIgnoreFile.parent());
+         std::string packageName = r_util::packageNameFromDirectory(gitIgnoreFile.getParent());
          if (!packageName.empty())
          {
             std::string packageNameRegex = "^";
@@ -3095,7 +3104,7 @@ bool isGitInstalled()
 
 bool isGitEnabled()
 {
-   return !s_git_.root().empty();
+   return !s_git_.root().isEmpty();
 }
 
 bool isWithinGitRoot(const core::FilePath& filePath)
@@ -3109,14 +3118,14 @@ FilePath detectedGitExePath()
    FilePath path;
    if (detectGitExeDirOnPath(&path))
    {
-      return path.complete("git.exe");
+      return path.completePath("git.exe");
    }
    else
    {
       Error error = discoverGitBinDir(&path);
       if (!error)
       {
-         return path.complete("git.exe");
+         return path.completePath("git.exe");
       }
       else
       {
@@ -3125,7 +3134,7 @@ FilePath detectedGitExePath()
    }
 #else
    FilePath gitExeFilePath = whichGitExe();
-   if (!gitExeFilePath.empty())
+   if (!gitExeFilePath.isEmpty())
       return FilePath(gitExeFilePath);
    else
       return FilePath();
@@ -3136,7 +3145,7 @@ FilePath detectedGitExePath()
 std::string nonPathGitBinDir()
 {
    if (!s_gitExePath.empty())
-      return FilePath(s_gitExePath).parent().absolutePath();
+      return FilePath(s_gitExePath).getParent().getAbsolutePath();
    else
       return std::string();
 }
@@ -3147,10 +3156,10 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
       return;
 
    FilePath gitExePath(prefs::userPrefs().gitExePath());
-   if (session::options().allowVcsExecutableEdit() && !gitExePath.empty())
+   if (session::options().allowVcsExecutableEdit() && !gitExePath.isEmpty())
    {
       // if there is an explicit value then set it
-      s_gitExePath = gitExePath.absolutePath();
+      s_gitExePath = gitExePath.getAbsolutePath();
    }
    else
    {
@@ -3172,11 +3181,11 @@ Error statusToJson(const core::FilePath &path,
    std::string status = vcsStatus.status();
 
    obj["status"] = status;
-   obj["path"] = path.relativePath(s_git_.root());
+   obj["path"] = path.getRelativePath(s_git_.root());
    obj["raw_path"] = module_context::createAliasedPath(path);
    obj["discardable"] = !status.empty() && status[1] != ' ' && status[1] != '?';
    obj["is_directory"] = path.isDirectory();
-   obj["size"] = static_cast<double>(path.size());
+   obj["size"] = static_cast<double>(path.getSize());
    return Success();
 }
 
@@ -3206,7 +3215,7 @@ bool initGitBin()
          return false; // no Git install detected
 #else
       FilePath gitExeFilePath = whichGitExe();
-      if (gitExeFilePath.empty())
+      if (gitExeFilePath.isEmpty())
          return false; // no Git install detected
 #endif
    }
@@ -3238,7 +3247,7 @@ bool initGitBin()
 
 bool isGitDirectory(const core::FilePath& workingDir)
 {
-   return !detectGitDir(workingDir).empty();
+   return !detectGitDir(workingDir).isEmpty();
 }
 
 
@@ -3277,9 +3286,9 @@ core::Error initializeGit(const core::FilePath& workingDir)
 {
    s_git_.setRoot(detectGitDir(workingDir));
 
-   if (!s_git_.root().empty())
+   if (!s_git_.root().isEmpty())
    {
-      FilePath gitIgnore = s_git_.root().childPath(".gitignore");
+      FilePath gitIgnore = s_git_.root().completeChildPath(".gitignore");
       Error error = augmentGitIgnore(gitIgnore);
       if (error)
          LOG_ERROR(error);

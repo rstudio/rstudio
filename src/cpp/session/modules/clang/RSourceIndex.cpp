@@ -19,7 +19,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 
@@ -69,15 +69,15 @@ bool isIndexableFile(const FileInfo& fileInfo,
    if (pkgSrcDir.exists() &&
        filePath.isWithin(pkgSrcDir) &&
        SourceIndex::isSourceFile(filePath) &&
-       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix) &&
-       (filePath.filename() != "RcppExports.cpp"))
+       !boost::algorithm::starts_with(filePath.getStem(), kCompilationDbPrefix) &&
+       (filePath.getFilename() != "RcppExports.cpp"))
    {
       return true;
    }
    else if (pkgIncludeDir.exists() &&
             filePath.isWithin(pkgIncludeDir) &&
             SourceIndex::isSourceFile(filePath) &&
-            !boost::algorithm::ends_with(filePath.stem(), "_RcppExports"))
+            !boost::algorithm::ends_with(filePath.getStem(), "_RcppExports"))
    {
       return true;
    }

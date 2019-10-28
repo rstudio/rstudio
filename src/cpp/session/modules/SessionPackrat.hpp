@@ -16,7 +16,7 @@
 #ifndef SESSION_PACKRAT_HPP
 #define SESSION_PACKRAT_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <r/RSexp.hpp>
 #include <session/SessionModuleContext.hpp>
 

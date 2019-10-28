@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_AUTHORING_HPP
 #define SESSION_MODULES_AUTHORING_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

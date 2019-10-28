@@ -24,7 +24,7 @@
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
 #include <core/http/Request.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -265,8 +265,8 @@ test_context("Options")
       options.push_back({"abc", std::string()});
       options.push_back({"abc=", std::string()});
 
-      core::json::Array optionsArray = core::json::toJsonArray(options);
-      core::system::Options options2 = core::json::optionsFromJson(optionsArray);
+      core::json::Array optionsArray = core::json::Array(options);
+      core::system::Options options2 = optionsArray.toStringPairList();
 
       for (size_t i = 0; i < options.size(); ++i)
       {

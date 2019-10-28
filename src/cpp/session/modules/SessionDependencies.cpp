@@ -18,7 +18,7 @@
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Environment.hpp>
 
@@ -55,7 +55,7 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    // determine location of archives
    FilePath archivesDir = session::options().sessionPackageArchivesPath();
    std::vector<FilePath> children;
-   Error error = archivesDir.children(&children);
+   Error error = archivesDir.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -79,14 +79,14 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    for (const FilePath& child : children)
    {
       boost::smatch match;
-      std::string filename = child.filename();
+      std::string filename = child.getFilename();
       if (regex_utils::match(filename, match, re))
       {
          EmbeddedPackage pkg;
          pkg.name = name;
          pkg.version = match[1];
          pkg.sha1 = match[2];
-         pkg.archivePath = string_utils::utf8ToSystem(child.absolutePath());
+         pkg.archivePath = string_utils::utf8ToSystem(child.getAbsolutePath());
          return pkg;
       }
    }
@@ -102,16 +102,19 @@ namespace dependencies {
 
 namespace {
 
-const int kCRANPackageDependency = 0;
-const int kEmbeddedPackageDependency = 1;
+#define kCRANPackageDependency "cran"
+#define kEmbeddedPackageDependency "embedded"
 
 struct Dependency
 {
-   Dependency() : type(0), source(false), versionSatisfied(true) {}
+   Dependency() : 
+      location(kCRANPackageDependency), 
+      source(false), 
+      versionSatisfied(true) {}
 
    bool empty() const { return name.empty(); }
 
-   int type;
+   std::string location;
    std::string name;
    std::string version;
    bool source;
@@ -142,9 +145,9 @@ std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
       if (json::isType<json::Object>(depJsonValue))
       {
          Dependency dep;
-         const json::Object& depJson = depJsonValue.get_obj();
+         const json::Object& depJson = depJsonValue.getObject();
          Error error = json::readObject(depJson,
-                                        "type", &(dep.type),
+                                        "location", &(dep.location),
                                         "name", &(dep.name),
                                         "version", &(dep.version),
                                         "source", &(dep.source));
@@ -167,7 +170,7 @@ json::Array dependenciesToJson(const std::vector<Dependency>& deps)
    for (const Dependency& dep : deps)
    {
       json::Object depJson;
-      depJson["type"] = dep.type;
+      depJson["location"] = dep.location;
       depJson["name"] = dep.name;
       depJson["version"] = dep.version;
       depJson["source"] = dep.source;
@@ -222,9 +225,8 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
    std::vector<Dependency> unsatisfiedDeps;
    for (Dependency& dep : deps)
    {
-      switch(dep.type)
+      if (dep.location == kCRANPackageDependency)
       {
-      case kCRANPackageDependency:
          if (!isPackageVersionInstalled(dep.name, dep.version))
          {
             // presume package is available unless we can demonstrate otherwise
@@ -248,9 +250,9 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
 
             unsatisfiedDeps.push_back(dep);
          }
-         break;
-
-      case kEmbeddedPackageDependency:
+      }
+      else if (dep.location == kEmbeddedPackageDependency)
+      {
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
 
          // package isn't installed so report that it reqires installation
@@ -279,8 +281,6 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
                // we do nothing
             }
          }
-
-         break;
       }
    }
 
@@ -327,20 +327,18 @@ Error installDependencies(const json::JsonRpcRequest& request,
    std::vector<std::string> embeddedPackages;
    for (const Dependency& dep : deps)
    {
-      switch(dep.type)
+      if (dep.location == kCRANPackageDependency)
       {
-      case kCRANPackageDependency:
          if (dep.source)
             cranSourcePackages.push_back("'" + dep.name + "'");
          else
             cranPackages.push_back("'" + dep.name + "'");
-         break;
-
-      case kEmbeddedPackageDependency:
+      }
+      else if (dep.location == kEmbeddedPackageDependency)
+      {
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
          if (!pkg.empty())
             embeddedPackages.push_back(pkg.archivePath);
-         break;
       }
    }
 
@@ -405,7 +403,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
    pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
             args,
             options,
             pCPI);

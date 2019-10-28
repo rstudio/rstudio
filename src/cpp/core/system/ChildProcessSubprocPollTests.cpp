@@ -223,7 +223,7 @@ test_context("ChildProcess polling support class")
       CwdPollingFixture test(pid);
 
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.getCwd().empty());
+      expect_true(test.poller_.getCwd().isEmpty());
    }
 }
 

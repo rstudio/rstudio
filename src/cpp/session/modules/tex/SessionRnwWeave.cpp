@@ -521,15 +521,15 @@ void runWeave(const core::FilePath& rnwPath,
    if (error)
    {
       LOG_ERROR(error);
-      onCompleted(Result::error(error.summary()));
+      onCompleted(Result::error(error.getSummary()));
       return;
    }
 
    // R exe path differs by platform
 #ifdef _WIN32
-   FilePath rBinPath = rBin.complete("Rterm.exe");
+   FilePath rBinPath = rBin.completePath("Rterm.exe");
 #else
-   FilePath rBinPath = rBin.complete("R");
+   FilePath rBinPath = rBin.completePath("R");
 #endif
 
    // determine the active sweave engine
@@ -544,7 +544,7 @@ void runWeave(const core::FilePath& rnwPath,
    if (pRnwWeave)
    {
       std::vector<std::string> args = pRnwWeave->commandArgs(
-                                                         rnwPath.filename(),
+                                                         rnwPath.getFilename(),
                                                          encoding,
                                                          driver);
 
@@ -553,14 +553,14 @@ void runWeave(const core::FilePath& rnwPath,
                rBinPath,
                args,
                core::system::Options(),
-               rnwPath.parent(),
+               rnwPath.getParent(),
                onOutput,
                boost::bind(onWeaveProcessExit,
                                  pRnwWeave, _1, _2, rnwPath, onCompleted));
       if (error)
       {
          LOG_ERROR(error);
-         onCompleted(Result::error(error.summary()));
+         onCompleted(Result::error(error.getSummary()));
       }
    }
    else

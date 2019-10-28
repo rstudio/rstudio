@@ -275,7 +275,7 @@ NSString* resolveAliasedPath(NSString* path)
       [path UTF8String],
       userHomePath());
 
-   return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
+   return [NSString stringWithUTF8String: resolved.getAbsolutePath().c_str()];
 }
 
 QString runFileDialog(NSSavePanel* panel)

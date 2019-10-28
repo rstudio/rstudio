@@ -33,9 +33,9 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 #define R_INTERNAL_FUNCTIONS
@@ -79,14 +79,14 @@ void reportRestoreError(const std::string& context,
    core::log::logError(restoreError, location);
    
    // notify end-user
-   std::string report = message + ": " + error.code().message() + "\n";
+   std::string report = message + ": " + error.getMessage() + "\n";
    REprintf(report.c_str());
 }   
    
 Error saveGlobalEnvironmentToFile(const FilePath& environmentFile)
 {
    std::string envPath =
-            string_utils::utf8ToSystem(environmentFile.absolutePath());
+            string_utils::utf8ToSystem(environmentFile.getAbsolutePath());
    return executeSafely(boost::bind(R_SaveGlobalEnvToFile, envPath.c_str()));
 }
    
@@ -96,7 +96,7 @@ Error restoreGlobalEnvironment(const core::FilePath& environmentFile)
    if (!environmentFile.exists())
       return Success();
    
-   return RFunction("load", environmentFile.absolutePath()).call();
+   return RFunction("load", environmentFile.getAbsolutePath()).call();
 }
 
 bool isPackage(const std::string& elementName, std::string* pPackageName)
@@ -191,7 +191,7 @@ void loadPackage(const std::string& packageName, const std::string& path)
    // calculate the lib
    std::string lib;
    if (!path.empty())
-      lib = string_utils::utf8ToSystem(FilePath(path).parent().absolutePath());
+      lib = string_utils::utf8ToSystem(FilePath(path).getParent().getAbsolutePath());
 
    Error error = r::exec::RFunction(".rs.loadPackage", packageName, lib).call();
    if (error)
@@ -208,7 +208,7 @@ void attachEnvironmentData(const FilePath& dataFilePath,
    if (dataFilePath.exists())
    {
       Error error = r::exec::RFunction(".rs.attachDataFile",
-                                       dataFilePath.absolutePath(),
+                                       dataFilePath.getAbsolutePath(),
                                        name).call();
       
       if (error)
@@ -221,7 +221,7 @@ void attachEnvironmentData(const FilePath& dataFilePath,
    else
    {
       LOG_ERROR_MESSAGE("environment data file not found: " +
-                        dataFilePath.absolutePath());
+                           dataFilePath.getAbsolutePath());
    }
 }
 
@@ -232,19 +232,19 @@ void attachEnvironmentData(const FilePath& dataFilePath,
 Error save(const FilePath& statePath)
 {
    // save the global environment
-   FilePath environmentFile = statePath.complete(kEnvironmentFile);
+   FilePath environmentFile = statePath.completePath(kEnvironmentFile);
    Error error = saveGlobalEnvironmentToFile(environmentFile);
    if (error)
       return error;
    
    // reset the contents of the search path dir
-   FilePath searchPathDir = statePath.complete(kSearchPathDir);
+   FilePath searchPathDir = statePath.completePath(kSearchPathDir);
    error = searchPathDir.resetDirectory();
    if (error)
       return error ;
    
    // create environment data subdirectory
-   FilePath environmentDataPath = searchPathDir.complete(kEnvDataDir);
+   FilePath environmentDataPath = searchPathDir.completePath(kEnvDataDir);
    error = environmentDataPath.ensureDirectory();
    if (error)
       return error;
@@ -299,12 +299,12 @@ Error save(const FilePath& statePath)
          // determine file path (index of item within list)
          std::string itemIndex = safe_convert::numberToString(
                                                 searchPathElements.size()-1);
-         FilePath dataFilePath = environmentDataPath.complete(itemIndex);
+         FilePath dataFilePath = environmentDataPath.completePath(itemIndex);
          
          // save the environment
          Error error = r::exec::RFunction(".rs.saveEnvironment",
                                           envSEXP,
-                                          dataFilePath.absolutePath()).call();
+                                          dataFilePath.getAbsolutePath()).call();
          if (error)
             return error;
       }
@@ -312,20 +312,20 @@ Error save(const FilePath& statePath)
    searchPathElements.push_back("package:base");
    
    // save the search path list
-   FilePath elementsPath = searchPathDir.complete(kSearchPathElementsDir);
+   FilePath elementsPath = searchPathDir.completePath(kSearchPathElementsDir);
    error =  writeStringVectorToFile(elementsPath, searchPathElements);
    if (error)
       return error;
 
    // save the package paths list
-   FilePath packagePathsFile = searchPathDir.complete(kPackagePaths);
+   FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
    return writeStringMapToFile(packagePathsFile, packagePaths);
 }
 
 
 Error saveGlobalEnvironment(const FilePath& statePath)
 {
-   FilePath environmentFile = statePath.complete(kEnvironmentFile);
+   FilePath environmentFile = statePath.completePath(kEnvironmentFile);
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
@@ -334,20 +334,20 @@ Error restoreSearchPath(const FilePath& statePath)
    Error error;
    
    // attempt to restore the search path if one has been saved
-   FilePath searchPathDir = statePath.complete(kSearchPathDir);
+   FilePath searchPathDir = statePath.completePath(kSearchPathDir);
    if (!searchPathDir.exists())
       return Success();
    
    // read the saved list
    std::vector<std::string> savedSearchPathList;
-   FilePath elementsPath = searchPathDir.complete(kSearchPathElementsDir);
+   FilePath elementsPath = searchPathDir.completePath(kSearchPathElementsDir);
    error = readStringVectorFromFile(elementsPath, &savedSearchPathList);
    if (error)
       return error;
 
    // read the package paths list
    std::map<std::string,std::string> packagePaths;
-   FilePath packagePathsFile = searchPathDir.complete(kPackagePaths);
+   FilePath packagePathsFile = searchPathDir.completePath(kPackagePaths);
    if (packagePathsFile.exists())
    {
       error = readStringMapFromFile(packagePathsFile, &packagePaths);
@@ -371,7 +371,7 @@ Error restoreSearchPath(const FilePath& statePath)
    // environments saved in external data files as necessary. note that 
    // this excludes the first and last entries in the list (.GlobalEnv and
    // package:base respectively)
-   FilePath environmentDataPath = searchPathDir.complete(kEnvDataDir);
+   FilePath environmentDataPath = searchPathDir.completePath(kEnvDataDir);
    for (int i = (gsl::narrow_cast<int>(savedSearchPathList.size()) - 2); i > 0; i--)
    {
       // get the path element
@@ -389,7 +389,7 @@ Error restoreSearchPath(const FilePath& statePath)
       else if (hasEnvironmentData(pathElement))
       {
          std::string itemIndex = safe_convert::numberToString(i);
-         FilePath dataFilePath = environmentDataPath.complete(itemIndex);
+         FilePath dataFilePath = environmentDataPath.completePath(itemIndex);
          attachEnvironmentData(dataFilePath, pathElement);
       }
       
@@ -407,7 +407,7 @@ Error restore(const FilePath& statePath, bool isCompatibleSessionState)
    // restore global environment unless suppressed
    if (utils::restoreEnvironmentOnResume())
    {
-      FilePath environmentFile = statePath.complete(kEnvironmentFile);
+      FilePath environmentFile = statePath.completePath(kEnvironmentFile);
       Error error = restoreGlobalEnvironment(environmentFile);
       if (error)
          return error;

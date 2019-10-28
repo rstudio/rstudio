@@ -17,12 +17,14 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-#include <core/StringUtils.hpp>
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 // Including the hunspell headers caused compilation errors for Windows 64-bit
 // builds. The trouble seemd to be a 'near' macro defined somewhere in the
@@ -166,9 +168,9 @@ public:
 
       // convert paths to system encoding before sending to external API
       std::string systemAffPath = string_utils::utf8ToSystem(
-                                    dictionary.affPath().absolutePath());
+         dictionary.affPath().getAbsolutePath());
       std::string systemDicPath = string_utils::utf8ToSystem(
-                                    dictionary.dicPath().absolutePath());
+         dictionary.dicPath().getAbsolutePath());
 
       // initialize hunspell, iconvstrFunc_, and encoding_
       pHunspell_.reset(new Hunspell(systemAffPath.c_str(),
@@ -178,8 +180,8 @@ public:
 
       // add words from dic_delta if available
       FilePath dicPath = dictionary.dicPath();
-      FilePath dicDeltaPath = dicPath.parent().childPath(
-                                                dicPath.stem() + ".dic_delta");
+      FilePath dicDeltaPath = dicPath.getParent().completeChildPath(
+         dicPath.getStem() + ".dic_delta");
       if (dicDeltaPath.exists())
       {
          Error error = mergeDicDeltaFile(dicDeltaPath);
@@ -223,7 +225,7 @@ private:
       // the chromium numeric affix indicators (6 and 7) to the right
       // hunspell example words. it's worth investigating whether we can do
       // this for other languages as well
-      bool addAffixes = boost::algorithm::starts_with(dicDeltaPath.stem(),
+      bool addAffixes = boost::algorithm::starts_with(dicDeltaPath.getStem(),
                                                       "en_");
 
       // read the file and strip the BOM
@@ -358,7 +360,7 @@ public:
          return core::fileNotFoundError(dicPath, ERROR_LOCATION);
 
       // Convert path to system encoding before sending to external api
-      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.absolutePath());
+      std::string systemDicPath = string_utils::utf8ToSystem(dicPath.getAbsolutePath());
       *pAdded = (pHunspell_->add_dic(systemDicPath.c_str(),key.c_str()) == 0);
       return Success();
    }
@@ -421,7 +423,7 @@ private:
                bool added;
                FilePath dicPath = dictManager_.custom().dictionaryPath(dict);
                Error error = pHunspell->addDictionary(dicPath,
-                                                      dicPath.stem(),
+                                                      dicPath.getStem(),
                                                       &added);
                if (error)
                   LOG_ERROR(error);

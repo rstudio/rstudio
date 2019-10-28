@@ -17,7 +17,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/r_util/RProjectFile.hpp>
@@ -54,18 +54,18 @@ namespace {
 std::string quotedFilesFromArray(json::Array array, bool quoted) 
 {
    std::string joined;
-   for (size_t i = 0; i < array.size(); i++) 
+   for (size_t i = 0; i < array.getSize(); i++)
    {
       // convert filenames to system encoding and escape quotes if quoted
       std::string filename = 
          string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-                  array[i].get_str()));
+                  array[i].getString()));
 
       // join into a single string
       joined += (quoted ? "'" : "") + 
                 filename +
                 (quoted ? "'" : "");
-      if (i < array.size() - 1) 
+      if (i < array.getSize() - 1)
          joined += (quoted ? ", " : "|");
    }
    return joined;
@@ -74,7 +74,7 @@ std::string quotedFilesFromArray(json::Array array, bool quoted)
 // transforms a FilePath into an aliased json string
 json::Value toJsonString(const core::FilePath& filePath)
 {
-   return module_context::createAliasedPath(filePath);
+   return json::Value(module_context::createAliasedPath(filePath));
 }
 
 class RSConnectPublish : public async_r::AsyncRProcess
@@ -113,23 +113,23 @@ public:
          if (caBundleFile.exists())
          {
             // if a valid bundle path was specified, use it
-            cmd += "options(rsconnect.ca.bundle = '" + 
-               string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
-                        caBundleFile.absolutePath())) +
-               "'); ";
+            cmd += "options(rsconnect.ca.bundle = '" +
+                   string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(
+                      caBundleFile.getAbsolutePath())) +
+                   "'); ";
          }
       }
 
       // create temporary file to host file manifest
-      if (!fileList.empty())
+      if (!fileList.isEmpty())
       {
-         Error error = FilePath::tempFilePath(&pDeploy->manifestPath_);
+         Error error = FilePath::tempFilePath(pDeploy->manifestPath_);
          if (error)
             return error;
 
          // write manifest to temporary file
          std::vector<std::string> deployFileList;
-         json::fillVectorString(fileList, &deployFileList);
+         fileList.toVectorString(deployFileList);
          error = core::writeStringVectorToFile(pDeploy->manifestPath_, 
                                                deployFileList);
          if (error)
@@ -148,7 +148,7 @@ public:
       if (!file.empty() && contentCategory != "site")
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
-         std::string extension = docFile.extensionLowerCase();
+         std::string extension = docFile.getExtensionLowerCase();
          if (extension == ".rmd" || extension == ".html" || extension == ".r" ||
              extension == ".pdf" || extension == ".docx" || extension == ".rtf" || 
              extension == ".odt" || extension == ".pptx") 
@@ -175,14 +175,14 @@ public:
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
              (recordDir.empty() ? "" : "recordDir = '" + 
-                string_utils::singleQuotedStrEscape(recordDir) + "',") + 
-             (pDeploy->manifestPath_.empty() ? "" : "appFileManifest = '" + 
-                string_utils::singleQuotedStrEscape(
-                   pDeploy->manifestPath_.absolutePath()) + "', ") +
+                string_utils::singleQuotedStrEscape(recordDir) + "',") +
+             (pDeploy->manifestPath_.isEmpty() ? "" : "appFileManifest = '" +
+                                                    string_utils::singleQuotedStrEscape(
+                                                       pDeploy->manifestPath_.getAbsolutePath()) + "', ") +
              (primaryDoc.empty() ? "" : "appPrimaryDoc = '" + 
-                string_utils::singleQuotedStrEscape(primaryDoc) + "', ") + 
+                string_utils::singleQuotedStrEscape(primaryDoc) + "', ") +
              (sourceDoc.empty() ? "" : "appSourceDoc = '" + 
-                string_utils::singleQuotedStrEscape(sourceDoc) + "', ") + 
+                string_utils::singleQuotedStrEscape(sourceDoc) + "', ") +
              "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
              "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
@@ -393,7 +393,7 @@ Error rsconnectDeployments(const json::JsonRpcRequest& request,
 
    // we want to always return an array, even if it's just one element long, so
    // wrap the result in an array if it isn't one already
-   if (result.type() != json::ArrayType) 
+   if (result.getType() != json::Type::ARRAY)
    {
       json::Array singleEle;
       singleEle.push_back(result);
@@ -429,10 +429,10 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
    else
    {
       std::vector<FilePath> shinyPaths;
-      shinyPaths.push_back(appPath.childPath("app.R"));
-      shinyPaths.push_back(appPath.childPath("ui.R"));
-      shinyPaths.push_back(appPath.childPath("server.R"));
-      shinyPaths.push_back(appPath.childPath("www/index.html"));
+      shinyPaths.push_back(appPath.completeChildPath("app.R"));
+      shinyPaths.push_back(appPath.completeChildPath("ui.R"));
+      shinyPaths.push_back(appPath.completeChildPath("server.R"));
+      shinyPaths.push_back(appPath.completeChildPath("www/index.html"));
       for (const FilePath& filePath : shinyPaths)
       {
          if (filePath.exists())
@@ -483,9 +483,9 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    // extract JSON object from result
    json::Value resultVal;
    error = r::json::jsonValueFromList(sexpDetails, &resultVal);
-   if (resultVal.type() != json::ObjectType)
+   if (resultVal.getType() != json::Type::OBJECT)
       return Error(json::errc::ParseError, ERROR_LOCATION);
-   json::Object result = resultVal.get_value<json::Object>();
+   json::Object result = resultVal.getValue<json::Object>();
 
    // augment with website project information
    FilePath path = module_context::resolveAliasedPath(target);
@@ -495,16 +495,16 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
                          path.hasExtensionLowerCase(".md")))
    {
       FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(path);
-      if (!webPath.empty())
+      if (!webPath.isEmpty())
       {
-         websiteDir = webPath.absolutePath();
+         websiteDir = webPath.getAbsolutePath();
          
          // also get build output dir
          if (!module_context::websiteOutputDir().empty())
          {
             FilePath websiteOutputPath = 
                   module_context::resolveAliasedPath(module_context::websiteOutputDir());
-            websiteOutputDir = websiteOutputPath.absolutePath();
+            websiteOutputDir = websiteOutputPath.getAbsolutePath();
          }
       }
    }

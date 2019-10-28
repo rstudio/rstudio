@@ -20,7 +20,7 @@
 #include <boost/function.hpp>
 
 #include <core/BoostSignals.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <r/RSexp.hpp>
 

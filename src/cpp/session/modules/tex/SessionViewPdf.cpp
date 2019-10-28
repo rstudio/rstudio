@@ -15,8 +15,8 @@
 
 #include "SessionViewPdf.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/http/Util.hpp>
@@ -39,7 +39,7 @@ void handleViewPdf(const http::Request& request, http::Response* pResponse)
 {
    // get the file path
    FilePath filePath(request.queryParamValue("path"));
-   if (!filePath.exists())
+   if (!filePath.exists() || !module_context::isPathViewAllowed(filePath))
    {
       pResponse->setNotFoundError(request);
       return;
@@ -66,7 +66,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
+   core::FilePath pdfJsResource = options().rResourcesPath().completeChildPath(path);
    if (pdfJsResource.exists())
    {
       pResponse->setCacheableFile(pdfJsResource, request);
@@ -78,7 +78,8 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
 
 std::string createViewPdfUrl(const core::FilePath& filePath)
 {
-   return "view_pdf?path=" + http::util::urlEncode(filePath.absolutePath(),
+   return "view_pdf?path=" + http::util::urlEncode(
+      filePath.getAbsolutePath(),
                                                    true);
 }
 

@@ -17,7 +17,7 @@
 
 #include <boost/range/adaptor/map.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -50,7 +50,7 @@ std::string serializeConsoleProcs(SerializationMode serialMode)
    }
 
    std::ostringstream ostr;
-   json::write(array, ostr);
+   array.write(ostr);
    return ostr.str();
 }
 
@@ -59,18 +59,18 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    if (jsonStr.empty())
       return;
    json::Value value;
-   if (!json::parse(jsonStr, &value))
+   if (value.parse(jsonStr))
    {
       LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;
    }
 
-   const json::Array& procs = value.get_array();
-   for (json::Array::iterator it = procs.begin();
+   const json::Array& procs = value.getArray();
+   for (json::Array::Iterator it = procs.begin();
         it != procs.end();
         it++)
    {
-      ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).get_obj());
+      ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).getObject());
 
       // Deserializing consoleprocs list only happens during session
       // initialization, therefore they do not represent an actual running

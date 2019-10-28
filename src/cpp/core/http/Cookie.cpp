@@ -16,7 +16,7 @@
 #include <core/http/Cookie.hpp>
 
 #include <core/http/URL.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 using namespace boost::gregorian ;

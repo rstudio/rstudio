@@ -56,7 +56,7 @@ void proxyJupyterRequest(const r_util::SessionContext& context,
 {
 }
 
-Error runVerifyInstallationSession(core::system::user::User& user,
+Error runVerifyInstallationSession(core::system::User& user,
                                    bool* pHandled)
 {
    *pHandled = false;

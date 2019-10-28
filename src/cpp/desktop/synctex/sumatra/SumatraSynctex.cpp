@@ -18,8 +18,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"
@@ -53,7 +53,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
    QString space = QString::fromUtf8(" ");
 
    // path to rsinverse binary
-   std::string rsinverse = desktop::options().rsinversePath().absolutePath();
+   std::string rsinverse = desktop::options().rsinversePath().getAbsolutePath();
    cmdFormat.append(quote + QString::fromStdString(rsinverse) + quote);
    cmdFormat.append(space);
 

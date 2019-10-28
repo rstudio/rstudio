@@ -28,7 +28,7 @@
 
 #include <core/system/System.hpp>
 #include <core/system/Types.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

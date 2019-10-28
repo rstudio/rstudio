@@ -19,7 +19,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -148,7 +148,7 @@ Error askForSecret(const std::string& name,
    // if secret changed
    if (pInput->changed)
    {
-      pInput->secret = value.get_value<std::string>();
+      pInput->secret = value.getValue<std::string>();
 
       // decrypt if necessary
 #ifdef RSTUDIO_SERVER

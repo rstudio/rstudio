@@ -20,8 +20,8 @@
 #include "NotebookQueueUnit.hpp"
 #include "SessionRmdNotebook.hpp"
 
-#include <core/json/Json.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
 #include <list>
 
 namespace rstudio {

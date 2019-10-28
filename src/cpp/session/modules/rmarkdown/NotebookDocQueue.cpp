@@ -102,7 +102,7 @@ json::Object NotebookDocQueue::toJson() const
    json::Object queue;
    queue[kDocQueueId]             = docId_;
    queue[kDocQueueJobDesc]        = jobDesc_;
-   queue[kDocQueueWorkingDir]     = workingDir_.absolutePath();
+   queue[kDocQueueWorkingDir]     = workingDir_.getAbsolutePath();
    queue[kDocQueueCommitMode]     = commitMode_;
    queue[kDocQueuePixelWidth]     = pixelWidth_;
    queue[kDocQueueCharWidth]      = charWidth_;
@@ -140,12 +140,12 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    for (const json::Value val : units)
    {
       // ignore non-objects
-      if (val.type() != json::ObjectType)
+      if (!val.isObject())
          continue;
 
       boost::shared_ptr<NotebookQueueUnit> pUnit = 
          boost::make_shared<NotebookQueueUnit>();
-      Error error = NotebookQueueUnit::fromJson(val.get_obj(), &pUnit);
+      Error error = NotebookQueueUnit::fromJson(val.getObject(), &pUnit);
       if (error)
          LOG_ERROR(error);
       else
@@ -269,13 +269,13 @@ void NotebookDocQueue::setWorkingDir(const std::string& workingDir, WorkingDirSo
       // have one, and the current directory if we don't
       core::FilePath docParentPath = docPath_.empty() ? 
          FilePath::safeCurrentPath(module_context::userHomePath()) :
-         module_context::resolveAliasedPath(docPath_).parent();
-      dir = docParentPath.childPath(workingDir);
+         module_context::resolveAliasedPath(docPath_).getParent();
+      dir = docParentPath.completeChildPath(workingDir);
    }
 
    // remove any trailing / or .
-   if (!dir.empty() && (dir.stem().empty() || dir.stem() == "."))
-      dir = dir.parent();
+   if (!dir.isEmpty() && (dir.getStem().empty() || dir.getStem() == "."))
+      dir = dir.getParent();
 
    // if this is a real directory, use it; otherwise, use an empty path, which
    // causes use to use the document's path as the working directory
@@ -300,14 +300,14 @@ void NotebookDocQueue::setExternalChunks(const json::Object& chunks)
 
 std::string NotebookDocQueue::externalChunk(const std::string& label) const
 {
-   json::Object::iterator it = externalChunks_.find(label);
+   json::Object::Iterator it = externalChunks_.find(label);
    std::string code;
    if (it == externalChunks_.end())
    {
       // no chunk with this label 
       return code;
    }
-   else if ((*it).value().type() != json::ArrayType)
+   else if (!(*it).getValue().isArray())
    {
       // the JSON object representing the external chunks should contain an
       // array of strings representing the lines of code in the chunk
@@ -316,12 +316,12 @@ std::string NotebookDocQueue::externalChunk(const std::string& label) const
    else
    {
       // extract each line of code
-      const json::Array& lines = (*it).value().get_array();
-      for (size_t i = 0; i < lines.size(); i++) 
+      const json::Array& lines = (*it).getValue().getArray();
+      for (size_t i = 0; i < lines.getSize(); i++)
       {
-         if (lines.at(i).type() == json::StringType)
-            code.append(lines.at(i).get_str());
-         if (i < lines.size() - 1)
+         if (lines.getValueAt(i).isString())
+            code.append(lines.getValueAt(i).getString());
+         if (i < lines.getSize() - 1)
             code.append("\n");
       }
    }

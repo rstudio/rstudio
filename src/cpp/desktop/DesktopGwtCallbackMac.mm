@@ -25,7 +25,7 @@
 #import <AppKit/NSImage.h>
 #import <Cocoa/Cocoa.h>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Macros.hpp>
 
 using namespace rstudio;
@@ -351,9 +351,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
    {
       std::string filename;
       if (hasDefaultExtension)
-         filename = filePath.stem();
+         filename = filePath.getStem();
       else
-         filename = filePath.filename();
+         filename = filePath.getFilename();
       [panel setNameFieldStringValue:
                   [NSString stringWithUTF8String: filename.c_str()]];
 

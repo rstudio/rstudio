@@ -15,7 +15,7 @@
 
 #include "DesktopPosixApplication.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <QFileOpenEvent>
 
@@ -56,10 +56,10 @@ bool PosixApplication::event(QEvent* pEvent)
          // FileOpen back to existing instances (e.g. via DDE)
 
          FilePath filePath(filename.toUtf8().constData());
-         if (filePath.exists() && filePath.extensionLowerCase() == ".rproj")
+         if (filePath.exists() && filePath.getExtensionLowerCase() == ".rproj")
          {
             std::vector<std::string> args;
-            args.push_back(filePath.absolutePath());
+            args.push_back(filePath.getAbsolutePath());
             pAppLauncher_->launchRStudio(args);
          }
          else

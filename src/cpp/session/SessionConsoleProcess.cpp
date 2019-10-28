@@ -76,7 +76,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().empty() ? module_context::shellWorkingDirectory() :
+   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
                                                     procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
@@ -88,7 +88,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
    {
       std::vector<std::string> whitelist;
-      core::json::fillVectorString(prefs::userPrefs().busyWhitelist(), &whitelist);
+      prefs::userPrefs().busyWhitelist().toVectorString(whitelist);
       options.subprocWhitelist = whitelist;
    }
 
@@ -180,7 +180,7 @@ void ConsoleProcess::commonInit()
          args << args_;
 
          // fixup program_ and args_ so we run the consoleio.exe proxy
-         program_ = consoleIoPath.absolutePathNative();
+         program_ = consoleIoPath.getAbsolutePathNative();
          args_ = args;
       }
       // if this is a runCommand then prepend consoleio.exe to the command
@@ -232,7 +232,7 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_NAME",
-                           projects::projectContext().file().stem());
+                           projects::projectContext().file().getStem());
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_ID",
                            module_context::activeSession().id());
 #endif

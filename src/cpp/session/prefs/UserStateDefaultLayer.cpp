@@ -34,7 +34,7 @@ UserStateDefaultLayer::UserStateDefaultLayer():
 core::Error UserStateDefaultLayer::readPrefs()
 {
    return loadPrefsFromSchema(
-      options().rResourcesPath().complete("schema").complete(kUserStateSchemaFile));
+      options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
 }
 
 core::Error UserStateDefaultLayer::validatePrefs()

@@ -123,6 +123,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                                 repos = getOption("repos"),
                                                                 ...) 
    {
+      if (missing(pkgs))
+         return(utils::install.packages())
+      
       if (!.Call("rs_canInstallPackages", PACKAGE = "(embedding)"))
       {
         stop("Package installation is disabled in this version of RStudio",

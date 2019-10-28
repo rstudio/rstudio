@@ -22,7 +22,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <core/BoostThread.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
 

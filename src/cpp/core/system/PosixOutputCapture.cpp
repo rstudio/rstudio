@@ -22,7 +22,7 @@
 #include <iostream>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
 

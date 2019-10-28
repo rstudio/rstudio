@@ -14,7 +14,7 @@
  */
 #include "SessionVCSCore.hpp"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 using namespace rstudio::core;
 
@@ -26,7 +26,7 @@ namespace source_control {
 VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 {
    std::map<std::string, VCSStatus>::const_iterator found =
-         this->filesByPath_.find(fileOrDirectory.absolutePath());
+         this->filesByPath_.find(fileOrDirectory.getAbsolutePath());
    if (found != this->filesByPath_.end())
       return found->second;
 

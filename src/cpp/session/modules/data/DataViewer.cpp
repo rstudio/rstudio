@@ -25,12 +25,12 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -302,8 +302,8 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::sessionScratchPath().childPath(kViewerCacheDir)
-      .absolutePath();
+   return module_context::sessionScratchPath().completeChildPath(kViewerCacheDir)
+      .getAbsolutePath();
 }
 
 SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
@@ -399,7 +399,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP,
       if (error) 
       {
          // caught below
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
       if (dataFrameSEXP != nullptr && dataFrameSEXP != R_NilValue)
       {
@@ -441,7 +441,7 @@ void handleGridResReq(const http::Request& request,
 
    // setCacheableFile is responsible for emitting a 404 when the file doesn't
    // exist.
-   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   core::FilePath gridResource = options().rResourcesPath().completeChildPath(path);
    pResponse->setCacheableFile(gridResource, request);
 }
 
@@ -456,7 +456,7 @@ json::Value getCols(SEXP dataSEXP)
    {
       json::Object err;
       if (error) 
-         err["error"] = error.summary();
+         err["error"] = error.getSummary();
       else
          err["error"] = "Failed to retrieve column definitions for data.";
       result = err;
@@ -572,7 +572,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
       transform.call(&dataSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
 
       // check to see if we've accidentally transformed ourselves into nothing
       // (this shouldn't generally happen without a specific error)
@@ -627,7 +627,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       formatFx.addParam(gsl::narrow_cast<int>(length));
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
    }
 
@@ -650,16 +650,16 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
+            rowData.push_back(json::Value(Rf_translateCharUTF8(nameSEXP)));
          }
          else
          {
-            rowData.push_back(row + start);
+            rowData.push_back(json::Value(row + start));
          }
       }
       else
       {
-         rowData.push_back(row + start);
+         rowData.push_back(json::Value(row + start));
       }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
@@ -674,20 +674,20 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
+               rowData.push_back(json::Value(Rf_translateCharUTF8(stringSEXP)));
             }
             else if (stringSEXP == NA_STRING)
             {
-               rowData.push_back(SPECIAL_CELL_NA);
+               rowData.push_back(json::Value(SPECIAL_CELL_NA));
             }
             else
             {
-               rowData.push_back("");
+               rowData.push_back(json::Value(""));
             }
          }
          else
          {
-            rowData.push_back("");
+            rowData.push_back(json::Value(""));
          }
       }
       data.push_back(rowData);
@@ -785,9 +785,6 @@ Error getGridData(const http::Request& request,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   std::ostringstream ostr;
-   json::write(result, ostr);
-
    // There are some unprintable ASCII control characters that are written
    // verbatim by json::write, but that won't parse in most Javascript JSON
    // parsing implementations, even if contained in a string literal. Scan the
@@ -796,7 +793,7 @@ Error getGridData(const http::Request& request,
    // unprintable and (b) some characters are invalid *even if escaped* e.g.
    // \v, there's little to be gained here in trying to marshal them to the
    // viewer.
-   std::string output = ostr.str();
+   std::string output = result.write();
    for (size_t i = 0; i < output.size(); i++)
    {
       char c = output[i];
@@ -975,7 +972,7 @@ void onDeferredInit(bool newSession)
    std::vector<FilePath> cacheFiles;
    if (cache.exists())
    {
-      Error error = cache.children(&cacheFiles);
+      Error error = cache.getChildren(cacheFiles);
       if (error)
       {
          LOG_ERROR(error);
@@ -986,7 +983,7 @@ void onDeferredInit(bool newSession)
    std::vector<std::string> cacheKeys;
    for (const FilePath& cacheFile : cacheFiles)
    {
-      cacheKeys.push_back(cacheFile.stem());
+      cacheKeys.push_back(cacheFile.getStem());
    }
 
    // sort each set of keys (so we can diff the sets below)
@@ -1001,7 +998,7 @@ void onDeferredInit(bool newSession)
    // remove each key no longer bound to a source file
    for (const std::string& orphanKey : orphanKeys)
    {
-      error = cache.complete(orphanKey + ".Rdata").removeIfExists();
+      error = cache.completePath(orphanKey + ".Rdata").removeIfExists();
       if (error)
          LOG_ERROR(error);
    }

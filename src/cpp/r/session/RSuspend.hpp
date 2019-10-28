@@ -16,7 +16,7 @@
 #ifndef R_SESSION_SUSPEND_HPP
 #define R_SESSION_SUSPEND_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace r {

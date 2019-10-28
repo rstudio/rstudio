@@ -874,6 +874,22 @@ void handleIdentifier(RTokenCursor& cursor,
    }
 }
 
+void handleString(RTokenCursor& cursor,
+                  ParseStatus& status)
+{
+   // if this is a string within a call to glue,
+   // mark used variables as appropriate
+   if (status.currentFunctionName() == L"glue")
+   {
+      const std::string& value = cursor.contentAsUtf8();
+      boost::regex re("{([^}]+)}");
+      boost::sregex_token_iterator it(value.begin(), value.end(), re, 1);
+      boost::sregex_token_iterator end;
+      for (; it != end; ++it)
+         status.node()->addReferencedSymbol(cursor.row(), cursor.column(), *it);
+   }
+}
+
 // Extract a single formal from an in-source function _definition_. For example,
 //
 //    foo <- function(alpha = 1, beta, gamma) {}
@@ -2310,7 +2326,13 @@ START:
          }
          
          if (cursor.isType(RToken::ID))
+         {
             handleIdentifier(cursor, status);
+         }
+         else if (cursor.isType(RToken::STRING))
+         {
+            handleString(cursor, status);
+         }
          
          // Identifiers following identifiers on the same line is
          // illegal (except for else), e.g.

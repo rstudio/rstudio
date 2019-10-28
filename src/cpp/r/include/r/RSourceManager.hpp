@@ -24,7 +24,7 @@
 #include <boost/utility.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {

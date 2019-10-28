@@ -53,8 +53,8 @@ SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP, SEXP metadata)
 bool copyLibFile(const FilePath& from, const FilePath& to,
       const FilePath& path)
 {
-   std::string relativePath = path.relativePath(from);
-   FilePath target = to.complete(relativePath);
+   std::string relativePath = path.getRelativePath(from);
+   FilePath target = to.completePath(relativePath);
 
    if (target.exists())
        return true;
@@ -94,8 +94,8 @@ core::Error HtmlCapture::connectHtmlCapture(
               const json::Object& chunkOptions)
 {
    return r::exec::RFunction(".rs.initHtmlCapture", 
-         string_utils::utf8ToSystem(outputFolder.absolutePath()),
-         string_utils::utf8ToSystem(outputFolder.complete(kChunkLibDir).absolutePath()),
+         string_utils::utf8ToSystem(outputFolder.getAbsolutePath()),
+         string_utils::utf8ToSystem(outputFolder.completePath(kChunkLibDir).getAbsolutePath()),
          chunkOptions).call();
 }
 
@@ -113,7 +113,7 @@ core::Error initHtmlWidgets()
 core::Error mergeLib(const core::FilePath& source, 
                      const core::FilePath& target)
 {
-   Error error = source.childrenRecursive(
+   Error error = source.getChildrenRecursive(
          boost::bind(copyLibFile, source, target, _2));
 
    if (error) return error;

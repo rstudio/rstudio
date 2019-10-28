@@ -21,7 +21,7 @@
 
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <core/system/Xdg.hpp>
@@ -110,7 +110,7 @@ void onDeferredInit(bool newSession)
 {
    r::exec::RFunction loadUserCommands(".rs.loadUserCommands");
    loadUserCommands.addParam("keybindingPath", 
-         core::system::xdg::userConfigDir().complete("keybindings").absolutePath());
+         core::system::xdg::userConfigDir().completePath("keybindings").getAbsolutePath());
          
    Error error = loadUserCommands.call();
    if (error)

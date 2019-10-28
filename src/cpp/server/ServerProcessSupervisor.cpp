@@ -15,7 +15,7 @@
 
 #include <server/ServerProcessSupervisor.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 #include <core/Thread.hpp>
 #include <core/PeriodicCommand.hpp>

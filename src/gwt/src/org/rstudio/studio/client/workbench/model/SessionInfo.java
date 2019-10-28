@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
+import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
@@ -614,6 +615,13 @@ public class SessionInfo extends JavaScriptObject
 
    public final native SessionInitOptions getInitOptions() /*-{
       return this.init_options;
+   }-*/;
+   
+   /**
+    * @return The list of R packages we depend on
+    */
+   public final native DependencyList getPackageDependencies() /*-{
+      return this.package_dependencies;
    }-*/;
    
    /**

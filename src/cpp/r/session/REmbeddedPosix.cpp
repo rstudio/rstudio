@@ -15,7 +15,7 @@
 
 #include <r/RExec.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 

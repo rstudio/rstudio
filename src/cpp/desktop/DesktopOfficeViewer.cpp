@@ -21,7 +21,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 

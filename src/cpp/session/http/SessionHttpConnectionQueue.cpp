@@ -16,7 +16,7 @@
 #include <session/SessionHttpConnectionQueue.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
 #include <core/http/Request.hpp>

@@ -18,7 +18,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
@@ -43,8 +43,8 @@ bool validateUser(const std::string& username,
       return true;
    
    // get the user
-   core::system::user::User user;
-   Error error = userFromUsername(username, &user);
+   core::system::User user;
+   Error error = core::system::User::getUserFromIdentifier(username, user);
    if (error)
    {
       // log the error only if it is unexpected
@@ -56,7 +56,7 @@ bool validateUser(const std::string& username,
    }
 
    // validate minimum user id
-   if (user.userId < minimumUserId)
+   if (user.getUserId() < minimumUserId)
    {
       if (failureWarning)
       {

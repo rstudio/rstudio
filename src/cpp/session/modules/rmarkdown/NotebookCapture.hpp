@@ -16,7 +16,7 @@
 #ifndef SESSION_NOTEBOOK_CAPTURE_HPP
 #define SESSION_NOTEBOOK_CAPTURE_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <boost/noncopyable.hpp>
 #include <string>

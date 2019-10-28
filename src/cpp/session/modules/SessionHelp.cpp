@@ -27,7 +27,7 @@
 #include <boost/iostreams/filter/aggregate.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 
@@ -260,7 +260,7 @@ bool handleLocalHttpUrl(const std::string& url)
 // displaying the manual. Redirect these to the appropriate help event
 bool handleRShowDocFile(const core::FilePath& filePath)
 {
-   std::string absPath = filePath.absolutePath();
+   std::string absPath = filePath.getAbsolutePath();
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
    if (regex_utils::match(absPath, match, manualRegx))
@@ -376,7 +376,7 @@ void setDynamicContentResponse(const std::string& content,
       if (error)
       {
          pResponse->setError(http::status::InternalServerError,
-                             error.code().message());
+                             error.getMessage());
       }
    }
    // otherwise just leave it alone
@@ -688,9 +688,9 @@ SEXP callHandler(const std::string& path,
 
 r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 {
-   FilePath packageDir = rdFilePath.parent().parent();
+   FilePath packageDir = rdFilePath.getParent().getParent();
 
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return r_util::RPackageInfo();
 
@@ -779,7 +779,7 @@ void handleHttpdRequest(const std::string& location,
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
+      core::FilePath cssFile = options().rResourcesPath().completeChildPath("R.css");
       if (cssFile.exists())
       {
          // ignoring the filter parameter here because the only other possible filter 
@@ -806,8 +806,8 @@ void handleHttpdRequest(const std::string& location,
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath(
-                                                      "markdown_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath(
+         "markdown_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -818,7 +818,7 @@ void handleHttpdRequest(const std::string& location,
    // roxygen help
    if (path == "/doc/roxygen_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath("roxygen_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath("roxygen_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -847,7 +847,7 @@ void handleHttpdRequest(const std::string& location,
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
    
    // error returned explicitly by httpd
@@ -942,7 +942,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    }
 
    // form a path to the temporary file
-   FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
+   FilePath tempFilePath = r::session::utils::tempDir().completeChildPath(uri);
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();

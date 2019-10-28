@@ -71,7 +71,7 @@ public:
 
    int resultCount() const
    {
-      return gsl::narrow_cast<int>(files_.size());
+      return gsl::narrow_cast<int>(files_.getSize());
    }
 
    bool isRunning() const
@@ -233,7 +233,7 @@ public:
       if (error)
          return error;
 
-      if (files_.size() != lineNums_.size() || files_.size() != contents_.size())
+      if (files_.getSize() != lineNums_.getSize() || files_.getSize() != contents_.getSize())
       {
          files_.clear();
          lineNums_.clear();
@@ -393,9 +393,9 @@ private:
 
          // update the match state
          if (match[1] == "01")
-            pMatchOn->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
+            pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
          else
-            pMatchOff->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
+            pMatchOff->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
       }
       
       if (inputPos != end)
@@ -421,7 +421,7 @@ private:
       {
          size_t pos=0;
          if ((pos = file->find("~")) != std::string::npos)
-            file->replace(pos, 1, session::options().userHomePath().absolutePath());
+            file->replace(pos, 1, session::options().userHomePath().getAbsolutePath());
       }
       const char* cfile = file->c_str();
       boost::shared_ptr<std::fstream> pStream(new std::fstream);
@@ -440,9 +440,9 @@ private:
             if (currentLine == lineNum)
             {
                size_t linePos = line.find(*pSearch);
-               pReplaceMatchOn->push_back(gsl::narrow_cast<int>(linePos));
-               pReplaceMatchOff->push_back(gsl::narrow_cast<int>(linePos) +
-                                           gsl::narrow_cast<int>(pReplace->size()));
+               pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(linePos)));
+               pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(linePos) +
+                                           gsl::narrow_cast<int>(pReplace->size())));
    
                std::string newLine;
                std::string replaceString(*pReplace);
@@ -545,9 +545,9 @@ private:
                               findResults().replacePattern());
             }
 
-            files.push_back(file);
-            lineNums.push_back(lineNum);
-            contents.push_back(lineContents);
+            files.push_back(json::Value(file));
+            lineNums.push_back(json::Value(lineNum));
+            contents.push_back(json::Value(lineContents));
             matchOns.push_back(matchOn);
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
@@ -561,7 +561,7 @@ private:
          stdOutBuf_.erase(0, nextLineStart);
       }
 
-      if (files.size() > 0)
+      if (files.getSize() > 0)
       {
          json::Object result;
          result["handle"] = handle();
@@ -617,7 +617,7 @@ private:
       findResults().onFindEnd(handle());
       module_context::enqueClientEvent(
             ClientEvent(client_events::kFindOperationEnded, handle()));
-      if (!tempFile_.empty())
+      if (!tempFile_.isEmpty())
          tempFile_.removeIfExists();
    }
 
@@ -648,14 +648,14 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    FilePath gnuGrepPath = session::options().gnugrepPath();
    core::system::addToPath(
             &childEnv,
-            string_utils::utf8ToSystem(gnuGrepPath.absolutePath()));
+            string_utils::utf8ToSystem(gnuGrepPath.getAbsolutePath()));
 #endif
    options.environment = childEnv;
 
    // Put the grep pattern in a file
    FilePath tempFile = module_context::tempFile("rs_grep", "txt");
-   boost::shared_ptr<std::ostream> pStream;
-   Error error = tempFile.open_w(&pStream);
+   std::shared_ptr<std::ostream> pStream;
+   Error error = tempFile.openForWrite(pStream);
    if (error)
       return error;
    std::string encoding = projects::projectContext().hasProject() ?
@@ -682,7 +682,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
                                        ptrGrepOp->createProcessCallbacks();
 
 #ifdef _WIN32
-   shell_utils::ShellCommand cmd(gnuGrepPath.complete("grep"));
+   shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
@@ -703,7 +703,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
    for (json::Value filePattern : filePatterns)
    {
-      cmd << "--include=" + filePattern.get_str();
+      cmd << "--include=" + filePattern.getString();
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
@@ -711,7 +711,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(directory);
-   cmd << string_utils::utf8ToSystem(dirPath.absolutePath());
+   cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
 
    // Clear existing results
    findResults().clear();
@@ -866,7 +866,7 @@ core::Error stopReplace(const json::JsonRpcRequest& request,
 void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
-   json::write(findResults().asJson(), os);
+   findResults().asJson().write(os);
    pSettings->set("find-in-files-state", os.str());
 }
 
@@ -876,13 +876,13 @@ void onResume(const core::Settings& settings)
    if (!state.empty())
    {
       json::Value stateJson;
-      if (!json::parse(state, &stateJson))
+      if (stateJson.parse(state))
       {
          LOG_WARNING_MESSAGE("invalid find results state json");
          return;
       }
 
-      Error error = findResults().readFromJson(stateJson.get_obj());
+      Error error = findResults().readFromJson(stateJson.getObject());
       if (error)
          LOG_ERROR(error);
    }

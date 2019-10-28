@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
@@ -134,15 +134,15 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    
    // Existence of "entrypoint.R" requires a different form of Plumber run command
    bool hasEntrypointFile = false;
-   FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.parent();
+   FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.getParent();
    std::vector<FilePath> children;
-   error = searchFolder.children(&children);
+   error = searchFolder.getChildren(children);
    if (error)
       return error;
 
    for (const auto& child : children)
    {
-      if (!child.isDirectory() && string_utils::toLower(child.filename()) == "entrypoint.r")
+      if (!child.isDirectory() && string_utils::toLower(child.getFilename()) == "entrypoint.r")
       {
          hasEntrypointFile = true;
          break;
@@ -153,7 +153,7 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    {
       // entrypoint.R mode operates on the folder
       if (!plumberPath.isDirectory())
-         plumberPath = plumberPath.parent();
+         plumberPath = plumberPath.getParent();
    }
 
    std::string plumberRunPath = module_context::pathRelativeTo(

@@ -20,7 +20,7 @@
 #include <iostream>
 
 #include <core/collection/Tree.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/FileUtils.hpp>
 

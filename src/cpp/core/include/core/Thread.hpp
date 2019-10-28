@@ -23,7 +23,7 @@
 
 #include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #define LOCK_MUTEX(m)                                                          \

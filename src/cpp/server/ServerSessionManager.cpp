@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -158,7 +158,7 @@ core::system::ProcessConfig sessionProcessConfig(
                         rVersion.number());
    core::system::setenv(&environment,
                         kRStudioDefaultRVersionHome,
-                        rVersion.homeDir().absolutePath());
+                        rVersion.homeDir().getAbsolutePath());
 
    // forward the auth options
    core::system::setenv(&environment,
@@ -188,7 +188,7 @@ core::system::ProcessConfig sessionProcessConfig(
 
    // forward path for session temp dir (used for local stream path)
    environment.push_back(
-         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().absolutePath()));
+         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath()));
 
    // build the config object and return it
    core::system::ProcessConfig config;

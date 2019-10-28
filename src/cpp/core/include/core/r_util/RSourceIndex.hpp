@@ -27,7 +27,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/RegexUtils.hpp>
 

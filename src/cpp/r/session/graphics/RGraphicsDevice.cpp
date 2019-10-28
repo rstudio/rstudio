@@ -20,8 +20,8 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
@@ -455,7 +455,7 @@ SEXP rs_createGD()
          Error error = r::exec::executeString(".rs.newDesktopGraphicsDevice()");
          if (error)
          {
-            std::string msg = error.summary();
+            std::string msg = error.getSummary();
             r::isCodeExecutionError(error, &msg);
             Rf_warning(("Error creating graphics device: " + msg).c_str());
          }
@@ -644,7 +644,7 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    
    // save snaphot file
    error = r::exec::RFunction(".rs.saveGraphics",
-                              string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                              string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
       return error;
 
@@ -662,7 +662,7 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
    
    // restore
    return r::exec::RFunction(".rs.restoreGraphics",
-                             string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                             string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
 }
     
 void copyToActiveDevice()

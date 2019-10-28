@@ -21,7 +21,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -121,9 +121,9 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
    
    // add in the selection ranges
    ListBuilder selectionBuilder(&protect);
-   for (std::size_t i = 0; i < selection.size(); ++i)
+   for (std::size_t i = 0; i < selection.getSize(); ++i)
    {
-      const json::Object& object = selection[i].get_obj();
+      const json::Object& object = selection[i].getObject();
       
       json::Array rangeJson;
       std::string text;
@@ -137,7 +137,7 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
       }
       
       std::vector<int> range;
-      if (!json::fillVectorInt(rangeJson, &range))
+      if (!rangeJson.toVectorInt(range))
       {
          LOG_WARNING_MESSAGE("failed to parse document range");
          continue;
@@ -310,11 +310,11 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
-   error = sshKeyPath.parent().ensureDirectory();
+   error = sshKeyPath.getParent().ensureDirectory();
    if (error)
       return error;
-   FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
-                                             sshKeyPath.stem() + ".pub");
+   FilePath sshPublicKeyPath = sshKeyPath.getParent().completePath(
+                                             sshKeyPath.getStem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
    {
       if (!overwrite)
@@ -369,7 +369,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // add msys_ssh to path
    core::system::addToPath(&childEnv,
-                           session::options().msysSshPath().absolutePath());
+                           session::options().msysSshPath().getAbsolutePath());
 
    options.environment = childEnv;
 #endif
@@ -422,7 +422,7 @@ void editFilePostback(const std::string& file,
    bool succeeded = s_waitForEditCompleted(&request, editEvent);
 
    // cancelled or otherwise didn't succeed
-   if (!succeeded || request.params[0].is_null())
+   if (!succeeded || request.params[0].isNull())
    {
       cont(EXIT_FAILURE, "");
       return;
@@ -464,7 +464,10 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
    // get the file path
    FilePath filePath = module_context::resolveAliasedPath(request.queryParamValue("path"));
-   if (!filePath.exists())
+
+   // treat disallowed paths identically to missing ones so this endpoint cannot be used to probe
+   // for existence
+   if (!filePath.exists() || !module_context::isPathViewAllowed(filePath))
    {
       pResponse->setNotFoundError(request);
       return;

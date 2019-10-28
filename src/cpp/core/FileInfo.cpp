@@ -15,13 +15,13 @@
 
 #include <core/FileInfo.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
 
 FileInfo::FileInfo(const FilePath& filePath, bool isSymlink)
-   :  absolutePath_(filePath.absolutePath()),
+   :  absolutePath_(filePath.getAbsolutePath()),
       isDirectory_(filePath.isDirectory()),
       size_(0),
       lastWriteTime_(0),
@@ -29,8 +29,8 @@ FileInfo::FileInfo(const FilePath& filePath, bool isSymlink)
 {
    if (!isDirectory_ && filePath.exists())
    {
-      size_ = filePath.size();
-      lastWriteTime_ = filePath.lastWriteTime();
+      size_ = filePath.getSize();
+      lastWriteTime_ = filePath.getLastWriteTime();
    }
 }
 

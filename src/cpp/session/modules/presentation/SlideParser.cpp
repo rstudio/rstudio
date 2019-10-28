@@ -21,10 +21,10 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/DcfParser.hpp>
 
@@ -374,7 +374,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
 
 
    // read the slides
-   return readSlides(slides, filePath.parent());
+   return readSlides(slides, filePath.getParent());
 }
 
 Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
@@ -493,7 +493,7 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
    // if the deck is empty then insert a placeholder first slide
    if (slides_.empty())
    {
-      slides_.push_back(Slide(baseDir.filename(),
+      slides_.push_back(Slide(baseDir.getFilename(),
                               std::vector<Slide::Field>(),
                               std::vector<std::string>(),
                               std::string(),

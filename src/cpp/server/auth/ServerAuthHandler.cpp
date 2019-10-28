@@ -400,7 +400,7 @@ Error initialize()
       Error error = rootDir.ensureDirectory();
       if (error)
       {
-         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.absolutePath());
+         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
          return error;
       }
 
@@ -409,14 +409,14 @@ Error initialize()
          error = file_utils::changeOwnership(rootDir, options().serverUser());
          if (error)
          {
-            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.absolutePath());
+            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
             return error;
          }
       }
    }
 
-   s_revocationList = rootDir.childPath("revocation-list");
-   s_revocationLockFile = rootDir.childPath("revocation-list.lock");
+   s_revocationList = rootDir.completeChildPath("revocation-list");
+   s_revocationLockFile = rootDir.completeChildPath("revocation-list.lock");
 
    // create a file lock to gain exclusive access to the revocation list
    boost::shared_ptr<FileLock> lock = FileLock::createDefault();

@@ -38,11 +38,8 @@ set (CORE_SOURCE_FILES
    CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
-   Error.cpp
    Exec.cpp
    FileInfo.cpp
-   FileLogWriter.cpp
-   FilePath.cpp
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
@@ -50,14 +47,11 @@ set (CORE_SOURCE_FILES
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
-   LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
    RecursionGuard.cpp
-   SafeConvert.cpp
    Settings.cpp
-   StderrLogWriter.cpp
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
@@ -81,7 +75,6 @@ set (CORE_SOURCE_FILES
    libclang/TranslationUnit.cpp
    libclang/UnsavedFiles.cpp
    libclang/Utils.cpp
-   json/Json.cpp
    json/JsonRpc.cpp
    http/Cookie.cpp
    http/Header.cpp
@@ -239,7 +232,6 @@ if (UNIX)
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
       r_util/RVersionsPosix.cpp
-      SyslogLogWriter.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
@@ -288,7 +280,6 @@ else()
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-      Win32StringUtils.cpp
       http/NamedPipeProtocol.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
@@ -327,9 +318,13 @@ if(RSTUDIO_ADDINS_PATH)
    endif()
 endif()
 
+set(SHARED_CORE_INCLUDE_DIRS
+   ${SHARED_CORE_SOURCE_DIR}/include)
+
 # include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
+   ${SHARED_CORE_INCLUDE_DIRS}
    ${EXT_SOURCE_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
@@ -342,6 +337,7 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 target_link_libraries(
    rstudio-core
    rstudio-core-hunspell
+   rstudio-shared-core
    ${Boost_LIBRARIES}
    ${CRASHPAD_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
@@ -362,6 +358,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell
+      rstudio-shared-core
       ${Boost_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )

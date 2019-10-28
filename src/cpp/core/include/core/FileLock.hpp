@@ -27,6 +27,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>
 
+#include <core/Log.hpp>
 #include <core/Settings.hpp>
 
 // env var to enable distributed locking mode
@@ -93,7 +94,7 @@ public:
    static bool isLoadBalanced() { return s_isLoadBalanced; }
    static bool isNoLockAvailable(const Error& error)
    {
-      return error.code() == boost::system::errc::no_lock_available;
+      return error == systemError(boost::system::errc::no_lock_available, ErrorLocation());
    }
    
 protected:

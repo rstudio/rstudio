@@ -22,7 +22,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
 namespace rstudio {
@@ -75,7 +75,7 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
                                           = toolsInfo.pathEntries().rbegin();
    for ( ; it != toolsInfo.pathEntries().rend(); ++it)
    {
-      std::string path = it->absolutePath();
+      std::string path = it->getAbsolutePath();
       boost::algorithm::replace_all(path, "/", "\\");
       core::system::addToPath(pTarget, path, true);
    }

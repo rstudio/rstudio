@@ -53,6 +53,7 @@ public:
    RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
+   bool workbenchInitialized();
 
 public Q_SLOTS:
    void quit();
@@ -114,6 +115,7 @@ private:
    bool isRemoteDesktop_;
    bool quitConfirmed_ = false;
    bool geometrySaved_ = false;
+   bool workbenchInitialized_ = false;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;

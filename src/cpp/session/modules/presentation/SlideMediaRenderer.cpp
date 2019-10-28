@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -76,17 +76,17 @@ std::vector<MediaSource> discoverMediaSources(
    }
 
    std::vector<MediaSource> sources;
-   FilePath mediaFile = baseDir.complete(filename);
+   FilePath mediaFile = baseDir.completePath(filename);
    if (mediaFile.exists())
    {
       // get the filename without extension
-      std::string stem = mediaFile.stem();
+      std::string stem = mediaFile.getStem();
       for (std::string fmt : formats)
       {
-         FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
+         FilePath targetPath = mediaFile.getParent().completePath(stem + "." + fmt);
          if (targetPath.exists())
          {
-            std::string file = targetPath.relativePath(baseDir);
+            std::string file = targetPath.getRelativePath(baseDir);
             if (boost::algorithm::starts_with(fmt, "og"))
                fmt = "ogg";
             sources.push_back(MediaSource(file, type + "/" + fmt));
@@ -96,7 +96,7 @@ std::vector<MediaSource> discoverMediaSources(
    else
    {
       module_context::consoleWriteError("Media file " +
-                                        mediaFile.absolutePath() +
+                                           mediaFile.getAbsolutePath() +
                                         " does not exist");
    }
 
@@ -111,9 +111,7 @@ std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
       cmdsArray.push_back(atCmd.asJson());
    }
 
-   std::ostringstream ostr;
-   json::write(cmdsArray, ostr);
-   return ostr.str();
+   return cmdsArray.write();
 }
 
 } // anonymous namespace

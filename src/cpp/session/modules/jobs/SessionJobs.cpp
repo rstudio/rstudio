@@ -15,7 +15,7 @@
 
 #include <string>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/System.hpp>
 
@@ -211,7 +211,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (workingDir.empty())
    {
       // default working dir to parent directory of script
-      workingDir = scriptPath.parent().absolutePath();
+      workingDir = scriptPath.getParent().getAbsolutePath();
    }
 
    FilePath workingDirPath(workingDir);
@@ -226,7 +226,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (jobName.empty())
    {
       // no name was supplied for the job, so derive one from the filename
-      jobName = scriptFilePath.filename();
+      jobName = scriptFilePath.getFilename();
    }
 
    std::string id;
@@ -245,13 +245,13 @@ SEXP rs_stopScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = stopScriptJob(id);
-   if (error.code() == boost::system::errc::no_such_file_or_directory)
+   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
    else if (error)
    {
-      r::exec::error("Error while stopping script job: " + error.summary());
+      r::exec::error("Error while stopping script job: " + error.getSummary());
    }
    return R_NilValue;
 }

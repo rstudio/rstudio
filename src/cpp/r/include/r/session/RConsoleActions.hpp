@@ -20,7 +20,7 @@
 #include <boost/circular_buffer.hpp>
 
 #include <core/BoostThread.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

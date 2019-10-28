@@ -701,7 +701,7 @@ public:
 
    RCommand& operator<<(const core::FilePath& arg)
    {
-      cmdString_ += " " + arg.absolutePath();
+      cmdString_ += " " + arg.getAbsolutePath();
       shellCmd_ << arg;
       return *this;
    }
@@ -849,6 +849,8 @@ std::string websiteOutputDir();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
+
+bool isPathViewAllowed(const core::FilePath& path);
 
 void onBackgroundProcessing(bool isIdle);
 

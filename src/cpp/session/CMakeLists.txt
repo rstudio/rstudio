@@ -108,6 +108,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
+   modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
@@ -295,6 +296,7 @@ endif()
 set(CORE_INCLUDE_DIRS
     ${CORE_SOURCE_DIR}/include
     ${SERVER_CORE_SOURCE_DIR}/include
+    ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # include addins
@@ -388,13 +390,6 @@ add_stripped_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES}
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
    set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
-endif()
-
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rsession PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
 endif()
 
 # set link dependencies
@@ -511,6 +506,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
 
    # JSON schema files
    install(DIRECTORY "resources/schema"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # dependency data
+   install(DIRECTORY "resources/dependencies"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc

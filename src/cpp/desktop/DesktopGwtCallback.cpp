@@ -28,9 +28,9 @@
 #include <QtPrintSupport/QPrinter>
 #include <QtPrintSupport/QPrintPreviewDialog>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/r_util/RUserData.hpp>
@@ -338,15 +338,15 @@ QString GwtCallback::getSaveFileName(const QString& caption,
       if (!defaultExtension.isEmpty())
       {
          FilePath fp(result.toUtf8().constData());
-         if (fp.extension().empty() ||
+         if (fp.getExtension().empty() ||
             (forceDefaultExtension &&
-            (fp.extension() != defaultExtension.toStdString())))
+            (fp.getExtension() != defaultExtension.toStdString())))
          {
             result += defaultExtension;
             FilePath newExtPath(result.toUtf8().constData());
             if (newExtPath.exists())
             {
-               std::string message = "\"" + newExtPath.filename() + "\" already "
+               std::string message = "\"" + newExtPath.getFilename() + "\" already "
                                      "exists. Do you want to overwrite it?";
                if (QMessageBox::Cancel == QMessageBox::warning(
                                         pOwner_->asWidget(),
@@ -945,8 +945,8 @@ void GwtCallback::toggleFullscreenMode()
 
 void GwtCallback::showKeyboardShortcutHelp()
 {
-   FilePath keyboardHelpPath = options().wwwDocsPath().complete("keyboard.htm");
-   QString file = QString::fromUtf8(keyboardHelpPath.absolutePath().c_str());
+   FilePath keyboardHelpPath = options().wwwDocsPath().completePath("keyboard.htm");
+   QString file = QString::fromUtf8(keyboardHelpPath.getAbsolutePath().c_str());
    QUrl url = QUrl::fromLocalFile(file);
    desktop::openUrl(url);
 }
@@ -1182,9 +1182,9 @@ void GwtCallback::openTerminal(QString terminalPath,
    // passed terminalPath because this setting isn't respected
    // on the Mac (we always use Terminal.app)
    FilePath macTermScriptFilePath =
-      desktop::options().scriptsPath().complete("mac-terminal");
+      desktop::options().scriptsPath().completePath("mac-terminal");
    QString macTermScriptPath = QString::fromUtf8(
-         macTermScriptFilePath.absolutePath().c_str());
+         macTermScriptFilePath.getAbsolutePath().c_str());
    QStringList args;
    args.append(desktop::resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);
@@ -1615,20 +1615,20 @@ void GwtCallback::submitLauncherJob(const QJsonObject& job)
    std::string jsonStr = doc.toJson().toStdString();
 
    json::Value val;
-   Error error = json::parse(jsonStr, ERROR_LOCATION, &val);
+   Error error = val.parse(jsonStr);
    if (error)
    {
       // a parse error should not occur here - if it does it indicates a programmer
       // error while invoking this method - as such, forward on the invalid job
       // so the appropriate error event is eventually delivered
-      LOG_ERROR(error);
+      log::logError(error, ERROR_LOCATION);
    }
 
    json::Object obj;
-   if (val.type() == json::ObjectType)
-      obj = val.get_obj();
+   if (val.isObject())
+      obj = val.getObject();
 
-   if (obj.empty())
+   if (obj.isEmpty())
    {
       // same as above - if this is not a valid object, it indicates a programmer error
       LOG_ERROR_MESSAGE("Empty job object submitted");

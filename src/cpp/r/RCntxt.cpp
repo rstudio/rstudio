@@ -22,7 +22,7 @@
 
 #include <boost/make_shared.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 using namespace rstudio::core;
 

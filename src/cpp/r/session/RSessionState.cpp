@@ -19,8 +19,8 @@
 
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/Version.hpp>
 #include <core/Log.hpp>
@@ -77,7 +77,7 @@ bool s_isCompatibleSessionState = true;
 
 Error saveLibPaths(const FilePath& libPathsFile)
 {
-   std::string file = string_utils::utf8ToSystem(libPathsFile.absolutePath());
+   std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
    return r::exec::RFunction(".rs.saveLibPaths", file).call();
 }
 
@@ -86,7 +86,7 @@ Error restoreLibPaths(const FilePath& libPathsFile)
    if (!libPathsFile.exists())
       return Success();
 
-   std::string file = string_utils::utf8ToSystem(libPathsFile.absolutePath());
+   std::string file = string_utils::utf8ToSystem(libPathsFile.getAbsolutePath());
    return r::exec::RFunction(".rs.restoreLibPaths", file).call();
 }
 
@@ -237,7 +237,7 @@ void reportError(const std::string& action,
    core::log::logError(serializationError, location);
    
    // notify end-user
-   std::string report = message + ": " + error.code().message() + "\n";
+   std::string report = message + ": " + error.getMessage() + "\n";
    if (reportFunction)
       reportFunction(report.c_str());
    else
@@ -295,7 +295,7 @@ void initSaveContext(const FilePath& statePath,
    }
 
    // init session settings
-   error = pSettings->initialize(statePath.complete(kSettingsFile));
+   error = pSettings->initialize(statePath.completePath(kSettingsFile));
    if (error)
    {
       reportError(kSaving, kSettingsFile, error, ERROR_LOCATION);
@@ -308,7 +308,7 @@ void saveWorkingContext(const FilePath& statePath,
                         bool* pSaved)
 {
    // save history
-   FilePath historyPath = statePath.complete(kHistoryFile);
+   FilePath historyPath = statePath.completePath(kHistoryFile);
    Error error = consoleHistory().saveToFile(historyPath);
    if (error)
    {
@@ -326,7 +326,7 @@ void saveWorkingContext(const FilePath& statePath,
    pSettings->set(kWorkingDirectory, workingDirectory);
 
    // save console actions
-   FilePath consoleActionsPath = statePath.complete(kConsoleActionsFile);
+   FilePath consoleActionsPath = statePath.completePath(kConsoleActionsFile);
    error = consoleActions().saveToFile(consoleActionsPath);
    if (error)
    {
@@ -357,7 +357,7 @@ bool save(const FilePath& statePath,
    settings.set(kRProfileOnRestore, !excludePackages || packratModeOn);
    
    // save r version
-   Error error = saveRVersion(statePath.complete(kRVersion));
+   Error error = saveRVersion(statePath.completePath(kRVersion));
    if (error)
    {
       reportError(kSaving, kRVersion, error, ERROR_LOCATION);
@@ -365,7 +365,7 @@ bool save(const FilePath& statePath,
    }
 
    // save environment variables
-   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   error = saveEnvironmentVars(statePath.completePath(kEnvironmentVars));
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
@@ -385,7 +385,7 @@ bool save(const FilePath& statePath,
    }
    else
    {
-      error = graphics::plotManager().serialize(statePath.complete(kPlotsDir));
+      error = graphics::plotManager().serialize(statePath.completePath(kPlotsDir));
       if (error)
       {
          reportError(kSaving, kPlotsDir, error, ERROR_LOCATION);
@@ -399,7 +399,7 @@ bool save(const FilePath& statePath,
    saveDevMode(&settings);
 
    // save libpaths
-   error = saveLibPaths(statePath.complete(kLibPathsFile));
+   error = saveLibPaths(statePath.completePath(kLibPathsFile));
    if (error)
    {
       reportError(kSaving, kLibPathsFile, error, ERROR_LOCATION);
@@ -407,7 +407,7 @@ bool save(const FilePath& statePath,
    }
 
    // save options 
-   error = r::options::saveOptions(statePath.complete(kOptionsFile));
+   error = r::options::saveOptions(statePath.completePath(kOptionsFile));
    if (error)
    {
       reportError(kSaving, kOptionsFile, error, ERROR_LOCATION);
@@ -498,7 +498,7 @@ bool getBoolSetting(const core::FilePath& statePath,
                     bool defaultValue)
 {
    Settings settings ;
-   Error error = settings.initialize(statePath.complete(kSettingsFile));
+   Error error = settings.initialize(statePath.completePath(kSettingsFile));
    if (error)
    {
       LOG_ERROR(error);
@@ -535,7 +535,7 @@ Error deferredRestore(const FilePath& statePath, bool serverMode)
    }
    else
    {
-      FilePath plotsDir = statePath.complete(kPlotsDir);
+      FilePath plotsDir = statePath.completePath(kPlotsDir);
       if (plotsDir.exists())
          return graphics::plotManager().deserialize(plotsDir);
       else
@@ -551,7 +551,7 @@ bool validateRestoredRVersion(const FilePath& filePath)
    
    // assume we're okay if no file exists
    if (!filePath.exists())
-      return Success();
+      return !!Success();
    
    // read version from file
    std::string suspendedRVersion;
@@ -559,7 +559,7 @@ bool validateRestoredRVersion(const FilePath& filePath)
             filePath,
             &suspendedRVersion);
    if (error)
-      return error;
+      return !!error;
    suspendedRVersion = core::string_utils::trimWhitespace(suspendedRVersion);
    s_suspendedRVersion = suspendedRVersion;
    
@@ -567,7 +567,7 @@ bool validateRestoredRVersion(const FilePath& filePath)
    std::string activeRVersion;
    error = RFunction(".rs.rVersionString").call(&activeRVersion);
    if (error)
-      return error;
+      return !!error;
    activeRVersion = core::string_utils::trimWhitespace(activeRVersion);
    s_activeRVersion = activeRVersion;
    
@@ -595,16 +595,16 @@ bool restore(const FilePath& statePath,
    
    // detect incompatible r version (don't restore some parts of session state
    // in this case as it could cause a crash on startup)
-   s_isCompatibleSessionState = validateRestoredRVersion(statePath.complete(kRVersion));
+   s_isCompatibleSessionState = validateRestoredRVersion(statePath.completePath(kRVersion));
    
    // init session settings (used below)
    Settings settings ;
-   error = settings.initialize(statePath.complete(kSettingsFile));
+   error = settings.initialize(statePath.completePath(kSettingsFile));
    if (error)
       reportError(kRestoring, kSettingsFile, error, ERROR_LOCATION, er);
    
    // restore console actions
-   FilePath consoleActionsPath = statePath.complete(kConsoleActionsFile);
+   FilePath consoleActionsPath = statePath.completePath(kConsoleActionsFile);
    error = consoleActions().loadFromFile(consoleActionsPath);
    if (error)
       reportError(kRestoring, kConsoleActionsFile, error, ERROR_LOCATION, er);
@@ -617,7 +617,7 @@ bool restore(const FilePath& statePath,
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    
    // restore options
-   FilePath optionsPath = statePath.complete(kOptionsFile);
+   FilePath optionsPath = statePath.completePath(kOptionsFile);
    if (optionsPath.exists())
    {
       error = r::options::restoreOptions(optionsPath);
@@ -631,7 +631,7 @@ bool restore(const FilePath& statePath,
       bool packratModeOn = settings.getBool(kPackratModeOn, false);
       if (!packratModeOn)
       {
-         error = restoreLibPaths(statePath.complete(kLibPathsFile));
+         error = restoreLibPaths(statePath.completePath(kLibPathsFile));
          if (error)
             reportError(kRestoring, kLibPathsFile, error, ERROR_LOCATION, er);
       }
@@ -649,13 +649,13 @@ bool restore(const FilePath& statePath,
    client_metrics::restore(settings);
 
    // restore history
-   FilePath historyFilePath = statePath.complete(kHistoryFile);
+   FilePath historyFilePath = statePath.completePath(kHistoryFile);
    error = consoleHistory().loadFromFile(historyFilePath, false);
    if (error)
       reportError(kRestoring, kHistoryFile, error, ERROR_LOCATION, er);
 
    // restore environment vars
-   error = restoreEnvironmentVars(statePath.complete(kEnvironmentVars));
+   error = restoreEnvironmentVars(statePath.completePath(kEnvironmentVars));
    if (error)
       reportError(kRestoring, kEnvironmentVars, error, ERROR_LOCATION, er);
 

@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <r/RSexp.hpp>
 
 namespace rstudio {

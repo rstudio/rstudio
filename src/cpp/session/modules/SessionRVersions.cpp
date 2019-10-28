@@ -41,7 +41,7 @@ void syncRVersionPref()
                                              kSessionSharedStoragePath)));
 
    auto value = prefs::userPrefs().readValue(kDefaultRVersion);
-   if (!value || value->type() != json::ObjectType)
+   if (!value || value->getType() != json::Type::OBJECT)
    {
       // No work to do if preference isn't actually defined
       return;
@@ -49,7 +49,7 @@ void syncRVersionPref()
 
    // Load values from prefs
    std::string version, home, label;
-   Error error = json::readObject(value->get_obj(), 
+   Error error = json::readObject(value->getObject(),
          kDefaultRVersionVersion, &version,
          kDefaultRVersionRHome,   &home,
          kDefaultRVersionLabel,   &label);

@@ -16,7 +16,7 @@
 #ifndef SESSION_NOTEBOOK_QUEUE_HPP
 #define SESSION_NOTEBOOK_QUEUE_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

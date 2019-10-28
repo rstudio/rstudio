@@ -913,33 +913,29 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
 SEXP create(const core::json::Value& value, Protect* pProtect)
 {
    // call embedded create function based on type
-   if (value.type() == core::json::StringType)
+   if (value.getType() == core::json::Type::STRING)
    {
-      return create(value.get_str(), pProtect);
+      return create(value.getString(), pProtect);
    }
-   else if (value.type() == core::json::IntegerType)
+   else if (value.getType() == core::json::Type::INTEGER)
    {
-      return create(value.get_int(), pProtect);
+      return create(value.getInt(), pProtect);
    }
-   else if (value.type() == core::json::RealType)
+   else if (value.getType() == core::json::Type::REAL)
    {
-      return create(value.get_real(), pProtect);
+      return create(value.getDouble(), pProtect);
    }
-   else if (value.type() == core::json::BooleanType)
+   else if (value.getType() == core::json::Type::BOOL)
    {
-      return create(value.get_bool(), pProtect);
+      return create(value.getBool(), pProtect);
    }
-   else if (value.type() == core::json::ArrayType)
+   else if (value.getType() == core::json::Type::ARRAY)
    {
-      return create(value.get_array(), pProtect);
+      return create(value.getArray(), pProtect);
    }
-   else if (value.type() == core::json::ObjectType)
+   else if (value.getType() == core::json::Type::OBJECT)
    {
-      return create(value.get_obj(), pProtect);
-   }
-   else if (value.is_null())
-   {
-      return R_NilValue;
+      return create(value.getObject(), pProtect);
    }
    else
    {
@@ -988,10 +984,10 @@ SEXP create(const core::json::Array& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP;
-   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.size()));
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // add each array element to it
-   for (size_t i=0; i<value.size(); i++)
+   for (size_t i=0; i<value.getSize(); i++)
    {
       SEXP valueSEXP = create(value[i], pProtect);
       SET_VECTOR_ELT(listSEXP, i,  valueSEXP);
@@ -1003,21 +999,21 @@ SEXP create(const core::json::Object& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP ;
-   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.size()));
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // build list of names
    SEXP namesSEXP ;
-   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.size()));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.getSize()));
    
    // add each object field to it
    int index = 0;
-   for (const core::json::Member& member : value)
+   for (const core::json::Object::Member& member : value)
    {
       // set name
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.name().c_str()));
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.getName().c_str()));
       
       // set value
-      SEXP valueSEXP = create(member.value(), pProtect);
+      SEXP valueSEXP = create(member.getValue(), pProtect);
       SET_VECTOR_ELT(listSEXP, index,  valueSEXP);
       
       // increment element index

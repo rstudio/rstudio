@@ -16,7 +16,7 @@
 #ifndef R_JSON_HPP
 #define R_JSON_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 typedef struct SEXPREC *SEXP;
 
