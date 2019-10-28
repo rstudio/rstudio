@@ -4401,6 +4401,7 @@ public class RemoteServer implements Server
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString filePatterns,
+                               int searchResults,
                                String replaceString,
                                boolean replaceRegex,
                                boolean gitIgnore,
@@ -4413,9 +4414,10 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(4, new JSONArray(filePatterns));
-      params.set(5, new JSONString(replaceString));
-      params.set(6, JSONBoolean.getInstance(replaceRegex));
-      params.set(7, JSONBoolean.getInstance(gitIgnore));
+      params.set(5, new JSONNumber(searchResults));
+      params.set(6, new JSONString(replaceString));
+      params.set(7, JSONBoolean.getInstance(replaceRegex));
+      params.set(8, JSONBoolean.getInstance(gitIgnore));
 
       sendRequest(RPC_SCOPE, "complete_replace", params, requestCallback);
    }

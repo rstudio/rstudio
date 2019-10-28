@@ -14,8 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find.events;
 
-import org.rstudio.studio.client.workbench.views.output.find.model.LocalReplaceProgress;
-
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -26,25 +25,35 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       void onReplaceProgress(ReplaceProgressEvent event);
    }
    
-   // constructor used when there's no progress
-   public ReplaceProgressEvent()
+   public static class Data extends JavaScriptObject
    {
-      progress_ = null;
+      protected Data()
+      {
+      }
+
+      public native final int getMax() /*-{
+         return this.max;
+      }-*/;
+
+      public native final int getUnits() /*-{
+         return this.units;
+      }-*/;
+   }
+
+   public ReplaceProgressEvent(int max, int units)
+   {
+      max_ = max;
+      units_ = units;
    }
    
-   public ReplaceProgressEvent(LocalReplaceProgress progress)
+   public int units()
    {
-      progress_ = progress;
+      return units_;
    }
-   
-   public boolean hasProgress()
+
+   public int max()
    {
-      return progress_ != null;
-   }
-   
-   public LocalReplaceProgress progress()
-   {
-      return progress_;
+      return max_;
    }
 
    @Override
@@ -59,7 +68,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       handler.onReplaceProgress(this);
    }
    
-   private final LocalReplaceProgress progress_;
-
    public static final Type<Handler> TYPE = new Type<Handler>();
+   private int max_;
+   private int units_;
 }

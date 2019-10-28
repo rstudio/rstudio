@@ -198,6 +198,7 @@ extern const int kRequestDocumentCloseCompleted;
 extern const int kExecuteAppCommand;
 extern const int kUserStateChanged;
 extern const int kReplaceResult;
+extern const int kReplaceUpdated;
 }
    
 class ClientEvent

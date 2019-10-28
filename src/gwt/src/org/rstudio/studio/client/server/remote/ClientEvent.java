@@ -71,6 +71,7 @@ class ClientEvent extends JavaScriptObject
    public static final String SynctexEditFile = "synctex_edit_file";
    public static final String FindResult = "find_result";
    public static final String ReplaceResult = "replace_result";
+   public static final String ReplaceProgress = "replace_updated";
    public static final String FindOperationEnded = "find_operation_ended";
    public static final String RPubsUploadStatus = "rpubs_upload_status";
    public static final String BuildStarted = "build_started";

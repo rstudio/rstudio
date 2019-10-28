@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -51,7 +52,6 @@ import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResul
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
-import org.rstudio.studio.client.workbench.views.output.find.model.LocalReplaceProgress;
 
 import java.util.ArrayList;
 
@@ -89,7 +89,7 @@ public class FindOutputPresenter extends BasePresenter
       HasClickHandlers getStopReplaceButton();
       void setStopReplaceButtonVisible(boolean visible);
 
-      void showProgress(LocalReplaceProgress progress);
+      ProgressBar getProgress();
    }
 
    @Inject
@@ -151,6 +151,8 @@ public class FindOutputPresenter extends BasePresenter
             view_.addMatches(event.getResults());
 
             view_.ensureVisible(true);
+
+            dialogState_.setResultsCount(event.getResults().size());
          }
       });
 
@@ -231,6 +233,7 @@ public class FindOutputPresenter extends BasePresenter
                                     !dialogState_.isCaseSensitive(),
                                     searchPath,
                                     filePatterns,
+                                    dialogState_.getResultsCount(),
                                     view_.getReplaceText(),
                                     view_.isReplaceRegex(),
                                     view_.useGitIgnore(),
@@ -255,6 +258,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onReplaceProgress(ReplaceProgressEvent event)
          {
             Debug.logToConsole("Replace progress event");
+            view_.getProgress().setProgress(event.units(), event.max());
          }
       });
 

@@ -151,6 +151,7 @@ import org.rstudio.studio.client.workbench.views.output.data.model.DataOutputRes
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.events.LintEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
@@ -463,6 +464,11 @@ public class ClientEventDispatcher
             ReplaceResultEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ReplaceResultEvent(
                    data.getHandle(), data.getResults().toArrayList()));
+         }
+         else if (type == ClientEvent.ReplaceProgress)
+         {
+            ReplaceProgressEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ReplaceProgressEvent(data.getMax(), data.getUnits()));
          }
          else if (type == ClientEvent.RPubsUploadStatus)
          {

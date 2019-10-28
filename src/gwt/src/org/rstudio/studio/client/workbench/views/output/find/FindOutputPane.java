@@ -43,7 +43,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
-import org.rstudio.studio.client.workbench.views.output.find.model.LocalReplaceProgress;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
 import java.util.ArrayList;
@@ -481,10 +480,11 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void showProgress(LocalReplaceProgress progress)
+   public ProgressBar getProgress()
    {
-      replaceProgress_.setVisible(true);
+      return replaceProgress_;
    }
+
 
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;

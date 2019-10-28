@@ -48,6 +48,7 @@ public interface FindInFilesServerOperations
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString filePatterns,
+                        int searchResults,
                         String replaceString,
                         boolean replaceRegex,
                         boolean gitIgnore,

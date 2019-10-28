@@ -62,7 +62,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
-            filePatterns: filePatterns
+            filePatterns: filePatterns,
+            resultsCount: 0
          };
       }-*/;
 
@@ -92,6 +93,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       private native JsArrayString getFilePatternsNative() /*-{
          return this.filePatterns;
       }-*/;
+
+      public native final void setResultsCount(int count) /*-{
+         this.resultsCount = count;
+      }-*/;
+
+      public native final int getResultsCount() /*-{
+         return this.resultsCount;
+      }-*/;
+
    }
 
    public FindInFilesDialog(OperationWithInput<State> operation)
