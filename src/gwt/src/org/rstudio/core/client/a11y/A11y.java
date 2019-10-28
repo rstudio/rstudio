@@ -14,10 +14,13 @@
  */
 package org.rstudio.core.client.a11y;
 
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 /**
  * Accessibility helpers including newer ARIA stuff not included with GWT
@@ -99,5 +102,71 @@ public class A11y
    public static void setARIAHidden(Element el)
    {
       el.setAttribute("aria-hidden", "true");
+   }
+
+   /**
+    * Mark as widget as an aria-live alert
+    *
+    * @param widget
+    * @param assertive
+    */
+   public static void setAlertRole(Widget widget, boolean assertive)
+   {
+      setAlertRole(widget.getElement(), assertive);
+   }
+
+   /**
+    * Mark an element as an aria-live alert
+    *
+    * @param el
+    * @param assertive
+    */
+   public static void setAlertRole(Element el, boolean assertive)
+   {
+      Roles.getAlertRole().set(el);
+      Roles.getAlertRole().setAriaLiveProperty(el, assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
+      Roles.getAlertRole().setAriaAtomicProperty(el, true);
+   }
+
+   /**
+    * Mark a widget as an aria-live status
+    * @param widget
+    * @param assertive
+    */
+   public static void setStatusRole(Widget widget, boolean assertive)
+   {
+      setStatusRole(widget.getElement(), assertive);
+   }
+
+   /**
+    * Mark as widget as an aria-live status
+    * @param el
+    * @param assertive
+    */
+   public static void setStatusRole(Element el, boolean assertive)
+   {
+      Roles.getStatusRole().set(el);
+      Roles.getAlertRole().setAriaLiveProperty(el, assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
+      Roles.getAlertRole().setAriaAtomicProperty(el, true);
+   }
+
+   public static void setVisuallyHidden(Widget widget)
+   {
+      setVisuallyHidden(widget.getElement());
+   }
+
+   public static void setVisuallyHidden(Element el)
+   {
+      el.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
+   }
+
+   public static void unsetVisuallyHidden(Widget widget)
+   {
+      setVisuallyHidden(widget.getElement());
+   }
+
+   public static void unsetlVisuallyHidden(Element el)
+   {
+      el.removeClassName(ThemeStyles.INSTANCE.visuallyHidden());
    }
 }

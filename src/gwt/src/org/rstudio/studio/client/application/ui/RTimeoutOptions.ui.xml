@@ -9,7 +9,7 @@
    
    .warning
    {
-      font-weight: 300;
+      font-weight: 400;
       margin-top: 10px;
       margin-bottom: 10px;
    }
@@ -21,7 +21,7 @@
       border: none;
       border-radius: 4px;
       color: white;
-      background-color: #a0a0a0;
+      background-color: #767676;
       padding-top: 3px;
       padding-bottom: 3px;
       padding-left: 6px;
@@ -37,7 +37,8 @@
    }
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
-      <g:Label styleName="{style.warning}" text="R is taking longer to start than usual."></g:Label>
+      <g:Label styleName="{style.warning}" text="R is taking longer to start than usual."
+               ui:field="visibleMsg_"></g:Label>
       <g:VerticalPanel>
          <g:HorizontalPanel>
             <g:Button text="Reload" ui:field="reload_"></g:Button>
