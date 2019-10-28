@@ -73,7 +73,7 @@ public class FindOutputPane extends WorkbenchPane
 
       FindOutputResources resources = GWT.create(FindOutputResources.class);
       viewReplaceButton_ = new ToolbarButton("Replace", "Replace",
-                                             resources.collapseReplaceIcon());
+                                             resources.expandReplaceIcon());
       toolbar.addRightWidget(viewReplaceButton_);
       viewReplaceButton_.addClickHandler(new ClickHandler()
       {

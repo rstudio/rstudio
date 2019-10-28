@@ -217,7 +217,6 @@ public class FindResult extends JavaScriptObject
 
    public final SafeHtml getLineReplaceHTML()
    {
-      Debug.logToConsole("getLineReplaceHTML");
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
       ArrayList<Integer> on = getMatchOns();
@@ -238,7 +237,6 @@ public class FindResult extends JavaScriptObject
             parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
       }
 
-      Debug.logToConsole("parts.size(): " + parts.size());
       String line = getLineValue();
 
       // Use a counter to ensure tags are balanced.
