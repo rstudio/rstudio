@@ -162,10 +162,10 @@ public class A11y
 
    public static void unsetVisuallyHidden(Widget widget)
    {
-      setVisuallyHidden(widget.getElement());
+      unsetVisuallyHidden(widget.getElement());
    }
 
-   public static void unsetlVisuallyHidden(Element el)
+   public static void unsetVisuallyHidden(Element el)
    {
       el.removeClassName(ThemeStyles.INSTANCE.visuallyHidden());
    }

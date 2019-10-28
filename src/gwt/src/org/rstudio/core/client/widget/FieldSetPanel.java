@@ -72,7 +72,7 @@ public class FieldSetPanel extends SimplePanel implements HasOneWidget
       if (hidden)
          A11y.setVisuallyHidden(legendElement_);
       else
-         A11y.unsetlVisuallyHidden(legendElement_);
+         A11y.unsetVisuallyHidden(legendElement_);
    }
 
    private Element legendElement_;
