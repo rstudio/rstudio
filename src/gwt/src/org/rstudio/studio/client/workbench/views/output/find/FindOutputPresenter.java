@@ -89,6 +89,8 @@ public class FindOutputPresenter extends BasePresenter
       HasClickHandlers getStopReplaceButton();
       void setStopReplaceButtonVisible(boolean visible);
 
+      void showProgress();
+      void hideProgress();
       ProgressBar getProgress();
    }
 
@@ -258,6 +260,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onReplaceProgress(ReplaceProgressEvent event)
          {
             Debug.logToConsole("Replace progress event");
+            view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
          }
       });
@@ -281,6 +284,7 @@ public class FindOutputPresenter extends BasePresenter
             view_.clearMatches();
             view_.addMatches(results);
             view_.toggleReplaceMode();
+            view_.hideProgress();
             
             view_.ensureVisible(true);
          }

@@ -170,6 +170,7 @@ public class FindOutputPane extends WorkbenchPane
 
       replaceProgress_ = new ProgressBar();
       replaceProgress_.setHeight("10px");
+      replaceProgress_.setWidth("210px");
       replaceProgress_.setVisible(false);
       replaceToolbar_.addLeftWidget(replaceProgress_);
 
@@ -485,7 +486,20 @@ public class FindOutputPane extends WorkbenchPane
       return replaceProgress_;
    }
 
+   @Override
+   public void showProgress()
+   {
+      if (!replaceProgress_.isVisible())
+         replaceProgress_.setVisible(true);
+   }
 
+   @Override
+   public void hideProgress()
+   {
+      if (replaceProgress_.isVisible())
+         replaceProgress_.setVisible(false);
+   }
+   
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;

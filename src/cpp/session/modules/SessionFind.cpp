@@ -57,7 +57,9 @@ public:
       units_ = 0;
       max_ = max;
       updateFrequency_ = updateFrequency;
-      updateIncrement_ = (updateFrequency * max_) / 100;
+      updateIncrement_ = (double)(updateFrequency * max_) / 100;
+      if (updateIncrement_ < 1)
+         updateIncrement_ = 1;
       nextUpdate_ = updateIncrement_;
    }
 
@@ -100,7 +102,7 @@ private:
    int units_;
    int max_;
    int updateFrequency_;
-   int updateIncrement_;
+   double updateIncrement_;
    int nextUpdate_;
 };
 
