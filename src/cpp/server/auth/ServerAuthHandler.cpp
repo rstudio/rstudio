@@ -59,7 +59,16 @@ boost::posix_time::ptime cookieExpiration(const std::string& cookie)
       std::string expirationStr = http::util::urlDecode(expiration);
       return http::util::parseHttpDate(expirationStr);
    }
-
+   core::Error initialize();
+   core::Error isUserLicensed(const std::string& username,
+                              bool* pLicensed);
+   bool isUserListCookieValid(const std::string& cookieValue);
+   bool shouldShowUserLicenseWarning();
+   std::string getUserListCookieValue();
+   unsigned int getActiveUserCount();
+   core::json::Array getLicensedUsers();
+   core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
+   core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
    return boost::posix_time::second_clock::universal_time();
 }
 
@@ -155,6 +164,50 @@ Error initialize()
    return Success();
 }
 
+Error isUserLicensed(const std::string& username,
+                     bool* pLicensed)
+{
+   *pLicensed = true;
+   return Success();
+}
+
+bool isUserListCookieValid(const std::string& cookieValue)
+{
+   return true;
+}
+
+bool shouldShowUserLicenseWarning()
+{
+   return false;
+}
+
+std::string getUserListCookieValue()
+{
+   return "9c16856330a7400cbbbba228392a5d83";
+}
+
+unsigned int getActiveUserCount()
+{
+   return 0;
+}
+
+json::Array getLicensedUsers()
+{
+   return json::Array();
+}
+
+Error lockUser(boost::asio::io_service& ioService,
+               const std::string& username)
+{
+   return Success();
+}
+
+Error unlockUser(boost::asio::io_service& ioService,
+                 const std::string& username)
+{
+   return Success();
+}
+
 } // namespace overlay
 
 void onCookieRevoked(const std::string& cookie)
@@ -175,10 +228,17 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
 }
 
 std::string getUserIdentifier(const core::http::Request& request,
+                              bool requireUserListCookie,
                               http::Response* pResponse)
 {
    if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
       return std::string();
+
+   if (requireUserListCookie)
+   {
+      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie)))
+         return std::string();
+   }
 
    return s_handler.getUserIdentifier(request, pResponse);
 }

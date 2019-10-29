@@ -43,10 +43,12 @@ class UriHandler
 public:
    UriHandler(SecureUriHandlerFunctionEx handlerFunction,
               http::UriHandlerFunction unauthorizedResponseFunction,
-              bool refreshAuthCookies)
+              bool refreshAuthCookies,
+              bool requireUserListCookie)
    : handlerFunction_(handlerFunction),
      unauthorizedResponseFunction_(unauthorizedResponseFunction),
-     refreshAuthCookies_(refreshAuthCookies)
+     refreshAuthCookies_(refreshAuthCookies),
+     requireUserListCookie_(requireUserListCookie)
    {
    }
    
@@ -55,7 +57,7 @@ public:
    // provide http::UriHandlerFunction concept
    void operator()(const http::Request& request, http::Response *pResponse)
    {
-      std::string userIdentifier = handler::getUserIdentifier(request, pResponse);
+      std::string userIdentifier = handler::getUserIdentifier(request, requireUserListCookie_, pResponse);
       if (userIdentifier.empty())
       {
          unauthorizedResponseFunction_(request, pResponse);
@@ -77,6 +79,7 @@ private:
    SecureUriHandlerFunctionEx handlerFunction_;
    http::UriHandlerFunction unauthorizedResponseFunction_;
    bool refreshAuthCookies_;
+   bool requireUserListCookie_;
 };
 
 class AsyncUriHandler
@@ -85,10 +88,12 @@ public:
    AsyncUriHandler(
             SecureAsyncUriHandlerFunctionExVariant handlerFunction,
             http::AsyncUriHandlerFunction unauthorizedResponseFunction,
-            bool refreshAuthCookies)
+            bool refreshAuthCookies,
+            bool requireUserListCookie)
    : handlerFunction_(handlerFunction),
      unauthorizedResponseFunction_(unauthorizedResponseFunction),
-     refreshAuthCookies_(refreshAuthCookies)
+     refreshAuthCookies_(refreshAuthCookies),
+     requireUserListCookie_(requireUserListCookie)
    {
    }
 
@@ -100,6 +105,7 @@ public:
       handlerFunction_ = other.handlerFunction_;
       unauthorizedResponseFunction_ = other.unauthorizedResponseFunction_;
       refreshAuthCookies_ = other.refreshAuthCookies_;
+      requireUserListCookie_ = other.requireUserListCookie_;
 
       // do not copy cached user identifiers
    }
@@ -181,6 +187,7 @@ private:
       if (userIdentifier_.empty() || username_.empty())
       {
          userIdentifier_ = handler::getUserIdentifier(pConnection->request(),
+                                                      requireUserListCookie_,
                                                       &pConnection->response());
          if (userIdentifier_.empty())
          {
@@ -219,6 +226,7 @@ private:
    SecureAsyncUriHandlerFunctionExVariant handlerFunction_;
    http::AsyncUriHandlerFunction unauthorizedResponseFunction_;
    bool refreshAuthCookies_;
+   bool requireUserListCookie_;
    std::string username_;
    std::string userIdentifier_;
 };
@@ -263,12 +271,19 @@ SecureAsyncUriHandlerFunctionEx makeExtendedAsyncUriHandler(SecureAsyncUriHandle
 } // anonymous namespace
    
 http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
-                                           bool authenticate)
+                                           bool authenticate,
+                                           bool requireUserListCookie)
 {
    if (authenticate)
-      return UriHandler(makeExtendedUriHandler(handler), auth::handler::signInThenContinue, true);
+      return UriHandler(makeExtendedUriHandler(handler),
+                        auth::handler::signInThenContinue,
+                        true,
+                        requireUserListCookie);
    else
-      return UriHandler(makeExtendedUriHandler(handler), setHttpError, true);
+      return UriHandler(makeExtendedUriHandler(handler),
+                        setHttpError,
+                        true,
+                        requireUserListCookie);
 }
 
 http::UriHandlerFunction secureJsonRpcHandler(
@@ -278,48 +293,53 @@ http::UriHandlerFunction secureJsonRpcHandler(
    // (since many of them are invoked automatically on timers)
    // therefore, auth refresh is handled in the session proxy, before the request
    // is forwarded to the actual session
-   return UriHandler(makeExtendedUriHandler(handler), setJsonRpcError, false);
+   return UriHandler(makeExtendedUriHandler(handler), setJsonRpcError, false, true);
 }
 
 http::UriHandlerFunction secureJsonRpcHandlerEx(
                                        SecureUriHandlerFunctionEx handler)
 {
-   return UriHandler(handler, setJsonRpcError, false);
+   return UriHandler(handler, setJsonRpcError, false, true);
 }
 
 http::UriHandlerFunction secureUploadHandler(SecureUriHandlerFunction handler)
 {
-   return UriHandler(makeExtendedUriHandler(handler), setFileUploadError, true);
+   return UriHandler(makeExtendedUriHandler(handler), setFileUploadError, true, true);
 }   
 
 http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
                                     bool authenticate,
-                                    bool refreshAuthCookies)
+                                    bool refreshAuthCookies,
+                                    bool requireUserListCookie)
 {
    if (authenticate)
    {
        // try to recover from auth failure by silently refreshing credentials
        return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
                               auth::handler::refreshCredentialsThenContinue,
-                              refreshAuthCookies);
+                              refreshAuthCookies,
+                              requireUserListCookie);
    }
    else
    {
       return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
                              boost::bind(asyncSetError, setHttpError, _1),
-                             refreshAuthCookies);
+                             refreshAuthCookies,
+                             requireUserListCookie);
    }
 }
 
 http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
                                     http::AsyncUriHandlerFunction unauthorizedResponseFunction,
-                                    bool refreshAuthCookies)
+                                    bool refreshAuthCookies,
+                                    bool requireUserListCookie)
 {
    return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
                           unauthorizedResponseFunction,
-                          refreshAuthCookies);
+                          refreshAuthCookies,
+                          requireUserListCookie);
 }
 
 http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
@@ -327,7 +347,8 @@ http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
 {
    return AsyncUriHandler(makeExtendedAsyncUriHandler(handler),
                           boost::bind(asyncSetError, setJsonRpcError, _1),
-                          false);
+                          false,
+                          true);
 }
 
 http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
@@ -335,7 +356,8 @@ http::AsyncUriHandlerFunction secureAsyncJsonRpcHandlerEx(
 {
    return AsyncUriHandler(handler,
                           boost::bind(asyncSetError, setJsonRpcError, _1),
-                          false);
+                          false,
+                          true);
 }
 
 
@@ -344,6 +366,7 @@ http::AsyncUriUploadHandlerFunction secureAsyncUploadHandler(
 {
    return AsyncUriHandler(handler,
                           boost::bind(asyncSetError, setFileUploadError, _1),
+                          true,
                           true);
 }
 

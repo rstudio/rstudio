@@ -21,6 +21,7 @@
 #define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
 #define kServerTmpDir                 "rstudio-rserver"
 #define kUserIdCookie                 "user-id"
+#define kUserListCookie               "user-list-id"
 #define kPersistAuthCookie            "persist-auth"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
 

@@ -24,6 +24,8 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
+#include <shared_core/json/Json.hpp>
+
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 namespace rstudio {
@@ -38,6 +40,7 @@ extern const char * const kRefreshCredentialsAndContinue;
 
 // functions which can be called on the handler directly
 std::string getUserIdentifier(const core::http::Request& request,
+                              bool requireUserListCookie,
                               core::http::Response* pResponse);
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
@@ -128,6 +131,15 @@ core::Error initialize();
 namespace overlay {
 
 core::Error initialize();
+core::Error isUserLicensed(const std::string& username,
+                           bool* pLicensed);
+bool isUserListCookieValid(const std::string& cookieValue);
+bool shouldShowUserLicenseWarning();
+std::string getUserListCookieValue();
+unsigned int getActiveUserCount();
+core::json::Array getLicensedUsers();
+core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
+core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
 
 } // namespace overlay
 
