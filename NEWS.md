@@ -70,6 +70,7 @@
 * Add preference for compiling .tex files with tinytex (#2788)
 * Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
 * Sort package-installed R Markdown templates alphabetically (#4929)
+* The 'Reopen with Encoding' command now saves unsaved changes before re-opening the document. (#5630)
 
 ### Bugfixes
 
