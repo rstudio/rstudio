@@ -3116,15 +3116,11 @@ public class TextEditingTarget implements
    @Handler
    void onReopenSourceDocWithEncoding()
    {
-      withChooseEncoding(
-            docUpdateSentinel_.getEncoding(),
-            new CommandWithArg<String>()
-            {
-               public void execute(String encoding)
-               {
-                  docUpdateSentinel_.reopenWithEncoding(encoding);
-               }
-            });
+	   saveThenExecute(null, () -> {
+	      withChooseEncoding(
+	            docUpdateSentinel_.getEncoding(),
+	            (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+	   });
    }
 
    @Handler
