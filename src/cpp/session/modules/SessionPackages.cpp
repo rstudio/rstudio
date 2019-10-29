@@ -184,8 +184,14 @@ private:
 void revertCRANMirrorToHTTP()
 {
    prefs::CRANMirror mirror = prefs::userPrefs().getCRANMirror();
+   std::string previous(mirror.url);
    boost::algorithm::replace_first(mirror.url, "https://", "http://");
-   prefs::userPrefs().setCRANMirror(mirror, true);
+   if (previous != mirror.url)
+   {
+      // Only set the value if it's actually changed (to avoid looping back here when we reconcile
+      // the HTTP type for the new value)
+      prefs::userPrefs().setCRANMirror(mirror, true);
+   }
 }
 
 } // anonymous namespace
