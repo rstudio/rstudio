@@ -29,14 +29,17 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.core.client.widget.ProgressBar;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -221,37 +224,51 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            view_.setStopReplaceButtonVisible(true);
-            stopAndClear();
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Replace All",
+                  "Are you sure you wish to permanently replace all? This will replace " +
+                  dialogState_.getResultsCount() + " occurences of " + dialogState_.getQuery() +
+                  ".",
+                  new Operation ()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        view_.setStopReplaceButtonVisible(true);
+                        stopAndClear();
 
-            FileSystemItem searchPath =
-                                      FileSystemItem.createDir(dialogState_.getPath());
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
-            for (String pattern : dialogState_.getFilePatterns())
-               filePatterns.push(pattern);
+                        FileSystemItem searchPath =
+                                                  FileSystemItem.createDir(dialogState_.getPath());
+                        JsArrayString filePatterns = JsArrayString.createArray().cast();
+                        for (String pattern : dialogState_.getFilePatterns())
+                           filePatterns.push(pattern);
 
-            server_.completeReplace(dialogState_.getQuery(),
-                                    dialogState_.isRegex(),
-                                    !dialogState_.isCaseSensitive(),
-                                    searchPath,
-                                    filePatterns,
-                                    dialogState_.getResultsCount(),
-                                    view_.getReplaceText(),
-                                    view_.isReplaceRegex(),
-                                    view_.useGitIgnore(),
-                                    new SimpleRequestCallback<String>()
-                                    {
-                                       @Override
-                                       public void onResponseReceived(String handle)
-                                       {
-                                          currentFindHandle_ = handle;
-                                          updateSearchLabel(dialogState_.getQuery(),
-                                                            dialogState_.getPath(),
-                                                            dialogState_.isRegex());
-                                          view_.setStopReplaceButtonVisible(false);
-                                       }
-                                    });
-         }
+                        server_.completeReplace(dialogState_.getQuery(),
+                                                dialogState_.isRegex(),
+                                                !dialogState_.isCaseSensitive(),
+                                                searchPath,
+                                                filePatterns,
+                                                dialogState_.getResultsCount(),
+                                                view_.getReplaceText(),
+                                                view_.isReplaceRegex(),
+                                                view_.useGitIgnore(),
+                                                new SimpleRequestCallback<String>()
+                                                {
+                                                   @Override
+                                                   public void onResponseReceived(String handle)
+                                                   {
+                                                      currentFindHandle_ = handle;
+                                                      updateSearchLabel(dialogState_.getQuery(),
+                                                                        dialogState_.getPath(),
+                                                                        dialogState_.isRegex());
+                                                      view_.setStopReplaceButtonVisible(false);
+                                                   }
+                                                });
+                     }
+                  },
+                  false);
+        }
       });
 
       events_.addHandler(ReplaceProgressEvent.TYPE, new ReplaceProgressEvent.Handler()
@@ -486,4 +503,5 @@ public class FindOutputPresenter extends BasePresenter
 
    private static final String GROUP_FIND_IN_FILES = "find-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
+   private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
 }
