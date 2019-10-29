@@ -74,6 +74,8 @@ public:
       if (units_ == nextUpdate_)
       {
          nextUpdate_ += updateIncrement_;
+         if (nextUpdate_ > max_)
+            nextUpdate_ = max_;
          notifyClient();
       }
    }
@@ -508,6 +510,7 @@ public:
                ++currentLine;
                if (currentLine == lineNum)
                {
+                  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
                   size_t matchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
                   size_t matchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
                   size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
@@ -571,6 +574,10 @@ public:
                            {
                               size_t difference = pSearch->size() - pReplace->size();
                               newLine.append(" ", difference);
+                           }
+                           else
+                           {
+                              newLine.append("\n");
                            }
                            pStream->write(newLine.c_str(), newLine.size());
                            pStream->flush();
@@ -960,7 +967,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   LocalProgress* progress = new LocalProgress(originalFindCount, 25);
+   LocalProgress* progress = new LocalProgress(originalFindCount, 5);
 
    error = retrieveFindReplaceResponse(pResponse,
          false, true, searchString, replacePattern,

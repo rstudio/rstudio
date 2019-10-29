@@ -172,6 +172,7 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                currentFindHandle_ = null;
+               Debug.logToConsole("1");
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
             }
@@ -217,7 +218,19 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            stopReplace();
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Stop Replace",
+                  "Are you sure you want to cancel the replace? Changes already made will not be reverted.",
+                  new Operation ()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        stopReplace();
+                     }
+                  },
+                  false);
          }
       });
 
@@ -230,7 +243,7 @@ public class FindOutputPresenter extends BasePresenter
                              dialogState_.getResultsCount();
             if (dialogState_.isRegex() ||
                 view_.isReplaceRegex())
-               message += "occurences and cannot be undone.";
+               message += " occurences and cannot be undone.";
             else
                message += " occurences of '" + dialogState_.getQuery() +
                           "' with '" + view_.getReplaceText() +
@@ -244,6 +257,7 @@ public class FindOutputPresenter extends BasePresenter
                      @Override
                      public void execute()
                      {
+                        Debug.logToConsole("2");
                         view_.setStopReplaceButtonVisible(true);
                         stopAndClear();
 
@@ -273,7 +287,6 @@ public class FindOutputPresenter extends BasePresenter
                                                                         dialogState_.isRegex(),
                                                                         view_.getReplaceText(),
                                                                         view_.isReplaceRegex());
-                                                      view_.setStopReplaceButtonVisible(false);
                                                    }
                                                 });
                      }
@@ -305,6 +318,9 @@ public class FindOutputPresenter extends BasePresenter
             // toggle replace mode so matches get added to context
             if (view_.getReplaceMode())
                 view_.toggleReplaceMode();
+
+            Debug.logToConsole("3");
+            view_.setStopReplaceButtonVisible(false);
 
             ArrayList<FindResult> results = event.getResults();
             for (FindResult fr : results)
@@ -508,8 +524,9 @@ public class FindOutputPresenter extends BasePresenter
          server_.stopReplace(currentFindHandle_,
                              new VoidServerRequestCallback());
          currentFindHandle_ = null;
+         Debug.logToConsole("4");
+         view_.setStopReplaceButtonVisible(false);
       }
-      view_.setStopReplaceButtonVisible(false);
    }
 
    private String currentFindHandle_;

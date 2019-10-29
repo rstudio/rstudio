@@ -168,9 +168,10 @@ public class FindOutputPane extends WorkbenchPane
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
       replaceToolbar_.addRightWidget(replaceAllButton_);
 
+      // don't adjust width without considering stop button
       replaceProgress_ = new ProgressBar();
       replaceProgress_.setHeight("10px");
-      replaceProgress_.setWidth("210px");
+      replaceProgress_.setWidth("195px");
       replaceProgress_.setVisible(false);
       replaceToolbar_.addLeftWidget(replaceProgress_);
 
@@ -494,6 +495,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setStopReplaceButtonVisible(boolean visible)
    {
+      Debug.logToConsole("Set Stop Replace Button" + visible);
       stopReplace_.setVisible(visible);
    }
 
