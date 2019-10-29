@@ -53,6 +53,15 @@ class ILogDestination;
 constexpr char s_delim = ';';
 
 /**
+ * @brief Helper function which cleans the log delimiter character from a string.
+ *
+ * @param in_str    The string to be cleaned
+ *
+ * @return The cleaned string.
+ */
+ std::string cleanDelimiters(const std::string& in_str);
+
+/**
  * @brief Enum which represents the level of detail at which to log messages.
  */
 enum class LogLevel

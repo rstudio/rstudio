@@ -25,6 +25,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Logger.hpp>
 #include <shared_core/SafeConvert.hpp>
 
 #ifdef _WIN32
@@ -38,6 +39,9 @@ namespace {
 
 const std::string s_errorExpected = "expected";
 const std::string s_errorExpectedValue = "yes";
+
+constexpr const char* s_occurredAt = "OCCURRED AT";
+constexpr const char* s_causedBy = "CAUSED BY";
 
 } // anonymous namespace
 
@@ -316,19 +320,31 @@ void Error::addProperty(const std::string& in_name, int in_value)
 std::string Error::asString() const
 {
    std::ostringstream ostr;
-   ostr << getSummary();
+   std::ostringstream errorStream;
+   errorStream << getSummary();
    auto& props = getProperties();
    if (!props.empty())
    {
-      ostr << " [";
+      errorStream << " [";
       for (size_t i = 0; i < props.size(); i++)
       {
-         ostr << props[i].first << ": " << props[i].second;
+         errorStream << props[i].first << ": " << props[i].second;
          if (i < props.size() - 1)
-            ostr << ", ";
+            errorStream << ", ";
       }
-      ostr << "] at " << getLocation().asString();
+      errorStream << "]";
    }
+
+   ostr << log::cleanDelimiters(errorStream.str());
+
+   ostr << log::s_delim << " " << s_occurredAt << " "
+        << log::cleanDelimiters(getLocation().asString());
+
+   if (getCause())
+   {
+      ostr << log::s_delim << " " << s_causedBy << ": " << getCause().asString();
+   }
+
    return ostr.str();
 }
 

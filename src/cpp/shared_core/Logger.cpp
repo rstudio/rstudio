@@ -42,9 +42,7 @@ typedef std::map<LogSection, LogMap> SectionLogMap;
 
 namespace {
 
-constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_loggedFrom = "LOGGED FROM";
-constexpr const char* s_causedBy = "CAUSED BY";
 
 std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
 {
@@ -95,21 +93,30 @@ std::string formatLogMessage(
    const ErrorLocation& in_loggedFrom = ErrorLocation(),
    bool in_formatForSyslog = false)
 {
-   // Add the time.
-   using namespace boost::posix_time;
-   ptime time = microsec_clock::universal_time();
-
    std::ostringstream oss;
-   oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
-       << " [" << in_programId << "] "
-       << in_logLevel
-       << " "
-       << in_message;
+
+   if (!in_formatForSyslog)
+   {
+      // Add the time.
+      using namespace boost::posix_time;
+      ptime time = microsec_clock::universal_time();
+
+      oss << system::date_time::format(time, "%d %b %Y %H:%M:%S")
+          << " [" << in_programId << "] ";
+   }
+
+   oss << in_logLevel << " " << in_message;
 
    if (in_loggedFrom.hasLocation())
-      oss << s_delim << " " << s_loggedFrom << ": " << cleanDelims(in_loggedFrom.asString());
+      oss << s_delim << " " << s_loggedFrom << ": " << cleanDelimiters(in_loggedFrom.asString());
 
    oss << std::endl;
+
+   if (in_formatForSyslog)
+   {
+      // Newlines delimit logs in syslog, so replace them with |||
+      return boost::replace_all_copy(oss.str(), "\n", "|||");
+   }
 
    return oss.str();
 }
@@ -296,9 +303,9 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, c
       log.MaxLogLevel = in_section.getMaxLogLevel(log.DefaultLogLevel);
 }
 
-std::string cleanDelims(const std::string& in_toClean)
+std::string cleanDelimiters(const std::string& in_str)
 {
-   std::string toClean(in_toClean);
+   std::string toClean(in_str);
    std::replace(toClean.begin(), toClean.end(), s_delim, ' ');
    return toClean;
 }
