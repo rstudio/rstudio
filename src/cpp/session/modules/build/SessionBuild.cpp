@@ -314,6 +314,14 @@ private:
       else
          core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
+      // pass along R_LIBS
+      std::string rLibs = module_context::libPathsString();
+      if (!rLibs.empty())
+         core::system::setenv(&environment, "R_LIBS", rLibs);
+
+      // pass along RSTUDIO_VERSION
+      core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -343,17 +351,7 @@ private:
       else if (config.buildType == r_util::kBuildTypeWebsite)
       {
          options.workingDir = buildTargetPath;
-         
-         // pass along R_LIBS
-         std::string rLibs = module_context::libPathsString();
-         if (!rLibs.empty())
-            core::system::setenv(&environment, "R_LIBS", rLibs);
-
-         // pass along RSTUDIO_VERSION
-         core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
-
          options.environment = environment;
-         
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
@@ -561,8 +559,8 @@ private:
       // check for required version of roxygen
       if (!module_context::isMinimumRoxygenInstalled())
       {
-         terminateWithError("roxygen2 v4.0 (or later) required to "
-                            "generate documentation");
+         terminateWithError(
+                  "roxygen2 v4.0 (or later) required to generate documentation");
       }
 
       // build the roxygenize command
@@ -675,11 +673,6 @@ private:
       else
          core::system::environment(&childEnv);
 
-      // allow child process to inherit our R_LIBS
-      std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
-      
       // record the library paths used when this build was kicked off
       libPaths_ = module_context::getLibPaths();
 
@@ -1498,7 +1491,7 @@ private:
 
    void terminateWithError(const std::string& msg)
    {
-      enqueBuildOutput(module_context::kCompileOutputError, msg);
+      enqueBuildOutput(module_context::kCompileOutputError, msg + "\n");
       enqueBuildCompleted();
    }
 
