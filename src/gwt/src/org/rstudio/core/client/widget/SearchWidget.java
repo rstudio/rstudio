@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.LiveValue;
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -228,8 +226,7 @@ public class SearchWidget extends Composite implements SearchDisplay
       
       focusTracker_ = new FocusTracker(suggestBox_);
 
-      Roles.getStatusRole().set(readerResultsLabel_);
-      Roles.getStatusRole().setAriaLiveProperty(readerResultsLabel_, LiveValue.POLITE);
+      A11y.setStatusRole(readerResultsLabel_, false);
    }
    
    public HandlerRegistration addFocusHandler(FocusHandler handler)

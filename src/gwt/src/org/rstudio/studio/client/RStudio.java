@@ -33,9 +33,9 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
@@ -59,6 +59,7 @@ import org.rstudio.studio.client.application.ui.LauncherSessionStatus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.StudioResources;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.repos.SecondaryReposDialog;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
@@ -122,6 +123,10 @@ public class RStudio implements EntryPoint
    private Command showProgress(Widget progressAction)
    {
       final Label background = new Label();
+      ariaLoadingMessage_ = new Label();
+      A11y.setAlertRole(ariaLoadingMessage_, true);
+      A11y.setVisuallyHidden(ariaLoadingMessage_);
+
       background.getElement().getStyle().setZIndex(1000);
       background.getElement().getStyle().setBackgroundColor("#e1e2e5");
       final RootLayoutPanel rootPanel = RootLayoutPanel.get();
@@ -130,10 +135,10 @@ public class RStudio implements EntryPoint
                                                0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(background, 0, Style.Unit.PX,
                                                0, Style.Unit.PX);
-      
+
       String progressUrl = ProgressImages.createLargeGray().getUrl();
       StringBuilder str = new StringBuilder();
-      str.append("<img src=\"");
+      str.append("<img alt src=\"");
       str.append(progressUrl);
       str.append("\"");
       if (BrowseCap.devicePixelRatio() > 1.0)
@@ -144,15 +149,16 @@ public class RStudio implements EntryPoint
       div.setInnerHTML(str.toString());
       div.getStyle().setProperty("textAlign", "center");
       ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
-   
+
       final VerticalPanel statusPanel = new VerticalPanel();
       final Element statusDiv = statusPanel.getElement();
       statusDiv.getStyle().setWidth(100, Style.Unit.PCT);
       statusDiv.getStyle().setMarginTop(200, Style.Unit.PX);
       statusDiv.getStyle().setProperty("textAlign", "center");
       statusDiv.getStyle().setZIndex(1000);
-      
+
       statusPanel.add(progressPanel);
+      statusPanel.add(ariaLoadingMessage_);
 
       if (progressAction != null)
       {
@@ -174,6 +180,20 @@ public class RStudio implements EntryPoint
             public void run()
             {
                sessionStatus_.setVisible(true);
+               ariaLoadingMessage_.setText(sessionStatus_.getMessage());
+            }
+         };
+         showStatusTimer_.schedule(3000);
+      }
+      else
+      {
+         // for regular sessions, give screen-reader users a hint that something is happening
+         // if the session is taking time to load
+         showStatusTimer_ = new Timer()
+         {
+            public void run()
+            {
+               ariaLoadingMessage_.setText("Loading session...");
             }
          };
          showStatusTimer_.schedule(3000);
@@ -181,24 +201,21 @@ public class RStudio implements EntryPoint
 
       rootPanel.add(statusPanel);
       
-      return new Command()
+      return () ->
       {
-         public void execute()
+         try
          {
-            try
+            if (showStatusTimer_ != null)
             {
-               if (showStatusTimer_ != null)
-               {
-                  showStatusTimer_.cancel();
-                  showStatusTimer_ = null;
-               }
-               rootPanel.remove(statusPanel);
-               rootPanel.remove(background);
+               showStatusTimer_.cancel();
+               showStatusTimer_ = null;
             }
-            catch (Exception e)
-            {
-               Debug.log(e.toString());
-            }
+            rootPanel.remove(statusPanel);
+            rootPanel.remove(background);
+         }
+         catch (Exception e)
+         {
+            Debug.log(e.toString());
          }
       };
    }
@@ -261,7 +278,12 @@ public class RStudio implements EntryPoint
       {
          rTimeoutOptions_ = new RTimeoutOptions();
 
-         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_, 750);
+         final DelayFadeInHelper reloadShowHelper = new DelayFadeInHelper(rTimeoutOptions_, 750, () ->
+         {
+            // after fade-in, another brief pause so screen readers have time to catch up with
+            // new UI state
+            Timers.singleShot(1000, () -> ariaLoadingMessage_.setText(rTimeoutOptions_.getMessage()));
+         });
          reloadShowHelper.hide();
          Timer t = new Timer()
          {
@@ -279,24 +301,10 @@ public class RStudio implements EntryPoint
       final SerializedCommandQueue queue = new SerializedCommandQueue();
 
       // ensure Ace is loaded up front
-      queue.addCommand(new SerializedCommand()
-      {
-         @Override
-         public void onExecute(Command continuation)
-         {
-            AceEditor.load(continuation);
-         }
-      });
+      queue.addCommand(continuation -> AceEditor.load(continuation));
       
       // load the requested page
-      queue.addCommand(new SerializedCommand()
-      {
-         @Override
-         public void onExecute(Command continuation)
-         {
-            onDelayLoadApplication();
-         }
-      });
+      queue.addCommand(continuation -> onDelayLoadApplication());
       
       GWT.runAsync(new RunAsyncCallback()
       {
@@ -460,4 +468,5 @@ public class RStudio implements EntryPoint
    private RTimeoutOptions rTimeoutOptions_;
    private Timer showStatusTimer_;
    private LauncherSessionStatus sessionStatus_;
+   private Label ariaLoadingMessage_;
 }
