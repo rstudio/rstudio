@@ -231,7 +231,8 @@ public class GlobalToolbar extends Toolbar
       // project popup menu
       if (sessionInfo.getAllowFullUI())
       {
-         ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo, commands_);
+         ProjectPopupMenu projectMenu = new ProjectPopupMenu(
+               sessionInfo, commands_, ElementIds.PROJECT_MENUBUTTON_TOOLBAR_SUFFIX);
          addRightWidget(projectMenu.getToolbarButton());
       }
    }
