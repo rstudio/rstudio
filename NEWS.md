@@ -70,6 +70,7 @@
 * Add preference for compiling .tex files with tinytex (#2788)
 * Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
 * Sort package-installed R Markdown templates alphabetically (#4929)
+* Comment / uncomment is now enabled for YAML documents (#3317)
 
 ### Bugfixes
 

@@ -229,6 +229,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.SQL.getTypeId().equals(getTypeId());
    }
    
+   public boolean isYaml()
+   {
+      return FileTypeRegistry.YAML.getTypeId().equals(getTypeId());
+   }
+   
    public boolean requiresKnit()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
@@ -317,6 +322,11 @@ public class TextFileType extends EditableFileType
       if (isSql())
       {
          results.add(commands.previewSql());
+      }
+      
+      if (isYaml())
+      {
+         results.add(commands.commentUncomment());
       }
       
       if ((canExecuteCode() && !isScript()) || isC())
