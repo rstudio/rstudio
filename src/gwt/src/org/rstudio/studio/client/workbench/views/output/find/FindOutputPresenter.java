@@ -172,7 +172,6 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                currentFindHandle_ = null;
-               Debug.logToConsole("1");
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
             }
@@ -257,7 +256,6 @@ public class FindOutputPresenter extends BasePresenter
                      @Override
                      public void execute()
                      {
-                        Debug.logToConsole("2");
                         view_.setStopReplaceButtonVisible(true);
                         stopAndClear();
 
@@ -319,7 +317,6 @@ public class FindOutputPresenter extends BasePresenter
             if (view_.getReplaceMode())
                 view_.toggleReplaceMode();
 
-            Debug.logToConsole("3");
             view_.setStopReplaceButtonVisible(false);
 
             ArrayList<FindResult> results = event.getResults();
@@ -521,10 +518,10 @@ public class FindOutputPresenter extends BasePresenter
    {
       if (currentFindHandle_ != null)
       {
+         Debug.logToConsole("Notifying backend to stop replace");
          server_.stopReplace(currentFindHandle_,
                              new VoidServerRequestCallback());
          currentFindHandle_ = null;
-         Debug.logToConsole("4");
          view_.setStopReplaceButtonVisible(false);
       }
    }

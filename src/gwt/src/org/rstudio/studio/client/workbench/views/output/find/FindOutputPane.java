@@ -495,7 +495,6 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setStopReplaceButtonVisible(boolean visible)
    {
-      Debug.logToConsole("Set Stop Replace Button" + visible);
       stopReplace_.setVisible(visible);
    }
 
