@@ -80,6 +80,7 @@ public class FindOutputPresenter extends BasePresenter
       void showSearchCompleted();
 
       void updateSearchLabel(String query, String path);
+      void updateSearchLabel(String query, String path, String replace);
       void clearSearchLabel();
 
       boolean getReplaceMode();
@@ -158,6 +159,7 @@ public class FindOutputPresenter extends BasePresenter
             view_.ensureVisible(true);
 
             dialogState_.setResultsCount(event.getResults().size());
+            Debug.logToConsole("Find Result Event with " + dialogState_.getResultsCount() + " results.");
          }
       });
 
@@ -268,7 +270,9 @@ public class FindOutputPresenter extends BasePresenter
                                                       currentFindHandle_ = handle;
                                                       updateSearchLabel(dialogState_.getQuery(),
                                                                         dialogState_.getPath(),
-                                                                        dialogState_.isRegex());
+                                                                        dialogState_.isRegex(),
+                                                                        view_.getReplaceText(),
+                                                                        view_.isReplaceRegex());
                                                       view_.setStopReplaceButtonVisible(false);
                                                    }
                                                 });
@@ -464,8 +468,18 @@ public class FindOutputPresenter extends BasePresenter
          query = "/" + query + "/";
       else
          query = "\"" + query + "\"";
-
       view_.updateSearchLabel(query, path);
+   }
+
+   private void updateSearchLabel(String query, String path, boolean regex,
+      String replace, boolean replaceRegex)
+   {
+      updateSearchLabel(query, path, regex);
+      if (replaceRegex)
+         replace = "/" + replace + "/";
+      else
+         replace = "\"" + replace + "\"";
+      view_.updateSearchLabel(query, path, replace);
    }
 
    private void stopAndClear()

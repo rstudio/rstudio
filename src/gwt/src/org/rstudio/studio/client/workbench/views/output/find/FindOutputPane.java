@@ -408,6 +408,23 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void updateSearchLabel(String query, String path, String replace)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Replace results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" with ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(replace)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+      
+   @Override
    public void clearSearchLabel()
    {
       searchLabel_.setText("");
