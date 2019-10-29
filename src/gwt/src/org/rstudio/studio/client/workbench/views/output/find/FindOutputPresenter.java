@@ -224,12 +224,19 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            String message = "Are you sure you wish to permanently replace all? This will replace " +
+                             dialogState_.getResultsCount();
+            if (dialogState_.isRegex() ||
+                view_.isReplaceRegex())
+               message += "occurences and cannot be undone.";
+            else
+               message += " occurences of '" + dialogState_.getQuery() +
+                          "' with '" + view_.getReplaceText() +
+                          "' and cannot be undone.";
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
                   "Replace All",
-                  "Are you sure you wish to permanently replace all? This will replace " +
-                  dialogState_.getResultsCount() + " occurences of " + dialogState_.getQuery() +
-                  ".",
+                  message,
                   new Operation ()
                   {
                      @Override
