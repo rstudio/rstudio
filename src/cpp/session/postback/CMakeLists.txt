@@ -53,6 +53,11 @@ configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
 
+# put rpostback in a place where it can be found for dev config
+if(NOT RSTUDIO_PACKAGE_BUILD)
+   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+endif()
+
 # installation rules
 if(NOT RSTUDIO_SESSION_WIN32)
    install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
