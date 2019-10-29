@@ -898,7 +898,7 @@ public class RCompletionManager implements CompletionManager
    // 4. The associated data for a `[[` call (if any -- completions from data object)
    class AutocompletionContext {
       
-      // Be sure to sync these with 'SessionCodeTools.R'!
+      // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
       public static final int TYPE_FUNCTION = 1;
       public static final int TYPE_SINGLE_BRACKET = 2;
@@ -913,6 +913,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
       public static final int TYPE_PACKAGE = 13;
+      public static final int TYPE_PLUMBER = 14;
       
       public AutocompletionContext(
             String token,
@@ -1053,7 +1054,13 @@ public class RCompletionManager implements CompletionManager
       Pattern pattern = Pattern.create("^\\s*#+'");
       return pattern.test(line);
    }
-   
+
+   private boolean isLineInPlumberComment(String line)
+   {
+      Pattern pattern = Pattern.create("^\\s*#+\\*");
+      return pattern.test(line);
+   }
+
    private boolean isLineInComment(String line)
    {
       return StringUtil.stripBalancedQuotes(line).contains("#");
@@ -1088,7 +1095,9 @@ public class RCompletionManager implements CompletionManager
       
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
+      if (isLineInComment(firstLine) &&
+            !isLineInRoxygenComment(firstLine) &&
+            !isLineInPlumberComment(firstLine))
          return false;
       
       // don't autocomplete if the cursor lies within the text of a
@@ -1384,7 +1393,11 @@ public class RCompletionManager implements CompletionManager
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_ROXYGEN);
-      
+
+      // plumber comments/annotations
+      if (firstLine.matches("\\s*#+\\*.*"))
+         return new AutocompletionContext(token, AutocompletionContext.TYPE_PLUMBER);
+
       // If the token has '$' or '@', add in the autocompletion context --
       // note that we still need parent contexts to give more information
       // about the appropriate completion
