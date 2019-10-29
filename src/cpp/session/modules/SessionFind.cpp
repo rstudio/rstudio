@@ -479,6 +479,8 @@ public:
       Error processReplace(std::string* file,
                            int lineNum,
                            std::string* pContent,
+                           json::Array* pMatchOn,
+                           json::Array* pMatchOff,
                            json::Array* pReplaceMatchOn,
                            json::Array* pReplaceMatchOff,
                            std::string* pSearch,
@@ -506,35 +508,49 @@ public:
                ++currentLine;
                if (currentLine == lineNum)
                {
+                  //size_t linePos = static_cast<std::size_t>(pMatchOff->getBack().getInt());
+                  
                   size_t linePos = line.find(*pSearch);
-                  pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(linePos)));
-                  pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(linePos) +
-                                              gsl::narrow_cast<int>(pReplace->size())));
-      
-                  std::string newLine;
-                  std::string replaceString(*pReplace);
-                  if (findResults().preview())
-                     replaceString.insert(0, *pSearch);
-                  if (findResults().replaceRegex())
-                     newLine = boost::regex_replace(line,
-                                                    boost::regex(*pSearch),
-                                                   replaceString);
-                  else
-                     newLine = line.replace(linePos, pSearch->size(), replaceString);
-                  *pContent = newLine;
-                  if (!findResults().preview())
+                  if (linePos == line.npos)
                   {
-                     pStream->seekg(seekPos);
-                     try
+                     linePos = string_utils::toUpper(line).find(string_utils::toUpper(*pSearch));
+                     if (linePos == line.npos)
+                        LOG_ERROR_MESSAGE("Could not find search phrase");
+                  }
+                  
+                  // this will need to be changed because this should never happen
+                  if (linePos != line.npos)
+                  {
+                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(linePos)));
+                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(linePos) +
+                                                 gsl::narrow_cast<int>(pReplace->size())));
+         
+                     std::string newLine;
+                     std::string replaceString(*pReplace);
+                     int len(pSearch->size());
+                     if (findResults().preview())
+                        replaceString.insert(0, *pSearch);
+                     if (findResults().replaceRegex())
+                        newLine = boost::regex_replace(line,
+                                                       boost::regex(*pSearch),
+                                                      replaceString);
+                     else
+                        newLine = line.replace(linePos, pSearch->size(), replaceString);
+                     *pContent = newLine;
+                     if (!findResults().preview())
                      {
-                         pStream->write(newLine.c_str(), line.size());
-                         progress->addUnit();
-                     }
-                     catch (const std::ios_base::failure& e)
-                     {
-                        std::string text("Failed to write to file ");
-                        text.append(e.code().message());
-                        LOG_ERROR_MESSAGE(text);
+                        pStream->seekg(seekPos);
+                        try
+                        {
+                            pStream->write(newLine.c_str(), line.size());
+                            progress->addUnit();
+                        }
+                        catch (const std::ios_base::failure& e)
+                        {
+                           std::string text("Failed to write to file ");
+                           text.append(e.code().message());
+                           LOG_ERROR_MESSAGE(text);
+                        }
                      }
                   }
                }
@@ -608,6 +624,7 @@ public:
                if (findResults().replace())
                {
                   processReplace(&file, lineNum, &lineContents,
+                                 &matchOn, &matchOff,
                                  &replaceMatchOn, &replaceMatchOff,
                                  findResults().searchPattern(),
                                  findResults().replacePattern(),
