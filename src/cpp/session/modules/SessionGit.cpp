@@ -128,9 +128,13 @@ core::system::ProcessOptions procOptions()
 
    options.workingDir = projects::projectContext().directory();
 
-   // on windows set HOME to USERPROFILE
 #ifdef _WIN32
+   // on windows set HOME to USERPROFILE
    core::system::setHomeToUserProfile(&childEnv);
+
+   // try to enforce UTF-8 output
+   core::system::setenv(&childEnv, "LC_ALL", "en_US.UTF-8");
+   core::system::setenv(&childEnv, "LANG",   "en_US.UTF-8");
 #endif
 
    // set custom environment
@@ -1539,14 +1543,12 @@ FilePath detectGitDir(const FilePath& workingDir)
             options,
             &result);
 
-   if (error)
+   if (error || result.exitStatus != 0)
       return FilePath();
 
-   if (result.exitStatus != 0)
-      return FilePath();
-
-   return FilePath(boost::algorithm::trim_copy(
-                      string_utils::systemToUtf8(result.stdOut)));
+   // NOTE: Git returns output encoded as UTF-8,
+   // so re-encoding here is not necessary
+   return FilePath(boost::algorithm::trim_copy(result.stdOut));
 }
 
 } // anonymous namespace
