@@ -59,16 +59,6 @@ boost::posix_time::ptime cookieExpiration(const std::string& cookie)
       std::string expirationStr = http::util::urlDecode(expiration);
       return http::util::parseHttpDate(expirationStr);
    }
-   core::Error initialize();
-   core::Error isUserLicensed(const std::string& username,
-                              bool* pLicensed);
-   bool isUserListCookieValid(const std::string& cookieValue);
-   bool shouldShowUserLicenseWarning();
-   std::string getUserListCookieValue();
-   unsigned int getActiveUserCount();
-   core::json::Array getLicensedUsers();
-   core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
-   core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
    return boost::posix_time::second_clock::universal_time();
 }
 
