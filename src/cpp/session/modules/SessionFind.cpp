@@ -508,42 +508,73 @@ public:
                ++currentLine;
                if (currentLine == lineNum)
                {
-                  //size_t linePos = static_cast<std::size_t>(pMatchOff->getBack().getInt());
-                  
-                  size_t linePos = line.find(*pSearch);
-                  if (linePos == line.npos)
-                  {
-                     linePos = string_utils::toUpper(line).find(string_utils::toUpper(*pSearch));
-                     if (linePos == line.npos)
-                        LOG_ERROR_MESSAGE("Could not find search phrase");
-                  }
+                  size_t matchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
+                  size_t matchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
+                  size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
+                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
                   
                   // this will need to be changed because this should never happen
-                  if (linePos != line.npos)
+                  if (matchOn != line.npos)
                   {
-                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(linePos)));
-                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(linePos) +
-                                                 gsl::narrow_cast<int>(pReplace->size())));
-         
                      std::string newLine;
                      std::string replaceString(*pReplace);
-                     int len(pSearch->size());
                      if (findResults().preview())
                         replaceString.insert(0, *pSearch);
+
+                     // pContent is decoded, but performing the replace requires offsetting
+                     // encoded characters
+                     if (!findResults().preview() &&
+                         line != *pContent)
+                     {
+                        const char* linePtr = line.c_str();
+                        const char* ptrPtr = pContent->c_str();
+                        size_t ptrCounter = 0;
+                        size_t counter = 0;
+                        while (ptrCounter < matchOn)
+                        {
+                           if (linePtr[0] != ptrPtr[0])
+                              counter++;
+                           else
+                           {
+                              ptrCounter++;
+                              ptrPtr++;
+                           }
+                           linePtr++;
+                        }
+                        replaceMatchOn += counter;
+                        replaceMatchOff += counter;
+                     }
+                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                 gsl::narrow_cast<int>(replaceString.size())));
+         
                      if (findResults().replaceRegex())
                         newLine = boost::regex_replace(line,
                                                        boost::regex(*pSearch),
                                                       replaceString);
                      else
-                        newLine = line.replace(linePos, pSearch->size(), replaceString);
-                     *pContent = newLine;
+                     {
+                        newLine =
+                           line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
+                        *pContent =
+                           pContent->replace(matchOn, (matchOff - matchOn), replaceString);
+                     }
+
                      if (!findResults().preview())
                      {
                         pStream->seekg(seekPos);
                         try
                         {
-                            pStream->write(newLine.c_str(), line.size());
-                            progress->addUnit();
+                           // !!! temporary, need to get rid of - may need to copy
+                           // everything to a new file to get this working properly
+                           if (pReplace->size() < pSearch->size())
+                           {
+                              size_t difference = pSearch->size() - pReplace->size();
+                              newLine.append(" ", difference);
+                           }
+                           pStream->write(newLine.c_str(), newLine.size());
+                           pStream->flush();
+                           progress->addUnit();
                         }
                         catch (const std::ios_base::failure& e)
                         {
@@ -554,7 +585,7 @@ public:
                      }
                   }
                }
-               seekPos += line.size();
+               seekPos += line.size() + 1;
             }
          }
          pStream->close();
