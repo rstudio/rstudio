@@ -78,8 +78,9 @@
 * Fix plot history when plot() called immediately after dev.off() (#3117)
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
-* Fix an issue where help tooltips could become corrupt when using prettycode. (#5561)
-* Fix an issue where signature tooltips were shown even when disabled by user preference. (#5405)
+* Fix an issue where help tooltips could become corrupt when using prettycode (#5561)
+* Fix an issue where signature tooltips were shown even when disabled by user preference (#5405)
+* Fix an issue where Git did not work within projects whose paths contained multibyte characters (#2194)
 
 ### RStudio Professional
 
