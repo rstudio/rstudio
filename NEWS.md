@@ -82,6 +82,7 @@
 * Fix an issue where help tooltips could become corrupt when using prettycode (#5561)
 * Fix an issue where signature tooltips were shown even when disabled by user preference (#5405)
 * Fix an issue where Git did not work within projects whose paths contained multibyte characters (#2194)
+* Fix an issue where RStudio would fail to preview self-contained bookdown books (#5371)
 
 ### RStudio Professional
 

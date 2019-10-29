@@ -490,3 +490,19 @@
    subbin <- list.files(bin, full.names = TRUE)
    normalizePath(subbin[[1]], mustWork = TRUE)
 })
+
+.rs.addFunction("bookdown.renderedOutputPath", function(outputPath)
+{
+   # if this is a PDF, use it directly
+   if (tools::file_ext(outputPath) == "pdf")
+      return(outputPath)
+   
+   # if we have an index, prefer using that
+   index <- file.path(dirname(outputPath), "index.html")
+   if (file.exists(index))
+      return(index)
+   
+   # otherwise, return the rendered path directly
+   # (typically necessary for self-contained books)
+   outputPath
+})
