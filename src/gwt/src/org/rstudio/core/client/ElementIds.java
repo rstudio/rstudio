@@ -186,6 +186,14 @@ public class ElementIds
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
 
+   // JobLauncherDialog
+   public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
+   public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
+
+   // RmdTemplateOptionsWidget
+   public final static String RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT = "rmd_template_options_output_format";
+   public static String getRmdTemplateOptionsOutputFormat() { return getElementId(RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT); }
+
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
 }
