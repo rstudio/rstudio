@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.LiveValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -40,6 +41,7 @@ public class ProgressBar extends Composite
       Roles.getProgressbarRole().setAriaValueminProperty(progress_.getElement(), 0);
       Roles.getProgressbarRole().setAriaValuemaxProperty(progress_.getElement(), 100);
       Roles.getProgressbarRole().setAriaValuenowProperty(progress_.getElement(), 0);
+      Roles.getProgressbarRole().setAriaLiveProperty(progress_.getElement(), LiveValue.POLITE);
       Roles.getPresentationRole().set(bar_.getElement());
    }
 
