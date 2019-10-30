@@ -73,6 +73,7 @@
 * The 'Reopen with Encoding' command now saves unsaved changes before re-opening the document. (#5630)
 * Autocomplete support for Plumber `#*` comment keywords (#2220)
 * Automatically continue Plumber `#*` on successive lines (#2219)
+* Comment / uncomment is now enabled for YAML documents (#3317)
 
 ### Bugfixes
 
