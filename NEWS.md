@@ -70,6 +70,7 @@
 * Add preference for compiling .tex files with tinytex (#2788)
 * Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
 * Sort package-installed R Markdown templates alphabetically (#4929)
+* Allow fuzzy matches in help topic search (#3316)
 
 ### Bugfixes
 
