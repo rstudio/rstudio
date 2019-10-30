@@ -24,7 +24,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
    {
       void onReplaceProgress(ReplaceProgressEvent event);
    }
-   
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
@@ -45,7 +45,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       max_ = max;
       units_ = units;
    }
-   
+
    public int units()
    {
       return units_;
@@ -67,7 +67,7 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
    {
       handler.onReplaceProgress(this);
    }
-   
+
    public static final Type<Handler> TYPE = new Type<Handler>();
    private int max_;
    private int units_;

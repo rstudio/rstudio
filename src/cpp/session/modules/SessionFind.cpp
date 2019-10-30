@@ -52,20 +52,16 @@ const size_t MAX_COUNT = 1000;
 class LocalProgress : public boost::noncopyable
 {
 public:
+
    explicit LocalProgress(int max, int updateFrequency)
    {
       units_ = 0;
       max_ = max;
       updateFrequency_ = updateFrequency;
-      updateIncrement_ = (double)(updateFrequency * max_) / 100;
+      updateIncrement_ = (updateFrequency_ * max_) / 100;
       if (updateIncrement_ < 1)
          updateIncrement_ = 1;
       nextUpdate_ = updateIncrement_;
-   }
-
-   void setUnits(int units)
-   {
-      units_ = units;
    }
 
    void addUnit()
@@ -78,16 +74,6 @@ public:
             nextUpdate_ = max_;
          notifyClient();
       }
-   }
-
-   int getUnits()
-   {
-      return units_;
-   }
-
-   int getMax()
-   {
-      return max_;
    }
 
 private:
@@ -120,9 +106,9 @@ public:
          running_(false),
          replace_(false),
          preview_(false),
-         replaceRegex_(false)
+         replaceRegex_(false),
+         replaceProgress_(nullptr)
       {
-         replaceProgress_ = nullptr;
       }
 
       std::string handle() const
@@ -510,85 +496,86 @@ public:
                ++currentLine;
                if (currentLine == lineNum)
                {
+                  // !!! sleep added for testing
                   boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+
                   size_t matchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
                   size_t matchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
                   size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
                   
-                  // this will need to be changed because this should never happen
-                  if (matchOn != line.npos)
+                  std::string newLine;
+                  // if previewing, we need to display the original and replacement text
+                  std::string replaceString(*pReplace);
+                  if (findResults().preview())
+                     replaceString.insert(0, *pSearch);
+
+                  // pContent is decoded, but performing the replace requires offsetting
+                  // encoded characters
+                  // the backend doesn't look at replaceMatchOn/Off for preview
+                  if (!findResults().preview() &&
+                      line != *pContent)
                   {
-                     std::string newLine;
-                     std::string replaceString(*pReplace);
-                     if (findResults().preview())
-                        replaceString.insert(0, *pSearch);
-
-                     // pContent is decoded, but performing the replace requires offsetting
-                     // encoded characters
-                     if (!findResults().preview() &&
-                         line != *pContent)
+                     const char* linePtr = line.c_str();
+                     const char* contentPtr = pContent->c_str();
+                     size_t contentCounter = 0;
+                     size_t offset = 0;
+                     while (contentCounter < matchOn)
                      {
-                        const char* linePtr = line.c_str();
-                        const char* ptrPtr = pContent->c_str();
-                        size_t ptrCounter = 0;
-                        size_t counter = 0;
-                        while (ptrCounter < matchOn)
+                        if (linePtr[0] != contentPtr[0])
+                           offset++;
+                        else
                         {
-                           if (linePtr[0] != ptrPtr[0])
-                              counter++;
-                           else
-                           {
-                              ptrCounter++;
-                              ptrPtr++;
-                           }
-                           linePtr++;
+                           contentCounter++;
+                           contentPtr++;
                         }
-                        replaceMatchOn += counter;
-                        replaceMatchOff += counter;
+                        linePtr++;
                      }
-                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                                 gsl::narrow_cast<int>(replaceString.size())));
-         
-                     if (findResults().replaceRegex())
-                        newLine = boost::regex_replace(line,
-                                                       boost::regex(*pSearch),
-                                                      replaceString);
-                     else
-                     {
-                        newLine =
-                           line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
-                        *pContent =
-                           pContent->replace(matchOn, (matchOff - matchOn), replaceString);
-                     }
+                     replaceMatchOn += offset;
+                     replaceMatchOff += offset;
+                  }
+                  pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                  pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                              gsl::narrow_cast<int>(replaceString.size())));
+      
+                  // !!! current doesn't account for the original text being a regex
+                  if (findResults().replaceRegex())
+                     newLine = boost::regex_replace(line,
+                                                    boost::regex(*pSearch),
+                                                    replaceString);
+                  else
+                  {
+                     newLine =
+                        line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
+                     *pContent =
+                        pContent->replace(matchOn, (matchOff - matchOn), replaceString);
+                  }
 
-                     if (!findResults().preview())
+                  if (!findResults().preview())
+                  {
+                     pStream->seekg(seekPos);
+                     try
                      {
-                        pStream->seekg(seekPos);
-                        try
+                        // !!! temporary, need to get rid of - may need to copy
+                        // everything to a new file to get this working properly
+                        if (pReplace->size() < pSearch->size())
                         {
-                           // !!! temporary, need to get rid of - may need to copy
-                           // everything to a new file to get this working properly
-                           if (pReplace->size() < pSearch->size())
-                           {
-                              size_t difference = pSearch->size() - pReplace->size();
-                              newLine.append(" ", difference);
-                           }
-                           else
-                           {
-                              newLine.append("\n");
-                           }
-                           pStream->write(newLine.c_str(), newLine.size());
-                           pStream->flush();
-                           progress->addUnit();
+                           size_t difference = pSearch->size() - pReplace->size();
+                           newLine.append(" ", difference);
                         }
-                        catch (const std::ios_base::failure& e)
+                        else
                         {
-                           std::string text("Failed to write to file ");
-                           text.append(e.code().message());
-                           LOG_ERROR_MESSAGE(text);
+                           newLine.append("\n");
                         }
+                        pStream->write(newLine.c_str(), newLine.size());
+                        pStream->flush();
+                        progress->addUnit();
+                     }
+                     catch (const std::ios_base::failure& e)
+                     {
+                        std::string text("Failed to write to file ");
+                        text.append(e.code().message());
+                        LOG_ERROR_MESSAGE(text);
                      }
                   }
                }
@@ -658,6 +645,7 @@ public:
                json::Array matchOn, matchOff;
                json::Array replaceMatchOn, replaceMatchOff;
 
+               // !!!  need to be locking files when replacing
                processContents(&lineContents, &matchOn, &matchOff);
                if (findResults().replace())
                {
@@ -709,17 +697,11 @@ public:
                                            replaceMatchOffs);
 
             if (!findResults().replace() || findResults().preview())
-            {
                module_context::enqueClientEvent(
                         ClientEvent(client_events::kFindResult, result));
-            }
             else
-            {
-               result["preview"] = findResults().preview();
-
                module_context::enqueClientEvent(
                        ClientEvent(client_events::kReplaceResult, result));
-            }
          }
 
          if (recordsToProcess <= 0)
