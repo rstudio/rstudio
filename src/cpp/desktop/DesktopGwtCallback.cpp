@@ -125,11 +125,6 @@ void GwtCallback::initialize()
 }
 #endif
 
-void GwtCallback::invokeReflowComment()
-{
-   pMainWindow_->invokeCommand(QStringLiteral("reflowComment"));
-}
-
 Synctex& GwtCallback::synctex()
 {
    if (pSynctex_ == nullptr)
