@@ -31,7 +31,8 @@ assign(x = ".rs.acContextTypes",
           ROXYGEN            = 10,
           HELP               = 11,
           ARGUMENT           = 12,
-          PACKAGE            = 13
+          PACKAGE            = 13,
+          PLUMBER            = 14
        )
 )
 
@@ -213,6 +214,72 @@ assign(x = ".rs.acCompletionTypes",
    
    matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
    
+   .rs.makeCompletions(tag,
+                       matchingTags,
+                       type = .rs.acCompletionTypes$ROXYGEN,
+                       excludeOtherCompletions = TRUE)
+})
+
+.rs.addFunction("attemptPlumberTagCompletion", function(token, line)
+{
+   emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
+
+   # fix up tokenization
+   if (grepl("^\\s*#+\\*\\s*$", line) && token == "*")
+      token <- ""
+
+   # allow the token to be empty only if we're attempting completions
+   # at the start of the line
+   if (token == "")
+   {
+      match <- grepl("^\\s*#+\\*\\s*$", line)
+      if (!match)
+         return(emptyCompletions)
+   }
+   else
+   {
+      match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
+      if (!match)
+         return(emptyCompletions)
+   }
+
+   tag <- sub(".*(?=@)", '', token, perl = TRUE)
+
+   # All known Plumber tags, in alphabetical order
+   tags <- c(
+      "@apiBasePath ",
+      "@apiConsumes ",
+      "@apiContact ",
+      "@apiDescription ",
+      "@apiHost ",
+      "@apiLicense ",
+      "@apiProduces ",
+      "@apiSchemes ",
+      "@apiTOS ",
+      "@apiTag ",
+      "@apiTitle ",
+      "@apiVersion ",
+      "@assets ",
+      "@delete ",
+      "@filter ",
+      "@get ",
+      "@head ",
+      "@jpeg ",
+      "@options ",
+      "@param ",
+      "@patch ",
+      "@png ",
+      "@post ",
+      "@preempt ",
+      "@put ",
+      "@response ",
+      "@serializer ",
+      "@tag ",
+      "@use "
+   )
+
+   matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
+
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
@@ -1970,7 +2037,11 @@ assign(x = ".rs.acCompletionTypes",
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token, line))
-   
+
+   # Plumber
+   if (.rs.acContextTypes$PLUMBER %in% type)
+      return(.rs.attemptPlumberTagCompletion(token, line))
+
    # install.packages
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
       return(.rs.getCompletionsInstallPackages(token))

@@ -589,8 +589,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="blockOutdent" value="Meta+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="blockIndent" value="Meta+]" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
          <shortcut refid="reindent" value="Cmd+I"/>
-         <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!(org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer())"/>
-         <shortcut refid="reflowComment" value="Cmd+Alt+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isChromeServer()"/>
+         <shortcut refid="reflowComment" value="Ctrl+Shift+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="reflowComment" value="Cmd+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="reformatCode" value="Cmd+Shift+A"/>
          <shortcut refid="showDiagnosticsProject" value="Cmd+Shift+Alt+D"/>
          <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>

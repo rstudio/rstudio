@@ -26,7 +26,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.a11y.A11y;
 
 /**
  * An image that behaves like a button.
@@ -53,7 +53,7 @@ public class ImageButton extends FocusWidget implements HasClickHandlers
       button.insertFirst(image_.getElement());
 
       descriptionSpan_ = Document.get().createSpanElement();
-      descriptionSpan_.setClassName(ThemeStyles.INSTANCE.visuallyHidden());
+      A11y.setVisuallyHidden(descriptionSpan_);
       button.appendChild(descriptionSpan_);
       setDescription(description);
 

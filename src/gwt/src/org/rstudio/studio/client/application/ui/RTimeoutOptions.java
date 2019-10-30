@@ -43,7 +43,7 @@ public class RTimeoutOptions extends Composite
    public RTimeoutOptions()
    {
       initWidget(uiBinder.createAndBindUi(this));
-      
+
       reload_.addClickHandler((click) ->
       {
          setStatus("Reloading...");
@@ -75,7 +75,12 @@ public class RTimeoutOptions extends Composite
    {
       observer_ = observer;
    }
-   
+
+   public String getMessage()
+   {
+      return visibleMsg_.getText();
+   }
+
    private void setStatus(String status)
    {
       // Disable buttons to prevent attempts to abort these abortive procedures
@@ -94,4 +99,5 @@ public class RTimeoutOptions extends Composite
    @UiField Button safeMode_;
    @UiField Button terminate_;
    @UiField Label status_;
+   @UiField Label visibleMsg_;
 }

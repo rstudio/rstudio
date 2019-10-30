@@ -530,8 +530,8 @@ Error ChildProcess::run()
    BOOL success = ::CreateProcessW(
      exeWide.c_str(), // Process
      &(cmdLine[0]),   // Command line
-     nullptr,            // Process handle not inheritable
-     nullptr,            // Thread handle not inheritable
+     nullptr,         // Process handle not inheritable
+     nullptr,         // Thread handle not inheritable
      TRUE,            // Set handle inheritance to TRUE
      dwFlags,         // Creation flags
      lpEnv,           // Environment block

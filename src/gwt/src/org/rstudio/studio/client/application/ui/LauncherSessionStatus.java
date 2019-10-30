@@ -20,6 +20,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.a11y.A11y;
 
 public class LauncherSessionStatus extends Composite
 {
@@ -34,13 +35,20 @@ public class LauncherSessionStatus extends Composite
    public LauncherSessionStatus()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      A11y.setStatusRole(status_, false);
    }
-   
+
+   public String getMessage()
+   {
+      return message_.getText();
+   }
+
    public void setStatus(String text)
    {
       status_.setVisible(true);
       status_.setText(text);
    }
 
+   @UiField Label message_;
    @UiField Label status_;
 }

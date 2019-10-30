@@ -277,7 +277,6 @@ public Q_SLOTS:
    void signOut();
 
 private:
-   void invokeReflowComment();
    Synctex& synctex();
    void activateAndFocusOwner();
 

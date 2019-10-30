@@ -30,7 +30,7 @@
    }
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
-      <g:Label styleName="{style.waiting}" text="Waiting for session to start..."></g:Label>
+      <g:Label ui:field="message_" styleName="{style.waiting}" text="Waiting for session to start..."></g:Label>
       <g:HTML>
          You may continue waiting here or monitor from
          <a title="Return to RStudio Server Pro Home" 

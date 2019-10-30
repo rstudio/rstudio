@@ -100,7 +100,9 @@ enum ErrorType
 {
    kErrorNone,
    kErrorInvalidLogin,
-   kErrorServer 
+   kErrorServer,
+   kErrorUserLicenseLimitReached,
+   kErrorUserLicenseSystemUnavailable
 };
 
 std::string errorMessage(ErrorType error)
@@ -113,6 +115,10 @@ std::string errorMessage(ErrorType error)
          return "Incorrect or invalid username/password";
       case kErrorServer:
          return "Temporary server error, please try again";
+      case kErrorUserLicenseLimitReached:
+         return "The user limit for this license has been reached, or you are not allowed access.";
+      case kErrorUserLicenseSystemUnavailable:
+         return "The user licensing system is temporarily unavailable. Please try again later.";
    }
    return "";
 }
@@ -326,6 +332,21 @@ void setSignInCookies(const core::http::Request& request,
                                      pResponse,
                                      secureCookie);
 
+      // set a cookie that is tied to the specific user list we have written
+      // if the user list ever has conflicting changes (e.g. a user is locked),
+      // the user will be forced to sign back in
+      core::http::secure_cookie::set(kUserListCookie,
+                                     auth::handler::overlay::getUserListCookieValue(),
+                                     request,
+                                     boost::posix_time::time_duration(24*staySignedInDays,
+                                                                      0,
+                                                                      0,
+                                                                      0),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
+
       // add cross site request forgery detection cookie
       core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
    }
@@ -342,6 +363,18 @@ void setSignInCookies(const core::http::Request& request,
       // set the secure user id cookie
       core::http::secure_cookie::set(kUserIdCookie,
                                      username,
+                                     request,
+                                     boost::posix_time::minutes(authTimeoutMinutes),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
+
+      // set a cookie that is tied to the specific user list we have written
+      // if the user list ever has conflicting changes (e.g. a user is locked),
+      // the user will be forced to sign back in
+      core::http::secure_cookie::set(kUserListCookie,
+                                     auth::handler::overlay::getUserListCookieValue(),
                                      request,
                                      boost::posix_time::minutes(authTimeoutMinutes),
                                      expiry,
@@ -432,6 +465,32 @@ void doSignIn(const http::Request& request,
 
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
+      // ensure user is licensed to use the product
+      bool isLicensed = false;
+      Error error = auth::handler::overlay::isUserLicensed(username, &isLicensed);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    kErrorUserLicenseSystemUnavailable));
+         return;
+      }
+      else
+      {
+         if (!isLicensed)
+         {
+            pResponse->setMovedTemporarily(
+                  request,
+                  applicationSignInURL(request,
+                                       appUri,
+                                       kErrorUserLicenseLimitReached));
+            return;
+         }
+      }
+
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 

@@ -122,15 +122,15 @@ core::system::ProcessOptions procOptions()
    if (!nonPathGitBinDir.empty())
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
-   // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
-   core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
-
    options.workingDir = projects::projectContext().directory();
 
-   // on windows set HOME to USERPROFILE
 #ifdef _WIN32
+   // on windows set HOME to USERPROFILE
    core::system::setHomeToUserProfile(&childEnv);
+
+   // try to enforce UTF-8 output
+   core::system::setenv(&childEnv, "LC_ALL", "en_US.UTF-8");
+   core::system::setenv(&childEnv, "LANG",   "en_US.UTF-8");
 #endif
 
    // set custom environment
@@ -1539,14 +1539,12 @@ FilePath detectGitDir(const FilePath& workingDir)
             options,
             &result);
 
-   if (error)
+   if (error || result.exitStatus != 0)
       return FilePath();
 
-   if (result.exitStatus != 0)
-      return FilePath();
-
-   return FilePath(boost::algorithm::trim_copy(
-                      string_utils::systemToUtf8(result.stdOut)));
+   // NOTE: Git returns output encoded as UTF-8,
+   // so re-encoding here is not necessary
+   return FilePath(boost::algorithm::trim_copy(result.stdOut));
 }
 
 } // anonymous namespace
@@ -3351,11 +3349,13 @@ core::Error initialize()
 
    // setup environment
    BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
+   
+   std::string rpostbackPath = session::options().rpostbackPath().getAbsolutePath();
+   core::system::setenv("GIT_ASKPASS", rpostbackPath);
 
    if (interceptAskPass)
    {
-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
+      core::system::setenv("SSH_ASKPASS", rpostbackPath);
    }
 
    // add suspend/resume handler

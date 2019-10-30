@@ -179,6 +179,8 @@ public class ElementIds
    public final static String VCS_MENUBUTTON = "vcs_menubutton";
    public final static String PANELAYOUT_MENUBUTTON = "panelayout_menubutton";
    public final static String PROJECT_MENUBUTTON = "project_menubutton";
+   public final static String PROJECT_MENUBUTTON_TOOLBAR_SUFFIX = "toolbar";
+   public final static String PROJECT_MENUBUTTON_MENUBAR_SUFFIX = "menubar";
 
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
