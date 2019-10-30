@@ -27,7 +27,7 @@ class UserPrefsDefaultLayer: public PrefLayer
 public:
    UserPrefsDefaultLayer();
    core::Error readPrefs();
-   core::Error validatePrefs();
+   core::Error validatePrefs(const core::json::Object &);
 };
 
 } // namespace prefs

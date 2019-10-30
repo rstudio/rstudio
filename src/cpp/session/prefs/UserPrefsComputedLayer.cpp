@@ -100,7 +100,7 @@ Error UserPrefsComputedLayer::readPrefs()
    return Success();
 }
 
-core::Error UserPrefsComputedLayer::validatePrefs()
+core::Error UserPrefsComputedLayer::validatePrefs(const core::json::Object &)
 {
    return Success();
 }

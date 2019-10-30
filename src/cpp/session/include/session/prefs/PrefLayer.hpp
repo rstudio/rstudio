@@ -42,7 +42,7 @@ public:
    PrefLayer(const std::string& layerName);
    virtual core::Error readPrefs() = 0;
    virtual core::Error writePrefs(const core::json::Object& prefs);
-   virtual core::Error validatePrefs() = 0;
+   virtual core::Error validatePrefs(const core::json::Object& prefs) = 0;
    virtual ~PrefLayer();
    std::string layerName();
 
@@ -114,7 +114,8 @@ public:
    core::json::Object allPrefs();
    boost::optional<core::json::Value> readValue(const std::string& name);
    core::Error clearValue(const std::string& name);
-   core::Error validatePrefsFromSchema(const core::FilePath& schemaFile);
+   core::Error validatePrefsFromSchema(const core::json::Object& prefs,
+         const core::FilePath& schemaFile);
 
 protected:
    // I/O methods

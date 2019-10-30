@@ -65,7 +65,7 @@ core::Error UserPrefsProjectLayer::readPrefs()
    return Success();
 }
 
-core::Error UserPrefsProjectLayer::validatePrefs()
+core::Error UserPrefsProjectLayer::validatePrefs(const core::json::Object&)
 {
    // Project level prefs can't be invalid.
    return Success();

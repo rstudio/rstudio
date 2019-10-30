@@ -99,6 +99,7 @@ test_context("default validation")
       expect_true(!error);
 
       error = defaults.validatePrefsFromSchema(
+         defaults.allPrefs(),
          options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
       INFO(error.asString());
       expect_true(!error);
@@ -111,6 +112,7 @@ test_context("default validation")
       expect_true(!error);
 
       error = defaults.validatePrefsFromSchema(
+         defaults.allPrefs(),
          options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
       INFO(error.asString());
       expect_true(!error);

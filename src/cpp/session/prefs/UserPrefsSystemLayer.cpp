@@ -37,9 +37,9 @@ core::Error UserPrefsSystemLayer::readPrefs()
       core::system::xdg::systemConfigDir().completePath(kUserPrefsFile));
 }
 
-core::Error UserPrefsSystemLayer::validatePrefs()
+core::Error UserPrefsSystemLayer::validatePrefs(const core::json::Object &prefs)
 {
-   return validatePrefsFromSchema(
+   return validatePrefsFromSchema(prefs,
       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 

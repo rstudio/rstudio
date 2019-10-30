@@ -37,7 +37,7 @@ core::Error UserPrefsDefaultLayer::readPrefs()
       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 
-core::Error UserPrefsDefaultLayer::validatePrefs()
+core::Error UserPrefsDefaultLayer::validatePrefs(const core::json::Object&)
 {
    // No need to validate defaults; they ship in the box and are validated at build time.
    return Success();

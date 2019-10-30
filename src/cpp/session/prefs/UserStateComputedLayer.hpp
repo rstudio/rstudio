@@ -27,7 +27,7 @@ class UserStateComputedLayer: public PrefLayer
 public:
    UserStateComputedLayer();
    core::Error readPrefs();
-   core::Error validatePrefs();
+   core::Error validatePrefs(const core::json::Object&);
 };
 
 } // namespace prefs

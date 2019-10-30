@@ -173,26 +173,19 @@ Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)
    return error;
 }
 
-Error PrefLayer::validatePrefsFromSchema(const core::FilePath &schemaFile)
+Error PrefLayer::validatePrefsFromSchema(const core::json::Object& prefs,
+      const core::FilePath &schemaFile)
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      if (cache_ && cache_->isObject())
-      {
-         std::string contents;
-         Error error = readStringFromFile(schemaFile, &contents);
-         if (error)
-            return error;
+      std::string contents;
+      Error error = readStringFromFile(schemaFile, &contents);
+      if (error)
+         return error;
 
-         error = cache_->validate(contents);
-         if (error)
-            return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
-      }
-      else
-      {
-         // We won't technically fail validation here, but we shouldn't try to validate before reading.
-         LOG_WARNING_MESSAGE("Attempt to validate prefs before they were read.");
-      }
+      error = prefs->validate(contents);
+      if (error)
+         return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
    }
    END_LOCK_MUTEX
 

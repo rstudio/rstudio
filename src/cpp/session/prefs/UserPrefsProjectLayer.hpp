@@ -27,7 +27,7 @@ class UserPrefsProjectLayer: public PrefLayer
 public:
    UserPrefsProjectLayer();
    core::Error readPrefs() override;
-   core::Error validatePrefs() override;
+   core::Error validatePrefs(const core::json::Object&) override;
 private:
    void onProjectConfigChanged();
 };

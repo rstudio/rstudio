@@ -46,7 +46,7 @@ Error UserStateComputedLayer::readPrefs()
    return Success();
 }
 
-core::Error UserStateComputedLayer::validatePrefs()
+core::Error UserStateComputedLayer::validatePrefs(const core::json::Object&)
 {
    return Success();
 }

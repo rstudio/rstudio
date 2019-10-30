@@ -110,9 +110,9 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    return error;
 }
 
-Error UserPrefsLayer::validatePrefs()
+Error UserPrefsLayer::validatePrefs(const core::json::Object& prefs)
 {
-   return validatePrefsFromSchema(
+   return validatePrefsFromSchema(prefs,
       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 

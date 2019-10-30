@@ -56,7 +56,7 @@ public:
       return writePrefsToFile(*cache_, prefsFile_);
    }
 
-   core::Error validatePrefs()
+   core::Error validatePrefs(const core::json::Object&)
    {
       // API prefs are always "valid"
       return Success();
