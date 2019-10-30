@@ -167,25 +167,6 @@ RS_END_NAMESPACE()
 
 void GwtCallback::initialize()
 {
-   [NSEvent addLocalMonitorForEventsMatchingMask: NSKeyDownMask
-                                         handler: ^(NSEvent* event)
-    {
-       // detect attempts to run Command + Shift + /, and let our own
-       // reflow comment code run instead
-       if (event.keyCode == 44 &&
-           (event.modifierFlags & NSEventModifierFlagShift) != 0 &&
-           (event.modifierFlags & NSEventModifierFlagCommand) != 0 &&
-           (event.modifierFlags & NSEventModifierFlagControl) == 0 &&
-           (event.modifierFlags & NSEventModifierFlagOption) == 0 &&
-           (event.modifierFlags & NSEventModifierFlagFunction) == 0)
-       {
-          invokeReflowComment();
-          return (NSEvent*) nil;
-       }
-       
-       return event;
-    }];
-
 }
 
 int GwtCallback::showMessageBox(int type,

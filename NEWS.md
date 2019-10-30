@@ -74,6 +74,7 @@
 * Autocomplete support for Plumber `#*` comment keywords (#2220)
 * Automatically continue Plumber `#*` on successive lines (#2219)
 * Comment / uncomment is now enabled for YAML documents (#3317)
+* Reflow comment has been rebound to 'Ctrl + Shift + /' on macOS. (#2443)
 
 ### Bugfixes
 
