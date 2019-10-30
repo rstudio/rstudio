@@ -164,12 +164,12 @@ void handleLogExceptionRequest(const std::string& username,
                      "Client-ID: %5%\n"
                      "User-Agent: %6%");
    std::string logEntry = boost::str(
-                        fmt % log::cleanDelims("rsession-" + username)
-                            % log::cleanDelims(ex.message)
+                        fmt % log::cleanDelimiters("rsession-" + username)
+                            % log::cleanDelimiters(ex.message)
                             % log::s_delim
-                            % log::cleanDelims(ostr.str())
-                            % log::cleanDelims(jsonRpcRequest.clientId)
-                            % log::cleanDelims(userAgent));
+                            % log::cleanDelimiters(ostr.str())
+                            % log::cleanDelimiters(jsonRpcRequest.clientId)
+                            % log::cleanDelimiters(userAgent));
 
    // log it
    core::system::log(log::LogLevel::ERR, logEntry);
