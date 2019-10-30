@@ -1,5 +1,5 @@
 /*
- * RParser.hpp
+ * SessionRParser.hpp
  *
  * Copyright (C) 2009-2019 by RStudio, Inc.
  *
@@ -480,6 +480,20 @@ public:
                "unexpected assignment in argument list; did you mean to use '='?");
    }
    
+   void addLintItem(const RToken& rToken,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(rToken, type, message));
+   }
+   
+   void addLintItem(const ParseItem& item,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(item, type, message));
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
@@ -509,20 +523,6 @@ public:
    void dump();
    
 private:
-   
-   void addLintItem(const RToken& rToken,
-                    LintType type,
-                    const std::string& message)
-   {
-      add(LintItem(rToken, type, message));
-   }
-   
-   void addLintItem(const ParseItem& item,
-                    LintType type,
-                    const std::string& message)
-   {
-      add(LintItem(item, type, message));
-   }
    
    void add(const LintItem& item)
    {

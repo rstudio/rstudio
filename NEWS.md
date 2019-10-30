@@ -74,6 +74,7 @@
 * Autocomplete support for Plumber `#*` comment keywords (#2220)
 * Automatically continue Plumber `#*` on successive lines (#2219)
 * Comment / uncomment is now enabled for YAML documents (#3317)
+* The diagnostics system better handles missing expressions. (#5660)
 
 ### Bugfixes
 
