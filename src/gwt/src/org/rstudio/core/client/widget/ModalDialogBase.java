@@ -48,6 +48,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
+import org.rstudio.core.client.js.JsWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -205,6 +206,38 @@ public abstract class ModalDialogBase extends DialogBox
    {
       super.center();
       onCompleted.execute();
+
+      // Force the contents of the modal to be vertically scrollable
+      // if the height of the modal is larger than the app window
+      Element e = this.getElement();
+      Element child = e.getFirstChildElement();
+      if (child != null)
+      {
+         int windowInnerHeight = Integer.parseInt(JsWindow.getProp("innerHeight").toString());
+         if (windowInnerHeight <= 10) return; // degenerate property case
+
+         // snap the top of the modal to the top bounds of the window
+         int eleTop = e.getAbsoluteTop();
+         if (eleTop < 0)
+         {
+            eleTop = 0;
+            e.getStyle().setTop(0, Unit.PX);
+         }
+         int eleHeight = e.getOffsetHeight();
+
+         if (eleHeight + 30 >= windowInnerHeight)
+         {
+            child.getStyle().setProperty("overflowY", "auto");
+
+            // don't override overflowX if it's already set
+            String overflowX = child.getStyle().getProperty("overflowX");
+            if (overflowX == null || overflowX.length() < 1)
+            {
+               child.getStyle().setProperty("overflowX", "hidden");
+            }
+            child.getStyle().setPropertyPx("maxHeight", windowInnerHeight - eleTop - 30);
+         }
+      }
    }
 
    protected void onDialogShown()
