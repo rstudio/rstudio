@@ -42,7 +42,9 @@ public:
    core::Error readPrefs()
    {
       prefsFile_ = core::system::xdg::userConfigDir().completePath(kApiPrefsFile);
-      return loadPrefsFromFile(prefsFile_);
+
+      // Load prefs; there's no schema for these prefs since API users can write any prefs they like
+      return loadPrefsFromFile(prefsFile_, core::FilePath());
    }
 
    core::Error writePrefs(const core::json::Object &prefs)
@@ -54,12 +56,6 @@ public:
       END_LOCK_MUTEX
 
       return writePrefsToFile(*cache_, prefsFile_);
-   }
-
-   core::Error validatePrefs()
-   {
-      // API prefs are always "valid"
-      return Success();
    }
 
 private:

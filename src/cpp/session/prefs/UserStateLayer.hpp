@@ -28,7 +28,6 @@ public:
    UserStateLayer();
    core::Error readPrefs();
    core::Error writePrefs(const core::json::Object &prefs);
-   core::Error validatePrefs();
 private:
    core::FilePath prefsFile_;
 };

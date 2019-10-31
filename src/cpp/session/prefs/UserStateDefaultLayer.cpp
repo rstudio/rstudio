@@ -37,12 +37,6 @@ core::Error UserStateDefaultLayer::readPrefs()
       options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
 }
 
-core::Error UserStateDefaultLayer::validatePrefs()
-{
-   // No need to validate defaults; they ship in the box and are validated at build time.
-   return Success();
-}
-
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

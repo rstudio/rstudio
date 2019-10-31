@@ -29,7 +29,6 @@ class UserPrefsComputedLayer: public PrefLayer
 public:
    UserPrefsComputedLayer();
    core::Error readPrefs();
-   core::Error validatePrefs();
 private:
    core::FilePath detectedTerminalPath();
 };

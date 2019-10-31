@@ -46,11 +46,6 @@ Error UserStateComputedLayer::readPrefs()
    return Success();
 }
 
-core::Error UserStateComputedLayer::validatePrefs()
-{
-   return Success();
-}
-
 } // namespace prefs
 } // namespace session
 } // namespace rstudio
