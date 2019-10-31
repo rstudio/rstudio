@@ -24,6 +24,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileLock.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -107,7 +108,9 @@ public:
          replace_(false),
          preview_(false),
          replaceRegex_(false),
-         replaceProgress_(nullptr)
+         replaceProgress_(nullptr),
+         pInputStream_(nullptr),
+         pOutputStream_(nullptr)
       {
       }
 
@@ -155,6 +158,36 @@ public:
       {
          return replaceProgress_;
       }
+
+      std::string currentFile()
+      {
+         return currentFile_;
+      }
+
+      void setCurrentFile(std::string file)
+      {
+         currentFile_ = file;
+      }
+
+      std::string tempFile()
+      {
+         return tempFile_;
+      }
+
+      void setTempFile(std::string file)
+      {
+         tempFile_ = file;
+      }
+
+      boost::shared_ptr<std::fstream> outputStream()
+      {
+         return pOutputStream_;
+      }
+
+      boost::shared_ptr<std::fstream> inputStream()
+      {
+          return pInputStream_;
+      }     
 
       bool addResult(const std::string& handle,
                      const json::Array& files,
@@ -244,6 +277,15 @@ public:
             replace_ = false;
             preview_ = false;
             replacePattern_.clear();
+            replaceProgress_ = nullptr;
+            pOutputStream_ = nullptr;
+            if (pOutputStream_ != nullptr)
+               pOutputStream_ -> close();
+            pInputStream_ = nullptr;
+            if (pInputStream_ != nullptr)
+               pInputStream_ -> close();
+            currentFile_.clear();
+            tempFile_.clear();
          }
       }
 
@@ -337,6 +379,10 @@ public:
       json::Array replaceMatchOns_;
       json::Array replaceMatchOffs_;
       LocalProgress* replaceProgress_;
+      std::string currentFile_;
+      std::string tempFile_;
+      boost::shared_ptr<std::fstream> pInputStream_;
+      boost::shared_ptr<std::fstream> pOutputStream_;
    };
 
    FindInFilesState& findResults()
@@ -392,6 +438,8 @@ public:
    private:
       bool onContinue(const core::system::ProcessOperations& ops) const
       {
+         // !!! sleep added for testing
+         boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
          return findResults().isRunning() && findResults().handle() == handle();
       }
 
@@ -480,29 +528,77 @@ public:
             if ((pos = file->find("~")) != std::string::npos)
                file->replace(pos, 1, session::options().userHomePath().getAbsolutePath());
          }
-         const char* cfile = file->c_str();
-         boost::shared_ptr<std::fstream> pStream(new std::fstream);
-         pStream->open(cfile, std::fstream::in | std::fstream::out);
 
-         if (!pStream->good())
+         std::string currentFile = findResults().currentFile();
+
+         /*
+         boost::shared_ptr<std::fstream> pInputStream(new std::fstream);
+         boost::shared_ptr<std::fstream> pOutputStream(new std::fstream);
+         if (!currentFile.empty())
+         {
+            pInputStream = findResults().inputStream();
+            pOutputStream = findResults().outputStream();
+         }
+
+         if (currentFile.empty() ||
+             currentFile == *file)
+         {
+            if (!currentFile.empty())
+            {
+               std::string line;
+               while (std::getline(*pInputStream, line))
+                  pOutputStream -> write(line.c_str(), line.size());
+               pInputStream -> close();
+               pOutputStream -> close();
+               int error = std::rename(
+                     findResults().tempFile().c_str(),
+                     file->c_str());
+               if (error != 0)
+                  LOG_ERROR_MESSAGE("Error renaming file");
+            }
+            findResults().setCurrentFile(*file);
+ 
+            pInputStream -> open(file->c_str(), std::fstream::in | std::fstream::out);
+            FilePath tempPath = module_context::tempFile("replace", "txt");
+            findResults().setTempFile(tempPath.getAbsolutePath());
+            pOutputStream -> open(tempPath.getAbsolutePath(), std::fstream::in | std::fstream::out);
+         }
+         
+
+         if (!pInputStream -> good() || !pOutputStream -> good())
             LOG_ERROR_MESSAGE(std::string("Could not open file ") + *file);
+            */
+
+         boost::shared_ptr<std::fstream> pInputStream(new std::fstream);
+         boost::shared_ptr<std::fstream> pOutputStream(new std::fstream);
+         FilePath tempPath = module_context::tempFile("replace", "txt");
+         pInputStream -> open(file->c_str(), std::fstream::in | std::fstream::out);
+         pOutputStream -> open(tempPath.getAbsolutePath(), std::fstream::out);
+
+         if (!pInputStream -> good())
+            LOG_ERROR_MESSAGE(std::string("could not open file ") + *file);
+         else if (!pOutputStream -> good())
+            LOG_ERROR_MESSAGE(std::string("Could not open file ") + *file);
+                  
          else
          {
             std::string line;
             int currentLine=0;
-            int seekPos=0;
-            while (findResults().isRunning() && currentLine < lineNum && std::getline(*pStream, line))
+            // !!! commented out for specific test, needs to be uncommented
+            while (findResults().isRunning() /*&& currentLine < lineNum*/ && std::getline(*pInputStream, line))
             {
                ++currentLine;
-               if (currentLine == lineNum)
+               if (currentLine != lineNum)
                {
-                  // !!! sleep added for testing
-                  boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-
-                  size_t matchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
-                  size_t matchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
-                  size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn->getBack().getInt());
-                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff->getBack().getInt());
+                  line.append("\n");
+                  pOutputStream -> write(line.c_str(), line.size());
+                }
+               else
+               {
+                  size_t matchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
+                  size_t matchOff = static_cast<std::size_t>(pMatchOff -> getBack().getInt());
+                  size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
+                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getBack().getInt());
                   
                   std::string newLine;
                   // if previewing, we need to display the original and replacement text
@@ -517,7 +613,7 @@ public:
                       line != *pContent)
                   {
                      const char* linePtr = line.c_str();
-                     const char* contentPtr = pContent->c_str();
+                     const char* contentPtr = pContent -> c_str();
                      size_t contentCounter = 0;
                      size_t offset = 0;
                      while (contentCounter < matchOn)
@@ -534,8 +630,8 @@ public:
                      replaceMatchOn += offset;
                      replaceMatchOff += offset;
                   }
-                  pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                  pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                  pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                  pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                               gsl::narrow_cast<int>(replaceString.size())));
       
                   // !!! current doesn't account for the original text being a regex
@@ -547,29 +643,18 @@ public:
                   {
                      newLine =
                         line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
+                     newLine.append("\n");
                      *pContent =
-                        pContent->replace(matchOn, (matchOff - matchOn), replaceString);
+                        pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
                   }
 
                   if (!findResults().preview())
                   {
-                     pStream->seekg(seekPos);
                      try
                      {
-                        // !!! temporary, need to get rid of - may need to copy
-                        // everything to a new file to get this working properly
-                        if (pReplace->size() < pSearch->size())
-                        {
-                           size_t difference = pSearch->size() - pReplace->size();
-                           newLine.append(" ", difference);
-                        }
-                        else
-                        {
-                           newLine.append("\n");
-                        }
-                        pStream->write(newLine.c_str(), newLine.size());
-                        pStream->flush();
-                        progress->addUnit();
+                        pOutputStream -> write(newLine.c_str(), newLine.size());
+                        pOutputStream -> flush();
+                        progress -> addUnit();
                      }
                      catch (const std::ios_base::failure& e)
                      {
@@ -579,10 +664,15 @@ public:
                      }
                   }
                }
-               seekPos += line.size() + 1;
             }
+            pOutputStream -> close();
+            pInputStream -> close();
+            int error = std::rename(
+                  tempPath.getAbsolutePath().c_str(),
+                  file->c_str());
+            if (error != 0)
+               LOG_ERROR_MESSAGE("Error renaming file");
          }
-         pStream->close();
 
          return Success();
       }
@@ -645,7 +735,6 @@ public:
                json::Array matchOn, matchOff;
                json::Array replaceMatchOn, replaceMatchOff;
 
-               // !!!  need to be locking files when replacing
                processContents(&lineContents, &matchOn, &matchOff);
                if (findResults().replace())
                {
