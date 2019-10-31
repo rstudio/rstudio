@@ -393,6 +393,18 @@ public:
    Error validate(const std::string& in_schema) const;
 
    /**
+    * @brief Attempts to coerce a JSON object to conform to the given schema by discarding non-conforming
+    *    properties.
+    *
+    * @param in_schema           The schema to validate this value against.
+    * @param out_propViolations  The names of of the properties that did not conform to the schema.
+    *
+    * @return Success if this JSON value matches the schema after coercion; Error otherwise.
+    */
+   Error coerce(const std::string& in_schema,
+                std::vector<std::string>& out_propViolations);
+
+   /**
     * @brief Writes this value to a string.
     *
     * @return The string representation of this value.

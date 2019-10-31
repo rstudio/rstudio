@@ -98,6 +98,8 @@ std::string JsonParseErrorCategory::message(int ev) const
 
 typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> JsonDocument;
 typedef rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator> JsonValue;
+typedef rapidjson::GenericPointer<rapidjson::GenericValue<rapidjson::UTF8<>, rapidjson::CrtAllocator>,
+                                  rapidjson::CrtAllocator> JsonPointer;
 
 // Globals and Helpers =================================================================================================
 namespace {
@@ -627,6 +629,55 @@ Error Value::validate(const std::string& in_schema) const
       return error;
    }
 
+   return Success();
+}
+
+Error Value::coerce(const std::string& in_schema,
+                    std::vector<std::string>& out_propViolations)
+{
+   Error error;
+
+   // Parse the schema first.
+   rapidjson::Document sd;
+   rapidjson::ParseResult result = sd.Parse(in_schema.c_str());
+   if (result.IsError())
+   {
+      error = Error(result.Code(), ERROR_LOCATION);
+      error.addProperty("offset", result.Offset());
+      return error;
+   }
+
+   // Validate the input according to the schema.
+   rapidjson::SchemaDocument schemaDoc(sd);
+   rapidjson::SchemaValidator validator(schemaDoc);
+   rapidjson::Pointer lastInvalid;
+   while (!m_impl->Document->Accept(validator))
+   {
+      rapidjson::StringBuffer sb;
+
+      // Find the invalid part of the document
+      rapidjson::Pointer invalid = validator.GetInvalidDocumentPointer();
+      if (invalid == lastInvalid)
+      {
+         // If this is the same as the last invalid piece we tried to remove, then removing
+         // it didn't actually fix the problem.
+         error = Error(rapidjson::kParseErrorUnspecificSyntaxError, ERROR_LOCATION);
+         error.addProperty("keyword", validator.GetInvalidSchemaKeyword());
+         validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+         error.addProperty("document", sb.GetString());
+         return error;
+      }
+
+      // Accumulate the error for the caller
+      if (invalid.Stringify(sb))
+         out_propViolations.push_back(sb.GetString());
+
+      // Remove the invalid part of the document
+      JsonPointer pointer(sb.GetString(), &s_allocator);
+      pointer.Erase(*(m_impl->Document));
+   }
+
+   // The value was succesfully coerced, or didn't need to be.
    return Success();
 }
 
