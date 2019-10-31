@@ -76,6 +76,7 @@
 * Comment / uncomment is now enabled for YAML documents (#3317)
 * Reflow comment has been rebound to 'Ctrl + Shift + /' on macOS. (#2443)
 * Allow fuzzy matches in help topic search (#3316)
+* The diagnostics system better handles missing expressions. (#5660)
 
 ### Bugfixes
 

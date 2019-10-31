@@ -279,6 +279,8 @@ test_context("Diagnostics")
       EXPECT_ERRORS("{\nx\n<- 1\n}");
       
       EXPECT_ERRORS("%a\nb%");
+      
+      EXPECT_ERRORS("local({ if (TRUE) })");
    }
    
    lintRStudioRFiles();
