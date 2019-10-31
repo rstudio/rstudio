@@ -108,9 +108,7 @@ public:
       replace_(false),
       preview_(false),
       replaceRegex_(false),
-      replaceProgress_(nullptr),
-      pInputStream_(nullptr),
-      pOutputStream_(nullptr)
+      replaceProgress_(nullptr)
    {
    }
 
@@ -158,36 +156,6 @@ public:
    {
       return replaceProgress_;
    }
-
-   std::string currentFile()
-   {
-      return currentFile_;
-   }
-
-   void setCurrentFile(std::string file)
-   {
-      currentFile_ = file;
-   }
-
-   std::string tempFile()
-   {
-      return tempFile_;
-   }
-
-   void setTempFile(std::string file)
-   {
-      tempFile_ = file;
-   }
-
-   boost::shared_ptr<std::fstream> outputStream()
-   {
-      return pOutputStream_;
-   }
-
-   boost::shared_ptr<std::fstream> inputStream()
-   {
-       return pInputStream_;
-   }     
 
    bool addResult(const std::string& handle,
                   const json::Array& files,
@@ -278,14 +246,6 @@ public:
          preview_ = false;
          replacePattern_.clear();
          replaceProgress_ = nullptr;
-         pOutputStream_ = nullptr;
-         if (pOutputStream_ != nullptr)
-            pOutputStream_ -> close();
-         pInputStream_ = nullptr;
-         if (pInputStream_ != nullptr)
-            pInputStream_ -> close();
-         currentFile_.clear();
-         tempFile_.clear();
       }
    }
 
@@ -379,10 +339,6 @@ private:
    json::Array replaceMatchOns_;
    json::Array replaceMatchOffs_;
    LocalProgress* replaceProgress_;
-   std::string currentFile_;
-   std::string tempFile_;
-   boost::shared_ptr<std::fstream> pInputStream_;
-   boost::shared_ptr<std::fstream> pOutputStream_;
 };
 
 FindInFilesState& findResults()
@@ -529,69 +485,58 @@ private:
             file->replace(pos, 1, session::options().userHomePath().getAbsolutePath());
       }
 
-      std::string currentFile = findResults().currentFile();
 
-      /*
-      boost::shared_ptr<std::fstream> pInputStream(new std::fstream);
-      boost::shared_ptr<std::fstream> pOutputStream(new std::fstream);
-      if (!currentFile.empty())
+      /* !!! safe to remove?
+      if (!currentFile_.empty())
       {
-         pInputStream = findResults().inputStream();
-         pOutputStream = findResults().outputStream();
+         pInputStream = pInputStream_;
+         pOutputStream = pOutputStream_;
       }
+      */
 
-      if (currentFile.empty() ||
-          currentFile == *file)
+      // if we're looking at the first or a new file
+      bool first = false;
+      if (currentFile_.empty() ||
+          currentFile_ != *file)
       {
-         if (!currentFile.empty())
+         if (!currentFile_.empty())
          {
+            // finish writing contents to file
             std::string line;
-            while (std::getline(*pInputStream, line))
-               pOutputStream -> write(line.c_str(), line.size());
-            pInputStream -> close();
-            pOutputStream -> close();
+            while (std::getline(inputStream_, line))
+               outputStream_.write(line.c_str(), line.size());
+            inputStream_.close();
+            outputStream_.close();
             int error = std::rename(
-                  findResults().tempFile().c_str(),
+                  tempReplaceFile_.getAbsolutePath().c_str(),
                   file->c_str());
             if (error != 0)
                LOG_ERROR_MESSAGE("Error renaming file");
          }
-         findResults().setCurrentFile(*file);
-
-         pInputStream -> open(file->c_str(), std::fstream::in | std::fstream::out);
-         FilePath tempPath = module_context::tempFile("replace", "txt");
-         findResults().setTempFile(tempPath.getAbsolutePath());
-         pOutputStream -> open(tempPath.getAbsolutePath(), std::fstream::in | std::fstream::out);
+         currentFile_ = *file;
+         inputStream_.open(file->c_str(), std::fstream::in | std::fstream::out);
+         tempReplaceFile_ = module_context::tempFile("replace", "txt");
+         outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
+         first = true;
       }
 
-      if (!pInputStream -> good() || !pOutputStream -> good())
-         LOG_ERROR_MESSAGE(std::string("Could not open file ") + *file);
-         */
-
-      boost::shared_ptr<std::fstream> pInputStream(new std::fstream);
-      boost::shared_ptr<std::fstream> pOutputStream(new std::fstream);
-      FilePath tempPath = module_context::tempFile("replace", "txt");
-      pInputStream -> open(file->c_str(), std::fstream::in | std::fstream::out);
-      pOutputStream -> open(tempPath.getAbsolutePath(), std::fstream::out);
-
-      if (!pInputStream -> good())
-         LOG_ERROR_MESSAGE(std::string("could not open file ") + *file);
-      else if (!pOutputStream -> good())
-         LOG_ERROR_MESSAGE(std::string("Could not open file ") + *file);
-               
+      if (!inputStream_.good() || !outputStream_.good())
+         LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
       else
       {
          std::string line;
          int currentLine=0;
-         // !!! commented out for specific test, needs to be uncommented
-         while (findResults().isRunning() /*&& currentLine < lineNum*/ && std::getline(*pInputStream, line))
+         while (findResults().isRunning() && currentLine < lineNum && std::getline(inputStream_, line))
          {
             ++currentLine;
             if (currentLine != lineNum)
             {
-               line.append("\n");
-               pOutputStream -> write(line.c_str(), line.size());
-             }
+               if (first)
+               {
+                  line.append("\n");
+                  outputStream_.write(line.c_str(), line.size());
+               }
+            }
             else
             {
                size_t matchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
@@ -645,32 +590,25 @@ private:
                   newLine.append("\n");
                   *pContent =
                      pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
-               }
+            }
 
-               if (!findResults().preview())
+            if (!findResults().preview())
+            {
+               try
                {
-                  try
-                  {
-                     pOutputStream -> write(newLine.c_str(), newLine.size());
-                     pOutputStream -> flush();
-                     progress -> addUnit();
-                  }
-                  catch (const std::ios_base::failure& e)
-                  {
-                     std::string text("Failed to write to file ");
+                  outputStream_.write(newLine.c_str(), newLine.size());
+                  outputStream_.flush();
+                  progress -> addUnit();
+               }
+               catch (const std::ios_base::failure& e)
+               {
+                  std::string text("Failed to write to file ");
                      text.append(e.code().message());
                      LOG_ERROR_MESSAGE(text);
                   }
                }
             }
          }
-         pOutputStream -> close();
-         pInputStream -> close();
-         int error = std::rename(
-               tempPath.getAbsolutePath().c_str(),
-               file->c_str());
-         if (error != 0)
-            LOG_ERROR_MESSAGE("Error renaming file");
       }
 
       return Success();
@@ -743,6 +681,22 @@ private:
                               findResults().searchPattern(),
                               findResults().replacePattern(),
                               findResults().replaceProgress());
+               /* !!!! move elsewhere
+               // finish writing contents to file
+               if (pOutputStream_ != nullptr)
+               {
+                  std::string line;
+                  while (std::getline(*inputStream_, line))
+                     pOutputStream_.write(line.c_str(), line.size());
+                  inputStream_.close();
+                  pOutputStream_.close();
+                  int error = std::rename(
+                        tempReplaceFile_.getAbsolutePath().c_str(),
+                        file.c_str());
+                  if (error != 0)
+                     LOG_ERROR_MESSAGE("Error renaming file");
+               }
+               */
             }
 
             files.push_back(json::Value(file));
@@ -820,6 +774,10 @@ private:
    FilePath tempFile_;
    std::string stdOutBuf_;
    std::string handle_;
+   std::string currentFile_;
+   FilePath tempReplaceFile_;
+   std::fstream inputStream_;
+   std::fstream outputStream_;
 };
 
 } // namespace
