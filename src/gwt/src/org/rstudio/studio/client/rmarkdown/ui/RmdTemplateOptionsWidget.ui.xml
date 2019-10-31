@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style type="org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsWidget.OptionsStyle">
    @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
    @external gwt-TabLayoutPanelContentContainer, gwt-TabLayoutPanelTabs;
@@ -108,12 +110,12 @@
    </ui:style>
    <g:HeaderPanel styleName="{style.root}">
       <g:FlowPanel styleName="{style.formatPanel}">
-         <g:InlineLabel styleName="{style.topLabel}" text="Output Format:"></g:InlineLabel>
-         <g:ListBox ui:field="listFormats_"></g:ListBox>
-         <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"></g:Label>
-         <g:InlineLabel ui:field="labelFormatName_" visible="false"></g:InlineLabel>
+         <rw:InlineFormLabel forId="{ElementIds.getRmdTemplateOptionsOutputFormat}"
+                             styleName="{style.topLabel}" text="Output Format:"/>
+         <rw:FormListBox elementId="{ElementIds.getRmdTemplateOptionsOutputFormat}" ui:field="listFormats_"/>
+         <g:Label styleName="{style.notesLabel}" ui:field="labelFormatNotes_"/>
+         <g:InlineLabel ui:field="labelFormatName_" visible="false"/>
       </g:FlowPanel>
-      <g:TabLayoutPanel height="100%" barHeight="30" ui:field="optionsTabs_" styleName="{style.optionsTabs}">
-      </g:TabLayoutPanel>
+      <g:TabLayoutPanel height="100%" barHeight="30" ui:field="optionsTabs_" styleName="{style.optionsTabs}"/>
    </g:HeaderPanel>
-</ui:UiBinder> 
+</ui:UiBinder>
