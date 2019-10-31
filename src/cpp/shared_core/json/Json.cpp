@@ -657,24 +657,32 @@ Error Value::coerce(const std::string& in_schema,
 
       // Find the invalid part of the document
       rapidjson::Pointer invalid = validator.GetInvalidDocumentPointer();
+
       if (invalid == lastInvalid)
       {
          // If this is the same as the last invalid piece we tried to remove, then removing
          // it didn't actually fix the problem.
          error = Error(rapidjson::kParseErrorUnspecificSyntaxError, ERROR_LOCATION);
          error.addProperty("keyword", validator.GetInvalidSchemaKeyword());
-         validator.GetInvalidDocumentPointer().StringifyUriFragment(sb);
+         invalid.StringifyUriFragment(sb);
          error.addProperty("document", sb.GetString());
          return error;
       }
 
+      // Remember this as the last error we hit, so we can bail if mutating the document
+      // doesn't resolve it
+      lastInvalid = invalid;
+
       // Accumulate the error for the caller
-      if (invalid.Stringify(sb))
-         out_propViolations.push_back(sb.GetString());
+      invalid.Stringify(sb);
+      out_propViolations.push_back(sb.GetString());
 
       // Remove the invalid part of the document
       JsonPointer pointer(sb.GetString(), &s_allocator);
       pointer.Erase(*(m_impl->Document));
+
+      // Reset state for re-validation
+      validator.Reset();
    }
 
    // The value was succesfully coerced, or didn't need to be.
