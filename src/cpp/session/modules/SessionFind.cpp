@@ -518,20 +518,40 @@ private:
          LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
       else
       {
+         bool lineFromTempFile = false;
+         if (first)
+            inputLineNum_ = 0;
+         else if (inputLineNum_ == lineNum) // account for more than one replace on the same line
+            lineFromTempFile = true;
          std::string line;
-         int currentLine=0;
-         if (!first)
-            currentLine = inputLineNum_;
-         while (findResults().isRunning() && currentLine < lineNum && std::getline(inputStream_, line))
+         while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(inputStream_, line))
          {
-            ++currentLine;
-            if (currentLine != lineNum)
+            ++inputLineNum_;
+            if (inputLineNum_ != lineNum)
             {
                line.append("\n");
                outputStream_.write(line.c_str(), line.size());
             }
             else
             {
+               std::string editLine;
+               if (lineFromTempFile)
+               {
+                  boost::shared_ptr<std::fstream> tempStream(new std::fstream);
+                  tempStream->open(tempReplaceFile_.getAbsolutePath(), std::fstream::in);
+                  int lineCount = 0;
+                  size_t pos = 0;
+                  while (findResults().isRunning() &&
+                         lineCount < inputLineNum_ &&
+                         std::getline(*tempStream, editLine))
+                  {
+                     lineCount++;
+                     if (inputLineNum_ == 1 ||
+                         lineCount == (inputLineNum_ - 1))
+                        outputStream_.seekg(pos);
+                     pos += line.size();
+                  }
+               }
                size_t matchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
                size_t matchOff = static_cast<std::size_t>(pMatchOff -> getBack().getInt());
                size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
@@ -546,7 +566,32 @@ private:
                // pContent is decoded, but performing the replace requires offsetting
                // encoded characters
                // the backend doesn't look at replaceMatchOn/Off for preview
-               if (!findResults().preview() &&
+               if (lineFromTempFile &&
+                   line.size() != editLine.size())
+               {
+                  const char* linePtr = line.c_str() + matchOn;
+                  const char* editLinePtr = editLine.c_str();
+                  int matchCounter = 0;
+                  if (line.size() > editLine.size())
+                  {
+                     replaceMatchOn = 0;
+                     int difference = matchOff - matchOn;
+                     while (matchCounter != difference ||
+                            (replaceMatchOn > editLine.size() &&
+                             replaceMatchOn > line.size()))
+                     {
+                        if (linePtr[matchCounter] != editLinePtr[matchCounter])
+                           matchCounter = 0;
+                        else
+                           matchCounter++;
+                        editLinePtr++;
+                        replaceMatchOn++;
+                     }
+                     if (matchCounter != difference)
+                        LOG_ERROR_MESSAGE("Could not replace line: " + line); 
+                  }
+               }
+               else if (!findResults().preview() &&
                    line != *pContent)
                {
                   const char* linePtr = line.c_str();
@@ -569,7 +614,7 @@ private:
                }
                pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                           gsl::narrow_cast<int>(replaceString.size())));
+                                             gsl::narrow_cast<int>(replaceString.size())));
    
                // !!! current doesn't account for the original text being a regex
                if (findResults().replaceRegex())
@@ -602,7 +647,6 @@ private:
                }
             }
          }
-         inputLineNum_ = currentLine;
       }
 
       return Success();
