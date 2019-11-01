@@ -96,4 +96,4 @@
 
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
-
+* New tools for viewing and managing server users when using named user licensing
