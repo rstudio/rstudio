@@ -207,6 +207,7 @@ const std::string s_homePathLeafAlias = "~";
 #define BOOST_FS_PATH2STR(path) toString((path).generic_wstring())
 #define BOOST_FS_PATH2STRNATIVE(path) toString((path).wstring())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(fromString(p), base)
+#define BOOST_FS_ABSOLUTE(p) boost::filesystem::absolute(fromString(p))
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
@@ -216,6 +217,7 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 #define BOOST_FS_PATH2STR(path) ((path).generic_string())
 #define BOOST_FS_PATH2STRNATIVE(path) ((path).generic_string())
 #define BOOST_FS_COMPLETE(p, base) boost::filesystem::absolute(p, base)
+#define BOOST_FS_ABSOLUTE(p) boost::filesystem::absolute(fromString(p))
 typedef boost::filesystem::directory_iterator dir_iterator;
 typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 
@@ -786,6 +788,11 @@ std::string FilePath::getFilename() const
    return BOOST_FS_STRING(m_impl->Path.filename());
 }
 
+std::string FilePath::getFullPath() const
+{
+   return BOOST_FS_PATH2STR(boost::filesystem::absolute(m_impl->Path).lexically_normal());
+}
+
 std::time_t FilePath::getLastWriteTime() const
 {
    try
@@ -1024,9 +1031,10 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
    if (*this == in_scopePath)
       return true;
 
-   // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
-   FilePath child(getLexicallyNormalPath());
-   FilePath parent(in_scopePath.getLexicallyNormalPath());
+   // Make the paths absolute and lexically normal so that e.g. foo/../bar isn't considered a child
+   // of foo.
+   FilePath child(getFullPath());
+   FilePath parent(in_scopePath.getFullPath());
 
    // Easy test: We can't possibly be in this scope path if it has more components than we do
    if (parent.m_impl->Path.size() >= child.m_impl->Path.size())

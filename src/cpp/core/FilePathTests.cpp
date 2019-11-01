@@ -51,6 +51,13 @@ TEST_CASE("file paths")
       FilePath cPath("/path/to/foo");
       FilePath dPath("/path/to/foobar");
       CHECK(!dPath.isWithin(cPath));
+
+      // isWithin should work with relative paths
+      FilePath ePath("path/to/foo");
+      FilePath fPath("path/to/foo/bar");
+      FilePath gPath("path/to/baz");
+      CHECK(fPath.isWithin(ePath));
+      CHECK(!gPath.isWithin(ePath));
    }
 
    SECTION("child path completion")
@@ -64,6 +71,11 @@ TEST_CASE("file paths")
       FilePath cPath("/path/to/foo");
       CHECK(cPath.completeChildPath("../bar") == cPath);
       CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
+
+      // it should be possible to complete relative paths
+      FilePath dPath("path/to");
+      CHECK(dPath.completeChildPath("quuux").getFullPath() == 
+            FilePath("path/to/quuux").getFullPath());
    }
 
    SECTION("general path completion")

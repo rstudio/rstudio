@@ -303,16 +303,16 @@ public:
    bool exists() const;
 
    /**
-    * @brief Gets the full absolute representation of this file path.
+    * @brief Gets the string representation of this file path.
     *
-    * @return The absolute representation of this file path.
+    * @return The string representation of this file path.
     */
    std::string getAbsolutePath() const;
 
    /**
-    * @brief Gets the full absolute representation of this file path in native format.
+    * @brief Gets the string representation of this file path in native format.
     *
-    * @return The absolute representation of this file path in native format.
+    * @return The string representation of this file path in native format.
     */
    std::string getAbsolutePathNative() const;
 
@@ -366,6 +366,15 @@ public:
     * @return The name of the file, including the extension.
     */
    std::string getFilename() const;
+
+   /**
+    * @brief Gets the full path to the file. Always returns an absolute,
+    *   lexically normal path.
+    *
+    * @return The full path to the file. If the path is relative, the current
+    *    directory will be used to make it absolute.
+    */
+   std::string getFullPath() const;
 
    /**
     * @brief Get the last time this file path was written.
