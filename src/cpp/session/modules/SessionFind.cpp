@@ -485,15 +485,6 @@ private:
             file->replace(pos, 1, session::options().userHomePath().getAbsolutePath());
       }
 
-
-      /* !!! safe to remove?
-      if (!currentFile_.empty())
-      {
-         pInputStream = pInputStream_;
-         pOutputStream = pOutputStream_;
-      }
-      */
-
       // if we're looking at the first or a new file
       bool first = false;
       if (currentFile_.empty() ||
@@ -526,16 +517,15 @@ private:
       {
          std::string line;
          int currentLine=0;
+         if (!first)
+            currentLine = inputLineNum_;
          while (findResults().isRunning() && currentLine < lineNum && std::getline(inputStream_, line))
          {
             ++currentLine;
             if (currentLine != lineNum)
             {
-               if (first)
-               {
-                  line.append("\n");
-                  outputStream_.write(line.c_str(), line.size());
-               }
+               line.append("\n");
+               outputStream_.write(line.c_str(), line.size());
             }
             else
             {
@@ -609,6 +599,7 @@ private:
                }
             }
          }
+         inputLineNum_ = currentLine;
       }
 
       return Success();
@@ -681,22 +672,6 @@ private:
                               findResults().searchPattern(),
                               findResults().replacePattern(),
                               findResults().replaceProgress());
-               /* !!!! move elsewhere
-               // finish writing contents to file
-               if (pOutputStream_ != nullptr)
-               {
-                  std::string line;
-                  while (std::getline(*inputStream_, line))
-                     pOutputStream_.write(line.c_str(), line.size());
-                  inputStream_.close();
-                  pOutputStream_.close();
-                  int error = std::rename(
-                        tempReplaceFile_.getAbsolutePath().c_str(),
-                        file.c_str());
-                  if (error != 0)
-                     LOG_ERROR_MESSAGE("Error renaming file");
-               }
-               */
             }
 
             files.push_back(json::Value(file));
@@ -708,6 +683,25 @@ private:
             replaceMatchOffs.push_back(replaceMatchOff);
             recordsToProcess--;
          }
+      }
+
+      if (!currentFile_.empty())
+      {
+         // finish writing contents to file
+         std::string line;
+         while (std::getline(inputStream_, line))
+         {
+            line.append("\n");
+            outputStream_.write(line.c_str(), line.size());
+         }
+         outputStream_.flush();
+         inputStream_.close();
+         outputStream_.close();
+         int error = std::rename(
+               tempReplaceFile_.getAbsolutePath().c_str(),
+               currentFile_.c_str());
+         if (error != 0)
+            LOG_ERROR_MESSAGE("Error renaming file");
       }
 
       if (nextLineStart)
@@ -778,6 +772,7 @@ private:
    FilePath tempReplaceFile_;
    std::fstream inputStream_;
    std::fstream outputStream_;
+   int inputLineNum_;
 };
 
 } // namespace
