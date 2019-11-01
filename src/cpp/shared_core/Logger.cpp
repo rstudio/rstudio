@@ -169,9 +169,10 @@ public:
    /**
     * @brief Writes a pre-formatted message to all registered destinations.
     *
-    * @param in_logLevel    The log level of the message, which is passed to the destination for informational purposes.
-    * @param in_message     The pre-formatted message.
- * @param in_loggedFrom         The location from which the error message was logged.
+    * @param in_logLevel        The log level of the message, which is passed to the destination for informational purposes.
+    * @param in_message         The pre-formatted message.
+    * @param in_section         The section to which to log this message.
+    * @param in_loggedFrom      The location from which the error message was logged.
     */
    void writeMessageToDestinations(
       LogLevel in_logLevel,
