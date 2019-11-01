@@ -569,9 +569,34 @@ private:
                      replaceMatchOn += offset;
                      replaceMatchOff += offset;
                   }
-                  pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                  pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                                gsl::narrow_cast<int>(replaceString.size())));
+                  // if multiple replaces in line, readjust previous match numbers
+                  if (pReplaceMatchOn->getSize() > 0)
+                  {
+                     json::Array tempMatchOn(*pReplaceMatchOn);
+                     json::Array tempMatchOff(*pReplaceMatchOff);
+                     pReplaceMatchOn -> clear();
+                     pReplaceMatchOff -> clear();
+                     int difference(matchOff - matchOn);
+                     int replaceDifference(replaceString.size()); // !!! need to fix for regexes
+                     int offset(replaceDifference - difference);
+                     {
+                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                      gsl::narrow_cast<int>(replaceString.size())));
+                     }
+                     for (json::Value match : tempMatchOn)
+                        pReplaceMatchOn -> push_back(json::Value(
+                                                     gsl::narrow_cast<int>(match.getInt() + offset)));
+                     for (json::Value match : tempMatchOff)
+                        pReplaceMatchOff -> push_back(json::Value(
+                                                     gsl::narrow_cast<int>(match.getInt() + offset)));
+                  }
+                  else
+                  {
+                     pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                     pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                   gsl::narrow_cast<int>(replaceString.size())));
+                  }
    
                   // !!! current doesn't account for the original text being a regex
                   if (findResults().replaceRegex())
@@ -670,12 +695,6 @@ private:
             json::Array replaceMatchOn, replaceMatchOff;
 
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
-            files.push_back(json::Value(file));
-            lineNums.push_back(json::Value(lineNum));
-            contents.push_back(json::Value(lineContents));
-            matchOns.push_back(matchOn);
-            matchOffs.push_back(matchOff);
-
             if (findResults().replace())
             {
                if (!fullLineContents.empty())
@@ -687,6 +706,12 @@ private:
                               findResults().replacePattern(),
                               findResults().replaceProgress());
             }
+
+            files.push_back(json::Value(file));
+            lineNums.push_back(json::Value(lineNum));
+            contents.push_back(json::Value(lineContents));
+            matchOns.push_back(matchOn);
+            matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
             recordsToProcess--;
