@@ -11,7 +11,10 @@
 
    <!-- Gin module dependencies                                    -->
    <inherits name="com.google.gwt.inject.Inject"/>
-    
+
+   <!-- Elemental module dependencies                              -->
+   <inherits name="elemental.Elemental"/>
+
    <!-- Use default GWT style sheet                                -->
    <!--<inherits name='com.google.gwt.user.theme.standard.Standard'/>-->
 
