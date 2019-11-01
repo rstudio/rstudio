@@ -3145,35 +3145,35 @@ well as menu structures (for main menu and popup menus).
         desc="Remove all the breakpoints in the current project"/>
         
    <cmd id="debugContinue"
+        label="Continue Execution"
         menuLabel="_Continue"
         buttonLabel="Continue"
-        desc="Continue execution until the next breakpoint is encountered"
-        rebindable="false"/>
-        
+        desc="Continue execution until the next breakpoint is encountered"/>
+
    <cmd id="debugStop"
+        label="Stop Debugging"
         menuLabel="_Stop Debugging"
         buttonLabel="Stop"
-        desc="Exit debug mode"
-        rebindable="false"/>
-        
+        desc="Exit debug mode"/>
+
    <cmd id="debugStep"
+        label="Execute Next Line"
         menuLabel="E_xecute Next Line"
         buttonLabel="Next"
-        desc="Execute the next line of code"
-        rebindable="false"/>
-        
+        desc="Execute the next line of code"/>
+
    <cmd id="debugStepInto"
+        label="Step Into Function"
         menuLabel="Step _Into Function"
         buttonLabel=""
-        desc="Step into the current function call"
-        rebindable="false"/>
-        
+        desc="Step into the current function call"/>
+
    <cmd id="debugFinish"
+        label="Finish Function/Loop"
         menuLabel="_Finish Function/Loop"
         buttonLabel=""
-        desc="Execute the remainder of the current function or loop"
-        rebindable="false"/>
-        
+        desc="Execute the remainder of the current function or loop"/>
+
    <cmd id="debugHelp"
         label="Show Guide on Debugging with RStudio"
         menuLabel="Debugging _Help"
