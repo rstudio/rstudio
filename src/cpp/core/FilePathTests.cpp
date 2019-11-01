@@ -64,6 +64,11 @@ TEST_CASE("file paths")
       FilePath cPath("/path/to/foo");
       CHECK(cPath.completeChildPath("../bar") == cPath);
       CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
+
+      // trailing slashes are okay
+      FilePath dPath("/path/to/");
+      FilePath ePath("/path/to/e");
+      CHECK(dPath.completeChildPath("e") == ePath);
    }
 
    SECTION("general path completion")

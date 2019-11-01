@@ -1029,13 +1029,14 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
    FilePath parent(in_scopePath.getLexicallyNormalPath());
 
    // Easy test: We can't possibly be in this scope path if it has more components than we do
-   if (parent.m_impl->Path.size() >= child.m_impl->Path.size())
+   if (parent.m_impl->Path.size() > child.m_impl->Path.size())
       return false;
 
-   // Find the first path element that differs
+   // Find the first path element that differs. Stop when we reach the end of the parent
+   // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
    for (boost::filesystem::path::iterator childIt = child.m_impl->Path.begin(),
                                           parentIt = parent.m_impl->Path.begin();
-        parentIt != parent.m_impl->Path.end();
+        parentIt != parent.m_impl->Path.end() && *parentIt != ".";
         parentIt++, childIt++)
    {
       if (*parentIt != *childIt)
