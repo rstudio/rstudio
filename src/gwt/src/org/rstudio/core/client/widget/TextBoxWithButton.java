@@ -119,18 +119,18 @@ public class TextBoxWithButton extends Composite
 
       addStyleName(ThemeResources.INSTANCE.themeStyles().textBoxWithButton());
    }
-   
+
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return themedButton_.addClickHandler(handler);
    }
-   
+
    public HandlerRegistration addValueChangeHandler(
                                     ValueChangeHandler<String> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
-   
+
    public void focusButton()
    {
       themedButton_.setFocus(true);
@@ -142,18 +142,18 @@ public class TextBoxWithButton extends Composite
    {
       useDefaultValue_ = useDefaultValue;
    }
-   
+
    public void setText(String text)
    {
       text_ = text;
-      
+
       if (text_ == useDefaultValue_)
          textBox_.setText("[Use Default] " + text);
       else if (text.length() > 0)
          textBox_.setText(text);
       else
          textBox_.setText(emptyLabel_);
-      
+
       ValueChangeEvent.fire(this, getText());
    }
 
@@ -161,7 +161,7 @@ public class TextBoxWithButton extends Composite
    {
       return text_;
    }
-   
+
    public void setTextWidth(String width)
    {
       inner_.setCellWidth(textBox_, width);
@@ -171,7 +171,7 @@ public class TextBoxWithButton extends Composite
    {
       textBox_.setReadOnly(readOnly);
    }
-   
+
    public void click()
    {
       themedButton_.click();
@@ -187,17 +187,17 @@ public class TextBoxWithButton extends Composite
       textBox_.setEnabled(enabled);
       themedButton_.setEnabled(enabled);
    }
-   
+
    public TextBox getTextBox()
    {
       return textBox_;
    }
-   
+
    protected ThemedButton getButton()
    {
       return themedButton_;
    }
-   
+
    @Override
    public void focus()
    {
@@ -220,12 +220,12 @@ public class TextBoxWithButton extends Composite
          lblCaption_.setFor(textBox_);
    }
 
-   private HorizontalPanel inner_;
+   private final HorizontalPanel inner_;
    private FormLabel lblCaption_;
-   private TextBox textBox_;
+   private final TextBox textBox_;
    private HelpButton helpButton_;
-   private ThemedButton themedButton_;
-   private String emptyLabel_;
+   private final ThemedButton themedButton_;
+   private final String emptyLabel_;
    private String useDefaultValue_;
    private String text_ = "";
 }
