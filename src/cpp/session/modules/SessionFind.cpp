@@ -419,6 +419,7 @@ private:
    }
 
    void processContents(std::string* pContent,
+                        std::string* pFullLineContent,
                         json::Array* pMatchOn,
                         json::Array* pMatchOff)
    {
@@ -461,6 +462,8 @@ private:
 
       if (decodedLine.size() > 300)
       {
+         // if we are cutting off pContent, we need to store full lines for replaces
+         *pFullLineContent = decodedLine;
          decodedLine = decodedLine.erase(300);
          decodedLine.append("...");
       }
@@ -659,13 +662,16 @@ private:
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
+            std::string fullLineContents; // only used with replace
             boost::algorithm::trim(lineContents);
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
 
-            processContents(&lineContents, &matchOn, &matchOff);
+            processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
             if (findResults().replace())
             {
+               if (!fullLineContents.empty())
+                  lineContents = fullLineContents;
                processReplace(&file, lineNum, &lineContents,
                               &matchOn, &matchOff,
                               &replaceMatchOn, &replaceMatchOff,
