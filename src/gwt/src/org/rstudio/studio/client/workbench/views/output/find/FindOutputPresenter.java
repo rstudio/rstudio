@@ -158,7 +158,12 @@ public class FindOutputPresenter extends BasePresenter
 
             view_.ensureVisible(true);
 
-            dialogState_.setResultsCount(event.getResults().size());
+            {
+               int count = 0;
+               for (FindResult fr : event.getResults())
+                  count += fr.getMatchOns().size();
+               dialogState_.setResultsCount(count);
+            }
             Debug.logToConsole("Find Result Event with " + dialogState_.getResultsCount() + " results.");
          }
       });
