@@ -518,11 +518,8 @@ private:
          LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
       else
       {
-         bool lineFromTempFile = false;
          if (first)
             inputLineNum_ = 0;
-         else if (inputLineNum_ == lineNum) // account for more than one replace on the same line
-            lineFromTempFile = true;
          std::string line;
          while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(inputStream_, line))
          {
@@ -534,113 +531,74 @@ private:
             }
             else
             {
-               std::string editLine;
-               if (lineFromTempFile)
-               {
-                  boost::shared_ptr<std::fstream> tempStream(new std::fstream);
-                  tempStream->open(tempReplaceFile_.getAbsolutePath(), std::fstream::in);
-                  int lineCount = 0;
-                  size_t pos = 0;
-                  while (findResults().isRunning() &&
-                         lineCount < inputLineNum_ &&
-                         std::getline(*tempStream, editLine))
-                  {
-                     lineCount++;
-                     if (inputLineNum_ == 1 ||
-                         lineCount == (inputLineNum_ - 1))
-                        outputStream_.seekg(pos);
-                     pos += line.size();
-                  }
-               }
-               size_t matchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
-               size_t matchOff = static_cast<std::size_t>(pMatchOff -> getBack().getInt());
-               size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getBack().getInt());
-               size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getBack().getInt());
-               
+               int pos = pMatchOn->getSize() - 1;
                std::string newLine;
-               // if previewing, we need to display the original and replacement text
-               std::string replaceString(*pReplace);
-               if (findResults().preview())
-                  replaceString.insert(0, *pSearch);
-
-               // pContent is decoded, but performing the replace requires offsetting
-               // encoded characters
-               // the backend doesn't look at replaceMatchOn/Off for preview
-               if (lineFromTempFile &&
-                   line.size() != editLine.size())
+               while (pos > -1)
                {
-                  const char* linePtr = line.c_str() + matchOn;
-                  const char* editLinePtr = editLine.c_str();
-                  int matchCounter = 0;
-                  if (line.size() > editLine.size())
+                  size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
+                  size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+                  size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
+                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+               
+                  // if previewing, we need to display the original and replacement text
+                  std::string replaceString(*pReplace);
+                  if (findResults().preview())
+                     replaceString.insert(0, *pSearch);
+
+                  // pContent is decoded, but performing the replace requires offsetting
+                  // encoded characters
+                  // the frontend doesn't look at replaceMatchOn/Off for preview
+                  if (!findResults().preview() &&
+                      line != *pContent)
                   {
-                     replaceMatchOn = 0;
-                     int difference = matchOff - matchOn;
-                     while (matchCounter != difference ||
-                            (replaceMatchOn > editLine.size() &&
-                             replaceMatchOn > line.size()))
+                     const char* linePtr = line.c_str();
+                     const char* contentPtr = pContent -> c_str();
+                     size_t contentCounter = 0;
+                     size_t offset = 0;
+                     while (contentCounter < matchOn)
                      {
-                        if (linePtr[matchCounter] != editLinePtr[matchCounter])
-                           matchCounter = 0;
+                        if (linePtr[0] != contentPtr[0])
+                           offset++;
                         else
-                           matchCounter++;
-                        editLinePtr++;
-                        replaceMatchOn++;
+                        {
+                           contentCounter++;
+                           contentPtr++;
+                        }
+                        linePtr++;
                      }
-                     if (matchCounter != difference)
-                        LOG_ERROR_MESSAGE("Could not replace line: " + line); 
+                     replaceMatchOn += offset;
+                     replaceMatchOff += offset;
                   }
-               }
-               else if (!findResults().preview() &&
-                   line != *pContent)
-               {
-                  const char* linePtr = line.c_str();
-                  const char* contentPtr = pContent -> c_str();
-                  size_t contentCounter = 0;
-                  size_t offset = 0;
-                  while (contentCounter < matchOn)
-                  {
-                     if (linePtr[0] != contentPtr[0])
-                        offset++;
-                     else
-                     {
-                        contentCounter++;
-                        contentPtr++;
-                     }
-                     linePtr++;
-                  }
-                  replaceMatchOn += offset;
-                  replaceMatchOff += offset;
-               }
-               pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-               pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                             gsl::narrow_cast<int>(replaceString.size())));
+                  pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                  pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                gsl::narrow_cast<int>(replaceString.size())));
    
-               // !!! current doesn't account for the original text being a regex
-               if (findResults().replaceRegex())
-                  newLine = boost::regex_replace(line,
-                                                 boost::regex(*pSearch),
-                                                 replaceString);
-               else
-               {
-                  newLine =
-                     line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
-                  newLine.append("\n");
-                  *pContent =
-                     pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
-            }
-
-            if (!findResults().preview())
-            {
-               try
-               {
-                  outputStream_.write(newLine.c_str(), newLine.size());
-                  outputStream_.flush();
-                  progress -> addUnit();
+                  // !!! current doesn't account for the original text being a regex
+                  if (findResults().replaceRegex())
+                     newLine = boost::regex_replace(line,
+                                                    boost::regex(*pSearch),
+                                                    replaceString);
+                  else
+                  {
+                     newLine =
+                        line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
+                     newLine.append("\n");
+                     *pContent =
+                        pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
+                  }
+                  pos--;
                }
-               catch (const std::ios_base::failure& e)
+               if (!findResults().preview())
                {
-                  std::string text("Failed to write to file ");
+                  try
+                  {
+                     outputStream_.write(newLine.c_str(), newLine.size());
+                     outputStream_.flush();
+                     progress -> addUnit();
+                  }
+                  catch (const std::ios_base::failure& e)
+                  {
+                     std::string text("Failed to write to file ");
                      text.append(e.code().message());
                      LOG_ERROR_MESSAGE(text);
                   }
@@ -712,6 +670,12 @@ private:
             json::Array replaceMatchOn, replaceMatchOff;
 
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
+            files.push_back(json::Value(file));
+            lineNums.push_back(json::Value(lineNum));
+            contents.push_back(json::Value(lineContents));
+            matchOns.push_back(matchOn);
+            matchOffs.push_back(matchOff);
+
             if (findResults().replace())
             {
                if (!fullLineContents.empty())
@@ -723,12 +687,6 @@ private:
                               findResults().replacePattern(),
                               findResults().replaceProgress());
             }
-
-            files.push_back(json::Value(file));
-            lineNums.push_back(json::Value(lineNum));
-            contents.push_back(json::Value(lineContents));
-            matchOns.push_back(matchOn);
-            matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
             recordsToProcess--;
