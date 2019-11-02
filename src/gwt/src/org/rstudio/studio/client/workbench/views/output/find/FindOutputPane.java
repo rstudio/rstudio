@@ -505,6 +505,21 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void enableReplace()
+   {
+      replaceTextBox_.setReadOnly(false);
+      replaceAllButton_.setEnabled(true);
+   }
+
+   @Override
+   public void disableReplace()
+   {
+      replaceTextBox_.setValue("");
+      replaceTextBox_.setReadOnly(true);
+      replaceAllButton_.setEnabled(false);
+   }
+
+   @Override
    public void showProgress()
    {
       if (!replaceProgress_.isVisible())

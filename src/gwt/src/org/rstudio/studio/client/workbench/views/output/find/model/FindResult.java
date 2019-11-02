@@ -265,7 +265,6 @@ public class FindResult extends JavaScriptObject
       {
          openTags--;
          out.appendHtmlConstant("</em>");
-                  String replace = getReplaceValue();
       }
 
       return out.toSafeHtml();

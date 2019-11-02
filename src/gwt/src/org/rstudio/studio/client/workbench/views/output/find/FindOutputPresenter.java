@@ -92,6 +92,8 @@ public class FindOutputPresenter extends BasePresenter
 
       HasClickHandlers getStopReplaceButton();
       void setStopReplaceButtonVisible(boolean visible);
+      void enableReplace();
+      void disableReplace();
 
       void showProgress();
       void hideProgress();
@@ -164,6 +166,8 @@ public class FindOutputPresenter extends BasePresenter
                   count += fr.getMatchOns().size();
                dialogState_.setResultsCount(count);
             }
+            // replace may have been previously disabled
+            view_.enableReplace();
             Debug.logToConsole("Find Result Event with " + dialogState_.getResultsCount() + " results.");
          }
       });
@@ -333,6 +337,7 @@ public class FindOutputPresenter extends BasePresenter
             view_.hideProgress();
             
             view_.ensureVisible(true);
+            view_.disableReplace();
          }
       });
 
