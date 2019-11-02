@@ -153,7 +153,7 @@ private:
    {                                                  \
       rstudio::core::thread::WriterLock lock(mutex);  \
 
-#define RW_LOCK_END(tryLog)                                                                     \
+#define RW_LOCK_END(tryLog)                                                                  \
    }                                                                                         \
    catch (const boost::thread_resource_error& e)                                             \
    {                                                                                         \
