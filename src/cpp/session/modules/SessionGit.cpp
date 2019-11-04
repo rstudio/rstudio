@@ -122,6 +122,13 @@ core::system::ProcessOptions procOptions()
    if (!nonPathGitBinDir.empty())
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
+   // add postback directory to PATH
+   // (note that we also do this on init, but we do this again for
+   // child processes just to ensure any user-initiated PATH munging
+   // doesn't break builtin utilities)
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
+
    options.workingDir = projects::projectContext().directory();
 
 #ifdef _WIN32
