@@ -69,6 +69,26 @@ public class SubstringDiff
       {
       }
       
+      // Move head and tail to ensure we align on starts of UTF-8 characters.
+      // UTF-8 continuation bytes match the byte sequence 10xxxxxx;
+      // that is, are values in the range [128, 192). So we want to ensure
+      // head + tail land on bytes not containing those values.
+      while (head > 0)
+      {
+         var ch = o[head];
+         if (ch < 128 || ch >= 192)
+            break;
+         head--;
+      }
+      
+      while (tail < o.length)
+      {
+         var ch = o[tail];
+         if (ch < 128 || ch >= 192)
+            break;
+         tail++;
+      }
+      
       // Extract the modified slice of data, and decode it back to a string.
       var slice = n.slice(head, tail + tailDelta);
       var replacement = new TextDecoder().decode(slice);
