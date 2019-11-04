@@ -67,6 +67,7 @@ endif()
 include_directories(${SHARED_INCLUDE_DIRS})
 
 add_library(rstudio-shared-core STATIC ${SHARED_CORE_HEADER_FILES} ${SHARED_CORE_SOURCE_FILES})
+define_source_file_names(rstudio-shared-core)
 
 target_link_libraries(rstudio-shared-core
    ${Boost_LIBRARIES})
