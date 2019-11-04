@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include <gsl/gsl>
+#include <regex>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
@@ -125,6 +126,11 @@ public:
    bool isRunning() const
    {
       return running_;
+   }
+
+   bool regex()
+   {
+      return regex_;
    }
 
    bool replace()
@@ -508,6 +514,7 @@ private:
                         std::string* pReplace,
                         LocalProgress* progress)
    {
+      bool preview = findResults().preview();
       FilePath fullFile = FilePath::resolveAliasedPath(*file, session::options().userHomePath());
       
       bool first = false; // is this the first time we're processing this file?
@@ -515,16 +522,19 @@ private:
           currentFile_ != fullFile.getAbsolutePath())
       {
          first = true;
-         if (!currentFile_.empty())
-            completeFileReplace();
+         inputLineNum_ = 0;
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
-         inputLineNum_ = 0;
-         tempReplaceFile_ = module_context::tempFile("replace", "txt");
-         outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
+         if (!preview)
+         {
+            if (!currentFile_.empty())
+               completeFileReplace();
+            tempReplaceFile_ = module_context::tempFile("replace", "txt");
+            outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
+         }
       }
 
-      if (!inputStream_.good() || !outputStream_.good())
+      if (!inputStream_.good() || (!preview && !outputStream_.good()))
          LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
       else
       {
@@ -534,8 +544,11 @@ private:
             ++inputLineNum_;
             if (inputLineNum_ != lineNum)
             {
-               line.append("\n");
-               outputStream_.write(line.c_str(), line.size());
+               if (!preview)
+               {
+                  line.append("\n");
+                  outputStream_.write(line.c_str(), line.size());
+               }
             }
             else
             {
@@ -548,17 +561,43 @@ private:
                   size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
-                  // if previewing, we need to display the original and replacement text
-                  // !!! BAD
                   std::string replaceString(*pReplace);
-                  if (findResults().preview())
-                     replaceString.insert(0, *pSearch);
+                  // for regexes, determine what the replace will look like before creating the string
+                  // that will be written to file so that previews are handled correctly
+                  if (findResults().replaceRegex())
+                  {
+                     std::regex searchAsRegex(*pSearch);
+                     std::string temp (std::regex_replace(line, searchAsRegex, *pReplace));
+
+                     const char* endOfString = line.substr(matchOff).c_str();
+                     const char* replacePtr = temp.substr(matchOn).c_str();
+                     size_t offset = 0;
+
+                     while (*endOfString != *replacePtr)
+                     {
+                        replacePtr++;
+                        offset++;
+                     }
+                     replaceMatchOff = replaceMatchOn + offset;
+                     replaceString = temp.substr(replaceMatchOn, (replaceMatchOff - replaceMatchOn));
+                  }
+                  // if previewing, we need to display the original and replacement text
+                  if (preview)
+                  {
+                     if (!findResults().regex())
+                        replaceString.insert(0, *pSearch);
+                     else
+                     {
+                        std::string foundString(pContent->substr(matchOn, (matchOff - matchOn)));
+                        replaceString.insert(0, foundString);
+                     }
+                  }
 
                   // pContent is decoded, but performing the replace may require offsetting
                   // encoded characters
                   // replaceMatchOn/Off aren't looked at for preview
                   if (line != *pContent &&
-                      !findResults().preview())
+                      !preview)
                   {
                      const char* linePtr = line.c_str();
                      const char* contentPtr = pContent -> c_str();
@@ -607,8 +646,8 @@ private:
                                                    gsl::narrow_cast<int>(replaceString.size())));
                   }
    
-                  // !!! current doesn't account for the original text being a regex
-                  if (findResults().replaceRegex())
+                  if (findResults().regex() &&
+                      !findResults().replaceRegex())
                      newLine = boost::regex_replace(line,
                                                     boost::regex(*pSearch),
                                                     replaceString);
@@ -622,7 +661,7 @@ private:
                   }
                   pos--;
                }
-               if (!findResults().preview())
+               if (!preview)
                {
                   try
                   {

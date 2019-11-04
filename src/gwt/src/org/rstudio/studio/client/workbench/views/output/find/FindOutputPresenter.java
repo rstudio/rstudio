@@ -214,8 +214,6 @@ public class FindOutputPresenter extends BasePresenter
                                       public void onResponseReceived(String handle)
                                       {
                                          currentFindHandle_ = handle;
-                                         Debug.logToConsole("Preview replace response received");
-                                         Debug.logToConsole(handle);
                                       }
                                    });
          }
@@ -497,7 +495,11 @@ public class FindOutputPresenter extends BasePresenter
    private void updateSearchLabel(String query, String path, boolean regex,
       String replace, boolean replaceRegex)
    {
-      updateSearchLabel(query, path, regex);
+      if (regex)
+         query = "/" + query + "/";
+      else
+         query = "\"" + query + "\"";
+
       if (replaceRegex)
          replace = "/" + replace + "/";
       else
