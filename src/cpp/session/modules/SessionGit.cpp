@@ -122,10 +122,6 @@ core::system::ProcessOptions procOptions()
    if (!nonPathGitBinDir.empty())
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
-   // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
-   core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
-
    options.workingDir = projects::projectContext().directory();
 
 #ifdef _WIN32
@@ -3359,6 +3355,10 @@ core::Error initialize()
    {
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
    }
+
+   // add postback directory to PATH
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   core::system::addToPath(postbackDir.getAbsolutePath());
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
