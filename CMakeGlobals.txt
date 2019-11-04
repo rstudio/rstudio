@@ -218,7 +218,6 @@ include(RStudioCMakeUtils)
 
 # define custom macro to strip unnecessary path parts from binary filename
 function(define_source_file_names targetname)
-    file(TO_NATIVE_PATH "/" PATH_SEPARATOR)
     get_target_property(SOURCE_FILES "${targetname}" SOURCES)
     foreach(SOURCE_FILE ${SOURCE_FILES})
         # Get source file's current list of compile definitions.
@@ -226,18 +225,16 @@ function(define_source_file_names targetname)
 
         # Add the stripped filename to the list
         # Provided source paths can either be full paths or simply filenames
-        string(FIND "${SOURCE_FILE}" "${PATH_SEPARATOR}src${PATH_SEPARATOR}cpp" SOURCE_INDEX)
+        string(FIND "${SOURCE_FILE}" "/src/cpp" SOURCE_INDEX)
         if (SOURCE_INDEX GREATER 0)
            set(FULL_SOURCE_NAME "${SOURCE_FILE}")
         else()
-           set(FULL_SOURCE_NAME "${CMAKE_CURRENT_SOURCE_DIR}${PATH_SEPARATOR}${SOURCE_FILE}")
-           string(FIND "${FULL_SOURCE_NAME}" "${PATH_SEPARATOR}src${PATH_SEPARATOR}cpp" SOURCE_INDEX)
+           set(FULL_SOURCE_NAME "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
+           string(FIND "${FULL_SOURCE_NAME}" "/src/cpp" SOURCE_INDEX)
         endif()
 
-        message(WARNING "Found source file: ${FULL_SOURCE_NAME}")
         MATH(EXPR SOURCE_INDEX "${SOURCE_INDEX}+1")
         string(SUBSTRING "${FULL_SOURCE_NAME}" "${SOURCE_INDEX}" -1 STRIPPED_SOURCE)
-        message(WARNING "Generated stripped source: ${STRIPPED_SOURCE}")
         list(APPEND SOURCE_DEFS "STRIPPED_FILENAME=\"${STRIPPED_SOURCE}\"")
 
         # Set the updated compile definitions on the source file.
