@@ -575,10 +575,17 @@ well as menu structures (for main menu and popup menus).
       <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
       <shortcutgroup name="Source Editor">
-         <shortcut refid="cutDummy" value="Cmd+X" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="copyDummy" value="Cmd+C" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="pasteDummy" value="Cmd+V" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="pasteWithIndentDummy" value="Cmd+Shift+V" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+
+         <shortcut refid="cutDummy"             value="Ctrl+X"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut refid="copyDummy"            value="Ctrl+C"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="pasteDummy"           value="Ctrl+V"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="pasteWithIndentDummy" value="Ctrl+Shift+V" if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+
+         <shortcut refid="cutDummy"             value="Meta+X"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut refid="copyDummy"            value="Meta+C"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="pasteDummy"           value="Meta+V"       if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="pasteWithIndentDummy" value="Meta+Shift+V" if="org.rstudio.studio.client.application.Desktop.isDesktop() &amp;&amp; org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
          <shortcut refid="insertSection" value="Ctrl+Shift+R" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
