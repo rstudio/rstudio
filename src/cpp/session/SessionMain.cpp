@@ -1711,6 +1711,21 @@ int main (int argc, char * const argv[])
       core::system::unsetenv("DYLD_INSERT_LIBRARIES");
 #endif
       
+      // fix up HOME / R_USER environment variables
+      // (some users on Windows report these having trailing
+      // slashes, which confuses a number of RStudio routines)
+      boost::regex reTrailing("[/\\]+$");
+      for (const std::string& envvar : {"HOME", "R_USER"})
+      {
+         std::string oldVal = core::system::getenv(envvar);
+         if (!oldVal.empty())
+         {
+            std::string newVal = boost::regex_replace(oldVal, reTrailing, "");
+            if (oldVal != newVal)
+               core::system::setenv(envvar, newVal);
+         }
+      }
+      
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
