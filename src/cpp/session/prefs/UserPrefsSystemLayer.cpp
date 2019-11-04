@@ -34,13 +34,9 @@ UserPrefsSystemLayer::UserPrefsSystemLayer():
 core::Error UserPrefsSystemLayer::readPrefs()
 {
    return loadPrefsFromFile(
-      core::system::xdg::systemConfigDir().completePath(kUserPrefsFile));
-}
-
-core::Error UserPrefsSystemLayer::validatePrefs()
-{
-   return validatePrefsFromSchema(
+      core::system::xdg::systemConfigDir().completePath(kUserPrefsFile),
       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
+      
 }
 
 } // namespace prefs

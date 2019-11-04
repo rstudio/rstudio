@@ -46,7 +46,8 @@ Error UserPrefsLayer::readPrefs()
    // Mark the last sync time 
    lastSync_ = prefsFile_.getLastWriteTime();
 
-   return loadPrefsFromFile(prefsFile_);
+   return loadPrefsFromFile(prefsFile_,
+       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 
 void UserPrefsLayer::onPrefsFileChanged()
@@ -62,7 +63,8 @@ void UserPrefsLayer::onPrefsFileChanged()
    const json::Object old = oldVal.getObject();
 
    // Reload the prefs from the file
-   Error error = loadPrefsFromFile(prefsFile_);
+   Error error = loadPrefsFromFile(prefsFile_,
+       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
    if (error)
    {
       LOG_ERROR(error);
@@ -108,12 +110,6 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    }
 
    return error;
-}
-
-Error UserPrefsLayer::validatePrefs()
-{
-   return validatePrefsFromSchema(
-      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
 }
 
 } // namespace prefs

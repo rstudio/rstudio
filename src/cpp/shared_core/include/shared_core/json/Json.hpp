@@ -190,6 +190,18 @@ public:
    Value clone() const;
 
    /**
+    * @brief Attempts to coerce a JSON object to conform to the given schema by discarding non-conforming
+    *    properties.
+    *
+    * @param in_schema           The schema to validate this value against.
+    * @param out_propViolations  The names of the properties that did not conform to the schema.
+    *
+    * @return Success if this JSON value matches the schema after coercion; Error otherwise.
+    */
+   Error coerce(const std::string& in_schema,
+                std::vector<std::string>& out_propViolations);
+
+   /**
     * @brief Gets the value as a JSON array. If the call to getType() does not return Type::ARRAY, this method is
     *        invalid.
     *

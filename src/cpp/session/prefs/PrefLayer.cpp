@@ -16,6 +16,7 @@
 #include <session/prefs/PrefLayer.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/Algorithm.hpp>
 
 using namespace rstudio::core;
 
@@ -105,7 +106,8 @@ Error PrefLayer::writePrefs(const core::json::Object &prefs)
    return systemError(boost::system::errc::function_not_supported, ERROR_LOCATION);
 }
 
-Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
+Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile, 
+                                   const core::FilePath& schemaFile)
 {
    json::Value val;
    std::string contents;
@@ -136,7 +138,34 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath &prefsFile)
    }
    else if (val.isObject())
    {
-      // Successful parse of prefs object
+      // Attempt to coerce the value to fit the schema, if provided
+      if (!schemaFile.isEmpty())
+      {
+         error = readStringFromFile(schemaFile, &contents);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else
+         {
+            std::vector<std::string> violations;
+            error = val.coerce(contents, violations);
+            if (error)
+            {
+               // We could not coerce the prefs to fit the schema.
+               return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
+            }
+            else if (violations.size() > 0)
+            {
+               // We made the prefs fit the schema, but had to discard some values to make it work.
+               // Log a warning.
+               LOG_WARNING_MESSAGE("Invalid values found in " + 
+                  prefsFile.getAbsolutePath() + ": " + 
+                  algorithm::join(violations, ", "));
+            }
+         }
+      }
+      // Successful parse of valid prefs object
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          cache_ = boost::make_shared<json::Object>(val.getObject());

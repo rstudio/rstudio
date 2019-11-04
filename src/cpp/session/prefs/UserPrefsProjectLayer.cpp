@@ -65,12 +65,6 @@ core::Error UserPrefsProjectLayer::readPrefs()
    return Success();
 }
 
-core::Error UserPrefsProjectLayer::validatePrefs()
-{
-   // Project level prefs can't be invalid.
-   return Success();
-}
-
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

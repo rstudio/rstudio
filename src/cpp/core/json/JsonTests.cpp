@@ -877,7 +877,7 @@ TEST_CASE("Json")
 
       // do invalid documents fail?
       std::string invalid = R"(
-         { "first": 1, "second": "d" }
+         { "first": "a", "second": "d", "third": 3 }
       )";
       err = val.parseAndValidate(invalid, schema);
       REQUIRE(err);
@@ -901,6 +901,27 @@ TEST_CASE("Json")
       // ... see if we got what we expected.
       REQUIRE(result["first"].getBool() == true);   // non-default value
       REQUIRE(result["second"].getString() == "b");   // default value
+
+      // now let's try coercing the invalid document
+      json::Value corrected;
+      err = corrected.parse(invalid);
+      REQUIRE(!err);
+      std::vector<std::string> violations;
+      err = corrected.coerce(schema, violations);
+      REQUIRE(!err);
+
+      // make sure that we got a violation
+      REQUIRE(violations.size() > 0);
+
+      // make sure the coerced document is valid according to the schema
+      err = val.validate(schema);
+      REQUIRE(!err);
+
+      // make sure that the two invalid nodes were removed, leaving the valid one
+      json::Object obj = corrected.getObject();
+      REQUIRE(obj.find("first") == obj.end());
+      REQUIRE(obj.find("second") == obj.end());
+      REQUIRE(obj.find("third") != obj.end());
    }
 
    SECTION("Can iterate object")
