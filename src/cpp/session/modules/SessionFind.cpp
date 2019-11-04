@@ -262,6 +262,7 @@ public:
       replacePattern_.clear();
       replaceMatchOns_.clear();
       replaceMatchOffs_.clear();
+      replaceProgress_ = nullptr;
    }
 
    Error readFromJson(const json::Object& asJson)
@@ -394,8 +395,6 @@ public:
 private:
    bool onContinue(const core::system::ProcessOperations& ops) const
    {
-      // !!! sleep added for testing
-      boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
       return findResults().isRunning() && findResults().handle() == handle();
    }
 
@@ -416,6 +415,33 @@ private:
       }
 
       return decoded;
+   }
+
+   void completeFileReplace()
+   {
+      if (!currentFile_.empty() &&
+          !tempReplaceFile_.getAbsolutePath().empty() && 
+          inputStream_.good() &&
+          outputStream_.good())
+      {
+         // finish writing contents to file
+         std::string line;
+         while (std::getline(inputStream_, line))
+         {
+            line.append("\n");
+            outputStream_.write(line.c_str(), line.size());
+         }
+         outputStream_.flush();
+         inputStream_.close();
+         outputStream_.close();
+         int error = std::rename(
+               tempReplaceFile_.getAbsolutePath().c_str(),
+               currentFile_.c_str());
+         if (error != 0)
+            LOG_ERROR_MESSAGE("Error renaming file");
+      }
+      else
+         LOG_ERROR_MESSAGE("Cannot complete file replace");
    }
 
    void processContents(std::string* pContent,
@@ -482,44 +508,26 @@ private:
                         std::string* pReplace,
                         LocalProgress* progress)
    {
-      {
-         size_t pos=0;
-         if ((pos = file->find("~")) != std::string::npos)
-            file->replace(pos, 1, session::options().userHomePath().getAbsolutePath());
-      }
-
-      // if we're looking at the first or a new file
-      bool first = false;
+      FilePath fullFile = FilePath::resolveAliasedPath(*file, session::options().userHomePath());
+      
+      bool first = false; // is this the first time we're processing this file?
       if (currentFile_.empty() ||
-          currentFile_ != *file)
+          currentFile_ != fullFile.getAbsolutePath())
       {
+         first = true;
          if (!currentFile_.empty())
-         {
-            // finish writing contents to file
-            std::string line;
-            while (std::getline(inputStream_, line))
-               outputStream_.write(line.c_str(), line.size());
-            inputStream_.close();
-            outputStream_.close();
-            int error = std::rename(
-                  tempReplaceFile_.getAbsolutePath().c_str(),
-                  file->c_str());
-            if (error != 0)
-               LOG_ERROR_MESSAGE("Error renaming file");
-         }
-         currentFile_ = *file;
-         inputStream_.open(file->c_str(), std::fstream::in | std::fstream::out);
+            completeFileReplace();
+         currentFile_ = fullFile.getAbsolutePath();
+         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
+         inputLineNum_ = 0;
          tempReplaceFile_ = module_context::tempFile("replace", "txt");
          outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
-         first = true;
       }
 
       if (!inputStream_.good() || !outputStream_.good())
          LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
       else
       {
-         if (first)
-            inputLineNum_ = 0;
          std::string line;
          while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(inputStream_, line))
          {
@@ -541,15 +549,16 @@ private:
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
                   // if previewing, we need to display the original and replacement text
+                  // !!! BAD
                   std::string replaceString(*pReplace);
                   if (findResults().preview())
                      replaceString.insert(0, *pSearch);
 
-                  // pContent is decoded, but performing the replace requires offsetting
+                  // pContent is decoded, but performing the replace may require offsetting
                   // encoded characters
-                  // the frontend doesn't look at replaceMatchOn/Off for preview
-                  if (!findResults().preview() &&
-                      line != *pContent)
+                  // replaceMatchOn/Off aren't looked at for preview
+                  if (line != *pContent &&
+                      !findResults().preview())
                   {
                      const char* linePtr = line.c_str();
                      const char* contentPtr = pContent -> c_str();
@@ -719,23 +728,7 @@ private:
       }
 
       if (!currentFile_.empty())
-      {
-         // finish writing contents to file
-         std::string line;
-         while (std::getline(inputStream_, line))
-         {
-            line.append("\n");
-            outputStream_.write(line.c_str(), line.size());
-         }
-         outputStream_.flush();
-         inputStream_.close();
-         outputStream_.close();
-         int error = std::rename(
-               tempReplaceFile_.getAbsolutePath().c_str(),
-               currentFile_.c_str());
-         if (error != 0)
-            LOG_ERROR_MESSAGE("Error renaming file");
-      }
+         completeFileReplace();
 
       if (nextLineStart)
       {
