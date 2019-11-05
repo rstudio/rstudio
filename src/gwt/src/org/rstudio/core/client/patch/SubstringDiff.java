@@ -46,9 +46,12 @@ public class SubstringDiff
       var o = new TextEncoder("utf-8").encode(origVal);
       var n = new TextEncoder("utf-8").encode(newVal);
       
+      var olen = o.length;
+      var nlen = n.length;
+      
       // Figure out how many characters at the beginning of the two strings
       // are identical.
-      var headLimit = Math.min(o.length, n.length);
+      var headLimit = Math.min(olen, nlen);
       var head;
       for (head = 0;
            head < headLimit && o[head] === n[head];
@@ -59,14 +62,34 @@ public class SubstringDiff
       // Figure out how many characters at the end of the two strings are
       // identical, but don't go past the range we established in the above
       // step (i.e., anything already in the head can't be part of the tail).
-      var tailDelta = n.length - o.length;
+      var tailDelta = nlen - olen;
       var tailLimit = Math.max(head, head - tailDelta);
       
       var tail;
-      for (tail = o.length;
+      for (tail = olen;
            tail > tailLimit && o[tail - 1] === n[tail + tailDelta - 1];
            tail--)
       {
+      }
+      
+      // Move head and tail to ensure we align on starts of UTF-8 characters.
+      // UTF-8 continuation bytes match the byte sequence 10xxxxxx;
+      // that is, are values in the range [128, 192). So we want to ensure
+      // head + tail land on bytes not containing those values.
+      while (head > 0)
+      {
+         var ch = o[head];
+         if (ch < 128 || ch >= 192)
+            break;
+         head--;
+      }
+      
+      while (tail < olen)
+      {
+         var ch = o[tail];
+         if (ch < 128 || ch >= 192)
+            break;
+         tail++;
       }
       
       // Extract the modified slice of data, and decode it back to a string.
