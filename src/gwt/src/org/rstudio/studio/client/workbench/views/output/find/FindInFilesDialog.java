@@ -63,7 +63,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             regex: regex,
             caseSensitive: caseSensitive,
             filePatterns: filePatterns,
-            resultsCount: 0
+            resultsCount: 0,
+            errorCount: 0
          };
       }-*/;
 
@@ -102,6 +103,13 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          return this.resultsCount;
       }-*/;
 
+      public native final void updateErrorCount(int count) /*-{
+         this.errorCount += count;
+      }-*/;
+
+      public native final int getErrorCount() /*-{
+         return this.errorCount;
+      }-*/;
    }
 
    public FindInFilesDialog(OperationWithInput<State> operation)

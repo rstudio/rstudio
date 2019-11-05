@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.output.find.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.Debug;
@@ -34,7 +35,8 @@ public class FindResult extends JavaScriptObject
          line: line,
          lineValue: lineValue,
          replace: "",
-         replaceIndicator: false
+         replaceIndicator: false,
+         errors: ""
       });
    }-*/;
 
@@ -50,7 +52,8 @@ public class FindResult extends JavaScriptObject
          matchOn: this.matchOn,
          matchOff: this.matchOff,
          replaceMatchOn: this.replaceMatchOn,
-         replaceMatchOff: this.replaceMatchOff
+         replaceMatchOff: this.replaceMatchOff,
+         errors: this.errors
       });
    }-*/;
 
@@ -96,6 +99,11 @@ public class FindResult extends JavaScriptObject
    public final ArrayList<Integer> getReplaceMatchOffs()
    {
       return getJavaArray("replaceMatchOff");
+   }
+
+   public final ArrayList<String> getErrors()
+   {
+      return getJavaStringArray("errors");
    }
 
    public final native void setReplace(String value) /*-{
@@ -314,9 +322,25 @@ public class FindResult extends JavaScriptObject
       return ints;
    }
 
+   private ArrayList<String> getJavaStringArray(String property)
+   {
+      JsArrayString array = getStringArray(property);
+      ArrayList<String> strings = new ArrayList<String>();
+      for (int i = 0; i < array.length(); i++)
+         strings.add(array.get(i));
+      return strings;
+
+   }
+
    private native final JsArrayInteger getArray(String property) /*-{
       if (this == null)
          return [];
       return this[property] || [];
    }-*/;
+
+  private native final JsArrayString getStringArray(String property) /*-{
+     if (this == null)
+        return [];
+     return this[property] || [];
+  }-*/;
 }

@@ -528,6 +528,7 @@ private:
                         json::Array* pReplaceMatchOff,
                         std::string* pSearch,
                         std::string* pReplace,
+                        std::set<std::string>* pErrorMessage,
                         LocalProgress* progress)
    {
       bool preview = findResults().preview();
@@ -552,6 +553,10 @@ private:
 
       if (!inputStream_.good() || (!preview && !outputStream_.good()))
       {
+         if (!inputStream_.good())
+            pErrorMessage->insert("Could not open file./n");
+         else
+            pErrorMessage->insert("Could not open temporary file./n");
          progress -> addUnits(pMatchOn->getSize());
          pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
          pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
@@ -706,9 +711,7 @@ private:
                   {
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                     std::string text("Failed to write to file ");
-                     text.append(e.code().message());
-                     LOG_ERROR_MESSAGE(text);
+                     pErrorMessage -> insert(std::string(e.code().message()));
                   }
                }
             }
@@ -727,6 +730,7 @@ private:
       json::Array matchOffs;
       json::Array replaceMatchOns;
       json::Array replaceMatchOffs;
+      json::Array errors;
 
       int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
       if (recordsToProcess < 0)
@@ -776,17 +780,19 @@ private:
             boost::algorithm::trim(lineContents);
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
+            std::set<std::string> errorMessage;
 
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
             if (findResults().replace())
             {
                if (!fullLineContents.empty())
-                  lineContents = fullLineContents;
+                  lineContents = fullLineContents; // !!! consider how this affects UI
                processReplace(&file, lineNum, &lineContents,
                               &matchOn, &matchOff,
                               &replaceMatchOn, &replaceMatchOff,
                               findResults().searchPattern(),
                               findResults().replacePattern(),
+                              &errorMessage,
                               findResults().replaceProgress());
             }
 
@@ -797,6 +803,28 @@ private:
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
+            if (errors.isEmpty())
+            {
+               for (std::string newError : errorMessage)
+                  errors.push_back(json::Value(newError));
+            }
+            else
+            {
+               for (std::string newError : errorMessage)
+               {
+                  bool found = false;
+                  for (json::Value value : errors)
+                  {
+                     if (newError.compare(value.getString()))
+                     {
+                        found = true;
+                        break;
+                     }
+                  }
+                  if (!found)
+                     errors.push_back(json::Value(newError));
+               }
+            }
             recordsToProcess--;
          }
       }
@@ -821,6 +849,7 @@ private:
          results["matchOff"] = matchOffs;
          results["replaceMatchOn"] = replaceMatchOns;
          results["replaceMatchOff"] = replaceMatchOffs;
+         results["errors"] = errors;
          result["results"] = results;
 
          findResults().addReplaceResult(handle(),

@@ -29,9 +29,10 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -52,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEv
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -309,7 +311,10 @@ public class FindOutputPresenter extends BasePresenter
             view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
             if (event.units() == event.max())
+            {
                view_.hideProgress();
+               events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
+            }
          }
       });
 
@@ -329,14 +334,38 @@ public class FindOutputPresenter extends BasePresenter
             view_.setStopReplaceButtonVisible(false);
 
             ArrayList<FindResult> results = event.getResults();
+            int errorCount = 0;
             for (FindResult fr : results)
+            {
                fr.setReplaceIndicator();
+               errorCount += fr.getErrors().size();
+            }
+            dialogState_.updateErrorCount(errorCount);
+
             //view_.clearMatches();
             view_.addMatches(results);
             view_.toggleReplaceMode();
             
             view_.ensureVisible(true);
             view_.disableReplace();
+         }
+      });
+
+      events_.addHandler(ReplaceOperationEndedEvent.TYPE, new ReplaceOperationEndedEvent.Handler()
+      {
+         @Override
+         public void onReplaceOperationEnded(
+               ReplaceOperationEndedEvent event)
+         {
+            if (event.getHandle() == currentFindHandle_)
+            {
+               Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
+               if (dialogState_.getErrorCount() > 0)
+                  globalDisplay_.showMessage(MessageDialog.INFO,
+                                             "Replace Errors",
+                                             "Could not replace " + dialogState_.getErrorCount() +
+                                             " occurences.");
+            }
          }
       });
 
