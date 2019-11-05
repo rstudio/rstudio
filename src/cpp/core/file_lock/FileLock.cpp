@@ -40,9 +40,11 @@ const char * const kLockTypeLinkBased = "linkbased";
 
 // use advisory locks on Windows by default; link-based elsewhere
 #ifdef _WIN32
-# define kLockTypeDefault kLockTypeAdvisory
+# define kLockTypeDefault      kLockTypeAdvisory
+# define kLockTypeDefaultEnum  (FileLock::LOCKTYPE_ADVISORY)
 #else
-# define kLockTypeDefault kLockTypeLinkBased
+# define kLockTypeDefault      kLockTypeLinkBased
+# define kLockTypeDefaultEnum  (FileLock::LOCKTYPE_LINKBASED)
 #endif 
 
 const char * const kLocksConfPath    = "/etc/rstudio/file-locks";
@@ -61,7 +63,8 @@ std::string lockTypeToString(FileLock::LockType type)
    return std::string();
 }
 
-FileLock::LockType stringToLockType(const std::string& lockType)
+FileLock::LockType stringToLockType(const std::string& lockType,
+                                    FileLock::LockType defaultLockType)
 {
    using namespace boost::algorithm;
    
@@ -71,7 +74,7 @@ FileLock::LockType stringToLockType(const std::string& lockType)
       return FileLock::LOCKTYPE_LINKBASED;
    
    LOG_WARNING_MESSAGE("unrecognized lock type '" + lockType + "'");
-   return FileLock::LOCKTYPE_LINKBASED;
+   return defaultLockType;
 }
 
 double getFieldPositive(const Settings& settings,
@@ -109,8 +112,18 @@ bool FileLock::verifyInitialized()
    return s_isInitialized;
 }
 
-void FileLock::initializeImpl(FileLock::LockType defaultLockType, const Settings& settings)
+void FileLock::initialize(FileLock::LockType fallbackLockType)
 {
+   // read settings
+   FilePath locksConfPath(kLocksConfPath);
+
+   Settings settings;
+   if (locksConfPath.exists())
+   {
+      Error error = settings.initialize(locksConfPath);
+      if (error)
+         LOG_ERROR(error);
+   }
    
 #ifdef _WIN32
    // TODO: link-based locks are not yet implemented on Windows
@@ -118,7 +131,10 @@ void FileLock::initializeImpl(FileLock::LockType defaultLockType, const Settings
 #endif
    
    // default lock type
-   FileLock::s_defaultType = defaultLockType;
+   std::string lockTypePref = settings.get("lock-type");
+   FileLock::s_defaultType = lockTypePref.empty()
+         ? fallbackLockType
+         : stringToLockType(lockTypePref, fallbackLockType);
 
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
@@ -157,35 +173,7 @@ void FileLock::initializeImpl(FileLock::LockType defaultLockType, const Settings
 
 void FileLock::initialize()
 {
-   FilePath locksConfPath = FilePath(kLocksConfPath);
-   
-   Settings settings;
-   if (locksConfPath.exists())
-   {
-      Error error = settings.initialize(locksConfPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   FileLock::LockType defaultLockType =
-         stringToLockType(settings.get("lock-file", kLockTypeDefault));
-   
-   initializeImpl(defaultLockType, settings);
-}
-
-void FileLock::initialize(FileLock::LockType defaultLockType)
-{
-   FilePath locksConfPath = FilePath(kLocksConfPath);
-   
-   Settings settings;
-   if (locksConfPath.exists())
-   {
-      Error error = settings.initialize(locksConfPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   initializeImpl(defaultLockType, settings);
+   initialize(kLockTypeDefaultEnum);
 }
 
 void FileLock::log(const std::string& message)

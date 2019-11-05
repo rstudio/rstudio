@@ -47,7 +47,7 @@ public:
    
    // initialize (read configuration)
    static void initialize();
-   static void initialize(FileLock::LockType defaultLockType);
+   static void initialize(FileLock::LockType fallbackLockType);
    
    // clean up
    static void cleanUp();
@@ -98,8 +98,6 @@ public:
    }
    
 protected:
-   static void initializeImpl(LockType defaultLockType, const Settings& settings);
-   
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
