@@ -176,8 +176,8 @@ FileLogDestination::FileLogDestination(
    LogLevel in_logLevel,
    const std::string& in_programId,
    FileLogOptions in_logOptions) :
-      m_impl(new Impl(in_id, in_programId, std::move(in_logOptions))),
-      ILogDestination(in_logLevel)
+      ILogDestination(in_logLevel),
+      m_impl(new Impl(in_id, in_programId, std::move(in_logOptions)))
 {
 }
 

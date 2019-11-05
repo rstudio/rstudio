@@ -57,7 +57,6 @@ int main(int argc, char * const argv[])
    try
    { 
       // initialize log
-      core::log::setLogLevel(core::log::LogLevel::WARN);
       core::log::setProgramId("rserver-pam");
       core::system::initializeSystemLog("rserver-pam", core::log::LogLevel::WARN);
 
