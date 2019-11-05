@@ -67,8 +67,8 @@ constexpr char s_delim = ';';
 enum class LogLevel
 {
    OFF = 0,       // No messages will be logged.
-   ERR = 1,     // Error messages will be logged.
-   WARN = 2,   // Warning and error messages will be logged.
+   ERR = 1,       // Error messages will be logged.
+   WARN = 2,      // Warning and error messages will be logged.
    INFO = 3,      // Info, warning, and error messages will be logged.
    DEBUG = 4      // All messages will be logged.
 };
