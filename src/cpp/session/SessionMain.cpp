@@ -1756,7 +1756,8 @@ int main (int argc, char * const argv[])
 
       // reflect stderr logging
       if (options.logStderr())
-         log::addLogDestination(std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination()));
+         log::addLogDestination(
+            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
 
       // initialize monitor
       initMonitorClient();
@@ -1764,7 +1765,8 @@ int main (int argc, char * const argv[])
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
       {
-         core::log::addLogDestination(monitor::client().createLogDestination(options.programIdentity()));
+         core::log::addLogDestination(
+            monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
       }
 
       // initialize file lock config
