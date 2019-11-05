@@ -64,7 +64,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             caseSensitive: caseSensitive,
             filePatterns: filePatterns,
             resultsCount: 0,
-            errorCount: 0
+            errorCount: 0,
+            replaceErrors: ""
          };
       }-*/;
 
@@ -109,6 +110,17 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       public native final int getErrorCount() /*-{
          return this.errorCount;
+      }-*/;
+
+      public native final void updateReplaceErrors(String errors) /*-{
+         if (this.replaceErrors)
+            this.replaceErrors = this.replaceErrors.concat(errors);
+         else
+            this.replaceErrors = errors;
+      }-*/;
+
+      public native final int getReplaceErrors() /*-{
+         return this.replaceErrors;
       }-*/;
    }
 

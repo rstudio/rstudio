@@ -338,7 +338,9 @@ public class FindOutputPresenter extends BasePresenter
             for (FindResult fr : results)
             {
                fr.setReplaceIndicator();
-               errorCount += fr.getErrors().size();
+               if (!StringUtil.isNullOrEmpty(fr.getErrors()))
+                  errorCount++;
+               dialogState_.updateReplaceErrors(fr.getErrors());
             }
             dialogState_.updateErrorCount(errorCount);
 
@@ -360,11 +362,13 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
+               Debug.logToConsole("Errors: " + dialogState_.getReplaceErrors());
                if (dialogState_.getErrorCount() > 0)
                   globalDisplay_.showMessage(MessageDialog.INFO,
                                              "Replace Errors",
                                              "Could not replace " + dialogState_.getErrorCount() +
-                                             " occurences.");
+                                             " occurences.\n" +
+                                             dialogState_.getReplaceErrors());
             }
          }
       });

@@ -22,6 +22,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.JsArrayUtil;
 
 import java.util.ArrayList;
 
@@ -101,7 +102,7 @@ public class FindResult extends JavaScriptObject
       return getJavaArray("replaceMatchOff");
    }
 
-   public final ArrayList<String> getErrors()
+   public final String getErrors()
    {
       return getJavaStringArray("errors");
    }
@@ -322,14 +323,11 @@ public class FindResult extends JavaScriptObject
       return ints;
    }
 
-   private ArrayList<String> getJavaStringArray(String property)
+   private String getJavaStringArray(String property)
    {
       JsArrayString array = getStringArray(property);
-      ArrayList<String> strings = new ArrayList<String>();
-      for (int i = 0; i < array.length(); i++)
-         strings.add(array.get(i));
+      String strings = array.toString();
       return strings;
-
    }
 
    private native final JsArrayInteger getArray(String property) /*-{
