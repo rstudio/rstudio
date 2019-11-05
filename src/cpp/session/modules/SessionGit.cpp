@@ -122,6 +122,13 @@ core::system::ProcessOptions procOptions()
    if (!nonPathGitBinDir.empty())
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
+   // add postback directory to PATH
+   // (note that we also do this on init, but we do this again for
+   // child processes just to ensure any user-initiated PATH munging
+   // doesn't break builtin utilities)
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
+
    options.workingDir = projects::projectContext().directory();
 
 #ifdef _WIN32
@@ -3349,14 +3356,16 @@ core::Error initialize()
 
    // setup environment
    BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
-   
-   std::string rpostbackPath = session::options().rpostbackPath().getAbsolutePath();
-   core::system::setenv("GIT_ASKPASS", rpostbackPath);
+   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
 
    if (interceptAskPass)
    {
-      core::system::setenv("SSH_ASKPASS", rpostbackPath);
+      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
    }
+
+   // add postback directory to PATH
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   core::system::addToPath(postbackDir.getAbsolutePath());
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
