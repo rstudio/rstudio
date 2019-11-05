@@ -78,6 +78,7 @@
 * Allow fuzzy matches in help topic search (#3316)
 * The diagnostics system better handles missing expressions. (#5660)
 * Keyboard shortcuts for debugging commands can be customized (#3539)
+* Update SumatraPDF to version 3.1.2 (#3155)
 
 ### Bugfixes
 
