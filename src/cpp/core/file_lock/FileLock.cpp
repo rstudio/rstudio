@@ -127,14 +127,14 @@ void FileLock::initialize(FileLock::LockType fallbackLockType)
    
 #ifdef _WIN32
    // TODO: link-based locks are not yet implemented on Windows
-   defaultLockType = LOCKTYPE_ADVISORY;
-#endif
-   
+   FileLock::s_defaultType = LOCKTYPE_ADVISORY;
+#else
    // default lock type
    std::string lockTypePref = settings.get("lock-type");
    FileLock::s_defaultType = lockTypePref.empty()
          ? fallbackLockType
          : stringToLockType(lockTypePref, fallbackLockType);
+#endif
 
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
