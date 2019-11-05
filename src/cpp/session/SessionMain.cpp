@@ -1681,7 +1681,6 @@ int main (int argc, char * const argv[])
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
-      core::log::setLogLevel(core::log::LogLevel::WARN);
       core::log::setProgramId(programId);
       core::system::initializeSystemLog(programId, core::log::LogLevel::WARN);
 

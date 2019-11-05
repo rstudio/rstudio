@@ -93,7 +93,6 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-   core::log::setLogLevel(core::log::LogLevel::WARN);
    core::log::setProgramId("rstudio-diagnostics");
    core::system::initializeStderrLog("rstudio-diagnostics",
                                     core::log::LogLevel::WARN);

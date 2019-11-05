@@ -198,23 +198,19 @@ void initializeLogWriter(const std::string& logSection)
                logLevel,
                s_programIdentity,
                boost::get<FileLogOptions>(options))),
-            LogSection(logSection, s_logOptions->logLevel(logSection)));
+               logSection);
          break;
       }
       case LoggerType::kStdErr:
       {
-         addLogDestination(
-            getStdErrLogDest(logLevel),
-            LogSection(logSection, s_logOptions->logLevel(logSection)));
+         addLogDestination(getStdErrLogDest(logLevel), logSection);
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         addLogDestination(
-            getSysLogDest(logLevel),
-            LogSection(logSection, s_logOptions->logLevel(logSection)));
+         addLogDestination(getSysLogDest(logLevel), logSection);
 #endif
       }
    }
@@ -224,7 +220,6 @@ void initializeLogWriters()
 {
    // requires prior synchronization
    log::setProgramId(s_programIdentity);
-   log::setLogLevel(s_logOptions->logLevel());
 
    // Initialize primary log writer
    initializeLogWriter();

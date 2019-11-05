@@ -74,80 +74,12 @@ enum class LogLevel
 };
 
 /**
- * @brief Class which represents a log section.
- */
-struct LogSection
-{
-   /**
-    * @brief Constructor.
-    *
-    * Intentionally not explicit.
-    *
-    * @param in_name        The name of the section.
-    */
-   LogSection(const std::string& in_name);
-
-   /**
-    * @brief Constructor.
-    *
-    * @param in_name        The name of the section.
-    * @param in_logLevel    The maximum log level for this section.
-    */
-   LogSection(const std::string& in_name, LogLevel in_logLevel);
-
-   /**
-    * @brief Less-than operator. A log section is less than another if its name is alphabetically less than the other.
-    *
-    * @param in_other   The log section to which to compare this log section.
-    *
-    * @return True if this log section is less, alphabetically by name, than in_other; false otherwise.
-    */
-   bool operator<(const LogSection& in_other) const;
-
-   /**
-    * @brief Equality operator. A log section is equal to another if their names are equal.
-    *
-    * @param in_other   The log section to which to compare this log section.
-    *
-    * @return True if the two log sections have the same name; false otherwise.
-    */
-   bool operator==(const LogSection& in_other) const;
-
-   /**
-    * @brief Gets the maximum log level for the section.
-    *
-    * @param in_defaultLevel   The default log level to use if this section does not have a log level configured.
-    *
-    * @return The maximum log level for the section, or the specified default level if this section has no log level
-    *         configured.
-    */
-    LogLevel getMaxLogLevel(LogLevel in_defaultLevel) const;
-
-   /**
-    * @brief Gets the name of the log section.
-    *
-    * @return The name of the log section.
-    */
-   const std::string& getName() const;
-
-private:
-   // Private implementation of LogSection.
-   PRIVATE_IMPL_SHARED(m_impl);
-};
-
-/**
  * @brief Sets the program ID for the logger.
  *
  * @param in_programId       The ID of the program.
  */
 void setProgramId(const std::string& in_programId);
 
-/**
- * @brief Sets the level of detail at which to log messages.
- *
- * @param in_logLevel    The level of detail at which to log messages.
- */
-void setLogLevel(LogLevel in_logLevel);
 /**
  * @brief Adds an un-sectioned log destination to the logger.
  *
@@ -167,7 +99,7 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
  * @param in_destination    The destination to add.
  * @param in_section        The name of the log section to which this logger is assigned.
  */
-void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const LogSection& in_section);
+void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
  * @brief Replaces logging delimiters with ' ' in the specified string.
