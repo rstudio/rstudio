@@ -111,6 +111,12 @@ bool FileLock::verifyInitialized()
 
 void FileLock::initializeImpl(FileLock::LockType defaultLockType, const Settings& settings)
 {
+   
+#ifdef _WIN32
+   // TODO: link-based locks are not yet implemented on Windows
+   defaultLockType = LOCKTYPE_ADVISORY;
+#endif
+   
    // default lock type
    FileLock::s_defaultType = defaultLockType;
 
