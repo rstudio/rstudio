@@ -49,6 +49,7 @@ include_directories(${SYNCTEX_INCLUDE_DIRS})
 add_library(rstudio-core-synctex STATIC
    ${SYNCTEX_SOURCE_FILES}
    ${SYNCTEX_HEADER_FILES})
+define_source_file_names(rstudio-core-synctex)
 
 # link dependencies
 target_link_libraries(rstudio-core-synctex
