@@ -1768,7 +1768,7 @@ int main (int argc, char * const argv[])
       }
 
       // initialize file lock config
-      FileLock::initialize();
+      FileLock::initialize(desktopMode ? FileLock::LOCKTYPE_ADVISORY : FileLock::LOCKTYPE_LINKBASED);
 
       // re-initialize log for desktop mode
       if (desktopMode)

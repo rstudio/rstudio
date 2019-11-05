@@ -109,27 +109,10 @@ bool FileLock::verifyInitialized()
    return s_isInitialized;
 }
 
-
-void FileLock::initialize(FilePath locksConfPath)
-{
-   if (locksConfPath.isEmpty())
-      locksConfPath = FilePath(kLocksConfPath);
-   
-   Settings settings;
-   if (locksConfPath.exists())
-   {
-      Error error = settings.initialize(locksConfPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   FileLock::initialize(settings);
-}
-
-void FileLock::initialize(const Settings& settings)
+void FileLock::initializeImpl(FileLock::LockType defaultLockType, const Settings& settings)
 {
    // default lock type
-   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeDefault));
+   FileLock::s_defaultType = defaultLockType;
 
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
@@ -164,6 +147,39 @@ void FileLock::initialize(const Settings& settings)
          distributedLockingEnabled;
 
    s_isInitialized = true;
+}
+
+void FileLock::initialize()
+{
+   FilePath locksConfPath = FilePath(kLocksConfPath);
+   
+   Settings settings;
+   if (locksConfPath.exists())
+   {
+      Error error = settings.initialize(locksConfPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   FileLock::LockType defaultLockType =
+         stringToLockType(settings.get("lock-file", kLockTypeDefault));
+   
+   initializeImpl(defaultLockType, settings);
+}
+
+void FileLock::initialize(FileLock::LockType defaultLockType)
+{
+   FilePath locksConfPath = FilePath(kLocksConfPath);
+   
+   Settings settings;
+   if (locksConfPath.exists())
+   {
+      Error error = settings.initialize(locksConfPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   initializeImpl(defaultLockType, settings);
 }
 
 void FileLock::log(const std::string& message)
@@ -208,7 +224,8 @@ void FileLock::log(const std::string& message)
    }
 }
 
-// default values for static members
+// definitions for static members
+// NOTE: these will be overridden when FileLock::initialize() is called
 FileLock::LockType FileLock::s_defaultType(FileLock::LOCKTYPE_LINKBASED);
 boost::posix_time::seconds FileLock::s_timeoutInterval(static_cast<long>(kDefaultTimeoutInterval));
 boost::posix_time::seconds FileLock::s_refreshRate(static_cast<long>(kDefaultRefreshRate));

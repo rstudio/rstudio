@@ -46,8 +46,8 @@ public:
    enum LockType { LOCKTYPE_ADVISORY, LOCKTYPE_LINKBASED };
    
    // initialize (read configuration)
-   static void initialize(FilePath locksConfPath = FilePath());
-   static void initialize(const Settings& settings);
+   static void initialize();
+   static void initialize(FileLock::LockType defaultLockType);
    
    // clean up
    static void cleanUp();
@@ -98,6 +98,8 @@ public:
    }
    
 protected:
+   static void initializeImpl(LockType defaultLockType, const Settings& settings);
+   
    static LockType s_defaultType;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
