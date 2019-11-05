@@ -439,7 +439,7 @@ private:
       return decoded;
    }
 
-   void completeFileReplace()
+   void completeFileReplace(std::set<std::string>* pErrorMessage)
    {
       if (!currentFile_.empty() &&
           !tempReplaceFile_.getAbsolutePath().empty() && 
@@ -460,10 +460,10 @@ private:
                tempReplaceFile_.getAbsolutePath().c_str(),
                currentFile_.c_str());
          if (error != 0)
-            LOG_ERROR_MESSAGE("Error renaming file");
+            pErrorMessage->insert("Error renaming file " + currentFile_ + ".\n");
       }
-      else
-         LOG_ERROR_MESSAGE("Cannot complete file replace");
+      else if (pErrorMessage->empty())
+         pErrorMessage->insert("Cannot complete file replace for " + currentFile_ + ".\n");
    }
 
    void processContents(std::string* pContent,
@@ -541,7 +541,7 @@ private:
          if (!preview)
          {
             if (!currentFile_.empty())
-               completeFileReplace();
+               completeFileReplace(pErrorMessage);
             tempReplaceFile_ = module_context::tempFile("replace", "txt");
             outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
          }
@@ -551,12 +551,12 @@ private:
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
       }
 
-      if (!inputStream_.good() || (!preview && !outputStream_.good()))
+      if (!inputStream_.good()  || (!preview && !outputStream_.good()))
       {
          if (!inputStream_.good())
-            pErrorMessage->insert("Could not open file./n");
+            pErrorMessage->insert("Could not open file " + currentFile_ + ".\n");
          else
-            pErrorMessage->insert("Could not open temporary file./n");
+            pErrorMessage->insert("Could not open temporary file to process " + currentFile_ + ".\n");
          progress -> addUnits(pMatchOn->getSize());
          pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
          pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
@@ -749,6 +749,7 @@ private:
          std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
          nextLineStart = pos + 1;
 
+         std::set<std::string> errorMessage;
          boost::smatch match;
          if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
          {
@@ -780,7 +781,6 @@ private:
             boost::algorithm::trim(lineContents);
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
-            std::set<std::string> errorMessage;
 
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
             if (findResults().replace())
@@ -827,10 +827,9 @@ private:
             }
             recordsToProcess--;
          }
+         if (recordsToProcess == 0 && !currentFile_.empty())
+            completeFileReplace(&errorMessage);
       }
-
-      if (!currentFile_.empty())
-         completeFileReplace();
 
       if (nextLineStart)
       {
