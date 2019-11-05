@@ -521,10 +521,6 @@ private:
       if (currentFile_.empty() ||
           currentFile_ != fullFile.getAbsolutePath())
       {
-         first = true;
-         inputLineNum_ = 0;
-         currentFile_ = fullFile.getAbsolutePath();
-         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
          if (!preview)
          {
             if (!currentFile_.empty())
@@ -532,6 +528,10 @@ private:
             tempReplaceFile_ = module_context::tempFile("replace", "txt");
             outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
          }
+         first = true;
+         inputLineNum_ = 0;
+         currentFile_ = fullFile.getAbsolutePath();
+         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
       }
 
       if (!inputStream_.good() || (!preview && !outputStream_.good()))
