@@ -38,12 +38,11 @@ class StderrLogDestination : public ILogDestination
 public:
 
    /**
-    * @brief Gets the unique ID for the stderr destination. There should only be one stderr destination for the whole
-    *        program.
+    * @brief Constructor.
     *
-    * @return The unique ID of the stderr destination.
+    * @param in_logLevel    The most detailed level of logs to be written to stderr.
     */
-   static unsigned int getStderrId();
+   explicit StderrLogDestination(LogLevel in_logLevel);
 
    /**
     * @brief Gets the unique ID of the stderr destination.

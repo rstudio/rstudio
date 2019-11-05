@@ -61,7 +61,8 @@ int logLevelToLogPriority(log::LogLevel in_logLevel)
 
 } // anonymous namespace
 
-SyslogDestination::SyslogDestination(const std::string& in_programId)
+SyslogDestination::SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId) :
+   ILogDestination(in_logLevel)
 {
    // Open the system log. Don't set a mask because filtering is done at a higher level.
    ::openlog(in_programId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
@@ -94,6 +95,10 @@ void SyslogDestination::writeLog(
    log::LogLevel in_logLevel,
    const std::string& in_message)
 {
+   // Don't write logs that are more detailed than the configured maximum.
+   if (in_logLevel > m_logLevel)
+      return;
+
    // Don't allow newlines in syslog messages since they delimit distinct log entries. Strip trailing whitespace first.
    std::string forSyslog = boost::algorithm::trim_right_copy(in_message);
    boost::algorithm::replace_all_copy(forSyslog, "\n", "|||");

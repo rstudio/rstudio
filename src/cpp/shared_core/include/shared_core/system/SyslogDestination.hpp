@@ -41,9 +41,10 @@ public:
    /**
     * @brief Constructor.
     *
+    * @param in_logLevel        The most detailed level of log to be written to syslog.
     * @param in_programId       The ID of this program.
     */
-   explicit SyslogDestination(const std::string& in_programId);
+   SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId);
 
    /**
     * @brief Destructor.
