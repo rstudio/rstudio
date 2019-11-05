@@ -1,24 +1,27 @@
-FROM fedora:28
+FROM centos:8
+
+RUN set -x \
+      && yum install epel-release -y \
+      && yum install dnf-plugins-core -y \ 
+      && yum config-manager --set-enabled PowerTools \
+      && yum update -y
 
 RUN yum install -y \
     ant \
     boost-devel \
     bzip2-devel \
     clang-devel \
-    curl \
     fakeroot \
     fuse-libs \
     gcc \
     gcc-c++ \
     git \
-    gpg \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     libcurl-devel \
     libacl-devel \
     libcap-devel \ 
-    libffi \
     libuuid-devel \
     libXcursor-devel \
     libXrandr-devel \
@@ -32,17 +35,14 @@ RUN yum install -y \
     pango-devel \
     patchelf \
     postgresql-devel \
-    procps \
-    python \
+    python2 \
     R \
     rpmdevtools \
     rpm-sign \
     sudo \
     valgrind \
     wget \
-    xml-commons-apis \
-    zlib-devel \
-    libuser-devel
+    zlib-devel
 
 # sudo defaults to requiretty on fedora
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
@@ -55,6 +55,9 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 # install cmake
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
+
+# copy python2 to python so that it can be picked up by Google scripts
+RUN cp /usr/bin/python2 /usr/bin/python
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
@@ -75,6 +78,12 @@ RUN mkdir -p /opt/RStudio-QtSDK && \
     export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.5 && \
     export QT_QPA_PLATFORM=minimal && \
     /tmp/install-qt-sdk
+
+# get libuser header files (libuser-devel not currently available on centos8)
+RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
+RUN tar zxvf libuser-libuser-0.62.tar.gz
+RUN mkdir -p /usr/include/libuser
+RUN cp libuser-libuser-0.62/lib/*.h /usr/include/libuser 
 
 # remove any previous users with conflicting IDs
 ARG JENKINS_GID=999
