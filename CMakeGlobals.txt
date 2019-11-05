@@ -216,7 +216,7 @@ set(RSTUDIO_EMBEDDED_PACKAGES renv CACHE INTERNAL "Embedded R Packages")
 # include utilities
 include(RStudioCMakeUtils)
 
-# define custom macro to strip unnecessary path parts from binary filename
+# define custom function to strip unnecessary path parts from binary filename
 function(define_source_file_names targetname)
     get_target_property(SOURCE_FILES "${targetname}" SOURCES)
     foreach(SOURCE_FILE ${SOURCE_FILES})
