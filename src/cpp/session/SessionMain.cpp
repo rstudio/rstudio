@@ -1714,7 +1714,7 @@ int main (int argc, char * const argv[])
       // fix up HOME / R_USER environment variables
       // (some users on Windows report these having trailing
       // slashes, which confuses a number of RStudio routines)
-      boost::regex reTrailing("[/\\]+$");
+      boost::regex reTrailing("[/\\\\]+$");
       for (const std::string& envvar : {"HOME", "R_USER"})
       {
          std::string oldVal = core::system::getenv(envvar);
