@@ -134,13 +134,7 @@ FilePath sessionRestartFilePath(const FilePath& sessionDir)
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
 {
-   // always use advisory locks on Desktop, but allow server lock scheme
-   // to be configurable
-   bool isServer = session::options().programMode() == kSessionProgramModeServer;
-   if (isServer)
-      return FileLock::createDefault();
-   else
-      return FileLock::create(FileLock::LOCKTYPE_ADVISORY);
+   return FileLock::createDefault();
 }
 
 FileLock& sessionDirLock()
