@@ -595,7 +595,6 @@ private:
 
                   // pContent is decoded, but performing the replace may require offsetting
                   // encoded characters
-                  // replaceMatchOn/Off aren't looked at for preview
                   if (line != *pContent &&
                       !preview)
                   {
@@ -628,9 +627,16 @@ private:
                      int replaceDifference(replaceString.size()); // !!! need to fix for regexes
                      int offset(replaceDifference - difference);
                      {
+                        // use matchOn here because it contains decoded values
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                                      gsl::narrow_cast<int>(replaceString.size())));
+                        //pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                        if (!preview)
+                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                         gsl::narrow_cast<int>(replaceString.size())));
+                        else
+                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                         gsl::narrow_cast<int>(replaceString.size() -
+                                                                               (matchOff - matchOn))));
                      }
                      for (json::Value match : tempMatchOn)
                         pReplaceMatchOn -> push_back(json::Value(
@@ -641,11 +647,20 @@ private:
                   }
                   else
                   {
+                     // use matchOn here because it contains decoded values
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                     pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
-                                                   gsl::narrow_cast<int>(replaceString.size())));
+                     //pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                     if (!preview)
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                      gsl::narrow_cast<int>(replaceString.size())));
+                     else
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                                                         gsl::narrow_cast<int>(replaceString.size() -
+                                                                               (matchOff - matchOn))));
                   }
    
+                  *pContent =
+                     pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
                   if (findResults().regex() &&
                       !findResults().replaceRegex())
                      newLine = boost::regex_replace(line,
@@ -654,10 +669,8 @@ private:
                   else
                   {
                      newLine =
-                        line.replace(replaceMatchOn, (replaceMatchOff - replaceMatchOn), replaceString);
+                        line.replace(replaceMatchOn, (matchOff - matchOn), replaceString);
                      newLine.append("\n");
-                     *pContent =
-                        pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
                   }
                   pos--;
                }
