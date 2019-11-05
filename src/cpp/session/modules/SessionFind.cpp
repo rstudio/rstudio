@@ -552,9 +552,9 @@ private:
 
       if (!inputStream_.good() || (!preview && !outputStream_.good()))
       {
-         // !!! add code to send response with failure notice
          progress -> addUnits(pMatchOn->getSize());
-         LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
+         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
       }
       else
       {
@@ -704,6 +704,8 @@ private:
                   }
                   catch (const std::ios_base::failure& e)
                   {
+                     pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                     pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      std::string text("Failed to write to file ");
                      text.append(e.code().message());
                      LOG_ERROR_MESSAGE(text);

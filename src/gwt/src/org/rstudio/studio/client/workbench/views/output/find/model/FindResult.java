@@ -221,6 +221,8 @@ public class FindResult extends JavaScriptObject
 
       ArrayList<Integer> on = getMatchOns();
       ArrayList<Integer> off = getMatchOffs();
+      ArrayList<Pair<Boolean, Integer>> failedParts =
+                                        new ArrayList<Pair<Boolean, Integer>>();
 
       ArrayList<Integer> onReplace = getReplaceMatchOns();
       ArrayList<Integer> offReplace = getReplaceMatchOffs();
@@ -231,7 +233,22 @@ public class FindResult extends JavaScriptObject
       {
          int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
          int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
-         if (onReplaceVal <= offReplaceVal)
+         if (onReplaceVal < 0 || offReplaceVal < 0)
+         {
+            int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
+            int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
+            if (onVal <= offVal)
+            {
+               failedParts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
+               onReplace.remove(0);
+            }
+            else
+            {
+               failedParts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
+               offReplace.remove(0);
+            }
+         }
+         else if (onReplaceVal <= offReplaceVal)
             parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
          else
             parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
@@ -240,7 +257,8 @@ public class FindResult extends JavaScriptObject
       String line = getLineValue();
 
       // Use a counter to ensure tags are balanced.
-      int openTags = 0;
+      int openEmTags = 0;
+      int openStrongTags = 0;
 
       for (int i = 0; i < line.length(); i++)
       {
@@ -249,22 +267,39 @@ public class FindResult extends JavaScriptObject
             if (parts.remove(0).first)
             {
                out.appendHtmlConstant("<em>");
-               openTags++;
+               openEmTags++;
             }
-            else if (openTags > 0)
+            else if (openEmTags > 0)
             {
                out.appendHtmlConstant("</em>");
-               openTags--;
-               String replace = getReplaceValue();
+               openEmTags--;
+            }
+         }
+         while (failedParts.size() > 0 && failedParts.get(0).second == i)
+         {
+            if (failedParts.remove(0).first)
+            {
+               out.appendHtmlConstant("<strong>");
+               openStrongTags++;
+            }
+            else if (openStrongTags > 0)
+            {
+               out.appendHtmlConstant("</strong>");
+               openStrongTags--;
             }
          }
          out.append(line.charAt(i));
       }
 
-      while (openTags > 0)
+      while (openEmTags > 0)
       {
-         openTags--;
+         openEmTags--;
          out.appendHtmlConstant("</em>");
+      }
+      while (openStrongTags > 0)
+      {
+         openStrongTags--;
+         out.appendHtmlConstant("</strong>");
       }
 
       return out.toSafeHtml();
