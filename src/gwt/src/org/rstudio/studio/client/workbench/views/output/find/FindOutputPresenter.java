@@ -155,7 +155,7 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() != currentFindHandle_)
                return;
 
-            view_.clearMatches();
+            //view_.clearMatches();
             view_.addMatches(event.getResults());
 
             view_.ensureVisible(true);
@@ -164,7 +164,7 @@ public class FindOutputPresenter extends BasePresenter
                int count = 0;
                for (FindResult fr : event.getResults())
                   count += fr.getMatchOns().size();
-               dialogState_.setResultsCount(count);
+               dialogState_.updateResultsCount(count);
             }
             // replace may have been previously disabled
             view_.enableReplace();
@@ -305,9 +305,11 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceProgress(ReplaceProgressEvent event)
          {
-            Debug.logToConsole("Replace progress event");
+            Debug.logToConsole("Replace progress event " + event.units() + " units out of " + event.max());
             view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
+            if (event.units() == event.max())
+               view_.hideProgress();
          }
       });
 
@@ -316,7 +318,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
-            Debug.logToConsole("Replace Result Event");
+            Debug.logToConsole("Replace Result Event with " + event.getResults().size() + " Results");
             if (event.getHandle() != currentFindHandle_)
                return;
 
@@ -329,10 +331,9 @@ public class FindOutputPresenter extends BasePresenter
             ArrayList<FindResult> results = event.getResults();
             for (FindResult fr : results)
                fr.setReplaceIndicator();
-            view_.clearMatches();
+            //view_.clearMatches();
             view_.addMatches(results);
             view_.toggleReplaceMode();
-            view_.hideProgress();
             
             view_.ensureVisible(true);
             view_.disableReplace();

@@ -94,8 +94,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          return this.filePatterns;
       }-*/;
 
-      public native final void setResultsCount(int count) /*-{
-         this.resultsCount = count;
+      public native final void updateResultsCount(int count) /*-{
+         this.resultsCount += count;
       }-*/;
 
       public native final int getResultsCount() /*-{

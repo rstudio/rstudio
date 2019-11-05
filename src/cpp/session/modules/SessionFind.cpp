@@ -69,13 +69,29 @@ public:
    void addUnit()
    {
       units_++;
-      if (units_ == nextUpdate_)
+      if (units_ >= nextUpdate_)
       {
          nextUpdate_ += updateIncrement_;
          if (nextUpdate_ > max_)
             nextUpdate_ = max_;
          notifyClient();
       }
+   }
+
+   void addUnits(int num)
+   {
+      units_ += num;
+      while (units_ >= nextUpdate_)
+      {
+         nextUpdate_ += updateIncrement_;
+         if (nextUpdate_ > max_)
+            nextUpdate_ = max_;
+         notifyClient();
+         // prevent infinite loop when max is reached
+         if (units_ == max_)
+            break;
+      }
+
    }
 
 private:
@@ -535,7 +551,11 @@ private:
       }
 
       if (!inputStream_.good() || (!preview && !outputStream_.good()))
+      {
+         // !!! add code to send response with failure notice
+         progress -> addUnits(pMatchOn->getSize());
          LOG_ERROR_MESSAGE(std::string("Could not process ") + *file);
+      }
       else
       {
          std::string line;
@@ -672,6 +692,7 @@ private:
                         line.replace(replaceMatchOn, (matchOff - matchOn), replaceString);
                      newLine.append("\n");
                   }
+                  progress -> addUnit();
                   pos--;
                }
                if (!preview)
@@ -680,7 +701,6 @@ private:
                   {
                      outputStream_.write(newLine.c_str(), newLine.size());
                      outputStream_.flush();
-                     progress -> addUnit();
                   }
                   catch (const std::ios_base::failure& e)
                   {
