@@ -44,9 +44,6 @@ RUN yum install -y \
     wget \
     zlib-devel
 
-# sudo defaults to requiretty on fedora
-RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
-
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
 COPY dependencies/common/install-boost /tmp/
