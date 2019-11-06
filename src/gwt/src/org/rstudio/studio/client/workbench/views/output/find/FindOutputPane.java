@@ -307,7 +307,7 @@ public class FindOutputPane extends WorkbenchPane
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
       
-      if (matchesToAdd != findResults.size())
+      if (matchCount_ >= MAX_COUNT)
          showOverflow();
    }
 
