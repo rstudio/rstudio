@@ -16,6 +16,7 @@ RUN yum install -y \
     gcc \
     gcc-c++ \
     git \
+    gnupg2 \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
