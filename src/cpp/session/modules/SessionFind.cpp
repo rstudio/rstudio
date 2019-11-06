@@ -441,29 +441,32 @@ private:
 
    void completeFileReplace(std::set<std::string>* pErrorMessage)
    {
-      if (!currentFile_.empty() &&
-          !tempReplaceFile_.getAbsolutePath().empty() && 
-          inputStream_.good() &&
-          outputStream_.good())
+      if (fileSuccess_)
       {
-         // finish writing contents to file
-         std::string line;
-         while (std::getline(inputStream_, line))
+         if (!currentFile_.empty() &&
+             !tempReplaceFile_.getAbsolutePath().empty() && 
+             inputStream_.good() &&
+             outputStream_.good())
          {
-            line.append("\n");
-            outputStream_.write(line.c_str(), line.size());
+            // finish writing contents to file
+            std::string line;
+            while (std::getline(inputStream_, line))
+            {
+               line.append("\n");
+               outputStream_.write(line.c_str(), line.size());
+            }
+            outputStream_.flush();
+            inputStream_.close();
+            outputStream_.close();
+            int error = std::rename(
+                  tempReplaceFile_.getAbsolutePath().c_str(),
+                  currentFile_.c_str());
+            if (error != 0)
+               pErrorMessage->insert("Error renaming file " + currentFile_ + ".\n");
          }
-         outputStream_.flush();
-         inputStream_.close();
-         outputStream_.close();
-         int error = std::rename(
-               tempReplaceFile_.getAbsolutePath().c_str(),
-               currentFile_.c_str());
-         if (error != 0)
-            pErrorMessage->insert("Error renaming file " + currentFile_ + ".\n");
+         else
+            pErrorMessage->insert("Cannot complete file replace for " + currentFile_ + ".\n");
       }
-      else if (pErrorMessage->empty())
-         pErrorMessage->insert("Cannot complete file replace for " + currentFile_ + ".\n");
    }
 
    void processContents(std::string* pContent,
@@ -541,10 +544,11 @@ private:
          if (!preview)
          {
             if (!currentFile_.empty())
-               completeFileReplace(pErrorMessage);
+               completeFileReplace(pErrorMessage); // !!! not sending the right pErrorMessage here
             tempReplaceFile_ = module_context::tempFile("replace", "txt");
             outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
          }
+         fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
          currentFile_ = fullFile.getAbsolutePath();
@@ -553,6 +557,7 @@ private:
 
       if (!inputStream_.good()  || (!preview && !outputStream_.good()))
       {
+         fileSuccess_ = false;
          if (!inputStream_.good())
             pErrorMessage->insert("Could not open file " + currentFile_ + ".\n");
          else
@@ -709,6 +714,7 @@ private:
                   }
                   catch (const std::ios_base::failure& e)
                   {
+                     fileSuccess_ = false;
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      pErrorMessage -> insert(std::string(e.code().message()));
@@ -907,6 +913,7 @@ private:
    std::fstream inputStream_;
    std::fstream outputStream_;
    int inputLineNum_;
+   bool fileSuccess_;
 };
 
 } // namespace

@@ -362,7 +362,6 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
-               Debug.logToConsole("Errors: " + dialogState_.getReplaceErrors());
                if (dialogState_.getErrorCount() > 0)
                   globalDisplay_.showMessage(MessageDialog.INFO,
                                              "Replace Errors",
