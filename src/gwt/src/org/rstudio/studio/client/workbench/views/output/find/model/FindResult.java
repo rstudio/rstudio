@@ -117,7 +117,6 @@ public class FindResult extends JavaScriptObject
 
    public final SafeHtml getLineHTML()
    {
-      // !!! entire function is sloppy
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
       ArrayList<Integer> on = getMatchOns();
@@ -326,8 +325,8 @@ public class FindResult extends JavaScriptObject
    private String getJavaStringArray(String property)
    {
       JsArrayString array = getStringArray(property);
-      String strings = array.toString();
-      return strings;
+      String string = array.toString();
+      return string;
    }
 
    private native final JsArrayInteger getArray(String property) /*-{

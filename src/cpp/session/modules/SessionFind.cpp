@@ -581,8 +581,11 @@ private:
                std::string newLine;
                while (pos > -1)
                {
-                  size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
-                  size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+                  // match final values were determined in processContents
+                  // replace matches change throughout function
+                  const size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
+                  const size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+                  const size_t matchDifference = matchOff - matchOn;
                   size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
@@ -613,15 +616,15 @@ private:
                         replaceString.insert(0, *pSearch);
                      else
                      {
-                        std::string foundString(pContent->substr(matchOn, (matchOff - matchOn)));
+                        std::string foundString(pContent->substr(matchOn, matchDifference));
                         replaceString.insert(0, foundString);
                      }
                   }
 
-                  // pContent is decoded, but performing the replace may require offsetting
-                  // encoded characters
-                  if (line != *pContent &&
-                      !preview)
+                  // pContent and line may be difference because pContent was decoded
+                  // need to offset difference when writing to file
+                  if (!preview &&
+                      line != *pContent)
                   {
                      const char* linePtr = line.c_str();
                      const char* contentPtr = pContent -> c_str();
@@ -641,27 +644,27 @@ private:
                      replaceMatchOn += offset;
                      replaceMatchOff += offset;
                   }
+
                   // if multiple replaces in line, readjust previous match numbers
                   if (pReplaceMatchOn->getSize() > 0)
                   {
                      json::Array tempMatchOn(*pReplaceMatchOn);
                      json::Array tempMatchOff(*pReplaceMatchOff);
+                     int replaceDifference(replaceString.size());
+                     int offset(replaceDifference - matchDifference);
                      pReplaceMatchOn -> clear();
                      pReplaceMatchOff -> clear();
-                     int difference(matchOff - matchOn);
-                     int replaceDifference(replaceString.size()); // !!! need to fix for regexes
-                     int offset(replaceDifference - difference);
                      {
-                        // use matchOn here because it contains decoded values
+                        // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
+                        // is only used for display
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                        //pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                         if (!preview)
                            pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size())));
                         else
                            pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
-                                                                               (matchOff - matchOn))));
+                                                                               matchDifference)));
                      }
                      for (json::Value match : tempMatchOn)
                         pReplaceMatchOn -> push_back(json::Value(
@@ -672,31 +675,28 @@ private:
                   }
                   else
                   {
-                     // use matchOn here because it contains decoded values
+                     // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
+                     // is only used for display
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                     //pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                      if (!preview)
                         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                       gsl::narrow_cast<int>(replaceString.size())));
                      else
                         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
-                                                                               (matchOff - matchOn))));
+                                                                               matchDifference)));
                   }
-   
-                  *pContent =
-                     pContent -> replace(matchOn, (matchOff - matchOn), replaceString);
                   if (findResults().regex() &&
                       !findResults().replaceRegex())
                      newLine = boost::regex_replace(line,
                                                     boost::regex(*pSearch),
                                                     replaceString);
                   else
-                  {
                      newLine =
-                        line.replace(replaceMatchOn, (matchOff - matchOn), replaceString);
-                     newLine.append("\n");
-                  }
+                        line.replace(replaceMatchOn, matchDifference, replaceString);
+                  newLine.append("\n");
+                  *pContent =
+                     pContent -> replace(matchOn, matchDifference, replaceString);
                   progress -> addUnit();
                   pos--;
                }
@@ -717,7 +717,6 @@ private:
             }
          }
       }
-
       return Success();
    }
 
@@ -786,14 +785,21 @@ private:
             if (findResults().replace())
             {
                if (!fullLineContents.empty())
-                  lineContents = fullLineContents; // !!! consider how this affects UI
-               processReplace(&file, lineNum, &lineContents,
-                              &matchOn, &matchOff,
-                              &replaceMatchOn, &replaceMatchOff,
-                              findResults().searchPattern(),
-                              findResults().replacePattern(),
-                              &errorMessage,
-                              findResults().replaceProgress());
+                  processReplace(&file, lineNum, &fullLineContents,
+                                 &matchOn, &matchOff,
+                                 &replaceMatchOn, &replaceMatchOff,
+                                 findResults().searchPattern(),
+                                 findResults().replacePattern(),
+                                 &errorMessage,
+                                 findResults().replaceProgress());
+               else
+                  processReplace(&file, lineNum, &lineContents,
+                                 &matchOn, &matchOff,
+                                 &replaceMatchOn, &replaceMatchOff,
+                                 findResults().searchPattern(),
+                                 findResults().replacePattern(),
+                                 &errorMessage,
+                                 findResults().replaceProgress());
             }
 
             files.push_back(json::Value(file));
