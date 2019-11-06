@@ -46,8 +46,8 @@ public:
    enum LockType { LOCKTYPE_ADVISORY, LOCKTYPE_LINKBASED };
    
    // initialize (read configuration)
-   static void initialize(FilePath locksConfPath = FilePath());
-   static void initialize(const Settings& settings);
+   static void initialize();
+   static void initialize(FileLock::LockType fallbackLockType);
    
    // clean up
    static void cleanUp();
