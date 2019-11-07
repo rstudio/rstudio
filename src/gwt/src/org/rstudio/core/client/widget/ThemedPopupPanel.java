@@ -90,8 +90,8 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
    @Override
    public void setPopupPosition(int left, int top)
    {
-      if (autoConstrain_ && left < 0)
-         left = 0;
+      if (autoConstrain_ && left < 10)
+         left = 10;
 
       super.setPopupPosition(left, top);
 
