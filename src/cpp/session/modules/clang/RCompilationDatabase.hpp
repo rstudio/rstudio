@@ -97,14 +97,13 @@ private:
                                              core::FilePath tempSrcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
-   std::vector<std::string> commonCompilationArgs(
+   std::vector<std::string> packageCompilationArgs(
          core::r_util::RPackageInfo* pPkgInfo = nullptr,
          bool* pIsCpp = nullptr);
 
    std::vector<std::string> rToolsArgs() const;
    core::system::Options compilationEnvironment() const;
-   std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
-                                                  const std::string& stdArg);
+   std::vector<std::string> precompiledHeaderArgs(const CompilationConfig& config);
 
    bool shouldIndexConfig(const CompilationConfig& config);
 
