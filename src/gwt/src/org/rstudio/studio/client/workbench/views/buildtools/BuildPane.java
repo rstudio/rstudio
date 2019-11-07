@@ -73,8 +73,7 @@ public class BuildPane extends WorkbenchPane
       boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
       boolean makefile = type == SessionInfo.BUILD_TOOLS_MAKEFILE;
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
-      
-      
+
       // always include build all
       ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
       if (website)
@@ -159,13 +158,12 @@ public class BuildPane extends WorkbenchPane
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
-      public void getDynamicPopupMenu(final 
-            ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+      public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          clearItems();
          
-         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>() {
-
+         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
+         {
             @Override
             public void onResponseReceived(BookdownFormats formats)
             {
@@ -174,12 +172,11 @@ public class BuildPane extends WorkbenchPane
                MenuItem allMenu = new FormatMenuItem(
                   "all", "All Formats", defaultFormat == "all");
                addItem(allMenu);
-               addSeparator();    
-               for (int i = 0; i<allFormats.length(); i++)
+               addSeparator();
+               for (int i = 0; i < allFormats.length(); i++)
                {
                   String format = allFormats.get(i);
-                  addItem(new FormatMenuItem(format, 
-                                             defaultFormat == format));
+                  addItem(new FormatMenuItem(format, defaultFormat == format));
                }
                callback.onPopupMenu(BookdownBuildPopupMenu.this);
             }
