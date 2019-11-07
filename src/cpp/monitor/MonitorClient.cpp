@@ -29,8 +29,9 @@ namespace {
 class MonitorLogDestination : public core::log::ILogDestination
 {
 public:
-   MonitorLogDestination(const std::string& programIdentity)
-      : programIdentity_(programIdentity)
+   MonitorLogDestination(core::log::LogLevel logLevel, const std::string& programIdentity) :
+      programIdentity_(programIdentity),
+      ILogDestination(logLevel)
    {
    }
 
@@ -43,6 +44,10 @@ public:
 
    void writeLog(core::log::LogLevel logLevel, const std::string& message) override
    {
+      // Don't log messages which are more detailed than the configured maximum.
+      if (logLevel > m_logLevel)
+         return;
+
       client().logMessage(programIdentity_, logLevel, message);
    }
 
@@ -57,9 +62,10 @@ Client* s_pClient = NULL;
 } // anonymous namespace
 
 std::shared_ptr<core::log::ILogDestination> Client::createLogDestination(
+                                    core::log::LogLevel logLevel,
                                     const std::string& programIdentity)
 {
-   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(programIdentity));
+   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(logLevel, programIdentity));
 }
 
 void initializeMonitorClient(const std::string& metricsSocket,

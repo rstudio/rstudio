@@ -173,8 +173,10 @@ struct FileLogDestination::Impl
 
 FileLogDestination::FileLogDestination(
    unsigned int in_id,
+   LogLevel in_logLevel,
    const std::string& in_programId,
    FileLogOptions in_logOptions) :
+      ILogDestination(in_logLevel),
       m_impl(new Impl(in_id, in_programId, std::move(in_logOptions)))
 {
 }
@@ -190,8 +192,12 @@ unsigned int FileLogDestination::getId() const
    return m_impl->Id;
 }
 
-void FileLogDestination::writeLog(LogLevel, const std::string& in_message)
+void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
 {
+   // Don't write logs that are more detailed than the configured maximum.
+   if (in_logLevel > m_logLevel)
+      return;
+
    // Lock the mutex before attempting to write.
    boost::unique_lock<boost::mutex> lock(m_impl->Mutex);
 

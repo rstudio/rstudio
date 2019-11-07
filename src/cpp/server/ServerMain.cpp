@@ -613,7 +613,8 @@ int main(int argc, char * const argv[])
       if (!options.verifyInstallation())
       {
          // add a monitor log writer
-         core::log::addLogDestination(monitor::client().createLogDestination(kProgramIdentity));
+         core::log::addLogDestination(
+            monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
       }
 
       // call overlay initialize

@@ -44,6 +44,13 @@ class ILogDestination : boost::noncopyable
 {
 public:
    /**
+    * @brief Constructor.
+    *
+    * @param in_logLevel    The most detailed level of log to be written to this log destination.
+    */
+   explicit ILogDestination(LogLevel in_logLevel) : m_logLevel(in_logLevel) {};
+
+   /**
     * @brief Virtual destructor to allow for inheritance.
     */
    virtual ~ILogDestination() = default;
@@ -56,13 +63,23 @@ public:
    virtual unsigned int getId() const = 0;
 
    /**
+    * @brief Gets the maximum level of logs that will be written to this log destination.
+    *
+    * @return This log destination's maximum log level.
+    */
+   LogLevel getLogLevel() { return m_logLevel; };
+
+   /**
     * @brief Writes a message to this log destination.
     *
-    * @param in_logLevel    The log level of the message to write. Filtering is done prior to this call. This is for
-    *                       informational purposes only.
+    * @param in_logLevel    The log level of the message to write.
     * @param in_message     The message to write to the destination.
     */
    virtual void writeLog(LogLevel in_level, const std::string& in_message) = 0;
+
+protected:
+   // The maximum level of log messages to write for this logger.
+   LogLevel m_logLevel;
 };
 
 } // namespace log
