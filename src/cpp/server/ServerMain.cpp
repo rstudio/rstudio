@@ -166,7 +166,8 @@ Error httpServerInit()
          continue;
       }
 
-      additionalHeaders.emplace_back(headerParts[0], headerParts[1]);
+      additionalHeaders.emplace_back(string_utils::trimWhitespace(headerParts[0]),
+                                     string_utils::trimWhitespace(headerParts[1]));
    }
 
    s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
