@@ -73,11 +73,13 @@ class AsyncServerImpl : public AsyncServer, boost::noncopyable
 public:
    AsyncServerImpl(const std::string& serverName,
                    const std::string& baseUri = std::string(),
-                   bool disableOriginCheck = true)
+                   bool disableOriginCheck = true,
+                   const Headers& additionalResponseHeaders = Headers())
       : abortOnResourceError_(false),
         serverName_(serverName),
         baseUri_(baseUri),
         originCheckDisabled_(disableOriginCheck),
+        additionalResponseHeaders_(additionalResponseHeaders),
         acceptorService_(),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioService()),
@@ -530,6 +532,12 @@ private:
       // non-threadsafe std::string implementations)
       pResponse->setHeader("Server", std::string(serverName_.c_str()));
 
+      // set additional headers
+      for (const Header& header : additionalResponseHeaders_)
+      {
+         pResponse->setHeader(header);
+      }
+
       if (responseFilter_)
          responseFilter_(originalUri, pResponse);
    }
@@ -662,6 +670,7 @@ private:
    std::string serverName_;
    std::string baseUri_;
    bool originCheckDisabled_;
+   Headers additionalResponseHeaders_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
    AsyncUriHandlers uriHandlers_ ;

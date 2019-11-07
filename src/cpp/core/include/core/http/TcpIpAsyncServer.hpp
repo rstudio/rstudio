@@ -30,8 +30,9 @@ class TcpIpAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
 public:
    TcpIpAsyncServer(const std::string& serverName,
                     const std::string& baseUri = std::string(),
-                    bool disableOriginCheck = true)
-      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri, disableOriginCheck)
+                    bool disableOriginCheck = true,
+                    const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri, disableOriginCheck, additionalHeaders)
    {
    }
    

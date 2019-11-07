@@ -153,7 +153,23 @@ boost::shared_ptr<http::AsyncServer> s_pHttpServer;
 
 Error httpServerInit()
 {
-   s_pHttpServer.reset(server::httpServerCreate());
+   http::Headers additionalHeaders;
+   for (const std::string& headerStr : options().serverAddHeaders())
+   {
+      std::vector<std::string> headerParts;
+      boost::split(headerParts, headerStr, boost::is_any_of(":"));
+
+      if (headerParts.size() != 2)
+      {
+         LOG_WARNING_MESSAGE("Invalid header " + headerStr +
+                             " will be skipped and not be written to outgoing requests");
+         continue;
+      }
+
+      additionalHeaders.emplace_back(headerParts[0], headerParts[1]);
+   }
+
+   s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
