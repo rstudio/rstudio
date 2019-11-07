@@ -11,6 +11,7 @@ RUN yum install -y \
     boost-devel \
     bzip2-devel \
     clang-devel \
+    expect \
     fakeroot \
     fuse-libs \
     gcc \
