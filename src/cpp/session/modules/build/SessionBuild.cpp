@@ -1187,6 +1187,17 @@ private:
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.filename();
         shinyPath = shinyPath.parent().parent();
+        if (shinyPath.filename() == "shinytests")
+        {
+           // In newer versions of shinytest, tests are stored in a "shinytests" folder under the
+           // "tests" folder.
+           shinyPath = shinyPath.parent();
+        }
+        if (shinyPath.filename() == "tests")
+        {
+           // Move up from the tests folder to the app folder.
+           shinyPath = shinyPath.parent();
+        }
       }
 
       // get temp path to store rds results
