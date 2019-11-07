@@ -8,7 +8,7 @@ bibentry("Manual",
          
          textVersion = 
          paste("RStudio Team (${CPACK_COPYRIGHT_YEAR}). ", 
-               "RStudio: Integrated Development for R. ",
+               "RStudio: Integrated Development Environment for R. ",
                "RStudio, Inc., Boston, MA ",
                "URL http://www.rstudio.com/.",
                sep=""),

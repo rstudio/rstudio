@@ -4,3 +4,6 @@ CMakeLists.txt.user
 cpp-build*/
 cmake-build-*/
 session32/*
+dbg/*
+rel/*
+rwd/*

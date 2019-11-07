@@ -24,7 +24,6 @@
 #include <shared_core/Logger.hpp>
 
 #include <boost/noncopyable.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional.hpp>
 
 #include <sstream>
@@ -32,6 +31,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/DateTime.hpp>
 #include <shared_core/ILogDestination.hpp>
+#include <shared_core/ReaderWriterMutex.hpp>
 
 namespace rstudio {
 namespace core {
@@ -136,9 +136,10 @@ public:
    /**
     * @brief Writes a pre-formatted message to all registered destinations.
     *
-    * @param in_logLevel    The log level of the message, which is passed to the destination for informational purposes.
-    * @param in_message     The pre-formatted message.
- * @param in_loggedFrom         The location from which the error message was logged.
+    * @param in_logLevel        The log level of the message, which is passed to the destination for informational purposes.
+    * @param in_message         The pre-formatted message.
+    * @param in_section         The section to which to log this message.
+    * @param in_loggedFrom      The location from which the error message was logged.
     */
    void writeMessageToDestinations(
       LogLevel in_logLevel,
@@ -167,6 +168,9 @@ public:
    // The registered sectioned log destinations. Any logs with a registered section will be logged to the destinations
    // assigned to that section.
    SectionLogMap SectionedLogDestinations;
+
+   // The read-write mutex to protect the maps.
+   thread::ReaderWriterMutex Mutex;
 };
 
 Logger& logger()
@@ -181,6 +185,8 @@ void Logger::writeMessageToDestinations(
    const std::string& in_section,
    const ErrorLocation& in_loggedFrom)
 {
+   READ_LOCK_BEGIN(Mutex)
+
    // Don't log this message, it's too detailed for any of the logs.
    if (in_logLevel > MaxLogLevel)
       return;
@@ -203,35 +209,48 @@ void Logger::writeMessageToDestinations(
    {
       iter->second->writeLog(in_logLevel, formattedMessage);
    }
+
+   RW_LOCK_END(false)
 }
 
 // Logging functions
 void setProgramId(const std::string& in_programId)
 {
+   WRITE_LOCK_BEGIN(logger().Mutex)
+
    if (!logger().ProgramId.empty() && (logger().ProgramId != in_programId))
       logWarningMessage("Changing the program id from " + logger().ProgramId + " to " + in_programId);
 
    logger().ProgramId = in_programId;
+
+   RW_LOCK_END(false)
 }
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
 {
+   WRITE_LOCK_BEGIN(logger().Mutex)
+
    LogMap& logMap = logger().DefaultLogDestinations;
    if (logMap.find(in_destination->getId()) == logMap.end())
    {
       logMap.insert(std::make_pair(in_destination->getId(), in_destination));
       if (in_destination->getLogLevel() > logger().MaxLogLevel)
          logger().MaxLogLevel = in_destination->getLogLevel();
+      return;
    }
-   else {
-      logDebugMessage(
-         "Attempted to register a log destination that has already been registered with id " +
-          std::to_string(in_destination->getId()));
-   }
+
+   RW_LOCK_END(false)
+
+   logDebugMessage(
+      "Attempted to register a log destination that has already been registered with id " +
+      std::to_string(in_destination->getId()));
 }
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section)
 {
+
+   WRITE_LOCK_BEGIN(logger().Mutex)
+
    Logger& log = logger();
    SectionLogMap& secLogMap =log.SectionedLogDestinations;
    if (secLogMap.find(in_section) == secLogMap.end())
@@ -244,15 +263,17 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, c
       logMap.insert(std::make_pair(in_destination->getId(), in_destination));
       if (log.MaxLogLevel < in_destination->getLogLevel())
          log.MaxLogLevel = in_destination->getLogLevel();
+
+      return;
    }
-   else
-   {
-      logDebugMessage(
-         "Attempted to register a log destination that has already been registered with id " +
-         std::to_string(in_destination->getId()) +
-         " to section " +
-         in_section);
-   }
+
+   RW_LOCK_END(false)
+
+   logDebugMessage(
+      "Attempted to register a log destination that has already been registered with id " +
+      std::to_string(in_destination->getId()) +
+      " to section " +
+      in_section);
 }
 
 std::string cleanDelimiters(const std::string& in_str)
@@ -358,6 +379,9 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
    {
       // Remove the log from default destinations if it's found. Keep track of whether we find it for logging purposes.
       bool found = false;
+
+      WRITE_LOCK_BEGIN(log.Mutex)
+
       auto iter = log.DefaultLogDestinations.find(in_destinationId);
       if (iter != log.DefaultLogDestinations.end())
       {
@@ -384,6 +408,8 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
       for (const std::string& toRemove: sectionsToRemove)
          log.SectionedLogDestinations.erase(log.SectionedLogDestinations.find(toRemove));
 
+      RW_LOCK_END(false);
+
       // Log a debug message if this destination wasn't registered.
       if (!found)
       {
@@ -393,24 +419,36 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
       }
    }
    else if (log.SectionedLogDestinations.find(in_section) != log.SectionedLogDestinations.end())
+   {
+      WRITE_LOCK_BEGIN(log.Mutex)
+
+      auto secIter = log.SectionedLogDestinations.find(in_section);
+      auto iter = secIter->second.find(in_destinationId);
+      if (iter != secIter->second.end())
       {
-         auto secIter = log.SectionedLogDestinations.find(in_section);
-         auto iter = secIter->second.find(in_destinationId);
-         if (iter != secIter->second.end())
-         {
-            secIter->second.erase(iter);
-            if (secIter->second.empty())
-               log.SectionedLogDestinations.erase(secIter);
-         }
-         else
-         {
-            logDebugMessage(
-               "Attempted to unregister a log destination that has not been registered to the specified section (" +
-               in_section +
-               ") with id " +
-               std::to_string(in_destinationId));
-         }
+         secIter->second.erase(iter);
+         if (secIter->second.empty())
+            log.SectionedLogDestinations.erase(secIter);
+
+         return;
       }
+
+      RW_LOCK_END(false);
+
+      logDebugMessage(
+         "Attempted to unregister a log destination that has not been registered to the specified section (" +
+         in_section +
+         ") with id " +
+         std::to_string(in_destinationId));
+   }
+   else
+   {
+      logDebugMessage(
+         "Attempted to unregister a log destination that has not been registered to the specified section (" +
+         in_section +
+         ") with id " +
+         std::to_string(in_destinationId));
+   }
 }
 
 std::ostream& writeError(const Error& in_error, std::ostream& io_os)
