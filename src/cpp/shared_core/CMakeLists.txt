@@ -33,6 +33,7 @@ set (SHARED_CORE_SOURCE_FILES
    FileLogDestination.cpp
    FilePath.cpp
    Logger.cpp
+   ReaderWriterMutex.cpp
    StderrLogDestination.cpp
    json/Json.cpp
 )
