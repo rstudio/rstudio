@@ -220,9 +220,9 @@ public class BuildPane extends WorkbenchPane
             SelectionCommitEvent.fire(buildSubType(), format_);
          }
          
-         private String format_;
-         private String label_;
-         private boolean isChecked_;
+         private final String format_;
+         private final String label_;
+         private final boolean isChecked_;
       }
    }
    
@@ -311,11 +311,11 @@ public class BuildPane extends WorkbenchPane
       compilePanel_.scrollToBottom();   
    }
  
-   private Commands commands_;
-   private Session session_;
-   private BuildServerOperations server_;
+   private final Commands commands_;
+   private final Session session_;
+   private final BuildServerOperations server_;
    private String errorsBuildType_;
    
-   CompilePanel compilePanel_;
+   private final CompilePanel compilePanel_;
 
 }
