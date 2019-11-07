@@ -259,7 +259,7 @@ public class BuildPane extends WorkbenchPane
    @Override
    public void buildCompleted()
    {
-      compilePanel_.compileCompleted();  
+      compilePanel_.compileCompleted();
    }
    
    @Override
@@ -305,14 +305,14 @@ public class BuildPane extends WorkbenchPane
    @Override
    public void scrollToBottom()
    {
-      compilePanel_.scrollToBottom();   
+      compilePanel_.scrollToBottom();
    }
  
    private final Commands commands_;
    private final Session session_;
    private final BuildServerOperations server_;
    private String errorsBuildType_;
-   
+
    private final CompilePanel compilePanel_;
 
 }
