@@ -84,6 +84,12 @@ options(buildtools.with = .rs.withBuildTools)
 })
 
 .rs.addFunction("findShinyTestsDir", function(appDir) {
-   shinytest:::findTestsDir(appDir = appDir, mustExist = FALSE, quiet = TRUE)
+   if (exists("findTestsDir", where = asNamespace("shinytest"))) {
+      # Newer versions of shinytest can report their own test directories.
+      shinytest:::findTestsDir(appDir = appDir, mustExist = FALSE, quiet = TRUE)
+   } else {
+      # Older versions require us to know.
+      file.path(appDir, "tests")
+   }
 })
 
