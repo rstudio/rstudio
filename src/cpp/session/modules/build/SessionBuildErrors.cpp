@@ -338,10 +338,18 @@ std::vector<module_context::SourceMarker> parseShinyTestErrors(
          std::string column = "0";
          type = "failure";
          message = std::string("Differences detected in " + file + ".");
-         FilePath testFilePath = basePathResolved.completePath("tests").completePath(file + ".R");
+
+         // ask the shinytest package where the tests live (this location varies between versions of
+         // the shinytest package
+         std::string testsDir;
+         r::exec::RFunction findTests(".rs.findShinyTestsDir", 
+               basePathResolved.getAbsolutePath());
+         error = findTests.call(&testsDir);
+         if (error)
+            LOG_ERROR(error);
 
          SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                          testFilePath,
+                          FilePath(testsDir).completePath(file + ".R"),
                           core::safe_convert::stringTo<int>(line, 1),
                           core::safe_convert::stringTo<int>(column, 1),
                           core::html_utils::HTML(message),

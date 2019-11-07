@@ -83,4 +83,7 @@ options(buildtools.with = .rs.withBuildTools)
    sapply(failures, function(e) e$name)
 })
 
+.rs.addFunction("findShinyTestsDir", function(appDir) {
+   shinytest:::findTestsDir(appDir = appDir, mustExist = FALSE, quiet = TRUE)
+})
 
