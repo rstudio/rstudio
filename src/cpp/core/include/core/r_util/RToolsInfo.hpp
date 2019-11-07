@@ -65,7 +65,7 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
-Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools);
+void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools);
 
 template <typename T>
 void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
