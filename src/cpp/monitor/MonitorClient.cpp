@@ -30,8 +30,8 @@ class MonitorLogDestination : public core::log::ILogDestination
 {
 public:
    MonitorLogDestination(core::log::LogLevel logLevel, const std::string& programIdentity) :
-      programIdentity_(programIdentity),
-      ILogDestination(logLevel)
+      ILogDestination(logLevel),
+      programIdentity_(programIdentity)
    {
    }
 
