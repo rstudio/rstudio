@@ -32,6 +32,20 @@
 
 using namespace rstudio::core ;
 
+namespace std
+{
+   // needed for boost to compile std::vector<std::string> default value for option
+   std::ostream& operator<<(std::ostream &os, const std::vector<std::string> &vec)
+   {
+      for (auto item : vec)
+      {
+         os << item << " ";
+      }
+
+      return os;
+   }
+}
+
 namespace rstudio {
 namespace server {
 
@@ -210,7 +224,10 @@ ProgramStatus Options::read(int argc,
         "path override for secure cookie key")
       ("server-data-dir",
          value<std::string>(&serverDataDir_)->default_value("/var/run/rstudio-server"),
-         "path to data directory where rstudio server will write run-time state");
+         "path to data directory where rstudio server will write run-time state")
+      ("server-add-header",
+       value<std::vector<std::string>>(&serverAddHeaders_)->default_value(std::vector<std::string>{})->multitoken(),
+         "adds a header to all responses from RStudio Server");
 
    // www - web server options
    options_description www("www") ;
