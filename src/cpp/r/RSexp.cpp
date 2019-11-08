@@ -909,7 +909,32 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
    pProtect->add(valueSEXP);
    return valueSEXP;
 }
+
+namespace {
+
+template <typename T>
+SEXP createInteger(const core::json::Value& value, Protect* pProtect)
+{
+   T innerValue = value.getValue<T>();
    
+   bool overflow =
+         innerValue < static_cast<T>(INT_MIN) ||
+         innerValue > static_cast<T>(INT_MAX);
+   
+   int castedValue = static_cast<int>(innerValue);
+   
+   if (overflow)
+   {
+      std::stringstream ss;
+      ss << "truncating value " << innerValue << " to " << castedValue;
+      LOG_WARNING_MESSAGE(ss.str());
+   }
+   
+   return create(castedValue, pProtect);
+}
+
+} // end anonymous namespace
+
 SEXP create(const core::json::Value& value, Protect* pProtect)
 {
    // call embedded create function based on type
@@ -919,7 +944,26 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
    }
    else if (value.getType() == core::json::Type::INTEGER)
    {
-      return create(value.getInt(), pProtect);
+      if (value.isUInt64())
+      {
+         return createInteger<uint64_t>(value, pProtect);
+      }
+      else if (value.isInt64())
+      {
+         return createInteger<int64_t>(value, pProtect);
+      }
+      else if (value.isUInt())
+      {
+         return createInteger<unsigned>(value, pProtect);
+      }
+      else if (value.isInt())
+      {
+         return createInteger<int>(value, pProtect);
+      }
+      else
+      {
+         assert(false);
+      }
    }
    else if (value.getType() == core::json::Type::REAL)
    {
