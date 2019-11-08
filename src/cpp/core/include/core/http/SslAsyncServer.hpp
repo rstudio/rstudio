@@ -33,8 +33,9 @@ public:
 
    SslAsyncServer(const std::string& serverName,
                   const std::string& baseUri = std::string(),
-                  bool disableOriginCheck = true)
-      : AsyncServerImpl(serverName, baseUri, disableOriginCheck)
+                  bool disableOriginCheck = true,
+                  const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl(serverName, baseUri, disableOriginCheck, additionalHeaders)
    {
    }
    
