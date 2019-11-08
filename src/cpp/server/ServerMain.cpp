@@ -156,18 +156,16 @@ Error httpServerInit()
    http::Headers additionalHeaders;
    for (const std::string& headerStr : options().serverAddHeaders())
    {
-      std::vector<std::string> headerParts;
-      boost::split(headerParts, headerStr, boost::is_any_of(":"));
-
-      if (headerParts.size() != 2)
+      size_t pos = headerStr.find(':');
+      if (pos == std::string::npos)
       {
          LOG_WARNING_MESSAGE("Invalid header " + headerStr +
                              " will be skipped and not be written to outgoing requests");
          continue;
       }
 
-      additionalHeaders.emplace_back(string_utils::trimWhitespace(headerParts[0]),
-                                     string_utils::trimWhitespace(headerParts[1]));
+      additionalHeaders.emplace_back(string_utils::trimWhitespace(headerStr.substr(0, pos)),
+                                     string_utils::trimWhitespace(headerStr.substr(pos+1)));
    }
 
    s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
