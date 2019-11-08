@@ -140,24 +140,51 @@ public class StatusBarWidget extends Composite
       else
          scopeIcon_.setVisible(true);
 
-           if (type == StatusBar.SCOPE_CLASS)
+      if (type == StatusBar.SCOPE_CLASS)
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.clazz2x()));
+         scopeIcon_.setAltText("Class");
+      }
       else if (type == StatusBar.SCOPE_NAMESPACE)
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.namespace2x()));
+         scopeIcon_.setAltText("Namespace");
+      }
       else if (type == StatusBar.SCOPE_LAMBDA)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.lambdaLetter2x()));
+         scopeIcon_.setAltText("Lambda");
+      }
       else if (type == StatusBar.SCOPE_ANON)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
+         scopeIcon_.setAltText("Anonymous");
+      }
       else if (type == StatusBar.SCOPE_FUNCTION)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
+         scopeIcon_.setAltText("Function");
+      }
       else if (type == StatusBar.SCOPE_CHUNK)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.chunk2x()));
+         scopeIcon_.setAltText("Chunk");
+      }
       else if (type == StatusBar.SCOPE_SECTION)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.section2x()));
+         scopeIcon_.setAltText("Section");
+      }
       else if (type == StatusBar.SCOPE_SLIDE)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.slide2x()));
+         scopeIcon_.setAltText("Slide");
+      }
       else
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.function2x()));
+         scopeIcon_.setAltText("Function");
+      }
    }
 
    private void initMessage(String message)

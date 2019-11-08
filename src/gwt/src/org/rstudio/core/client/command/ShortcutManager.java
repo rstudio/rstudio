@@ -1,7 +1,7 @@
 /*
  * ShortcutManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -467,8 +467,7 @@ public class ShortcutManager implements NativePreviewHandler,
             AceEditorNative nativeEditor = AceEditorNative.getEditor(target);
             if (editor != null && nativeEditor != null &&
                   nativeEditor == editor.getWidget().getEditor() &&
-                  editor.getWidget().getElement().getId() ==
-                     ElementIds.getElementId(ElementIds.SOURCE_TEXT_EDITOR))
+                  ElementIds.isInstanceOf(editor.getWidget(), ElementIds.SOURCE_TEXT_EDITOR))
             {
                keyBuffer_.clear();
                commands_.expandToLine().execute();

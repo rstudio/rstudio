@@ -71,6 +71,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          parentToolbar_ = getParentToolbar();
 
          super.onAttach();
+         ElementIds.assignElementId(getElement(), "tb_" + ElementIds.idSafeString(getId()));
       }
 
       @Override
@@ -493,7 +494,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                                                              synced);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
-      ElementIds.assignElementId(button.getElement(), "tb_" + ElementIds.idSafeString(getId()));
       return button;
    }
 

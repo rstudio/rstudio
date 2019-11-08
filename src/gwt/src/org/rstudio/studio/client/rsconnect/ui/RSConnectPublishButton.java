@@ -111,16 +111,12 @@ public class RSConnectPublishButton extends Composite
                   onPublishButtonClick();
                }
             });
-      
-      publishButton_.getElement().setId(ElementIds.ID_PREFIX + 
-            ElementIds.PUBLISH_ITEM + "_" + host);
+
       panel.add(publishButton_);
       
       // create drop menu of previous deployments/other commands
       publishMenu_ = new DeploymentPopupMenu();
       publishMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Publish options", publishMenu_, true);
-      publishMenuButton_.getElement().setId(ElementIds.ID_PREFIX + 
-            ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host);
       panel.add(publishMenuButton_);
       
       // initialize composite widget
@@ -388,8 +384,18 @@ public class RSConnectPublishButton extends Composite
       onPublishButtonClick();
    }
 
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+
+      ElementIds.assignElementId(
+            publishButton_, ElementIds.PUBLISH_ITEM + "_" + host_);
+      ElementIds.assignElementId(
+            publishMenuButton_, ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host_);
+   }
+
    // Private methods --------------------------------------------------------
-   
 
    private void onPublishButtonClick()
    {

@@ -205,7 +205,7 @@ public class TextBoxWithButton extends Composite
    }
 
    @Override
-   public void onAttach()
+   protected void onAttach()
    {
       super.onAttach();
 
