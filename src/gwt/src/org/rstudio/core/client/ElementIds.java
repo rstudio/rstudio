@@ -17,6 +17,7 @@ package org.rstudio.core.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Pattern;
 
 public class ElementIds
 {
@@ -45,6 +46,27 @@ public class ElementIds
       return ID_PREFIX + id;
    }
 
+   public static boolean isInstanceOf(Widget widget, String baseId)
+   {
+      return isInstanceOf(widget.getElement(), baseId);
+   }
+
+   public static boolean isInstanceOf(Element ele, String baseId)
+   {
+      String actualId = ele.getId();
+      String testId = ElementIds.getElementId(baseId);
+      if (actualId == testId)
+         return true;
+
+      // does ID match disambiguation pattern?
+      if (RE_NUMBERED_ELEMENT_ID.test(actualId))
+      {
+         String trimmedId = actualId.substring(0, actualId.lastIndexOf('_'));
+         return trimmedId == testId;
+      }
+      return false;
+   }
+
    public static String idSafeString(String text)
    {
       // replace all non-alphanumerics with underscores
@@ -65,6 +87,8 @@ public class ElementIds
    {
       return ID_PREFIX + "label_" + idSafeString(label);
    }
+
+   private static final Pattern RE_NUMBERED_ELEMENT_ID = Pattern.create("^[a-zA-Z0-9_]+_\\d+$");
 
    public final static String ID_PREFIX = "rstudio_";
 

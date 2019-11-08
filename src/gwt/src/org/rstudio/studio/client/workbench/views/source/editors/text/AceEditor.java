@@ -287,7 +287,8 @@ public class AceEditor implements DocDisplay,
             aceSupportLoader_.addCallback(() ->
                   extLanguageToolsLoader_.addCallback(() ->
                         vimLoader_.addCallback(() ->
-                              emacsLoader_.addCallback(() -> {
+                              emacsLoader_.addCallback(() ->
+                              {
                                  AceSupport.initialize();
 
                                  if (command != null)
@@ -324,7 +325,6 @@ public class AceEditor implements DocDisplay,
       editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
-      ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
@@ -336,7 +336,8 @@ public class AceEditor implements DocDisplay,
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       bgChunkHighlighter_ = new AceBackgroundHighlighter(this);
       
-      widget_.addValueChangeHandler(evt -> {
+      widget_.addValueChangeHandler(evt ->
+      {
          if (!valueChangeSuppressed_)
          {
             ValueChangeEvent.fire(AceEditor.this, null);
@@ -364,13 +365,15 @@ public class AceEditor implements DocDisplay,
          }
       });
 
-      addPasteHandler(event -> {
+      addPasteHandler(event ->
+      {
          if (completionManager_ != null)
             completionManager_.onPaste(event);
 
          final Position start = getSelectionStart();
 
-         Scheduler.get().scheduleDeferred(() -> {
+         Scheduler.get().scheduleDeferred(() ->
+         {
             Range range = Range.fromPoints(start, getSelectionEnd());
             if (shouldIndentOnPaste())
                indentPastedRange(range);
@@ -378,7 +381,8 @@ public class AceEditor implements DocDisplay,
       });
 
       // handle click events
-      addAceClickHandler(event -> {
+      addAceClickHandler(event ->
+      {
          fixVerticalOffsetBug();
          if (DomUtils.isCommandClick(event.getNativeEvent()))
          {
@@ -398,21 +402,27 @@ public class AceEditor implements DocDisplay,
       });
 
       lastCursorChangedTime_ = 0;
-      addCursorChangedHandler(event -> {
+      addCursorChangedHandler(event ->
+      {
          fixVerticalOffsetBug();
          clearLineHighlight();
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
       lastModifiedTime_ = 0;
-      addValueChangeHandler(event -> {
+      addValueChangeHandler(event ->
+      {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
       });
       
-      widget_.addAttachHandler(event -> {
+      widget_.addAttachHandler(event ->
+      {
          if (event.isAttached())
+         {
             attachToWidget(widget_.getElement(), AceEditor.this);
+            ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
+         }
          else
             detachFromWidget(widget_.getElement());
 
@@ -435,7 +445,8 @@ public class AceEditor implements DocDisplay,
          }
       });
       
-      widget_.addFocusHandler((FocusEvent event) -> {
+      widget_.addFocusHandler((FocusEvent event) ->
+      {
          String id = AceEditor.this.getWidget().getElement().getId();
          MainWindowObject.lastFocusedEditorId().set(id);
       });
@@ -444,7 +455,8 @@ public class AceEditor implements DocDisplay,
       
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
-            event -> {
+            event ->
+            {
                // skip this if this is only for the actively focused Ace instance
                // (note: in RStudio Server, the Ace Editor instance may become
                // unfocused when e.g. executing commands from the menu, so we
@@ -582,7 +594,8 @@ public class AceEditor implements DocDisplay,
       
       if (Desktop.hasDesktopFrame() && isEmacsModeOn())
       {
-         Desktop.getFrame().getClipboardText((String text) -> {
+         Desktop.getFrame().getClipboardText((String text) ->
+         {
             replaceSelection(text);
             setCursorPosition(getSelectionEnd());
          });
@@ -1055,7 +1068,8 @@ public class AceEditor implements DocDisplay,
                                                      false);
          scrollToY(scrollTop, 0);
          scrollToX(scrollLeft);
-         Scheduler.get().scheduleDeferred(() -> {
+         Scheduler.get().scheduleDeferred(() ->
+         {
             scrollToY(scrollTop, 0);
             scrollToX(scrollLeft);
          });
@@ -1257,7 +1271,8 @@ public class AceEditor implements DocDisplay,
          // Preview". The only thing you could do is close the browser tab.
          // By inserting a 5-minute delay hopefully Firefox would be done with
          // whatever print related operations are important.
-         Scheduler.get().scheduleFixedDelay(() -> {
+         Scheduler.get().scheduleFixedDelay(() ->
+         {
             PrintIFrame.this.removeFromParent();
             return false;
          }, 1000 * 60 * 5);
@@ -1923,7 +1938,8 @@ public class AceEditor implements DocDisplay,
       final AnchoredSelection selection = new AnchoredSelectionImpl(start, end);
       if (hostWidget != null)
       {
-         hostWidget.addAttachHandler(event -> {
+         hostWidget.addAttachHandler(event ->
+         {
             if (!event.isAttached() && selection != null)
                selection.detach();
          });
@@ -2000,7 +2016,8 @@ public class AceEditor implements DocDisplay,
 
    public void onActivate()
    {
-      Scheduler.get().scheduleFinally(() -> {
+      Scheduler.get().scheduleFinally(() ->
+      {
          widget_.onResize();
          widget_.onActivate();
          return false;
@@ -3680,7 +3697,8 @@ public class AceEditor implements DocDisplay,
       if (infoBar_ == null)
       {
          infoBar_ = new AceInfoBar(widget_);
-         widget_.addKeyDownHandler(event -> {
+         widget_.addKeyDownHandler(event ->
+         {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
                infoBar_.hide();
          });
@@ -4034,7 +4052,8 @@ public class AceEditor implements DocDisplay,
             }
          };
          
-         editor_.addDocumentChangedHandler(event -> {
+         editor_.addDocumentChangedHandler(event ->
+         {
             if (editor_.hasCodeModelScopeTree())
             {
                row_ = event.getEvent().getRange().getStart().getRow();

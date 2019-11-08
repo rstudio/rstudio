@@ -16,6 +16,7 @@ package org.rstudio.studio.client;
 
 import org.rstudio.core.client.AnsiCodeTests;
 import org.rstudio.core.client.ConsoleOutputWriterTests;
+import org.rstudio.core.client.ElementIdsTests;
 import org.rstudio.core.client.StringUtilTests;
 import org.rstudio.core.client.URIUtilsTests;
 import org.rstudio.core.client.VirtualConsoleTests;
@@ -51,6 +52,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       // suite.addTestSuite(RChunkHeaderParserTests.class);
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(JobsListTests.class);
+      suite.addTestSuite(ElementIdsTests.class);
       
       // Pro-only tests
       

@@ -404,7 +404,6 @@ public class TextEditingTargetWidget
                   commands_.sourceActiveDocument().execute();
             });
       toolbar.addRightWidget(sourceButton_);
-      ElementIds.assignElementId(sourceButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON);
 
       previewJsButton_ = commands_.previewJS().createToolbarButton(false);
       toolbar.addRightWidget(previewJsButton_);
@@ -431,7 +430,6 @@ public class TextEditingTargetWidget
          
       sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
-      ElementIds.assignElementId(sourceMenuButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
 
       //toolbar.addRightSeparator();
      
@@ -1472,7 +1470,16 @@ public class TextEditingTargetWidget
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
-   
+
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+
+      ElementIds.assignElementId(sourceButton_, ElementIds.TEXT_SOURCE_BUTTON);
+      ElementIds.assignElementId(sourceMenuButton_, ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
+   }
+
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
