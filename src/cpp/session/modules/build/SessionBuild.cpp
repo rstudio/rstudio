@@ -1197,6 +1197,12 @@ private:
            // Move up from the tests folder to the app folder.
            shinyPath = shinyPath.getParent();
         }
+        else
+        {
+           // If this doesn't look like it's in a tests directory, bail out.
+           terminateWithError("Could not find Shiny app for test in " + 
+              shinyPath.getAbsolutePath());
+        }
       }
 
       // get temp path to store rds results
