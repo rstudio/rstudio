@@ -1202,7 +1202,7 @@ private:
         {
            // If this doesn't look like it's in a tests directory, bail out.
            terminateWithError("Could not find Shiny app for test in " + 
-              shinyPath.getAbsolutePath());
+              shinyPath.absolutePath());
         }
       }
 
