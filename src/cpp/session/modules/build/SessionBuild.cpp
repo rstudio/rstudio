@@ -1185,7 +1185,24 @@ private:
       std::string shinyTestName;
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.getFilename();
-        shinyPath = shinyPath.getParent().getParent();
+        shinyPath = shinyPath.getParent();
+        if (shinyPath.getFilename() == "shinytests")
+        {
+           // In newer versions of shinytest, tests are stored in a "shinytests" folder under the
+           // "tests" folder.
+           shinyPath = shinyPath.getParent();
+        }
+        if (shinyPath.getFilename() == "tests")
+        {
+           // Move up from the tests folder to the app folder.
+           shinyPath = shinyPath.getParent();
+        }
+        else
+        {
+           // If this doesn't look like it's in a tests directory, bail out.
+           terminateWithError("Could not find Shiny app for test in " + 
+              shinyPath.getAbsolutePath());
+        }
       }
 
       // get temp path to store rds results
