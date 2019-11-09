@@ -562,7 +562,8 @@ private:
             pErrorMessage->insert("Could not open file " + currentFile_ + ".\n");
          else
             pErrorMessage->insert("Could not open temporary file to process " + currentFile_ + ".\n");
-         progress -> addUnits(pMatchOn->getSize());
+         if (!preview)
+            progress -> addUnits(pMatchOn->getSize());
          pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
          pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
       }
@@ -599,13 +600,20 @@ private:
                   // that will be written to file so that previews are handled correctly
                   if (findResults().replaceRegex())
                   {
-                     std::regex searchAsRegex(*pSearch);
-                     std::string temp (std::regex_replace(line, searchAsRegex, *pReplace));
-
-                     const char* endOfString = line.substr(matchOff).c_str();
+                     boost::regex searchAsRegex(*pSearch);
+                     boost::regex replaceAsRegex(*pReplace);
+                     std::string previewString;
+                     if (preview)
+                        previewString = *pContent;
+                     else
+                        previewString = line;
+                     std::string temp = boost::regex_replace(
+                                         previewString, searchAsRegex, replaceAsRegex);
+                     if (previewString == temp)
+                        LOG_ERROR_MESSAGE("Did not find expression");
+                     const char* endOfString = previewString.substr(matchOff).c_str();
                      const char* replacePtr = temp.substr(matchOn).c_str();
                      size_t offset = 0;
-
                      while (*endOfString != *replacePtr)
                      {
                         replacePtr++;
@@ -702,7 +710,8 @@ private:
                   newLine.append("\n");
                   *pContent =
                      pContent -> replace(matchOn, matchDifference, replaceString);
-                  progress -> addUnit();
+                  if (!preview)
+                     progress -> addUnit();
                   pos--;
                }
                if (!preview)
@@ -971,6 +980,8 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
+#elif
+   shell_utils::ShellCommand cmd("ggrep");
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
@@ -984,6 +995,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
    // Use -f to pass pattern via file, so we don't have to worry about
    // escaping double quotes, etc.
+   cmd << "-P";
    cmd << "-f";
    cmd << tempFile;
    if (!asRegex)
@@ -996,6 +1008,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
    
+   
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(directory);
@@ -1004,6 +1017,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    // Clear existing results
    findResults().clear();
 
+   LOG_ERROR_MESSAGE("cmd: " + cmd.string());
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
