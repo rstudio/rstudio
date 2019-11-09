@@ -208,7 +208,7 @@ if(UNIX)
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
       endif()
