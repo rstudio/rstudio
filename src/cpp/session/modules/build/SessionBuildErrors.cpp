@@ -350,7 +350,7 @@ std::vector<module_context::SourceMarker> parseShinyTestErrors(
             LOG_ERROR(error);
 
          SourceMarker err(module_context::sourceMarkerTypeFromString(type),
-                          FilePath(testsDir).completePath(file + ".R"),
+                          FilePath(testsDir).complete(file + ".R"),
                           core::safe_convert::stringTo<int>(line, 1),
                           core::safe_convert::stringTo<int>(column, 1),
                           core::html_utils::HTML(message),
