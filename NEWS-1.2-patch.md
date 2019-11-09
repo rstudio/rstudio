@@ -2,6 +2,10 @@
 ## RStudio v1.2 Patch 3 "Orange Blossom"
 
 
+### Misc
+
+* Add compatibility with recent versions of the `shinytest` package (#5677, #5703)
+
 ### Server Pro
 
 * Add ability to configure Slurm command line tools location for the Slurm Launcher Plugin (#1298)
