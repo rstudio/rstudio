@@ -915,22 +915,15 @@ namespace {
 template <typename T>
 SEXP createInteger(const core::json::Value& value, Protect* pProtect)
 {
-   T innerValue = value.getValue<T>();
-   
-   bool overflow =
-         innerValue < static_cast<T>(INT_MIN) ||
-         innerValue > static_cast<T>(INT_MAX);
-   
-   int castedValue = static_cast<int>(innerValue);
-   
-   if (overflow)
+   try
    {
-      std::stringstream ss;
-      ss << "truncating value " << innerValue << " to " << castedValue;
-      LOG_WARNING_MESSAGE(ss.str());
+      int casted = boost::numeric_cast<int>(value.getValue<T>());
+      return create(casted, pProtect);
    }
+   CATCH_UNEXPECTED_EXCEPTION
    
-   return create(castedValue, pProtect);
+   // only reached if an exception occurs
+   return R_NilValue;
 }
 
 } // end anonymous namespace
@@ -954,15 +947,18 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
       }
       else if (value.isUInt())
       {
-         return createInteger<unsigned>(value, pProtect);
+         return createInteger<uint32_t>(value, pProtect);
       }
       else if (value.isInt())
       {
-         return createInteger<int>(value, pProtect);
+         return createInteger<int32_t>(value, pProtect);
       }
       else
       {
-         assert(false);
+         std::stringstream ss;
+         ss << "unhandled JSON data type " << value.getType();
+         LOG_WARNING_MESSAGE(ss.str());
+         return R_NilValue;
       }
    }
    else if (value.getType() == core::json::Type::REAL)
