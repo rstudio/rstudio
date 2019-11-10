@@ -21,7 +21,6 @@ import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
@@ -128,7 +127,6 @@ public class JobItem extends Composite implements JobItemView
       name_.setText(job.name);
       progress_.setLabel(job.name);
       spinner_.setResource(new ImageResource2x(RESOURCES.jobSpinner()));
-      A11y.setDecorativeImage(spinner_.getElement());
 
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))

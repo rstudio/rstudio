@@ -15,11 +15,8 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -83,14 +80,9 @@ public class SourcePane extends Composite implements Display,
          }
       });
       chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
+      chevron_.setAltText("Switch to tab");
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
-      chevron_.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            tabOverflowPopup_.showRelativeTo(chevron_);
-         }
-      });
+      chevron_.addClickHandler(event -> tabOverflowPopup_.showRelativeTo(chevron_));
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
@@ -107,13 +99,7 @@ public class SourcePane extends Composite implements Display,
    protected void onLoad()
    {
       super.onLoad();
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            onResize();
-         }
-      });
+      Scheduler.get().scheduleDeferred(() -> onResize());
    }
 
    public void addTab(Widget widget,
@@ -291,7 +277,7 @@ public class SourcePane extends Composite implements Display,
 
    public void onBeforeShow()
    {
-      fireEvent(new BeforeShowEvent());   
+      fireEvent(new BeforeShowEvent());
    }
 
    public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)

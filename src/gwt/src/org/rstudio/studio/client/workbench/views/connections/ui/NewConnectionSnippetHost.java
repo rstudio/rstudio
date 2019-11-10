@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,6 +33,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
@@ -121,6 +121,7 @@ public class NewConnectionSnippetHost extends Composite
          warningPanel.addStyleName(RES.styles().warningPanel());
          Image warningImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x()));
          warningImage.addStyleName(RES.styles().warningImage());
+         warningImage.setAltText(MessageDialogImages.DIALOG_WARNING_TEXT);
          warningPanel.add(warningImage);
          
          Label label = new Label();

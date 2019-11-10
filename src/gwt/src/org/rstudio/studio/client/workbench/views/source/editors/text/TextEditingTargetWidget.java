@@ -331,14 +331,14 @@ public class TextEditingTargetWidget
       }
 
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
+      rmdFormatButton_ = new ToolbarPopupMenuButton("Knit options", false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
-      runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
+      runDocumentMenuButton_ = new ToolbarPopupMenuButton("Run document options", false, true);
       addClearKnitrCacheMenu(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
-      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
+      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");
       toolbar.addLeftWidget(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.shinyRecordTest().createMenuItem(false), "");
@@ -691,7 +691,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
-            fileType.isC() || fileType.isStan());   
+            fileType.isC() || fileType.isStan());
      
       previewJsButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       previewSqlButton_.setVisible(fileType.isSql() && extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
