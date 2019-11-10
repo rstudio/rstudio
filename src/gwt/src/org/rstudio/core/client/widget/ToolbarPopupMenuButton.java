@@ -29,15 +29,10 @@ import com.google.gwt.user.client.ui.MenuItem;
 public class ToolbarPopupMenuButton extends ToolbarMenuButton
                                     implements HasValueChangeHandlers<String>
 {
-   public ToolbarPopupMenuButton()
-   {
-      this(true, true);
-   }
-
-   public ToolbarPopupMenuButton(boolean showText, boolean rightAlignMenu)
+   public ToolbarPopupMenuButton(String title, boolean showText, boolean rightAlignMenu)
    {
       super(ToolbarButton.NoText,
-            ToolbarButton.NoTitle,
+            title,
             StandardIcons.INSTANCE.empty_command(),
             new ToolbarPopupMenu(),
             rightAlignMenu);
