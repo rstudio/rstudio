@@ -85,7 +85,9 @@ public class FindOutputPresenter extends BasePresenter
       void updateSearchLabel(String query, String path, String replace);
       void clearSearchLabel();
 
+      boolean getRegexPreviewMode();
       boolean getReplaceMode();
+      public void toggleRegexPreviewMode();
       public void toggleReplaceMode();
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
@@ -157,15 +159,13 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() != currentFindHandle_)
                return;
 
-            //view_.clearMatches();
             view_.addMatches(event.getResults());
-
             view_.ensureVisible(true);
-
             {
                int count = 0;
                for (FindResult fr : event.getResults())
                   count += fr.getMatchOns().size();
+               // !!! we need to clear this at some point
                dialogState_.updateResultsCount(count);
             }
             // replace may have been previously disabled
@@ -194,6 +194,8 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
+            if (!view_.getRegexPreviewMode())
+               view_.toggleRegexPreviewMode();
             stopAndClear();
 
             FileSystemItem searchPath =
@@ -215,7 +217,9 @@ public class FindOutputPresenter extends BasePresenter
                                       @Override
                                       public void onResponseReceived(String handle)
                                       {
+                                         view_.clearMatches();
                                          currentFindHandle_ = handle;
+                                         dialogState_.clearResultsCount();
                                       }
                                    });
          }
@@ -344,7 +348,6 @@ public class FindOutputPresenter extends BasePresenter
             }
             dialogState_.updateErrorCount(errorCount);
 
-            //view_.clearMatches();
             view_.addMatches(results);
             view_.toggleReplaceMode();
             
@@ -435,6 +438,7 @@ public class FindOutputPresenter extends BasePresenter
       view_.ensureVisible(false);
 
       currentFindHandle_ = state.getHandle();
+      dialogState_.clearResultsCount();
       view_.clearMatches();
       view_.addMatches(state.getResults().toArrayList());
 

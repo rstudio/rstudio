@@ -90,3 +90,8 @@
    color: white;
 }
 
+.findOutputReplace mark {
+   font-weight: bold;
+   background-color: #A81900;
+   color: white;
+}

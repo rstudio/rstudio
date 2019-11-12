@@ -247,6 +247,7 @@ public class FindResult extends JavaScriptObject
             int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
             if (onVal <= offVal)
             {
+               Debug.logToConsole("failure found");
                failedParts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
                onReplace.remove(0);
             }
@@ -287,12 +288,13 @@ public class FindResult extends JavaScriptObject
          {
             if (failedParts.remove(0).first)
             {
-               out.appendHtmlConstant("<strong>");
+               Debug.logToConsole("adding failure tag");
+               out.appendHtmlConstant("<mark>");
                openStrongTags++;
             }
             else if (openStrongTags > 0)
             {
-               out.appendHtmlConstant("</strong>");
+               out.appendHtmlConstant("</mark>");
                openStrongTags--;
             }
          }
@@ -307,7 +309,7 @@ public class FindResult extends JavaScriptObject
       while (openStrongTags > 0)
       {
          openStrongTags--;
-         out.appendHtmlConstant("</strong>");
+         out.appendHtmlConstant("</mark>");
       }
 
       return out.toSafeHtml();

@@ -137,15 +137,24 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_.addLeftWidget(regexCheckboxLabel_);
       regexCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
-            public void onValueChange(ValueChangeEvent<Boolean> event)
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
             {
-               if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
+               addReplaceMatches(new String());
+               if (regexCheckbox_.getValue())
+                  eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+               else
                {
-                  addReplaceMatches(new String());
-                  if (regexCheckbox_.getValue())
-                     eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-                  else
-                     addReplaceMatches(replaceTextBox_.getValue());
+                  // if we've previously done a regex preview, the display content has been modified
+                  // and needs to be regenerated
+                  if (getRegexPreviewMode())
+                  {
+                     toggleRegexPreviewMode();
+                     eventBus_.fireEvent(new PreviewReplaceEvent(new String()));
+                  }
+                  addReplaceMatches(replaceTextBox_.getValue());
+               }
             }
          }
       });
@@ -245,6 +254,8 @@ public class FindOutputPane extends WorkbenchPane
             {
                if (!replaceMode_)
                   toggleReplaceMode();
+               // !!! currently the preview re runs the 'find' backend logic, we may
+               // want to simplify this to just do the preview without rerunning find
                if (regexCheckbox_.getValue())
                   eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
                else
@@ -277,6 +288,12 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void toggleRegexPreviewMode()
+   {
+      regexPreviewMode_ = !regexPreviewMode_;
+   }
+
+   @Override
    public void toggleReplaceMode()
    {
       replaceMode_ = !replaceMode_;
@@ -302,7 +319,7 @@ public class FindOutputPane extends WorkbenchPane
          if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
             container_.setWidget(scrollPanel_);
             
-         if (!replaceMode_)
+         if (!replaceMode_ || regexPreviewMode_)
             context_.addMatches(findResults.subList(0, matchesToAdd));
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
@@ -457,7 +474,13 @@ public class FindOutputPane extends WorkbenchPane
       }
    
    @Override
-   public  boolean getReplaceMode()
+   public boolean getRegexPreviewMode()
+   {
+      return regexPreviewMode_;
+   }
+
+   @Override
+   public boolean getReplaceMode()
    {
       return replaceMode_;
    }
@@ -547,6 +570,7 @@ public class FindOutputPane extends WorkbenchPane
 
    private SecondaryToolbar replaceToolbar_;
    private ToolbarButton viewReplaceButton_;
+   private boolean regexPreviewMode_;
    private boolean replaceMode_;
    private Label replaceLabel_;
    private CheckBox regexCheckbox_;
