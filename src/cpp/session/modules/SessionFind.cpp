@@ -980,7 +980,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
-#elif Q_OS_MAC
+#elif __APPLE__
    shell_utils::ShellCommand cmd("ggrep");
 #else
    shell_utils::ShellCommand cmd("grep");
