@@ -595,6 +595,7 @@ private:
             {
                int pos = pMatchOn->getSize() - 1;
                std::string newLine;
+               bool errors = false;
                while (pos > -1)
                {
                   // match final values were determined in processContents
@@ -615,11 +616,11 @@ private:
                      if (findResults().ignoreCase())
                      {
                         {
-                           boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
+                           boost::regex tempRegex(*pSearch, boost::regex::icase);
                            searchAsRegex = tempRegex;
                         }
                         {
-                           boost::regex tempRegex(*pReplace, boost::regex::basic | boost::regex::icase);
+                           boost::regex tempRegex(*pReplace, boost::regex::icase);
                            replaceAsRegex = tempRegex;
                         }
                      }
@@ -631,20 +632,28 @@ private:
                      std::string temp = boost::regex_replace(
                                          previewString, searchAsRegex, replaceAsRegex);
                      if (previewString == temp)
-                        LOG_ERROR_MESSAGE("Did not find expression");
-                     const char* endOfString = previewString.substr(matchOff).c_str();
-                     const char* replacePtr = temp.substr(matchOn).c_str();
-                     size_t offset = 0;
-                     while (*endOfString != *replacePtr)
                      {
-                        replacePtr++;
-                        offset++;
+                        errors = true;
+                        pErrorMessage->insert("Could not find regular expression");
+                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      }
-                     replaceMatchOff = replaceMatchOn + offset;
-                     replaceString = temp.substr(replaceMatchOn, (replaceMatchOff - replaceMatchOn));
+                     else
+                     {
+                        const char* endOfString = previewString.substr(matchOff).c_str();
+                        const char* replacePtr = temp.substr(matchOn).c_str();
+                        size_t offset = 0;
+                        while (*endOfString != *replacePtr)
+                        {
+                           replacePtr++;
+                           offset++;
+                        }
+                        replaceMatchOff = replaceMatchOn + offset;
+                        replaceString = temp.substr(replaceMatchOn, (replaceMatchOff - replaceMatchOn));
+                     }
                   }
                   // if previewing, we need to display the original and replacement text
-                  if (preview)
+                  if (preview && !errors)
                   {
                      if (!findResults().regex())
                         replaceString.insert(0, *pSearch);
@@ -657,7 +666,8 @@ private:
 
                   // pContent and line may be difference because pContent was decoded
                   // need to offset difference when writing to file
-                  if (!preview &&
+                  if (!errors && 
+                      !preview &&
                       line != *pContent)
                   {
                      const char* linePtr = line.c_str();
@@ -688,6 +698,7 @@ private:
                      int offset(replaceDifference - matchDifference);
                      pReplaceMatchOn -> clear();
                      pReplaceMatchOff -> clear();
+                     if (!errors)
                      {
                         // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
                         // is only used for display
@@ -701,13 +712,22 @@ private:
                                                                                matchDifference)));
                      }
                      for (json::Value match : tempMatchOn)
+                     {
+                        // make sure negative values (errors) don't become positve
+                        if (match.getInt() < 0)
+                           match = json::Value(match.getInt() - offset);
                         pReplaceMatchOn -> push_back(json::Value(
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
+                     }
                      for (json::Value match : tempMatchOff)
+                     {
+                        if (match.getInt() < 0)
+                           match = json::Value(match.getInt() - offset);
                         pReplaceMatchOff -> push_back(json::Value(
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
+                     }
                   }
-                  else
+                  else if (!errors)
                   {
                      // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
                      // is only used for display
@@ -720,32 +740,35 @@ private:
                                                          gsl::narrow_cast<int>(replaceString.size() -
                                                                                matchDifference)));
                   }
-                  if (findResults().regex() &&
-                      !findResults().replaceRegex())
+                  if (!errors)
                   {
-                     boost::regex searchAsRegex(*pSearch);
-                     if (findResults().ignoreCase())
+                     if (findResults().regex() &&
+                         !findResults().replaceRegex())
                      {
+                        boost::regex searchAsRegex(*pSearch);
+                        if (findResults().ignoreCase())
                         {
-                           boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
-                           searchAsRegex = tempRegex;
+                           {
+                              boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
+                              searchAsRegex = tempRegex;
+                           }
                         }
+                        newLine = boost::regex_replace(line,
+                                                       searchAsRegex,
+                                                       replaceString);
                      }
-                     newLine = boost::regex_replace(line,
-                                                    searchAsRegex,
-                                                    replaceString);
+                     else
+                        newLine =
+                           line.replace(replaceMatchOn, matchDifference, replaceString);
+                     newLine.append("\n");
+                     *pContent =
+                        pContent -> replace(matchOn, matchDifference, replaceString);
                   }
-                  else
-                     newLine =
-                        line.replace(replaceMatchOn, matchDifference, replaceString);
-                  newLine.append("\n");
-                  *pContent =
-                     pContent -> replace(matchOn, matchDifference, replaceString);
                   if (!preview)
                      progress -> addUnit();
                   pos--;
                }
-               if (!preview)
+               if (!preview && !errors)
                {
                   try
                   {
@@ -828,7 +851,8 @@ private:
             json::Array replaceMatchOn, replaceMatchOff;
 
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
-            if (findResults().replace())
+            if (findResults().replace() &&
+                !(findResults().preview() && findResults().replacePattern()->empty()))
             {
                size_t tempMatchOnSize = matchOn.getSize();
                if (!fullLineContents.empty())
@@ -919,11 +943,8 @@ private:
             module_context::enqueClientEvent(
                      ClientEvent(client_events::kFindResult, result));
          else
-         {
-            LOG_ERROR_MESSAGE("recordsToProcess: " + std::to_string(recordsToProcess));
             module_context::enqueClientEvent(
                     ClientEvent(client_events::kReplaceResult, result));
-         }
       }
 
       if (recordsToProcess <= 0)

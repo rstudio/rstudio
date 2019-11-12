@@ -159,6 +159,7 @@ public class FindResult extends JavaScriptObject
       // Use a counter to ensure tags are balanced.
       int openStrongTags = 0;
       int openEmTags = 0;
+      boolean useMark = false;
 
       for (int i = 0; i < line.length(); i++)
       {
@@ -166,12 +167,27 @@ public class FindResult extends JavaScriptObject
          {
             if (parts.remove(0).first)
             {
-               out.appendHtmlConstant("<strong>");
+               if (replaceParts.size() > 0 &&
+                   replaceParts.get(0).second < 0)
+               {
+                  useMark = true;
+                  replaceParts.remove(0);
+               }
+               if (!useMark)
+                  out.appendHtmlConstant("<strong>");
+               else
+                  out.appendHtmlConstant("<mark>");
                openStrongTags++;
             }
             else if (openStrongTags > 0)
             {
-               out.appendHtmlConstant("</strong>");
+               if (!useMark)
+                  out.appendHtmlConstant("</strong>");
+               else
+               {
+                  out.appendHtmlConstant("</mark>");
+                  useMark = false;
+               }
                openStrongTags--;
                String replace = getReplaceValue();
                if (!StringUtil.isNullOrEmpty(replace))
@@ -202,7 +218,10 @@ public class FindResult extends JavaScriptObject
       while (openStrongTags > 0)
       {
          openStrongTags--;
-         out.appendHtmlConstant("</strong>");
+         if (!useMark)
+            out.appendHtmlConstant("</strong>");
+         else
+            out.appendHtmlConstant("</mark>");
          String replace = getReplaceValue();
          if (!StringUtil.isNullOrEmpty(replace))
          {
