@@ -87,6 +87,7 @@
 * Fix issue where calling `install.packages()` without arguments would fail (#5154)
 * Fix issue where C code in packages would incorrectly be diagnosed as C++ (#5418)
 * Fix plot history when plot() called immediately after dev.off() (#3117)
+* Fix debug stopping past breakpoint when source windows are open (#3683)
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
 * Fix an issue where help tooltips could become corrupt when using prettycode (#5561)
