@@ -1051,9 +1051,7 @@ public class PaneManager
       switch (tab)
       {
          case VCS:
-            return getTab(tab).getTitle();
          case Presentation:
-            return getTab(tab).getTitle();
          case Connections:
             return getTab(tab).getTitle();
          default:
@@ -1203,14 +1201,14 @@ public class PaneManager
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
    private final OptionsLoader.Shim optionsLoader_;
-   private MainSplitPanel panel_;
+   private final MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   private DualWindowLayoutPanel left_;
-   private DualWindowLayoutPanel right_;
+   private final DualWindowLayoutPanel left_;
+   private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;
    private ConsoleTabPanel consoleTabPanel_;
    private WorkbenchTabPanel tabSet1TabPanel_;
