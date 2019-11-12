@@ -977,7 +977,7 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow);
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
 
       if (persisterName == "TabSet1")
          tabs1_ = tabs;

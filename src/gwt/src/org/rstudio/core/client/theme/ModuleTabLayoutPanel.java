@@ -144,9 +144,9 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       private ProgressSpinner busySpinner_;
    }
 
-   public ModuleTabLayoutPanel(final WindowFrame owner)
+   public ModuleTabLayoutPanel(final WindowFrame owner, String tabListName)
    {
-      super(BAR_HEIGHT, Style.Unit.PX, "Pane");
+      super(BAR_HEIGHT, Style.Unit.PX, tabListName);
       owner_ = owner;
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.moduleTabPanel());

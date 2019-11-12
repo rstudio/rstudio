@@ -75,7 +75,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab jobsTab,
                           WorkbenchTab launcherJobsTab)
    {
-      super(owner, parentWindow);
+      super(owner, parentWindow, "ConsoleTabSet");
       owner_ = owner;
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;
@@ -421,7 +421,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          if (Desktop.hasDesktopFrame())
          {
             // if there are session servers defined, we will show the launcher tab
-            Desktop.getFrame().getSessionServers(servers -> {
+            Desktop.getFrame().getSessionServers(servers ->
+            {
                if (servers.length() > 0)
                {
                   showLauncherTab.execute();
