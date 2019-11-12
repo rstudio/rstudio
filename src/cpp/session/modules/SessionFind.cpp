@@ -121,6 +121,7 @@ public:
 
    explicit FindInFilesState() :
       regex_(false),
+      ignoreCase_(false),
       running_(false),
       replace_(false),
       preview_(false),
@@ -147,6 +148,11 @@ public:
    bool regex()
    {
       return regex_;
+   }
+
+   bool ignoreCase()
+   {
+      return ignoreCase_;
    }
 
    bool replace()
@@ -228,12 +234,13 @@ public:
    void onFindBegin(const std::string& handle,
                     const std::string& input,
                     const std::string& path,
-                    bool asRegex)
+                    bool asRegex, bool ignoreCase)
    {
       handle_ = handle;
       input_ = input;
       path_ = path;
       regex_ = asRegex;
+      ignoreCase_ = ignoreCase;
       running_ = true;
    }
 
@@ -295,6 +302,7 @@ public:
                                      "input", &input_,
                                      "path", &path_,
                                      "regex", &regex_,
+                                     "ignoreCase", &ignoreCase_,
                                      "results", &results,
                                      "running", &running_);
       if (error)
@@ -328,6 +336,7 @@ public:
       obj["input"] = input_;
       obj["path"] = path_;
       obj["regex"] = regex_;
+      obj["ignoreCase"] = ignoreCase_;
 
       json::Object results;
       results["file"] = files_;
@@ -349,6 +358,7 @@ private:
    std::string input_;
    std::string path_;
    bool regex_;
+   bool ignoreCase_;
    json::Array files_;
    json::Array lineNums_;
    json::Array contents_;
@@ -602,6 +612,17 @@ private:
                   {
                      boost::regex searchAsRegex(*pSearch);
                      boost::regex replaceAsRegex(*pReplace);
+                     if (findResults().ignoreCase())
+                     {
+                        {
+                           boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
+                           searchAsRegex = tempRegex;
+                        }
+                        {
+                           boost::regex tempRegex(*pReplace, boost::regex::basic | boost::regex::icase);
+                           replaceAsRegex = tempRegex;
+                        }
+                     }
                      std::string previewString;
                      if (preview)
                         previewString = *pContent;
@@ -701,9 +722,19 @@ private:
                   }
                   if (findResults().regex() &&
                       !findResults().replaceRegex())
+                  {
+                     boost::regex searchAsRegex(*pSearch);
+                     if (findResults().ignoreCase())
+                     {
+                        {
+                           boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
+                           searchAsRegex = tempRegex;
+                        }
+                     }
                      newLine = boost::regex_replace(line,
-                                                    boost::regex(*pSearch),
+                                                    searchAsRegex,
                                                     replaceString);
+                  }
                   else
                      newLine =
                         line.replace(replaceMatchOn, matchDifference, replaceString);
@@ -799,6 +830,7 @@ private:
             processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
             if (findResults().replace())
             {
+               size_t tempMatchOnSize = matchOn.getSize();
                if (!fullLineContents.empty())
                   processReplace(&file, lineNum, &fullLineContents,
                                  &matchOn, &matchOff,
@@ -815,6 +847,8 @@ private:
                                  findResults().replacePattern(),
                                  &errorMessage,
                                  findResults().replaceProgress());
+               if (matchOn.getSize() != tempMatchOnSize)
+                  LOG_ERROR_MESSAGE("Something bad happened");
             }
 
             files.push_back(json::Value(file));
@@ -885,8 +919,11 @@ private:
             module_context::enqueClientEvent(
                      ClientEvent(client_events::kFindResult, result));
          else
+         {
+            LOG_ERROR_MESSAGE("recordsToProcess: " + std::to_string(recordsToProcess));
             module_context::enqueClientEvent(
                     ClientEvent(client_events::kReplaceResult, result));
+         }
       }
 
       if (recordsToProcess <= 0)
@@ -1017,7 +1054,6 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    // Clear existing results
    findResults().clear();
 
-   LOG_ERROR_MESSAGE("cmd: " + cmd.string());
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
@@ -1027,7 +1063,8 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    findResults().onFindBegin(ptrGrepOp->handle(),
                              searchString,
                              directory,
-                             asRegex);
+                             asRegex,
+                             ignoreCase);
    if (replaceFlag)
       findResults().onReplaceBegin(ptrGrepOp->handle(),
                                    previewFlag,
