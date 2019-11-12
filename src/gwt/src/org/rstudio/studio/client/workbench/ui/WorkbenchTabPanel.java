@@ -46,14 +46,14 @@ class WorkbenchTabPanel
                  HasEnsureVisibleHandlers,
                  HasEnsureHeightHandlers
 {
-   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow)
+   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName)
    {
       final int UTILITY_AREA_SIZE = 52;
       panel_ = new LayoutPanel();
       
       parentWindow_ = parentWindow;
 
-      tabPanel_ = new ModuleTabLayoutPanel(owner);
+      tabPanel_ = new ModuleTabLayoutPanel(owner, tabListName);
       panel_.add(tabPanel_);
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
