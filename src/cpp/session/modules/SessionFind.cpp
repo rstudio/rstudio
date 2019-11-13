@@ -88,7 +88,7 @@ public:
             nextUpdate_ = max_;
          notifyClient();
          // prevent infinite loop when max is reached
-         if (units_ == max_)
+         if (units_ >= max_)
             break;
       }
 
@@ -561,8 +561,10 @@ private:
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
+         if (!currentFile_.empty())
+            inputStream_.close();
          currentFile_ = fullFile.getAbsolutePath();
-         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
+         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in);
       }
 
       if (!inputStream_.good()  || (!preview && !outputStream_.good()))
@@ -673,11 +675,12 @@ private:
                            onPos += encodingOffset;
                         }
                         std::string endOfString = previewString.substr(offPos).c_str();
-                        std::string* replacePtr = &temp;
+                        const char* replacePtr = temp.c_str();
                         replacePtr += onPos;
 
                         size_t offset = 0;
-                        while (endOfString != *replacePtr)
+                        while (endOfString.compare(replacePtr)!=0 &&
+                               offset < temp.length())
                         {
                            replacePtr++;
                            offset++;

@@ -316,7 +316,7 @@ public class FindOutputPresenter extends BasePresenter
             Debug.logToConsole("Replace progress event " + event.units() + " units out of " + event.max());
             view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
-            if (event.units() == event.max())
+            if (event.units() >= event.max())
             {
                view_.hideProgress();
                events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));

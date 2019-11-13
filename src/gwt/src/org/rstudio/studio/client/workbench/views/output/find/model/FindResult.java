@@ -146,7 +146,10 @@ public class FindResult extends JavaScriptObject
          {
             if (replaceOnVal <= replaceOffVal)
             {
-               difference = offVal - onVal;
+               if (replaceOnVal > 0)
+                  difference = offVal - onVal;
+               else
+                  difference = -1;
                replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
             }
             else
@@ -155,7 +158,6 @@ public class FindResult extends JavaScriptObject
       }
 
       String line = getLineValue();
-
       // Use a counter to ensure tags are balanced.
       int openStrongTags = 0;
       int openEmTags = 0;
