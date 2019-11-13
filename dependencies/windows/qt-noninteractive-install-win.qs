@@ -30,10 +30,10 @@ Controller.prototype.TargetDirectoryPageCallback = function()
 Controller.prototype.ComponentSelectionPageCallback = function() {
     var widget = gui.currentPageWidget();
 
-    widget.selectComponent("qt.qt5.5125.win64_msvc2017_64");
-    widget.selectComponent("qt.qt5.5125.qtwebengine");
-    widget.selectComponent("qt.qt5.5125.qtwebengine.win64_msvc2017_64");
-    widget.deselectComponent("qt.qt5.5125.src");
+    widget.selectComponent("qt.qt5.5126.win64_msvc2017_64");
+    widget.selectComponent("qt.qt5.5126.qtwebengine");
+    widget.selectComponent("qt.qt5.5126.qtwebengine.win64_msvc2017_64");
+    widget.deselectComponent("qt.qt5.5126.src");
     gui.clickButton(buttons.NextButton);
 }
 
