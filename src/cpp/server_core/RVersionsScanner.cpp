@@ -52,13 +52,15 @@ RVersionsScanner::RVersionsScanner(bool checkCommonRLocations,
                                    const std::string& rLdScriptPath,
                                    const std::string& rLdLibraryPath,
                                    const r_util::RVersion& profileDefaultR,
-                                   const std::vector<FilePath>& profileRHomeDirs) :
+                                   const std::vector<FilePath>& profileRHomeDirs,
+                                   const std::string& modulesBinaryPath) :
    checkCommonRLocations_(checkCommonRLocations),
    whichROverride_(whichROverride),
    rLdScriptPath_(rLdScriptPath),
    rLdLibraryPath_(rLdLibraryPath),
    profileDefaultR_(profileDefaultR),
-   profileRHomeDirs_(profileRHomeDirs)
+   profileRHomeDirs_(profileRHomeDirs),
+   modulesBinaryPath_(modulesBinaryPath)
 {
 }
 
@@ -177,7 +179,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
             rEntries,
             checkCommonRLocations_,
             rLdScriptPath_,
-            rLdLibraryPath_);
+            rLdLibraryPath_,
+            modulesBinaryPath_);
 
    // cache the versions that we just found
    cachedVersions_ = versions;
@@ -287,9 +290,11 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
    }
 
    std::string path = string_utils::trimWhitespace(fields["Path"]);
+   std::string module = string_utils::trimWhitespace(fields["Module"]);
+
    FilePath rPath = FilePath(path);
 
-   if (path.empty() || !rPath.exists())
+   if (module.empty() && (path.empty() || !rPath.exists()))
    {
       LOG_ERROR_MESSAGE("Invalid R path specified in /etc/rstudio/r-versions: " + path +
                         "This version of R will be skipped");
@@ -302,8 +307,6 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
    pVersion->setLabel(label);
 
    pVersion->setHomeDir(rPath);
-
-   std::string module = string_utils::trimWhitespace(fields["Module"]);
    pVersion->setModule(module);
 
    std::string script = string_utils::trimWhitespace(fields["Script"]);

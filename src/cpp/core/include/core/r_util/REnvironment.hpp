@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <core/system/Types.hpp>
 
 namespace rstudio {
 namespace core {
 
 class Error;
-class FilePath;
 
 namespace r_util {
 
@@ -38,7 +38,9 @@ bool detectREnvironment(const FilePath& whichRScript,
                         std::string* pVersion,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg,
-                        const std::string& prelaunchScript = "");
+                        const std::string& prelaunchScript = "",
+                        const std::string& module = "",
+                        const FilePath& modulesBinaryPath = FilePath());
 
 void setREnvironmentVars(const EnvironmentVars& vars);
 void setREnvironmentVars(const EnvironmentVars& vars,
@@ -52,6 +54,14 @@ std::string rLibraryPath(const FilePath& rHomePath,
 Error rVersion(const FilePath& rHomePath,
                const FilePath& rScriptPath,
                const std::string& ldLibraryPath,
+               std::string* pVersion);
+
+Error rVersion(const FilePath& rHomePath,
+               const FilePath& rScriptPath,
+               const std::string& ldLibraryPath,
+               const std::string& prelaunchScript,
+               const std::string& module,
+               const FilePath& moduleBinaryPath,
                std::string* pVersion);
 
 void ensureLang();

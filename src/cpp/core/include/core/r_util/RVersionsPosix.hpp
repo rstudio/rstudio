@@ -118,7 +118,8 @@ std::vector<RVersion> enumerateRVersions(
                               std::vector<r_util::RVersion> rEntries,
                               bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
-                              const std::string& ldLibraryPath);
+                              const std::string& ldLibraryPath,
+                              const FilePath& modulesBinaryPath);
 
 RVersion selectVersion(const std::string& number,
                        const std::string& rHomeDir,
