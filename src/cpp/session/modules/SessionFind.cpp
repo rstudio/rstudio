@@ -606,6 +606,31 @@ private:
                   size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
+                  // pContent and line may be difference because pContent was decoded
+                  // need to offset difference when writing to file
+                  size_t encodingOffset = 0;
+                  if (!errors && 
+                      !preview &&
+                      line != *pContent)
+                  {
+                     const char* linePtr = line.c_str();
+                     const char* contentPtr = pContent -> c_str();
+                     size_t contentCounter = 0;
+                     while (contentCounter < matchOn)
+                     {
+                        if (linePtr[0] != contentPtr[0])
+                           encodingOffset++;
+                        else
+                        {
+                           contentCounter++;
+                           contentPtr++;
+                        }
+                        linePtr++;
+                     }
+                     replaceMatchOn += encodingOffset;
+                     replaceMatchOff += encodingOffset;
+                  }
+
                   std::string replaceString(*pReplace);
                   // for regexes, determine what the replace will look like before creating the string
                   // that will be written to file so that previews are handled correctly
@@ -640,10 +665,19 @@ private:
                      }
                      else
                      {
-                        const char* endOfString = previewString.substr(matchOff).c_str();
-                        const char* replacePtr = temp.substr(matchOn).c_str();
+                        size_t offPos = matchOff;
+                        size_t onPos = matchOn;
+                        if (!preview)
+                        {
+                           offPos += encodingOffset;
+                           onPos += encodingOffset;
+                        }
+                        std::string endOfString = previewString.substr(offPos).c_str();
+                        std::string* replacePtr = &temp;
+                        replacePtr += onPos;
+
                         size_t offset = 0;
-                        while (*endOfString != *replacePtr)
+                        while (endOfString != *replacePtr)
                         {
                            replacePtr++;
                            offset++;
@@ -662,31 +696,6 @@ private:
                         std::string foundString(pContent->substr(matchOn, matchDifference));
                         replaceString.insert(0, foundString);
                      }
-                  }
-
-                  // pContent and line may be difference because pContent was decoded
-                  // need to offset difference when writing to file
-                  if (!errors && 
-                      !preview &&
-                      line != *pContent)
-                  {
-                     const char* linePtr = line.c_str();
-                     const char* contentPtr = pContent -> c_str();
-                     size_t contentCounter = 0;
-                     size_t offset = 0;
-                     while (contentCounter < matchOn)
-                     {
-                        if (linePtr[0] != contentPtr[0])
-                           offset++;
-                        else
-                        {
-                           contentCounter++;
-                           contentPtr++;
-                        }
-                        linePtr++;
-                     }
-                     replaceMatchOn += offset;
-                     replaceMatchOff += offset;
                   }
 
                   // if multiple replaces in line, readjust previous match numbers

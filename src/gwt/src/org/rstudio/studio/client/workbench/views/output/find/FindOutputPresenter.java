@@ -185,6 +185,8 @@ public class FindOutputPresenter extends BasePresenter
                currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
+               if (view_.getRegexPreviewMode())
+                  view_.toggleRegexPreviewMode();
             }
          }
       });
@@ -472,6 +474,7 @@ public class FindOutputPresenter extends BasePresenter
             if (view_.getReplaceMode())
                 view_.toggleReplaceMode();
 
+            view_.disableReplace();
             server_.beginFind(input.getQuery(),
                               input.isRegex(),
                               !input.isCaseSensitive(),
@@ -548,6 +551,7 @@ public class FindOutputPresenter extends BasePresenter
    {
       stop();
       stopReplace();
+      dialogState_.clearResultsCount();
       view_.clearMatches();
       view_.clearSearchLabel();
    }
