@@ -31,7 +31,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -247,7 +246,7 @@ public class FindOutputPane extends WorkbenchPane
    {
       if (displayPreview_ == null)
       {
-         displayPreview_ = new DebouncedCommand(50)
+         displayPreview_ = new DebouncedCommand(500)
          {
             @Override
             protected void execute()
