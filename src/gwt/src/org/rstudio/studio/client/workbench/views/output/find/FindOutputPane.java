@@ -256,7 +256,11 @@ public class FindOutputPane extends WorkbenchPane
                // !!! currently the preview re runs the 'find' backend logic, we may
                // want to simplify this to just do the preview without rerunning find
                if (regexCheckbox_.getValue())
+               {
+                  if (!getRegexPreviewMode())
+                     toggleRegexPreviewMode();
                   eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+               }
                else
                   addReplaceMatches(replaceTextBox_.getValue());
             }

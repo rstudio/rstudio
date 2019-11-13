@@ -146,7 +146,7 @@ public class FindResult extends JavaScriptObject
          {
             if (replaceOnVal <= replaceOffVal)
             {
-               if (replaceOnVal > 0)
+               if (replaceOnVal >= 0)
                   difference = offVal - onVal;
                else
                   difference = -1;
@@ -268,7 +268,6 @@ public class FindResult extends JavaScriptObject
             int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
             if (onVal <= offVal)
             {
-               Debug.logToConsole("failure found");
                failedParts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
                onReplace.remove(0);
             }
@@ -309,7 +308,6 @@ public class FindResult extends JavaScriptObject
          {
             if (failedParts.remove(0).first)
             {
-               Debug.logToConsole("adding failure tag");
                out.appendHtmlConstant("<mark>");
                openStrongTags++;
             }
