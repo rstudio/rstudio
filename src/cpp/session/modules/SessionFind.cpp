@@ -823,13 +823,14 @@ private:
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
       size_t pos = -1;
+      std::set<std::string> errorMessage;
       while (recordsToProcess &&
              std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
       {
          std::string line = stdOutBuf_.substr(nextLineStart, pos - nextLineStart);
          nextLineStart = pos + 1;
 
-         std::set<std::string> errorMessage;
+         errorMessage.clear();
          boost::smatch match;
          if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
          {
@@ -919,8 +920,12 @@ private:
             recordsToProcess--;
          }
          if (recordsToProcess == 0 && !currentFile_.empty())
+         {
             completeFileReplace(&errorMessage);
+         }
       }
+      if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
+         completeFileReplace(&errorMessage);
 
       if (nextLineStart)
       {
