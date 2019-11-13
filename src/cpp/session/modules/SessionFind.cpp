@@ -1062,11 +1062,12 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
    // Use -f to pass pattern via file, so we don't have to worry about
    // escaping double quotes, etc.
-   cmd << "-P";
    cmd << "-f";
    cmd << tempFile;
    if (!asRegex)
       cmd << "-F";
+   else
+      cmd << "-P";
 
    for (json::Value filePattern : filePatterns)
    {
