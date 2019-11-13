@@ -922,6 +922,7 @@ private:
          if (recordsToProcess == 0 && !currentFile_.empty())
          {
             completeFileReplace(&errorMessage);
+            currentFile_.clear();
          }
       }
       if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
