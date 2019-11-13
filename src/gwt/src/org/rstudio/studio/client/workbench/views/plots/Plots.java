@@ -22,7 +22,6 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -88,7 +87,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       void refresh();
    
-      Panel getPlotsSurface();
+      PlotsSurface getPlotsSurface();
       
       Parent getPlotsParent();
       Size getPlotFrameSize();
