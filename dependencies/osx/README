@@ -24,11 +24,3 @@ Additional dependencies can be satisfied by running the following script:
 Note that this script includes download, extraction, and compilation of
 boost so can take some time (30-60 minutes) to complete.
 
-Qt SDK and macOS 10.15 Catalina
-=============================================================================
-Installation of the Qt SDK via the dependency scripts may fail due to
-notarization requirements added to macOS Catalina. If so, manually install
-the required version of Qt from the Qt website. Include the macOS and
-QtWebEngine components.
-
-https://www.qt.io/blog/qt-5.12.6-released
