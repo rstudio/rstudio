@@ -312,6 +312,12 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
    std::string script = string_utils::trimWhitespace(fields["Script"]);
    pVersion->setPrelaunchScript(script);
 
+   std::string repo = string_utils::trimWhitespace(fields["Repo"]);
+   pVersion->setRepo(repo);
+
+   std::string library = string_utils::trimWhitespace(fields["Library"]);
+   pVersion->setLibrary(library);
+
    return pVersion;
 }
 

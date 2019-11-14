@@ -433,6 +433,8 @@ json::Object rVersionToJson(const RVersion& version)
    versionJson["label"] = version.label();
    versionJson["module"] = version.module();
    versionJson["prelaunchScript"] = version.prelaunchScript();
+   versionJson["repo"] = version.repo();
+   versionJson["library"] = version.library();
 
    return versionJson;
 }
@@ -445,13 +447,17 @@ Error rVersionFromJson(const json::Object& versionJson,
    std::string label;
    std::string module;
    std::string prelaunchScript;
+   std::string repo;
+   std::string library;
 
    Error error = json::readObject(versionJson,
                                   "number", &number,
                                   "environment", &environmentJson,
                                   "label", &label,
                                   "module", &module,
-                                  "prelaunchScript", &prelaunchScript);
+                                  "prelaunchScript", &prelaunchScript,
+                                  "repo", &repo,
+                                  "library", &library);
    if (error)
       return error;
 
@@ -460,6 +466,8 @@ Error rVersionFromJson(const json::Object& versionJson,
    pVersion->setLabel(label);
    pVersion->setModule(module);
    pVersion->setPrelaunchScript(prelaunchScript);
+   pVersion->setRepo(repo);
+   pVersion->setLibrary(library);
 
    return Success();
 }

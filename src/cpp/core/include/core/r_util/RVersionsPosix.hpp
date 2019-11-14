@@ -43,6 +43,8 @@ public:
       setLabel(std::string());
       setModule(std::string());
       setPrelaunchScript(std::string());
+      setRepo(std::string());
+      setLibrary(std::string());
    }
 
 public:
@@ -85,6 +87,20 @@ public:
       core::system::setenv(&environment_, "RSTUDIO_R_PRELAUNCH_SCRIPT", prelaunchScript);
    }
 
+   const std::string& repo() const { return repo_; }
+   void setRepo(const std::string& repo)
+   {
+      repo_ = repo;
+      core::system::setenv(&environment_, "RSTUDIO_R_REPO", repo);
+   }
+
+   const std::string& library() const { return library_; }
+   void setLibrary(const std::string& library)
+   {
+      library_ = library;
+      core::system::setenv(&environment_, "R_LIBS_SITE", library);
+   }
+
    bool operator<(const RVersion& other) const
    {
       RVersionNumber ver = RVersionNumber::parse(number());
@@ -109,6 +125,8 @@ private:
    std::string label_;
    std::string module_;
    std::string prelaunchScript_;
+   std::string repo_;
+   std::string library_;
 };
 
 std::ostream& operator<<(std::ostream& os, const RVersion& version);

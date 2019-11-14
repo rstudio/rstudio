@@ -1458,6 +1458,24 @@ FilePath getStartupEnvironmentFilePath()
       return dirs::rEnvironmentDir().completePath(".RData");
 }
 
+void loadCranRepos(const std::string& repos,
+                   rstudio::r::session::ROptions* pROptions)
+{
+   std::vector<std::string> parts;
+   boost::split(parts, repos, boost::is_any_of("|"));
+   pROptions->rCRANSecondary = "";
+
+   std::vector<std::string> secondary;
+   for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
+   {
+      if (string_utils::toLower(parts[idxParts]) == "cran")
+         pROptions->rCRANUrl = parts[idxParts + 1];
+      else
+         secondary.push_back(std::string(parts[idxParts]) + "|" + parts[idxParts + 1]);
+   }
+   pROptions->rCRANSecondary = algorithm::join(secondary, "|");
+}
+
 } // anonymous namespace
 
 
@@ -2010,10 +2028,11 @@ int main (int argc, char * const argv[])
       //
       // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
       //    same
-      // 2. The session's repo settings (in rsession.conf/repos.conf)
-      // 3. The server's repo settings
-      // 4. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 5. If all else fails, cran.rstudio.com
+      // 2. The repo settings specified in the loaded version of R
+      // 3. The session's repo settings (in rsession.conf/repos.conf)
+      // 4. The server's repo settings
+      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 6. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
       if (val && (layerName == kUserPrefsUserLayer ||
@@ -2023,23 +2042,27 @@ int main (int argc, char * const argv[])
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
       }
+      else if (!core::system::getenv("RSTUDIO_R_REPO").empty())
+      {
+         // repo was specified in the r version
+         std::string repo = core::system::getenv("RSTUDIO_R_REPO");
+
+         // the repo can either be a repos.conf-style file, or a URL
+         FilePath reposFile(repo);
+         if (reposFile.exists())
+         {
+            std::string reposConfig = Options::parseReposConfig(reposFile);
+            loadCranRepos(reposConfig, &rOptions);
+         }
+         else
+         {
+            rOptions.rCRANUrl = repo;
+         }
+      }
       else if (!options.rCRANMultipleRepos().empty())
       {
-         // There's no user-scoped value, so read from session options (this also loads repos.conf)
-         std::vector<std::string> parts;
-         std::string repos = options.rCRANMultipleRepos();
-         boost::split(parts, repos, boost::is_any_of("|"));
-         rOptions.rCRANSecondary = "";
-
-         std::vector<std::string> secondary;
-         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
-         {
-            if (string_utils::toLower(parts[idxParts]) == "cran")
-               rOptions.rCRANUrl = parts[idxParts + 1];
-            else
-               secondary.push_back(std::string(parts[idxParts]) + "|" + parts[idxParts + 1]);
-         }
-         rOptions.rCRANSecondary = algorithm::join(secondary, "|");
+         // repo was specified in a repos file
+         loadCranRepos(options.rCRANMultipleRepos(), &rOptions);
       }
       else if (!options.rCRANUrl().empty())
       {
