@@ -1056,8 +1056,6 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
-#elif __APPLE__
-   shell_utils::ShellCommand cmd("ggrep");
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
@@ -1075,8 +1073,6 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    cmd << tempFile;
    if (!asRegex)
       cmd << "-F";
-   else
-      cmd << "-P";
 
    for (json::Value filePattern : filePatterns)
    {
