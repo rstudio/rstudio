@@ -20,11 +20,12 @@
 
 QT_VERSION=5.12.6
 QT_SDK_BINARY_BASE=qt-opensource-mac-x64-${QT_VERSION}
-QT_SDK_BINARY=${QT_SDK_BINARY_BASE}.tar.gz
+QT_SDK_BINARY=${QT_SDK_BINARY_BASE}.dmg
 QT_SDK_INSTALLER=${QT_SDK_BINARY_BASE}.app
-QT_SDK_INSTALLER_BIN=${QT_SDK_INSTALLER}/Contents/MacOS/${QT_SDK_BINARY_BASE}
+QT_SDK_VOLUME=/Volumes/${QT_SDK_BINARY_BASE}
+QT_SDK_INSTALLER_BIN=${QT_SDK_VOLUME}/${QT_SDK_INSTALLER}/Contents/MacOS/${QT_SDK_BINARY_BASE}
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/Qt/$QT_SDK_BINARY
-QT_SCRIPT=/tmp/qt-noninteractive-install-osx.qs 
+QT_SCRIPT=/tmp/qt-noninteractive-install-osx.qs
 
 # generate script for automatic Qt installation; customizes the install location via $QT_SDK_DIR
 function write_qt_script() {
@@ -112,21 +113,23 @@ then
    # download and install
    curl -L $QT_SDK_URL > /tmp/$QT_SDK_BINARY
    cd /tmp
-   tar xzf /tmp/$QT_SDK_BINARY
-   write_qt_script   
+   hdiutil attach ${QT_SDK_BINARY}
+   write_qt_script
    
    echo "Installing Qt, this will take a while."
    echo " - Ignore warnings about QtAccount credentials."
    echo " - Do not click on the setup interface, it is controlled by a script."
 
-   ./$QT_SDK_INSTALLER_BIN --script $QT_SCRIPT
+   $QT_SDK_INSTALLER_BIN --script $QT_SCRIPT
 
-   rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
-   rm -rf /tmp/$QT_SDK_INSTALLER
    if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]; then
-      echo "Error: Unable to install Qt, run script again or install manually." 
+      echo "Error: Unable to install Qt, run script again or install manually."
+      echo "Downloaded installer remains in /tmp and image is still mounted."
       exit 1
    fi
+
+   hdiutil unmount ${QT_SDK_VOLUME}
+   rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
 else
    echo "Qt $QT_VERSION SDK already installed"
 fi
