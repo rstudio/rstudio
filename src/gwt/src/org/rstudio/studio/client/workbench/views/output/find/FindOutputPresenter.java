@@ -87,7 +87,7 @@ public class FindOutputPresenter extends BasePresenter
 
       boolean getRegexPreviewMode();
       boolean getReplaceMode();
-      public void toggleRegexPreviewMode();
+      public void setRegexPreviewMode(boolean value);
       public void toggleReplaceMode();
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
@@ -185,8 +185,7 @@ public class FindOutputPresenter extends BasePresenter
                currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
-               if (view_.getRegexPreviewMode())
-                  view_.toggleRegexPreviewMode();
+               view_.setRegexPreviewMode(false);
             }
          }
       });
@@ -196,8 +195,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onPreviewReplace(PreviewReplaceEvent event)
          {
-            if (!view_.getRegexPreviewMode())
-               view_.toggleRegexPreviewMode();
+            view_.setRegexPreviewMode(true);
             stopAndClear();
 
             FileSystemItem searchPath =

@@ -149,7 +149,7 @@ public class FindOutputPane extends WorkbenchPane
                   // and needs to be regenerated
                   if (getRegexPreviewMode())
                   {
-                     toggleRegexPreviewMode();
+                     setRegexPreviewMode(false);
                      eventBus_.fireEvent(new PreviewReplaceEvent(new String()));
                   }
                   addReplaceMatches(replaceTextBox_.getValue());
@@ -253,12 +253,9 @@ public class FindOutputPane extends WorkbenchPane
             {
                if (!replaceMode_)
                   toggleReplaceMode();
-               // !!! currently the preview re runs the 'find' backend logic, we may
-               // want to simplify this to just do the preview without rerunning find
                if (regexCheckbox_.getValue())
                {
-                  if (!getRegexPreviewMode())
-                     toggleRegexPreviewMode();
+                  setRegexPreviewMode(true);
                   eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
                }
                else
@@ -291,9 +288,9 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void toggleRegexPreviewMode()
+   public void setRegexPreviewMode(boolean value)
    {
-      regexPreviewMode_ = !regexPreviewMode_;
+      regexPreviewMode_ = value;
    }
 
    @Override
