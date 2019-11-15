@@ -37,6 +37,7 @@ public class FindResult extends JavaScriptObject
          lineValue: lineValue,
          replace: "",
          replaceIndicator: false,
+         regexPreviewIndicator: false,
          errors: ""
       });
    }-*/;
@@ -49,6 +50,7 @@ public class FindResult extends JavaScriptObject
          line: this.line,
          lineValue: this.lineValue,
          replaceIndicator: this.replaceIndicator,
+         regexPreviewIndicator: this.regexPreviewIndicator,
          replace: this.replace,
          matchOn: this.matchOn,
          matchOff: this.matchOff,
@@ -82,6 +84,14 @@ public class FindResult extends JavaScriptObject
       this.replaceIndicator = true;
    }-*/;
 
+   public native final boolean getRegexPreviewIndicator()/*-{
+      return this.regexPreviewIndicator;
+   }-*/;
+
+   public native final void setRegexPreviewIndicator()/*-{
+      this.regexPreviewIndicator = true;
+   }-*/;
+
    public final ArrayList<Integer> getMatchOns()
    {
       return getJavaArray("matchOn");
@@ -112,6 +122,7 @@ public class FindResult extends JavaScriptObject
          this.replace = value;
       else
          this.replace = "";
+      this.regexPreviewIndicator = false;
    }-*/;
 
 
@@ -128,6 +139,10 @@ public class FindResult extends JavaScriptObject
       ArrayList<Integer> replaceOff = getReplaceMatchOffs();
       ArrayList<Pair<Boolean, Integer>> replaceParts
                                       = new ArrayList<Pair<Boolean, Integer>>();
+      // we should only use one replace method at at time
+      boolean useReplaceParts = true;
+      if (!getRegexPreviewIndicator())
+         useReplaceParts = false;
 
       int difference = 0;
       while (on.size() + off.size() > 0)
@@ -214,7 +229,8 @@ public class FindResult extends JavaScriptObject
                openEmTags--;
             }
          }
-         out.append(line.charAt(i));
+         if (useReplaceParts || openEmTags == 0)
+            out.append(line.charAt(i));
       }
 
       while (openStrongTags > 0)

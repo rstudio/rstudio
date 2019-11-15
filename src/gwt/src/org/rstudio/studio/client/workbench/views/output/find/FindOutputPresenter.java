@@ -159,15 +159,18 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() != currentFindHandle_)
                return;
 
-            view_.addMatches(event.getResults());
             view_.ensureVisible(true);
             {
                int count = 0;
                for (FindResult fr : event.getResults())
+               {
                   count += fr.getMatchOns().size();
-               // !!! we need to clear this at some point
+                  if (view_.getRegexPreviewMode())
+                     fr.setRegexPreviewIndicator();
+               }
                dialogState_.updateResultsCount(count);
             }
+            view_.addMatches(event.getResults());
             // replace may have been previously disabled
             view_.enableReplace();
             Debug.logToConsole("Find Result Event with " + dialogState_.getResultsCount() + " results.");
@@ -197,6 +200,7 @@ public class FindOutputPresenter extends BasePresenter
          {
             view_.setRegexPreviewMode(true);
             stopAndClear();
+            dialogState_.clearResultsCount();
 
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(dialogState_.getPath());
@@ -365,12 +369,14 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
+               /*
                if (dialogState_.getErrorCount() > 0)
                   globalDisplay_.showMessage(MessageDialog.INFO,
                                              "Replace Errors",
                                              "Could not replace " + dialogState_.getErrorCount() +
                                              " occurences.\n" +
                                              dialogState_.getReplaceErrors());
+                                             */
             }
          }
       });
@@ -460,6 +466,7 @@ public class FindOutputPresenter extends BasePresenter
             dialogState_ = input;
 
             stopAndClear();
+            dialogState_.clearResultsCount();
 
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(input.getPath());
@@ -549,7 +556,6 @@ public class FindOutputPresenter extends BasePresenter
    {
       stop();
       stopReplace();
-      dialogState_.clearResultsCount();
       view_.clearMatches();
       view_.clearSearchLabel();
    }
@@ -569,7 +575,6 @@ public class FindOutputPresenter extends BasePresenter
    {
       if (currentFindHandle_ != null)
       {
-         Debug.logToConsole("Notifying backend to stop replace");
          server_.stopReplace(currentFindHandle_,
                              new VoidServerRequestCallback());
          currentFindHandle_ = null;

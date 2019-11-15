@@ -31,6 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -78,6 +79,7 @@ public class FindOutputPane extends WorkbenchPane
          @Override
          public void onClick(ClickEvent event)
          {
+            createDisplayPreview();
             toggleReplaceToolbar();
             toggleChevron();
             if (replaceMode_ ||
@@ -86,7 +88,7 @@ public class FindOutputPane extends WorkbenchPane
                if (secondaryToolbar_.isVisible())
                {
                   toggleReplaceMode();
-                  addReplaceMatches(replaceTextBox_.getValue());
+                  displayPreview_.nudge();
                }
                else if (replaceMode_)
                   toggleReplaceMode();
@@ -121,7 +123,6 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onKeyUp(KeyUpEvent event)
          {
-            createDisplayPreview();
             displayPreview_.nudge();
          }
       });
@@ -140,20 +141,7 @@ public class FindOutputPane extends WorkbenchPane
          {
             if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
             {
-               addReplaceMatches(new String());
-               if (regexCheckbox_.getValue())
-                  eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-               else
-               {
-                  // if we've previously done a regex preview, the display content has been modified
-                  // and needs to be regenerated
-                  if (getRegexPreviewMode())
-                  {
-                     setRegexPreviewMode(false);
-                     eventBus_.fireEvent(new PreviewReplaceEvent(new String()));
-                  }
-                  addReplaceMatches(replaceTextBox_.getValue());
-               }
+               displayPreview_.nudge();
             }
          }
       });
@@ -244,25 +232,19 @@ public class FindOutputPane extends WorkbenchPane
 
    private void createDisplayPreview()
    {
-      if (displayPreview_ == null)
+      displayPreview_ = new DebouncedCommand(500)
       {
-         displayPreview_ = new DebouncedCommand(500)
+         @Override
+         protected void execute()
          {
-            @Override
-            protected void execute()
-            {
-               if (!replaceMode_)
-                  toggleReplaceMode();
-               if (regexCheckbox_.getValue())
-               {
-                  setRegexPreviewMode(true);
-                  eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-               }
-               else
-                  addReplaceMatches(replaceTextBox_.getValue());
-            }
-         };
-      }
+            if (!replaceMode_)
+               toggleReplaceMode();
+            if (regexCheckbox_.getValue())
+               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            else
+               addReplaceMatches(replaceTextBox_.getValue());
+         }
+      };
    }
 
    private void toggleReplaceToolbar()
@@ -320,7 +302,11 @@ public class FindOutputPane extends WorkbenchPane
             container_.setWidget(scrollPanel_);
             
          if (!replaceMode_ || regexPreviewMode_)
+         {
+            if (regexPreviewMode_ && !replaceProgress_.isVisible())
+               setRegexPreviewMode(false);
             context_.addMatches(findResults.subList(0, matchesToAdd));
+         }
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
       
