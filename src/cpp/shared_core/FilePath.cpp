@@ -36,8 +36,6 @@
 #include <shared_core/system/Win32StringUtils.hpp>
 #endif
 
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
@@ -753,7 +751,7 @@ Error FilePath::getChildrenRecursive(const RecursiveIterationFunction& in_iterat
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         if (!in_iterationFunction(itr.level(),
+         if (!in_iterationFunction(itr.depth(),
                                    FilePath(BOOST_FS_PATH2STR(itr->path()))))
          {
             // end the iteration if requested
