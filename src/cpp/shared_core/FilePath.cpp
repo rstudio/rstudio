@@ -326,7 +326,7 @@ FilePath::FilePath(const std::string& in_absolutePath) :
 {
 }
 
-#if _WIN32
+#ifdef _WIN32
 FilePath::FilePath(const std::wstring& absolutePath)
    : m_impl(new Impl(absolutePath)) // thwart ref-count
 {
@@ -697,7 +697,7 @@ std::string FilePath::getAbsolutePathNative() const
       return BOOST_FS_PATH2STRNATIVE(m_impl->Path);
 }
 
-#if _WIN32
+#ifdef _WIN32
 std::wstring FilePath::getAbsolutePathW() const
 {
    if (isEmpty())
@@ -951,7 +951,7 @@ bool FilePath::isEquivalentTo(const FilePath& in_other) const
    {
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
-      error.addProperty("equivilant-to", in_other);
+      error.addProperty("equivalent-to", in_other);
       return false;
    }
 }
@@ -1297,7 +1297,7 @@ struct PathScopeImpl
    PathScopeImpl(FilePath&& in_path, ErrorLocation&& in_location) :
       Path(in_path),
       Location(in_location)
-   { };
+   { }
 
    FilePath Path;
    ErrorLocation Location;
