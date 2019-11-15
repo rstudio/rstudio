@@ -605,34 +605,8 @@ private:
                   const size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   const size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                   const size_t matchDifference = matchOff - matchOn;
-                  size_t replaceMatchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
-                  // pContent and line may be difference because pContent was decoded
-                  // need to offset difference when writing to file
-                  size_t encodingOffset = 0;
-                  if (!errors && 
-                      !preview &&
-                      line != *pContent)
-                  {
-                     const char* linePtr = line.c_str();
-                     const char* contentPtr = pContent -> c_str();
-                     size_t contentCounter = 0;
-                     while (contentCounter < matchOn)
-                     {
-                        if (linePtr[0] != contentPtr[0])
-                           encodingOffset++;
-                        else
-                        {
-                           contentCounter++;
-                           contentPtr++;
-                        }
-                        linePtr++;
-                     }
-                     replaceMatchOn += encodingOffset;
-                     replaceMatchOff += encodingOffset;
-                  }
-
                   std::string replaceString(*pReplace);
                   // for regexes, determine what the replace will look like before creating the string
                   // that will be written to file so that previews are handled correctly
@@ -651,14 +625,9 @@ private:
                            replaceAsRegex = tempRegex;
                         }
                      }
-                     std::string previewString;
-                     if (preview)
-                        previewString = *pContent;
-                     else
-                        previewString = line;
                      std::string temp = boost::regex_replace(
-                                         previewString, searchAsRegex, replaceAsRegex);
-                     if (previewString == temp)
+                                         *pContent, searchAsRegex, replaceAsRegex);
+                     if (*pContent == temp)
                      {
                         errors = true;
                         pErrorMessage->insert("Could not find regular expression");
@@ -667,26 +636,18 @@ private:
                      }
                      else
                      {
-                        size_t offPos = matchOff;
-                        size_t onPos = matchOn;
-                        if (!preview)
-                        {
-                           offPos += encodingOffset;
-                           onPos += encodingOffset;
-                        }
-                        std::string endOfString = previewString.substr(offPos).c_str();
+                        // determine length of replace pattern
+                        std::string endOfString = pContent->substr(matchOff).c_str();
                         const char* replacePtr = temp.c_str();
-                        replacePtr += onPos;
+                        replacePtr += matchOn;
 
                         size_t offset = 0;
-                        while (endOfString.compare(replacePtr)!=0 &&
-                               offset < temp.length())
-                        {
-                           replacePtr++;
-                           offset++;
-                        }
-                        replaceMatchOff = replaceMatchOn + offset;
-                        replaceString = temp.substr(replaceMatchOn, (replaceMatchOff - replaceMatchOn));
+                        if (endOfString.empty())
+                           offset = temp.length() - matchOn;
+                        else
+                           offset = temp.find(endOfString) - 1;
+                        replaceMatchOff = matchOn + offset;
+                        replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
                      }
                   }
                   // if previewing, we need to display the original and replacement text
@@ -712,8 +673,6 @@ private:
                      pReplaceMatchOff -> clear();
                      if (!errors)
                      {
-                        // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
-                        // is only used for display
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                         if (!preview)
                            pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
@@ -741,8 +700,6 @@ private:
                   }
                   else if (!errors)
                   {
-                     // use matchOn here because it contains decoded values and pReplaceMatchOn/Off
-                     // is only used for display
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      if (!preview)
                         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
@@ -765,16 +722,14 @@ private:
                               searchAsRegex = tempRegex;
                            }
                         }
-                        newLine = boost::regex_replace(line,
+                        newLine = boost::regex_replace(*pContent,
                                                        searchAsRegex,
                                                        replaceString);
                      }
                      else
                         newLine =
-                           line.replace(replaceMatchOn, matchDifference, replaceString);
+                           pContent->replace(matchOn, matchDifference, replaceString);
                      newLine.append("\n");
-                     *pContent =
-                        pContent -> replace(matchOn, matchDifference, replaceString);
                   }
                   if (!preview)
                      progress -> addUnit();
@@ -782,17 +737,28 @@ private:
                }
                if (!preview && !errors)
                {
-                  try
+                  std::string encodedNewLine; // !!! maybe we'll replace newLine with pContent
+                  Error error = r::util::iconvstr(newLine,
+                                                  "UTF-8",
+                                                  encoding_,
+                                                  false, // !!! do we really want false here?
+                                                  &encodedNewLine);
+                  if (error)
+                     errors = true; //!!! add something more helpful
+                  else
                   {
-                     outputStream_.write(newLine.c_str(), newLine.size());
-                     outputStream_.flush();
-                  }
-                  catch (const std::ios_base::failure& e)
-                  {
-                     fileSuccess_ = false;
-                     pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                     pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                     pErrorMessage -> insert(std::string(e.code().message()));
+                     try
+                     {
+                        outputStream_.write(encodedNewLine.c_str(), encodedNewLine.size());
+                        outputStream_.flush();
+                     }
+                     catch (const std::ios_base::failure& e)
+                     {
+                        fileSuccess_ = false;
+                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        pErrorMessage -> insert(std::string(e.code().message()));
+                     }
                   }
                }
             }
@@ -808,7 +774,7 @@ private:
       json::Array contents;
       json::Array matchOns;
       json::Array matchOffs;
-      json::Array replaceMatchOns;
+      json::Array replaceMatchOns; // !!! get rid of this
       json::Array replaceMatchOffs;
       json::Array errors;
 
@@ -859,7 +825,7 @@ private:
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
             std::string fullLineContents; // only used with replace
-            boost::algorithm::trim(lineContents);
+            boost::algorithm::trim(lineContents); // !!! come back here, we don't want to lose the trim in replaces
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
 
