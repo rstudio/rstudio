@@ -148,7 +148,7 @@ MimeType s_mimeTypes[] =
    { "bmp",   "image/bmp"  },
    { "ps",    "application/postscript" },
    { "eps",   "application/postscript" },
-   { "dvi"    "application/x-dvi" },
+   { "dvi",    "application/x-dvi" },
 
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
