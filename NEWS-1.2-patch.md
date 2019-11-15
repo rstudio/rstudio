@@ -5,6 +5,7 @@
 ### Misc
 
 * Add compatibility with recent versions of the `shinytest` package (#5677, #5703)
+* Eliminate warnings when using `_R_CHECK_LENGTH_1_CONDITION_` (#5268, #5363)
 
 ### Server Pro
 
