@@ -542,7 +542,9 @@ private:
                         std::string* pSearch,
                         std::string* pReplace,
                         std::set<std::string>* pErrorMessage,
-                        LocalProgress* progress)
+                        LocalProgress* progress,
+                        std::string* pLineLeftContents,
+                        std::string* pLineRightContents)
    {
       bool preview = findResults().preview();
       FilePath fullFile = FilePath::resolveAliasedPath(*file, session::options().userHomePath());
@@ -743,6 +745,9 @@ private:
                                                   encoding_,
                                                   false, // !!! do we really want false here?
                                                   &encodedNewLine);
+                  encodedNewLine.insert(0, *pLineLeftContents);
+                  encodedNewLine.insert(encodedNewLine.length(), *pLineRightContents);
+
                   if (error)
                      errors = true; //!!! add something more helpful
                   else
@@ -824,34 +829,52 @@ private:
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
-            std::string fullLineContents; // only used with replace
+            std::string fullLineContentsEncoded(lineContents); // only used with replace
+            std::string fullLineContentsDecoded;
             boost::algorithm::trim(lineContents); // !!! come back here, we don't want to lose the trim in replaces
+            std::string lineLeftTrim;
+            std::string lineRightTrim;
+            if (fullLineContentsEncoded != lineContents)
+            {
+               size_t pos = fullLineContentsEncoded.find(lineContents);
+               lineLeftTrim = fullLineContentsEncoded.substr(0,pos);
+               lineRightTrim = fullLineContentsEncoded.substr(pos + lineContents.length());
+            }
+            
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
 
-            processContents(&lineContents, &fullLineContents, &matchOn, &matchOff);
+            processContents(&lineContents, &fullLineContentsDecoded, &matchOn, &matchOff);
             if (findResults().replace() &&
                 !(findResults().preview() && findResults().replacePattern()->empty()))
             {
-               size_t tempMatchOnSize = matchOn.getSize();
-               if (!fullLineContents.empty())
-                  processReplace(&file, lineNum, &fullLineContents,
-                                 &matchOn, &matchOff,
-                                 &replaceMatchOn, &replaceMatchOff,
-                                 findResults().searchPattern(),
-                                 findResults().replacePattern(),
-                                 &errorMessage,
-                                 findResults().replaceProgress());
-               else
+               if (fullLineContentsDecoded.empty())
                   processReplace(&file, lineNum, &lineContents,
                                  &matchOn, &matchOff,
                                  &replaceMatchOn, &replaceMatchOff,
                                  findResults().searchPattern(),
                                  findResults().replacePattern(),
                                  &errorMessage,
-                                 findResults().replaceProgress());
-               if (matchOn.getSize() != tempMatchOnSize)
-                  LOG_ERROR_MESSAGE("Something bad happened");
+                                 findResults().replaceProgress(),
+                                 &lineLeftTrim, &lineRightTrim);
+               else
+               {
+                  processReplace(&file, lineNum, &fullLineContentsDecoded,
+                                 &matchOn, &matchOff,
+                                 &replaceMatchOn, &replaceMatchOff,
+                                 findResults().searchPattern(),
+                                 findResults().replacePattern(),
+                                 &errorMessage,
+                                 findResults().replaceProgress(),
+                                 &lineLeftTrim, &lineRightTrim);
+                  lineContents = fullLineContentsDecoded;
+               }
+               if (lineContents.size() > 300 &&
+                   lineContents.substr(300).compare("..."))
+               {
+                  lineContents = lineContents.erase(300);
+                  lineContents.append("...");
+               }
             }
 
             files.push_back(json::Value(file));
