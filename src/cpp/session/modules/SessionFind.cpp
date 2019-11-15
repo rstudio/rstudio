@@ -614,42 +614,40 @@ private:
                   // that will be written to file so that previews are handled correctly
                   if (findResults().replaceRegex())
                   {
-                     boost::regex searchAsRegex(*pSearch);
-                     boost::regex replaceAsRegex(*pReplace);
-                     if (findResults().ignoreCase())
-                     {
+                     try {
+                        boost::regex searchAsRegex(*pSearch);
+                        boost::regex replaceAsRegex(*pReplace);
+                        if (findResults().ignoreCase())
                         {
-                           boost::regex tempRegex(*pSearch, boost::regex::icase);
-                           searchAsRegex = tempRegex;
+                           {
+                              boost::regex tempRegex(*pSearch, boost::regex::icase);
+                              searchAsRegex = tempRegex;
+                           }
+                           {
+                              boost::regex tempRegex(*pReplace, boost::regex::icase);
+                              replaceAsRegex = tempRegex;
+                           }
                         }
-                        {
-                           boost::regex tempRegex(*pReplace, boost::regex::icase);
-                           replaceAsRegex = tempRegex;
-                        }
-                     }
-                     std::string temp = boost::regex_replace(
-                                         *pContent, searchAsRegex, replaceAsRegex);
-                     if (*pContent == temp)
-                     {
-                        errors = true;
-                        pErrorMessage->insert("Could not find regular expression");
-                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                     }
-                     else
-                     {
+                        std::string temp = boost::regex_replace(
+                                           *pContent, searchAsRegex, replaceAsRegex);
+                        
                         // determine length of replace pattern
                         std::string endOfString = pContent->substr(matchOff).c_str();
                         const char* replacePtr = temp.c_str();
                         replacePtr += matchOn;
 
-                        size_t offset = 0;
                         if (endOfString.empty())
-                           offset = temp.length() - matchOn;
+                           replaceMatchOff = temp.length() -1;
                         else
-                           offset = temp.find(endOfString) - 1;
-                        replaceMatchOff = matchOn + offset;
+                           replaceMatchOff = temp.find(endOfString);
                         replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
+                     }
+                     catch (boost::exception& e) // !!! later
+                     {
+                        errors = true;
+                        pErrorMessage->insert(boost::diagnostic_information(e));
+                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      }
                   }
                   // if previewing, we need to display the original and replacement text
@@ -716,17 +714,26 @@ private:
                      if (findResults().regex() &&
                          !findResults().replaceRegex())
                      {
-                        boost::regex searchAsRegex(*pSearch);
-                        if (findResults().ignoreCase())
-                        {
+                        try {
+                           boost::regex searchAsRegex(*pSearch);
+                           if (findResults().ignoreCase())
                            {
-                              boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
-                              searchAsRegex = tempRegex;
+                              {
+                                 boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
+                                 searchAsRegex = tempRegex;
+                              }
                            }
+                           newLine = boost::regex_replace(*pContent,
+                                                          searchAsRegex,
+                                                          replaceString);
                         }
-                        newLine = boost::regex_replace(*pContent,
-                                                       searchAsRegex,
-                                                       replaceString);
+                        catch (boost::exception& e)
+                        {
+                           errors = true;
+                           pErrorMessage->insert(boost::diagnostic_information(e));
+                           pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        }
                      }
                      else
                         newLine =
