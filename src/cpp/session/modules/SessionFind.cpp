@@ -599,7 +599,6 @@ private:
             {
                int pos = pMatchOn->getSize() - 1;
                std::string newLine;
-               bool errors = false;
                while (pos > -1)
                {
                   // match final values were determined in processContents
@@ -615,6 +614,7 @@ private:
                   if (findResults().replaceRegex())
                   {
                      try {
+
                         boost::regex searchAsRegex(*pSearch);
                         boost::regex replaceAsRegex(*pReplace);
                         if (findResults().ignoreCase())
@@ -642,16 +642,16 @@ private:
                            replaceMatchOff = temp.find(endOfString);
                         replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
                      }
-                     catch (boost::exception& e) // !!! later
+                     catch (const std::runtime_error& e)
                      {
-                        errors = true;
-                        pErrorMessage->insert(boost::diagnostic_information(e));
+                        fileSuccess_ = false;
+                        pErrorMessage->insert(std::string(e.what()));
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                      }
                   }
                   // if previewing, we need to display the original and replacement text
-                  if (preview && !errors)
+                  if (preview && fileSuccess_)
                   {
                      if (!findResults().regex())
                         replaceString.insert(0, *pSearch);
@@ -671,7 +671,7 @@ private:
                      int offset(replaceDifference - matchDifference);
                      pReplaceMatchOn -> clear();
                      pReplaceMatchOff -> clear();
-                     if (!errors)
+                     if (fileSuccess_)
                      {
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                         if (!preview)
@@ -698,7 +698,7 @@ private:
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
                      }
                   }
-                  else if (!errors)
+                  else if (fileSuccess_)
                   {
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      if (!preview)
@@ -709,7 +709,7 @@ private:
                                                          gsl::narrow_cast<int>(replaceString.size() -
                                                                                matchDifference)));
                   }
-                  if (!errors)
+                  if (fileSuccess_)
                   {
                      if (findResults().regex() &&
                          !findResults().replaceRegex())
@@ -727,10 +727,13 @@ private:
                                                           searchAsRegex,
                                                           replaceString);
                         }
-                        catch (boost::exception& e)
+                        catch (const std::runtime_error& e)
                         {
-                           errors = true;
-                           pErrorMessage->insert(boost::diagnostic_information(e));
+                           fileSuccess_ = false;
+                           if (e.what() != nullptr)
+                              pErrorMessage->insert(e.what());
+                           else
+                              pErrorMessage->insert("Could not evaluate regular expression");
                            pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                            pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
                         }
@@ -744,7 +747,7 @@ private:
                      progress -> addUnit();
                   pos--;
                }
-               if (!preview && !errors)
+               if (!preview && fileSuccess_)
                {
                   std::string encodedNewLine; // !!! maybe we'll replace newLine with pContent
                   Error error = r::util::iconvstr(newLine,
@@ -756,7 +759,7 @@ private:
                   encodedNewLine.insert(encodedNewLine.length(), *pLineRightContents);
 
                   if (error)
-                     errors = true; //!!! add something more helpful
+                     fileSuccess_ = false; //!!! add something more helpful
                   else
                   {
                      try

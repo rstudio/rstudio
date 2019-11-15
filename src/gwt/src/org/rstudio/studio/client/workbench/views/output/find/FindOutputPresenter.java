@@ -319,10 +319,7 @@ public class FindOutputPresenter extends BasePresenter
             view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
             if (event.units() >= event.max())
-            {
                view_.hideProgress();
-               events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
-            }
          }
       });
 
@@ -347,7 +344,9 @@ public class FindOutputPresenter extends BasePresenter
             {
                fr.setReplaceIndicator();
                if (!StringUtil.isNullOrEmpty(fr.getErrors()))
+               {
                   errorCount++;
+               }
                dialogState_.updateReplaceErrors(fr.getErrors());
             }
             dialogState_.updateErrorCount(errorCount);
@@ -357,6 +356,8 @@ public class FindOutputPresenter extends BasePresenter
             
             view_.ensureVisible(true);
             view_.disableReplace();
+            if (!view_.getProgress().isVisible())
+               events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
          }
       });
 
