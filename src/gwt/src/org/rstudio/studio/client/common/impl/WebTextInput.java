@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.impl;
 
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -106,7 +107,7 @@ public class WebTextInput implements TextInput
                      int left = (Window.getClientWidth()/2) - (offsetWidth/2);
                      int top = (Window.getClientHeight()/2) - (offsetHeight/2);
                      
-                     if (type == MessageDisplay.INPUT_PASSWORD)
+                     if (type == MessageDisplay.INPUT_USERNAME || type == MessageDisplay.INPUT_PASSWORD)
                         top = 50;
                      
                      setPopupPosition(left, top);

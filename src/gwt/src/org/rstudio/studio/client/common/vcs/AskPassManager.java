@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
@@ -78,10 +79,21 @@ public class AskPassManager
             
             askpassPending_ = true;
             
-            globalDisplay.promptForPassword(
-                  "Password",
-                  e.getPrompt(),
+            String prompt = e.getPrompt();
+            
+            String title = "Password";
+            int dialogType = MessageDisplay.INPUT_PASSWORD;
+            if (prompt.toLowerCase().indexOf("username") != -1)
+            {
+               title = "Username";
+               dialogType = MessageDisplay.INPUT_USERNAME;
+            }
+            
+            globalDisplay.promptForTextWithOption(
+                  title,
+                  prompt,
                   "",
+                  dialogType,
                   e.getRememberPasswordPrompt(),
                   rememberByDefault_,
                   new ProgressOperationWithInput<PromptWithOptionResult>()
