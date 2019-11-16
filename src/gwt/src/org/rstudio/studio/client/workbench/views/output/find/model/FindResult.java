@@ -133,7 +133,7 @@ public class FindResult extends JavaScriptObject
       if (!StringUtil.isNullOrEmpty(getErrors()))
       {
          out.appendHtmlConstant("<mark>");
-         out.appendEscaped(getErrors());
+         out.appendEscapedLines(getErrors());
          out.appendHtmlConstant("</mark>");
       }
       else

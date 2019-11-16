@@ -91,7 +91,6 @@ public:
          if (units_ >= max_)
             break;
       }
-
    }
 
 private:
@@ -186,26 +185,6 @@ public:
    }
 
    bool addResult(const std::string& handle,
-                  const json::Array& files,
-                  const json::Array& lineNums,
-                  const json::Array& contents,
-                  const json::Array& matchOns,
-                  const json::Array& matchOffs)
-   {
-      if (handle_.empty())
-         handle_ = handle;
-      else if (handle_ != handle)
-         return false;
-
-      std::copy(files.begin(), files.end(), std::back_inserter(files_));
-      std::copy(lineNums.begin(), lineNums.end(), std::back_inserter(lineNums_));
-      std::copy(contents.begin(), contents.end(), std::back_inserter(contents_));
-      std::copy(matchOns.begin(), matchOns.end(), std::back_inserter(matchOns_));
-      std::copy(matchOffs.begin(), matchOffs.end(), std::back_inserter(matchOffs_));
-      return true;
-   }
-
-   bool addReplaceResult(const std::string& handle,
                          const json::Array& files,
                          const json::Array& lineNums,
                          const json::Array& contents,
@@ -449,6 +428,17 @@ private:
       return decoded;
    }
 
+   void addErrorMessage(std::set<std::string>* pErrorSet,
+                        std::string contents,
+                        json::Array* pReplaceMatchOn,
+                        json::Array* pReplaceMatchOff)
+   {
+      fileSuccess_ = false;
+      pErrorSet->insert(contents);
+      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+      pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+   }
+
    void completeFileReplace(std::set<std::string>* pErrorMessage)
    {
       if (fileSuccess_)
@@ -458,7 +448,6 @@ private:
              inputStream_.good() &&
              outputStream_.good())
          {
-            // finish writing contents to file
             std::string line;
             while (std::getline(inputStream_, line))
             {
@@ -563,7 +552,7 @@ private:
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
-         if (!currentFile_.empty())
+         if (!currentFile_.empty()) // this happens in preview mode
             inputStream_.close();
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in);
@@ -571,15 +560,12 @@ private:
 
       if (!inputStream_.good()  || (!preview && !outputStream_.good()))
       {
-         fileSuccess_ = false;
-         if (!inputStream_.good())
-            pErrorMessage->insert("Could not open file " + currentFile_ + ".\n");
-         else
-            pErrorMessage->insert("Could not open temporary file to process " + currentFile_ + ".\n");
+         std::string contents("Could not open file " + currentFile_ + ".\n");
+         if (inputStream_.good()) 
+            contents = "Could not open temporary file to process " + currentFile_ + ".\n";
+         addErrorMessage(pErrorMessage, contents, pReplaceMatchOn, pReplaceMatchOff);
          if (!preview)
             progress -> addUnits(pMatchOn->getSize());
-         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
       }
       else
       {
@@ -601,11 +587,9 @@ private:
                std::string newLine;
                while (pos > -1)
                {
-                  // match final values were determined in processContents
-                  // replace matches change throughout function
                   const size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
                   const size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
-                  const size_t matchDifference = matchOff - matchOn;
+                  const size_t matchSize = matchOff - matchOn;
                   size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
                
                   std::string replaceString(*pReplace);
@@ -613,18 +597,20 @@ private:
                   // that will be written to file so that previews are handled correctly
                   if (findResults().replaceRegex())
                   {
-                     try {
-
-                        boost::regex searchAsRegex(*pSearch);
-                        boost::regex replaceAsRegex(*pReplace);
+                     try
+                     {
+                        boost::regex searchAsRegex(*pSearch, boost::regex::grep);
+                        boost::regex replaceAsRegex(*pReplace, boost::regex::grep);
                         if (findResults().ignoreCase())
                         {
                            {
-                              boost::regex tempRegex(*pSearch, boost::regex::icase);
+                              boost::regex tempRegex(*pSearch,
+                                                     boost::regex::grep | boost::regex::icase);
                               searchAsRegex = tempRegex;
                            }
                            {
-                              boost::regex tempRegex(*pReplace, boost::regex::icase);
+                              boost::regex tempRegex(*pReplace,
+                                                     boost::regex::grep | boost::regex::icase);
                               replaceAsRegex = tempRegex;
                            }
                         }
@@ -633,9 +619,6 @@ private:
                         
                         // determine length of replace pattern
                         std::string endOfString = pContent->substr(matchOff).c_str();
-                        const char* replacePtr = temp.c_str();
-                        replacePtr += matchOn;
-
                         if (endOfString.empty())
                            replaceMatchOff = temp.length() -1;
                         else
@@ -644,10 +627,7 @@ private:
                      }
                      catch (const std::runtime_error& e)
                      {
-                        fileSuccess_ = false;
-                        pErrorMessage->insert(std::string(e.what()));
-                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                        addErrorMessage(pErrorMessage, e.what(), pReplaceMatchOn, pReplaceMatchOff);
                      }
                   }
                   // if previewing, we need to display the original and replacement text
@@ -656,21 +636,18 @@ private:
                      if (!findResults().regex())
                         replaceString.insert(0, *pSearch);
                      else
-                     {
-                        std::string foundString(pContent->substr(matchOn, matchDifference));
-                        replaceString.insert(0, foundString);
-                     }
+                        replaceString.insert(0, pContent->substr(matchOn, matchSize));
                   }
 
                   // if multiple replaces in line, readjust previous match numbers
-                  if (pReplaceMatchOn->getSize() > 0)
+                  if (pReplaceMatchOn->getSize() > 0 &&
+                      matchSize != replaceString.size())
                   {
-                     json::Array tempMatchOn(*pReplaceMatchOn);
-                     json::Array tempMatchOff(*pReplaceMatchOff);
-                     int replaceDifference(replaceString.size());
-                     int offset(replaceDifference - matchDifference);
                      pReplaceMatchOn -> clear();
                      pReplaceMatchOff -> clear();
+                     json::Array tempMatchOn(*pReplaceMatchOn);
+                     json::Array tempMatchOff(*pReplaceMatchOff);
+                     int offset(replaceString.size() - matchSize);
                      if (fileSuccess_)
                      {
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
@@ -680,7 +657,7 @@ private:
                         else
                            pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
-                                                                               matchDifference)));
+                                                                               matchSize)));
                      }
                      for (json::Value match : tempMatchOn)
                      {
@@ -707,41 +684,34 @@ private:
                      else
                         pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
-                                                                               matchDifference)));
+                                                                               matchSize)));
                   }
                   if (fileSuccess_)
                   {
                      if (findResults().regex() &&
                          !findResults().replaceRegex())
                      {
-                        try {
-                           boost::regex searchAsRegex(*pSearch);
+                        try
+                        {
+                           boost::regex searchAsRegex(*pSearch, boost::regex::grep);
                            if (findResults().ignoreCase())
                            {
-                              {
-                                 boost::regex tempRegex(*pSearch, boost::regex::basic | boost::regex::icase);
-                                 searchAsRegex = tempRegex;
-                              }
+                              boost::regex tempRegex(*pSearch, boost::regex::grep | boost::regex::icase);
+                              searchAsRegex = tempRegex;
                            }
-                           newLine = boost::regex_replace(*pContent,
-                                                          searchAsRegex,
-                                                          replaceString);
+                           *pContent = boost::regex_replace(*pContent,
+                                                            searchAsRegex,
+                                                            replaceString);
                         }
                         catch (const std::runtime_error& e)
                         {
-                           fileSuccess_ = false;
-                           if (e.what() != nullptr)
-                              pErrorMessage->insert(e.what());
-                           else
-                              pErrorMessage->insert("Could not evaluate regular expression");
-                           pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+                           addErrorMessage(pErrorMessage, e.what(), pReplaceMatchOn, pReplaceMatchOff);
                         }
                      }
                      else
-                        newLine =
-                           pContent->replace(matchOn, matchDifference, replaceString);
-                     newLine.append("\n");
+                        pContent =
+                           &pContent->replace(matchOn, matchSize, replaceString);
+                     pContent->append("\n");
                   }
                   if (!preview)
                      progress -> addUnit();
@@ -749,8 +719,8 @@ private:
                }
                if (!preview && fileSuccess_)
                {
-                  std::string encodedNewLine; // !!! maybe we'll replace newLine with pContent
-                  Error error = r::util::iconvstr(newLine,
+                  std::string encodedNewLine;
+                  Error error = r::util::iconvstr(*pContent,
                                                   "UTF-8",
                                                   encoding_,
                                                   false, // !!! do we really want false here?
@@ -759,7 +729,7 @@ private:
                   encodedNewLine.insert(encodedNewLine.length(), *pLineRightContents);
 
                   if (error)
-                     fileSuccess_ = false; //!!! add something more helpful
+                     addErrorMessage(pErrorMessage, error.asString(), pReplaceMatchOn, pReplaceMatchOff);
                   else
                   {
                      try
@@ -769,10 +739,7 @@ private:
                      }
                      catch (const std::ios_base::failure& e)
                      {
-                        fileSuccess_ = false;
-                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-                        pErrorMessage -> insert(std::string(e.code().message()));
+                        addErrorMessage(pErrorMessage, e.code().message(), pReplaceMatchOn, pReplaceMatchOff);
                      }
                   }
                }
@@ -947,14 +914,14 @@ private:
          results["errors"] = errors;
          result["results"] = results;
 
-         findResults().addReplaceResult(handle(),
-                                        files,
-                                        lineNums,
-                                        contents,
-                                        matchOns,
-                                        matchOffs,
-                                        replaceMatchOns,
-                                        replaceMatchOffs);
+         findResults().addResult(handle(),
+                                 files,
+                                 lineNums,
+                                 contents,
+                                 matchOns,
+                                 matchOffs,
+                                 replaceMatchOns,
+                                 replaceMatchOffs);
 
          if (!findResults().replace() || findResults().preview())
             module_context::enqueClientEvent(
