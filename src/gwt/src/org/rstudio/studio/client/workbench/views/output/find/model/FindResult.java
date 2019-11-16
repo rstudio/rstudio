@@ -147,12 +147,7 @@ public class FindResult extends JavaScriptObject
          ArrayList<Integer> replaceOff = getReplaceMatchOffs();
          ArrayList<Pair<Boolean, Integer>> replaceParts
                                       = new ArrayList<Pair<Boolean, Integer>>();
-         // we should only use one replace method at at time
-         boolean useReplaceParts = true;
-         if (!getRegexPreviewIndicator())
-            useReplaceParts = false;
    
-         int difference = 0;
          while (on.size() + off.size() > 0)
          {
             int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
@@ -168,15 +163,9 @@ public class FindResult extends JavaScriptObject
             if (replaceOn.size() + replaceOff.size() > 0)
             {
                if (replaceOnVal <= replaceOffVal)
-               {
-                  if (replaceOnVal >= 0)
-                     difference = offVal - onVal;
-                  else
-                     difference = -1;
-                  replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
-               }
+                  replaceParts.add(new Pair<Boolean, Integer>(true, replaceOn.remove(0)));
                else
-                  replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0) + difference)));
+                  replaceParts.add(new Pair<Boolean, Integer>(false, replaceOff.remove(0)));
             }
          }
    
@@ -184,7 +173,6 @@ public class FindResult extends JavaScriptObject
          // Use a counter to ensure tags are balanced.
          int openStrongTags = 0;
          int openEmTags = 0;
-         boolean useMark = false;
    
          for (int i = 0; i < line.length(); i++)
          {
@@ -192,27 +180,12 @@ public class FindResult extends JavaScriptObject
             {
                if (parts.remove(0).first)
                {
-                  if (replaceParts.size() > 0 &&
-                      replaceParts.get(0).second < 0)
-                  {
-                     useMark = true;
-                     replaceParts.remove(0);
-                  }
-                  if (!useMark)
-                     out.appendHtmlConstant("<strong>");
-                  else
-                     out.appendHtmlConstant("<mark>");
+                  out.appendHtmlConstant("<strong>");
                   openStrongTags++;
                }
                else if (openStrongTags > 0)
                {
-                  if (!useMark)
-                     out.appendHtmlConstant("</strong>");
-                  else
-                  {
-                     out.appendHtmlConstant("</mark>");
-                     useMark = false;
-                  }
+                  out.appendHtmlConstant("</strong>");
                   openStrongTags--;
                   String replace = getReplaceValue();
                   if (!StringUtil.isNullOrEmpty(replace))
@@ -237,17 +210,14 @@ public class FindResult extends JavaScriptObject
                   openEmTags--;
                }
             }
-            if (useReplaceParts || openEmTags == 0)
+            if (getRegexPreviewIndicator() || openEmTags == 0)
                out.append(line.charAt(i));
          }
    
          while (openStrongTags > 0)
          {
             openStrongTags--;
-            if (!useMark)
-               out.appendHtmlConstant("</strong>");
-            else
-               out.appendHtmlConstant("</mark>");
+            out.appendHtmlConstant("</strong>");
             String replace = getReplaceValue();
             if (!StringUtil.isNullOrEmpty(replace))
             {
@@ -283,8 +253,6 @@ public class FindResult extends JavaScriptObject
       {
          ArrayList<Integer> on = getMatchOns();
          ArrayList<Integer> off = getMatchOffs();
-         ArrayList<Pair<Boolean, Integer>> failedParts =
-                                           new ArrayList<Pair<Boolean, Integer>>();
    
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
@@ -300,15 +268,9 @@ public class FindResult extends JavaScriptObject
                int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
                int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
                if (onVal <= offVal)
-               {
-                  failedParts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
                   onReplace.remove(0);
-               }
                else
-               {
-                  failedParts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
                   offReplace.remove(0);
-               }
             }
             else if (onReplaceVal <= offReplaceVal)
                parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
@@ -317,10 +279,8 @@ public class FindResult extends JavaScriptObject
          }
    
          String line = getLineValue();
-   
          // Use a counter to ensure tags are balanced.
          int openEmTags = 0;
-         int openStrongTags = 0;
    
          for (int i = 0; i < line.length(); i++)
          {
@@ -337,19 +297,6 @@ public class FindResult extends JavaScriptObject
                   openEmTags--;
                }
             }
-            while (failedParts.size() > 0 && failedParts.get(0).second == i)
-            {
-               if (failedParts.remove(0).first)
-               {
-                  out.appendHtmlConstant("<mark>");
-                  openStrongTags++;
-               }
-               else if (openStrongTags > 0)
-               {
-                  out.appendHtmlConstant("</mark>");
-                  openStrongTags--;
-               }
-            }
             out.append(line.charAt(i));
          }
    
@@ -357,11 +304,6 @@ public class FindResult extends JavaScriptObject
          {
             openEmTags--;
             out.appendHtmlConstant("</em>");
-         }
-         while (openStrongTags > 0)
-         {
-            openStrongTags--;
-            out.appendHtmlConstant("</mark>");
          }
       }
 
