@@ -370,14 +370,6 @@ public class FindOutputPresenter extends BasePresenter
             if (event.getHandle() == currentFindHandle_)
             {
                Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
-               /*
-               if (dialogState_.getErrorCount() > 0)
-                  globalDisplay_.showMessage(MessageDialog.INFO,
-                                             "Replace Errors",
-                                             "Could not replace " + dialogState_.getErrorCount() +
-                                             " occurences.\n" +
-                                             dialogState_.getReplaceErrors());
-                                             */
             }
          }
       });

@@ -28,6 +28,7 @@
 #include <core/FileLock.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/FileMode.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -439,7 +440,7 @@ private:
       pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
    }
 
-   void completeFileReplace(std::set<std::string>* pErrorMessage)
+   void completeFileReplace()
    {
       if (fileSuccess_)
       {
@@ -457,14 +458,9 @@ private:
             outputStream_.flush();
             inputStream_.close();
             outputStream_.close();
-            int error = std::rename(
-                  tempReplaceFile_.getAbsolutePath().c_str(),
-                  currentFile_.c_str());
-            if (error != 0)
-               pErrorMessage->insert("Error renaming file " + currentFile_ + ".\n");
+            std::rename(tempReplaceFile_.getAbsolutePath().c_str(),
+                        currentFile_.c_str());
          }
-         else
-            pErrorMessage->insert("Cannot complete file replace for " + currentFile_ + ".\n");
       }
    }
 
@@ -476,7 +472,7 @@ private:
       // initialize some state
       std::string decodedLine;
       std::size_t nUtf8CharactersProcessed = 0;
-      
+         
       const char* inputPos = pContent->c_str();
       const char* end = inputPos + pContent->size();
       
@@ -545,15 +541,24 @@ private:
          if (!preview)
          {
             if (!currentFile_.empty())
-               completeFileReplace(pErrorMessage); // !!! not sending the right pErrorMessage here
+               completeFileReplace();
             tempReplaceFile_ = module_context::tempFile("replace", "txt");
             outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
          }
+         if (!currentFile_.empty()) // this happens in preview mode
+            inputStream_.close();
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
-         if (!currentFile_.empty()) // this happens in preview mode
-            inputStream_.close();
+         bool writable;
+         Error error = core::system::isFileWriteable(fullFile, &writable);
+         if (error)
+            addErrorMessage(pErrorMessage, error.asString(), pReplaceMatchOn, pReplaceMatchOff);
+         else if (!writable)
+            addErrorMessage(pErrorMessage,
+                            "File does not have write permissions",
+                            pReplaceMatchOn,
+                            pReplaceMatchOff);
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in);
       }
@@ -890,12 +895,12 @@ private:
          }
          if (recordsToProcess == 0 && !currentFile_.empty())
          {
-            completeFileReplace(&errorMessage);
+            completeFileReplace();
             currentFile_.clear();
          }
       }
       if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
-         completeFileReplace(&errorMessage);
+         completeFileReplace();
 
       if (nextLineStart)
       {
