@@ -70,6 +70,13 @@ public class FindOutputPane extends WorkbenchPane
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
+      stopSearch_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Stop find in files",
+            commands_.interruptR().getImageResource());
+      stopSearch_.setVisible(false);
+      toolbar.addRightWidget(stopSearch_);
+
       FindOutputResources resources = GWT.create(FindOutputResources.class);
       viewReplaceButton_ = new ToolbarButton("Replace", "Replace",
                                              resources.expandReplaceIcon());
@@ -97,13 +104,6 @@ public class FindOutputPane extends WorkbenchPane
             }
          }
       });
-
-      stopSearch_ = new ToolbarButton(
-            ToolbarButton.NoText,
-            "Stop find in files",
-            commands_.interruptR().getImageResource());
-      stopSearch_.setVisible(false);
-      toolbar.addRightWidget(stopSearch_);
 
       return toolbar;
    }
@@ -164,7 +164,6 @@ public class FindOutputPane extends WorkbenchPane
       replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
       replaceToolbar_.addRightWidget(replaceAllButton_);
 
-      // don't adjust width without considering stop button
       replaceProgress_ = new ProgressBar();
       replaceProgress_.setHeight("10px");
       replaceProgress_.setWidth("195px");

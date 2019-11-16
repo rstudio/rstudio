@@ -148,6 +148,7 @@ public class FindResult extends JavaScriptObject
          ArrayList<Pair<Boolean, Integer>> replaceParts
                                       = new ArrayList<Pair<Boolean, Integer>>();
    
+         int difference = 0;
          while (on.size() + off.size() > 0)
          {
             int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
@@ -163,9 +164,15 @@ public class FindResult extends JavaScriptObject
             if (replaceOn.size() + replaceOff.size() > 0)
             {
                if (replaceOnVal <= replaceOffVal)
-                  replaceParts.add(new Pair<Boolean, Integer>(true, replaceOn.remove(0)));
+               {
+                  if (replaceOnVal >= 0)
+                     difference = offVal - onVal;
+                  else
+                     difference = -1; // shouldn't get here
+                  replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
+               }
                else
-                  replaceParts.add(new Pair<Boolean, Integer>(false, replaceOff.remove(0)));
+                  replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0) + difference)));
             }
          }
    
@@ -237,7 +244,6 @@ public class FindResult extends JavaScriptObject
 
       return out.toSafeHtml();
    }
-
 
    public final SafeHtml getLineReplaceHTML()
    {
