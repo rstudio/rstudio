@@ -756,7 +756,7 @@ private:
       json::Array contents;
       json::Array matchOns;
       json::Array matchOffs;
-      json::Array replaceMatchOns; // !!! get rid of this
+      json::Array replaceMatchOns;
       json::Array replaceMatchOffs;
       json::Array errors;
 
@@ -806,11 +806,13 @@ private:
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
             std::string lineContents = match[3];
-            std::string fullLineContentsEncoded(lineContents); // only used with replace
+            // needed for replace
+            std::string fullLineContentsEncoded(lineContents);
             std::string fullLineContentsDecoded;
-            boost::algorithm::trim(lineContents); // !!! come back here, we don't want to lose the trim in replaces
             std::string lineLeftTrim;
             std::string lineRightTrim;
+
+            boost::algorithm::trim(lineContents);
             if (fullLineContentsEncoded != lineContents)
             {
                size_t pos = fullLineContentsEncoded.find(lineContents);
@@ -820,10 +822,11 @@ private:
             
             json::Array matchOn, matchOff;
             json::Array replaceMatchOn, replaceMatchOff;
-
             processContents(&lineContents, &fullLineContentsDecoded, &matchOn, &matchOff);
+
             if (findResults().replace() &&
-                !(findResults().preview() && findResults().replacePattern()->empty()))
+                !(findResults().preview() &&
+                  findResults().replacePattern()->empty()))
             {
                if (fullLineContentsDecoded.empty())
                   processReplace(&file, lineNum, &lineContents,
@@ -847,7 +850,7 @@ private:
                   lineContents = fullLineContentsDecoded;
                }
                if (lineContents.size() > 300 &&
-                   lineContents.substr(300).compare("..."))
+                   !lineContents.substr(300).compare("..."))
                {
                   lineContents = lineContents.erase(300);
                   lineContents.append("...");
