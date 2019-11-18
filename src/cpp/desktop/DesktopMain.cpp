@@ -552,9 +552,8 @@ int main(int argc, char* argv[])
       // https://github.com/rstudio/rstudio/issues/1990)
       bool accessibility = desktop::options().enableAccessibility();
 
-      if (!accessibility && core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
+      if (!accessibility)
       {
-         // only disable if (a) pref indicates we should, and (b) override env var is not set
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
