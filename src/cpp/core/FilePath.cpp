@@ -22,8 +22,6 @@
 #include <windows.h>
 #endif
 
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
@@ -1032,7 +1030,7 @@ Error FilePath::childrenRecursive(
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         if (!iterationFunction(itr.level(),
+         if (!iterationFunction(itr.depth(),
                                 FilePath(BOOST_FS_PATH2STR(itr->path()))))
          {
             // end the iteration if requested
