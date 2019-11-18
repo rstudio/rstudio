@@ -139,6 +139,7 @@ public class FindOutputPane extends WorkbenchPane
       {
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
+            regexPreviewMode_ = !regexPreviewMode_;
             if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
             {
                displayPreview_.nudge();
@@ -301,11 +302,7 @@ public class FindOutputPane extends WorkbenchPane
             container_.setWidget(scrollPanel_);
             
          if (!replaceMode_ || regexPreviewMode_)
-         {
-            if (regexPreviewMode_ && !replaceProgress_.isVisible())
-               setRegexPreviewMode(false);
             context_.addMatches(findResults.subList(0, matchesToAdd));
-         }
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
       
@@ -344,10 +341,13 @@ public class FindOutputPane extends WorkbenchPane
    {
       super.onSelected();
       
-      table_.focus();
-      ArrayList<Integer> indices = table_.getSelectedRowIndexes();
-      if (indices.isEmpty())
-         table_.selectNextRow();
+      if (!regexPreviewMode_)
+      {
+         table_.focus();
+         ArrayList<Integer> indices = table_.getSelectedRowIndexes();
+         if (indices.isEmpty())
+            table_.selectNextRow();
+      }
    }
 
    @Override

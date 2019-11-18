@@ -188,7 +188,6 @@ public class FindOutputPresenter extends BasePresenter
                currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
-               view_.setRegexPreviewMode(false);
             }
          }
       });
