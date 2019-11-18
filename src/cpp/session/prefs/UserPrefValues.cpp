@@ -2221,6 +2221,19 @@ core::Error UserPrefValues::setReducedMotion(bool val)
 }
 
 /**
+ * Tab key moves focus out of text editing controls instead of inserting tabs.
+ */
+bool UserPrefValues::tabKeyMoveFocus()
+{
+   return readPref<bool>("tab_key_move_focus");
+}
+
+core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
+{
+   return writePref("tab_key_move_focus", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2431,6 +2444,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kTabKeyMoveFocus,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,

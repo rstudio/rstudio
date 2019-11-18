@@ -23,22 +23,15 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class AccessibilityPreferencesPane extends PreferencesPane
 {
    @Inject
    public AccessibilityPreferencesPane(UserPrefs prefs,
-                                       PreferencesDialogResources res,
-                                       Session session,
-                                       final Server server)
+                                       PreferencesDialogResources res)
    {
-      prefs_ = prefs;
       res_ = res;
-      session_ = session;
-      server_ = server;
 
       add(headerLabel("Assistive Tools"));
       chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
@@ -56,6 +49,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       add(displayLabel);
       displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
       add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
+      chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
+      add(chkTabMovesFocus_);
    }
 
    @Override
@@ -75,6 +70,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    {
       initialScreenReaderEnabled_ = prefs.getScreenReaderEnabled();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
+      chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
    }
 
    @Override
@@ -99,6 +95,9 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          initialAriaApplicationRole_ = applicationRoleSetting;
          restartRequirement.setUiReloadRequired(true);
       }
+
+      prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
+      prefs.syncToggleTabKeyMovesFocusState(chkTabMovesFocus_.getValue());
       return restartRequirement;
    }
 
@@ -111,14 +110,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
    private final CheckBox chkApplicationRole_;
+   private final CheckBox chkTabMovesFocus_;
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
    private boolean initialAriaApplicationRole_;
 
-   // Injected ----
-   private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
-   private final Session session_;
-   private final Server server_;
 }
