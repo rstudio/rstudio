@@ -1,7 +1,7 @@
 /*
  * FullscreenPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,8 +21,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
@@ -86,15 +84,9 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    private void addCloseButton(NineUpBorder border)
    {
       Image closeIcon = new Image(new ImageResource2x(RES.close2x()));
+      closeIcon.setAltText("Close popup");
       closeIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
-      closeIcon.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            close();
-         }
-      });
+      closeIcon.addClickHandler(event -> close());
 
       LayoutPanel layoutPanel = border.getLayoutPanel();
       layoutPanel.add(closeIcon);
@@ -156,5 +148,5 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    {
    }
    
-   private static final Resources RES = GWT.<Resources>create(Resources.class); 
+   private static final Resources RES = GWT.create(Resources.class);
 }

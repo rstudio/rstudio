@@ -14,13 +14,12 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -52,24 +51,20 @@ public class MinimizedModuleTabLayoutPanel
          ModuleTabLayoutPanel.ModuleTab tab
                = new ModuleTabLayoutPanel.ModuleTab(tabName, styles, false, true /*minimized*/);
          tab.addStyleName("gwt-TabLayoutPanelTab");
+         tab.getElement().setId(ElementIds.getUniqueElementId(tab.getTabId()));
          final Integer thisIndex = i;
-         tab.addClickHandler(new ClickHandler()
+         tab.addClickHandler(event ->
          {
-            public void onClick(ClickEvent event)
-            {
-               event.preventDefault();
-               SelectionEvent.fire(
-                     MinimizedModuleTabLayoutPanel.this,
-                     thisIndex);
-            }
+            event.preventDefault();
+            SelectionEvent.fire(
+                  MinimizedModuleTabLayoutPanel.this,
+                  thisIndex);
          });
-
          horiz.add(tab);
       }
    }
 
-   public HandlerRegistration addSelectionHandler(
-         SelectionHandler<Integer> handler)
+   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
    {
       return addHandler(handler, SelectionEvent.getType());
    }

@@ -108,6 +108,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     Error error = r::exec::RFunction(".rs.isRtoolsOnPath").call(&rToolsOnPath);
     if (error)
        LOG_ERROR(error);
+
     if (rToolsOnPath)
     {
        // perform an extra check to see if the version on the path is not
@@ -137,12 +138,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     // ok so scan for R tools
     bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanForRTools(usingGcc49, &rTools);
-    if (error)
-    {
-       LOG_ERROR(error);
-       return false;
-    }
+    core::r_util::scanForRTools(usingGcc49, &rTools);
 
     // enumerate them to see if we have a compatible version
     // (go in reverse order for most recent first)

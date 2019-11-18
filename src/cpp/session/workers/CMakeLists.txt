@@ -37,6 +37,7 @@ include_directories(
 add_library(rstudio-session-workers STATIC
    ${SESSION_WORKERS_SOURCE_FILES}
    ${SESSION_WORKERS_HEADER_FILES})
+define_source_file_names(rstudio-session-workers)
 
 # link dependencies
 target_link_libraries(rstudio-session-workers

@@ -17,22 +17,34 @@ package org.rstudio.core.client;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Pattern;
 
 public class ElementIds
 {
-   public static void assignElementId(Element ele, String id)
+   /**
+    * Return a unique ID based on examination of existing elements. Must be assigned
+    * immediately to an element in the DOM to ensure uniqueness.
+    * @param baseId
+    * @return
+    */
+   public static String getUniqueElementId(String baseId)
    {
-      String elementIdBase = ID_PREFIX + id;
+      String elementIdBase = getElementId(baseId);
       String elementId = elementIdBase;
       int counter = 0;
-      
+
       // ensure uniqueness; for example, if multiple modal dialogs are displayed, make sure
       // the OK button instances, etc., are uniquely identified
       while (DomUtils.getElementById(elementId) != null)
       {
          elementId = elementIdBase + "_" + counter++;
       }
-      ele.setId(elementId);
+     return elementId;
+   }
+
+   public static void assignElementId(Element ele, String id)
+   {
+      ele.setId(getUniqueElementId(id));
    }
 
    public static void assignElementId(Widget widget, String id)
@@ -43,6 +55,27 @@ public class ElementIds
    public static String getElementId(String id)
    {
       return ID_PREFIX + id;
+   }
+
+   public static boolean isInstanceOf(Widget widget, String baseId)
+   {
+      return isInstanceOf(widget.getElement(), baseId);
+   }
+
+   public static boolean isInstanceOf(Element ele, String baseId)
+   {
+      String actualId = ele.getId();
+      String testId = ElementIds.getElementId(baseId);
+      if (actualId == testId)
+         return true;
+
+      // does ID match disambiguation pattern?
+      if (RE_NUMBERED_ELEMENT_ID.test(actualId))
+      {
+         String trimmedId = actualId.substring(0, actualId.lastIndexOf('_'));
+         return trimmedId == testId;
+      }
+      return false;
    }
 
    public static String idSafeString(String text)
@@ -65,6 +98,8 @@ public class ElementIds
    {
       return ID_PREFIX + "label_" + idSafeString(label);
    }
+
+   private static final Pattern RE_NUMBERED_ELEMENT_ID = Pattern.create("^[a-zA-Z0-9_]+_\\d+$");
 
    public final static String ID_PREFIX = "rstudio_";
 
@@ -179,10 +214,20 @@ public class ElementIds
    public final static String VCS_MENUBUTTON = "vcs_menubutton";
    public final static String PANELAYOUT_MENUBUTTON = "panelayout_menubutton";
    public final static String PROJECT_MENUBUTTON = "project_menubutton";
+   public final static String PROJECT_MENUBUTTON_TOOLBAR_SUFFIX = "toolbar";
+   public final static String PROJECT_MENUBUTTON_MENUBAR_SUFFIX = "menubar";
 
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
+
+   // JobLauncherDialog
+   public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
+   public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
+
+   // RmdTemplateOptionsWidget
+   public final static String RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT = "rmd_template_options_output_format";
+   public static String getRmdTemplateOptionsOutputFormat() { return getElementId(RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT); }
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";

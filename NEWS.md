@@ -70,18 +70,35 @@
 * Add preference for compiling .tex files with tinytex (#2788)
 * Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
 * Sort package-installed R Markdown templates alphabetically (#4929)
+* The 'Reopen with Encoding' command now saves unsaved changes before re-opening the document. (#5630)
+* Autocomplete support for Plumber `#*` comment keywords (#2220)
+* Automatically continue Plumber `#*` on successive lines (#2219)
+* Comment / uncomment is now enabled for YAML documents (#3317)
+* Reflow comment has been rebound to 'Ctrl + Shift + /' on macOS. (#2443)
+* Allow fuzzy matches in help topic search (#3316)
+* The diagnostics system better handles missing expressions (#5660)
+* Keyboard shortcuts for debugging commands can be customized (#3539)
+* Update SumatraPDF to version 3.1.2 (#3155)
+* RStudio Server runtime files are stored in `/var/run`, or another configurable location, instead of `/tmp` (#4666)
+* Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
+* Enable copying images to the clipboard from the Plots pane (#3142)
 
 ### Bugfixes
 
 * Fix issue where calling `install.packages()` without arguments would fail (#5154)
 * Fix issue where C code in packages would incorrectly be diagnosed as C++ (#5418)
 * Fix plot history when plot() called immediately after dev.off() (#3117)
+* Fix debug stopping past breakpoint when source windows are open (#3683)
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
-* Fix an issue where help tooltips could become corrupt when using prettycode. (#5561)
+* Fix an issue where help tooltips could become corrupt when using prettycode (#5561)
+* Fix an issue where signature tooltips were shown even when disabled by user preference (#5405)
+* Fix an issue where Git did not work within projects whose paths contained multibyte characters (#2194)
+* Fix an issue where RStudio would fail to preview self-contained bookdown books (#5371)
+* Fix modal dialog boundaries extending out of the app window in certain cases (#1605)
 
 ### RStudio Professional
 
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
-
+* New tools for viewing and managing server users when using named user licensing

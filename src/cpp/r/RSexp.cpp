@@ -909,7 +909,25 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
    pProtect->add(valueSEXP);
    return valueSEXP;
 }
+
+namespace {
+
+template <typename T>
+SEXP createInteger(const core::json::Value& value, Protect* pProtect)
+{
+   try
+   {
+      int casted = boost::numeric_cast<int>(value.getValue<T>());
+      return create(casted, pProtect);
+   }
+   CATCH_UNEXPECTED_EXCEPTION
    
+   // only reached if an exception occurs
+   return R_NilValue;
+}
+
+} // end anonymous namespace
+
 SEXP create(const core::json::Value& value, Protect* pProtect)
 {
    // call embedded create function based on type
@@ -919,7 +937,29 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
    }
    else if (value.getType() == core::json::Type::INTEGER)
    {
-      return create(value.getInt(), pProtect);
+      if (value.isUInt64())
+      {
+         return createInteger<uint64_t>(value, pProtect);
+      }
+      else if (value.isInt64())
+      {
+         return createInteger<int64_t>(value, pProtect);
+      }
+      else if (value.isUInt())
+      {
+         return createInteger<uint32_t>(value, pProtect);
+      }
+      else if (value.isInt())
+      {
+         return createInteger<int32_t>(value, pProtect);
+      }
+      else
+      {
+         std::stringstream ss;
+         ss << "unhandled JSON data type " << value.getType();
+         LOG_WARNING_MESSAGE(ss.str());
+         return R_NilValue;
+      }
    }
    else if (value.getType() == core::json::Type::REAL)
    {

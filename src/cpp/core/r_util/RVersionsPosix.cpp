@@ -108,7 +108,8 @@ std::vector<RVersion> enumerateRVersions(
                               std::vector<r_util::RVersion> rEntries,
                               bool scanForOtherVersions,
                               const FilePath& ldPathsScript,
-                              const std::string& ldLibraryPath)
+                              const std::string& ldLibraryPath,
+                              const FilePath& modulesBinaryPath)
 {
    std::vector<RVersion> rVersions;
 
@@ -143,7 +144,15 @@ std::vector<RVersion> enumerateRVersions(
       // compute R script path
       FilePath rScriptPath = rEntry.homeDir().completeChildPath("bin/R");
       if (!rScriptPath.exists())
-         continue;
+      {
+         // if we are loading a module and no R path is defined, that's okay
+         // just mark the path as empty and the default R on the module path
+         // will be used instead
+         if (rEntry.module().empty())
+            continue;
+         else
+            rScriptPath = FilePath();
+      }
 
       // get the prelaunch script to be executed before attempting to load R to read version info
       // if the prelaunch script is specific to users (starts with ~), don't attempt to use it
@@ -163,7 +172,9 @@ std::vector<RVersion> enumerateRVersions(
                              &rVersion,
                              &env,
                              &errMsg,
-                             prelaunchScript))
+                             prelaunchScript,
+                             rEntry.module(),
+                             modulesBinaryPath))
       {
          // merge the found environment with the existing user-overridden environment
          // we ensure that the user overrides overwrite whatever environment we established automatically
@@ -195,9 +206,14 @@ std::vector<RVersion> enumerateRVersions(
       }
       else
       {
-         LOG_ERROR_MESSAGE("Error scanning R version at " +
-                              rScriptPath.getAbsolutePath() + ": " +
-                           errMsg);
+         std::string rVersion;
+
+         if (!rEntry.module().empty())
+            rVersion += " module " + rEntry.module();
+         if (!rScriptPath.getAbsolutePath().empty())
+            rVersion += " at " + rScriptPath.getAbsolutePath();
+
+         LOG_ERROR_MESSAGE("Error scanning R version" + rVersion + ": " + errMsg);
       }
    }
 
@@ -417,6 +433,8 @@ json::Object rVersionToJson(const RVersion& version)
    versionJson["label"] = version.label();
    versionJson["module"] = version.module();
    versionJson["prelaunchScript"] = version.prelaunchScript();
+   versionJson["repo"] = version.repo();
+   versionJson["library"] = version.library();
 
    return versionJson;
 }
@@ -429,13 +447,17 @@ Error rVersionFromJson(const json::Object& versionJson,
    std::string label;
    std::string module;
    std::string prelaunchScript;
+   std::string repo;
+   std::string library;
 
    Error error = json::readObject(versionJson,
                                   "number", &number,
                                   "environment", &environmentJson,
                                   "label", &label,
                                   "module", &module,
-                                  "prelaunchScript", &prelaunchScript);
+                                  "prelaunchScript", &prelaunchScript,
+                                  "repo", &repo,
+                                  "library", &library);
    if (error)
       return error;
 
@@ -444,6 +466,8 @@ Error rVersionFromJson(const json::Object& versionJson,
    pVersion->setLabel(label);
    pVersion->setModule(module);
    pVersion->setPrelaunchScript(prelaunchScript);
+   pVersion->setRepo(repo);
+   pVersion->setLibrary(library);
 
    return Success();
 }

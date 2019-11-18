@@ -620,6 +620,8 @@ public:
       return directoryViewWhitelist_;
    }
 
+   static std::string parseReposConfig(core::FilePath reposFile);
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -633,7 +635,6 @@ private:
    bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
-   std::string parseReposConfig(core::FilePath reposFile);
 
 private:
    // tests

@@ -307,9 +307,9 @@ void RCompilationDatabase::updateForCurrentPackage()
       return;
 
    // start with base args
-   bool isCpp = false;
+   bool isCpp = true;
    core::r_util::RPackageInfo pkgInfo;
-   std::vector<std::string> args = commonCompilationArgs(&pkgInfo, &isCpp);
+   std::vector<std::string> args = packageCompilationArgs(&pkgInfo, &isCpp);
    if (!args.empty())
    {
       // set the args and build file hash (to avoid recomputation)
@@ -754,8 +754,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
        (filePath.getExtensionLowerCase() != ".m"))
    {
       // extract any -std= argument
-      std::string stdArg = extractStdArg(args);
-      std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH, stdArg);
+      std::vector<std::string> pchArgs = precompiledHeaderArgs(config);
       std::copy(pchArgs.begin(),
                 pchArgs.end(),
                 std::back_inserter(args));
@@ -790,7 +789,7 @@ RCompilationDatabase::CompilationConfig
       return CompilationConfig();
 
    // start with base args
-   std::vector<std::string> args = commonCompilationArgs();
+   std::vector<std::string> args = baseCompilationArgs(true);
 
    // if this is a header file we need to rename it as a temporary .cpp
    // file so that R CMD SHLIB is willing to compile it
@@ -889,7 +888,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
    return args;
 }
 
-std::vector<std::string> RCompilationDatabase::commonCompilationArgs(
+std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       core::r_util::RPackageInfo* pPkgInfo,
       bool* pIsCpp)
 {
@@ -981,9 +980,7 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
       // scan for Rtools
       bool usingMingwGcc49 = module_context::usingMingwGcc49();
       std::vector<core::r_util::RToolsInfo> rTools;
-      Error error = core::r_util::scanForRTools(usingMingwGcc49, &rTools);
-      if (error)
-         LOG_ERROR(error);
+      core::r_util::scanForRTools(usingMingwGcc49, &rTools);
 
       // enumerate them to see if we have a compatible version
       // (go in reverse order for most recent first)
@@ -1029,13 +1026,13 @@ FilePath precompiledHeaderDir(const std::string& pkgName)
 } // anonymous namespace
 
 std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
-                                                  const std::string& pkgName,
-                                                  const std::string& stdArg)
+      const CompilationConfig& config)
 {
    // args to return
    std::vector<std::string> args;
 
    // precompiled header dir
+   std::string pkgName = config.PCH;
    FilePath precompiledDir = precompiledHeaderDir(pkgName);
 
    // further scope to actual path of package (as the locations of the
@@ -1089,6 +1086,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    }
 
    // now create the PCH if we need to
+   std::string stdArg = extractStdArg(config.args);
    FilePath pchPath = platformPath.completeChildPath(pkgName + stdArg + ".pch");
    if (!pchPath.exists())
    {
@@ -1104,8 +1102,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       }
 
       // get common compilation args
-      std::vector<std::string> args = commonCompilationArgs();
-
+      std::vector<std::string> args = config.args;
+      
       // add this package's path to the args
       std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
       std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));

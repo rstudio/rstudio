@@ -104,16 +104,19 @@ public class ToolbarMenuButton extends ToolbarButton
        * time you get into the mousedown handler).
        */
 
-      addMouseDownHandler(event -> {
+      addMouseDownHandler(event ->
+      {
          event.preventDefault();
          event.stopPropagation();
          menuClick();
       });
-      popupMenu.addCloseHandler(popupPanelCloseEvent -> {
+      popupMenu.addCloseHandler(popupPanelCloseEvent ->
+      {
          removeStyleName(styles_.toolbarButtonPushed());
          Scheduler.get().scheduleDeferred(() -> menuShowing_ = false);
       });
-      addKeyPressHandler(event -> {
+      addKeyPressHandler(event ->
+      {
          char charCode = event.getCharCode();
          if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
          {
@@ -129,7 +132,8 @@ public class ToolbarMenuButton extends ToolbarButton
       addStyleName(styles_.toolbarButtonPushed());
       // Some menus are rebuilt on every invocation. Ask the menu for 
       // the most up-to-date version before proceeding.
-      menu_.getDynamicPopupMenu(menu -> {
+      menu_.getDynamicPopupMenu(menu ->
+      {
          if (menuShowing_)
          {
             removeStyleName(styles_.toolbarButtonPushed());

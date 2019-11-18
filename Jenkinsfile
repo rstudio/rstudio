@@ -166,8 +166,8 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: ''],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'fedora28',   arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'fedora28',   arch: 'x86_64', flavor: 'desktop', variant: '']
+          [os: 'centos8',   arch: 'x86_64', flavor: 'server',  variant: ''],
+          [os: 'centos8',   arch: 'x86_64', flavor: 'desktop', variant: '']
         ]
         containers = limit_builds(containers)
         // create the version we're about to build

@@ -475,8 +475,13 @@ Error unknownError(const std::string& in_message, const Error& in_cause, const E
 } // namespace core
 } // namespace rstudio
 
+#ifdef STRIPPED_FILENAME
 #define ERROR_LOCATION rstudio::core::ErrorLocation( \
-      BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)
+      BOOST_CURRENT_FUNCTION, STRIPPED_FILENAME, __LINE__)
+#else
+#define ERROR_LOCATION rstudio::core::ErrorLocation( \
+      BOOST_CURRENT_FUNCTION, __FILE__, __LINE__)
+#endif
 
 #define CATCH_UNEXPECTED_EXCEPTION                                                  \
    catch(const std::exception& e)                                                   \

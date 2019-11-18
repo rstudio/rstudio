@@ -1,7 +1,7 @@
 /*
  * ThemedPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,9 +86,13 @@ public class ThemedPopupPanel extends DecoratedPopupPanel
       if (RStudioThemes.usesScrollbars())
          addStyleName("rstudio-themes-scrollbars");
    }
+
    @Override
    public void setPopupPosition(int left, int top)
    {
+      if (autoConstrain_ && left < 10)
+         left = 10;
+
       super.setPopupPosition(left, top);
 
       if (autoConstrain_)

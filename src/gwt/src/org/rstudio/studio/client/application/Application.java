@@ -184,39 +184,37 @@ public class Application implements ApplicationEventHandlers
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
             // initialize workbench after verifying agreement
-            verifyAgreement(sessionInfo, new Operation() {
-               public void execute()
+            verifyAgreement(sessionInfo, () ->
+            {
+               // if this is a switch project then wait to dismiss the
+               // loading progress animation for 10 seconds. typically
+               // this will be enough time to switch projects. if it
+               // isn't then it's nice to reveal whatever progress
+               // operation or error state is holding up the switch
+               // directly to the user
+               if (ApplicationAction.isSwitchProject())
                {
-                  // if this is a switch project then wait to dismiss the 
-                  // loading progress animation for 10 seconds. typically
-                  // this will be enough time to switch projects. if it
-                  // isn't then it's nice to reveal whatever progress 
-                  // operation or error state is holding up the switch
-                  // directly to the user
-                  if (ApplicationAction.isSwitchProject())
-                  {
-                     new Timer() {
-                        @Override
-                        public void run()
-                        {
-                           dismissLoadingProgress.execute();
-                        }   
-                     }.schedule(10000);  
-                  }
-                  else
-                  {
-                     dismissLoadingProgress.execute();
-                  }
-                  
-                  session_.setSessionInfo(sessionInfo);
-                  
-                  // load MathJax
-                  MathJaxLoader.ensureMathJaxLoaded();
-                  
-                  // initialize workbench
-                  initializeWorkbench();
+                  new Timer() {
+                     @Override
+                     public void run()
+                     {
+                        dismissLoadingProgress.execute();
+                     }
+                  }.schedule(10000);
                }
-            }); 
+               else
+               {
+                  dismissLoadingProgress.execute();
+               }
+
+               session_.setSessionInfo(sessionInfo);
+
+               // load MathJax
+               MathJaxLoader.ensureMathJaxLoaded();
+
+               // initialize workbench
+               initializeWorkbench();
+            });
          }
 
          public void onError(ServerError error)
@@ -800,40 +798,33 @@ public class Application implements ApplicationEventHandlers
             agreement.getContents(),
              
             // bail to sign in page if the user doesn't confirm
-            new Operation()
+            () ->
             {
-               public void execute()
+               if (Desktop.isDesktop())
                {
-                  if (Desktop.isDesktop())
-                  {
-                     Desktop.getFrame().setPendingQuit(
-                                       DesktopFrame.PENDING_QUIT_AND_EXIT);
-                     server_.quitSession(false,
-                                         null,
-                                         null,
-                                         GWT.getHostPageBaseURL(),
-                                         new SimpleRequestCallback<Boolean>());
-                  }
-                  else
-                     navigateToSignIn();
+                  Desktop.getFrame().setPendingQuit(
+                                    DesktopFrame.PENDING_QUIT_AND_EXIT);
+                  server_.quitSession(false,
+                                      null,
+                                      null,
+                                      GWT.getHostPageBaseURL(),
+                                      new SimpleRequestCallback<Boolean>());
                }
+               else
+                  navigateToSignIn();
             },
-        
+
             // user confirmed
-            new Operation() {
-               public void execute()
-               {
-                  // call verified operation
-                  verifiedOperation.execute();
-                  
-                  // record agreement on server
-                  server_.acceptAgreement(agreement, 
-                                          new VoidServerRequestCallback());
-               } 
+            () ->
+            {
+               // call verified operation
+               verifiedOperation.execute();
+
+               // record agreement on server
+               server_.acceptAgreement(agreement,
+                                       new VoidServerRequestCallback());
             }
-            
          );
-         
       }
       else
       {
@@ -1241,7 +1232,8 @@ public class Application implements ApplicationEventHandlers
 
       if (Desktop.hasDesktopFrame())
       {
-         Desktop.getFrame().getSessionServers(servers -> {
+         Desktop.getFrame().getSessionServers(servers ->
+         {
             if (servers.length() == 0)
             {
                removeCommands.execute();

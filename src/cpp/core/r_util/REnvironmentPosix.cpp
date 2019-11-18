@@ -32,6 +32,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/ShellUtils.hpp>
 
 namespace rstudio {
 namespace core {
@@ -451,13 +452,38 @@ bool detectRLocationsUsingScript(const FilePath& rScriptPath,
    return true;
 }
 
+std::string createSourcedCommand(const std::string& prelaunchScript,
+                                 const std::string& module,
+                                 const FilePath& moduleBinaryPath,
+                                 const std::string& command)
+{
+   std::string fullCommand;
+
+   if (!module.empty() && !moduleBinaryPath.isEmpty())
+   {
+      fullCommand += ". " + shell_utils::escape(moduleBinaryPath.getAbsolutePath()) +
+                " > /dev/null 2>&1; module load " + shell_utils::escape(module) +
+                " > /dev/null 2>&1; ";
+   }
+
+   // don't attempt to load the prelaunch script if it is a user script
+   if (!prelaunchScript.empty())
+   {
+      fullCommand += ". " + shell_utils::escape(prelaunchScript) + " > /dev/null 2>&1; ";
+   }
+
+   return fullCommand + command;
+}
+
 #ifndef __APPLE__
 bool detectRLocationsUsingR(const std::string& rScriptPath,
                             FilePath* pHomePath,
                             FilePath* pLibPath,
                             config_utils::Variables* pScriptVars,
                             std::string* pErrMsg,
-                            const std::string& prelaunchScript = "")
+                            const std::string& prelaunchScript = "",
+                            const std::string& module = "",
+                            const FilePath& moduleBinaryPath = FilePath())
 {
    // eliminate a potentially conflicting R_HOME before calling R
    // (the normal semantics of invoking the R script are that it overwrites
@@ -465,21 +491,32 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    // output of R and messes up our parsing)
    core::system::setenv("R_HOME", "");
 
-   // call R to determine the locations
-   std::string command = rScriptPath +
+   // if no R path was specified for a module, the module binary path MUST be specified
+   // otherwise, we would have no way to load the module
+   if (rScriptPath.empty() && moduleBinaryPath.isEmpty())
+   {
+      *pErrMsg = "Path to R not specified, and no module binary specified";
+      return false;
+   }
+
+   // call R to determine the locations - if a path to R is not given
+   // then just use the default on the command line - this should
+   // only be the case when a module is specified
+   std::string rCommand = !rScriptPath.empty() ? rScriptPath : "R";
+   std::string command =  rCommand +
      " --slave --vanilla -e \"cat(paste("
             "R.home('home'),"
             "R.home('share'),"
             "R.home('include'),"
             "R.home('doc'),sep=':'))\"";
 
-   if (!prelaunchScript.empty())
-   {
-      command = prelaunchScript + " &> /dev/null && " + command;
-   }
+   std::string fullCommand = createSourcedCommand(prelaunchScript,
+                                                  module,
+                                                  moduleBinaryPath,
+                                                  command);
 
    system::ProcessResult result;
-   Error error = runCommand(command, system::ProcessOptions(), &result);
+   Error error = runCommand(fullCommand, system::ProcessOptions(), &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -575,7 +612,9 @@ bool detectREnvironment(const FilePath& whichRScript,
                         std::string* pVersion,
                         EnvironmentVars* pVars,
                         std::string* pErrMsg,
-                        const std::string& prelaunchScript)
+                        const std::string& prelaunchScript,
+                        const std::string& module,
+                        const FilePath& modulesBinaryPath)
 {
    // if there is a which R script override then validate it
    if (!whichRScript.isEmpty())
@@ -587,10 +626,11 @@ bool detectREnvironment(const FilePath& whichRScript,
       // set it
       *pRScriptPath = whichRScript.getAbsolutePath();
    }
-   // otherwise use the system default (after validating it as well)
-   else
+   else if (module.empty())
    {
-      // get system default
+      // get system default R path, but only if a module is not specified
+      // if a module is specified, we will just use whatever R shows up on
+      // the path when the module is loaded
       FilePath sysRScript = systemDefaultRScript(pErrMsg);
       if (sysRScript.isEmpty())
          return false;
@@ -600,6 +640,11 @@ bool detectREnvironment(const FilePath& whichRScript,
 
       // set it
       *pRScriptPath = sysRScript.getAbsolutePath();
+   }
+   else
+   {
+      // using module - no R script path
+      *pRScriptPath = std::string();
    }
 
    // detect R locations
@@ -633,10 +678,22 @@ bool detectREnvironment(const FilePath& whichRScript,
                                &rLibPath,
                                &scriptVars,
                                pErrMsg,
-                               prelaunchScript))
+                               prelaunchScript,
+                               module,
+                               modulesBinaryPath))
    {
       // fallback to detecting using script (sometimes we are unable to
       // call R successfully immediately after a system reboot)
+      //
+      // we do not attempt to do this if we were loading R via module
+      // because we do not actually have a path to R to attempt these
+      // workarounds
+      if (pRScriptPath->empty())
+      {
+         pErrMsg->append("; Invalid R module");
+         return false;
+      }
+
       rHomePath = FilePath();
       rLibPath = FilePath();
       scriptVars.clear();
@@ -690,8 +747,13 @@ bool detectREnvironment(const FilePath& whichRScript,
    }
 #endif
 
-   Error error = rVersion(rHomePath, FilePath(*pRScriptPath), ldLibraryPath, 
-         pVersion);
+   Error error = rVersion(rHomePath,
+                          FilePath(*pRScriptPath),
+                          ldLibraryPath,
+                          prelaunchScript,
+                          module,
+                          modulesBinaryPath,
+                          pVersion);
    if (error)
       LOG_ERROR(error);
 
@@ -756,6 +818,23 @@ Error rVersion(const FilePath& rHomePath,
                const std::string& ldLibraryPath,
                std::string* pVersion)
 {
+   return rVersion(rHomePath,
+                   rScriptPath,
+                   ldLibraryPath,
+                   std::string(),
+                   std::string(),
+                   FilePath(),
+                   pVersion);
+}
+
+Error rVersion(const FilePath& rHomePath,
+               const FilePath& rScriptPath,
+               const std::string& ldLibraryPath,
+               const std::string& prelaunchScript,
+               const std::string& module,
+               const FilePath& moduleBinaryPath,
+               std::string* pVersion)
+{
    // set R_HOME as provided
    core::system::ProcessOptions options;
    core::system::Options env;
@@ -775,9 +854,16 @@ Error rVersion(const FilePath& rHomePath,
    // determine the R version
    options.environment = env;
    core::system::ProcessResult result;
+
+   std::string rCommand = !rScriptPath.isEmpty() ? rScriptPath.getAbsolutePath() : "R";
+   std::string command = rCommand + " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
+   std::string fullCommand = createSourcedCommand(prelaunchScript,
+                                                  module,
+                                                  moduleBinaryPath,
+                                                  command);
+
    Error error = core::system::runCommand(
-      rScriptPath.getAbsolutePath() +
-      " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'",
+      fullCommand,
       options,
       &result);
    if (error)

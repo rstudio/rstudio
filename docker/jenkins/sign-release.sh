@@ -117,8 +117,17 @@ elif [ "$EXT" == "rpm" ]; then
     echo "%_gpg_name $KEY_ID" >> $RPM_MACROS
     echo "%_gpg_path $TMP_KEYRING_DIR" >> $RPM_MACROS
 
-    if [ -f /etc/fedora-release ]; then
-        # on Fedora, the expect-based approach doesn't work, so attempt to
+    if [ -f /etc/redhat-release ]; then
+       REDHAT_VERSION=$(cat /etc/redhat-release | grep -oP "CentOS Linux release \K[\w.]+") || true
+       VERSION_ARRAY=(${REDHAT_VERSION//./ })
+       if ((${VERSION_ARRAY[0]} >= 8)); then
+          FORCE_NO_EXPECT=true
+          echo "Not using expect approach because we are on a newer version of Redhat"
+       fi
+    fi
+
+    if [ -f /etc/fedora-release ] || [ "$FORCE_NO_EXPECT" = true ]; then
+        # on fedora and centos 8 and greater, the expect-based approach doesn't work, so attempt to
         # supply the passphrase by redefining the GPG signature command in the
         # RPM macros definition to take a passphrase-file.
         echo "%__gpg_sign_cmd %{__gpg} \\" >> $RPM_MACROS

@@ -1458,6 +1458,24 @@ FilePath getStartupEnvironmentFilePath()
       return dirs::rEnvironmentDir().completePath(".RData");
 }
 
+void loadCranRepos(const std::string& repos,
+                   rstudio::r::session::ROptions* pROptions)
+{
+   std::vector<std::string> parts;
+   boost::split(parts, repos, boost::is_any_of("|"));
+   pROptions->rCRANSecondary = "";
+
+   std::vector<std::string> secondary;
+   for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
+   {
+      if (string_utils::toLower(parts[idxParts]) == "cran")
+         pROptions->rCRANUrl = parts[idxParts + 1];
+      else
+         secondary.push_back(std::string(parts[idxParts]) + "|" + parts[idxParts + 1]);
+   }
+   pROptions->rCRANSecondary = algorithm::join(secondary, "|");
+}
+
 } // anonymous namespace
 
 
@@ -1681,7 +1699,6 @@ int main (int argc, char * const argv[])
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
-      core::log::setLogLevel(core::log::LogLevel::WARN);
       core::log::setProgramId(programId);
       core::system::initializeSystemLog(programId, core::log::LogLevel::WARN);
 
@@ -1710,6 +1727,21 @@ int main (int argc, char * const argv[])
 #ifdef __APPLE__
       core::system::unsetenv("DYLD_INSERT_LIBRARIES");
 #endif
+      
+      // fix up HOME / R_USER environment variables
+      // (some users on Windows report these having trailing
+      // slashes, which confuses a number of RStudio routines)
+      boost::regex reTrailing("[/\\\\]+$");
+      for (const std::string& envvar : {"HOME", "R_USER"})
+      {
+         std::string oldVal = core::system::getenv(envvar);
+         if (!oldVal.empty())
+         {
+            std::string newVal = boost::regex_replace(oldVal, reTrailing, "");
+            if (oldVal != newVal)
+               core::system::setenv(envvar, newVal);
+         }
+      }
       
       // read program options
       std::ostringstream osWarnings;
@@ -1741,7 +1773,8 @@ int main (int argc, char * const argv[])
 
       // reflect stderr logging
       if (options.logStderr())
-         log::addLogDestination(std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination()));
+         log::addLogDestination(
+            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
 
       // initialize monitor
       initMonitorClient();
@@ -1749,11 +1782,12 @@ int main (int argc, char * const argv[])
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
       {
-         core::log::addLogDestination(monitor::client().createLogDestination(options.programIdentity()));
+         core::log::addLogDestination(
+            monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
       }
 
       // initialize file lock config
-      FileLock::initialize();
+      FileLock::initialize(desktopMode ? FileLock::LOCKTYPE_ADVISORY : FileLock::LOCKTYPE_LINKBASED);
 
       // re-initialize log for desktop mode
       if (desktopMode)
@@ -1994,10 +2028,11 @@ int main (int argc, char * const argv[])
       //
       // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
       //    same
-      // 2. The session's repo settings (in rsession.conf/repos.conf)
-      // 3. The server's repo settings
-      // 4. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 5. If all else fails, cran.rstudio.com
+      // 2. The repo settings specified in the loaded version of R
+      // 3. The session's repo settings (in rsession.conf/repos.conf)
+      // 4. The server's repo settings
+      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 6. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
       if (val && (layerName == kUserPrefsUserLayer ||
@@ -2007,23 +2042,27 @@ int main (int argc, char * const argv[])
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
       }
+      else if (!core::system::getenv("RSTUDIO_R_REPO").empty())
+      {
+         // repo was specified in the r version
+         std::string repo = core::system::getenv("RSTUDIO_R_REPO");
+
+         // the repo can either be a repos.conf-style file, or a URL
+         FilePath reposFile(repo);
+         if (reposFile.exists())
+         {
+            std::string reposConfig = Options::parseReposConfig(reposFile);
+            loadCranRepos(reposConfig, &rOptions);
+         }
+         else
+         {
+            rOptions.rCRANUrl = repo;
+         }
+      }
       else if (!options.rCRANMultipleRepos().empty())
       {
-         // There's no user-scoped value, so read from session options (this also loads repos.conf)
-         std::vector<std::string> parts;
-         std::string repos = options.rCRANMultipleRepos();
-         boost::split(parts, repos, boost::is_any_of("|"));
-         rOptions.rCRANSecondary = "";
-
-         std::vector<std::string> secondary;
-         for (size_t idxParts = 0; idxParts < parts.size() - 1; idxParts += 2)
-         {
-            if (string_utils::toLower(parts[idxParts]) == "cran")
-               rOptions.rCRANUrl = parts[idxParts + 1];
-            else
-               secondary.push_back(std::string(parts[idxParts]) + "|" + parts[idxParts + 1]);
-         }
-         rOptions.rCRANSecondary = algorithm::join(secondary, "|");
+         // repo was specified in a repos file
+         loadCranRepos(options.rCRANMultipleRepos(), &rOptions);
       }
       else if (!options.rCRANUrl().empty())
       {

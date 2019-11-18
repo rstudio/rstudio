@@ -42,6 +42,7 @@ include_directories(
 
 # define shared library
 add_library(rstudio-server-core STATIC ${SERVER_CORE_SOURCE_FILES} ${SERVER_CORE_HEADER_FILES})
+define_source_file_names(rstudio-server-core)
 
 # link dependencies
 target_link_libraries(

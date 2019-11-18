@@ -29,7 +29,6 @@ public:
    UserPrefsLayer();
    core::Error readPrefs() override;
    core::Error writePrefs(const core::json::Object &prefs) override;
-   core::Error validatePrefs() override;
 
 protected:
    void onPrefsFileChanged() override;

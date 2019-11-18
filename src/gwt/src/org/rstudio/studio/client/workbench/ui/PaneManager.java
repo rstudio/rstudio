@@ -18,10 +18,6 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -63,7 +59,6 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -304,106 +299,79 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.NORMAL));
       }
 
-      userPrefs.panes().addValueChangeHandler(new ValueChangeHandler<UserPrefsAccessor.Panes>()
+      userPrefs.panes().addValueChangeHandler(evt ->
       {
-         public void onValueChange(ValueChangeEvent<UserPrefsAccessor.Panes> evt)
-         {
-            ArrayList<LogicalWindow> newPanes = createPanes(
-                  validateConfig(evt.getValue().cast()));
-            panes_ = newPanes;
-            left_.replaceWindows(newPanes.get(0), newPanes.get(1));
-            right_.replaceWindows(newPanes.get(2), newPanes.get(3));
+         ArrayList<LogicalWindow> newPanes = createPanes(
+               validateConfig(evt.getValue().cast()));
+         panes_ = newPanes;
+         left_.replaceWindows(newPanes.get(0), newPanes.get(1));
+         right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
-            tabSet1TabPanel_.clear();
-            tabSet2TabPanel_.clear();
-            tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
-            populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-            tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
-            populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-            
-            manageLayoutCommands();
-         }
+         tabSet1TabPanel_.clear();
+         tabSet2TabPanel_.clear();
+         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
+         populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
+         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+         populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
+
+         manageLayoutCommands();
       });
       
-      eventBus_.addHandler(ZoomPaneEvent.TYPE, new ZoomPaneEvent.Handler()
+      eventBus_.addHandler(ZoomPaneEvent.TYPE, event ->
       {
-         @Override
-         public void onZoomPane(ZoomPaneEvent event)
-         {
-            String pane = event.getPane();
-            LogicalWindow window = panesByName_.get(pane);
-            assert window != null :
-               "No pane with name '" + pane + "'";
-            
-            toggleWindowZoom(window, tabForName(event.getTab()));
-         }
+         String pane = event.getPane();
+         LogicalWindow window = panesByName_.get(pane);
+         assert window != null :
+            "No pane with name '" + pane + "'";
+
+         toggleWindowZoom(window, tabForName(event.getTab()));
       });
       
-      eventBus_.addHandler(WindowEnsureVisibleEvent.TYPE, new WindowEnsureVisibleEvent.Handler()
+      eventBus_.addHandler(WindowEnsureVisibleEvent.TYPE, event ->
       {
-         @Override
-         public void onWindowEnsureVisible(WindowEnsureVisibleEvent event)
+         final LogicalWindow window = getLogicalWindow(event.getWindowFrame());
+         if (window == null)
+            return;
+
+         // If we're currently zooming a pane, and we're now ensuring
+         // a separate window is visible (e.g. a pane raising itself),
+         // then transfer zoom to that window.
+         if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
          {
-            final LogicalWindow window = getLogicalWindow(event.getWindowFrame());
-            if (window == null)
-               return;
-            
-            // If we're currently zooming a pane, and we're now ensuring
-            // a separate window is visible (e.g. a pane raising itself),
-            // then transfer zoom to that window.
-            if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
-            {
-               fullyMaximizeWindow(window, lastSelectedTab_);
-               return;
-            }
-            
-            int width = window.getActiveWidget().getOffsetWidth();
-            
-            // If the widget is already visible horizontally, then bail
-            // (other logic handles vertical visibility)
-            if (width > 0)
-               return;
-            
-            final Command afterAnimation = new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  window.getNormal().onResize();
-               }
-            };
-            
-            int newWidth = computeAppropriateWidth();
-            resizeHorizontally(0, newWidth, afterAnimation);
+            fullyMaximizeWindow(window, lastSelectedTab_);
+            return;
          }
+
+         int width = window.getActiveWidget().getOffsetWidth();
+
+         // If the widget is already visible horizontally, then bail
+         // (other logic handles vertical visibility)
+         if (width > 0)
+            return;
+
+         final Command afterAnimation = () -> window.getNormal().onResize();
+
+         int newWidth = computeAppropriateWidth();
+         resizeHorizontally(0, newWidth, afterAnimation);
       });
       
       eventBus_.addHandler(
             ManageLayoutCommandsEvent.TYPE,
-            new ManageLayoutCommandsEvent.Handler()
-            {
-               @Override
-               public void onManageLayoutCommands(ManageLayoutCommandsEvent event)
-               {
-                  manageLayoutCommands();
-               }
-            });
+            event -> manageLayoutCommands());
 
-      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, new UpdateTabPanelsEvent.Handler() {
-         public void onUpdateTabPanels(UpdateTabPanelsEvent event)
-         {
-            left_.replaceWindows(panes_.get(0), panes_.get(1));
-            right_.replaceWindows(panes_.get(2), panes_.get(3));
+      eventBus.addHandler(UpdateTabPanelsEvent.TYPE, event ->
+      {
+         left_.replaceWindows(panes_.get(0), panes_.get(1));
+         right_.replaceWindows(panes_.get(2), panes_.get(3));
 
-            tabSet1TabPanel_.clear();
-            tabSet2TabPanel_.clear();
-            populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
-            populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-            
-            manageLayoutCommands();  
+         tabSet1TabPanel_.clear();
+         tabSet2TabPanel_.clear();
+         populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
+         populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
 
-            activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
-         }
+         manageLayoutCommands();
+
+         activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
       });
       
       manageLayoutCommands();
@@ -650,14 +618,7 @@ public class PaneManager
       Command onActivation = null;
       if (maximizedTab_.equals(Tab.Help))
       {
-         onActivation = new Command()
-         {
-            @Override
-            public void execute()
-            {
-               commands_.activateHelp().execute();
-            }
-         };
+         onActivation = () -> commands_.activateHelp().execute();
       }
       
       resizeHorizontally(initialSize, targetSize, onActivation);
@@ -779,7 +740,7 @@ public class PaneManager
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
    {
-      ArrayList<LogicalWindow> results = new ArrayList<LogicalWindow>();
+      ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
       for (int i = 0; i < 4; i++)
@@ -791,7 +752,7 @@ public class PaneManager
 
    private void initPanes(PaneConfig config)
    {
-      panesByName_ = new HashMap<String, LogicalWindow>();
+      panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
       panesByName_.put("Source", createSource());
 
@@ -812,7 +773,7 @@ public class PaneManager
    
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
-      ArrayList<Tab> tabList = new ArrayList<Tab>();
+      ArrayList<Tab> tabList = new ArrayList<>();
       for (int j = 0; j < tabNames.length(); j++)
          tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
       return tabList;
@@ -1016,7 +977,7 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow);
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
 
       if (persisterName == "TabSet1")
          tabs1_ = tabs;
@@ -1027,32 +988,26 @@ public class PaneManager
 
       frame.setFillWidget(tabPanel);
 
-      minimized.addSelectionHandler(new SelectionHandler<Integer>()
+      minimized.addSelectionHandler(integerSelectionEvent ->
       {
-         public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
-         {
-            int tab = integerSelectionEvent.getSelectedItem();
-            tabPanel.selectTab(tab);
-         }
+         int tab = integerSelectionEvent.getSelectedItem();
+         tabPanel.selectTab(tab);
       });
 
-      tabPanel.addSelectionHandler(new SelectionHandler<Integer>()
+      tabPanel.addSelectionHandler(integerSelectionEvent ->
       {
-         public void onSelection(SelectionEvent<Integer> integerSelectionEvent)
-         {
-            int index = integerSelectionEvent.getSelectedItem();
-            WorkbenchTab selected = tabPanel.getTab(index);
-            lastSelectedTab_ = workbenchTabToTab(selected);
-            session_.persistClientState();
-         }
+         int index = integerSelectionEvent.getSelectedItem();
+         WorkbenchTab selected = tabPanel.getTab(index);
+         lastSelectedTab_ = workbenchTabToTab(selected);
+         session_.persistClientState();
       });
 
       new SelectedTabStateValue(persisterName, tabPanel);
 
-      return new Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>(
-            logicalWindow,
-            tabPanel,
-            minimized);
+      return new Triad<>(
+         logicalWindow,
+         tabPanel,
+         minimized);
    }
    
    private Tab workbenchTabToTab(WorkbenchTab tab)
@@ -1064,26 +1019,25 @@ public class PaneManager
                                  WorkbenchTabPanel tabPanel,
                                  MinimizedModuleTabLayoutPanel minimized)
    {
-      ArrayList<WorkbenchTab> tabList = new ArrayList<WorkbenchTab>();
+      ArrayList<WorkbenchTab> tabList = new ArrayList<>();
       int tabIdx = 0;
-      for (int i = 0; i < tabs.size(); i++)
+      for (Tab tab : tabs)
       {
-         Tab tab = tabs.get(i);
          WorkbenchTab wbTab = getTab(tab);
-         
+
          wbTabToTab_.put(wbTab, tab);
          tabToPanel_.put(tab, tabPanel);
-         
+
          // exclude suppressed tabs from the index since they aren't added to
          // the panel
          if (!wbTab.isSuppressed())
             tabToIndex_.put(tab, tabIdx++);
-         
+
          tabList.add(wbTab);
       }
       tabPanel.setTabs(tabList);
 
-      ArrayList<String> labels = new ArrayList<String>();
+      ArrayList<String> labels = new ArrayList<>();
       for (Tab tab : tabs)
       {
          if (!getTab(tab).isSuppressed())
@@ -1097,9 +1051,7 @@ public class PaneManager
       switch (tab)
       {
          case VCS:
-            return getTab(tab).getTitle();
          case Presentation:
-            return getTab(tab).getTitle();
          case Connections:
             return getTab(tab).getTitle();
          default:
@@ -1190,7 +1142,7 @@ public class PaneManager
    
    private List<AppCommand> getLayoutCommands()
    {
-      List<AppCommand> commands = new ArrayList<AppCommand>();
+      List<AppCommand> commands = new ArrayList<>();
       
       commands.add(commands_.layoutEndZoom());
       commands.add(commands_.layoutZoomBuild());
@@ -1249,17 +1201,14 @@ public class PaneManager
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
    private final OptionsLoader.Shim optionsLoader_;
-   private MainSplitPanel panel_;
+   private final MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
-   private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =
-         new HashMap<Tab, WorkbenchTabPanel>();
-   private final HashMap<Tab, Integer> tabToIndex_ =
-         new HashMap<Tab, Integer>();
-   private final HashMap<WorkbenchTab, Tab> wbTabToTab_ =
-         new HashMap<WorkbenchTab, Tab>();
+   private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
+   private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
+   private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   private DualWindowLayoutPanel left_;
-   private DualWindowLayoutPanel right_;
+   private final DualWindowLayoutPanel left_;
+   private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;
    private ConsoleTabPanel consoleTabPanel_;
    private WorkbenchTabPanel tabSet1TabPanel_;

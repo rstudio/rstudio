@@ -34,8 +34,9 @@ public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
                           core::system::FileMode fileMode,
-                          bool disableOriginCheck = true)
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck),
+                          bool disableOriginCheck = true,
+                          const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck, additionalHeaders),
         fileMode_(fileMode)
    {
    }

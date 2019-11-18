@@ -28,7 +28,6 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      rstudio::core::log::setLogLevel(rstudio::core::log::LogLevel::WARN);
       rstudio::core::log::setProgramId("urlopener");
       rstudio::core::system::initializeSystemLog("urlopener", rstudio::core::log::LogLevel::WARN);
 

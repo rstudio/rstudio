@@ -331,14 +331,14 @@ public class TextEditingTargetWidget
       }
 
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
+      rmdFormatButton_ = new ToolbarPopupMenuButton("Knit options", false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
-      runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
+      runDocumentMenuButton_ = new ToolbarPopupMenuButton("Run document options", false, true);
       addClearKnitrCacheMenu(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
-      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
+      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");
       toolbar.addLeftWidget(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.shinyRecordTest().createMenuItem(false), "");
@@ -404,7 +404,6 @@ public class TextEditingTargetWidget
                   commands_.sourceActiveDocument().execute();
             });
       toolbar.addRightWidget(sourceButton_);
-      ElementIds.assignElementId(sourceButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON);
 
       previewJsButton_ = commands_.previewJS().createToolbarButton(false);
       toolbar.addRightWidget(previewJsButton_);
@@ -431,7 +430,6 @@ public class TextEditingTargetWidget
          
       sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
-      ElementIds.assignElementId(sourceMenuButton_.getElement(), ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
 
       //toolbar.addRightSeparator();
      
@@ -693,7 +691,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText("Source on Save");
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
-            fileType.isC() || fileType.isStan());   
+            fileType.isC() || fileType.isStan());
      
       previewJsButton_.setVisible(fileType.isJS() && extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       previewSqlButton_.setVisible(fileType.isSql() && extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
@@ -1472,7 +1470,16 @@ public class TextEditingTargetWidget
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
-   
+
+   @Override
+   protected void onAttach()
+   {
+      super.onAttach();
+
+      ElementIds.assignElementId(sourceButton_, ElementIds.TEXT_SOURCE_BUTTON);
+      ElementIds.assignElementId(sourceMenuButton_, ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
+   }
+
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;

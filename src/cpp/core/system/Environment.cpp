@@ -17,6 +17,8 @@
 
 #include <algorithm>
 
+#include <core/Algorithm.hpp>
+
 #include <boost/bind.hpp>
 
 #ifdef _WIN32
@@ -86,21 +88,38 @@ void unsetenv(Options* pEnvironment, const std::string& name)
                        pEnvironment->end());
 }
 
+namespace {
+
+std::string modifyPath(const std::string& path,
+                       const std::string& entry,
+                       bool prepend)
+{
+   // if the PATH is empty, we can just use the
+   // requested entry as-is
+   if (path.empty())
+      return entry;
+
+   // otherwise, prepend or append as appropriate
+   return prepend
+         ? entry + kPathSeparator + path
+         : path + kPathSeparator + entry;
+}
+
+} // end anonymous namespace
+
+void addToPath(const std::string& filePath,
+               bool prepend)
+{
+   std::string oldPath = getenv("PATH");
+   std::string newPath = modifyPath(oldPath, filePath, prepend);
+   setenv("PATH", newPath);
+}
+
 void addToPath(std::string* pPath,
                const std::string& filePath,
                bool prepend)
 {
-   if (prepend)
-   {
-      *pPath = filePath + kPathSeparator + *pPath;
-   }
-   else
-   {
-      if (!pPath->empty())
-         pPath->append(kPathSeparator);
-
-      pPath->append(filePath);
-   }
+   *pPath = modifyPath(*pPath, filePath, prepend);
 }
 
 // add to the PATH within an Options struture
@@ -108,12 +127,9 @@ void addToPath(Options* pEnvironment,
                const std::string& filePath,
                bool prepend)
 {
-   std::string path = getenv(*pEnvironment, "PATH");
-   if (prepend)
-      path = filePath + kPathSeparator + path;
-   else
-      path = path + kPathSeparator + filePath;
-   setenv(pEnvironment, "PATH", path);
+   std::string oldPath = getenv(*pEnvironment, "PATH");
+   std::string newPath = modifyPath(oldPath, filePath, prepend);
+   setenv(pEnvironment, "PATH", newPath);
 }
 
 bool parseEnvVar(const std::string envVar, Option* pEnvVar)

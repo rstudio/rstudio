@@ -29,19 +29,21 @@ namespace rstudio {
 namespace core {
 namespace log {
 
-unsigned int StderrLogDestination::getStderrId()
+StderrLogDestination::StderrLogDestination(LogLevel in_logLevel) :
+   ILogDestination(in_logLevel)
 {
-   return 0;
 }
 
 unsigned int StderrLogDestination::getId() const
 {
-   return getStderrId();
+   return 0;
 }
 
-void StderrLogDestination::writeLog(LogLevel, const std::string& in_message)
+void StderrLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_message)
 {
-   std::cerr << in_message;
+   // Don't write logs that are more detailed than the configured maximum
+   if (in_logLevel <= m_logLevel)
+      std::cerr << in_message;
 }
 
 } // namespace log

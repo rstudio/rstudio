@@ -125,9 +125,9 @@ public class JobItem extends Composite implements JobItemView
       initWidget(uiBinder.createAndBindUi(this));
       
       name_.setText(job.name);
+      progress_.setLabel(job.name);
       spinner_.setResource(new ImageResource2x(RESOURCES.jobSpinner()));
-      spinner_.setAltText("Progress indicator");
-      
+
       ImageResource2x detailsImage = new ImageResource2x(RESOURCES.jobSelect());
       if (JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_INFO))
       {

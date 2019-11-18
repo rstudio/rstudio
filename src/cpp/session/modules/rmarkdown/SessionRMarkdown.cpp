@@ -272,14 +272,15 @@ std::string assignOutputUrl(const std::string& outputFile)
    // detect whether we're creating a book output vs. a website page
    if (!websiteDir.isEmpty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(projDir))
    {
-      // if we're creating a '.pdf', detect the created book appropriately
-      FilePath indexPath;
-      if (outputPath.getExtensionLowerCase() == ".pdf")
-         indexPath = websiteDir.completeChildPath(outputPath.getFilename());
-      else
-         indexPath = websiteDir.completeChildPath("index.html");
+      std::string renderedPath;
+      Error error = r::exec::RFunction(".rs.bookdown.renderedOutputPath")
+            .addParam(outputPath.getAbsolutePath())
+            .callUtf8(&renderedPath);
+      if (error)
+         LOG_ERROR(error);
       
-      s_renderOutputs[s_currentRenderOutput] = indexPath.getAbsolutePath();
+      s_renderOutputs[s_currentRenderOutput] = renderedPath;
+      
       // compute relative path to target file and append it to the path
       std::string relativePath = outputPath.getRelativePath(websiteDir);
       path += relativePath;

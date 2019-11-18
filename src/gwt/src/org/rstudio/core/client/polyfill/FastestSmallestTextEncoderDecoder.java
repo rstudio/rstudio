@@ -14,10 +14,12 @@
  */
 package org.rstudio.core.client.polyfill;
 
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
+import com.google.inject.Singleton;
 
 /**
  * Provides a polyfill for window.TextEncoder() and window.TextDecoder(),
@@ -25,6 +27,7 @@ import com.google.gwt.resources.client.TextResource;
  * 
  * See: https://github.com/anonyco/FastestSmallestTextEncoderDecoder
  */
+@Singleton
 public class FastestSmallestTextEncoderDecoder
 {
    public interface Resources extends ClientBundle
@@ -36,6 +39,6 @@ public class FastestSmallestTextEncoderDecoder
    private static final Resources RES = GWT.create(Resources.class);
    static
    {
-      ScriptInjector.fromString(RES.js().getText()).inject();
+      DomUtils.loadScript(RES.js());
    }
 }
