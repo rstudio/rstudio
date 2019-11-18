@@ -1,7 +1,7 @@
 /*
  * DesktopBrowserWindow.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 #include "DesktopBrowserWindow.hpp"
 
+#include <QAccessibleWidget>
 #include <QApplication>
 #include <QToolBar>
 #include <QWebChannel>
@@ -75,6 +76,65 @@ new QWebChannel(qt.webChannelTransport, function(channel) {
    page->scripts().insert(script);
 }
 
+// Partial fix for VoiceOver / Screen Reader support on macOS, based on the work described
+// in link below. This is the subset that is in application code, more complete fix also requires
+// changes to QtWebEngine itself, tentatively expected in Qt 5.14.
+//
+// This partial fix somewhat improves behavior of VoiceOver on desktop RStudio in that more
+// keyboard focus changes are noticed and announced than without the change. Still
+// it is far from usable and at this stage is mostly for fact-finding experimentation.
+//
+// https://codereview.qt-project.org/c/qt/qtwebengine/+/281210
+//
+class BrowserWindowAccessibility : public QAccessibleWidget
+{
+   static QAccessibleInterface *findFocusChild(QAccessibleInterface *iface)
+   {
+      if (!iface)
+         return nullptr;
+
+      if (iface->state().focused)
+         return iface;
+
+      for (int i = 0; i < iface->childCount(); ++i)
+      {
+         if (QAccessibleInterface *focusChild = findFocusChild(iface->child(i)))
+            return focusChild;
+      }
+
+      return nullptr;
+   }
+
+public:
+   BrowserWindowAccessibility(BrowserWindow *bw) : QAccessibleWidget(bw, QAccessible::Window)
+   {
+   }
+
+   QAccessibleInterface *focusChild() const override
+   {
+      QAccessibleInterface *iface = QAccessibleWidget::focusChild();
+
+      BrowserWindow *bw = qobject_cast<BrowserWindow *>(widget());
+      if (iface == QAccessible::queryAccessibleInterface(bw->webView()->focusWidget()))
+      {
+         QAccessibleInterface *viewInterface = QAccessible::queryAccessibleInterface(bw->webView());
+         return findFocusChild(viewInterface->child(0));
+      }
+
+      return iface;
+   }
+};
+
+QAccessibleInterface *accessibleFactory(const QString &key, QObject *object)
+{
+   Q_UNUSED(key)
+
+   if (BrowserWindow *bw = qobject_cast<BrowserWindow *>(object))
+      return new BrowserWindowAccessibility(bw);
+
+   return nullptr;
+}
+
 } // end anonymous namespace
 
 BrowserWindow::BrowserWindow(bool showToolbar,
@@ -88,6 +148,16 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    name_(name),
    pOpener_(pOpener)
 {
+#ifdef Q_OS_MAC
+   // NSAccessibility queries the window for the focused accessibility
+   // element. QAccessibleWidget::focusChild() returns the accessibility interface
+   // of the RenderWidgetHostViewQtDelegateWidget because it has the active
+   // focus instead of the QWebEngineView, so install accessibility factory to
+   // compensate for this macOS-specific behavior.
+   if (desktop::options().enableAccessibility())
+      QAccessible::installFactory(&accessibleFactory);
+#endif
+
    adjustTitle_ = adjustTitle;
    progress_ = 0;
 
