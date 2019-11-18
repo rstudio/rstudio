@@ -76,7 +76,7 @@ public:
       // the ssl::context (immediately above)
       ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioService, sslContext_));
 
-      // Set the SNI so we still work with TLS v1.3
+      // TLS v1.3 requires that the SNI be set, so set the SNI.
       if (!SSL_set_tlsext_host_name(
             ptrSslStream_->native_handle(),
             (hostname.empty() ? address_.c_str() : hostname.c_str())))
