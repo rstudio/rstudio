@@ -190,10 +190,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findNext"/>
          <cmd refid="findPrevious"/>
          <cmd refid="findFromSelection"/>
-         <cmd refid="replaceAndFind"/> <!-- need to add functionality -->
+         <cmd refid="replaceAndFind"/>
          <separator/>
          <cmd refid="findInFiles"/>
-         <cmd refid="replaceInFiles"/>
          <separator/>
          <cmd refid="checkSpelling"/>
          <cmd refid="wordCount"/>
@@ -745,7 +744,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="closeOtherSourceDocs" value="Cmd+Shift+Alt+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
-         <shortcut refid="replaceInFiles" value="Cmd+Shift+R"/>
       </shortcutgroup>
       <shortcutgroup name="Build">
          <shortcut refid="compilePDF" value="Ctrl+Shift+K" disableModes="sublime"/>
@@ -1508,10 +1506,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Find _in Files..."
         windowMode="main"/>
         
-   <cmd id="replaceInFiles"
-        menuLabel="Replace _in Files..."
-        windowMode="main"/>
-
    <cmd id="fold"
         menuLabel="_Collapse"/>
         
