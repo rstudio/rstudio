@@ -34,8 +34,8 @@ class TcpIpAsyncClientSsl
 {
 public:
    TcpIpAsyncClientSsl(boost::asio::io_service& ioService,
-                       std::string address,
-                       std::string port,
+                       const std::string& address,
+                       const std::string& port,
                        bool verify,
                        const std::string& certificateAuthority = std::string(),
                        const boost::posix_time::time_duration& connectionTimeout =
@@ -43,8 +43,8 @@ public:
                        const std::string& hostname = std::string() )
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
        sslContext_(boost::asio::ssl::context::sslv23_client),
-       address_(std::move(address)),
-       port_(std::move(port)),
+       address_(address),
+       port_(port),
        verify_(verify),
        certificateAuthority_(certificateAuthority),
        connectionTimeout_(connectionTimeout)
