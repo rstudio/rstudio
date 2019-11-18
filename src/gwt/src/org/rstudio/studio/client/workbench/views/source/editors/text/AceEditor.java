@@ -51,7 +51,9 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -322,6 +324,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
+      monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
@@ -4020,6 +4023,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().setTextInputAriaLabel(label);
    }
+   
+   public final void setScrollSpeed(double speed)
+   {
+      widget_.getEditor().setScrollSpeed(speed);
+   }
 
    private void fireLineWidgetsChanged()
    {
@@ -4126,6 +4134,7 @@ public class AceEditor implements DocDisplay,
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
+   private final AceEditorMonitor monitor_;
    private ScrollAnimator scrollAnimator_;
    private CompletionManager completionManager_;
    private ScopeTreeManager scopes_;

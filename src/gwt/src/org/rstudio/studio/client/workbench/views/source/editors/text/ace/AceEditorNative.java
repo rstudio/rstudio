@@ -640,6 +640,10 @@ public class AceEditorNative extends JavaScriptObject {
       this.setOption("cursorStyle", style);
    }-*/;
    
+   public final native void setScrollSpeed(double speed) /*-{
+      this.setOption("scrollSpeed", speed);
+   }-*/;
+   
    private static final native void initialize()
    /*-{
       // Remove the 'Return' keybinding associated with Emacs.
