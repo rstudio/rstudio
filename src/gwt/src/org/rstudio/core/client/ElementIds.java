@@ -21,19 +21,30 @@ import org.rstudio.core.client.regex.Pattern;
 
 public class ElementIds
 {
-   public static void assignElementId(Element ele, String id)
+   /**
+    * Return a unique ID based on examination of existing elements. Must be assigned
+    * immediately to an element in the DOM to ensure uniqueness.
+    * @param baseId
+    * @return
+    */
+   public static String getUniqueElementId(String baseId)
    {
-      String elementIdBase = ID_PREFIX + id;
+      String elementIdBase = getElementId(baseId);
       String elementId = elementIdBase;
       int counter = 0;
-      
+
       // ensure uniqueness; for example, if multiple modal dialogs are displayed, make sure
       // the OK button instances, etc., are uniquely identified
       while (DomUtils.getElementById(elementId) != null)
       {
          elementId = elementIdBase + "_" + counter++;
       }
-      ele.setId(elementId);
+     return elementId;
+   }
+
+   public static void assignElementId(Element ele, String id)
+   {
+      ele.setId(getUniqueElementId(id));
    }
 
    public static void assignElementId(Widget widget, String id)

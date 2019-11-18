@@ -55,9 +55,9 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          if (minimized)
             minimized_id = "_minimized";
 
-         // Assign a unique element ID based on the tab's title
-         ElementIds.assignElementId(layoutPanel.getElement(),
-               ElementIds.WORKBENCH_TAB + minimized_id + "_" + ElementIds.idSafeString(title));
+         // Determine a base element ID based on the tab's title; make available to be
+         // associated with actual tab element when ModuleTab is attached to the tab layout panel
+         tabId_ = ElementIds.WORKBENCH_TAB + minimized_id + "_" + ElementIds.idSafeString(title);
 
          HTML left = new HTML();
          left.setStylePrimaryName(styles.tabLayoutLeft());
@@ -143,8 +143,14 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          }
       }
 
+      public String getTabId()
+      {
+         return tabId_;
+      }
+
       private Image closeButton_;
       private ProgressSpinner busySpinner_;
+      private final String tabId_;
    }
 
    public ModuleTabLayoutPanel(final WindowFrame owner, String tabListName)
@@ -196,8 +202,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       add(child, text, asHtml, null);
    }
 
-   public void add(Widget child, String text, boolean asHtml, 
-                   ClickHandler closeHandler)
+   public void add(Widget child, String text, boolean asHtml, ClickHandler closeHandler)
    {
       add(child, text, asHtml, closeHandler, null);
    }
@@ -210,6 +215,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
       ModuleTab tab = new ModuleTab(text, styles_, closeHandler != null, false /*minimized*/);
       super.add(child, tab);
+      setTabId(child, ElementIds.getUniqueElementId(tab.getTabId()));
 
       if (closeHandler != null)
          tab.addCloseButtonClickHandler(closeHandler);

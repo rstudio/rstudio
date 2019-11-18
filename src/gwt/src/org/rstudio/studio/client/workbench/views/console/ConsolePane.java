@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -24,6 +25,7 @@ import com.google.inject.Provider;
 
 import java.util.Stack;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -65,6 +67,14 @@ public class ConsolePane extends WorkbenchPane
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
       mode_ = new Stack<>();
+
+      ElementIds.assignElementId(this, ElementIds.WORKBENCH_PANEL + "_console");
+
+      // technically this is only playing aria-tabpanel role when the console pane
+      // has tabs (e.g. at least one other pane is being shown, such as Terminal), but
+      // having it always marked with that role is fine
+      Roles.getTabpanelRole().set(this.getElement());
+      Roles.getTabpanelRole().setAriaLabelProperty(this.getElement(), "Console");
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
