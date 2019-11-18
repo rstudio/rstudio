@@ -130,7 +130,8 @@ public class FindResult extends JavaScriptObject
    {
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
-      if (!StringUtil.isNullOrEmpty(getErrors()))
+      if (getRegexPreviewIndicator() &&
+          !StringUtil.isNullOrEmpty(getErrors()))
       {
          out.appendHtmlConstant("<mark>");
          out.appendEscapedLines(getErrors());
