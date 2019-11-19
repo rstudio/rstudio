@@ -568,6 +568,16 @@ private:
 #endif
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
+
+         // test if you can open
+         int test = std::rename(currentFile_.c_str(),
+                                currentFile_.c_str());
+         if (test != 0)
+            addErrorMessage(pErrorMessage,
+                            "A terrible error has occurred",
+                            pReplaceMatchOn,
+                            pReplaceMatchOff,
+                            fileSuccess_);
       }
       else if (!fileSuccess_)
          addErrorMessage(pErrorMessage,
