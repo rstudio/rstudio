@@ -43,6 +43,10 @@ public class WindowEx extends JavaScriptObject
    protected WindowEx()
    {
    }
+   
+   public final native double getDevicePixelRatio() /*-{
+      return this.devicePixelRatio;
+   }-*/;
 
    public final native void focus() /*-{
       this.focus();
