@@ -334,8 +334,6 @@ public class FindOutputPresenter extends BasePresenter
             // toggle replace mode so matches get added to context
             view_.setReplaceMode(true);
 
-            view_.setStopReplaceButtonVisible(false);
-
             ArrayList<FindResult> results = event.getResults();
             int errorCount = 0;
             for (FindResult fr : results)
@@ -367,6 +365,7 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() == currentFindHandle_)
             {
+               view_.setStopReplaceButtonVisible(false);
                Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
             }
          }

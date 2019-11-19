@@ -260,12 +260,6 @@ public class FindOutputPane extends WorkbenchPane
       };
    }
 
-   private void toggleReplaceToolbar()
-   {
-      boolean isToolbarVisible =  secondaryToolbar_.isVisible();
-      setSecondaryToolbarVisible(!isToolbarVisible);
-   }
-
    private void fireSelectionCommitted()
    {
       ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
