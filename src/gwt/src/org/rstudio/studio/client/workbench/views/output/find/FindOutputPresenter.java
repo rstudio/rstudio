@@ -88,7 +88,7 @@ public class FindOutputPresenter extends BasePresenter
       boolean getRegexPreviewMode();
       boolean getReplaceMode();
       public void setRegexPreviewMode(boolean value);
-      public void toggleReplaceMode();
+      public void setReplaceMode(boolean value);
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
       boolean isReplaceRegex();
@@ -332,8 +332,7 @@ public class FindOutputPresenter extends BasePresenter
                return;
 
             // toggle replace mode so matches get added to context
-            if (view_.getReplaceMode())
-                view_.toggleReplaceMode();
+            view_.setReplaceMode(true);
 
             view_.setStopReplaceButtonVisible(false);
 
@@ -351,7 +350,7 @@ public class FindOutputPresenter extends BasePresenter
             dialogState_.updateErrorCount(errorCount);
 
             view_.addMatches(results);
-            view_.toggleReplaceMode();
+            view_.setReplaceMode(false);
             
             view_.ensureVisible(true);
             view_.disableReplace();
@@ -468,8 +467,7 @@ public class FindOutputPresenter extends BasePresenter
                filePatterns.push(pattern);
 
             // find result always starts with !replaceMode
-            if (view_.getReplaceMode())
-                view_.toggleReplaceMode();
+            view_.setReplaceMode(false);
 
             view_.disableReplace();
             server_.beginFind(input.getQuery(),

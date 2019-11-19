@@ -77,33 +77,47 @@ public class FindOutputPane extends WorkbenchPane
       stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
 
-      FindOutputResources resources = GWT.create(FindOutputResources.class);
-      viewReplaceButton_ = new ToolbarButton("Replace", "Replace",
-                                             resources.expandReplaceIcon());
-      toolbar.addRightWidget(viewReplaceButton_);
-      viewReplaceButton_.addClickHandler(new ClickHandler()
-      {
+      showFindButton_ = new LeftRightToggleButton("Find", "Replace", false);
+      showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
-            createDisplayPreview();
-            toggleReplaceToolbar();
-            toggleChevron();
-            if (replaceMode_ ||
-                !replaceTextBox_.getValue().isEmpty())
+            if (!replaceMode_)
             {
-               if (secondaryToolbar_.isVisible())
-               {
-                  toggleReplaceMode();
+               showFindButton_.setVisible(false);
+               showReplaceButton_.setVisible(true);
+               setReplaceMode(true);
+               setSecondaryToolbarVisible(true);
+               if (displayPreview_ == null)
+                  createDisplayPreview();
+               if (!replaceTextBox_.getValue().isEmpty())
                   displayPreview_.nudge();
-               }
-               else if (replaceMode_)
-                  toggleReplaceMode();
-               else if (!replaceTextBox_.getValue().isEmpty())
-                  addReplaceMatches(new String());
             }
          }
       });
+      toolbar.addRightWidget(showFindButton_);
+
+      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      showReplaceButton_.setVisible(false);
+      showReplaceButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (replaceMode_)
+            {
+               showFindButton_.setVisible(true);
+               showReplaceButton_.setVisible(false);
+               setSecondaryToolbarVisible(false);
+               if (!replaceTextBox_.getValue().isEmpty())
+               {
+                  setRegexPreviewMode(false);
+                  addReplaceMatches(new String());
+               }
+               setReplaceMode(false);
+            }
+         }
+      });
+      toolbar.addRightWidget(showReplaceButton_);
 
       return toolbar;
    }
@@ -237,8 +251,7 @@ public class FindOutputPane extends WorkbenchPane
          @Override
          protected void execute()
          {
-            if (!replaceMode_)
-               toggleReplaceMode();
+            setReplaceMode(true);
             if (regexCheckbox_.getValue())
                eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
             else
@@ -251,15 +264,6 @@ public class FindOutputPane extends WorkbenchPane
    {
       boolean isToolbarVisible =  secondaryToolbar_.isVisible();
       setSecondaryToolbarVisible(!isToolbarVisible);
-   }
-
-   private void toggleChevron()
-   {
-     FindOutputResources resources = GWT.create(FindOutputResources.class);
-     if (secondaryToolbar_.isVisible())
-        viewReplaceButton_.setLeftImage(resources.collapseReplaceIcon());
-     else
-        viewReplaceButton_.setLeftImage(resources.expandReplaceIcon());
    }
 
    private void fireSelectionCommitted()
@@ -276,17 +280,18 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public void toggleReplaceMode()
+   public void setReplaceMode(boolean value)
    {
-      replaceMode_ = !replaceMode_;
       FindOutputResources resources = GWT.create(FindOutputResources.class);
-      if (replaceMode_)
+      if (value)
          table_.addStyleName(resources.styles().findOutputReplace());
       else
       {
          table_.removeStyleName(resources.styles().findOutputReplace());
          addReplaceMatches(new String());
       }
+      // this needs to be done after addReplaceMatches is called
+      replaceMode_ = value;
    }
 
    @Override
@@ -554,7 +559,8 @@ public class FindOutputPane extends WorkbenchPane
    private int matchCount_;
 
    private SecondaryToolbar replaceToolbar_;
-   private ToolbarButton viewReplaceButton_;
+   private LeftRightToggleButton showFindButton_;
+   private LeftRightToggleButton showReplaceButton_;
    private boolean regexPreviewMode_;
    private boolean replaceMode_;
    private Label replaceLabel_;
