@@ -1078,7 +1078,7 @@ public class RCompletionManager implements CompletionManager
       // Don't auto complete if tab was pressed and tab completion was disabled.
       if (nativeEvent_ != null &&
               nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB &&
-              !userPrefs_.tabCompletion().getValue())
+              (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue()))
          return false;
       
       if (!input_.isSelectionCollapsed())
