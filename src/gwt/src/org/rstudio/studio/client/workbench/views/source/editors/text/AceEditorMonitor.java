@@ -51,7 +51,11 @@ public class AceEditorMonitor
       if (BrowseCap.isWindowsDesktop())
       {
          double ratio = WindowEx.get().getDevicePixelRatio();
-         editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
+         if (devicePixelRatio_ != ratio)
+         {
+            devicePixelRatio_ = ratio;
+            editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
+         }
       }
       
       return true;
@@ -76,6 +80,8 @@ public class AceEditorMonitor
  
    private boolean monitoring_ = false;
    private AceEditor editor_;
+   
+   private double devicePixelRatio_ = 1.0;
    
    private static final double ACE_EDITOR_DEFAULT_SCROLL_SPEED = 2.0;
    
