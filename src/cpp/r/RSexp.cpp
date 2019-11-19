@@ -922,8 +922,9 @@ SEXP createInteger(const core::json::Value& value, const std::string& type, Prot
    }
    catch(const boost::bad_numeric_cast& e)
    {
-      LOG_WARNING_MESSAGE("Failed to cast from " + type + " to int: " + e.what());
-      try {
+      LOG_DEBUG_MESSAGE("Failed to cast from " + type + " to int: " + e.what());
+      try
+      {
          double casted = boost::numeric_cast<double>(value.getValue<T>());
          return create(casted, pProtect);
       }
