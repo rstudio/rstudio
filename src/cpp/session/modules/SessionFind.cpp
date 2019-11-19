@@ -432,14 +432,15 @@ private:
    }
 
    void addErrorMessage(std::set<std::string>* pErrorSet,
-                        std::string contents,
+                        const std::string& contents,
                         json::Array* pReplaceMatchOn,
-                        json::Array* pReplaceMatchOff)
+                        json::Array* pReplaceMatchOff,
+                        bool& successFlag)
    {
-      fileSuccess_ = false;
       pErrorSet->insert(contents);
       pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
       pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+      successFlag = false;
    }
 
    void completeFileReplace()
@@ -556,31 +557,43 @@ private:
          bool writable;
          Error error = core::system::isFileWriteable(fullFile, &writable);
          if (error)
-            addErrorMessage(pErrorMessage, error.asString(), pReplaceMatchOn, pReplaceMatchOff);
+            addErrorMessage(pErrorMessage, error.asString(),
+                            pReplaceMatchOn, pReplaceMatchOff, fileSuccess_);
          else if (!writable)
             addErrorMessage(pErrorMessage,
                             "File does not have write permissions",
                             pReplaceMatchOn,
-                            pReplaceMatchOff);
+                            pReplaceMatchOff,
+                            fileSuccess_);
 #endif
          currentFile_ = fullFile.getAbsolutePath();
-         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in);
+         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
       }
+      else if (!fileSuccess_)
+         addErrorMessage(pErrorMessage,
+                         "Cannot perform replace",
+                         pReplaceMatchOn,
+                         pReplaceMatchOff,
+                         fileSuccess_);
 
-      if (!inputStream_.good()  || (!preview && !outputStream_.good()))
+      if (!fileSuccess_ || !inputStream_.good()  || (!preview && !outputStream_.good()))
       {
-         std::string contents("Could not open file " + currentFile_ + ".\n");
-         if (inputStream_.good()) 
-            contents = "Could not open temporary file to process " + currentFile_ + ".\n";
-         addErrorMessage(pErrorMessage, contents, pReplaceMatchOn, pReplaceMatchOff);
-         if (!preview)
-            progress -> addUnits(pMatchOn->getSize());
+         if (fileSuccess_)
+         {
+            std::string contents("Could not open file " + currentFile_ + ".\n");
+            if (inputStream_.good()) 
+               contents = "Could not open temporary file to process " + currentFile_ + ".\n";
+            addErrorMessage(pErrorMessage, contents, pReplaceMatchOn, pReplaceMatchOff, fileSuccess_);
+            if (!preview)
+               progress -> addUnits(pMatchOn->getSize());
+         }
       }
       else
       {
          std::string line;
          while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(inputStream_, line))
          {
+            bool lineSuccess = true;
             ++inputLineNum_;
             if (inputLineNum_ != lineNum)
             {
@@ -636,11 +649,12 @@ private:
                      }
                      catch (const std::runtime_error& e)
                      {
-                        addErrorMessage(pErrorMessage, e.what(), pReplaceMatchOn, pReplaceMatchOff);
+                        addErrorMessage(pErrorMessage, e.what(),
+                                        pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
                      }
                   }
                   // if previewing, we need to display the original and replacement text
-                  if (preview && fileSuccess_)
+                  if (preview && lineSuccess)
                   {
                      if (!findResults().regex())
                         replaceString.insert(0, *pSearch);
@@ -657,7 +671,7 @@ private:
                      json::Array tempMatchOn(*pReplaceMatchOn);
                      json::Array tempMatchOff(*pReplaceMatchOff);
                      int offset(replaceString.size() - matchSize);
-                     if (fileSuccess_)
+                     if (lineSuccess)
                      {
                         pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                         if (!preview)
@@ -684,7 +698,7 @@ private:
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
                      }
                   }
-                  else if (fileSuccess_)
+                  else if (lineSuccess)
                   {
                      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      if (!preview)
@@ -695,7 +709,7 @@ private:
                                                          gsl::narrow_cast<int>(replaceString.size() -
                                                                                matchSize)));
                   }
-                  if (fileSuccess_)
+                  if (lineSuccess)
                   {
                      if (findResults().regex() &&
                          !findResults().replaceRegex())
@@ -714,7 +728,8 @@ private:
                         }
                         catch (const std::runtime_error& e)
                         {
-                           addErrorMessage(pErrorMessage, e.what(), pReplaceMatchOn, pReplaceMatchOff);
+                           addErrorMessage(pErrorMessage, e.what(),
+                                           pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
                         }
                      }
                      else
@@ -726,7 +741,7 @@ private:
                      progress -> addUnit();
                   pos--;
                }
-               if (!preview && fileSuccess_)
+               if (!preview && lineSuccess)
                {
                   std::string encodedNewLine;
                   Error error = r::util::iconvstr(*pContent,
@@ -738,7 +753,8 @@ private:
                   encodedNewLine.insert(encodedNewLine.length(), *pLineRightContents);
 
                   if (error)
-                     addErrorMessage(pErrorMessage, error.asString(), pReplaceMatchOn, pReplaceMatchOff);
+                     addErrorMessage(pErrorMessage, error.asString(), 
+                                     pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
                   else
                   {
                      try
@@ -748,7 +764,8 @@ private:
                      }
                      catch (const std::ios_base::failure& e)
                      {
-                        addErrorMessage(pErrorMessage, e.code().message(), pReplaceMatchOn, pReplaceMatchOff);
+                        addErrorMessage(pErrorMessage, e.code().message(),
+                                        pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
                      }
                   }
                }
@@ -873,28 +890,8 @@ private:
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
-            if (errors.isEmpty())
-            {
-               for (std::string newError : errorMessage)
-                  errors.push_back(json::Value(newError));
-            }
-            else
-            {
-               for (std::string newError : errorMessage)
-               {
-                  bool found = false;
-                  for (json::Value value : errors)
-                  {
-                     if (newError.compare(value.getString()))
-                     {
-                        found = true;
-                        break;
-                     }
-                  }
-                  if (!found)
-                     errors.push_back(json::Value(newError));
-               }
-            }
+            for (std::string newError : errorMessage)
+               errors.push_back(json::Value(newError));
             recordsToProcess--;
          }
          if (recordsToProcess == 0 && !currentFile_.empty())

@@ -347,8 +347,8 @@ public class FindOutputPresenter extends BasePresenter
             }
             dialogState_.updateErrorCount(errorCount);
 
-            view_.addMatches(results);
             view_.setReplaceMode(false);
+            view_.addMatches(results);
             
             view_.ensureVisible(true);
             view_.disableReplace();

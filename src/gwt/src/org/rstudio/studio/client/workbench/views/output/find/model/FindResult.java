@@ -266,18 +266,28 @@ public class FindResult extends JavaScriptObject
    
          ArrayList<Pair<Boolean, Integer>> parts
                                          = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> failedParts =
+                                        new ArrayList<Pair<Boolean, Integer>>();
+
          while (onReplace.size() + offReplace.size() > 0)
          {
             int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
             int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
             if (onReplaceVal < 0 || offReplaceVal < 0)
             {
+
                int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
                int offVal = off.size() == 0 ? Integer.MAX_VALUE : off.get(0);
                if (onVal <= offVal)
+               {
+                  failedParts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
                   onReplace.remove(0);
+               }
                else
+               {
+                  failedParts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
                   offReplace.remove(0);
+               }
             }
             else if (onReplaceVal <= offReplaceVal)
                parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
@@ -288,6 +298,7 @@ public class FindResult extends JavaScriptObject
          String line = getLineValue();
          // Use a counter to ensure tags are balanced.
          int openEmTags = 0;
+         int openMarkTags = 0;
    
          for (int i = 0; i < line.length(); i++)
          {
@@ -304,6 +315,19 @@ public class FindResult extends JavaScriptObject
                   openEmTags--;
                }
             }
+            while (failedParts.size() > 0 && failedParts.get(0).second == i)
+            {
+               if (failedParts.remove(0).first)
+               {
+                  out.appendHtmlConstant("<mark>");
+                  openMarkTags++;
+               }
+               else if (openMarkTags < 0)
+               {
+                  out.appendHtmlConstant("</mark>");
+                  openMarkTags--;
+               }
+            }
             out.append(line.charAt(i));
          }
    
@@ -311,6 +335,11 @@ public class FindResult extends JavaScriptObject
          {
             openEmTags--;
             out.appendHtmlConstant("</em>");
+         }
+         while (openMarkTags > 0)
+         {
+            openMarkTags--;
+            out.appendHtmlConstant("</mark>");
          }
       }
 
