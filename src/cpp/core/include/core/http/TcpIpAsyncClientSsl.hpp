@@ -46,7 +46,7 @@ public:
                           boost::posix_time::time_duration(boost::posix_time::pos_infin),
                        const std::string& hostname = std::string() )
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
-       sslContext_(boost::asio::ssl::context::sslv23_client),
+       sslContext_(ioService, boost::asio::ssl::context::sslv23_client),
        address_(address),
        port_(port),
        verify_(verify),
