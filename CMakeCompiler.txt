@@ -53,6 +53,11 @@ if(MSVC)
   # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
 
+  # embed debug information into the generated objects
+  # (otherwise we can run into annoying PDB errors during compilation)
+  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+
   # ensure that we're using linker flags compatible with
   # the version of Boost that will be linked in
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
