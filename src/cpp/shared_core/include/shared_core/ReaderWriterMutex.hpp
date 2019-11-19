@@ -170,7 +170,8 @@ private:
    catch (...)                                                                               \
    {                                                                                         \
       if (tryLog)                                                                            \
-         log::logErrorMessage("Unknown exception while trying to acquire lock.");            \
+         log::logErrorMessage("Unknown exception while trying to acquire lock.",             \
+                              ERROR_LOCATION);                                               \
    }                                                                                         \
 
 
