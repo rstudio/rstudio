@@ -23,6 +23,8 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -43,6 +45,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -104,8 +107,12 @@ public class FindOutputPresenter extends BasePresenter
       ProgressBar getProgress();
    }
 
+   public interface Binder extends CommandBinder<Commands, FindOutputPresenter> {}
+
    @Inject
    public FindOutputPresenter(Display view,
+                              Binder binder,
+                              Commands commands,
                               EventBus events,
                               FindInFilesServerOperations server,
                               final FileTypeRegistry ftr,
@@ -114,6 +121,8 @@ public class FindOutputPresenter extends BasePresenter
    {
       super(view);
       view_ = view;
+      commands_ = commands;
+      binder.bind(commands, this);
       events_ = events;
       server_ = server;
       session_ = session;
@@ -571,6 +580,14 @@ public class FindOutputPresenter extends BasePresenter
       }
    }
 
+   @Handler
+   public void onActivateFindInFiles()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private String currentFindHandle_;
 
    private FindInFilesDialog.State dialogState_;
@@ -579,7 +596,8 @@ public class FindOutputPresenter extends BasePresenter
    private final FindInFilesServerOperations server_;
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
-   private EventBus events_;
+   private final Commands commands_;
+   private EventBus events_; // !!! should this be final
 
    private static final String GROUP_FIND_IN_FILES = "find-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";

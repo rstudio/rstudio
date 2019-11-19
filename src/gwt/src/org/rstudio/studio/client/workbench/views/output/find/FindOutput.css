@@ -77,6 +77,12 @@
    color: #66A;
 }
 
+.findOutput mark {
+   font-weight: bold;
+   background-color: #A81900;
+   color: white;
+}
+
 .findOutputReplace strong {
    font-weight: bold;
    background-color: #A81900;

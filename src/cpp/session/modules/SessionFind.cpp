@@ -556,7 +556,7 @@ private:
          // make sure we have write permissions
          int writable = std::rename(currentFile_.c_str(),
                                 currentFile_.c_str());
-         if (test != 0)
+         if (writable != 0)
             addErrorMessage(pErrorMessage,
                             "File does not have required permissions.",
                             pReplaceMatchOn,
