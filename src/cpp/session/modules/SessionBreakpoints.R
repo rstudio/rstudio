@@ -18,6 +18,8 @@
 .rs.addFunction("getEnvironmentOfFunction", function(
    objName, fileName, packageName)
 {
+   objName <- .rs.unquote(objName)
+   
    # assume fileName is UTF-8 encoded unless it's already got a labelled
    # encoding
    if (Encoding(fileName) == "unknown") {
@@ -269,6 +271,7 @@
    envir,
    steps)
 {
+   functionName <- .rs.unquote(functionName)
    if (length(steps) == 0 || nchar(steps) == 0)
    {
       # Restore the function to its original state. Note that trace/untrace
@@ -326,17 +329,19 @@
 .rs.addFunction("getUntracedFunction", function(
    functionName, fileName, packageName)
 {
+   functionName <- .rs.unquote(functionName)
    envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
    if (is.null(envir))
    {
       return(NULL)
    }
-   .rs.untraced(get(functionName, mode="function", envir=envir))
+   .rs.untraced(get(functionName, mode = "function", envir = envir))
 })
 
 .rs.addFunction("getFunctionSourceRefs", function(
    functionName, fileName, packageName)
 {
+   functionName <- .rs.unquote(functionName)
    fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    if (is.null(fun))
    {
@@ -348,6 +353,7 @@
 .rs.addFunction("getFunctionSourceCode", function(
    functionName, fileName, packageName)
 {
+   functionName <- .rs.unquote(functionName)
    paste(capture.output(
       .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
       collapse="\n")
@@ -522,3 +528,20 @@
 .rs.addFunction("haveAdvancedSteppingCommands", function() {
    getRversion() >= "3.1" && .rs.haveRequiredRSvnRev(63400)
 })
+
+.rs.addFunction("unquote", function(strings)
+{
+   tryCatch(
+      unquoteImpl(strings),
+      error = function(e) strings
+   )
+})
+
+.rs.addFunction("unquoteImpl", function(strings)
+{
+   if (!is.character(strings))
+      return(strings)
+   parsed <- parse(text = strings)
+   vapply(parsed, as.character, FUN.VALUE = character(1))
+})
+
