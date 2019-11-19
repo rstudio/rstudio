@@ -340,7 +340,7 @@
 })
 
 .rs.addFunction("odbcBundleOdbcinstPathUseHome", function() {
-   normalizePath("~/odbcinst.ini", mustWork = FALSE)
+   normalizePath("~/.odbcinst.ini", mustWork = FALSE)
 })
 
 .rs.addFunction("odbcBundleOdbcinstPath", function() {
