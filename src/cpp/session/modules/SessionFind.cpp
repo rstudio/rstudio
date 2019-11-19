@@ -28,9 +28,6 @@
 #include <core/FileLock.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -553,28 +550,15 @@ private:
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
-#ifndef _WIN32
-         bool writable;
-         Error error = core::system::isFileWriteable(fullFile, &writable);
-         if (error)
-            addErrorMessage(pErrorMessage, error.asString(),
-                            pReplaceMatchOn, pReplaceMatchOff, fileSuccess_);
-         else if (!writable)
-            addErrorMessage(pErrorMessage,
-                            "File does not have write permissions",
-                            pReplaceMatchOn,
-                            pReplaceMatchOff,
-                            fileSuccess_);
-#endif
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
 
-         // test if you can open
-         int test = std::rename(currentFile_.c_str(),
+         // make sure we have write permissions
+         int writable = std::rename(currentFile_.c_str(),
                                 currentFile_.c_str());
          if (test != 0)
             addErrorMessage(pErrorMessage,
-                            "A terrible error has occurred",
+                            "File does not have required permissions.",
                             pReplaceMatchOn,
                             pReplaceMatchOff,
                             fileSuccess_);
