@@ -28,7 +28,9 @@
 #include <core/FileLock.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
+#ifndef _WIN32
 #include <core/system/FileMode.hpp>
+#endif
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -550,6 +552,7 @@ private:
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
+#ifndef _WIN32
          bool writable;
          Error error = core::system::isFileWriteable(fullFile, &writable);
          if (error)
@@ -559,6 +562,7 @@ private:
                             "File does not have write permissions",
                             pReplaceMatchOn,
                             pReplaceMatchOff);
+#endif
          currentFile_ = fullFile.getAbsolutePath();
          inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in);
       }
