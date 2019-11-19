@@ -286,6 +286,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomEnvironment"/>
             <cmd refid="layoutZoomViewer"/>
             <cmd refid="layoutZoomVcs"/>
+            <cmd refid="layoutZoomTutorial"/>
             <cmd refid="layoutZoomBuild"/>
             <cmd refid="layoutZoomConnections"/>
          </menu>
@@ -869,6 +870,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
          <shortcut refid="layoutZoomConnections" value="Ctrl+Shift+F5"/>
+         <shortcut refid="layoutZoomTutorial" value="Ctrl+Shift+F6"/>
       </shortcutgroup>
          
    </shortcuts>
@@ -1375,6 +1377,12 @@ well as menu structures (for main menu and popup menus).
         checkable="true"
         label="Zoom VCS"
         menuLabel="Zoom VCS"
+        windowMode="main"/>
+        
+   <cmd id="layoutZoomTutorial"
+        checkable="true"
+        label="Zoom Tutorial"
+        menuLabel="Zoom Tutorial"
         windowMode="main"/>
         
    <cmd id="layoutZoomBuild"
