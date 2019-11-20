@@ -528,6 +528,14 @@ public class FindOutputPresenter extends BasePresenter
       server_.clearFindResults(new VoidServerRequestCallback());
    }
 
+   @Handler
+   public void onActivateFindInFiles()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private void updateSearchLabel(String query, String path, boolean regex)
    {
       if (regex)
@@ -583,16 +591,7 @@ public class FindOutputPresenter extends BasePresenter
       }
    }
 
-   @Handler
-   public void onActivateFindInFiles()
-   {
-      // Ensure that console pane is not minimized
-      commands_.activateConsolePane().execute();
-      view_.bringToFront();
-   }
-
    private String currentFindHandle_;
-
    private FindInFilesDialog.State dialogState_;
 
    private final Display view_;
@@ -600,7 +599,7 @@ public class FindOutputPresenter extends BasePresenter
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
    private final Commands commands_;
-   private EventBus events_; // !!! should this be final
+   private EventBus events_;
 
    private static final String GROUP_FIND_IN_FILES = "find-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";

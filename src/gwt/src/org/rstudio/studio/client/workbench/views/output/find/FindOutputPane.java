@@ -244,29 +244,6 @@ public class FindOutputPane extends WorkbenchPane
       return container_;
    }
 
-   private void createDisplayPreview()
-   {
-      displayPreview_ = new DebouncedCommand(500)
-      {
-         @Override
-         protected void execute()
-         {
-            setReplaceMode(true);
-            if (regexCheckbox_.getValue())
-               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
-            else
-               addReplaceMatches(replaceTextBox_.getValue());
-         }
-      };
-   }
-
-   private void fireSelectionCommitted()
-   {
-      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
-      if (values.size() == 1)
-         SelectionCommitEvent.fire(this, values.get(0));
-   }
-
    @Override
    public void setRegexPreviewMode(boolean value)
    {
@@ -438,25 +415,6 @@ public class FindOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
 
-   private class StatusPanel extends HorizontalCenterPanel
-   {
-      public StatusPanel()
-      {
-         super(new Label(), 50);
-         label_ = (Label)getWidget();
-         
-      }
-      
-      public void setStatusText(String status)
-      {
-         label_.setText(status);
-      }
-      
-      
-      private final Label label_;
-      
-      }
-   
    @Override
    public boolean getRegexPreviewMode()
    {
@@ -538,6 +496,45 @@ public class FindOutputPane extends WorkbenchPane
    {
       if (replaceProgress_.isVisible())
          replaceProgress_.setVisible(false);
+   }
+   
+   private void createDisplayPreview()
+   {
+      displayPreview_ = new DebouncedCommand(500)
+      {
+         @Override
+         protected void execute()
+         {
+            setReplaceMode(true);
+            if (regexCheckbox_.getValue())
+               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            else
+               addReplaceMatches(replaceTextBox_.getValue());
+         }
+      };
+   }
+
+   private void fireSelectionCommitted()
+   {
+      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
+      if (values.size() == 1)
+         SelectionCommitEvent.fire(this, values.get(0));
+   }
+
+   private class StatusPanel extends HorizontalCenterPanel
+   {
+      public StatusPanel()
+      {
+         super(new Label(), 50);
+         label_ = (Label)getWidget();
+      }
+      
+      public void setStatusText(String status)
+      {
+         label_.setText(status);
+      }
+      
+      private final Label label_;
    }
    
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
