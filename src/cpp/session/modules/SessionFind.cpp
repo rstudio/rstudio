@@ -169,14 +169,14 @@ public:
       return replaceRegex_;
    }
 
-   std::string* searchPattern()
+   std::string searchPattern()
    {
-      return &input_;
+      return input_;
    }
 
-   std::string* replacePattern()
+   std::string replacePattern()
    {
-      return &replacePattern_;
+      return replacePattern_;
    }
 
    LocalProgress* replaceProgress()
@@ -185,13 +185,13 @@ public:
    }
 
    bool addResult(const std::string& handle,
-                         const json::Array& files,
-                         const json::Array& lineNums,
-                         const json::Array& contents,
-                         const json::Array& matchOns,
-                         const json::Array& matchOffs,
-                         const json::Array& replaceMatchOns,
-                         const json::Array& replaceMatchOffs)
+                  const json::Array& files,
+                  const json::Array& lineNums,
+                  const json::Array& contents,
+                  const json::Array& matchOns,
+                  const json::Array& matchOffs,
+                  const json::Array& replaceMatchOns,
+                  const json::Array& replaceMatchOffs)
    {
       if (handle_.empty())
          handle_ = handle;
@@ -213,7 +213,8 @@ public:
    void onFindBegin(const std::string& handle,
                     const std::string& input,
                     const std::string& path,
-                    bool asRegex, bool ignoreCase)
+                    const bool& asRegex,
+                    const bool& ignoreCase)
    {
       handle_ = handle;
       input_ = input;
@@ -230,9 +231,10 @@ public:
    }
 
    void onReplaceBegin(const std::string& handle,
-                       bool previewFlag,
+                       const bool& previewFlag,
                        const std::string& replacePattern,
-                       bool asRegex, LocalProgress& progress)
+                       const bool& asRegex,
+                       LocalProgress* progress)
    {
       if (handle_ == handle)
       {
@@ -241,7 +243,7 @@ public:
          replacePattern_ = replacePattern;
          replaceRegex_ = asRegex;
          running_ = true;
-         replaceProgress_ = &progress;
+         replaceProgress_ = progress;
       }
    }
 
@@ -428,16 +430,16 @@ private:
       return decoded;
    }
 
-   void addErrorMessage(std::set<std::string>* pErrorSet,
-                        const std::string& contents,
+   void addErrorMessage(const std::string& contents,
+                        std::set<std::string>* pErrorSet,
                         json::Array* pReplaceMatchOn,
                         json::Array* pReplaceMatchOff,
-                        bool& successFlag)
+                        bool* pSuccessFlag)
    {
       pErrorSet->insert(contents);
       pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
       pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-      successFlag = false;
+      *pSuccessFlag = false;
    }
 
    void completeFileReplace()
@@ -517,22 +519,22 @@ private:
       *pContent = decodedLine;
    }
 
-   Error processReplace(std::string* file,
-                        int lineNum,
+   Error processReplace(const std::string& file,
+                        const int& lineNum,
+                        const json::Array& pMatchOn,
+                        const json::Array& pMatchOff,
+                        const std::string& searchPattern, // !!! we really don't need to pass this
+                        const std::string& replacePattern,
+                        const std::string& lineLeftContents,
+                        const std::string& lineRightContents,
                         std::string* pContent,
-                        json::Array* pMatchOn,
-                        json::Array* pMatchOff,
                         json::Array* pReplaceMatchOn,
                         json::Array* pReplaceMatchOff,
-                        std::string* pSearch,
-                        std::string* pReplace,
                         std::set<std::string>* pErrorMessage,
-                        LocalProgress* progress,
-                        std::string* pLineLeftContents,
-                        std::string* pLineRightContents)
+                        LocalProgress* pProgress)
    {
       bool preview = findResults().preview();
-      FilePath fullFile = FilePath::resolveAliasedPath(*file, session::options().userHomePath());
+      FilePath fullFile = FilePath::resolveAliasedPath(file, session::options().userHomePath());
       
       bool first = false; // is this the first time we're processing this file?
       if (currentFile_.empty() ||
@@ -557,18 +559,18 @@ private:
          int writable = std::rename(currentFile_.c_str(),
                                 currentFile_.c_str());
          if (writable != 0)
-            addErrorMessage(pErrorMessage,
-                            "File does not have required permissions.",
+            addErrorMessage("File does not have required permissions.",
+                            pErrorMessage,
                             pReplaceMatchOn,
                             pReplaceMatchOff,
-                            fileSuccess_);
+                            &fileSuccess_);
       }
       else if (!fileSuccess_)
-         addErrorMessage(pErrorMessage,
-                         "Cannot perform replace",
+         addErrorMessage("Cannot perform replace",
+                         pErrorMessage,
                          pReplaceMatchOn,
                          pReplaceMatchOff,
-                         fileSuccess_);
+                         &fileSuccess_);
 
       if (!fileSuccess_ || !inputStream_.good()  || (!preview && !outputStream_.good()))
       {
@@ -577,9 +579,9 @@ private:
             std::string contents("Could not open file " + currentFile_ + ".\n");
             if (inputStream_.good()) 
                contents = "Could not open temporary file to process " + currentFile_ + ".\n";
-            addErrorMessage(pErrorMessage, contents, pReplaceMatchOn, pReplaceMatchOff, fileSuccess_);
+            addErrorMessage(contents, pErrorMessage, pReplaceMatchOn, pReplaceMatchOff, &fileSuccess_);
             if (!preview)
-               progress -> addUnits(pMatchOn->getSize());
+               pProgress -> addUnits(pMatchOn.getSize());
          }
       }
       else
@@ -599,33 +601,33 @@ private:
             }
             else
             {
-               int pos = pMatchOn->getSize() - 1;
+               int pos = pMatchOn.getSize() - 1;
                std::string newLine;
                while (pos > -1)
                {
-                  const size_t matchOn = static_cast<std::size_t>(pMatchOn -> getValueAt(pos).getInt());
-                  const size_t matchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+                  const size_t matchOn = static_cast<std::size_t>(pMatchOn.getValueAt(pos).getInt());
+                  const size_t matchOff = static_cast<std::size_t>(pMatchOff.getValueAt(pos).getInt());
                   const size_t matchSize = matchOff - matchOn;
-                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff -> getValueAt(pos).getInt());
+                  size_t replaceMatchOff = static_cast<std::size_t>(pMatchOff.getValueAt(pos).getInt());
                
-                  std::string replaceString(*pReplace);
+                  std::string replaceString(replacePattern);
                   // for regexes, determine what the replace will look like before creating the string
                   // that will be written to file so that previews are handled correctly
                   if (findResults().replaceRegex())
                   {
                      try
                      {
-                        boost::regex searchAsRegex(*pSearch, boost::regex::grep);
-                        boost::regex replaceAsRegex(*pReplace, boost::regex::grep);
+                        boost::regex searchAsRegex(searchPattern, boost::regex::grep);
+                        boost::regex replaceAsRegex(replacePattern, boost::regex::grep);
                         if (findResults().ignoreCase())
                         {
                            {
-                              boost::regex tempRegex(*pSearch,
+                              boost::regex tempRegex(searchPattern,
                                                      boost::regex::grep | boost::regex::icase);
                               searchAsRegex = tempRegex;
                            }
                            {
-                              boost::regex tempRegex(*pReplace,
+                              boost::regex tempRegex(replacePattern,
                                                      boost::regex::grep | boost::regex::icase);
                               replaceAsRegex = tempRegex;
                            }
@@ -643,15 +645,15 @@ private:
                      }
                      catch (const std::runtime_error& e)
                      {
-                        addErrorMessage(pErrorMessage, e.what(),
-                                        pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
+                        addErrorMessage(e.what(), pErrorMessage, 
+                                        pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
                      }
                   }
                   // if previewing, we need to display the original and replacement text
                   if (preview && lineSuccess)
                   {
                      if (!findResults().regex())
-                        replaceString.insert(0, *pSearch);
+                        replaceString.insert(0, searchPattern);
                      else
                         replaceString.insert(0, pContent->substr(matchOn, matchSize));
                   }
@@ -710,10 +712,10 @@ private:
                      {
                         try
                         {
-                           boost::regex searchAsRegex(*pSearch, boost::regex::grep);
+                           boost::regex searchAsRegex(searchPattern, boost::regex::grep);
                            if (findResults().ignoreCase())
                            {
-                              boost::regex tempRegex(*pSearch, boost::regex::grep | boost::regex::icase);
+                              boost::regex tempRegex(searchPattern, boost::regex::grep | boost::regex::icase);
                               searchAsRegex = tempRegex;
                            }
                            *pContent = boost::regex_replace(*pContent,
@@ -722,8 +724,8 @@ private:
                         }
                         catch (const std::runtime_error& e)
                         {
-                           addErrorMessage(pErrorMessage, e.what(),
-                                           pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
+                           addErrorMessage(e.what(), pErrorMessage, 
+                                           pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
                         }
                      }
                      else
@@ -732,7 +734,7 @@ private:
                      pContent->append("\n");
                   }
                   if (!preview)
-                     progress -> addUnit();
+                     pProgress->addUnit();
                   pos--;
                }
                if (!preview && lineSuccess)
@@ -741,14 +743,14 @@ private:
                   Error error = r::util::iconvstr(*pContent,
                                                   "UTF-8",
                                                   encoding_,
-                                                  false, // !!! do we really want false here?
+                                                  false,
                                                   &encodedNewLine);
-                  encodedNewLine.insert(0, *pLineLeftContents);
-                  encodedNewLine.insert(encodedNewLine.length(), *pLineRightContents);
+                  encodedNewLine.insert(0, lineLeftContents);
+                  encodedNewLine.insert(encodedNewLine.length(), lineRightContents);
 
                   if (error)
-                     addErrorMessage(pErrorMessage, error.asString(), 
-                                     pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
+                     addErrorMessage(error.asString(), pErrorMessage,
+                                     pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
                   else
                   {
                      try
@@ -758,8 +760,8 @@ private:
                      }
                      catch (const std::ios_base::failure& e)
                      {
-                        addErrorMessage(pErrorMessage, e.code().message(),
-                                        pReplaceMatchOn, pReplaceMatchOff, lineSuccess);
+                        addErrorMessage(e.code().message(), pErrorMessage,
+                                        pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
                      }
                   }
                }
@@ -846,29 +848,19 @@ private:
 
             if (findResults().replace() &&
                 !(findResults().preview() &&
-                  findResults().replacePattern()->empty()))
+                  findResults().replacePattern().empty()))
             {
                if (fullLineContentsDecoded.empty())
-                  processReplace(&file, lineNum, &lineContents,
-                                 &matchOn, &matchOff,
-                                 &replaceMatchOn, &replaceMatchOff,
-                                 findResults().searchPattern(),
-                                 findResults().replacePattern(),
-                                 &errorMessage,
-                                 findResults().replaceProgress(),
-                                 &lineLeftTrim, &lineRightTrim);
-               else
-               {
-                  processReplace(&file, lineNum, &fullLineContentsDecoded,
-                                 &matchOn, &matchOff,
-                                 &replaceMatchOn, &replaceMatchOff,
-                                 findResults().searchPattern(),
-                                 findResults().replacePattern(),
-                                 &errorMessage,
-                                 findResults().replaceProgress(),
-                                 &lineLeftTrim, &lineRightTrim);
                   lineContents = fullLineContentsDecoded;
-               }
+               processReplace(file, lineNum,
+                              matchOn, matchOff,
+                              findResults().searchPattern(),
+                              findResults().replacePattern(),
+                              lineLeftTrim, lineRightTrim,
+                              &lineContents,
+                              &replaceMatchOn, &replaceMatchOff,
+                              &errorMessage,
+                              findResults().replaceProgress());
                if (lineContents.size() > 300 &&
                    !lineContents.substr(300).compare("..."))
                {
@@ -972,10 +964,13 @@ private:
 
 } // namespace
 
-core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
-      bool previewFlag, bool replaceFlag, std::string searchString, std::string replacePattern,
-      bool asRegex, bool ignoreCase, bool replaceRegex, bool useGitIgnore,
-      std::string directory, json::Array filePatterns, LocalProgress* progress)
+core::Error retrieveFindReplaceResponse(
+      const bool& previewFlag, const bool& replaceFlag,
+      const std::string& searchPattern, const std::string& replacePattern,
+      const bool& asRegex, const bool& ignoreCase, const bool& replaceRegex, const bool& usGitIgnore,
+      const std::string& directory, const json::Array& filePatterns,
+      LocalProgress* progress,
+      json::JsonRpcResponse* pResponse)
 {
    if (previewFlag && !replaceFlag)
       LOG_ERROR_MESSAGE("replaceFlag must be true when previewFlag is true");
@@ -1004,7 +999,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
                           projects::projectContext().defaultEncoding() :
                           prefs::userPrefs().defaultEncoding();
    std::string encodedString;
-   error = r::util::iconvstr(searchString,
+   error = r::util::iconvstr(searchPattern,
                              "UTF-8",
                              encoding,
                              false,
@@ -1012,7 +1007,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
    if (error)
    {
       LOG_ERROR(error);
-      encodedString = searchString;
+      encodedString = searchPattern;
    }
 
    *pStream << encodedString << std::endl;
@@ -1066,7 +1061,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
       return error;
 
    findResults().onFindBegin(ptrGrepOp->handle(),
-                             searchString,
+                             searchPattern,
                              directory,
                              asRegex,
                              ignoreCase);
@@ -1075,7 +1070,7 @@ core::Error retrieveFindReplaceResponse(json::JsonRpcResponse* pResponse,
                                    previewFlag,
                                    replacePattern,
                                    replaceRegex,
-                                   *progress);
+                                   progress);
    pResponse->setResult(ptrGrepOp->handle());
 
    return Success();
@@ -1098,10 +1093,10 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = retrieveFindReplaceResponse(pResponse,
+   error = retrieveFindReplaceResponse(
       false, false, searchString, std::string(),
       asRegex, ignoreCase, false, false,
-      directory, filePatterns, nullptr);
+      directory, filePatterns, nullptr, pResponse);
 
    if (error)
       return error;
@@ -1152,10 +1147,10 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (!replaceRegex)
       LOG_ERROR_MESSAGE("Replace Regex must be true during preview");
 
-   error = retrieveFindReplaceResponse(pResponse,
+   error = retrieveFindReplaceResponse(
       true, true, searchString, replacePattern,
       asRegex, ignoreCase, replaceRegex, useGitIgnore,
-      directory, filePatterns, nullptr);
+      directory, filePatterns, nullptr, pResponse);
 
    if (error)
       return error;
@@ -1164,7 +1159,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 }
 
 core::Error completeReplace(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+                            json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
    std::string replacePattern;
@@ -1189,10 +1184,10 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
 
    LocalProgress* progress = new LocalProgress(originalFindCount, 5);
 
-   error = retrieveFindReplaceResponse(pResponse,
-         false, true, searchString, replacePattern,
-         asRegex, ignoreCase, replaceRegex, useGitIgnore,
-         directory, filePatterns, progress);
+   error = retrieveFindReplaceResponse(
+              false, true, searchString, replacePattern,
+              asRegex, ignoreCase, replaceRegex, useGitIgnore,
+              directory, filePatterns, progress, pResponse);
 
    if (error)
       return error;
