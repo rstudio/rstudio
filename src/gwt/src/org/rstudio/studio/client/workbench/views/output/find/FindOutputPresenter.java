@@ -358,6 +358,7 @@ public class FindOutputPresenter extends BasePresenter
 
             view_.setReplaceMode(false);
             view_.addMatches(results);
+            view_.setReplaceMode(true);
             
             view_.ensureVisible(true);
             view_.disableReplace();
