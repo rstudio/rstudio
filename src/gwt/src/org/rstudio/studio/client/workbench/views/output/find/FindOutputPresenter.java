@@ -194,7 +194,8 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() == currentFindHandle_)
             {
-               currentFindHandle_ = null;
+               if (!view_.getReplaceMode())
+                  currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
             }
@@ -578,6 +579,7 @@ public class FindOutputPresenter extends BasePresenter
                              new VoidServerRequestCallback());
          currentFindHandle_ = null;
          view_.setStopReplaceButtonVisible(false);
+         view_.hideProgress();
       }
    }
 
