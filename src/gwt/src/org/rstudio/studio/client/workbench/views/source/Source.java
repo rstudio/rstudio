@@ -402,7 +402,7 @@ public class Source implements InsertSourceHandler,
       commands.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
 
       // If tab has been disabled for auto complete by the user, set the "shortcut" to ctrl-space instead.
-      if (userPrefs_.tabCompletion().getValue())
+      if (userPrefs_.tabCompletion().getValue() && !userPrefs_.tabKeyMoveFocus().getValue())
          commands.codeCompletion().setShortcut(new KeyboardShortcut("Tab", KeyCodes.KEY_TAB, KeyboardShortcut.NONE));
       else
       {
