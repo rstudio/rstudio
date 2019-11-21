@@ -21,7 +21,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -182,7 +181,6 @@ public class FindOutputPresenter extends BasePresenter
             view_.addMatches(event.getResults());
             // replace may have been previously disabled
             view_.enableReplace();
-            Debug.logToConsole("Find Result Event with " + dialogState_.getResultsCount() + " results.");
          }
       });
 
@@ -324,7 +322,6 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceProgress(ReplaceProgressEvent event)
          {
-            Debug.logToConsole("Replace progress event " + event.units() + " units out of " + event.max());
             view_.showProgress();
             view_.getProgress().setProgress(event.units(), event.max());
             if (event.units() >= event.max())
@@ -337,7 +334,6 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onReplaceResult(ReplaceResultEvent event)
          {
-            Debug.logToConsole("Replace Result Event with " + event.getResults().size() + " Results");
             if (event.getHandle() != currentFindHandle_)
                return;
 
@@ -376,8 +372,8 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() == currentFindHandle_)
             {
+               view_.hideProgress();
                view_.setStopReplaceButtonVisible(false);
-               Debug.logToConsole("Replace Operation Ended with "+ dialogState_.getErrorCount() + " errors.");
             }
          }
       });
