@@ -437,8 +437,8 @@ private:
                         bool* pSuccessFlag)
    {
       pErrorSet->insert(contents);
-      pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
-      pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(-1)));
+      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(-1)));
+      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(-1)));
       *pSuccessFlag = false;
    }
 
@@ -455,6 +455,9 @@ private:
             while (std::getline(inputStream_, line))
             {
                line.append("\n");
+#ifdef _WIN32
+                  string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
+#endif
                outputStream_.write(line.c_str(), line.size());
             }
             outputStream_.flush();
@@ -575,7 +578,7 @@ private:
       if (!fileSuccess_ || !inputStream_.good()  || (!preview && !outputStream_.good()))
       {
          if (!preview)
-            pProgress -> addUnits(pMatchOn.getSize());
+            pProgress->addUnits(pMatchOn.getSize());
          if (fileSuccess_)
          {
             std::string contents("Could not open file " + currentFile_ + ".\n");
@@ -596,6 +599,9 @@ private:
                if (!preview)
                {
                   line.append("\n");
+#ifdef _WIN32
+                  string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
+#endif
                   outputStream_.write(line.c_str(), line.size());
                }
             }
@@ -662,19 +668,19 @@ private:
                   if (pReplaceMatchOn->getSize() > 0 &&
                       matchSize != replaceString.size())
                   {
-                     pReplaceMatchOn -> clear();
-                     pReplaceMatchOff -> clear();
+                     pReplaceMatchOn->clear();
+                     pReplaceMatchOff->clear();
                      json::Array tempMatchOn(*pReplaceMatchOn);
                      json::Array tempMatchOff(*pReplaceMatchOff);
                      int offset(replaceString.size() - matchSize);
                      if (lineSuccess)
                      {
-                        pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                        pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                         if (!preview)
-                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                           pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size())));
                         else
-                           pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                           pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
                                                                                matchSize)));
                      }
@@ -683,25 +689,25 @@ private:
                         // make sure negative values (errors) don't become positve
                         if (match.getInt() < 0)
                            match = json::Value(match.getInt() - offset);
-                        pReplaceMatchOn -> push_back(json::Value(
+                        pReplaceMatchOn->push_back(json::Value(
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
                      }
                      for (json::Value match : tempMatchOff)
                      {
                         if (match.getInt() < 0)
                            match = json::Value(match.getInt() - offset);
-                        pReplaceMatchOff -> push_back(json::Value(
+                        pReplaceMatchOff->push_back(json::Value(
                                                      gsl::narrow_cast<int>(match.getInt() + offset)));
                      }
                   }
                   else if (lineSuccess)
                   {
-                     pReplaceMatchOn -> push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      if (!preview)
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                        pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                       gsl::narrow_cast<int>(replaceString.size())));
                      else
-                        pReplaceMatchOff -> push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
+                        pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(matchOn) +
                                                          gsl::narrow_cast<int>(replaceString.size() -
                                                                                matchSize)));
                   }
@@ -732,6 +738,9 @@ private:
                         pContent =
                            &pContent->replace(matchOn, matchSize, replaceString);
                      pContent->append("\n");
+#ifdef _WIN32
+                     string_utils::convertLineEndings(pContent, string_utils::LineEndingWindows);
+#endif
                   }
                   if (!preview)
                      pProgress->addUnit();
