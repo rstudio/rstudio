@@ -353,7 +353,7 @@ bool save(const FilePath& statePath,
    }
 
    // save environment variables
-   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars, envVarSaveBlacklist));
+   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars), envVarSaveBlacklist);
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);
