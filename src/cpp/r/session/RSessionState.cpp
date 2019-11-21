@@ -1,7 +1,7 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #include <r/session/RSessionState.hpp>
 
 #include <algorithm>
+#include <unordered_set>
 
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
@@ -124,7 +125,7 @@ Error saveRVersion(const FilePath& filePath)
    return Success();
 }
 
-Error saveEnvironmentVars(const FilePath& envFile)
+Error saveEnvironmentVars(const FilePath& envFile, const std::string& envVarBlacklist)
 {
    // remove then create settings file
    Error error = envFile.removeIfExists();
@@ -135,13 +136,18 @@ Error saveEnvironmentVars(const FilePath& envFile)
    if (error)
       return error;
 
+   // build set of blacklisted environment variables
+   std::vector<std::string> envBlacklist(core::algorithm::split(envVarBlacklist, ":"));
+   std::unordered_set<std::string> blacklist(envBlacklist.begin(), envBlacklist.end());
+
    // get environment and write it to the file
    core::system::Options env;
    core::system::environment(&env);
    envSettings.beginUpdate();
    BOOST_FOREACH(const core::system::Option& var, env)
    {
-      envSettings.set(var.first, var.second);
+      if (blacklist.count(var.first) == 0)
+         envSettings.set(var.first, var.second);
    }
    envSettings.endUpdate();
 
@@ -323,7 +329,8 @@ void saveWorkingContext(const FilePath& statePath,
 bool save(const FilePath& statePath,
           bool serverMode,
           bool excludePackages,
-          bool disableSaveCompression)
+          bool disableSaveCompression,
+          const std::string& envVarSaveBlacklist)
 {
    // initialize context
    Settings settings;
@@ -346,7 +353,7 @@ bool save(const FilePath& statePath,
    }
 
    // save environment variables
-   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars));
+   error = saveEnvironmentVars(statePath.complete(kEnvironmentVars, envVarSaveBlacklist));
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);

@@ -64,7 +64,7 @@
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kTimeoutSuspendSessionOption      "session-timeout-suspend"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
-
+#define kSessionEnvVarSaveBlacklist       "session-env-var-save-blacklist"
 #define kVerifySignaturesSessionOption    "verify-signatures"
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
