@@ -82,6 +82,7 @@
 * RStudio Server runtime files are stored in `/var/run`, or another configurable location, instead of `/tmp` (#4666)
 * Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
 * Enable copying images to the clipboard from the Plots pane (#3142)
+* Session configuration option to customize environment variables saved when session suspends (#5769)
 
 ### Bugfixes
 
