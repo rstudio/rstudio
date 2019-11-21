@@ -574,14 +574,14 @@ private:
 
       if (!fileSuccess_ || !inputStream_.good()  || (!preview && !outputStream_.good()))
       {
+         if (!preview)
+            pProgress -> addUnits(pMatchOn.getSize());
          if (fileSuccess_)
          {
             std::string contents("Could not open file " + currentFile_ + ".\n");
             if (inputStream_.good()) 
                contents = "Could not open temporary file to process " + currentFile_ + ".\n";
             addErrorMessage(contents, pErrorMessage, pReplaceMatchOn, pReplaceMatchOff, &fileSuccess_);
-            if (!preview)
-               pProgress -> addUnits(pMatchOn.getSize());
          }
       }
       else
@@ -850,7 +850,7 @@ private:
                 !(findResults().preview() &&
                   findResults().replacePattern().empty()))
             {
-               if (fullLineContentsDecoded.empty())
+               if (!fullLineContentsDecoded.empty())
                   lineContents = fullLineContentsDecoded;
                processReplace(file, lineNum,
                               matchOn, matchOff,
