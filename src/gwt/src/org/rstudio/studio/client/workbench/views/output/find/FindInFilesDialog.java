@@ -56,12 +56,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                              String path,
                                              boolean regex,
                                              boolean caseSensitive,
+                                             boolean excludeIgnore,
                                              JsArrayString filePatterns) /*-{
          return {
             query: query,
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
+            excludeIgnore: excludeIgnore,
             filePatterns: filePatterns,
             resultsCount: 0,
             errorCount: 0,
@@ -85,6 +87,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       public native final boolean isCaseSensitive() /*-{
          return this.caseSensitive;
+      }-*/;
+
+      public native final boolean excludeIgnore() /*-{
+         return this.excludeIgnore;
       }-*/;
 
       public final String[] getFilePatterns()
@@ -192,6 +198,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                getEffectivePath().getPath(),
                                checkboxRegex_.getValue(),
                                checkboxCaseSensitive_.getValue(),
+                               checkboxIgnore_.getValue(),
                                JsUtil.toJsArrayString(list));
    }
 
@@ -248,6 +255,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxRegex_.setValue(dialogState.isRegex());
+      checkboxIgnore_.setValue(dialogState.excludeIgnore());
       dirChooser_.setText(dialogState.getPath());
 
       String filePatterns = StringUtil.join(
@@ -273,6 +281,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    LabeledTextBox txtSearchPattern_;
    @UiField
    CheckBox checkboxRegex_;
+   @UiField
+   CheckBox checkboxIgnore_;
    @UiField
    CheckBox checkboxCaseSensitive_;
    @UiField(provided = true)
