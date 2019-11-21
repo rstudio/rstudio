@@ -257,7 +257,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "whether to mark cookies as secure")
       ("directory-view-whitelist",
        value<std::string>(&directoryViewWhitelist_)->default_value(""),
-       "list of directories where files can be viewed, separated by :");
+       "list of directories where files can be viewed, separated by :")
+      (kSessionEnvVarSaveBlacklist,
+       value<std::string>(&envVarSaveBlacklist_)->default_value(""),
+       "list of environment variables not saved on session suspend, separated by :");
 
    // allow options
    options_description allow("allow");
