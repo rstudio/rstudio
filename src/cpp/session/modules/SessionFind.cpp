@@ -523,7 +523,7 @@ private:
                         const int& lineNum,
                         const json::Array& pMatchOn,
                         const json::Array& pMatchOff,
-                        const std::string& searchPattern, // !!! we really don't need to pass this
+                        const std::string& searchPattern,
                         const std::string& replacePattern,
                         const std::string& lineLeftContents,
                         const std::string& lineRightContents,
