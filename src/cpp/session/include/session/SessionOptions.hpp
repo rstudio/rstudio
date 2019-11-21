@@ -600,6 +600,11 @@ public:
       return sessionRsaPrivateKey_;
    }
 
+   std::string envVarSaveBlacklist() const
+   {
+      return envVarSaveBlacklist_;
+   }
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -672,6 +677,7 @@ private:
    int webSocketHandshakeTimeoutMs_;
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
+   std::string envVarSaveBlacklist_;
 
    // r
    std::string coreRSourcePath_;

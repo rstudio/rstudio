@@ -252,8 +252,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "WebSocket protocol handshake timeout (ms)")
       (kPackageOutputInPackageFolder,
        value<bool>(&packageOutputToPackageFolder_)->default_value(false),
-       "devtools check and devtools build output to package project folder");
-
+       "devtools check and devtools build output to package project folder")
+      (kSessionEnvVarSaveBlacklist,
+       value<std::string>(&envVarSaveBlacklist_)->default_value(""),
+       "list of environment variables not saved on session suspend, separated by :");
    // allow options
    options_description allow("allow");
    allow.add_options()
