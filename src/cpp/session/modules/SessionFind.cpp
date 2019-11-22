@@ -456,7 +456,7 @@ private:
             {
                line.append("\n");
 #ifdef _WIN32
-                  string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
+                  string_utils::convertLineEndings(&line, string_utils::LineEndingWindows);
 #endif
                outputStream_->write(line.c_str(), line.size());
             }
@@ -604,7 +604,7 @@ private:
                {
                   line.append("\n");
 #ifdef _WIN32
-                  string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
+                  string_utils::convertLineEndings(&line, string_utils::LineEndingWindows);
 #endif
                   outputStream_->write(line.c_str(), line.size());
                }
