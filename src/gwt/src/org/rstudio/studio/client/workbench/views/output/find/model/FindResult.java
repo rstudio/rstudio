@@ -323,13 +323,13 @@ public class FindResult extends JavaScriptObject
    }
 
    private native final JsArrayInteger getArray(String property) /*-{
-      if (this == null)
+      if (this === null)
          return [];
       return this[property] || [];
    }-*/;
 
   private native final JsArrayString getStringArray(String property) /*-{
-     if (this == null)
+     if (this === null)
         return [];
      return this[property] || [];
   }-*/;

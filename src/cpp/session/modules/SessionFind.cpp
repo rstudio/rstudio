@@ -125,7 +125,7 @@ public:
       replace_(false),
       preview_(false),
       replaceRegex_(false),
-      replaceProgress_(nullptr)
+      pReplaceProgress_(nullptr)
    {
    }
 
@@ -181,7 +181,7 @@ public:
 
    LocalProgress* replaceProgress()
    {
-      return replaceProgress_;
+      return pReplaceProgress_;
    }
 
    bool addResult(const std::string& handle,
@@ -213,8 +213,8 @@ public:
    void onFindBegin(const std::string& handle,
                     const std::string& input,
                     const std::string& path,
-                    const bool& asRegex,
-                    const bool& ignoreCase)
+                    bool asRegex,
+                    bool ignoreCase)
    {
       handle_ = handle;
       input_ = input;
@@ -231,10 +231,10 @@ public:
    }
 
    void onReplaceBegin(const std::string& handle,
-                       const bool& previewFlag,
+                       bool previewFlag,
                        const std::string& replacePattern,
-                       const bool& asRegex,
-                       LocalProgress* progress)
+                       bool asRegex,
+                       LocalProgress* pProgress)
    {
       if (handle_ == handle)
       {
@@ -243,7 +243,7 @@ public:
          replacePattern_ = replacePattern;
          replaceRegex_ = asRegex;
          running_ = true;
-         replaceProgress_ = progress;
+         pReplaceProgress_ = pProgress;
       }
    }
 
@@ -255,7 +255,7 @@ public:
          replace_ = false;
          preview_ = false;
          replacePattern_.clear();
-         replaceProgress_ = nullptr;
+         pReplaceProgress_ = nullptr;
       }
    }
 
@@ -272,7 +272,7 @@ public:
       replacePattern_.clear();
       replaceMatchOns_.clear();
       replaceMatchOffs_.clear();
-      replaceProgress_ = nullptr;
+      pReplaceProgress_ = nullptr;
    }
 
    Error readFromJson(const json::Object& asJson)
@@ -352,7 +352,7 @@ private:
    std::string replacePattern_;
    json::Array replaceMatchOns_;
    json::Array replaceMatchOffs_;
-   LocalProgress* replaceProgress_;
+   LocalProgress* pReplaceProgress_;
 };
 
 FindInFilesState& findResults()
@@ -448,21 +448,21 @@ private:
       {
          if (!currentFile_.empty() &&
              !tempReplaceFile_.getAbsolutePath().empty() && 
-             inputStream_.good() &&
-             outputStream_.good())
+             inputStream_->good() &&
+             outputStream_->good())
          {
             std::string line;
-            while (std::getline(inputStream_, line))
+            while (std::getline(*inputStream_, line))
             {
                line.append("\n");
 #ifdef _WIN32
                   string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
 #endif
-               outputStream_.write(line.c_str(), line.size());
+               outputStream_->write(line.c_str(), line.size());
             }
-            outputStream_.flush();
-            inputStream_.close();
-            outputStream_.close();
+            outputStream_->flush();
+            inputStream_.reset();
+            outputStream_.reset();
             std::rename(tempReplaceFile_.getAbsolutePath().c_str(),
                         currentFile_.c_str());
          }
@@ -537,7 +537,7 @@ private:
                         LocalProgress* pProgress)
    {
       bool preview = findResults().preview();
-      FilePath fullFile = FilePath::resolveAliasedPath(file, session::options().userHomePath());
+      FilePath fullFile = module_context::resolveAliasedPath(file);
       
       bool first = false; // is this the first time we're processing this file?
       if (currentFile_.empty() ||
@@ -548,19 +548,31 @@ private:
             if (!currentFile_.empty())
                completeFileReplace();
             tempReplaceFile_ = module_context::tempFile("replace", "txt");
-            outputStream_.open(tempReplaceFile_.getAbsolutePath(), std::fstream::out);
+            Error error = tempReplaceFile_.openForWrite(outputStream_);
+            if (error)
+               addErrorMessage(error.asString(),
+                               pErrorMessage,
+                               pReplaceMatchOn,
+                               pReplaceMatchOff,
+                               &fileSuccess_);
          }
          if (!currentFile_.empty()) // this happens in preview mode
-            inputStream_.close();
+            inputStream_.reset();
          fileSuccess_ = true;
          first = true;
          inputLineNum_ = 0;
          currentFile_ = fullFile.getAbsolutePath();
-         inputStream_.open(fullFile.getAbsolutePath().c_str(), std::fstream::in | std::fstream::out);
+         Error error = fullFile.openForRead(inputStream_);
+         if (error)
+            addErrorMessage(error.asString(),
+                            pErrorMessage,
+                            pReplaceMatchOn,
+                            pReplaceMatchOff,
+                            &fileSuccess_);
 
          // make sure we have write permissions
          int writable = std::rename(currentFile_.c_str(),
-                                currentFile_.c_str());
+                                    currentFile_.c_str());
          if (writable != 0)
             addErrorMessage("File does not have required permissions.",
                             pErrorMessage,
@@ -575,22 +587,15 @@ private:
                          pReplaceMatchOff,
                          &fileSuccess_);
 
-      if (!fileSuccess_ || !inputStream_.good()  || (!preview && !outputStream_.good()))
+      if (!fileSuccess_)
       {
          if (!preview)
             pProgress->addUnits(pMatchOn.getSize());
-         if (fileSuccess_)
-         {
-            std::string contents("Could not open file " + currentFile_ + ".\n");
-            if (inputStream_.good()) 
-               contents = "Could not open temporary file to process " + currentFile_ + ".\n";
-            addErrorMessage(contents, pErrorMessage, pReplaceMatchOn, pReplaceMatchOff, &fileSuccess_);
-         }
       }
       else
       {
          std::string line;
-         while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(inputStream_, line))
+         while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(*inputStream_, line))
          {
             bool lineSuccess = true;
             ++inputLineNum_;
@@ -602,7 +607,7 @@ private:
 #ifdef _WIN32
                   string_utils::convertLineEndings(line, string_utils::LineEndingWindows);
 #endif
-                  outputStream_.write(line.c_str(), line.size());
+                  outputStream_->write(line.c_str(), line.size());
                }
             }
             else
@@ -764,8 +769,8 @@ private:
                   {
                      try
                      {
-                        outputStream_.write(encodedNewLine.c_str(), encodedNewLine.size());
-                        outputStream_.flush();
+                        outputStream_->write(encodedNewLine.c_str(), encodedNewLine.size());
+                        outputStream_->flush();
                      }
                      catch (const std::ios_base::failure& e)
                      {
@@ -965,8 +970,8 @@ private:
    std::string handle_;
    std::string currentFile_;
    FilePath tempReplaceFile_;
-   std::fstream inputStream_;
-   std::fstream outputStream_;
+   std::shared_ptr<std::istream> inputStream_;
+   std::shared_ptr<std::ostream> outputStream_;
    int inputLineNum_;
    bool fileSuccess_;
 };
@@ -974,11 +979,11 @@ private:
 } // namespace
 
 core::Error retrieveFindReplaceResponse(
-      const bool& previewFlag, const bool& replaceFlag,
+      bool previewFlag, bool replaceFlag,
       const std::string& searchPattern, const std::string& replacePattern,
-      const bool& asRegex, const bool& ignoreCase, const bool& replaceRegex, const bool& usGitIgnore,
+      bool asRegex, bool ignoreCase, bool replaceRegex, bool useGitIgnore,
       const std::string& directory, const json::Array& filePatterns,
-      LocalProgress* progress,
+      LocalProgress* pProgress,
       json::JsonRpcResponse* pResponse)
 {
    if (previewFlag && !replaceFlag)
@@ -1079,7 +1084,7 @@ core::Error retrieveFindReplaceResponse(
                                    previewFlag,
                                    replacePattern,
                                    replaceRegex,
-                                   progress);
+                                   pProgress);
    pResponse->setResult(ptrGrepOp->handle());
 
    return Success();
@@ -1107,10 +1112,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       asRegex, ignoreCase, false, false,
       directory, filePatterns, nullptr, pResponse);
 
-   if (error)
-      return error;
-
-   return Success();
+   return error;
 }
 
 core::Error stopFind(const json::JsonRpcRequest& request,
@@ -1123,7 +1125,7 @@ core::Error stopFind(const json::JsonRpcRequest& request,
 
    findResults().onFindEnd(handle);
 
-   return Success();
+   return error;
 }
 
 core::Error clearFindResults(const json::JsonRpcRequest& request,
@@ -1161,10 +1163,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
       asRegex, ignoreCase, replaceRegex, useGitIgnore,
       directory, filePatterns, nullptr, pResponse);
 
-   if (error)
-      return error;
-
-   return Success();
+   return error;
 }
 
 core::Error completeReplace(const json::JsonRpcRequest& request,
@@ -1191,17 +1190,13 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   LocalProgress* progress = new LocalProgress(originalFindCount, 5);
+   LocalProgress* pProgress = new LocalProgress(originalFindCount, 5);
 
    error = retrieveFindReplaceResponse(
               false, true, searchString, replacePattern,
               asRegex, ignoreCase, replaceRegex, useGitIgnore,
-              directory, filePatterns, progress, pResponse);
-
-   if (error)
-      return error;
-
-   return Success();
+              directory, filePatterns, pProgress, pResponse);
+   return error;
 }
 
 core::Error stopReplace(const json::JsonRpcRequest& request,
@@ -1214,7 +1209,7 @@ core::Error stopReplace(const json::JsonRpcRequest& request,
 
    findResults().onReplaceEnd(handle);
 
-   return Success();
+   return error;
 }
 
 void onSuspend(core::Settings* pSettings)
