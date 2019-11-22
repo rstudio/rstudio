@@ -463,8 +463,8 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
-            std::rename(tempReplaceFile_.getAbsolutePath().c_str(),
-                        currentFile_.c_str());
+            Error error = tempReplaceFile_.move(FilePath(currentFile_));
+            // !!! add in proper error handling
          }
       }
    }
@@ -571,10 +571,9 @@ private:
                             &fileSuccess_);
 
          // make sure we have write permissions
-         int writable = std::rename(currentFile_.c_str(),
-                                    currentFile_.c_str());
-         if (writable != 0)
-            addErrorMessage("File does not have required permissions.",
+         error = fullFile.move(fullFile, FilePath::MoveDirect);
+         if (error)
+            addErrorMessage(error.asString(),
                             pErrorMessage,
                             pReplaceMatchOn,
                             pReplaceMatchOff,
