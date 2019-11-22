@@ -1090,11 +1090,16 @@ bool addTinytexToPathIfNecessary()
    if (!module_context::findProgram("pdflatex").isEmpty())
       return false;
    
-   std::string binDir;
-   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDir);
+   SEXP binDirSEXP;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDirSEXP, &protect);
    if (error)
       LOG_ERROR(error);
    
+   if (!r::sexp::isString(binDirSEXP))
+      return false;
+   
+   std::string binDir = r::sexp::asString(binDirSEXP);
    FilePath binPath = module_context::resolveAliasedPath(binDir);
    if (!binPath.exists())
       return false;
