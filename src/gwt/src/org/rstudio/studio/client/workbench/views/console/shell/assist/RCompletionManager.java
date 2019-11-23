@@ -433,7 +433,7 @@ public class RCompletionManager implements CompletionManager
             }
          }
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
-                  modifier == KeyboardShortcut.SHIFT)
+                  modifier == KeyboardShortcut.SHIFT && !userPrefs_.tabKeyMoveFocus().getValue())
          {
             return snippets_.attemptSnippetInsertion(true);
          }

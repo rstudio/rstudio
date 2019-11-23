@@ -51,17 +51,13 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -207,7 +203,7 @@ public class AceEditor implements DocDisplay,
             return true;
 
          // Tab was pressed. Don't attempt auto-complete if the user opted out of tab completions.
-         if (!userPrefs_.tabCompletion().getValue())
+         if (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue())
             return false;
 
          // If the user opted in to multi-line tab completion, there is no case where we don't attempt auto-complete.
