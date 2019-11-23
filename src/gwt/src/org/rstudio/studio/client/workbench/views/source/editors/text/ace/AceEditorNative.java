@@ -650,7 +650,7 @@ public class AceEditorNative extends JavaScriptObject {
          this.commands.bindKey("Shift+Tab", null);
       } else {
          this.commands.bindKey("Tab", "indent");
-         this.commands.bindKey("Shift+Tab", "unindent");
+         this.commands.bindKey("Shift+Tab", "outdent");
       }
    }-*/;
 
