@@ -106,6 +106,7 @@ public:
    virtual core::Error createLayers() = 0;
    virtual int userLayer() = 0;
    virtual int clientChangedEvent() = 0;
+   void destroyLayers();
 
    // Signal emitted when preferences change; includes the layer name and value name
    RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onChanged;
