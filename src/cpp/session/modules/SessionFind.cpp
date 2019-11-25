@@ -816,15 +816,14 @@ private:
             LineInfo lineInfo;
             lineInfo.encodedContents = match[3];
             lineInfo.decodedPreview = match[3];
-            std::string lineContents = match[3];
-            boost::algorithm::trim(lineContents);
+            lineInfo.decodedContents = match[3];
 
             boost::algorithm::trim(lineInfo.decodedPreview);
-            if (lineInfo.encodedContents != lineInfo.decodedContents)
+            if (lineInfo.encodedContents != lineInfo.decodedPreview)
             {
-               size_t pos = lineInfo.encodedContents.find(lineInfo.decodedContents);
+               size_t pos = lineInfo.encodedContents.find(lineInfo.decodedPreview);
                lineInfo.leftContents = lineInfo.encodedContents.substr(0,pos);
-               lineInfo.rightContents = lineInfo.encodedContents.substr(pos + lineInfo.decodedContents.length());
+               lineInfo.rightContents = lineInfo.encodedContents.substr(pos + lineInfo.decodedPreview.length());
             }
 
             json::Array matchOn, matchOff;
