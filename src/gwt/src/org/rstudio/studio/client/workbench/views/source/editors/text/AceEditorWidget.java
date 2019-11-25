@@ -299,11 +299,6 @@ public class AceEditorWidget extends Composite
                }
             }));
 
-      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
-      {
-         editor_.setTabMovesFocus(movesFocus);
-      }));
-
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -467,6 +462,22 @@ public class AceEditorWidget extends Composite
    protected void onLoad()
    {
       super.onLoad();
+
+      // rarely used accessibility feature to allow tabbing out of text editor instead
+      // of indenting/outdenting
+      if (uiPrefs_.tabKeyMoveFocus().getValue())
+      {
+         editor_.setTabMovesFocus(true);
+         tabMovesFocus_ = true;
+      }
+      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
+      {
+         if (tabMovesFocus_ != movesFocus)
+         {
+            editor_.setTabMovesFocus(movesFocus);
+            tabMovesFocus_ = movesFocus;
+         }
+      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -1202,6 +1213,7 @@ public class AceEditorWidget extends Composite
    private ArrayList<ChunkRowExecState> lineExecState_ = new ArrayList<>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private static boolean hasEditHandlers_ = false;
+   private boolean tabMovesFocus_ = false;
 
    // injected
    private EventBus events_;
