@@ -682,7 +682,7 @@ private:
                         std::string endOfString = pContent->substr(matchOff).c_str();
                         size_t replaceMatchOff;
                         if (endOfString.empty())
-                           replaceMatchOff = temp.length() -1;
+                           replaceMatchOff = temp.length();
                         else
                            replaceMatchOff = temp.find(endOfString);
                         replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
@@ -718,7 +718,7 @@ private:
                         if (!preview)
                            offset = replaceString.size();
                         else
-                           offset = -matchSize;
+                           offset = replaceString.size() - matchSize;
                         addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), offset, pReplaceMatchOff);
                      }
                      addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
@@ -731,7 +731,7 @@ private:
                      if (!preview)
                         offset = replaceString.size();
                      else
-                        offset = -matchSize;
+                        offset = replaceString.size() - matchSize;
                      addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), offset, pReplaceMatchOff);
                   }
                   if (lineSuccess)
