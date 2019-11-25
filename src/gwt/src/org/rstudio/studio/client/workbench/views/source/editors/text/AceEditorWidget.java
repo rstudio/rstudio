@@ -463,8 +463,7 @@ public class AceEditorWidget extends Composite
    {
       super.onLoad();
 
-      // rarely used accessibility feature to allow tabbing out of text editor instead
-      // of indenting/outdenting
+      // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
       if (uiPrefs_.tabKeyMoveFocus().getValue())
       {
          editor_.setTabMovesFocus(true);
