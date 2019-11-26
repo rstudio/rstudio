@@ -81,7 +81,7 @@ public class PaneManager
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
    
    public enum Tab {
-      History, Files, Plots, Packages, Help, VCS, Build, Connections,
+      History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
       Presentation, Environment, Viewer, Source, Console
    }
    
@@ -225,6 +225,7 @@ public class PaneManager
                       @Named("Jobs") final WorkbenchTab jobsTab,
                       @Named("Launcher") final WorkbenchTab launcherJobsTab,
                       @Named("Data Output") final WorkbenchTab dataTab,
+                      @Named("Tutorial") final WorkbenchTab tutorialTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader)
@@ -258,6 +259,7 @@ public class PaneManager
       optionsLoader_ = optionsLoader;
       testsTab_ = testsTab;
       dataTab_ = dataTab;
+      tutorialTab_ = tutorialTab;
       
       binder.bind(commands, this);
       
@@ -812,6 +814,8 @@ public class PaneManager
             return helpTab_;
          case VCS:
             return vcsTab_;
+         case Tutorial:
+            return tutorialTab_;
          case Build:
             return buildTab_;
          case Presentation:
@@ -833,7 +837,7 @@ public class PaneManager
    {
       return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, buildTab_, presentationTab_,
+                                  vcsTab_, tutorialTab_, buildTab_, presentationTab_,
                                   environmentTab_, viewerTab_,
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
@@ -1073,6 +1077,8 @@ public class PaneManager
          return Tab.Help;
       if (name.equalsIgnoreCase("vcs"))
          return Tab.VCS;
+      if (name.equalsIgnoreCase("tutorial"))
+         return Tab.Tutorial;
       if (name.equalsIgnoreCase("build"))
          return Tab.Build;
       if (name.equalsIgnoreCase("presentation"))
@@ -1108,6 +1114,7 @@ public class PaneManager
       case Plots:        return commands_.layoutZoomPlots();
       case Source:       return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
+      case Tutorial:     return commands_.layoutZoomTutorial();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
       default:
@@ -1155,6 +1162,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomPlots());
       commands.add(commands_.layoutZoomSource());
       commands.add(commands_.layoutZoomVcs());
+      commands.add(commands_.layoutZoomTutorial());
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       
@@ -1200,6 +1208,7 @@ public class PaneManager
    private final WorkbenchTab jobsTab_;
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
+   private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;

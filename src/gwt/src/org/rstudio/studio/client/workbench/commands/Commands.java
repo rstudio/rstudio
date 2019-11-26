@@ -269,6 +269,9 @@ public abstract class
    public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
    
+   // Tutorial
+   public abstract AppCommand layoutZoomTutorial();
+   
    // PDF
    public abstract AppCommand showPdfExternal();
    
