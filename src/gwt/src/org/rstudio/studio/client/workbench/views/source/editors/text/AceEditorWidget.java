@@ -469,14 +469,17 @@ public class AceEditorWidget extends Composite
          editor_.setTabMovesFocus(true);
          tabMovesFocus_ = true;
       }
-      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
-      {
-         if (tabMovesFocus_ != movesFocus)
-         {
-            editor_.setTabMovesFocus(movesFocus);
-            tabMovesFocus_ = movesFocus;
-         }
-      }));
+
+      // TODO GARY
+      // TEMPORARY REMOVAL OF CODE CAUSING EXCEPTION AT STARTUP
+//      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
+//      {
+//         if (tabMovesFocus_ != movesFocus)
+//         {
+//            editor_.setTabMovesFocus(movesFocus);
+//            tabMovesFocus_ = movesFocus;
+//         }
+//      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
