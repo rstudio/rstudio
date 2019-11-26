@@ -3,7 +3,7 @@
 #
 # prune-mathjax
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -37,8 +37,6 @@ rm -rf $MATHJAX_DIR/docs
 rm -rf $MATHJAX_DIR/test
 rm -rf $MATHJAX_DIR/unpacked
 
-rm -f $MATHJAX_DIR/config/Accessible-full.js
-rm -f $MATHJAX_DIR/config/Accessible.js
 rm -f $MATHJAX_DIR/config/AM_HTMLorMML-full.js
 rm -f $MATHJAX_DIR/config/AM_HTMLorMML.js
 rm -f $MATHJAX_DIR/config/default.js
@@ -55,6 +53,28 @@ rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/svg
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/png
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/eot
 rm -rf $MATHJAX_DIR/fonts/HTML-CSS/TeX/woff
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/STIX-Web
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/Latin-Modern
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/Asana-Math
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/Gyre-Pagella
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/Gyre-Termes
+rm -rf $MATHJAX_DIR/fonts/HTML-CSS/Neo-Euler
 
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/STIX-Web
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/Latin-Modern
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/Asana-Math
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/Gyre-Pagella
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/Gyre-Termes
+rm -rf $MATHJAX_DIR/jax/output/HTML-CSS/fonts/Neo-Euler
 
+rm -rf $MATHJAX_DIR/jax/output/SVG
+rm -rf $MATHJAX_DIR/jax/output/NativeMML
+
+rm -f $MATHJAX_DIR/latest.js
+rm -f $MATHJAX_DIR/CONTRIBUTING.md
+rm -f $MATHJAX_DIR/bower.json
+rm -f $MATHJAX_DIR/composer.json
+rm -f $MATHJAX_DIR/package.json
+rm -f $MATHJAX_DIR/.npmignore
+rm -f $MATHJAX_DIR/.travis.yml
 
