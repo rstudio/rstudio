@@ -63,7 +63,7 @@
 
 /**
  * @brief Macro which implements the deleter for the class's private implementation. This macro must be used after the
- *        implentation of the Impl struct in the definition file.
+ *        implementation of the Impl struct in the definition file.
  *
  * @param in_owningClass    The name of the class which owns the private implementation (e.g. Error).
  */
