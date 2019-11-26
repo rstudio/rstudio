@@ -1,7 +1,7 @@
 /*
  * AceEditorWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,8 +51,8 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -298,8 +298,7 @@ public class AceEditorWidget extends Composite
                   fireEvent(new AceSelectionChangedEvent());
                }
             }));
-      
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -419,9 +418,10 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events, UserPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -462,6 +462,21 @@ public class AceEditorWidget extends Composite
    protected void onLoad()
    {
       super.onLoad();
+
+      // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
+      if (uiPrefs_.tabKeyMoveFocus().getValue())
+      {
+         editor_.setTabMovesFocus(true);
+         tabMovesFocus_ = true;
+      }
+      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
+      {
+         if (tabMovesFocus_ != movesFocus)
+         {
+            editor_.setTabMovesFocus(movesFocus);
+            tabMovesFocus_ = movesFocus;
+         }
+      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -1192,15 +1207,14 @@ public class AceEditorWidget extends Composite
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private ArrayList<AnchoredAceAnnotation> annotations_ =
-         new ArrayList<AnchoredAceAnnotation>();
-   private ArrayList<ChunkRowExecState> lineExecState_ =
-         new ArrayList<ChunkRowExecState>();
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
+   private ArrayList<AnchoredAceAnnotation> annotations_ = new ArrayList<>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = new ArrayList<>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
-   
-   private EventBus events_;
-   private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
    private static boolean hasEditHandlers_ = false;
+   private boolean tabMovesFocus_ = false;
+
+   // injected
+   private EventBus events_;
+   private UserPrefs uiPrefs_;
 }

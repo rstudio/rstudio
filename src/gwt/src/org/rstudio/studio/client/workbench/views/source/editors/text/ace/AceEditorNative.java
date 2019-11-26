@@ -643,7 +643,17 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void setScrollSpeed(double speed) /*-{
       this.setOption("scrollSpeed", speed);
    }-*/;
-   
+
+   public final native void setTabMovesFocus(boolean movesFocus) /*-{
+      if (movesFocus) {
+         this.commands.bindKey("Tab", null);
+         this.commands.bindKey("Shift+Tab", null);
+      } else {
+         this.commands.bindKey("Tab", "indent");
+         this.commands.bindKey("Shift+Tab", "outdent");
+      }
+   }-*/;
+
    private static final native void initialize()
    /*-{
       // Remove the 'Return' keybinding associated with Emacs.
@@ -658,8 +668,8 @@ public class AceEditorNative extends JavaScriptObject {
          delete bindings["return"];
       }
    }-*/;
-   
+
    static { initialize(); }
-   
+
    private static boolean uiPrefsSynced_ = false;
 }

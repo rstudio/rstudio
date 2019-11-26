@@ -502,6 +502,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <menu label="Acc_essibility">
             <cmd refid="toggleScreenReaderSupport"/>
+            <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
             <cmd refid="showAccessibilityOptions"/>
          </menu>
@@ -828,6 +829,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
+         <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -3512,5 +3514,10 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showAccessibilityOptions"
         menuLabel="Accessibility _Options..."
+        windowMode="main"/>
+
+   <cmd id="toggleTabKeyMovesFocus"
+        menuLabel="_Tab Key Always Moves Focus"
+        checkable="true"
         windowMode="main"/>
 </commands>

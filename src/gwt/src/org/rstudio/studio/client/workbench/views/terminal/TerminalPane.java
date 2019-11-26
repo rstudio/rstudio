@@ -323,6 +323,7 @@ public class TerminalPane extends WorkbenchPane
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
             uiPrefs_.terminalTrackEnvironment().getValue());
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
+                                                 uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  false /*createdByApi*/, arg -> {
          terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
             {
@@ -838,6 +839,7 @@ public class TerminalPane extends WorkbenchPane
       }
 
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
+                                                 uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  event.createdByApi(), arg -> {
          terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
             {

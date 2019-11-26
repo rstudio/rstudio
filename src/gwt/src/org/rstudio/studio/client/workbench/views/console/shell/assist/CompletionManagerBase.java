@@ -1,7 +1,7 @@
 /*
  * CompletionManagerBase.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -718,7 +718,7 @@ public abstract class CompletionManagerBase
    private boolean onTab()
    {
       // Don't auto complete if tab auto completion was disabled
-      if (!userPrefs_.tabCompletion().getValue())
+      if (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue())
          return false;
 
       // if the line is blank, don't request completions unless

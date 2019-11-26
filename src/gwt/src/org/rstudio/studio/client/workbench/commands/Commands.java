@@ -614,5 +614,6 @@ public abstract class
 
    // Accessibility
    public abstract AppCommand toggleScreenReaderSupport();
+   public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
 }

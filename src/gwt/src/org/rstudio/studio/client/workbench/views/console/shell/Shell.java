@@ -545,9 +545,18 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                return;
             }
          }
-         
+
          if (event.getNativeKeyCode() == KeyCodes.KEY_TAB)
-            event.preventDefault();
+         {
+            if (prefs_.tabKeyMoveFocus().getValue())
+            {
+               // allow tab to change focus instead of letting editor use for indenting
+               event.stopPropagation();
+               return;
+            }
+            else
+               event.preventDefault();
+         }
 
          int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
 
