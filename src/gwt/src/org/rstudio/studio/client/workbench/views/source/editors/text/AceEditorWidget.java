@@ -470,16 +470,19 @@ public class AceEditorWidget extends Composite
          tabMovesFocus_ = true;
       }
 
-      // TODO GARY
-      // TEMPORARY REMOVAL OF CODE CAUSING EXCEPTION AT STARTUP
-//      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
-//      {
-//         if (tabMovesFocus_ != movesFocus)
-//         {
-//            editor_.setTabMovesFocus(movesFocus);
-//            tabMovesFocus_ = movesFocus;
-//         }
-//      }));
+      // GWT sometimes throws an exception if we bind a lambda here, work around is
+      // to defer it. Not sure why, though.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
+         {
+            if (tabMovesFocus_ != movesFocus)
+            {
+               editor_.setTabMovesFocus(movesFocus);
+               tabMovesFocus_ = movesFocus;
+            }
+         }));
+      });
 
       editor_.getRenderer().updateFontSize();
       onResize();
