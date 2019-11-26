@@ -387,6 +387,26 @@ public:
       return handle_;
    }
 
+   std::string currentFile() const
+   {
+      return currentFile_;
+   }
+
+   std::shared_ptr<std::istream> inputStream() const
+   {
+      return inputStream_;
+   }
+
+   std::shared_ptr<std::ostream> outputStream() const
+   {
+      return outputStream_;
+   }
+
+   int inputLineNum() const
+   {
+      return inputLineNum_;
+   }
+
    core::system::ProcessCallbacks createProcessCallbacks()
    {
       core::system::ProcessCallbacks callbacks;
@@ -962,7 +982,7 @@ private:
 
 } // namespace
 
-core::Error retrieveFindReplaceResponse(
+core::Error runGrepOperation(
       bool previewFlag, bool replaceFlag,
       const std::string& searchPattern, const std::string& replacePattern,
       bool asRegex, bool ignoreCase, bool replaceRegex, bool useGitIgnore,
@@ -1091,7 +1111,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = retrieveFindReplaceResponse(
+   error = runGrepOperation(
       false, false, searchString, std::string(),
       asRegex, ignoreCase, false, false,
       directory, filePatterns, nullptr, pResponse);
@@ -1142,7 +1162,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (!replaceRegex)
       LOG_ERROR_MESSAGE("Replace Regex must be true during preview");
 
-   error = retrieveFindReplaceResponse(
+   error = runGrepOperation(
       true, true, searchString, replacePattern,
       asRegex, ignoreCase, replaceRegex, useGitIgnore,
       directory, filePatterns, nullptr, pResponse);
@@ -1176,7 +1196,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
 
    LocalProgress* pProgress = new LocalProgress(originalFindCount, 5);
 
-   error = retrieveFindReplaceResponse(
+   error = runGrepOperation(
               false, true, searchString, replacePattern,
               asRegex, ignoreCase, replaceRegex, useGitIgnore,
               directory, filePatterns, pProgress, pResponse);
