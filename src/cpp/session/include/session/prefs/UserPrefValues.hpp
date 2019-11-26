@@ -296,6 +296,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -1320,6 +1321,12 @@ public:
     */
    bool reducedMotion();
    core::Error setReducedMotion(bool val);
+
+   /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   bool tabKeyMoveFocus();
+   core::Error setTabKeyMoveFocus(bool val);
 
    /**
     * How to deal with changes to documents on idle.

@@ -1582,6 +1582,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   public PrefValue<Boolean> tabKeyMoveFocus()
+   {
+      return bool("tab_key_move_focus", false);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -1949,6 +1957,8 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
+      if (source.hasKey("tab_key_move_focus"))
+         tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
