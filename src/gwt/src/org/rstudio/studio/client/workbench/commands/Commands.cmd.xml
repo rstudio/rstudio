@@ -51,12 +51,21 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
             <separator/>
-            <cmd refid="newTextDoc"/>
+            <cmd refid="newCDoc"/>
             <cmd refid="newCppDoc"/>
+            <cmd refid="newHeaderDoc"/>
+            <separator/>
+            <cmd refid="newMarkdownDoc"/>
+            <cmd refid="newHtmlDoc"/>
+            <cmd refid="newCssDoc"/>
+            <cmd refid="newJavaScriptDoc"/>
+            <cmd refid="newD3Doc"/>
+            <separator/>
             <cmd refid="newPythonDoc"/>
+            <cmd refid="newShellDoc"/>
             <cmd refid="newSqlDoc"/>
             <cmd refid="newStanDoc"/>
-            <cmd refid="newD3Doc"/>
+            <cmd refid="newTextDoc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
@@ -940,9 +949,24 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new text file"
         rebindable="false"/>
         
+   <cmd id="newCDoc"
+        menuLabel="_C File"
+        desc="Create a new C file"
+        rebindable="false"/>
+        
    <cmd id="newCppDoc"
         menuLabel="_C++ File"
         desc="Create a new C++ file"
+        rebindable="false"/>
+        
+   <cmd id="newHeaderDoc"
+        menuLabel="_Header File"
+        desc="Create a new header file"
+        rebindable="false"/>
+        
+   <cmd id="newMarkdownDoc"
+        menuLabel="_Markdown File"
+        desc="Create a new Markdown document"
         rebindable="false"/>
         
    <cmd id="newPythonDoc"
@@ -950,14 +974,34 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new Python script"
         rebindable="false"/>
         
+   <cmd id="newShellDoc"
+        menuLabel="_Shell Script"
+        desc="Create a new shell script"
+        rebindable="false"/>
+        
    <cmd id="newStanDoc"
         menuLabel="_Stan File"
         desc="Create a new Stan program"
         rebindable="false"/>
         
+   <cmd id="newHtmlDoc"
+        menuLabel="_HTML File"
+        desc="Create a new HTML file"
+        rebindable="false"/>     
+        
+   <cmd id="newJavaScriptDoc"
+        menuLabel="_JavaScript File"
+        desc="Create a new JavaScript file"
+        rebindable="false"/>
+        
+   <cmd id="newCssDoc"
+        menuLabel="_CSS File"
+        desc="Create a new CSS file"
+        rebindable="false"/>
+        
    <cmd id="newD3Doc"
         menuLabel="_D3 Script"
-        desc="Create a new D3 script"
+        desc="Create a new D3 Script"
         rebindable="false"/>     
         
    <cmd id="newRPlumberDoc"
