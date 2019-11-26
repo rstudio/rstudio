@@ -43,8 +43,6 @@
 namespace rstudio {
 namespace core {
 
-class Error;
-
 /**
  * @brief Class which represents a path on the system. May be any type of file (e.g. directory, symlink, regular file,
  *        etc.)
