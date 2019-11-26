@@ -1160,7 +1160,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
    if (!replaceRegex)
-      LOG_ERROR_MESSAGE("Replace Regex must be true during preview");
+      LOG_WARNING_MESSAGE("Replace Regex must be true during preview");
 
    error = runGrepOperation(
       true, true, searchString, replacePattern,
