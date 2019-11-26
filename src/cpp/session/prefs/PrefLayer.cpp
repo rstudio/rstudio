@@ -81,12 +81,27 @@ PrefLayer::PrefLayer(const std::string& layerName):
 
 PrefLayer::~PrefLayer()
 {
+   destroy();
+}
+
+void PrefLayer::destroy()
+{
    // End file monitoring if not already terminated
    if (handle_)
    {
       core::system::file_monitor::unregisterMonitor(*handle_);
       handle_ = boost::none;
    }
+
+   // Clear prefs cache
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      if (cache_)
+      {
+         cache_.reset();
+      }
+   }
+   END_LOCK_MUTEX;
 }
 
 core::json::Object PrefLayer::allPrefs()
