@@ -1980,23 +1980,23 @@ well as menu structures (for main menu and popup menus).
           desc="Data transformation with dplyr"
           context="help"/>
           
-    <cmd id="openSpar_klyrCheatSheet"
-         menuLabel="Interfacing Spark with sparklyr"
+    <cmd id="openSparklyrCheatSheet"
+         menuLabel="Interfacing Spar_k with sparklyr"
          desc="Interfacing Apache Spark with sparklyr"
          context="help"/>
 
-    <cmd id="openR_MarkdownCheatSheet"
-         menuLabel="R Markdown Cheat Sheet"
+    <cmd id="openRMarkdownCheatSheet"
+         menuLabel="R _Markdown Cheat Sheet"
          desc="R Markdown cheat sheet"
          context="help"/>
 
-    <cmd id="open_RMarkdownReferenceGuide"
-         menuLabel="R Markdown Reference Guide"
+    <cmd id="openRMarkdownReferenceGuide"
+         menuLabel="R Markdo_wn Reference Guide"
          desc="R Markdown reference guide"
          context="help"/>
 
-    <cmd id="open_ShinyCheatSheet"
-         menuLabel="Web Applications with shiny"
+    <cmd id="openShinyCheatSheet"
+         menuLabel="Web Applications with _shiny"
          desc="Build web applications with Shiny"
          context="help"/>
          
