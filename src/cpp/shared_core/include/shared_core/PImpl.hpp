@@ -57,7 +57,7 @@
  *
  * @param in_memeberName    The name of the private implementation member variable (e.g. m_impl).
  */
-#define PRIVATE_IMPL_SHARED(in_memberName) \
+#define PRIVATE_IMPL_SHARED(in_memberName)   \
    PRIVATE_IMPL_START                        \
    std::shared_ptr<Impl> in_memberName;
 
