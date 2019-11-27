@@ -229,7 +229,7 @@ public:
     *
     * @return Success if the file could be created; Error otherwise.
     */
-   static Error uniqueFilePath(const std::string& in_basePath, const std::string& in_extension, FilePath& out_FilePath);
+   static Error uniqueFilePath(const std::string& in_basePath, const std::string& in_extension, FilePath& out_filePath);
 
    /**
     * @brief Gets the provided relative path as a child of this path.
@@ -618,7 +618,17 @@ private:
  * @brief Forward declaration for the implementation of RAII path scope classes.
  */
 struct PathScopeImpl;
-struct PathScopeImplDeleter { void operator()(PathScopeImpl*); };
+
+/**
+ * @brief Struct which implements the deleter for PathScopeImpl.
+ */
+struct PathScopeImplDeleter
+{
+   /**
+    * @brief Deletion operator.
+    */
+   void operator()(PathScopeImpl*);
+};
 
 /**
  * @brief RAII class for restoring the current working directory.
@@ -658,7 +668,7 @@ public:
     *                           object.
     * @param in_location        The location where this object was constructed, for logging purposes.
     */
-   RemoveOnExitScope(FilePath in_filePath, ErrorLocation in_location);
+   RemoveOnExitScope(FilePath in_restorePath, ErrorLocation in_location);
 
    /**
     * @brief Destructor. Removes the path that was provided in the constructor from the filesystem.
@@ -673,12 +683,12 @@ private:
 /**
  * @brief Output stream operator for FilePath objects.
  *
- * @param io_stream         The output stream to which to write the FilePath.
+ * @param io_ostream         The output stream to which to write the FilePath.
  * @param in_filePath       The FilePath to write.
  *
  * @return A reference to io_stream.
  */
-std::ostream& operator<<(std::ostream& io_stream, const FilePath& in_filePath);
+std::ostream& operator<<(std::ostream& io_ostream, const FilePath& in_filePath);
 
 /**
  * @brief Error creation function to be used when a file or directory exists but it should not.

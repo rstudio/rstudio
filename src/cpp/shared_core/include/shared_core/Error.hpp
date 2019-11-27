@@ -93,7 +93,7 @@ public:
    /**
     * @brief Constructor.
     *
-    * param in_function     The function in which the error occurred.
+    * @param in_function    The function in which the error occurred.
     * @param in_file        The file in which the error occurred.
     * @param in_line        The line at which the error occurred.
     */
