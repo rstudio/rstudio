@@ -48,6 +48,9 @@ class ErrorLock
    friend class Error ;
    friend class Success;
 
+   /**
+    * @brief Virtual Destructor.
+    */
    virtual ~ErrorLock() = default;
 
 private:
@@ -182,35 +185,92 @@ public:
    Error(const Error& in_other);
 
    /**
-    * \defgroup FunctionGroup Constructor
+    * @brief Constructor.
     *
-    * @brief Constructors.
-    *
-    * @param in_ec                   The boost error code to convert from.
-    * @param in_code            The error code. (e.g. 1)
-    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
-    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this plugin.")
-    * @param in_cause                The error which caused this error.
+    * @param in_ec              The boost error code to convert from.
     * @param in_location        The location of the error.
-    *
-    * @{
     */
    Error(const boost::system::error_code& in_ec, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error code to convert from.
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
    Error(const boost::system::error_code& in_ec, const Error& in_cause, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error code to convert from.
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_location        The location of the error.
+    */
    Error(const boost::system::error_code& in_ec, std::string in_message, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error code to convert from.
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
    Error(const boost::system::error_code& in_ec,
          std::string in_message,
          const Error& in_cause,
          const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_location        The location of the error.
+    */
    Error(int in_code, std::string in_name, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
    Error(int in_code, std::string in_name, const Error& in_cause, const ErrorLocation& in_location);
+
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_location        The location of the error.
+    */
    Error(int in_code, std::string in_name, std::string in_message, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
    Error(int in_code,
          std::string in_name,
          std::string in_message,
          const Error& in_cause,
          const ErrorLocation& in_location);
-   /** @} */
 
    /**
    * @brief Non-virtual destructor because only Success inherits Error and it will keep Error lightweight.
@@ -268,35 +328,55 @@ public:
    bool operator!=(const boost::system::error_code& in_ec) const;
 
    /**
-    * \defgroup FunctionGroup addOrUpdateProperty
-    *
     * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
     *        updated.
     *
     * @param in_name        The name of the property to add or update.
     * @param in_value       The new value of the property.
-    *
-    * @{
     */
    void addOrUpdateProperty(const std::string& in_name, const std::string& in_value);
-   void addOrUpdateProperty(const std::string& in_name, const FilePath& in_value);
-   void addOrUpdateProperty(const std::string& in_name, int in_value);
-   /** @} */
 
    /**
-    * \defgroup FunctionGroup addProperty
+    * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
+    *        updated.
     *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    */
+   void addOrUpdateProperty(const std::string& in_name, const FilePath& in_value);
+
+   /**
+    * @brief Add or updates a property of this error. If any properties with the specified name exist, they will all be
+    *        updated.
+    *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    */
+   void addOrUpdateProperty(const std::string& in_name, int in_value);
+
+   /**
     * @brief Adds a property of this error. If a property with the same name already exists, a duplicate will be added.
     *
     * @param in_name        The name of the property to add or update.
     * @param in_value       The new value of the property.
-    *
-    * @{
     */
    void addProperty(const std::string& in_name, const std::string& in_value);
+
+   /**
+    * @brief Adds a property of this error. If a property with the same name already exists, a duplicate will be added.
+    *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    */
    void addProperty(const std::string& in_name, const FilePath& in_value);
+
+   /**
+    * @brief Adds a property of this error. If a property with the same name already exists, a duplicate will be added.
+    *
+    * @param in_name        The name of the property to add or update.
+    * @param in_value       The new value of the property.
+    */
    void addProperty(const std::string& in_name, int in_value);
-   /** @} */
 
    /**
     * @brief Formats the error as a string.
@@ -433,8 +513,39 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
 #endif // _WIN32
 
 /**
- * \defgroup FunctionGroup systemError
+ * @brief Function which creates a system error.
  *
+ * @param in_code            The error code. (e.g. 1)
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(int in_code, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
+ * @param in_code            The error code. (e.g. 1)
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
+ * @param in_code            The error code. (e.g. 1)
+ * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
+ *                           Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(int in_code, const std::string& in_message, const ErrorLocation& in_location);
+
+/**
  * @brief Function which creates a system error.
  *
  * @param in_code            The error code. (e.g. 1)
@@ -444,18 +555,10 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error);
  * @param in_location        The location of the error.
  *
  * @return A system error.
- *
- * @{
  */
-Error systemError(int in_code, const ErrorLocation& in_location);
-Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_location);
-Error systemError(int in_code, const std::string& in_message, const ErrorLocation& in_location);
 Error systemError(int in_code, const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
-/** @} */
 
 /**
- * /defgroup FunctionGroup unknownError
- *
  * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be
  *        determined.
  *
@@ -465,12 +568,21 @@ Error systemError(int in_code, const std::string& in_message, const Error& in_ca
  * @param in_location        The location of the error.
  *
  * @return An unknown error.
- *
- * @{
  */
 Error unknownError(const std::string& in_message, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be
+ *        determined.
+ *
+ * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
+ *                           Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return An unknown error.
+ */
 Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
-/** @} */
 
 } // namespace core
 } // namespace rstudio

@@ -184,10 +184,19 @@ public:
     * @return The current working directory.
     */
    static FilePath safeCurrentPath(const FilePath& in_revertToPath);
+
    /**
-    * \defgroup FunctionGroup tempFilePath
+    * @brief Creates a randomly named file in the temp directory.
     *
-    * @brief Creates a randomly named file in the temp directory, optionally with the specified extension.
+    * @param out_filePath   The absolute path of the newly created file, or an empty file path if the file could not be
+    *                       created.
+    *
+    * @return Success if the file could be created; Error otherwise.
+    */
+   static Error tempFilePath(FilePath& out_filePath);
+
+   /**
+    * @brief Creates a randomly named file with the specified extension in the temp directory.
     *
     * @param in_extension   The extension with which to create the file. The extension should include the leading '.',
     *                       e.g. '.zip'.
@@ -195,17 +204,22 @@ public:
     *                       created.
     *
     * @return Success if the file could be created; Error otherwise.
-    *
-    * @{
     */
-   static Error tempFilePath(FilePath& out_filePath);
    static Error tempFilePath(const std::string& in_extension, FilePath& out_filePath);
-   /** @} */
 
    /**
-    * \defgroup FunctionGroup uniqueFilePath
+    * @brief Creates a file with a random name in the specified directory.
     *
-    * @brief Creates a file with a random name in the specified directory, optionally with the specified extension.
+    * @param in_basePath    The path at which to create the file.
+    * @param out_filePath   The absolute path of the newly created file, or an empty file path if the file could not be
+    *                       created.
+    *
+    * @return Success if the file could be created; Error otherwise.
+    */
+   static Error uniqueFilePath(const std::string& in_basePath, FilePath& out_filePath);
+
+   /**
+    * @brief Creates a file with a random name and the specified extension in the specified directory.
     *
     * @param in_basePath    The path at which to create the file.
     * @param in_extension   The extension with which to create the file. The extension should include the leading '.',
@@ -214,12 +228,8 @@ public:
     *                       created.
     *
     * @return Success if the file could be created; Error otherwise.
-    *
-    * @{
     */
-   static Error uniqueFilePath(const std::string& in_basePath, FilePath& out_filePath);
    static Error uniqueFilePath(const std::string& in_basePath, const std::string& in_extension, FilePath& out_FilePath);
-   /** @} */
 
    /**
     * @brief Gets the provided relative path as a child of this path.
@@ -671,20 +681,23 @@ private:
 std::ostream& operator<<(std::ostream& io_stream, const FilePath& in_filePath);
 
 /**
- * \defgroup FunctionGroup fileExistsError
+ * @brief Error creation function to be used when a file or directory exists but it should not.
  *
+ * @param in_location   The location at which the error occurred.
+ *
+ * @return The "file exists" error.
+ */
+Error fileExistsError(const ErrorLocation& in_location);
+
+/**
  * @brief Error creation function to be used when a file or directory exists but it should not.
  *
  * @param in_filePath   The file or directory which already existed.
  * @param in_location   The location at which the error occurred.
  *
  * @return The "file exists" error.
- *
- * @{
  */
-Error fileExistsError(const ErrorLocation& in_location);
 Error fileExistsError(const FilePath& in_filePath, const ErrorLocation& in_location);
-/** @} */
 
 /**
  * @brief Checks whether the provided error is a "file not found" error.
@@ -696,21 +709,33 @@ Error fileExistsError(const FilePath& in_filePath, const ErrorLocation& in_locat
 bool isFileNotFoundError(const Error& in_error);
 
 /**
- * \defgroup FunctionGroup fileNotFoundError
+ * @brief Error creation function to be used when a file could not be found.
  *
+ * @param in_location   The location at which the error occurred.
+ *
+ * @return The "file not found" error.
+ */
+Error fileNotFoundError(const ErrorLocation& in_location);
+
+/**
  * @brief Error creation function to be used when a file could not be found.
  *
  * @param in_filePath   The file which could not be found.
  * @param in_location   The location at which the error occurred.
  *
  * @return The "file not found" error.
- *
- * @{
  */
-Error fileNotFoundError(const ErrorLocation& in_location);
 Error fileNotFoundError(const std::string& in_filePath, const ErrorLocation& in_location);
+
+/**
+ * @brief Error creation function to be used when a file could not be found.
+ *
+ * @param in_filePath   The file which could not be found.
+ * @param in_location   The location at which the error occurred.
+ *
+ * @return The "file not found" error.
+ */
 Error fileNotFoundError(const FilePath& in_filePath, const ErrorLocation& in_location);
-/** @} */
 
 /**
  * @brief Checks whether the provided error is a "file not found" error.
@@ -721,23 +746,24 @@ Error fileNotFoundError(const FilePath& in_filePath, const ErrorLocation& in_loc
  */
 bool isPathNotFoundError(const Error& error);
 
+/**
+ * @brief Error creation function to be used when a directory could not be found.
+ *
+ * @param in_location   The location at which the error occurred.
+ *
+ * @return The "path not found" error.
+ */
+Error pathNotFoundError(const ErrorLocation& in_location);
 
 /**
- * \defgroup FunctionGroup pathNotFoundError
- *
  * @brief Error creation function to be used when a directory could not be found.
  *
  * @param in_filePath   The directory which could not be found.
  * @param in_location   The location at which the error occurred.
  *
  * @return The "path not found" error.
- *
- * @{
  */
-Error pathNotFoundError(const ErrorLocation& in_location);
-Error pathNotFoundError(const std::string& path, const ErrorLocation& in_location);
-/** @} */
-
+Error pathNotFoundError(const std::string& in_filePath, const ErrorLocation& in_location);
 
 /**
  * @brief Checks whether the error is either a file not found error or a path not found error.

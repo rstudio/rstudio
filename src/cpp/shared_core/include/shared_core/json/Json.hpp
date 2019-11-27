@@ -109,24 +109,67 @@ public:
    Value(Value&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup Conversion constructor.
-    *
-    * @brief Conversion constructors.
+    * @brief Conversion constructor.
     *
     * @param in_value   The literal value to set this JSON Value to.
-    *
-    * @{
     */
    explicit Value(bool in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(double in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(float in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(int in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(int64_t in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(const char* in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(const std::string& in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(unsigned int in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(uint64_t in_value);
-   /** @} */
 
    /**
     * @brief Virtual destructor.
@@ -152,26 +195,85 @@ public:
    Value& operator=(Value&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup operator=
-    *
-    * @brief Assignment operators.
+    * @brief Assignment operator.
     *
     * @param in_value   The literal value to set this JSON Value to.
     *
     * @return A reference to this value.
-    *
-    * @{
     */
    Value& operator=(bool in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(double in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(float in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(int in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(int64_t in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(const char* in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(const std::string& in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(unsigned int in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(uint64_t in_value);
-   /** @} */
 
    /**
     * @brief Equality operator.
@@ -371,19 +473,22 @@ public:
    bool isUInt64() const;
 
    /**
-    * \defgroup FunctionGroup parse
-    *
     * @brief Parses the JSON string into this value.
     *
     * @param in_jsonStr     The JSON string to parse.
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
-    *
-    * @{
     */
    Error parse(const char* in_jsonStr);
+
+   /**
+    * @brief Parses the JSON string into this value.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse; error otherwise (e.g. ParseError)
+    */
    Error parse(const std::string& in_jsonStr);
-   /** @} */
 
    /**
     * @brief Parses the JSON string and validates it against the schema.
@@ -662,35 +767,42 @@ public:
    Object& operator=(Object&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup operator[]
-    *
     * @brief Accessor operator. Gets the value a member of this JSON object by name. If no such object exists, an empty
     *        JSON value will be returned.
     *
     * @param in_name    The name of the member to access.
     *
     * @return The value of the member with the specified name, if it exists; empty JSON value otherwise.
-    *
-    * @{
     */
    Value operator[](const char* in_name);
-   Value operator[](const std::string& in_name);
-   /** @} */
 
    /**
-    * \defgroup FunctionGroup find
+    * @brief Accessor operator. Gets the value a member of this JSON object by name. If no such object exists, an empty
+    *        JSON value will be returned.
     *
+    * @param in_name    The name of the member to access.
+    *
+    * @return The value of the member with the specified name, if it exists; empty JSON value otherwise.
+    */
+   Value operator[](const std::string& in_name);
+
+   /**
     * @brief Finds a JSON member by name.
     *
     * @param in_name    The name of the member to find.
     *
     * @return If such a member exists, an iterator pointing to that member; the end iterator otherwise.
-    *
-    * @{
     */
    Iterator find(const char* in_name) const;
+
+   /**
+    * @brief Finds a JSON member by name.
+    *
+    * @param in_name    The name of the member to find.
+    *
+    * @return If such a member exists, an iterator pointing to that member; the end iterator otherwise.
+    */
    Iterator find(const std::string& in_name) const;
-   /** @} */
 
    /**
     * @brief Gets an iterator pointing to the first member of this object.
@@ -727,19 +839,22 @@ public:
    void clear();
 
    /**
-    * \defgroup FunctionGroup erase
-    *
     * @brief Erases a member by name.
     *
     * @param in_name    The name of the member to erase.
     *
     * @return True if a member was erased; false otherwise.
-    *
-    * @{
     */
    bool erase(const char* in_name);
+
+   /**
+    * @brief Erases a member by name.
+    *
+    * @param in_name    The name of the member to erase.
+    *
+    * @return True if a member was erased; false otherwise.
+    */
    bool erase(const std::string& in_name);
-   /** @} */
 
    /**
     * @brief Erases the member specified by the provided iterator.
