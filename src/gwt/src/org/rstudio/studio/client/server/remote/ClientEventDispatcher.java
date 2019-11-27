@@ -192,6 +192,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -1031,10 +1032,14 @@ public class ClientEventDispatcher
             ExecuteAppCommandEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ExecuteAppCommandEvent(data));
          }
-         else if (type == ClientEvent.Highlight)
+         else if (type == ClientEvent.HighlightUi)
          {
             HighlightEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new HighlightEvent(data));
+         else if (type == ClientEvent.TutorialCommand)
+         {
+            TutorialCommandEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new TutorialCommandEvent(data));
          }
          else
          {

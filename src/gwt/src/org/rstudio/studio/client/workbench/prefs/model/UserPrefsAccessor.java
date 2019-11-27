@@ -1005,6 +1005,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String SHINY_VIEWER_TYPE_USER = "user";
    public final static String SHINY_VIEWER_TYPE_NONE = "none";
    public final static String SHINY_VIEWER_TYPE_PANE = "pane";
+   public final static String SHINY_VIEWER_TYPE_TUTORIAL = "tutorial";
    public final static String SHINY_VIEWER_TYPE_WINDOW = "window";
    public final static String SHINY_VIEWER_TYPE_BROWSER = "browser";
 

@@ -23,6 +23,7 @@ import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
@@ -169,7 +170,7 @@ public class ViewerPresenter extends BasePresenter
    public void onViewerCleared(ViewerClearedEvent event)
    {
       if (!event.isForStop())
-         navigate(ViewerPane.ABOUT_BLANK);
+         navigate(URIConstants.ABOUT_BLANK);
    }
 
    @Override
@@ -200,7 +201,7 @@ public class ViewerPresenter extends BasePresenter
       {
          manageCommands(false);
          
-         navigate(ViewerPane.ABOUT_BLANK);
+         navigate(URIConstants.ABOUT_BLANK);
       }
    }
    
@@ -220,10 +221,8 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
-      if (event.getParams().getViewerType() == 
-            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
-          event.getParams().getState() == 
-            ShinyApplicationParams.STATE_STARTED)
+      if (event.getParams().getViewerType() == UserPrefs.SHINY_VIEWER_TYPE_PANE &&
+          event.getParams().getState() == ShinyApplicationParams.STATE_STARTED)
       {
          manageCommands(true);
          display_.bringToFront();
@@ -522,7 +521,7 @@ public class ViewerPresenter extends BasePresenter
       boolean wasStaticWidget = commands_.viewerZoom().isEnabled();
       
       manageCommands(false);
-      navigate(ViewerPane.ABOUT_BLANK);
+      navigate(URIConstants.ABOUT_BLANK);
       if (interruptR)
          commands_.interruptR().execute();
       server_.viewerStopped(new VoidServerRequestCallback());

@@ -815,6 +815,53 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # highlight UI elements within the IDE
-.rs.addApiFunction("highlight", function(data = list()) {
-   .Call("rs_highlight", data, PACKAGE = "(embedding)")
+.rs.addApiFunction("highlightUi", function(data = list()) {
+   .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("enqueueTutorialClientEvent", function(type, data)
+{
+   eventData <- list(type = .rs.scalar(type), data = data)
+   .rs.enqueClientEvent("tutorial_command", eventData)
+})
+
+.rs.addApiFunction("tutorialLaunchBrowser", function(url) {
+   .rs.invokeShinyTutorialViewer(url)
+})
+
+.rs.addApiFunction("tutorialRun", function(name, package, shiny_args = NULL) {
+   
+   shiny_args$launch.browser <- quote(rstudioapi:::tutorialLaunchBrowser)
+   
+   call <- substitute(
+      
+      learnr::run_tutorial(
+         name = name,
+         package = package,
+         shiny_args = shiny_args
+      ),
+      
+      list(
+         name = name,
+         package = package,
+         shiny_args = shiny_args
+      )
+      
+   )
+   
+   deparsed <- deparse(call)
+   path <- tempfile("rstudio-tutorial-", fileext = ".R")
+   writeLines(deparsed, con = path)
+   
+   .rs.api.runScriptJob(
+      path = path,
+      name = paste("Tutorial:", name),
+      encoding = "UTF-8"
+   )
+   
+})
+
+.rs.addApiFunction("tutorialStop", function(job) {
+   .rs.api.stopJob(job)
+   .rs.enqueueTutorialClientEvent("stop", list(job = job))
 })

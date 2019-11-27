@@ -237,6 +237,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          {
             commands_.viewerRefresh().execute();
          }
+         // TODO tutorial
          else if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
          {
             eventBus_.fireEvent(new ShinyApplicationStatusEvent(params_));

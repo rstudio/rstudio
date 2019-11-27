@@ -17,6 +17,10 @@
    invisible(.Call("rs_shinyviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "pane"))
 
+.rs.addFunction("invokeShinyTutorialViewer", function(url) {
+   invisible(.Call("rs_shinyviewer", url, getwd(), "tutorial", PACKAGE = "(embedding)"))
+}, attrs = list(shinyViewerType = "tutorial"))
+
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "window"))
@@ -28,6 +32,8 @@
 .rs.addFunction("setShinyViewerType", function(type) {
    if (identical(type, "none"))
       options(shiny.launch.browser = FALSE)
+   else if (identical(type, "tutorial"))
+      options(shiny.launch.browser = .rs.invokeShinyTutorialViewer)
    else if (identical(type, "pane"))
       options(shiny.launch.browser = .rs.invokeShinyPaneViewer)
    else if (identical(type, "window"))

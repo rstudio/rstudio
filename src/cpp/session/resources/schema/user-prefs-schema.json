@@ -617,7 +617,7 @@
         },
         "shiny_viewer_type": {
             "type": "string",
-            "enum": ["user", "none", "pane", "window", "browser"],
+            "enum": ["user", "none", "pane", "tutorial", "window", "browser"],
             "default": "window",
             "description": "Where to display Shiny applications when they are run."
         },

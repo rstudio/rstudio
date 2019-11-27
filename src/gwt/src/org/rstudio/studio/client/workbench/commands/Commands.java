@@ -463,6 +463,16 @@ public abstract class
    public abstract AppCommand viewAllPrefs();
    public abstract AppCommand clearUserPrefs();
    
+   // Tutorial
+   public abstract AppCommand activateTutorial();
+   public abstract AppCommand tutorialPopout();
+   public abstract AppCommand tutorialBack(); 
+   public abstract AppCommand tutorialForward();
+   public abstract AppCommand tutorialZoom();
+   public abstract AppCommand tutorialRefresh();
+   public abstract AppCommand tutorialStop();
+   
+   
    // Viewer
    public abstract AppCommand activateViewer();
    public abstract AppCommand layoutZoomViewer();

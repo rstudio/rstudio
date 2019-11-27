@@ -1,5 +1,5 @@
 /*
- * EditorCommandEvent.java
+ * TutorialCommandEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.events;
+package org.rstudio.studio.client.workbench.views.tutorial.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
@@ -21,22 +21,22 @@ import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 @JavaScriptSerializable
-public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Handler>
+public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
-      public final native String getType() /*-{ return this["type"]; }-*/;
+      public final native String getType()           /*-{ return this["type"]; }-*/;
       public final native JavaScriptObject getData() /*-{ return this["data"]; }-*/;
    }
    
-   public EditorCommandEvent()
+   public TutorialCommandEvent()
    {
       type_ = "";
       data_ = JavaScriptObject.createObject();
    }
    
-   public EditorCommandEvent(Data data)
+   public TutorialCommandEvent(Data data)
    {
       type_ = data.getType();
       data_ = data.getData();
@@ -57,15 +57,13 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    private final String type_;
    private final JavaScriptObject data_;
    
-   public static final String TYPE_REPLACE_RANGES = "replace_ranges";
-   public static final String TYPE_SET_SELECTION_RANGES = "set_selection_ranges";
-   public static final String TYPE_EDITOR_CONTEXT = "editor_context";
+   public static final String TYPE_STOP = "stop";
    
    // Boilerplate ----
    
    public interface Handler extends EventHandler
    {
-      void onEditorCommand(EditorCommandEvent event);
+      void onTutorialCommand(TutorialCommandEvent event);
    }
    
    @Override
@@ -77,7 +75,7 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onEditorCommand(this);
+      handler.onTutorialCommand(this);
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();

@@ -84,6 +84,7 @@ public:
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
+   void setTutorialUrl(const QString& tutorialUrl);
    void setViewerUrl(const QString& viewerUrl);
    void setShinyDialogUrl(const QString& shinyDialogUrl);
    void prepareExternalNavigate(const QString& externalUrl);
@@ -107,6 +108,8 @@ protected:
                                  int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
+   
+   QString tutorialUrl();
    QString viewerUrl();
 
 private:
@@ -115,6 +118,7 @@ private:
 
 private:
    QUrl baseUrl_;
+   QString tutorialUrl_;
    QString viewerUrl_;
    QString shinyDialogUrl_;
    bool allowExternalNav_;

@@ -86,7 +86,7 @@ Error viewerStopped(const json::JsonRpcRequest& request,
 }
 
 Error viewerBack(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                 json::JsonRpcResponse* pResponse)
 {
    if (viewerHistory().hasPrevious())
       viewerNavigate(viewerHistory().goBack().url(), 0, true, true);

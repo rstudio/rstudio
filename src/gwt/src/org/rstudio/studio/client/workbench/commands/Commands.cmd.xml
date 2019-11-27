@@ -2870,7 +2870,35 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHelp"
         menuLabel="Refresh"
         desc="Refresh topic"/>
-
+        
+   <cmd id="tutorialPopout"
+        buttonLabel=""
+        desc="Show in new window"/>
+        
+   <cmd id="tutorialBack"
+        buttonLabel=""
+        desc="Go back"
+        rebindable="false"/>
+        
+   <cmd id="tutorialForward"
+        buttonLabel=""
+        desc="Go forward"
+        rebindable="false"/>
+        
+   <cmd id="tutorialZoom"
+        buttonLabel="Zoom"
+        desc="View a larger version in a new window"
+        rebindable="false"/>
+        
+   <cmd id="tutorialRefresh"
+        desc="Refresh tutorial"
+        rebindable="false"/>
+        
+   <cmd id="tutorialStop"
+        buttonLabel=""
+        desc="Stop application"
+        rebindable="false"/>
+        
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>
