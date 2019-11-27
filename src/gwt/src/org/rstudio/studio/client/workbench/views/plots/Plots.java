@@ -51,7 +51,6 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -98,7 +97,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
                 WorkbenchContext workbenchContext,
-                Provider<UserPrefs> userPrefs,
                 Provider<UserState> userState,
                 Commands commands,
                 EventBus events,
@@ -109,7 +107,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_ = view;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
-      userPrefs_ = userPrefs;
       userState_ = userState;
       server_ = server;
       session_ = session;
@@ -614,7 +611,6 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
-   private final Provider<UserPrefs> userPrefs_;
    private final Provider<UserState> userState_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
