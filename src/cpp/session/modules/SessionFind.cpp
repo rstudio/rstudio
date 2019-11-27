@@ -779,7 +779,7 @@ private:
                const int matchOff = pMatchOff.getValueAt(pos).getInt();
                const int matchSize = matchOff - matchOn;
                int replaceMatchOff;
-               std::string newLine(line);
+               std::string newLine(pLineInfo->decodedContents);
                Error error;
 
                // for regexes, determine what the replace will look like before creating the string
