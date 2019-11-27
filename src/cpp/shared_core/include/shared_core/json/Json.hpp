@@ -915,8 +915,7 @@ public:
     * @brief Inserts the specified member into this JSON object. If an object with the same name already exists, it will be
     *        overridden.
     *
-    * @param in_name        The name of the JSON value to insert.
-    * @param in_value       The value to insert.
+    * @param in_member      The member to insert.
     */
    void insert(const Member& in_member);
 
