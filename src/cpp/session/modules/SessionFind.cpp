@@ -111,6 +111,122 @@ private:
    int nextUpdate_;
 };
 
+// helper class used to process file replacements
+class Replacer : public boost::noncopyable
+{
+public:
+   explicit Replacer(bool ignoreCase) :
+      ignoreCase_(ignoreCase)
+   {
+   }
+
+   void replaceLiteralWithLiteral(int matchOn, int matchOff, std::string* line,
+                                  const std::string* replaceLiteral,
+                                  int* pReplaceMatchOff)
+   {
+      *line = line->replace(matchOn, (matchOff - matchOn), *replaceLiteral);
+      *pReplaceMatchOff = matchOn + replaceLiteral->size();
+   }
+
+   Error replaceLiteralWithRegex(int matchOn, int matchOff, std::string* line,
+                                const std::string* replaceRegex,
+                                int* pReplaceMatchOff)
+   {
+      std::string find(line->substr(matchOn, matchOff));
+      return (replaceRegexWithRegex(matchOn, matchOff, line, &find,
+                                    replaceRegex, pReplaceMatchOff));
+   }
+
+   Error replaceRegexWithLiteral(int matchOn, int matchOff, std::string* line,
+                                 const std::string* findRegex, const std::string* replaceLiteral,
+                                 int* pReplaceMatchOff)
+   {
+      return (replaceRegexWithRegex(matchOn, matchOff, line, findRegex, replaceLiteral,
+                                    pReplaceMatchOff));
+   }
+
+  Error replaceRegexWithRegex(int matchOn, int matchOff, std::string* line,
+                              const std::string* findRegex, const std::string* replaceRegex,
+                              int* pReplaceMatchOff)
+  {
+     Error error;
+     if (ignoreCase_)
+        error = replaceRegexWithCaseInsensitiveRegex(matchOn, matchOff, line, findRegex, replaceRegex,
+                                                     pReplaceMatchOff);
+     else
+        error = replaceRegexWithCaseSensitiveRegex(matchOn, matchOff, line, findRegex, replaceRegex,
+                                                   pReplaceMatchOff);
+     return error;
+  }
+
+private:
+   Error replaceRegexWithRegex(const boost::regex* searchRegex, const boost::regex* replaceRegex,
+                               int matchOn, int matchOff, std::string* line,
+                               int* pReplaceMatchOff)
+   {
+      std::string temp;
+      try
+      {
+         temp = boost::regex_replace(*line, *searchRegex, *replaceRegex);
+      }
+      catch (const std::runtime_error& e)
+      {
+         return Error(-1, e.what(), ERROR_LOCATION);
+      }
+
+      std::string endOfString = line->substr(matchOff).c_str();
+      size_t replaceMatchOff;
+      if (endOfString.empty())
+         replaceMatchOff = temp.length();
+      else
+         replaceMatchOff = temp.find(endOfString);
+      std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
+      *pReplaceMatchOff = matchOn  + replaceString.size();
+      return Success();
+   }
+
+   Error replaceRegexWithCaseInsensitiveRegex(int matchOn, int matchOff, std::string* line,
+                                              const std::string* findRegex, const std::string* replaceRegex,
+                                              int* pReplaceMatchOff)
+   {
+      try
+      {
+         boost::regex find(findRegex->c_str(), boost::regex::grep | boost::regex::icase);
+         boost::regex replace(replaceRegex->c_str(), boost::regex::grep | boost::regex::icase);
+
+         Error error = replaceRegexWithRegex(&find, &replace, matchOn, matchOff, line,
+                                             pReplaceMatchOff);
+         return error;
+      }
+      catch (const std::runtime_error& e)
+      {
+         return Error(-1, e.what(), ERROR_LOCATION);
+      }
+   }
+
+   Error replaceRegexWithCaseSensitiveRegex(int matchOn, int matchOff, std::string* line,
+                                            const std::string* findRegex, const std::string* replaceRegex,
+                                            int* pReplaceMatchOff)
+   {
+      try
+      {
+         boost::regex find(findRegex->c_str(), boost::regex::grep);
+         boost::regex replace(replaceRegex->c_str(), boost::regex::grep);
+
+         Error error = replaceRegexWithRegex(&find, &replace, matchOn, matchOff, line,
+                                             pReplaceMatchOff);
+         return error;
+      }
+      catch (const std::runtime_error& e)
+      {
+         return Error(-1, e.what(), ERROR_LOCATION);
+      }
+   }
+                                           
+private:
+   bool ignoreCase_;
+};
+
 // Reflects the current set of Find results that are being
 // displayed, in case they need to be re-fetched (i.e. browser
 // refresh)
@@ -585,6 +701,7 @@ private:
    void addOffsetIntegersToJsonArray(
       const json::Array& pNewValues, size_t offset, json::Array* pJsonArray)
    {
+      // putting integers back in reverse order
       for (json::Value newValue : pNewValues)
          addOffsetIntegerToJsonArray(newValue, offset, pJsonArray);
    }
@@ -658,44 +775,32 @@ private:
             std::string newLine;
             while (pos > -1)
             {
-               const size_t matchOn = static_cast<std::size_t>(pMatchOn.getValueAt(pos).getInt());
-               const size_t matchOff = static_cast<std::size_t>(pMatchOff.getValueAt(pos).getInt());
-               const size_t matchSize = matchOff - matchOn;
+               const int matchOn = pMatchOn.getValueAt(pos).getInt();
+               const int matchOff = pMatchOff.getValueAt(pos).getInt();
+               const int matchSize = matchOff - matchOn;
+               int replaceMatchOff;
+               std::string newLine(line);
+               Error error;
 
-               std::string replaceString(replacePattern);
                // for regexes, determine what the replace will look like before creating the string
                // that will be written to file so that previews are handled correctly
                if (findResults().replaceRegex())
                {
-                  try
+                  Replacer replacer(findResults().ignoreCase());
+                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &newLine, &searchPattern,
+                                                         &replacePattern, &replaceMatchOff);
+                  if (error)
                   {
-                     boost::regex searchAsRegex(boost::regex(searchPattern, boost::regex::grep));
-                     boost::regex replaceAsRegex(replacePattern, boost::regex::grep);
-                     if (findResults().ignoreCase())
-                     {
-                        getCaseInsensitiveRegex(searchPattern, &searchAsRegex);
-                        getCaseInsensitiveRegex(replacePattern, &replaceAsRegex);
-                     }
-                     std::string temp = boost::regex_replace(
-                                           pLineInfo->decodedContents, searchAsRegex, replaceAsRegex);
-
-                     // determine length of replace pattern
-                     std::string endOfString = pLineInfo->decodedContents.substr(matchOff).c_str();
-                     size_t replaceMatchOff;
-                     if (endOfString.empty())
-                        replaceMatchOff = temp.length();
-                     else
-                        replaceMatchOff = temp.find(endOfString);
-                     replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
-                  }
-                  catch (const std::runtime_error& e)
-                  {
-                     addErrorMessage(e.what(), pErrorMessage,
-                                     pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
+                     pProgress->addUnit();
+                     addErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                                     pReplaceMatchOff, &lineSuccess);
+                     return error;
                   }
                }
+
                // if previewing, we need to display the original and replacement text
-               if (preview && lineSuccess)
+               std::string replaceString(replacePattern);
+               if (preview)
                {
                   if (!findResults().regex())
                      replaceString.insert(0, searchPattern);
@@ -703,68 +808,52 @@ private:
                      replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
                }
 
-               // if multiple replaces in line, readjust previous match numbers
-               if (pReplaceMatchOn->getSize() > 0 &&
-                   matchSize != replaceString.size())
-               {
-                  json::Array tempMatchOn(*pReplaceMatchOn);
-                  json::Array tempMatchOff(*pReplaceMatchOff);
-                  pReplaceMatchOn->clear();
-                  pReplaceMatchOff->clear();
-                  int offset(replaceString.size() - matchSize);
-                  if (lineSuccess)
-                  {
-                     addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), 0, pReplaceMatchOn);
-                     int offset;
-                     if (!preview)
-                        offset = replaceString.size();
-                     else
-                        offset = replaceString.size() - matchSize;
-                     addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), offset, pReplaceMatchOff);
-                  }
-                  addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
-                  addOffsetIntegerToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
-               }
-               else if (lineSuccess)
-               {
-                  int offset = 0;
-                  addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), offset, pReplaceMatchOn);
-                  if (!preview)
-                     offset = replaceString.size();
-                  else
-                     offset = replaceString.size() - matchSize;
-                  addOffsetIntegerToJsonArray(pMatchOn.getValueAt(pos), offset, pReplaceMatchOff);
-               }
-               if (lineSuccess)
-               {
-                  if (findResults().regex() &&
-                      !findResults().replaceRegex())
-                  {
-                     try
-                     {
-                        boost::regex searchAsRegex(searchPattern, boost::regex::grep);
-                        if (findResults().ignoreCase())
-                           getCaseInsensitiveRegex(searchPattern, &searchAsRegex);
-                        pLineInfo->decodedContents = boost::regex_replace(pLineInfo->decodedContents, searchAsRegex, replaceString);
-                     }
-                     catch (const std::runtime_error& e)
-                     {
-                        addErrorMessage(e.what(), pErrorMessage,
-                                        pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
-                     }
-                  }
-                  else
-                     pLineInfo->decodedContents = pLineInfo->decodedContents.replace(matchOn, matchSize, replaceString);
-                  pLineInfo->decodedContents.append("\n");
+               Replacer replacer(findResults().ignoreCase());
+               if (findResults().regex() &&
+                   !findResults().replaceRegex())
+                  error = replacer.replaceRegexWithLiteral(matchOn, matchOff, &newLine, &searchPattern,
+                                                           &replacePattern, &replaceMatchOff);
+               else
+                  replacer.replaceLiteralWithLiteral(matchOn, matchOff, &newLine, &replaceString,
+                                                     &replaceMatchOff);
+                if (error)
+                   addErrorMessage(error.asString(), pErrorMessage,
+                                   pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
+                if (lineSuccess)
+                {
+                   newLine.append("\n");
 #ifdef _WIN32
-                  string_utils::convertLineEndings(pLineInfo->decodedContents, string_utils::LineEndingWindows);
+                   string_utils::convertLineEndings(newLine, string_utils::LineEndingWindows);
 #endif
-               }
-               if (!preview)
+                   pLineInfo->decodedContents = newLine;
+
+                   // if multiple replaces in line, readjust previous match numbers
+                   if (pReplaceMatchOn->getSize() > 0 &&
+                       matchSize != static_cast<int>(replaceString.size()))
+                   {
+                      json::Array tempMatchOn(*pReplaceMatchOn);
+                      json::Array tempMatchOff(*pReplaceMatchOff);
+                      pReplaceMatchOn->clear();
+                      pReplaceMatchOff->clear();
+
+                      // put back in reverse order
+                      int offset(replaceString.size() - matchSize);
+                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                      addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
+                      addOffsetIntegerToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
+                   }
+                   else if (lineSuccess)
+                   {
+                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
+                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                   }
+                }
+                if (!preview)
                   pProgress->addUnit();
                pos--;
             }
-            if (!preview && lineSuccess)
+            if (!preview)
             {
                Error error = encodeAndWriteLineToFile(pLineInfo->decodedContents,
                                 pLineInfo->leftContents, pLineInfo->rightContents);
