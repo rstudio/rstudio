@@ -413,7 +413,6 @@ public class DocUpdateSentinel
       JsArray<ChunkDefinition> oldChunkDefs = 
             sourceDoc_.getNotebookDoc().getChunkDefs();
       
-      //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
