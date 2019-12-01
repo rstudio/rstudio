@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class DataImportFileChooser extends Composite
+                                   implements CanSetControlId
 {
    public DataImportFileChooser(Operation updateOperation, boolean growTextbox)
    {
@@ -167,6 +169,12 @@ public class DataImportFileChooser extends Composite
             actionButton_.setText(browseModeCaption_);
          }
       }
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      locationTextBox_.getElement().setId(id);
    }
 
    private static String browseModeCaption_ = "Browse...";

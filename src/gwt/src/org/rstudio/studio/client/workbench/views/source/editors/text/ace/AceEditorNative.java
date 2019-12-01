@@ -22,11 +22,14 @@ import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.LinkedList;
 
-public class AceEditorNative extends JavaScriptObject {
+public class AceEditorNative extends JavaScriptObject
+                             implements CanSetControlId
+{
    
    protected AceEditorNative() {}
 
@@ -210,6 +213,11 @@ public class AceEditorNative extends JavaScriptObject {
    {
       Element textInput = getTextInputElement();
       textInput.setAttribute("aria-label", label);
+   }
+
+   public final void setElementId(String id)
+   {
+      getTextInputElement().setId(id);
    }
 
    private native static JavaScriptObject addDomListener(
