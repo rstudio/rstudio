@@ -146,7 +146,8 @@
         <rsw:FormLabel text="File/URL:" styleName="{style.topImportLabel}" for="{ElementIds.getDataImportFileUrl}"/>
         <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
                                     styleName="{style.fileChooser}"
-                                    elementId="{ElementIds.getDataImportFileUrl}"/>
+                                    elementId="{ElementIds.getDataImportFileUrl}"
+                                    ariaLabelSuffix="File/URL"/>
         <g:HTMLPanel styleName="{style.dataPreviewHeader}">
             <g:Label text="Data Preview:" styleName="{style.dataPreviewLabel}"/>
         </g:HTMLPanel>

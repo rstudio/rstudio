@@ -50,7 +50,8 @@
                 <rsw:FormLabel text="Model:" styleName="{style.optionLabel} {style.modelLabel}"
                                for="{ElementIds.getDataImportOptionsFilechooser}"/>
                 <rsdi:DataImportFileChooser ui:field="fileChooser_"
-                                            elementId="{ElementIds.getDataImportOptionsFilechooser}"/>
+                                            elementId="{ElementIds.getDataImportOptionsFilechooser}"
+                                            ariaLabelSuffix="Model"/>
             </div>
             <div class="{style.optionsRow} {style.formatRow}">
                 <div class="{style.optionsLeftBlock}">

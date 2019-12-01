@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.Operation;
@@ -166,9 +168,35 @@ public class DataImportFileChooser extends Composite
          }
          else
          {
-            actionButton_.setText(browseModeCaption_);
+            actionButton_.setText(browseModeCaption_ + "...");
          }
+         updateButtonAriaLabel();
       }
+   }
+
+   /**
+    * @param suffix aria-label for the button to provide additional context to
+    *               screen reader users; applied as a suffix to the visible
+    *               button text, e.g. "Browse..." becomes "Browse for File/URL..."
+    */
+   public void setAriaLabelSuffix(String suffix)
+   {
+      ariaLabelSuffix_ = suffix;
+      updateButtonAriaLabel();
+   }
+
+   public void updateButtonAriaLabel()
+   {
+      if (StringUtil.isNullOrEmpty(ariaLabelSuffix_))
+      {
+         Roles.getButtonRole().setAriaLabelProperty(actionButton_.getElement(), "");
+         return;
+      }
+
+      final String prefix = updateMode_ ? updateModeCaption_ : browseModeCaption_ + " for";
+      final String finalSuffix = updateMode_ ? "" : "...";
+      Roles.getButtonRole().setAriaLabelProperty(actionButton_.getElement(),
+         prefix + " " + ariaLabelSuffix_ + finalSuffix);
    }
 
    @Override
@@ -177,12 +205,13 @@ public class DataImportFileChooser extends Composite
       locationTextBox_.getElement().setId(id);
    }
 
-   private static String browseModeCaption_ = "Browse...";
-   private static String updateModeCaption_ = "Update";
+   private static final String browseModeCaption_ = "Browse";
+   private static final String updateModeCaption_ = "Update";
    private boolean updateMode_ = false;
    private String lastTextBoxValue_;
    private int checkTextBoxInterval_ = 250;
    private final Operation updateOperation_;
+   private String ariaLabelSuffix_;
 
    private static DataImportFileChooserUiBinder uiBinder = GWT.create(DataImportFileChooserUiBinder.class);
    interface DataImportFileChooserUiBinder extends UiBinder<Widget, DataImportFileChooser> {}
