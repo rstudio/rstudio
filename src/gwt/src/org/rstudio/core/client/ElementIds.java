@@ -268,4 +268,20 @@ public class ElementIds
    public static String getDataImportOptionsRange() { return getElementId(DATA_IMPORT_OPTIONS_RANGE); }
    public final static String DATA_IMPORT_OPTIONS_FORMAT = "data_import_options_format";
    public static String getDataImportOptionsFormat() { return getElementId(DATA_IMPORT_OPTIONS_FORMAT); }
+
+   // DataImportOptionsUiCsvLocale
+   public final static String DATA_IMPORT_CSV_DATENAME = "data_import_csv_datename";
+   public static String getDataImportCsvDatename() { return getElementId(DATA_IMPORT_CSV_DATENAME); }
+   public final static String DATA_IMPORT_CSV_ENCODING = "data_import_csv_encoding";
+   public static String getDataImportCsvEncoding() { return getElementId(DATA_IMPORT_CSV_ENCODING); }
+   public final static String DATA_IMPORT_CSV_DATE_FORMAT = "data_import_csv_date_format";
+   public static String getDataImportCsvDateFormat() { return getElementId(DATA_IMPORT_CSV_DATE_FORMAT); }
+   public final static String DATA_IMPORT_CSV_TIME_FORMAT = "data_import_csv_time_format";
+   public static String getDataImportCsvTimeFormat() { return getElementId(DATA_IMPORT_CSV_TIME_FORMAT); }
+   public final static String DATA_IMPORT_CSV_DECIMAL_MARK = "data_import_csv_decimal_mark";
+   public static String getDataImportCsvDecimalMark() { return getElementId(DATA_IMPORT_CSV_DECIMAL_MARK); }
+   public final static String DATA_IMPORT_CSV_GROUPING_MARK = "data_import_csv_grouping_mark";
+   public static String getDataImportCsvGroupingMark() { return getElementId(DATA_IMPORT_CSV_GROUPING_MARK); }
+   public final static String DATA_IMPORT_CSV_TZ = "data_import_csv_tz";
+   public static String getDataImportCsvTz() { return getElementId(DATA_IMPORT_CSV_TZ); }
 }
