@@ -746,8 +746,8 @@ private:
    }
 
    Error processReplace(const int& lineNum,
-                        const json::Array& pMatchOn,
-                        const json::Array& pMatchOff,
+                        const json::Array& matchOnArray,
+                        const json::Array& matchOffArray,
                         LineInfo* pLineInfo,
                         json::Array* pReplaceMatchOn,
                         json::Array* pReplaceMatchOff,
@@ -775,12 +775,12 @@ private:
          }
          else
          {
-            int pos = pMatchOn.getSize() - 1;
+            int pos = matchOnArray.getSize() - 1;
             std::string newLine;
             while (pos > -1)
             {
-               const int matchOn = pMatchOn.getValueAt(pos).getInt();
-               const int matchOff = pMatchOff.getValueAt(pos).getInt();
+               const int matchOn = matchOnArray.getValueAt(pos).getInt();
+               const int matchOff = matchOffArray.getValueAt(pos).getInt();
                const int matchSize = matchOff - matchOn;
                int replaceMatchOff;
                std::string newLine(pLineInfo->decodedContents);
@@ -805,12 +805,7 @@ private:
                // if previewing, we need to display the original and replacement text
                std::string replaceString(replacePattern);
                if (preview)
-               {
-                  if (!findResults().regex())
-                     replaceString.insert(0, searchPattern);
-                  else
-                     replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
-               }
+                  replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
 
                Replacer replacer(findResults().ignoreCase());
                if (findResults().regex() &&
