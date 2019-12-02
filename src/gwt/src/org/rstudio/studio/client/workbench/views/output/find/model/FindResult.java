@@ -172,7 +172,7 @@ public class FindResult extends JavaScriptObject
                   replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
                }
                else
-                  replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0) + difference)));
+                  replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0))));
             }
          }
    
