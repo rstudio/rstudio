@@ -68,34 +68,28 @@ public:
 
    void addUnit()
    {
-      if (!findResults().preview())
+      units_++;
+      if (units_ >= nextUpdate_)
       {
-         units_++;
-         if (units_ >= nextUpdate_)
-         {
-            nextUpdate_ += updateIncrement_;
-            if (nextUpdate_ > max_)
-               nextUpdate_ = max_;
-            notifyClient();
-         }
+         nextUpdate_ += updateIncrement_;
+         if (nextUpdate_ > max_)
+            nextUpdate_ = max_;
+         notifyClient();
       }
    }
 
    void addUnits(int num)
    {
-      if (!findResults().preview())
+      units_ += num;
+      while (units_ >= nextUpdate_)
       {
-         units_ += num;
-         while (units_ >= nextUpdate_)
-         {
-            nextUpdate_ += updateIncrement_;
-            if (nextUpdate_ > max_)
-               nextUpdate_ = max_;
-            notifyClient();
-            // prevent infinite loop when max is reached
-            if (units_ >= max_)
-               break;
-         }
+         nextUpdate_ += updateIncrement_;
+         if (nextUpdate_ > max_)
+            nextUpdate_ = max_;
+         notifyClient();
+         // prevent infinite loop when max is reached
+         if (units_ >= max_)
+            break;
       }
    }
 
@@ -800,7 +794,8 @@ private:
                                                          &replacePattern, &replaceMatchOff);
                   if (error)
                   {
-                     pProgress->addUnit();
+                     if (!findResults().preview())
+                        pProgress->addUnit();
                      addErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                                      pReplaceMatchOff, &lineSuccess);
                      return error;
@@ -849,7 +844,8 @@ private:
                       pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                    }
                 }
-                pProgress->addUnit();
+                if (!findResults().preview())
+                   pProgress->addUnit();
                pos--;
             }
             if (!findResults().preview())
@@ -961,7 +957,8 @@ private:
                   if (inputLineNum_ != 0)
                      addErrorMessage("Cannot perform replace", &errorMessage,
                                      &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
-                  findResults().replaceProgress()->addUnits(matchOn.getSize());
+                  if (!findResults().preview())
+                     findResults().replaceProgress()->addUnits(matchOn.getSize());
                }
                processReplace(lineNum,
                               matchOn, matchOff,
