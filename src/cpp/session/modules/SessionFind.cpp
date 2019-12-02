@@ -601,7 +601,7 @@ private:
             {
                line.append("\n");
 #ifdef _WIN32
-                  string_utils::convertLineEndings(&line, string_utils::LineEndingWindows);
+               string_utils::convertLineEndings(&line, string_utils::LineEndingWindows);
 #endif
                outputStream_->write(line.c_str(), line.size());
             }
@@ -723,6 +723,10 @@ private:
          &encodedNewLine);
       encodedNewLine.insert(0, lineLeftContents);
       encodedNewLine.insert(encodedNewLine.length(), lineRightContents);
+      encodedNewLine.append("\n");
+#ifdef _WIN32
+      string_utils::convertLineEndings(encodedNewLine, string_utils::LineEndingWindows);
+#endif
 
       if (error)
          return error;
@@ -821,10 +825,6 @@ private:
                                    pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
                 if (lineSuccess)
                 {
-                   newLine.append("\n");
-#ifdef _WIN32
-                   string_utils::convertLineEndings(newLine, string_utils::LineEndingWindows);
-#endif
                    pLineInfo->decodedContents = newLine;
 
                    // if multiple replaces in line, readjust previous match numbers
@@ -943,8 +943,10 @@ private:
                 !(findResults().preview() &&
                   findResults().replacePattern().empty()))
             {
+               std::string fullPath =
+                  FilePath(module_context::resolveAliasedPath(file)).getAbsolutePath();
                if (currentFile_.empty() ||
-                   currentFile_ != file)
+                   currentFile_ != fullPath)
                {
                   if (!currentFile_.empty())
                      completeFileReplace();
