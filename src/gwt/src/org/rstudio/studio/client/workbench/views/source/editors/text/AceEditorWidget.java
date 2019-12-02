@@ -44,6 +44,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasContextMenuHandlers;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -79,7 +80,8 @@ public class AceEditorWidget extends Composite
                  HasContextMenuHandlers,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
-                 EditEvent.Handler
+                 EditEvent.Handler,
+                 CanSetControlId
 {
    public AceEditorWidget()
    {
@@ -967,6 +969,12 @@ public class AceEditorWidget extends Composite
                                              Position end)
    {
       return getEditor().getSession().createAnchoredRange(start, end);
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      editor_.setElementId(id);
    }
 
    // This class binds an ace annotation (used for the gutter) with an

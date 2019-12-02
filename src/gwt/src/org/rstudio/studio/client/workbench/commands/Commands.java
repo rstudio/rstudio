@@ -347,11 +347,6 @@ public abstract class
    public abstract AppCommand importDatasetFromSAS();
    public abstract AppCommand importDatasetFromStata();
    public abstract AppCommand importDatasetFromXLS();
-   public abstract AppCommand importDatasetFromXML();
-   public abstract AppCommand importDatasetFromJSON();
-   public abstract AppCommand importDatasetFromJDBC();
-   public abstract AppCommand importDatasetFromODBC();
-   public abstract AppCommand importDatasetFromMongo();
 
    // Environment
    public abstract AppCommand activateEnvironment();

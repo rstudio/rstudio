@@ -1,7 +1,7 @@
 /*
  * EnvironmentTab.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,16 +57,6 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
       public abstract void onImportDatasetFromStata();
       @Handler
       public abstract void onImportDatasetFromXLS();
-      @Handler
-      public abstract void onImportDatasetFromXML();
-      @Handler
-      public abstract void onImportDatasetFromJSON();
-      @Handler
-      public abstract void onImportDatasetFromJDBC();
-      @Handler
-      public abstract void onImportDatasetFromODBC();
-      @Handler
-      public abstract void onImportDatasetFromMongo();
       @Handler
       public abstract void onClearWorkspace();
 

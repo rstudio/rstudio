@@ -122,14 +122,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="importDatasetFromSAV"/>
             <cmd refid="importDatasetFromSAS"/>
             <cmd refid="importDatasetFromStata"/>
-            <separator/>
-            <cmd refid="importDatasetFromXML"/>
-            <cmd refid="importDatasetFromJSON"/>
-            <separator/>
-            <cmd refid="importDatasetFromJDBC"/>
-            <cmd refid="importDatasetFromODBC"/>
-            <separator/>
-            <cmd refid="importDatasetFromMongo"/>
          </menu>
          <separator/>
          <cmd refid="saveSourceDoc"/>
@@ -2559,31 +2551,6 @@ well as menu structures (for main menu and popup menus).
    <cmd id="importDatasetFromXLS"
         label="Import Dataset from Excel..."
         menuLabel="From _Excel..."
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromXML"
-        label="Import Dataset from XML..."
-        menuLabel="From _XML..."
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromJSON"
-        label="Import Dataset from JSON..."
-        menuLabel="From _JSON..."
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromJDBC"
-        label="Import Dataset from JDBC..."
-        menuLabel="From _JDBC..."
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromODBC"
-        label="Import Dataset from ODBC..."
-        menuLabel="From _ODBC..."
-        windowMode="main"/>
-
-   <cmd id="importDatasetFromMongo"
-        label="Import Dataset from Mongo DB..."
-        menuLabel="From _Mongo DB..."
         windowMode="main"/>
 
    <cmd id="refreshWorkspace"
