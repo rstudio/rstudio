@@ -68,28 +68,34 @@ public:
 
    void addUnit()
    {
-      units_++;
-      if (units_ >= nextUpdate_)
+      if (!findResults().preview())
       {
-         nextUpdate_ += updateIncrement_;
-         if (nextUpdate_ > max_)
-            nextUpdate_ = max_;
-         notifyClient();
+         units_++;
+         if (units_ >= nextUpdate_)
+         {
+            nextUpdate_ += updateIncrement_;
+            if (nextUpdate_ > max_)
+               nextUpdate_ = max_;
+            notifyClient();
+         }
       }
    }
 
    void addUnits(int num)
    {
-      units_ += num;
-      while (units_ >= nextUpdate_)
+      if (!findResults().preview())
       {
-         nextUpdate_ += updateIncrement_;
-         if (nextUpdate_ > max_)
-            nextUpdate_ = max_;
-         notifyClient();
-         // prevent infinite loop when max is reached
-         if (units_ >= max_)
-            break;
+         units_ += num;
+         while (units_ >= nextUpdate_)
+         {
+            nextUpdate_ += updateIncrement_;
+            if (nextUpdate_ > max_)
+               nextUpdate_ = max_;
+            notifyClient();
+            // prevent infinite loop when max is reached
+            if (units_ >= max_)
+               break;
+         }
       }
    }
 
@@ -756,7 +762,6 @@ private:
       std::string line;
       const std::string searchPattern = findResults().searchPattern();
       const std::string replacePattern = findResults().replacePattern();
-      bool preview = findResults().preview();
       LocalProgress* pProgress = findResults().replaceProgress();
       while (findResults().isRunning() && inputLineNum_ < lineNum && std::getline(*inputStream_, line))
       {
@@ -764,7 +769,7 @@ private:
          ++inputLineNum_;
          if (inputLineNum_ != lineNum)
          {
-            if (!preview)
+            if (!findResults().preview())
             {
                line.append("\n");
 #ifdef _WIN32
@@ -804,7 +809,7 @@ private:
 
                // if previewing, we need to display the original and replacement text
                std::string replaceString(replacePattern);
-               if (preview)
+               if (findResults().preview())
                   replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
 
                Replacer replacer(findResults().ignoreCase());
@@ -844,11 +849,10 @@ private:
                       pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                    }
                 }
-                if (!preview)
-                  pProgress->addUnit();
+                pProgress->addUnit();
                pos--;
             }
-            if (!preview)
+            if (!findResults().preview())
             {
                Error error = encodeAndWriteLineToFile(pLineInfo->decodedContents,
                                 pLineInfo->leftContents, pLineInfo->rightContents);
@@ -957,8 +961,7 @@ private:
                   if (inputLineNum_ != 0)
                      addErrorMessage("Cannot perform replace", &errorMessage,
                                      &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
-                  if (!findResults().preview())
-                     findResults().replaceProgress()->addUnits(matchOn.getSize());
+                  findResults().replaceProgress()->addUnits(matchOn.getSize());
                }
                processReplace(lineNum,
                               matchOn, matchOff,
