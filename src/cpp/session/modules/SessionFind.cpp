@@ -180,6 +180,7 @@ private:
          replaceMatchOff = temp.length();
       else
          replaceMatchOff = temp.find(endOfString);
+      *line = temp;
       std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
       *pReplaceMatchOff = matchOn  + replaceString.size();
       return Success();
