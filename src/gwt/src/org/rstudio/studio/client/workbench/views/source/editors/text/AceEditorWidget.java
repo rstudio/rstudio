@@ -472,19 +472,22 @@ public class AceEditorWidget extends Composite
          tabMovesFocus_ = true;
       }
 
-      // GWT sometimes throws an exception if we bind a lambda here, work around is
-      // to defer it. Not sure why, though.
-      Scheduler.get().scheduleDeferred(() ->
+      // This command binding has to be an anonymous inner class (not a lambda)
+      // due to an issue with using lambda bindings with Ace, which sometimes 
+      // results in a blocking exception on startup in devmode.
+      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(
+            new CommandWithArg<Boolean>()
       {
-         aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(movesFocus ->
+         @Override
+         public void execute(Boolean movesFocus)
          {
             if (tabMovesFocus_ != movesFocus)
             {
                editor_.setTabMovesFocus(movesFocus);
                tabMovesFocus_ = movesFocus;
             }
-         }));
-      });
+         }
+      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
