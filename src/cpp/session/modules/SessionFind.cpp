@@ -665,19 +665,23 @@ private:
                const int matchOn = matchOnArray.getValueAt(pos).getInt();
                const int matchOff = matchOffArray.getValueAt(pos).getInt();
                const int matchSize = matchOff - matchOn;
-               int replaceMatchOff;
+               int replaceMatchOff = matchOff;
                std::string newLine(pLineInfo->decodedContents);
                Error error;
 
+               // if previewing, we need to display the original and replacement text
+               std::string replaceString(replacePattern);
                // for regexes, determine replacePattern before creating the string
                // that will be written to file so that previews are handled correctly
                if (findResults().replaceRegex())
                {
                   Replacer replacer(findResults().ignoreCase());
-                  std::string temp(newLine);
-                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &temp, &searchPattern,
+                  std::string previewLine(newLine);
+                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &previewLine, &searchPattern,
                                                          &replacePattern, &replaceMatchOff);
-                  if (error)
+                  if (!error)
+                     replaceString = previewLine.substr(matchOn, replaceMatchOff - matchOn);
+                  else
                   {
                      if (!findResults().preview())
                         pProgress->addUnit();
@@ -686,9 +690,6 @@ private:
                      return error;
                   }
                }
-
-               // if previewing, we need to display the original and replacement text
-               std::string replaceString(replacePattern);
                if (findResults().preview())
                   replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
 
@@ -1235,6 +1236,66 @@ core::Error initialize()
       (bind(registerRpcMethod, "complete_replace", completeReplace))
       (bind(registerRpcMethod, "stop_replace", stopReplace));
    return initBlock.execute();
+}
+
+core::Error Replacer::completeReplace(const boost::regex* searchRegex, const std::string* replaceRegex,
+                                      int matchOn, int matchOff, std::string* line,
+                                      int* pReplaceMatchOff)
+{
+   std::string temp;
+   try
+   {
+      temp = boost::regex_replace(*line, *searchRegex, *replaceRegex, boost::format_sed);
+   }
+   catch (const std::runtime_error& e)
+   {
+      return core::Error(-1, e.what(), ERROR_LOCATION);
+   }
+
+   std::string endOfString = line->substr(matchOff).c_str();
+   size_t replaceMatchOff;
+   if (endOfString.empty())
+      replaceMatchOff = temp.length();
+   else
+      replaceMatchOff = temp.find(endOfString);
+   *line = temp;
+   std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
+   *pReplaceMatchOff = matchOn  + replaceString.size();
+   return core::Success();
+}
+
+core::Error Replacer::replaceRegexIgnoreCase(int matchOn, int matchOff, std::string* line,
+                                            const std::string* findRegex, const std::string* replaceRegex,
+                                            int* pReplaceMatchOff)
+{
+   try
+   {
+      boost::regex find(*findRegex, boost::regex::grep | boost::regex::icase);
+      core::Error error = completeReplace(&find, replaceRegex, matchOn, matchOff, line,
+                                        pReplaceMatchOff);
+      return error;
+   }
+   catch (const std::runtime_error& e)
+   {
+      return core::Error(-1, e.what(), ERROR_LOCATION);
+   }
+}
+
+core::Error Replacer::replaceRegexWithCase(int matchOn, int matchOff, std::string* line,
+                                           const std::string* findRegex, const std::string* replaceRegex,
+                                           int* pReplaceMatchOff)
+{
+   try
+   {
+      boost::regex find(*findRegex, boost::regex::grep);
+      core::Error error = completeReplace(&find, replaceRegex, matchOn, matchOff, line,
+                                        pReplaceMatchOff);
+      return error;
+   }
+   catch (const std::runtime_error& e)
+   {
+      return core::Error(-1, e.what(), ERROR_LOCATION);
+   }
 }
 
 } // namespace find

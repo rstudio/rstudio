@@ -31,10 +31,27 @@
 
  namespace {
       std::string line("<key>Green Component</key>");
+      std::string regexLine("aba oookkk okab aaoo aa abab");
+      const std::string regexOriginalLine("aba oookkk okab aaoo aa abab");
+
       std::string newLine("<key>mean Component</key>");
+      std::string regexNewLine("aba mean okab aaoo aa abab");
+      //std::string regexRegexNewLine("aba oOooOo okab aaooo");
+      std::string regexRegexNewLine("aba ooo okab aaoo aa abab");
+
+      //std::string findRegex("([a-z])\1{2}([a-z])\2{2})");
+      std::string findRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
+
       std::string replaceString("mean");
+      //std::string replaceRegex("\\1\\{2\\}");
+      std::string replaceRegex("\\1\\1\\1");
+
       int matchOn = 5;
       int matchOff = 10;
+
+      int rMatchOn = 4;
+      int rMatchOff = 10;
+
       int replaceMatchOff = 0;
  } // anonymous namespace
 
@@ -51,18 +68,49 @@
 
       SECTION("Replace regex with literal ignore case")
       {
+         Replacer replacer(true);
+         replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
+            &findRegex, &replaceString, &replaceMatchOff);
+         CHECK(regexLine.compare(regexNewLine) == 0);
+         CHECK(replaceMatchOff == 8);
+         regexLine = regexOriginalLine;
       }
 
       SECTION("Replace regex with literal case sensitive")
       {
+         std::string regexOriginalLine = regexLine;
+         Replacer replacer(false);
+         replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
+            &findRegex, &replaceString, &replaceMatchOff);
+         CHECK(regexLine.compare(regexNewLine) == 0);
+         CHECK(replaceMatchOff == 8);
+         regexLine = regexOriginalLine;
       }
 
       SECTION("Replace regex with regex ignore case")
       {
+         Replacer replacer(true);
+         replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
+            &findRegex, &replaceRegex, &replaceMatchOff);
+
+         CHECK(regexLine.compare(regexRegexNewLine) == 0);
+         CHECK(replaceMatchOff == 7);
+         regexLine = regexOriginalLine;
       }
 
       SECTION("Replace regex with regex case sensitive")
       {
+         std::string regexOriginalLine = regexLine;
+         Replacer replacer(false);
+         replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
+            &findRegex, &replaceRegex, &replaceMatchOff);
+
+         LOG_DEBUG_MESSAGE("regexLine: " + regexLine);
+         LOG_DEBUG_MESSAGE("regexRegexNewLine: " + regexRegexNewLine);
+         LOG_DEBUG_MESSAGE("replaceRegex: " + replaceRegex);
+         CHECK(regexLine.compare(regexRegexNewLine) == 0);
+         CHECK(replaceMatchOff == 7);
+         regexLine = regexOriginalLine;
       }
    }
 } // end namespace tests

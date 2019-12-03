@@ -34,6 +34,18 @@ core::Error initialize();
 // helper class used to process file replacements
 class Replacer : public boost::noncopyable
 {
+   core::Error completeReplace(const boost::regex* searchRegex, const std::string* replaceRegex,
+                               int matchOn, int matchOff, std::string* line,
+                               int* pReplaceMatchOff);
+
+   core::Error replaceRegexIgnoreCase(int matchOn, int matchOff, std::string* line,
+                                      const std::string* findRegex, const std::string* replaceRegex,
+                                      int* pReplaceMatchOff);
+
+   core::Error replaceRegexWithCase(int matchOn, int matchOff, std::string* line,
+                                    const std::string* findRegex, const std::string* replaceRegex,
+                                    int* pReplaceMatchOff);
+
 public:
    explicit Replacer(bool ignoreCase) :
       ignoreCase_(ignoreCase)
@@ -58,91 +70,26 @@ public:
    }
 
    core::Error replaceRegexWithLiteral(int matchOn, int matchOff, std::string* line,
-                                 const std::string* findRegex, const std::string* replaceLiteral,
-                                 int* pReplaceMatchOff)
+                                       const std::string* findRegex, const std::string* replaceLiteral,
+                                       int* pReplaceMatchOff)
    {
       return (replaceRegexWithRegex(matchOn, matchOff, line, findRegex, replaceLiteral,
                                     pReplaceMatchOff));
    }
 
    core::Error replaceRegexWithRegex(int matchOn, int matchOff, std::string* line,
-                              const std::string* findRegex, const std::string* replaceRegex,
-                              int* pReplaceMatchOff)
+                                     const std::string* findRegex, const std::string* replaceRegex,
+                                     int* pReplaceMatchOff)
   {
      core::Error error;
      if (ignoreCase_)
-        error = replaceRegexWithCaseInsensitiveRegex(matchOn, matchOff, line, findRegex, replaceRegex,
-                                                     pReplaceMatchOff);
+        error = replaceRegexIgnoreCase(matchOn, matchOff, line, findRegex, replaceRegex,
+                                       pReplaceMatchOff);
      else
-        error = replaceRegexWithCaseSensitiveRegex(matchOn, matchOff, line, findRegex, replaceRegex,
-                                                   pReplaceMatchOff);
+        error = replaceRegexWithCase(matchOn, matchOff, line, findRegex, replaceRegex,
+                                     pReplaceMatchOff);
      return error;
   }
-
-private:
-   core::Error replaceRegexWithRegex(const boost::regex* searchRegex, const boost::regex* replaceRegex,
-                               int matchOn, int matchOff, std::string* line,
-                               int* pReplaceMatchOff)
-   {
-      std::string temp;
-      try
-      {
-         temp = boost::regex_replace(*line, *searchRegex, *replaceRegex);
-      }
-      catch (const std::runtime_error& e)
-      {
-         return core::Error(-1, e.what(), ERROR_LOCATION);
-      }
-
-      std::string endOfString = line->substr(matchOff).c_str();
-      size_t replaceMatchOff;
-      if (endOfString.empty())
-         replaceMatchOff = temp.length();
-      else
-         replaceMatchOff = temp.find(endOfString);
-      *line = temp;
-      std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
-      *pReplaceMatchOff = matchOn  + replaceString.size();
-      return core::Success();
-   }
-
-   core::Error replaceRegexWithCaseInsensitiveRegex(int matchOn, int matchOff, std::string* line,
-                                              const std::string* findRegex, const std::string* replaceRegex,
-                                              int* pReplaceMatchOff)
-   {
-      try
-      {
-         boost::regex find(findRegex->c_str(), boost::regex::grep | boost::regex::icase);
-         boost::regex replace(replaceRegex->c_str(), boost::regex::grep | boost::regex::icase);
-
-         core::Error error = replaceRegexWithRegex(&find, &replace, matchOn, matchOff, line,
-                                             pReplaceMatchOff);
-         return error;
-      }
-      catch (const std::runtime_error& e)
-      {
-         return core::Error(-1, e.what(), ERROR_LOCATION);
-      }
-   }
-
-   core::Error replaceRegexWithCaseSensitiveRegex(int matchOn, int matchOff, std::string* line,
-                                            const std::string* findRegex, const std::string* replaceRegex,
-                                            int* pReplaceMatchOff)
-   {
-      try
-      {
-         boost::regex find(findRegex->c_str(), boost::regex::grep);
-         boost::regex replace(replaceRegex->c_str(), boost::regex::grep);
-
-         core::Error error = replaceRegexWithRegex(&find, &replace, matchOn, matchOff, line,
-                                             pReplaceMatchOff);
-         return error;
-      }
-      catch (const std::runtime_error& e)
-      {
-         return core::Error(-1, e.what(), ERROR_LOCATION);
-      }
-   }
 
 private:
    bool ignoreCase_;
