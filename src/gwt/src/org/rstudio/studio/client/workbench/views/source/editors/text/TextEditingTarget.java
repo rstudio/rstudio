@@ -121,6 +121,7 @@ import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -7245,33 +7246,28 @@ public class TextEditingTarget implements
    @Handler
    void onShinyCompareTest()
    {
-      final String appDir = FilePathUtils.parent(FilePathUtils.dirFromFile(docUpdateSentinel_.getPath()));
-      final String testName = FilePathUtils.fileNameSansExtension(docUpdateSentinel_.getPath());
-
-      server_.hasShinyTestResults(appDir, testName, new ServerRequestCallback<Boolean>() {
+      final String testFile = docUpdateSentinel_.getPath();
+      server_.hasShinyTestResults(testFile, new ServerRequestCallback<ShinyTestResults>() {
          @Override
-         public void onResponseReceived(Boolean hasResults)
+         public void onResponseReceived(ShinyTestResults results)
          {
-            if (!hasResults) {
+            if (!results.testDirExists)
+            {
                globalDisplay_.showMessage(
                   GlobalDisplay.MSG_INFO, 
                   "No Failed Results", 
                   "There are no failed tests to compare."
                );
             }
-            else {
-               checkTestPackageDependencies(
-                  new Command()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        String code = "shinytest::viewTestDiff(\"" + appDir + "\", \"" + testName + "\")";
-                        events_.fireEvent(new SendToConsoleEvent(code, true));
-                     }
-                  },
-                  false
-               );
+            else
+            {
+               checkTestPackageDependencies(() -> 
+               {
+                  String testName = FilePathUtils.fileNameSansExtension(testFile);
+                  String code = "shinytest::viewTestDiff(\"" + 
+                        results.appDir + "\", \"" + testName + "\")";
+                  events_.fireEvent(new SendToConsoleEvent(code, true));
+               }, false);
             }
          }
 
