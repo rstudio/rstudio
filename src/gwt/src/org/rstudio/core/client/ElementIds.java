@@ -284,4 +284,8 @@ public class ElementIds
    public static String getDataImportCsvGroupingMark() { return getElementId(DATA_IMPORT_CSV_GROUPING_MARK); }
    public final static String DATA_IMPORT_CSV_TZ = "data_import_csv_tz";
    public static String getDataImportCsvTz() { return getElementId(DATA_IMPORT_CSV_TZ); }
+
+   // AboutDialogContents
+   public final static String ABOUT_LICENSE_INFO = "about_license_info";
+   public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
 }
