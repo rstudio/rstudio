@@ -1,5 +1,5 @@
 GWT 2.8.2
-(git revision 2da18f092)
+(git revision ba14cf743)
 Copyright (c) Google, Inc. 2009.  All rights reserved.
 Visit http://www.gwtproject.org.
 

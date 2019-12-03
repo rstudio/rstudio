@@ -39,8 +39,6 @@ well as menu structures (for main menu and popup menus).
       <!-- 
          Keep ShowMainMenuEvent.Menu enum in sync with top-level main-menu entries (File, Edit...)
       -->
-      <separator/>
-
       <menu label="_File">
          <menu label="New _File">
             <cmd refid="newSourceDoc"/>
@@ -148,8 +146,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="quitSession"/>
       </menu>
 
-      <separator/>
-
       <menu label="_Edit">
          <cmd refid="sourceNavigateBack"/>
          <cmd refid="sourceNavigateForward"/>
@@ -193,8 +189,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="macPreferences"/>
       </menu>
-
-      <separator/>
 
       <menu label="_Code">
          <cmd refid="insertChunk"/>
@@ -250,8 +244,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="sourceFile"/>
          <separator/>
       </menu>
-
-      <separator/>
 
       <menu label="_View">
          <cmd refid="showToolbar"/>
@@ -319,8 +311,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="synctexSearch"/>
       </menu>
 
-      <separator/>
-
       <menu label="_Plots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
@@ -336,8 +326,6 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="clearPlots"/>
       </menu>
-
-      <separator/>
 
       <menu label="_Session">
          <cmd refid="newSession"/>
@@ -419,8 +407,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="profileHelp"/>
       </menu>
 
-      <separator/>
-
       <menu label="_Tools">
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
@@ -485,8 +471,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showOptions"/>
       </menu>
 
-      <separator/>
-
       <menu label="_Help">
          <cmd refid="helpHome"/>
          <cmd refid="showAboutDialog"/>
@@ -544,9 +528,6 @@ well as menu structures (for main menu and popup menus).
 -           <cmd refid="raiseException2"/>
          </menu>
       </menu>
-
-      <separator/>
-
    </menu>
 
    <shortcuts>
