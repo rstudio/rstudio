@@ -75,11 +75,13 @@ public:
     * @param in_logLevel    The log level of the message to write.
     * @param in_message     The message to write to the destination.
     */
-   virtual void writeLog(LogLevel in_level, const std::string& in_message) = 0;
+   virtual void writeLog(LogLevel in_logLevel, const std::string& in_message) = 0;
 
 protected:
-   // The maximum level of log messages to write for this logger.
-   LogLevel m_logLevel;
+   /**
+    * @brief The maximum level of log messages to write for this logger.
+    */
+    LogLevel m_logLevel;
 };
 
 } // namespace log
