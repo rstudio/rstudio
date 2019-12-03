@@ -16,15 +16,16 @@
 context("find-replace")
 
 test_that("complete replace regex preview", {
-   search_string <- ""
-   replace_string <- ""
+   search_string <- "Green"
+   replace_string <- "Mean"
    file_patterns <- array(0, dim=c(0,0))
+   directory <- "~/work/themes"
 
    contents <- .rs.invokeRpc("preview_replace",
                              search_string,
                              FALSE,
                              TRUE,
-                             "",
+                             directory,
                              file_patterns,
                              replace_string,
                              TRUE,

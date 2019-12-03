@@ -13,6 +13,8 @@
  *
  */
 
+#include "SessionFind.hpp"
+
 #include <core/system/ShellUtils.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
@@ -25,65 +27,42 @@
  namespace tests {
 
  using namespace rstudio::core;
- //using namespace modules::find;
+ using namespace modules::find;
 
  namespace {
-
-   bool previewFlag = true;
-   bool replaceFlag = true;
-   bool asRegex = false;
-   bool ignoreCase = true;
-   bool replaceRegex = false;
-   bool useGitIgnore = false;
-   //json::Array patterns;
-   //LocalProgress* pProgress;
-   std::string encoding;
-   std::set<std::string>* pErrorSet;
-   //json::Array* pReplaceMatchOn;
-   //json::Array* pReplaceMatchOff;
-
-   const std::string directory("/test/directory");
-   const std::string searchPattern("hello");
-   const std::string replacePattern("goodbye");
-   const std::string regexSearchPattern("sub[^ ]");
-   const std::string regexReplacePattern("sub-");
-   const std::string handle("unit-test01");
-   const FilePath grepFile;
-   const FilePath replaceFile("/some/file/tbd.txt");
-   const shell_utils::ShellCommand grepCommand("grep");
-
-
-   } // anonymous namespace
+      std::string line("<key>Green Component</key>");
+      std::string newLine("<key>mean Component</key>");
+      std::string replaceString("mean");
+      int matchOn = 5;
+      int matchOff = 10;
+      int replaceMatchOff = 0;
+ } // anonymous namespace
 
    TEST_CASE("SessionFind")
    {
-      SECTION("Add error message")
+      SECTION("Replace literal with literal ignore case")
       {
-         /*
-         boost::shared_ptr<GrepOperation> pGrepOp = GrepOperation::create(encoding, grepFile);
-         bool successFlag = true;
-         pGrepOp->addErrorMessage("Test error message",
-                                  pErrorSet, pReplaceMatchOn, pReplaceMatchOff,
-                                  &successFlag);
-         CHECK(pReplaceMatchOn->getValueAt(pReplaceMatchOn->getSize() - 1).getInt() == -1);
-         CHECK(pReplaceMatchOff->getValueAt(pReplaceMatchOff->getSize() - 1).getInt() == -1);
-         CHECK(pErrorSet->find("Test error message") !=
-               pErrorSet->end());
-         CHECK_FALSE(successFlag);
-         */
+         Replacer replacer(true);
+         replacer.replaceLiteralWithLiteral(matchOn, matchOff, &line,
+            &replaceString, &replaceMatchOff);
+         CHECK(line.compare(newLine) == 0);
+         CHECK(replaceMatchOff == 9);
       }
 
-      SECTION("Initialize file replace")
+      SECTION("Replace regex with literal ignore case")
       {
-         /*
-         boost::shared_ptr<GrepOperation> pGrepOp = GrepOperation::create(encoding, grepFile);
-         Error error = pGrepOp->initializeFileForReplace(replaceFile);
-         CHECK(!error);
-         CHECK(pGrepOp->outputStream()->good());
-         CHECK(pGrepOp->inputStream()->good());
-         CHECK(pGrepOp->inputLineNum() == 0);
-         CHECK(pGrepOp->currentFile() == replaceFile.getAbsolutePath());
-         */
+      }
+
+      SECTION("Replace regex with literal case sensitive")
+      {
+      }
+
+      SECTION("Replace regex with regex ignore case")
+      {
+      }
+
+      SECTION("Replace regex with regex case sensitive")
+      {
       }
    }
 } // end namespace tests
