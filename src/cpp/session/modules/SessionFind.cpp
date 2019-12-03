@@ -786,12 +786,13 @@ private:
                std::string newLine(pLineInfo->decodedContents);
                Error error;
 
-               // for regexes, determine what the replace will look like before creating the string
+               // for regexes, determine replacePattern before creating the string
                // that will be written to file so that previews are handled correctly
                if (findResults().replaceRegex())
                {
                   Replacer replacer(findResults().ignoreCase());
-                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &newLine, &searchPattern,
+                  std::string temp(newLine);
+                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &temp, &searchPattern,
                                                          &replacePattern, &replaceMatchOff);
                   if (error)
                   {
