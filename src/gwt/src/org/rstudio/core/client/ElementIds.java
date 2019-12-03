@@ -172,6 +172,7 @@ public class ElementIds
    // FindInFilesDialog
    public final static String FIND_FILES_TEXT = "find_files_text";
    public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
+   public final static String FIND_FILES_PATTERN_EXAMPLE = "find_files_pattern_example";
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
