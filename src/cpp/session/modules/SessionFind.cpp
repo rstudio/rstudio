@@ -16,16 +16,13 @@
 #include "SessionFind.hpp"
 
 #include <algorithm>
-#include <fstream>
 #include <gsl/gsl>
-#include <regex>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/Exec.hpp>
-#include <core/FileLock.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
@@ -932,7 +929,7 @@ core::Error runGrepOperation(
       json::JsonRpcResponse* pResponse)
 {
    if (previewFlag && !replaceFlag)
-      LOG_ERROR_MESSAGE("replaceFlag must be true when previewFlag is true");
+      LOG_DEBUG_MESSAGE("replaceFlag must be true when previewFlag is true");
 
    core::system::ProcessOptions options;
 
@@ -1101,7 +1098,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
    if (!replaceRegex)
-      LOG_WARNING_MESSAGE("Replace Regex must be true during preview");
+      LOG_DEBUG_MESSAGE("Replace Regex must be true during preview");
 
    error = runGrepOperation(
       true, true, searchString, replacePattern,
