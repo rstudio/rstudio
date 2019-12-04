@@ -270,6 +270,7 @@ namespace prefs {
 #define kShowUserHomePageSessions "sessions"
 #define kReuseSessionsForProjectLinks "reuse_sessions_for_project_links"
 #define kVcsEnabled "vcs_enabled"
+#define kVcsAutorefresh "vcs_autorefresh"
 #define kGitExePath "git_exe_path"
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
@@ -1183,6 +1184,12 @@ public:
     */
    bool vcsEnabled();
    core::Error setVcsEnabled(bool val);
+
+   /**
+    * Automatically refresh VCS status?
+    */
+   bool vcsAutorefresh();
+   core::Error setVcsAutorefresh(bool val);
 
    /**
     * The path to the Git executable to use.

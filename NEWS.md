@@ -83,6 +83,7 @@
 * Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
 * Enable copying images to the clipboard from the Plots pane (#3142)
 * Update minimum supported browser versions (#5593)
+* Automatic refresh of the Git pane can now be enabled / disabled as required. (#4368)
 
 ### Bugfixes
 

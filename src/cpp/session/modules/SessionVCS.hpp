@@ -39,7 +39,8 @@ enum VCS
 };
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir);
+      const core::FilePath& rootDir,
+      bool implicit);
 
 VCS activeVCS();
 std::string activeVCSName();

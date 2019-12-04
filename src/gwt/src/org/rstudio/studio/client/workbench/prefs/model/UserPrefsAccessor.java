@@ -1380,6 +1380,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Automatically refresh VCS status?
+    */
+   public PrefValue<Boolean> vcsAutorefresh()
+   {
+      return bool("vcs_autorefresh", true);
+   }
+
+   /**
     * The path to the Git executable to use.
     */
    public PrefValue<String> gitExePath()
@@ -1911,6 +1919,8 @@ public class UserPrefsAccessor extends Prefs
          reuseSessionsForProjectLinks().setValue(layer, source.getBool("reuse_sessions_for_project_links"));
       if (source.hasKey("vcs_enabled"))
          vcsEnabled().setValue(layer, source.getBool("vcs_enabled"));
+      if (source.hasKey("vcs_autorefresh"))
+         vcsAutorefresh().setValue(layer, source.getBool("vcs_autorefresh"));
       if (source.hasKey("git_exe_path"))
          gitExePath().setValue(layer, source.getString("git_exe_path"));
       if (source.hasKey("svn_exe_path"))
