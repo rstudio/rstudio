@@ -2187,6 +2187,12 @@ Error runProcess(const std::string& path,
       if (error)
          return error;
    }
+   else
+   {
+      // set limits - calls may fail if attempting to set greater than max allowed values
+      // since the user is potentially unprivileged
+      setProcessLimits(config.limits);
+   }
 
    // clear the signal mask so the child process can handle whatever
    // signals it wishes to
@@ -2290,61 +2296,6 @@ Error runProcess(const std::string& path,
    error = systemError(errno, ERROR_LOCATION);
    error.addProperty("child-path", path);
    return error;
-}
-
-// simple cass to encapsulate parent-child
-// relationship of processes
-struct ProcessTreeNode
-{
-   boost::shared_ptr<ProcessInfo> data;
-   std::vector<boost::shared_ptr<ProcessTreeNode> > children;
-};
-
-// process tree, indexed by pid
-typedef std::map<pid_t, boost::shared_ptr<ProcessTreeNode> > ProcessTreeT;
-
-void createProcessTree(const std::vector<ProcessInfo>& processes,
-                       ProcessTreeT *pOutTree)
-{
-   // first pass, create the nodes in the tree
-   for (const ProcessInfo& process : processes)
-   {
-      ProcessTreeT::iterator iter = pOutTree->find(process.pid);
-      if (iter == pOutTree->end())
-      {
-         // process not found, so create a new entry for it
-         boost::shared_ptr<ProcessTreeNode> nodePtr = boost::shared_ptr<ProcessTreeNode>(
-                                                         new ProcessTreeNode());
-
-         nodePtr->data = boost::shared_ptr<ProcessInfo>(new ProcessInfo(process));
-
-         (*pOutTree)[process.pid] = nodePtr;
-      }
-   }
-
-   // second pass, link the nodes together
-   for (ProcessTreeT::value_type& element : *pOutTree)
-   {
-      pid_t parent = element.second->data->ppid;
-      ProcessTreeT::iterator iter = pOutTree->find(parent);
-
-      // if we cannot find the parent in the tree, move on
-      if (iter == pOutTree->end())
-         continue;
-
-      // add this node to its parent's children
-      iter->second->children.push_back(element.second);
-   }
-}
-
-void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
-                 std::vector<ProcessInfo> *pOutChildren)
-{
-   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
-   {
-      pOutChildren->push_back(*child->data.get());
-      getChildren(child, pOutChildren);
-   }
 }
 
 Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses)
