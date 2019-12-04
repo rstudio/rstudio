@@ -100,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
@@ -4019,7 +4020,12 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().setTextInputAriaLabel(label);
    }
-   
+
+   public void setTabAlwaysMovesFocus()
+   {
+      widget_.setTabKeyMode(TabKeyMode.AlwaysMoveFocus);
+   }
+
    public final void setScrollSpeed(double speed)
    {
       widget_.getEditor().setScrollSpeed(speed);

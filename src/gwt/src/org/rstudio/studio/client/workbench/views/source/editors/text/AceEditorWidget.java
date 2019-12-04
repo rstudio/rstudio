@@ -465,11 +465,14 @@ public class AceEditorWidget extends Composite
    {
       super.onLoad();
 
-      // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
-      if (uiPrefs_.tabKeyMoveFocus().getValue())
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
       {
-         editor_.setTabMovesFocus(true);
-         tabMovesFocus_ = true;
+         // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
+         if (uiPrefs_.tabKeyMoveFocus().getValue())
+         {
+            editor_.setTabMovesFocus(true);
+            tabMovesFocus_ = true;
+         }
       }
 
       // This command binding has to be an anonymous inner class (not a lambda)
@@ -481,7 +484,7 @@ public class AceEditorWidget extends Composite
          @Override
          public void execute(Boolean movesFocus)
          {
-            if (tabMovesFocus_ != movesFocus)
+            if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
             {
                editor_.setTabMovesFocus(movesFocus);
                tabMovesFocus_ = movesFocus;
@@ -1218,6 +1221,37 @@ public class AceEditorWidget extends Composite
       return isRendered_;
    }
 
+   public enum TabKeyMode
+   {
+      TrackUserPref,
+      AlwaysMoveFocus
+   }
+
+   /**
+    * By default, editor tracks the tabKeyMovesFocus user preference to control whether Tab
+    * and Shift+Tab indent/outdent, or move keyboard focus. Alternatively can force the
+    * move keyboard-focus mode independently of the user preference.
+    *
+    * @param mode TrackUserPref (default) or AlwaysMoveFocus
+    */
+   public void setTabKeyMode(TabKeyMode mode)
+   {
+      if (mode == tabKeyMode_)
+         return;
+
+      tabKeyMode_ = mode;
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         tabMovesFocus_ = uiPrefs_.tabKeyMoveFocus().getValue();
+         editor_.setTabMovesFocus(tabMovesFocus_);
+      }
+      else
+      {
+         tabMovesFocus_ = true;
+         editor_.setTabMovesFocus(true);
+      }
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
@@ -1230,6 +1264,7 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private static boolean hasEditHandlers_ = false;
    private boolean tabMovesFocus_ = false;
+   private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
 
    // injected
    private EventBus events_;
