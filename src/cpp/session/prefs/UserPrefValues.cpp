@@ -1922,6 +1922,19 @@ core::Error UserPrefValues::setVcsEnabled(bool val)
 }
 
 /**
+ * Automatically refresh VCS status?
+ */
+bool UserPrefValues::vcsAutorefresh()
+{
+   return readPref<bool>("vcs_autorefresh");
+}
+
+core::Error UserPrefValues::setVcsAutorefresh(bool val)
+{
+   return writePref("vcs_autorefresh", val);
+}
+
+/**
  * The path to the Git executable to use.
  */
 std::string UserPrefValues::gitExePath()
@@ -2421,6 +2434,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
       kVcsEnabled,
+      kVcsAutorefresh,
       kGitExePath,
       kSvnExePath,
       kTerminalPath,

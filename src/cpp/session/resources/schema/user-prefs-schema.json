@@ -834,6 +834,11 @@
             "default": true,
             "description": "Whether to enable RStudio's version control system interface."
         },
+        "vcs_autorefresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically refresh VCS status?"
+        },
         "git_exe_path": {
             "type": "string",
             "default": "",

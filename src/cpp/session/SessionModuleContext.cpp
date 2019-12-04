@@ -1885,6 +1885,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 }
 
 namespace {
+
 // enque file changed event
 void enqueFileChangedEvent(
       const core::system::FileChangeEvent& event,
@@ -1895,8 +1896,12 @@ void enqueFileChangedEvent(
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
 
-   pCtx->decorateFile(FilePath(event.fileInfo().absolutePath()),
-                      &fileSystemItem);
+   if (prefs::userPrefs().vcsAutorefresh())
+   {
+      pCtx->decorateFile(
+               FilePath(event.fileInfo().absolutePath()),
+               &fileSystemItem);
+   }
 
    fileChange["file"] = fileSystemItem;
 
@@ -1904,6 +1909,7 @@ void enqueFileChangedEvent(
    ClientEvent clientEvent(client_events::kFileChanged, fileChange);
    module_context::enqueClientEvent(clientEvent);
 }
+
 } // namespace
 
 void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
@@ -1911,9 +1917,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                       fileDecorationContext(filePath);
-
+   auto pCtx = fileDecorationContext(filePath, true);
    enqueFileChangedEvent(event, pCtx);
 }
 
@@ -1938,8 +1942,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    }
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                  fileDecorationContext(commonParentPath);
+   auto pCtx = fileDecorationContext(commonParentPath, true);
 
    // fire client events as necessary
    for (const core::system::FileChangeEvent& event : events)

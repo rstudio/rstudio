@@ -22,21 +22,27 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.CreateBranchToolbarButton;
@@ -48,14 +54,21 @@ public class GitPane extends WorkbenchPane implements Display
 {
    @Inject
    public GitPane(GitChangelistTablePresenter changelistTablePresenter,
+                  GitServerOperations server,
                   Session session,
                   Commands commands,
+                  GlobalDisplay display,
+                  UserPrefs prefs,
                   CheckoutBranchToolbarButton switchBranchToolbarButton,
                   CreateBranchToolbarButton createBranchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
       
+      server_ = server;
       commands_ = commands;
+      display_ = display;
+      prefs_ = prefs;
+      
       switchBranchToolbarButton_ = switchBranchToolbarButton;
       createBranchToolbarButton_ = createBranchToolbarButton;
       
@@ -69,9 +82,33 @@ public class GitPane extends WorkbenchPane implements Display
             @Override
             public void onFocus(FocusEvent event)
             {
-               commands_.vcsRefreshNoError().execute();
+               if (prefs_.vcsAutorefresh().getGlobalValue())
+               {
+                  commands_.vcsRefreshNoError().execute();
+               }
             }
          });
+      }
+   }
+   
+   private class GitMonitoringMenuItem extends MonitoringMenuItem
+   {
+      public GitMonitoringMenuItem(boolean monitoredValue)
+      {
+         super(
+               prefs_.vcsAutorefresh(),
+               prefs_.vcsAutorefresh().getGlobalValue(),
+               monitoredValue);
+      }
+
+      @Override
+      public void onInvoked()
+      {
+         if (prefs_.vcsAutorefresh().getGlobalValue() != monitoredValue_)
+         {
+            prefs_.vcsAutorefresh().setGlobalValue(monitoredValue_);
+            prefs_.writeUserPrefs();
+         }
       }
    }
 
@@ -126,6 +163,22 @@ public class GitPane extends WorkbenchPane implements Display
                   commands_.vcsRefresh().execute();
                }
             }));
+      
+      ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
+      refreshMenu.addItem(new GitMonitoringMenuItem(true));
+      refreshMenu.addItem(new GitMonitoringMenuItem(false));
+      refreshMenu.addSeparator();
+
+      refreshMenu.addItem(new MenuItem(
+            AppCommand.formatMenuLabel(null, "Refresh Now", null),
+            true, // as HTML
+            () -> commands_.vcsRefresh().execute()));
+      
+      toolbar.addRightWidget(new ToolbarMenuButton(
+            ToolbarButton.NoText,
+            "Refresh options",
+            refreshMenu,
+            false));
       
       return toolbar;
    }
@@ -240,7 +293,11 @@ public class GitPane extends WorkbenchPane implements Display
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
    
+   private final GitServerOperations server_;
    private final Commands commands_;
+   private final GlobalDisplay display_;
+   private final UserPrefs prefs_;
+   
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
    private GitChangelistTable table_;

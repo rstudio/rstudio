@@ -25,6 +25,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckableMenuItem;
+import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -145,8 +146,8 @@ public class EnvironmentPane extends WorkbenchPane
       setRefreshButtonState(environmentMonitoring_.getValue());
       
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
-      refreshMenu.addItem(new MonitoringMenuItem(true));
-      refreshMenu.addItem(new MonitoringMenuItem(false));
+      refreshMenu.addItem(new EnvironmentMonitoringMenuItem(true));
+      refreshMenu.addItem(new EnvironmentMonitoringMenuItem(false));
       refreshMenu.addSeparator();
 
       refreshMenu.addItem(new MenuItem(
@@ -640,57 +641,37 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
-   private class MonitoringMenuItem extends CheckableMenuItem
+   private class EnvironmentMonitoringMenuItem extends MonitoringMenuItem
    {
-      public MonitoringMenuItem(boolean monitoring)
+      public EnvironmentMonitoringMenuItem(boolean monitoredValue)
       {
-         monitoring_ = monitoring;
-         environmentMonitoring_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-         {
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> arg0)
-            {
-               onStateChanged();
-            }
-         });
-         onStateChanged();
-      }
-
-      @Override
-      public String getLabel()
-      {
-         return monitoring_ ?
-                  "Refresh Automatically" :
-                  "Manual Refresh Only";
-      }
-
-      @Override
-      public boolean isChecked()
-      {
-         return monitoring_ == environmentMonitoring_.getValue();
+         super(
+               environmentMonitoring_,
+               environmentMonitoring_.getValue(),
+               monitoredValue);
       }
 
       @Override
       public void onInvoked()
       {
-         server_.setEnvironmentMonitoring(monitoring_, new ServerRequestCallback<Void>()
+         server_.setEnvironmentMonitoring(monitoredValue_, new ServerRequestCallback<Void>()
          {
             @Override
             public void onResponseReceived(Void v)
             {
-               environmentMonitoring_.setValue(monitoring_, true);
+               environmentMonitoring_.setValue(monitoredValue_, true);
             }
-
+         
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Could not change monitoring state", 
+               globalDisplay_.showErrorMessage(
+                     "Could not change monitoring state",
                      error.getMessage());
             }
          });
+ 
       }
-
-      private final boolean monitoring_;
    }
    
    private void setRefreshButtonState(boolean monitoring)
