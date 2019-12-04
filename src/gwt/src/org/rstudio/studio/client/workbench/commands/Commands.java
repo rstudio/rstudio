@@ -32,9 +32,16 @@ public abstract class
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
+   public abstract AppCommand newCDoc();
    public abstract AppCommand newCppDoc();
+   public abstract AppCommand newHeaderDoc();
+   public abstract AppCommand newMarkdownDoc();
    public abstract AppCommand newPythonDoc();
+   public abstract AppCommand newShellDoc();
    public abstract AppCommand newStanDoc();
+   public abstract AppCommand newHtmlDoc();
+   public abstract AppCommand newJavaScriptDoc();
+   public abstract AppCommand newCssDoc();
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
