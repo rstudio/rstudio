@@ -38,13 +38,13 @@
       std::string replaceString("awesome");
       std::string replaceRegex("\\1\\1\\1");
 
-      int matchOn = 11;
-      int matchOff = 16;
+      size_t matchOn = 11;
+      size_t matchOff = 16;
 
-      int rMatchOn = 4;
-      int rMatchOff = 10;
+      size_t rMatchOn = 4;
+      size_t rMatchOff = 10;
 
-      int replaceMatchOff = 0;
+      size_t replaceMatchOff = 0;
  } // anonymous namespace
 
    TEST_CASE("SessionFind")

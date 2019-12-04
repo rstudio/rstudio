@@ -60,7 +60,7 @@ public:
       units_ = 0;
       max_ = max;
       updateFrequency_ = updateFrequency;
-      updateIncrement_ = (updateFrequency_ * max_) / 100;
+      updateIncrement_ = static_cast<int>((updateFrequency_ * max_) / 100);
       if (updateIncrement_ < 1)
          updateIncrement_ = 1;
       nextUpdate_ = updateIncrement_;
@@ -107,7 +107,7 @@ private:
    int units_;
    int max_;
    int updateFrequency_;
-   double updateIncrement_;
+   int updateIncrement_;
    int nextUpdate_;
 };
 
@@ -387,26 +387,6 @@ public:
       return handle_;
    }
 
-   std::string currentFile() const
-   {
-      return currentFile_;
-   }
-
-   std::shared_ptr<std::istream> inputStream() const
-   {
-      return inputStream_;
-   }
-
-   std::shared_ptr<std::ostream> outputStream() const
-   {
-      return outputStream_;
-   }
-
-   int inputLineNum() const
-   {
-      return inputLineNum_;
-   }
-
    core::system::ProcessCallbacks createProcessCallbacks()
    {
       core::system::ProcessCallbacks callbacks;
@@ -579,20 +559,6 @@ private:
                             gsl::narrow_cast<int>(newValue.getInt() + offset)));
    }
 
-   void addOffsetIntegersToJsonArray(
-      const json::Array& pNewValues, size_t offset, json::Array* pJsonArray)
-   {
-      // putting integers back in reverse order
-      for (json::Value newValue : pNewValues)
-         addOffsetIntegerToJsonArray(newValue, offset, pJsonArray);
-   }
-
-   void getCaseInsensitiveRegex(const std::string& pattern, boost::regex* pRegex)
-   {
-      boost::regex tempRegex(pattern, boost::regex::grep | boost::regex::icase);
-      *pRegex = tempRegex;
-   }
-
    Error encodeAndWriteLineToFile(const std::string& decodedLine,
        const std::string& lineLeftContents, const std::string& lineRightContents)
    {
@@ -655,14 +621,16 @@ private:
          }
          else
          {
-            int pos = matchOnArray.getSize() - 1;
+            int pos = gsl::narrow_cast<int>(matchOnArray.getSize()) - 1;
             std::string newLine;
             while (pos > -1)
             {
-               const int matchOn = matchOnArray.getValueAt(pos).getInt();
-               const int matchOff = matchOffArray.getValueAt(pos).getInt();
-               const int matchSize = matchOff - matchOn;
-               int replaceMatchOff = matchOff;
+               const size_t matchOn =
+                  static_cast<size_t>(matchOnArray.getValueAt(static_cast<size_t>(pos)).getInt());
+               const size_t matchOff =
+                  static_cast<size_t>(matchOffArray.getValueAt(static_cast<size_t>(pos)).getInt());
+               const size_t matchSize = matchOff - matchOn;
+               size_t replaceMatchOff = matchOff;
                std::string newLine(pLineInfo->decodedContents);
                Error error;
 
@@ -677,7 +645,7 @@ private:
                   error = replacer.replaceRegexWithRegex(matchOn, matchOff, &previewLine, &searchPattern,
                                                          &replacePattern, &replaceMatchOff);
                   if (!error)
-                     replaceString = previewLine.substr(matchOn, replaceMatchOff - matchOn);
+                     replaceString = previewLine.substr(matchOn, (replaceMatchOff - matchOn));
                   else
                   {
                      if (!findResults().preview())
@@ -707,7 +675,7 @@ private:
 
                    // if multiple replaces in line, readjust previous match numbers
                    if (pReplaceMatchOn->getSize() > 0 &&
-                       matchSize != static_cast<int>(replaceString.size()))
+                       matchSize != replaceString.size())
                    {
                       json::Array tempMatchOn(*pReplaceMatchOn);
                       json::Array tempMatchOff(*pReplaceMatchOff);
@@ -715,7 +683,7 @@ private:
                       pReplaceMatchOff->clear();
 
                       // put back in reverse order
-                      int offset(replaceString.size() - matchSize);
+                      int offset(gsl::narrow_cast<int>(replaceString.size() - matchSize));
                       pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                       pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                       addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
@@ -841,7 +809,8 @@ private:
                      addErrorMessage("Cannot perform replace", &errorMessage,
                                      &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                   if (!findResults().preview())
-                     findResults().replaceProgress()->addUnits(matchOn.getSize());
+                     findResults().replaceProgress()->
+                        addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
                }
                else
                {
@@ -1239,8 +1208,8 @@ core::Error initialize()
 }
 
 core::Error Replacer::completeReplace(const boost::regex* searchRegex, const std::string* replaceRegex,
-                                      int matchOn, int matchOff, std::string* line,
-                                      int* pReplaceMatchOff)
+                                      size_t matchOn, size_t matchOff, std::string* line,
+                                      size_t* pReplaceMatchOff)
 {
    std::string temp;
    try
@@ -1264,9 +1233,9 @@ core::Error Replacer::completeReplace(const boost::regex* searchRegex, const std
    return core::Success();
 }
 
-core::Error Replacer::replaceRegexIgnoreCase(int matchOn, int matchOff, std::string* line,
+core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, std::string* line,
                                             const std::string* findRegex, const std::string* replaceRegex,
-                                            int* pReplaceMatchOff)
+                                            size_t* pReplaceMatchOff)
 {
    try
    {
@@ -1281,9 +1250,9 @@ core::Error Replacer::replaceRegexIgnoreCase(int matchOn, int matchOff, std::str
    }
 }
 
-core::Error Replacer::replaceRegexWithCase(int matchOn, int matchOff, std::string* line,
+core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff, std::string* line,
                                            const std::string* findRegex, const std::string* replaceRegex,
-                                           int* pReplaceMatchOff)
+                                           size_t* pReplaceMatchOff)
 {
    try
    {
