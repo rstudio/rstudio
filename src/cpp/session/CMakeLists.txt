@@ -513,11 +513,7 @@ if (NOT RSTUDIO_SESSION_WIN32)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   if(WIN32)
-      set(PANDOC_VERSION "2.7.2" CACHE INTERNAL "Pandoc version")
-   else()
-      set(PANDOC_VERSION "2.3.1" CACHE INTERNAL "Pandoc version")
-   endif()
+   set(PANDOC_VERSION "2.7.3" CACHE INTERNAL "Pandoc version")
 
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
