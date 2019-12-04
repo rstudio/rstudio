@@ -14,6 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -25,24 +28,31 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 // object in 'onInvoked()'.
 public abstract class MonitoringMenuItem extends CheckableMenuItem
 {
-   public MonitoringMenuItem(HasValueChangeHandlers<Boolean> observable,
-                             boolean initialValue,
+   public MonitoringMenuItem(ToolbarButton refreshButton,
+                             HasValueChangeHandlers<Boolean> observable,
+                             boolean autoRefreshEnabled,
                              boolean monitoredValue)
    {
       observable_ = observable;
-      currentValue_ = initialValue;
+      autoRefreshEnabled_ = autoRefreshEnabled;
       monitoredValue_ = monitoredValue;
+      
+      refreshButton_ = refreshButton;
+      autoRefreshImage_ = new ImageResource2x(ThemeResources.INSTANCE.refreshWorkspaceMonitored2x());
+      manualRefreshImage_ = new ImageResource2x(ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x());
       
       observable.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
-            currentValue_ = event.getValue();
+            autoRefreshEnabled_ = event.getValue();
+            updateRefreshButton();
             onStateChanged();
          }
       });
       
+      updateRefreshButton();
       onStateChanged();
    }
 
@@ -57,12 +67,21 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    @Override
    public boolean isChecked()
    {
-      return monitoredValue_ == currentValue_;
+      return monitoredValue_ == autoRefreshEnabled_;
    }
    
-   private boolean currentValue_;
+   private void updateRefreshButton()
+   {
+      refreshButton_.setLeftImage(autoRefreshEnabled_ ? autoRefreshImage_ : manualRefreshImage_);
+   }
    
-   protected final boolean monitoredValue_;
+   private boolean autoRefreshEnabled_;
+   
    protected final HasValueChangeHandlers<Boolean> observable_;
+   protected final boolean monitoredValue_;
+ 
+   private final ToolbarButton refreshButton_;
+   private final ImageResource2x autoRefreshImage_;
+   private final ImageResource2x manualRefreshImage_;
 }
 

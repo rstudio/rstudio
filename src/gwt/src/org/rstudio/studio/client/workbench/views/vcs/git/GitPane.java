@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
@@ -30,6 +31,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -96,6 +98,7 @@ public class GitPane extends WorkbenchPane implements Display
       public GitMonitoringMenuItem(boolean monitoredValue)
       {
          super(
+               refreshButton_,
                prefs_.vcsAutorefresh(),
                prefs_.vcsAutorefresh().getGlobalValue(),
                monitoredValue);
@@ -151,7 +154,7 @@ public class GitPane extends WorkbenchPane implements Display
       
       toolbar.addRightSeparator();
       
-      toolbar.addRightWidget(new ToolbarButton(
+      toolbar.addRightWidget(refreshButton_ = new ToolbarButton(
             ToolbarButton.NoText,
             commands_.vcsRefresh().getTooltip(),
             commands_.vcsRefresh().getImageResource(),
@@ -212,11 +215,11 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
       
-      pullButton_.setText(width > 550 ? "Pull" : "");
-      pushButton_.setText(width > 550 ? "Push" : "");
-      historyButton_.setText(width > 630 ? "History" : "");
-      moreButton_.setText(width > 630 ? "More" : "");
-      createBranchToolbarButton_.setText(width > 680 ? "New Branch" : "");
+      pullButton_.setText(width > 600 ? "Pull" : "");
+      pushButton_.setText(width > 600 ? "Push" : "");
+      historyButton_.setText(width > 680 ? "History" : "");
+      moreButton_.setText(width > 680 ? "More" : "");
+      createBranchToolbarButton_.setText(width > 730 ? "New Branch" : "");
    }
 
    @Override
@@ -292,12 +295,13 @@ public class GitPane extends WorkbenchPane implements Display
    private ToolbarMenuButton moreButton_;
    private ToolbarButton pullButton_;
    private ToolbarButton pushButton_;
+   private ToolbarButton refreshButton_;
    
    private final GitServerOperations server_;
    private final Commands commands_;
    private final GlobalDisplay display_;
    private final UserPrefs prefs_;
-   
+ 
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
    private GitChangelistTable table_;

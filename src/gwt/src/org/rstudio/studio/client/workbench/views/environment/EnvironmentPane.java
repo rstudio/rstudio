@@ -99,16 +99,6 @@ public class EnvironmentPane extends WorkbenchPane
       environmentIsLocal_ = environmentState.environmentIsLocal();
       
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
-      ValueChangeHandler<Boolean> onMonitorChange = new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            // when the monitoring state changes, update the UI accordingly
-            setRefreshButtonState(event.getValue());
-         }
-      };
-      environmentMonitoring_.addValueChangeHandler(onMonitorChange);
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -143,7 +133,6 @@ public class EnvironmentPane extends WorkbenchPane
       refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton_);
-      setRefreshButtonState(environmentMonitoring_.getValue());
       
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
       refreshMenu.addItem(new EnvironmentMonitoringMenuItem(true));
@@ -646,6 +635,7 @@ public class EnvironmentPane extends WorkbenchPane
       public EnvironmentMonitoringMenuItem(boolean monitoredValue)
       {
          super(
+               refreshButton_,
                environmentMonitoring_,
                environmentMonitoring_.getValue(),
                monitoredValue);
@@ -672,17 +662,6 @@ public class EnvironmentPane extends WorkbenchPane
          });
  
       }
-   }
-   
-   private void setRefreshButtonState(boolean monitoring)
-   {
-      if (refreshButton_ == null)
-         return;
-
-      refreshButton_.setLeftImage(monitoring ?
-            commands_.refreshEnvironment().getImageResource() :
-            new ImageResource2x(
-               ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x()));
    }
    
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
