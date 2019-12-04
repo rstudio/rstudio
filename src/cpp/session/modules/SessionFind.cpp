@@ -477,7 +477,6 @@ private:
       {
          if (!currentFile_.empty() &&
              !tempReplaceFile_.getAbsolutePath().empty() &&
-             inputStream_->good() &&
              outputStream_->good())
          {
             std::string line;
@@ -565,8 +564,6 @@ private:
          error = file.openForRead(inputStream_);
          fileSuccess_ = true;
          inputLineNum_ = 0;
-         // make sure we have write permissions
-         error = file.move(file, FilePath::MoveDirect);
          currentFile_ = file.getAbsolutePath();
       }
       return error;
@@ -609,7 +606,7 @@ private:
       encodedNewLine.insert(encodedNewLine.length(), lineRightContents);
       encodedNewLine.append("\n");
 #ifdef _WIN32
-      string_utils::convertLineEndings(encodedNewLine, string_utils::LineEndingWindows);
+      string_utils::convertLineEndings(&encodedNewLine, string_utils::LineEndingWindows);
 #endif
 
       if (error)
@@ -720,7 +717,7 @@ private:
                       // put back in reverse order
                       int offset(replaceString.size() - matchSize);
                       pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                       addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
                       addOffsetIntegerToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
                    }
@@ -837,8 +834,8 @@ private:
                      addErrorMessage(error.asString(), &errorMessage,
                                         &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                }
-              if (!fileSuccess_)
-              {
+               if (!fileSuccess_)
+               {
                   // the first time a file is processed it gets a more detailed initialization error
                   if (inputLineNum_ != 0)
                      addErrorMessage("Cannot perform replace", &errorMessage,
@@ -846,11 +843,14 @@ private:
                   if (!findResults().preview())
                      findResults().replaceProgress()->addUnits(matchOn.getSize());
                }
-               processReplace(lineNum,
-                              matchOn, matchOff,
-                              &lineInfo,
-                              &replaceMatchOn, &replaceMatchOff,
-                              &errorMessage);
+               else
+               {
+                   processReplace(lineNum,
+                                  matchOn, matchOff,
+                                  &lineInfo,
+                                  &replaceMatchOn, &replaceMatchOff,
+                                  &errorMessage);
+               }
                lineInfo.decodedPreview = lineInfo.decodedContents;
                if (lineInfo.decodedPreview.size() > 300)
                {
