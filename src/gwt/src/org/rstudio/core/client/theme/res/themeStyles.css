@@ -28,6 +28,7 @@
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
 @external editor_dark;
+@external gwt-TextBox-readonly;
 
 /* These are exposed to allow users to customize RStudio further with their rsthemes. */
 @external rstheme_tabLayoutCenter;
@@ -267,6 +268,10 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
    margin: -1px;
    overflow: hidden;
    padding: 0;
+}
+
+.gwt-TextBox-readonly {
+   background: #f3f4f4;
 }
 
 .gwt-Label {
