@@ -79,6 +79,7 @@
 * The diagnostics system better handles missing expressions (#5660)
 * Keyboard shortcuts for debugging commands can be customized (#3539)
 * Update SumatraPDF to version 3.1.2 (#3155)
+* Allow previewing PDFs in fullscreen mode in Sumatra PDF (#4301)
 * RStudio Server runtime files are stored in `/var/run`, or another configurable location, instead of `/tmp` (#4666)
 * Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
 * Enable copying images to the clipboard from the Plots pane (#3142)
