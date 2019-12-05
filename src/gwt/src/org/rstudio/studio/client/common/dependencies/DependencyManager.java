@@ -29,8 +29,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
@@ -39,12 +38,15 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -91,6 +93,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       requestQueue_ = new LinkedList<DependencyRequest>();
       session_ = session;
       commands_ = commands;
+      events_ = eventBus;
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
       eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
@@ -739,7 +742,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                public void execute(Boolean arg)
                {
                   // complete the user action, if any
-                  onComplete.execute(arg);
+                  if (onComplete != null)
+                     onComplete.execute(arg);
 
                   // process the next request in the queue
                   processingQueue_ = false;
@@ -779,7 +783,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // if no unsatisfied dependencies were found, we're done already
       if (deps.length() == 0)
       {
-         req.onComplete.execute(true);
+         if (req.onComplete != null)
+            req.onComplete.execute(true);
          return;
       }
 
@@ -804,7 +809,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             // if we've satisfied all dependencies then execute the command
             if (unsatisfiedDeps.length() == 0)
             {
-               req.onComplete.execute(true);
+               if (req.onComplete != null)
+                  req.onComplete.execute(true);
                return;
             }
             
@@ -836,7 +842,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                      unsatisfiedVersions + "\n" +
                      "Check that getOption(\"repos\") refers to a CRAN " + 
                      "repository that contains the needed package versions.");
-               req.onComplete.execute(false);
+               if (req.onComplete != null)
+                  req.onComplete.execute(false);
             }
             else
             {
@@ -850,7 +857,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                      // bail if user didn't confirm
                      if (!confirmed)
                      {
-                        req.onComplete.execute(false);
+                        if (req.onComplete != null)
+                           req.onComplete.execute(false);
                         return;
                      }
 
@@ -896,7 +904,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          public void onError(ServerError error)
          {
             progress.onError(error.getUserMessage());
-            req.onComplete.execute(false);
+            if (req.onComplete != null)
+               req.onComplete.execute(false);
          }
       });
       
@@ -908,34 +917,38 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       server_.installDependencies(
          dependencies, 
-         new ServerRequestCallback<ConsoleProcess>() {
-   
+         new ServerRequestCallback<String>() {
             @Override
-            public void onResponseReceived(ConsoleProcess proc)
+            public void onResponseReceived(String jobId)
             {   
-               final ConsoleProgressDialog dialog = 
-                     new ConsoleProgressDialog(proc, server_);
-               dialog.showModal();
-   
-               proc.addProcessExitHandler(
-                  new ProcessExitEvent.Handler()
+               // Hold handler registration so we can clean it up when finished
+               final Value<HandlerRegistration> reg = new Value<HandlerRegistration>(null);
+               reg.setValue(events_.addHandler(JobUpdatedEvent.TYPE, event ->
+               {
+                  // Ensure the update is for this job
+                  JobUpdate update = event.getData();
+                  if (update.job.id != jobId)
+                     return;
+                  
+                  if (update.job.state == JobConstants.STATE_SUCCEEDED)
                   {
-                     @Override
-                     public void onProcessExit(ProcessExitEvent event)
-                     {
-                        ifDependenciesSatisifed(dependencies, 
-                              silentEmbeddedUpdate, 
-                              new CommandWithArg<Boolean>(){
-                           @Override
-                           public void execute(Boolean succeeded)
-                           {
-                              dialog.hide();
-                              onComplete.execute(succeeded);
-                           }
-                        });     
-                     }
-                  }); 
-            } 
+                     // If the job succeeded, check to be sure our dependencies
+                     // are now satisfied
+                     ifDependenciesSatisifed(dependencies, 
+                           silentEmbeddedUpdate, 
+                           onComplete);
+                     reg.getValue().removeHandler();
+                  }
+                  else if (update.job.state == JobConstants.STATE_FAILED ||
+                           update.job.state == JobConstants.STATE_CANCELLED)
+                  {
+                     // If the job failed, or was cancelled, we're done
+                     if (onComplete != null)
+                        onComplete.execute(false);
+                     reg.getValue().removeHandler();
+                  }
+               }));
+            }
 
             @Override
             public void onError(ServerError error)
@@ -944,7 +957,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                globalDisplay_.showErrorMessage(
                      "Dependency installation failed",
                      error.getUserMessage());
-               onComplete.execute(false);
+               if (onComplete != null)
+                  onComplete.execute(false);
             }
          });
    }
@@ -960,7 +974,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
            @Override
            public void onResponseReceived(JsArray<Dependency> dependencies)
            {
-              onComplete.execute(dependencies.length() == 0);
+              if (onComplete != null)
+                 onComplete.execute(dependencies.length() == 0);
            }
 
            @Override
@@ -970,7 +985,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
               globalDisplay_.showErrorMessage(
                     "Could not determine available packages",
                     error.getUserMessage());
-              onComplete.execute(false);
+              if (onComplete != null)
+                 onComplete.execute(false);
            }
         });
    }
@@ -1148,4 +1164,5 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private final ArrayList<Dependency> satisfied_;
    private final Session session_;
    private final Commands commands_;
+   private final EventBus events_;
 }

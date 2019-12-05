@@ -1,7 +1,7 @@
 /*
  * DependencyServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common.dependencies.model;
 
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -30,6 +29,6 @@ public interface DependencyServerOperations extends CryptoServerOperations
    
    void installDependencies(
        JsArray<Dependency> dependencies,
-       ServerRequestCallback<ConsoleProcess> requestCallback);
+       ServerRequestCallback<String> requestCallback);
 }
 

@@ -5298,12 +5298,12 @@ public class RemoteServer implements Server
    @Override
    public void installDependencies(
       JsArray<Dependency> dependencies,
-      ServerRequestCallback<ConsoleProcess> requestCallback)
+      ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   "install_dependencies",
                   dependencies,
-                  new ConsoleProcessCallbackAdapter(requestCallback));
+                  requestCallback);
    }
 
    @Override
