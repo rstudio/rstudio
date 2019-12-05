@@ -98,7 +98,7 @@
         "keyring": {
             "version": "1.1.0",
             "location": "cran",
-            "source": true
+            "source": false
         },
         "knitr": {
             "version": "1.22",
