@@ -131,6 +131,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
+import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
@@ -2080,6 +2081,7 @@ public class RemoteServer implements Server
                                 String replacement,
                                 int offset,
                                 int length,
+                                boolean valid,
                                 String hash,
                                 ServerRequestCallback<String> requestCallback)
    {
@@ -2095,7 +2097,8 @@ public class RemoteServer implements Server
       params.set(6, new JSONString(replacement));
       params.set(7, new JSONNumber(offset));
       params.set(8, new JSONNumber(length));
-      params.set(9, new JSONString(hash));
+      params.set(9, JSONBoolean.getInstance(valid));
+      params.set(10, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 
@@ -5891,11 +5894,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void hasShinyTestResults(String shinyApp, String testName, ServerRequestCallback<Boolean> callback)
+   public void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(shinyApp));
-      params.set(1, new JSONString(testName));
+      params.set(0, new JSONString(testFile));
 
       sendRequest(RPC_SCOPE,
                   HAS_SHINYTEST_RESULTS,

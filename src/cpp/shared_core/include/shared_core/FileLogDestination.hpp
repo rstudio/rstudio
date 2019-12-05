@@ -134,13 +134,18 @@ public:
     * @brief Constructor.
     *
     * @param in_id              The ID of this log destination. Must be unique for each file log destination and > 100.
+    * @param in_logLevel        The most detailed level of log to be written to this log file.
     * @param in_programId       The ID of this program.
     * @param in_logOptions      The options for log file creation and management.
     *
     * If the log file cannot be opened, no logs will be written to the file. If there are other log destinations
     * registered an error will be logged regarding the failure.
     */
-   FileLogDestination(unsigned int in_id, const std::string& in_programId, FileLogOptions in_logOptions);
+   FileLogDestination(
+      unsigned int in_id,
+      LogLevel in_logLevel,
+      const std::string& in_programId,
+      FileLogOptions in_logOptions);
 
    /**
     * @brief Destructor.

@@ -54,12 +54,7 @@ public class ToolbarButton extends FocusWidget
                                       final HandlerManager eventBus,
                                       final GwtEvent<? extends T> targetEvent)
    {
-      this(text, title, leftImg, new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-           eventBus.fireEvent(targetEvent);
-         }
-      });
+      this(text, title, leftImg, event -> eventBus.fireEvent(targetEvent));
    }
    
    public ToolbarButton(String text,
@@ -74,7 +69,7 @@ public class ToolbarButton extends FocusWidget
                         String title,
                         ImageResource leftImage)
    {
-      this(text, title, new SimpleImageResourceProvider(leftImage), (ClickHandler)null);
+      this(text, title, new SimpleImageResourceProvider(leftImage), null);
    }
    
    public ToolbarButton(String text,
@@ -161,58 +156,50 @@ public class ToolbarButton extends FocusWidget
       
       hasHandlers_.addHandler(ClickEvent.getType(), clickHandler);
 
-      final HandlerRegistration mouseDown = addMouseDownHandler(new MouseDownHandler()
+      final HandlerRegistration mouseDown = addMouseDownHandler(event ->
       {
-         public void onMouseDown(MouseDownEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
+         event.preventDefault();
+         event.stopPropagation();
 
-            addStyleName(styles_.toolbarButtonPushed());
-            down_ = true;
-         }
+         addStyleName(styles_.toolbarButtonPushed());
+         down_ = true;
       });
 
-      final HandlerRegistration mouseOut = addMouseOutHandler(new MouseOutHandler()
+      final HandlerRegistration mouseOut = addMouseOutHandler(event ->
       {
-         public void onMouseOut(MouseOutEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
+         event.preventDefault();
+         event.stopPropagation();
 
-            removeStyleName(styles_.toolbarButtonPushed());
+         removeStyleName(styles_.toolbarButtonPushed());
+         down_ = false;
+      });
+
+      final HandlerRegistration mouseUp = addMouseUpHandler(event ->
+      {
+         event.preventDefault();
+         event.stopPropagation();
+
+         if (down_)
+         {
             down_ = false;
+            removeStyleName(styles_.toolbarButtonPushed());
+
+            NativeEvent clickEvent = Document.get().createClickEvent(
+                  1,
+                  event.getScreenX(),
+                  event.getScreenY(),
+                  event.getClientX(),
+                  event.getClientY(),
+                  event.getNativeEvent().getCtrlKey(),
+                  event.getNativeEvent().getAltKey(),
+                  event.getNativeEvent().getShiftKey(),
+                  event.getNativeEvent().getMetaKey());
+            DomEvent.fireNativeEvent(clickEvent, hasHandlers_);
          }
       });
 
-      final HandlerRegistration mouseUp = addMouseUpHandler(new MouseUpHandler()
+      final HandlerRegistration keyPress = addKeyPressHandler(event ->
       {
-         public void onMouseUp(MouseUpEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-
-            if (down_)
-            {
-               down_ = false;
-               removeStyleName(styles_.toolbarButtonPushed());
-
-               NativeEvent clickEvent = Document.get().createClickEvent(
-                     1,
-                     event.getScreenX(),
-                     event.getScreenY(),
-                     event.getClientX(),
-                     event.getClientY(),
-                     event.getNativeEvent().getCtrlKey(),
-                     event.getNativeEvent().getAltKey(),
-                     event.getNativeEvent().getShiftKey(),
-                     event.getNativeEvent().getMetaKey());
-               DomEvent.fireNativeEvent(clickEvent, hasHandlers_);
-            }
-         }
-      });
-
-      final HandlerRegistration keyPress = addKeyPressHandler(event -> {
          char charCode = event.getCharCode();
          if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
          {
@@ -222,16 +209,13 @@ public class ToolbarButton extends FocusWidget
          }
       });
 
-      return new HandlerRegistration()
+      return () ->
       {
-         public void removeHandler()
-         {
-            mouseDown.removeHandler();
-            mouseOut.removeHandler();
-            mouseUp.removeHandler();
-            keyPress.removeHandler();
-         }
-      }; 
+         mouseDown.removeHandler();
+         mouseOut.removeHandler();
+         mouseUp.removeHandler();
+         keyPress.removeHandler();
+      };
    }
    
    public void click()
@@ -309,7 +293,7 @@ public class ToolbarButton extends FocusWidget
 
    private boolean down_;
    
-   private SimpleHasHandlers hasHandlers_ = new SimpleHasHandlers();
+   private final SimpleHasHandlers hasHandlers_ = new SimpleHasHandlers();
    
    interface Binder extends UiBinder<Element, ToolbarButton> { }
 

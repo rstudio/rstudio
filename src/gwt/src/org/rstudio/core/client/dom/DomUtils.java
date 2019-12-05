@@ -28,6 +28,7 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -1226,6 +1227,16 @@ public class DomUtils
    /*-{
       return element.querySelectorAll(query);
    }-*/;
+   
+   public static final void loadScript(TextResource resource)
+   {
+      ScriptElement scriptEl = Document.get().createScriptElement();
+      scriptEl.setAttribute("type", "text/javascript");
+      scriptEl.setText(resource.getText());
+      
+      HeadElement headEl = Document.get().getHead();
+      headEl.appendChild(scriptEl);
+   }
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

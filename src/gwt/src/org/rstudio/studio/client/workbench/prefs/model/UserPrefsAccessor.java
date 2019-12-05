@@ -1380,6 +1380,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Automatically refresh VCS status?
+    */
+   public PrefValue<Boolean> vcsAutorefresh()
+   {
+      return bool("vcs_autorefresh", true);
+   }
+
+   /**
     * The path to the Git executable to use.
     */
    public PrefValue<String> gitExePath()
@@ -1465,6 +1473,14 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> restoreLastProject()
    {
       return bool("restore_last_project", true);
+   }
+
+   /**
+    * Use tinytex to compile .tex files.
+    */
+   public PrefValue<Boolean> useTinytex()
+   {
+      return bool("use_tinytex", false);
    }
 
    /**
@@ -1571,6 +1587,14 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> reducedMotion()
    {
       return bool("reduced_motion", false);
+   }
+
+   /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   public PrefValue<Boolean> tabKeyMoveFocus()
+   {
+      return bool("tab_key_move_focus", false);
    }
 
    /**
@@ -1895,6 +1919,8 @@ public class UserPrefsAccessor extends Prefs
          reuseSessionsForProjectLinks().setValue(layer, source.getBool("reuse_sessions_for_project_links"));
       if (source.hasKey("vcs_enabled"))
          vcsEnabled().setValue(layer, source.getBool("vcs_enabled"));
+      if (source.hasKey("vcs_autorefresh"))
+         vcsAutorefresh().setValue(layer, source.getBool("vcs_autorefresh"));
       if (source.hasKey("git_exe_path"))
          gitExePath().setValue(layer, source.getString("git_exe_path"));
       if (source.hasKey("svn_exe_path"))
@@ -1917,6 +1943,8 @@ public class UserPrefsAccessor extends Prefs
          hideObjectFiles().setValue(layer, source.getBool("hide_object_files"));
       if (source.hasKey("restore_last_project"))
          restoreLastProject().setValue(layer, source.getBool("restore_last_project"));
+      if (source.hasKey("use_tinytex"))
+         useTinytex().setValue(layer, source.getBool("use_tinytex"));
       if (source.hasKey("clean_texi2dvi_output"))
          cleanTexi2dviOutput().setValue(layer, source.getBool("clean_texi2dvi_output"));
       if (source.hasKey("latex_shell_escape"))
@@ -1939,6 +1967,8 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
+      if (source.hasKey("tab_key_move_focus"))
+         tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))

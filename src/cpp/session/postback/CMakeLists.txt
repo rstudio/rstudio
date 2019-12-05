@@ -33,13 +33,6 @@ include_directories(
 # define executable
 add_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rpostback PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
-
 # set link dependencies
 target_link_libraries(rpostback
    rstudio-core
@@ -59,6 +52,11 @@ configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
 configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+
+# put rpostback in a place where it can be found for dev config
+if(NOT RSTUDIO_PACKAGE_BUILD)
+   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+endif()
 
 # installation rules
 if(NOT RSTUDIO_SESSION_WIN32)

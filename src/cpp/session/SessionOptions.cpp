@@ -254,7 +254,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        "devtools check and devtools build output to package project folder")
       (kUseSecureCookiesSessionOption,
        value<bool>(&useSecureCookies_)->default_value(false),
-       "whether to mark cookies as secure");
+       "whether to mark cookies as secure")
+      ("directory-view-whitelist",
+       value<std::string>(&directoryViewWhitelist_)->default_value(""),
+       "list of directories where files can be viewed, separated by :")
+      (kSessionEnvVarSaveBlacklist,
+       value<std::string>(&envVarSaveBlacklist_)->default_value(""),
+       "list of environment variables not saved on session suspend, separated by :");
 
    // allow options
    options_description allow("allow");
@@ -401,7 +407,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries")
       ("external-mathjax-path",
-        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-26"),
+        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-27"),
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),

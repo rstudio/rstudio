@@ -231,13 +231,23 @@ Error openDocument(const json::JsonRpcRequest& request,
          encoding = ::locale2charset(nullptr);
    }
    
-   // ensure the file exists
    FilePath documentPath = module_context::resolveAliasedPath(path);
+   if (!module_context::isPathViewAllowed(documentPath))
+   {
+      Error error = systemError(boost::system::errc::operation_not_permitted,
+                                ERROR_LOCATION);
+      pResponse->setError(error, "The file is in a restricted path and cannot "
+                                 "be opened by the source editor.");
+      
+   }
+
+   // ensure the file exists
    if (!documentPath.exists())
    {
       return systemError(boost::system::errc::no_such_file_or_directory,
                          ERROR_LOCATION);
    }
+
    
    // ensure the file is not binary
    if (!module_context::isTextFile(documentPath))
@@ -476,6 +486,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // current document. It replaces the subrange [offset, offset+length).
    std::string replacement;
    int offset, length;
+   bool valid;
    
    // This is the expected hash of the current document. If the
    // current hash value is different than this value, then the
@@ -493,6 +504,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &replacement,
                                   &offset,
                                   &length,
+                                  &valid,
                                   &hash);
    if (error)
       return error ;
@@ -513,21 +525,14 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    if (pDoc->hash() == hash)
    {
       std::string contents(pDoc->contents());
-
-      // Offset and length are specified in characters, but contents
-      // is in UTF8 bytes. Convert before using.
-      std::string::iterator rangeBegin = contents.begin();
-      error = utf8Advance(rangeBegin, offset, contents.end(), &rangeBegin);
-      if (error)
-         return Success(); // UTF8 decoding failed. Abort differential save.
-
-      std::string::iterator rangeEnd = rangeBegin;
-      error = utf8Advance(rangeEnd, length, contents.end(), &rangeEnd);
-      if (error)
-         return Success(); // UTF8 decoding failed. Abort differential save.
-
-      contents.erase(rangeBegin, rangeEnd);
-      contents.insert(rangeBegin, replacement.begin(), replacement.end());
+      
+      // the offsets we receive are in bytes, so we can replace the contents
+      // of the string directly at the supplied offset + length (the contents
+      // string itself is already UTF-8 encoded)
+      if (valid)
+      {
+         contents.replace(offset, length, replacement);
+      }
       
       // track if we're updating the document contents
       bool hasChanges = contents != pDoc->contents();

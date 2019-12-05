@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.LiveValue;
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -75,9 +73,7 @@ public class InfoBar extends Composite
       initWidget(binder.createAndBindUi(this));
 
       A11y.setARIAHidden(label_);
-      Roles.getAlertRole().setAriaLiveProperty(live_.getElement(), 
-            mode == ERROR ? LiveValue.ASSERTIVE : LiveValue.POLITE);
-      Roles.getAlertRole().setAriaAtomicProperty(live_.getElement(), true);
+      A11y.setAlertRole(live_, mode == ERROR);
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       
       if (dismissHandler != null)

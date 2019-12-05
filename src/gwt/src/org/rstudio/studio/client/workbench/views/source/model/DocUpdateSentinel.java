@@ -413,12 +413,11 @@ public class DocUpdateSentinel
       JsArray<ChunkDefinition> oldChunkDefs = 
             sourceDoc_.getNotebookDoc().getChunkDefs();
       
-      //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);
 
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
-      if (path == null && fileType == null && diff.isEmpty()
+      if (path == null && fileType == null && diff.isValid() && diff.isEmpty()
           && foldSpec == oldFoldSpec 
           && (newChunkDefs == null || 
               ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
@@ -464,6 +463,7 @@ public class DocUpdateSentinel
             diff.getReplacement(),
             diff.getOffset(),
             diff.getLength(),
+            diff.isValid(),
             hash,
             new ServerRequestCallback<String>()
             {

@@ -150,7 +150,7 @@ std::string alternateMathjax(const std::string& prefix)
 
 std::string localMathjax()
 {
-   return alternateMathjax("mathjax-26");
+   return alternateMathjax("mathjax-27");
 }
 
 std::string copiedMathjax(const FilePath& targetFile)
@@ -180,7 +180,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    }
 
    // return fixed up html
-   return alternateMathjax(presFilesDir + "/mathjax-26");
+   return alternateMathjax(presFilesDir + "/mathjax-27");
 }
 
 std::string localWebFonts()

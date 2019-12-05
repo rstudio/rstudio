@@ -40,12 +40,15 @@
 * Add option `auth-cookies-force-secure` to always mark auth cookies as secure when SSL is terminated upstream (Pro #995)
 * Set HTTP header `X-Content-Type-Options` to discourage MIME type sniffing (Pro #1219)
 * Authentication cookies are now revoked after signout (Pro #606)
+* File-serving resource endpoints are now more restrictive; added new `directory-view-whitelist` option (Pro #607)
 
 ### Miscellaneous
 
 * Show detailed logs and process output when R fails to start (#2097)
+* Enable large file uploads (over 4GB) in RStudio Server (#3299)
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
 * Files with extension '.q' are no longer indexed or parsed as R files (#4696)
+* Add support for an API command to return the list of R packages RStudio depends on (#2332)
 * Add automated crash handling and reporting
 * Upgrade internal JSON parsing engine for speed improvements (#1830)
 * Improved ergonomics for history prefix navigation (#2771)
@@ -62,16 +65,46 @@
 * Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 * Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 * Improved browser tab names (project name first, complete product name) (Pro #1172)
+* Add 'Close All Terminals' command to Terminal menu (#3564)
+* The diagnostics system now understands referenced symbols in glue strings (#5270)
+* Add preference for compiling .tex files with tinytex (#2788)
+* Long menus and popups now scroll instead of overflowing (#1760, #1794, #2330)
+* Sort package-installed R Markdown templates alphabetically (#4929)
+* The 'Reopen with Encoding' command now saves unsaved changes before re-opening the document. (#5630)
+* Autocomplete support for Plumber `#*` comment keywords (#2220)
+* Automatically continue Plumber `#*` on successive lines (#2219)
+* Comment / uncomment is now enabled for YAML documents (#3317)
+* Reflow comment has been rebound to 'Ctrl + Shift + /' on macOS. (#2443)
+* Allow fuzzy matches in help topic search (#3316)
+* The diagnostics system better handles missing expressions (#5660)
+* Keyboard shortcuts for debugging commands can be customized (#3539)
+* Update Pandoc to 2.7.3 (#4512)
+* Update SumatraPDF to version 3.1.2 (#3155)
+* Allow previewing PDFs in fullscreen mode in Sumatra PDF (#4301)
+* RStudio Server runtime files are stored in `/var/run`, or another configurable location, instead of `/tmp` (#4666)
+* Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
+* Enable copying images to the clipboard from the Plots pane (#3142)
+* Update minimum supported browser versions (#5593)
+* Automatic refresh of the Git pane can now be enabled / disabled as required. (#4368)
 
 ### Bugfixes
 
+* Fix issue where calling `install.packages()` without arguments would fail (#5154)
+* Fix issue where C code in packages would incorrectly be diagnosed as C++ (#5418)
 * Fix plot history when plot() called immediately after dev.off() (#3117)
+* Fix debug stopping past breakpoint when source windows are open (#3683)
 * Fix diagnostics error with multibyte characters in R Markdown documents on Windows (#1866)
 * Fix stale processes when invoking child R processes with large command lines (#3414)
-* Fixed an issue where help tooltips could become corrupt when using prettycode. (#5561)
+* Fix an issue where help tooltips could become corrupt when using prettycode (#5561)
+* Fix an issue where signature tooltips were shown even when disabled by user preference (#5405)
+* Fix an issue where Git did not work within projects whose paths contained multibyte characters (#2194)
+* Fix an issue where RStudio would fail to preview self-contained bookdown books (#5371)
+* Fix modal dialog boundaries extending out of the app window in certain cases (#1605)
+* Restore ability to select and copy text in version control diffs (#4734)
 
 ### RStudio Professional
 
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
-
+* New tools for viewing and managing server users when using named user licensing
+* The Launcher service now starts and runs automatically when the system starts

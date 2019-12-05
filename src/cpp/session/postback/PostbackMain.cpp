@@ -53,7 +53,6 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      core::log::setLogLevel(core::log::LogLevel::WARN);
       core::log::setProgramId("rpostback");
       core::system::initializeSystemLog("rpostback", core::log::LogLevel::WARN);
 

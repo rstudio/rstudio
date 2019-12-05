@@ -39,7 +39,8 @@ public:
                        bool verify,
                        const std::string& certificateAuthority = std::string(),
                        const boost::posix_time::time_duration& connectionTimeout =
-                          boost::posix_time::time_duration(boost::posix_time::pos_infin))
+                          boost::posix_time::time_duration(boost::posix_time::pos_infin),
+                       const std::string& hostname = std::string() )
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
        sslContext_(boost::asio::ssl::context::sslv23_client),
        address_(address),
@@ -70,6 +71,15 @@ public:
       // use scoped ptr so we can call the constructor after we've configured
       // the ssl::context (immediately above)
       ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioService, sslContext_));
+
+      // TLS v1.3 requires that the SNI be set, so set the SNI.
+      if (!SSL_set_tlsext_host_name(
+            ptrSslStream_->native_handle(),
+            (hostname.empty() ? address_.c_str() : hostname.c_str())))
+      {
+         boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
+         LOG_ERROR(Error(ec, ERROR_LOCATION));
+      }
    }
 
 

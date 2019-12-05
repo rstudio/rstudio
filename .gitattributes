@@ -1,2 +1,2 @@
-/NEWS merge=union
+/NEWS*.md merge=union
 

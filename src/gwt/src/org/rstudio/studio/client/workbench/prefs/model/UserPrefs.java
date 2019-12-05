@@ -78,7 +78,11 @@ public class UserPrefs extends UserPrefsComputed
 
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
-      Scheduler.get().scheduleDeferred(() -> loadScreenReaderEnabledSetting());
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         loadScreenReaderEnabledSetting();
+         syncToggleTabKeyMovesFocusState();
+      });
    }
    
    public void writeUserPrefs()
@@ -242,7 +246,8 @@ public class UserPrefs extends UserPrefsComputed
       Command onCompleted = () -> commands_.toggleScreenReaderSupport().setChecked(screenReaderEnabled_);
 
       if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().getEnableAccessibility(enabled -> {
+         Desktop.getFrame().getEnableAccessibility(enabled ->
+         {
             screenReaderEnabled_ = enabled;
             onCompleted.execute();
          });
@@ -277,7 +282,8 @@ public class UserPrefs extends UserPrefsComputed
             "Are you sure you want to " + (getScreenReaderEnabled() ? "disable" : "enable") + " " +
             "screen reader support? The application will reload to apply the change.",
             false,
-            () -> {
+            () ->
+            {
                setScreenReaderEnabled(!getScreenReaderEnabled());
                writeUserPrefs(succeeded -> {
                   if (succeeded)
@@ -298,7 +304,36 @@ public class UserPrefs extends UserPrefsComputed
                commands_.toggleScreenReaderSupport().setChecked(getScreenReaderEnabled());
             },
             false);
+   }
 
+   public void syncToggleTabKeyMovesFocusState(boolean checked)
+   {
+      commands_.toggleTabKeyMovesFocus().setChecked(checked);
+   }
+
+   private void syncToggleTabKeyMovesFocusState()
+   {
+      syncToggleTabKeyMovesFocusState(
+            RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue());
+   }
+
+   @Handler
+   void onToggleTabKeyMovesFocus()
+   {
+      RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().setGlobalValue(
+            !RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue());
+      writeUserPrefs(succeeded ->
+      {
+         if (succeeded)
+         {
+            syncToggleTabKeyMovesFocusState();
+         }
+         else
+         {
+            display_.showErrorMessage("Error Changing Setting",
+                  "The tab key moves focus setting could not be updated.");
+         }
+      });
    }
 
    public static final int LAYER_DEFAULT  = 0;

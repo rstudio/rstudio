@@ -36,8 +36,6 @@
 #include <shared_core/system/Win32StringUtils.hpp>
 #endif
 
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-
 #define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
 #undef BOOST_NO_CXX11_SCOPED_ENUMS
@@ -148,7 +146,7 @@ MimeType s_mimeTypes[] =
    { "bmp",   "image/bmp"  },
    { "ps",    "application/postscript" },
    { "eps",   "application/postscript" },
-   { "dvi"    "application/x-dvi" },
+   { "dvi",    "application/x-dvi" },
 
    { "atom",  "application/atom+xml" },
    { "rss",   "application/rss+xml" },
@@ -326,7 +324,7 @@ FilePath::FilePath(const std::string& in_absolutePath) :
 {
 }
 
-#if _WIN32
+#ifdef _WIN32
 FilePath::FilePath(const std::wstring& absolutePath)
    : m_impl(new Impl(absolutePath)) // thwart ref-count
 {
@@ -546,7 +544,16 @@ Error FilePath::completeChildPath(const std::string& in_filePath, FilePath& out_
                   boost::system::system_category()));
          }
 
-         out_childPath =  completePath(in_filePath);
+         out_childPath = completePath(in_filePath);
+
+         if (!out_childPath.isWithin(*this))
+         {
+            throw boost::filesystem::filesystem_error(
+               "child path must be inside parent path",
+               boost::system::error_code(
+                  boost::system::errc::no_such_file_or_directory,
+                  boost::system::system_category()));
+         }
       }
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -688,7 +695,7 @@ std::string FilePath::getAbsolutePathNative() const
       return BOOST_FS_PATH2STRNATIVE(m_impl->Path);
 }
 
-#if _WIN32
+#ifdef _WIN32
 std::wstring FilePath::getAbsolutePathW() const
 {
    if (isEmpty())
@@ -744,7 +751,7 @@ Error FilePath::getChildrenRecursive(const RecursiveIterationFunction& in_iterat
       {
          // NOTE: The path gets round-tripped through toString/fromString, would
          //   be nice to have a direct constructor
-         if (!in_iterationFunction(itr.level(),
+         if (!in_iterationFunction(itr.depth(),
                                    FilePath(BOOST_FS_PATH2STR(itr->path()))))
          {
             // end the iteration if requested
@@ -791,6 +798,14 @@ std::time_t FilePath::getLastWriteTime() const
       logError(m_impl->Path, e, ERROR_LOCATION);
       return 0;
    }
+}
+
+std::string FilePath::getLexicallyNormalPath() const
+{
+   if (isEmpty())
+      return std::string();
+   else
+      return BOOST_FS_PATH2STR(m_impl->Path.lexically_normal());
 }
 
 std::string FilePath::getMimeContentType(const std::string& in_defaultType) const
@@ -934,7 +949,7 @@ bool FilePath::isEquivalentTo(const FilePath& in_other) const
    {
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
-      error.addProperty("equivilant-to", in_other);
+      error.addProperty("equivalent-to", in_other);
       return false;
    }
 }
@@ -1003,12 +1018,34 @@ bool FilePath::isSymlink() const
 
 bool FilePath::isWithin(const FilePath& in_scopePath) const
 {
+   // Technically, we contain ourselves.
    if (*this == in_scopePath)
       return true;
 
-   return boost::algorithm::starts_with(
-      (*this).getAbsolutePath(),
-      in_scopePath.getAbsolutePath());
+   // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
+   FilePath child(getLexicallyNormalPath());
+   FilePath parent(in_scopePath.getLexicallyNormalPath());
+
+   // Easy test: We can't possibly be in this scope path if it has more components than we do
+   if (parent.m_impl->Path.size() > child.m_impl->Path.size())
+      return false;
+
+   // Find the first path element that differs. Stop when we reach the end of the parent
+   // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
+   for (boost::filesystem::path::iterator childIt = child.m_impl->Path.begin(),
+                                          parentIt = parent.m_impl->Path.begin();
+        parentIt != parent.m_impl->Path.end() && *parentIt != ".";
+        parentIt++, childIt++)
+   {
+      if (*parentIt != *childIt)
+      {
+         // Found a differing path element
+         return false;
+      }
+   }
+
+   // No differing path element found
+   return true;
 }
 
 Error FilePath::makeCurrentPath(bool in_autoCreate) const
@@ -1258,7 +1295,7 @@ struct PathScopeImpl
    PathScopeImpl(FilePath&& in_path, ErrorLocation&& in_location) :
       Path(in_path),
       Location(in_location)
-   { };
+   { }
 
    FilePath Path;
    ErrorLocation Location;

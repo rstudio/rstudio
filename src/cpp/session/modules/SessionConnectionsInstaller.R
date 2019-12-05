@@ -333,10 +333,24 @@
    prereqs()
 })
 
-.rs.addFunction("odbcBundleOdbcinstPath", function() {
+.rs.addFunction("odbcBundleOdbcinstPathWithOdbcinst", function() {
    config <- system2("odbcinst", "-j", stdout = TRUE)
    odbciniEntry <- config[grepl("odbcinst.ini", config)]
    gsub("^[^/\\\\]*", "", odbciniEntry)
+})
+
+.rs.addFunction("odbcBundleOdbcinstPathUseHome", function() {
+   normalizePath("~/.odbcinst.ini", mustWork = FALSE)
+})
+
+.rs.addFunction("odbcBundleOdbcinstPath", function() {
+   osOdbcinstPath <- list(
+      osx = .rs.odbcBundleOdbcinstPathWithOdbcinst,
+      windows = .rs.odbcBundleOdbcinstPathWithOdbcinst,
+      linux = .rs.odbcBundleOdbcinstPathUseHome
+   )
+
+   osOdbcinstPath[[.rs.odbcBundleOsName()]]()
 })
 
 .rs.addFunction("odbcBundleReadIni", function(odbcinstPath) {
@@ -468,6 +482,11 @@
          list(
             path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
             key = "Driver",
+            value = driverPath
+         ),
+         list(
+            path = file.path("SOFTWARE", "ODBC", "ODBCINST.INI", name, fsep = "\\"),
+            key = "Setup",
             value = driverPath
          ),
          list(

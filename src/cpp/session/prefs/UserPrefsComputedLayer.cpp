@@ -100,11 +100,6 @@ Error UserPrefsComputedLayer::readPrefs()
    return Success();
 }
 
-core::Error UserPrefsComputedLayer::validatePrefs()
-{
-   return Success();
-}
-
 // Try to detect a terminal on linux desktop
 FilePath UserPrefsComputedLayer::detectedTerminalPath()
 {

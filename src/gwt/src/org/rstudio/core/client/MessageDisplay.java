@@ -35,6 +35,7 @@ public abstract class MessageDisplay
    public final static int INPUT_OPTIONAL_TEXT = 1;
    public final static int INPUT_PASSWORD = 2;
    public final static int INPUT_NUMERIC = 3;
+   public final static int INPUT_USERNAME = 4;
    
    public static class PromptWithOptionResult
    {

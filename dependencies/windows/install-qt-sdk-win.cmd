@@ -4,7 +4,7 @@ setlocal EnableDelayedExpansion
 
 @rem When updating to a new Qt version, be sure to also update the 
 @rem component versions in qt-noninteractive-install-win.qs
-set QT_VERSION=5.12.5
+set QT_VERSION=5.12.6
 set QT_SDK_BINARY=qt-opensource-windows-x86-%QT_VERSION%.exe
 set QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/Qt/%QT_SDK_BINARY%
 set QT_SCRIPT=qt-noninteractive-install-win.qs

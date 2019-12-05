@@ -295,6 +295,9 @@ public interface ThemeResources extends ClientBundle
    @Source("user_2x.png")
    ImageResource user();
    
+   @Source("refreshWorkspaceMonitored_2x.png")
+   ImageResource refreshWorkspaceMonitored2x();
+   
    @Source("refreshWorkspaceUnmonitored_2x.png")
    ImageResource refreshWorkspaceUnmonitored2x();
    

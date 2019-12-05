@@ -29,7 +29,7 @@ if test "$INIT_SYSTEM" = "systemd"
 then
    systemctl stop rstudio-server.service 2>/dev/null
    systemctl disable rstudio-server.service 2>/dev/null
-   rm -rf /etc/systemd/system/rstudio-server.service
+   rm -rf /lib/systemd/system/rstudio-server.service
    systemctl daemon-reload
 fi
 

@@ -14,25 +14,38 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.regex.Pattern;
 
 public class ElementIds
 {
-   public static void assignElementId(Element ele, String id)
+   /**
+    * Return a unique ID based on examination of existing elements. Must be assigned
+    * immediately to an element in the DOM to ensure uniqueness.
+    * @param baseId
+    * @return
+    */
+   public static String getUniqueElementId(String baseId)
    {
-      String elementIdBase = ID_PREFIX + id;
+      String elementIdBase = getElementId(baseId);
       String elementId = elementIdBase;
       int counter = 0;
-      
+
       // ensure uniqueness; for example, if multiple modal dialogs are displayed, make sure
       // the OK button instances, etc., are uniquely identified
       while (DomUtils.getElementById(elementId) != null)
       {
          elementId = elementIdBase + "_" + counter++;
       }
-      ele.setId(elementId);
+     return elementId;
+   }
+
+   public static void assignElementId(Element ele, String id)
+   {
+      ele.setId(getUniqueElementId(id));
    }
 
    public static void assignElementId(Widget widget, String id)
@@ -43,6 +56,32 @@ public class ElementIds
    public static String getElementId(String id)
    {
       return ID_PREFIX + id;
+   }
+
+   public static Id getAriaElementId(String id)
+   {
+      return Id.of(getElementId(id));
+   }
+
+   public static boolean isInstanceOf(Widget widget, String baseId)
+   {
+      return isInstanceOf(widget.getElement(), baseId);
+   }
+
+   public static boolean isInstanceOf(Element ele, String baseId)
+   {
+      String actualId = ele.getId();
+      String testId = ElementIds.getElementId(baseId);
+      if (actualId == testId)
+         return true;
+
+      // does ID match disambiguation pattern?
+      if (RE_NUMBERED_ELEMENT_ID.test(actualId))
+      {
+         String trimmedId = actualId.substring(0, actualId.lastIndexOf('_'));
+         return trimmedId == testId;
+      }
+      return false;
    }
 
    public static String idSafeString(String text)
@@ -65,6 +104,8 @@ public class ElementIds
    {
       return ID_PREFIX + "label_" + idSafeString(label);
    }
+
+   private static final Pattern RE_NUMBERED_ELEMENT_ID = Pattern.create("^[a-zA-Z0-9_]+_\\d+$");
 
    public final static String ID_PREFIX = "rstudio_";
 
@@ -131,6 +172,7 @@ public class ElementIds
    // FindInFilesDialog
    public final static String FIND_FILES_TEXT = "find_files_text";
    public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
+   public final static String FIND_FILES_PATTERN_EXAMPLE = "find_files_pattern_example";
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
@@ -179,11 +221,72 @@ public class ElementIds
    public final static String VCS_MENUBUTTON = "vcs_menubutton";
    public final static String PANELAYOUT_MENUBUTTON = "panelayout_menubutton";
    public final static String PROJECT_MENUBUTTON = "project_menubutton";
+   public final static String PROJECT_MENUBUTTON_TOOLBAR_SUFFIX = "toolbar";
+   public final static String PROJECT_MENUBUTTON_MENUBAR_SUFFIX = "menubar";
 
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
 
+   // JobLauncherDialog
+   public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
+   public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
+
+   // RmdTemplateOptionsWidget
+   public final static String RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT = "rmd_template_options_output_format";
+   public static String getRmdTemplateOptionsOutputFormat() { return getElementId(RMD_TEMPLATE_OPTIONS_OUTPUT_FORMAT); }
+
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+
+   // DataImport
+   public final static String DATA_IMPORT_UI_OPTIONS = "data_import_ui_options";
+   public final static String DATA_IMPORT_FILE_URL = "data_import_file_url";
+   public static String getDataImportFileUrl() { return getElementId(DATA_IMPORT_FILE_URL); }
+   public final static String DATA_IMPORT_OPTIONS_FILECHOOSER = "data_import_options_filechooser";
+   public static String getDataImportOptionsFilechooser() { return getElementId(DATA_IMPORT_OPTIONS_FILECHOOSER); }
+   public final static String DATA_IMPORT_CODE_PREVIEW = "data_import_code_preview";
+   public static String getDataImportCodePreview() { return getElementId(DATA_IMPORT_CODE_PREVIEW); }
+   public final static String DATA_IMPORT_OPTIONS_NAME = "data_import_options_name";
+   public static String getDataImportOptionsName() { return getElementId(DATA_IMPORT_OPTIONS_NAME); }
+   public final static String DATA_IMPORT_OPTIONS_SKIP = "data_import_options_skip";
+   public static String getDataImportOptionsSkip() { return getElementId(DATA_IMPORT_OPTIONS_SKIP); }
+   public final static String DATA_IMPORT_OPTIONS_MAXROWS = "data_import_options_maxrows";
+   public static String getDataImportOptionsMaxrows() { return getElementId(DATA_IMPORT_OPTIONS_MAXROWS); }
+   public final static String DATA_IMPORT_OPTIONS_DELIMITER = "data_import_options_delimiter";
+   public static String getDataImportOptionsDelimiter() { return getElementId(DATA_IMPORT_OPTIONS_DELIMITER); }
+   public final static String DATA_IMPORT_OPTIONS_QUOTES = "data_import_options_quotes";
+   public static String getDataImportOptionsQuotes() { return getElementId(DATA_IMPORT_OPTIONS_QUOTES); }
+   public final static String DATA_IMPORT_OPTIONS_ESCAPE = "data_import_options_escape";
+   public static String getDataImportOptionsEscape() { return getElementId(DATA_IMPORT_OPTIONS_ESCAPE); }
+   public final static String DATA_IMPORT_OPTIONS_COMMENT = "data_import_options_comment";
+   public static String getDataImportOptionsComment() { return getElementId(DATA_IMPORT_OPTIONS_COMMENT); }
+   public final static String DATA_IMPORT_OPTIONS_NA = "data_import_options_na";
+   public static String getDataImportOptionsNa() { return getElementId(DATA_IMPORT_OPTIONS_NA); }
+   public final static String DATA_IMPORT_OPTIONS_SHEET = "data_import_options_sheet";
+   public static String getDataImportOptionsSheet() { return getElementId(DATA_IMPORT_OPTIONS_SHEET); }
+   public final static String DATA_IMPORT_OPTIONS_RANGE = "data_import_options_range";
+   public static String getDataImportOptionsRange() { return getElementId(DATA_IMPORT_OPTIONS_RANGE); }
+   public final static String DATA_IMPORT_OPTIONS_FORMAT = "data_import_options_format";
+   public static String getDataImportOptionsFormat() { return getElementId(DATA_IMPORT_OPTIONS_FORMAT); }
+
+   // DataImportOptionsUiCsvLocale
+   public final static String DATA_IMPORT_CSV_DATENAME = "data_import_csv_datename";
+   public static String getDataImportCsvDatename() { return getElementId(DATA_IMPORT_CSV_DATENAME); }
+   public final static String DATA_IMPORT_CSV_ENCODING = "data_import_csv_encoding";
+   public static String getDataImportCsvEncoding() { return getElementId(DATA_IMPORT_CSV_ENCODING); }
+   public final static String DATA_IMPORT_CSV_DATE_FORMAT = "data_import_csv_date_format";
+   public static String getDataImportCsvDateFormat() { return getElementId(DATA_IMPORT_CSV_DATE_FORMAT); }
+   public final static String DATA_IMPORT_CSV_TIME_FORMAT = "data_import_csv_time_format";
+   public static String getDataImportCsvTimeFormat() { return getElementId(DATA_IMPORT_CSV_TIME_FORMAT); }
+   public final static String DATA_IMPORT_CSV_DECIMAL_MARK = "data_import_csv_decimal_mark";
+   public static String getDataImportCsvDecimalMark() { return getElementId(DATA_IMPORT_CSV_DECIMAL_MARK); }
+   public final static String DATA_IMPORT_CSV_GROUPING_MARK = "data_import_csv_grouping_mark";
+   public static String getDataImportCsvGroupingMark() { return getElementId(DATA_IMPORT_CSV_GROUPING_MARK); }
+   public final static String DATA_IMPORT_CSV_TZ = "data_import_csv_tz";
+   public static String getDataImportCsvTz() { return getElementId(DATA_IMPORT_CSV_TZ); }
+
+   // AboutDialogContents
+   public final static String ABOUT_LICENSE_INFO = "about_license_info";
+   public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
 }

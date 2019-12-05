@@ -46,6 +46,7 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
 
@@ -1089,11 +1090,16 @@ bool addTinytexToPathIfNecessary()
    if (!module_context::findProgram("pdflatex").isEmpty())
       return false;
    
-   std::string binDir;
-   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDir);
+   SEXP binDirSEXP;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDirSEXP, &protect);
    if (error)
       LOG_ERROR(error);
    
+   if (!r::sexp::isString(binDirSEXP))
+      return false;
+   
+   std::string binDir = r::sexp::asString(binDirSEXP);
    FilePath binPath = module_context::resolveAliasedPath(binDir);
    if (!binPath.exists())
       return false;
@@ -1879,6 +1885,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 }
 
 namespace {
+
 // enque file changed event
 void enqueFileChangedEvent(
       const core::system::FileChangeEvent& event,
@@ -1889,8 +1896,12 @@ void enqueFileChangedEvent(
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
 
-   pCtx->decorateFile(FilePath(event.fileInfo().absolutePath()),
-                      &fileSystemItem);
+   if (prefs::userPrefs().vcsAutorefresh())
+   {
+      pCtx->decorateFile(
+               FilePath(event.fileInfo().absolutePath()),
+               &fileSystemItem);
+   }
 
    fileChange["file"] = fileSystemItem;
 
@@ -1898,6 +1909,7 @@ void enqueFileChangedEvent(
    ClientEvent clientEvent(client_events::kFileChanged, fileChange);
    module_context::enqueClientEvent(clientEvent);
 }
+
 } // namespace
 
 void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
@@ -1905,9 +1917,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                       fileDecorationContext(filePath);
-
+   auto pCtx = fileDecorationContext(filePath, true);
    enqueFileChangedEvent(event, pCtx);
 }
 
@@ -1932,8 +1942,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    }
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                  fileDecorationContext(commonParentPath);
+   auto pCtx = fileDecorationContext(commonParentPath, true);
 
    // fire client events as necessary
    for (const core::system::FileChangeEvent& event : events)
@@ -2031,7 +2040,14 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
    else if (session::options().programMode() == kSessionProgramModeServer)
    {
-      if (session::options().allowFileDownloads())
+      if (!isPathViewAllowed(filePath))
+      {
+         module_context::showErrorMessage(
+            "File Download Error",
+            "This system administrator has not granted you permission "
+            "to view this file.\n");
+      }
+      else if (session::options().allowFileDownloads())
       {
          std::string url = createFileUrl(filePath);
          ClientEvent event = browseUrlEvent(url);
@@ -2317,6 +2333,52 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
       boost::format fmt("session/%1%");
       return boost::str(fmt % sessionTempPath);
    }
+}
+
+bool isPathViewAllowed(const FilePath& filePath)
+{
+   // No paths are restricted in desktop mode
+   if (options().programMode() != kSessionProgramModeServer)
+      return true;
+
+   // Viewing content in the home directory is always allowed
+   if (filePath.isWithin(userHomePath().getParent()))
+      return true;
+      
+   // Viewing content in the session temporary files path is always allowed
+   if (isSessionTempPath(filePath))
+      return true;
+
+   // Allow users to view the system's configuration
+   if (filePath.isWithin(core::system::xdg::systemConfigDir()))
+      return true;
+
+   // Viewing content in R libraries is always allowed
+   std::vector<FilePath> libPaths = getLibPaths();
+   for (const auto& dir: libPaths)
+   {
+      if (filePath.isWithin(dir))
+      {
+         return true;
+      }
+   }
+
+   // Check session option for explicitly whitelisted directories
+   std::string whitelistDirs = session::options().directoryViewWhitelist();
+   if (!whitelistDirs.empty())
+   {
+      std::vector<std::string> dirs = core::algorithm::split(whitelistDirs, ":");
+      for (const auto& dir: dirs)
+      {
+         if (filePath.isWithin(FilePath(dir)))
+         {
+            return true;
+         }
+      }
+   }
+
+   // All other paths are implicitly disallowed
+   return false;
 }
 
 namespace {

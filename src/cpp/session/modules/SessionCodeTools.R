@@ -1898,7 +1898,7 @@
 .rs.addFunction("CRANDownloadOptionsString", function() {
    
    # collect options of interest
-   options <- options("repos", "download.file.method", "download.file.extra")
+   options <- options("repos", "download.file.method", "download.file.extra", "HTTPUserAgent")
    if (identical(options[["download.file.method"]], "curl"))
       options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
    

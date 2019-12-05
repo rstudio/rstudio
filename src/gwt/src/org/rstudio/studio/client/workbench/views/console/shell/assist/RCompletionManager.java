@@ -16,16 +16,10 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.HandlerRegistrations;
@@ -35,8 +29,6 @@ import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -107,12 +99,12 @@ public class RCompletionManager implements CompletionManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      input_ = input ;
+      input_ = input;
       navigableSourceEditor_ = navigableSourceEditor;
-      popup_ = popup ;
-      server_ = server ;
+      popup_ = popup;
+      server_ = server;
       rContext_ = rContext;
-      initFilter_ = initFilter ;
+      initFilter_ = initFilter;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
@@ -122,73 +114,38 @@ public class RCompletionManager implements CompletionManager
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
-      handlers_.add(input_.addBlurHandler(new BlurHandler() {
-         public void onBlur(BlurEvent event)
-         {
-            if (!ignoreNextInputBlur_)
-               invalidatePendingRequests() ;
-            ignoreNextInputBlur_ = false ;
-         }
-      }));
-
-      handlers_.add(input_.addClickHandler(new ClickHandler()
+      handlers_.add(input_.addBlurHandler(event ->
       {
-         public void onClick(ClickEvent event)
-         {
+         if (!ignoreNextInputBlur_)
             invalidatePendingRequests();
-         }
+         ignoreNextInputBlur_ = false;
       }));
 
-      handlers_.add(popup_.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
-         public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
-         {
-            assert context_ != null : "onSelection called but handler is null" ;
-            if (context_ != null)
-               context_.onSelection(event.getSelectedItem()) ;
-         }
-      }));
-      
-      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
-         public void onSelection(SelectionEvent<QualifiedName> event)
-         {
-            lastSelectedItem_ = event.getSelectedItem();
-            if (popup_.isHelpVisible())
-               context_.showHelp(lastSelectedItem_);
-            else
-               showHelpDeferred(context_, lastSelectedItem_, 600);
-         }
-      }));
-      
-      handlers_.add(popup_.addMouseDownHandler(new MouseDownHandler() {
-         public void onMouseDown(MouseDownEvent event)
-         {
-            ignoreNextInputBlur_ = true ;
-         }
-      }));
-      
-      handlers_.add(popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
-         
-         @Override
-         public void onSelection(SelectionEvent<QualifiedName> event)
-         {
-            docDisplay_.setPopupVisible(true);
-         }
-      }));
-      
-      handlers_.add(popup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      handlers_.add(input_.addClickHandler(event -> invalidatePendingRequests()));
+
+      handlers_.add(popup_.addSelectionCommitHandler(event ->
       {
-         @Override
-         public void onClose(CloseEvent<PopupPanel> event)
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  docDisplay_.setPopupVisible(false);
-               }
-            });
-         }
+         assert context_ != null : "onSelection called but handler is null";
+         if (context_ != null)
+            context_.onSelection(event.getSelectedItem());
+      }));
+      
+      handlers_.add(popup_.addSelectionHandler(event ->
+      {
+         lastSelectedItem_ = event.getSelectedItem();
+         if (popup_.isHelpVisible())
+            context_.showHelp(lastSelectedItem_);
+         else
+            showHelpDeferred(context_, lastSelectedItem_, 600);
+      }));
+      
+      handlers_.add(popup_.addMouseDownHandler(event -> ignoreNextInputBlur_ = true));
+      
+      handlers_.add(popup_.addSelectionHandler(event -> docDisplay_.setPopupVisible(true)));
+      
+      handlers_.add(popup_.addCloseHandler(event ->
+      {
+         Scheduler.get().scheduleDeferred(() -> docDisplay_.setPopupVisible(false));
       }));
       
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
@@ -222,18 +179,11 @@ public class RCompletionManager implements CompletionManager
       
       // hide the autocompletion popup if the user executes
       // an Ace editor command (e.g. insert pipe operator)
-      handlers_.add(eventBus_.addHandler(
-            AceEditorCommandEvent.TYPE,
-            new AceEditorCommandEvent.Handler()
-            {
-               @Override
-               public void onEditorCommand(AceEditorCommandEvent event)
-               {
-                  invalidatePendingRequests();
-                  close();
-               }
-            }));
-      
+      handlers_.add(eventBus_.addHandler(AceEditorCommandEvent.TYPE, event ->
+      {
+         invalidatePendingRequests();
+         close();
+      }));
    }
    
    @Inject
@@ -483,7 +433,7 @@ public class RCompletionManager implements CompletionManager
             }
          }
          else if (event.getKeyCode() == KeyCodes.KEY_TAB &&
-                  modifier == KeyboardShortcut.SHIFT)
+                  modifier == KeyboardShortcut.SHIFT && !userPrefs_.tabKeyMoveFocus().getValue())
          {
             return snippets_.attemptSnippetInsertion(true);
          }
@@ -524,8 +474,8 @@ public class RCompletionManager implements CompletionManager
          {
             if (keycode == KeyCodes.KEY_ESCAPE)
             {
-               invalidatePendingRequests() ;
-               return true ;
+               invalidatePendingRequests();
+               return true;
             }
             
             // NOTE: It is possible for the popup to still be showing, but
@@ -538,17 +488,17 @@ public class RCompletionManager implements CompletionManager
             {
                if (keycode == KeyCodes.KEY_ENTER)
                {
-                  QualifiedName value = popup_.getSelectedValue() ;
+                  QualifiedName value = popup_.getSelectedValue();
                   if (value != null)
                   {
-                     context_.onSelection(value) ;
-                     return true ;
+                     context_.onSelection(value);
+                     return true;
                   }
                }
                
                else if (keycode == KeyCodes.KEY_TAB)
                {
-                  QualifiedName value = popup_.getSelectedValue() ;
+                  QualifiedName value = popup_.getSelectedValue();
                   if (value != null)
                   {
                      if (value.type == RCompletionType.DIRECTORY)
@@ -560,13 +510,13 @@ public class RCompletionManager implements CompletionManager
                }
                
                else if (keycode == KeyCodes.KEY_UP)
-                  return popup_.selectPrev() ;
+                  return popup_.selectPrev();
                else if (keycode == KeyCodes.KEY_DOWN)
-                  return popup_.selectNext() ;
+                  return popup_.selectNext();
                else if (keycode == KeyCodes.KEY_PAGEUP)
-                  return popup_.selectPrevPage() ;
+                  return popup_.selectPrevPage();
                else if (keycode == KeyCodes.KEY_PAGEDOWN)
-                  return popup_.selectNextPage() ;
+                  return popup_.selectNextPage();
                else if (keycode == KeyCodes.KEY_HOME)
                   return popup_.selectFirst();
                else if (keycode == KeyCodes.KEY_END)
@@ -574,8 +524,8 @@ public class RCompletionManager implements CompletionManager
                
                if (keycode == 112) // F1
                {
-                  context_.showHelpTopic() ;
-                  return true ;
+                  context_.showHelpTopic();
+                  return true;
                }
                else if (keycode == 113) // F2
                {
@@ -626,7 +576,8 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition start = selection.getStart().movePosition(-1, true);
                   InputEditorPosition end = selection.getStart();
 
-                  if (StringUtil.charAt(currentLine, cursorColumn) == ')' && StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
+                  if (StringUtil.charAt(currentLine, cursorColumn) == ')' &&
+                        StringUtil.charAt(currentLine, cursorColumn - 1) == '(')
                   {
                      // flush cache as old completions no longer relevant
                      requester_.flushCache();
@@ -647,10 +598,10 @@ public class RCompletionManager implements CompletionManager
          }
          
          invalidatePendingRequests();
-         return false ;
+         return false;
       }
       
-      return false ;
+      return false;
    }
    
    private boolean isValidForRIdentifier(char c) {
@@ -733,9 +684,9 @@ public class RCompletionManager implements CompletionManager
             // want this behaviour (ie the current selection)
             int prefixMatchCount = 0;
             QualifiedName[] items = popup_.getItems();
-            for (int i = 0; i < items.length; i++)
+            for (QualifiedName item : items)
             {
-               if (items[i].name.startsWith(fullToken))
+               if (item.name.startsWith(fullToken))
                {
                   ++prefixMatchCount;
                   if (prefixMatchCount > 1)
@@ -769,16 +720,8 @@ public class RCompletionManager implements CompletionManager
          // Always update the current set of completions following
          // a key insertion. Defer execution so the key insertion can
          // enter the document.
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               beginSuggest(false, true, false);
-            }
-         });
+         Scheduler.get().scheduleDeferred(() -> beginSuggest(false, true, false));
          return false;
-         
       }
       else
       {
@@ -825,14 +768,7 @@ public class RCompletionManager implements CompletionManager
                   return false;
                }
       
-               Scheduler.get().scheduleDeferred(new ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     beginSuggest(true, true, false);
-                  }
-               });
+               Scheduler.get().scheduleDeferred(() -> beginSuggest(true, true, false));
                return false;
             }
          }
@@ -853,14 +789,7 @@ public class RCompletionManager implements CompletionManager
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
             
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  sigTipManager_.resolveActiveFunctionAndDisplayToolTip();
-               }
-            });
+            Scheduler.get().scheduleDeferred(() -> sigTipManager_.resolveActiveFunctionAndDisplayToolTip());
          }
          
          if (
@@ -871,7 +800,7 @@ public class RCompletionManager implements CompletionManager
             suggestTimer_.schedule(true, true, false);
          }
       }
-      return false ;
+      return false;
    }
    
    @SuppressWarnings("unused")
@@ -913,31 +842,31 @@ public class RCompletionManager implements CompletionManager
             || event.getCtrlKey()
             || event.getMetaKey())
       {
-         return false ;
+         return false;
       }
       
-      int keyCode = event.getKeyCode() ;
+      int keyCode = event.getKeyCode();
       
       if (keyCode >= 'a' && keyCode <= 'z')
-         return true ;
+         return true;
       else if (keyCode >= 'A' && keyCode <= 'Z')
-         return true ;
+         return true;
       else if (keyCode == ' ')
-         return true ;
+         return true;
       else if (KeyboardHelper.isHyphen(event))
-         return true ;
+         return true;
       else if (KeyboardHelper.isUnderscore(event))
          return true;
       
       if (event.getShiftKey())
-         return false ;
+         return false;
       
       if (keyCode >= '0' && keyCode <= '9')
-         return true ;
+         return true;
       if (keyCode == 190) // period
-         return true ;
-      
-      return false ;
+         return true;
+
+      return false;
    }
 
    private void invalidatePendingRequests()
@@ -957,7 +886,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       if (flushCache)
-         requester_.flushCache() ;
+         requester_.flushCache();
    }
    
    
@@ -969,7 +898,7 @@ public class RCompletionManager implements CompletionManager
    // 4. The associated data for a `[[` call (if any -- completions from data object)
    class AutocompletionContext {
       
-      // Be sure to sync these with 'SessionCodeTools.R'!
+      // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
       public static final int TYPE_FUNCTION = 1;
       public static final int TYPE_SINGLE_BRACKET = 2;
@@ -984,6 +913,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
       public static final int TYPE_PACKAGE = 13;
+      public static final int TYPE_PLUMBER = 14;
       
       public AutocompletionContext(
             String token,
@@ -1124,7 +1054,13 @@ public class RCompletionManager implements CompletionManager
       Pattern pattern = Pattern.create("^\\s*#+'");
       return pattern.test(line);
    }
-   
+
+   private boolean isLineInPlumberComment(String line)
+   {
+      Pattern pattern = Pattern.create("^\\s*#+\\*");
+      return pattern.test(line);
+   }
+
    private boolean isLineInComment(String line)
    {
       return StringUtil.stripBalancedQuotes(line).contains("#");
@@ -1142,11 +1078,11 @@ public class RCompletionManager implements CompletionManager
       // Don't auto complete if tab was pressed and tab completion was disabled.
       if (nativeEvent_ != null &&
               nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB &&
-              !userPrefs_.tabCompletion().getValue())
+              (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue()))
          return false;
       
       if (!input_.isSelectionCollapsed())
-         return false ;
+         return false;
       
       invalidatePendingRequests(flushCache, false);
       
@@ -1159,7 +1095,9 @@ public class RCompletionManager implements CompletionManager
       
       // never autocomplete in (non-roxygen) comments, or at the start
       // of roxygen comments (e.g. at "#' |")
-      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
+      if (isLineInComment(firstLine) &&
+            !isLineInRoxygenComment(firstLine) &&
+            !isLineInPlumberComment(firstLine))
          return false;
       
       // don't autocomplete if the cursor lies within the text of a
@@ -1291,7 +1229,7 @@ public class RCompletionManager implements CompletionManager
             implicit,
             context_);
 
-      return true ;
+      return true;
    }
    
    private String getDplyrJoinString(
@@ -1455,7 +1393,11 @@ public class RCompletionManager implements CompletionManager
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_ROXYGEN);
-      
+
+      // plumber comments/annotations
+      if (firstLine.matches("\\s*#+\\*.*"))
+         return new AutocompletionContext(token, AutocompletionContext.TYPE_PLUMBER);
+
       // If the token has '$' or '@', add in the autocompletion context --
       // note that we still need parent contexts to give more information
       // about the appropriate completion
@@ -1758,8 +1700,8 @@ public class RCompletionManager implements CompletionManager
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
       {
-         invalidationToken_ = token ;
-         selection_ = selection ;
+         invalidationToken_ = token;
+         selection_ = selection;
          canAutoAccept_ = canAutoAccept;
       }
       
@@ -1784,18 +1726,18 @@ public class RCompletionManager implements CompletionManager
       public void onError(ServerError error)
       {
          if (invalidationToken_.isInvalid())
-            return ;
+            return;
          
          RCompletionManager.this.popup_.showErrorMessage(
                   error.getUserMessage(), 
-                  new PopupPositioner(input_.getCursorBounds(), popup_)) ;
+                  new PopupPositioner(input_.getCursorBounds(), popup_));
       }
 
       @Override
       public void onResponseReceived(CompletionResult completions)
       {
          if (invalidationToken_.isInvalid())
-            return ;
+            return;
          
          // Only display the top completions
          final QualifiedName[] results =
@@ -1830,7 +1772,7 @@ public class RCompletionManager implements CompletionManager
                popup_.placeOffscreen();
             }
             
-            return ;
+            return;
          }
          
          // If there is only one result and the name is identical to the
@@ -1852,7 +1794,7 @@ public class RCompletionManager implements CompletionManager
          }
 
          // Move range to beginning of token; we want to place the popup there.
-         final String token = completions.token ;
+         final String token = completions.token;
 
          Rectangle rect = input_.getPositionBounds(
                selection_.getStart().movePosition(-token.length(), true));
@@ -1879,18 +1821,18 @@ public class RCompletionManager implements CompletionManager
       private void onSelection(QualifiedName qname)
       {
          suggestTimer_.cancel();
-         final String value = qname.name ;
+         final String value = qname.name;
          
          if (invalidationToken_.isInvalid())
             return;
          
-         requester_.flushCache() ;
+         requester_.flushCache();
          helpStrategy_.clearCache();
          
          if (value == null)
          {
-            assert false : "Selected comp value is null" ;
-            return ;
+            assert false : "Selected comp value is null";
+            return;
          }
 
          applyValue(qname);
@@ -1900,18 +1842,11 @@ public class RCompletionManager implements CompletionManager
                (qname.name.endsWith(":") &&
                      docDisplay_.getCharacterAtCursor() != ':'))
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(true, true, false);
-               }
-            });
+            Scheduler.get().scheduleDeferred(() -> beginSuggest(true, true, false));
          }
          else
          {
-            popup_.hide() ;
+            popup_.hide();
             popup_.clearHelp(false);
             popup_.setHelpVisible(false);
             docDisplay_.setFocus(true);
@@ -2122,8 +2057,8 @@ public class RCompletionManager implements CompletionManager
                                           qualifiedName.helpHandler);
       }
       
-      private final Invalidation.Token invalidationToken_ ;
-      private InputEditorSelection selection_ ;
+      private final Invalidation.Token invalidationToken_;
+      private InputEditorSelection selection_;
       private final boolean canAutoAccept_;
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
@@ -2181,23 +2116,23 @@ public class RCompletionManager implements CompletionManager
    private UserPrefs userPrefs_;
 
    private final CodeToolsServerOperations server_;
-   private final InputEditorDisplay input_ ;
+   private final InputEditorDisplay input_;
    private final NavigableSourceEditor navigableSourceEditor_;
-   private final CompletionPopupDisplay popup_ ;
-   private final CompletionRequester requester_ ;
-   private final InitCompletionFilter initFilter_ ;
+   private final CompletionPopupDisplay popup_;
+   private final CompletionRequester requester_;
+   private final InitCompletionFilter initFilter_;
    
    // Prevents completion popup from being dismissed when you merely
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;
-   private String token_ ;
+   private String token_;
    
    private final DocDisplay docDisplay_;
    private final SnippetHelper snippets_;
    private final boolean isConsole_;
 
    private final Invalidation invalidation_ = new Invalidation();
-   private CompletionRequestContext context_ ;
+   private CompletionRequestContext context_;
    private final CompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    

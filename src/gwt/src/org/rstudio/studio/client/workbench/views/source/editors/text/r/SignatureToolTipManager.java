@@ -300,10 +300,14 @@ public class SignatureToolTipManager
                               final String source,
                               String helpHandler)
    {
+      if (!userPrefs_.showFunctionSignatureTooltips().getGlobalValue())
+         return;
+      
       if (isBoringFunction(name))
          return;
       
-      getFunctionArguments(name, source, helpHandler, (String response) -> {
+      getFunctionArguments(name, source, helpHandler, (String response) ->
+      {
          toolTip_.resolvePositionAndShow(name + response);
       });
    }

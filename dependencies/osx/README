@@ -24,4 +24,3 @@ Additional dependencies can be satisfied by running the following script:
 Note that this script includes download, extraction, and compilation of
 boost so can take some time (30-60 minutes) to complete.
 
-

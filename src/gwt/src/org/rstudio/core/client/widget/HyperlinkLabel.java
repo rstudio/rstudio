@@ -110,13 +110,20 @@ public class HyperlinkLabel extends Label
       registerClickHandler();
    }
 
+   @Override
+   protected void onUnload()
+   {
+      releaseOnUnload_.removeHandler();
+   }
+
    private void registerClickHandler()
    {
       if (isAttached() && clickHandler_ != null)
       {
          releaseOnUnload_.add(super.addClickHandler(event -> click()));
 
-         releaseOnUnload_.add(addKeyPressHandler(event -> {
+         releaseOnUnload_.add(addKeyPressHandler(event ->
+         {
             char charCode = event.getCharCode();
             if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
             {
@@ -138,7 +145,7 @@ public class HyperlinkLabel extends Label
       clickHandler_.execute();
    }
 
-   private MouseHandlers mouseHandlers_ = new MouseHandlers();
+   private final MouseHandlers mouseHandlers_ = new MouseHandlers();
    private Command clickHandler_ ;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
 

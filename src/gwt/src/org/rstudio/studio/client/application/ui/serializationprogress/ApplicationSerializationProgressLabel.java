@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui.serializationprogress;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.a11y.A11y;
 
 public class ApplicationSerializationProgressLabel extends Composite
 {
@@ -32,7 +32,7 @@ public class ApplicationSerializationProgressLabel extends Composite
    public ApplicationSerializationProgressLabel()
    {
       initWidget(binder.createAndBindUi(this));
-      Roles.getStatusRole().set(label_.getElement());
+      A11y.setStatusRole(label_, false);
    }
 
    public void setText(String text)

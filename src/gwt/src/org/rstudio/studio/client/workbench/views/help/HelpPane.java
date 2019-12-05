@@ -37,6 +37,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -131,6 +132,34 @@ public class HelpPane extends WorkbenchPane
       
       navStack_ = new VirtualHistory(frame_);
       
+      // NOTE: we do some pretty strange gymnastics to save the scroll
+      // position for the iframe. when the Help Pane is deactivated
+      // (e.g. another tab in the tabset is selected), a synthetic scroll
+      // event is sent to the iframe's window, forcing it to scroll back
+      // to the top of the window. in order to suppress this behavior, we
+      // track whether the scroll event occurred when the tab was deactivated;
+      // if it was, then we restore the last-recorded scroll position instead.
+      scrollTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            WindowEx contentWindow = getContentWindow();
+            if (contentWindow != null)
+            {
+               if (selected_)
+               {
+                  scrollPos_ = contentWindow.getScrollPosition();
+               }
+               else if (scrollPos_ != null)
+               {
+                  contentWindow.setScrollPosition(scrollPos_);
+               }
+            }
+         }
+      };
+      
+      
       ensureWidget();
    }
 
@@ -138,6 +167,33 @@ public class HelpPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       return new AutoGlassPanel(frame_);
+   }
+   
+   @Override
+   public void onBeforeUnselected()
+   {
+      super.onBeforeUnselected();
+      selected_ = false;
+   }
+   
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      selected_ = true;
+      
+      if (scrollPos_ == null)
+         return;
+      
+      IFrameElementEx iframeEl = getIFrameEx();
+      if (iframeEl == null)
+         return;
+      
+      WindowEx windowEl = iframeEl.getContentWindow();
+      if (windowEl == null)
+         return;
+      
+      windowEl.setScrollPosition(scrollPos_);
    }
    
    @Override
@@ -624,7 +680,10 @@ public class HelpPane extends WorkbenchPane
             @Override
             public void onLoad(LoadEvent event)
             {
-               getIFrameEx().getContentWindow().setScrollPosition(scrollPos);
+               WindowEx contentWindow = getIFrameEx().getContentWindow();
+               contentWindow.setScrollPosition(scrollPos);
+               setWindowScrollHandler(contentWindow);
+               
                handler_.removeHandler();
                handler_ = null;
             }
@@ -670,7 +729,7 @@ public class HelpPane extends WorkbenchPane
    {
       return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null ;
    }
-
+   
    public void back()
    {
       VirtualHistory.Data back = navStack_.back();
@@ -749,6 +808,19 @@ public class HelpPane extends WorkbenchPane
          this.location.replace(url);
       }, 0);
    }-*/;
+   
+   private final native void setWindowScrollHandler(WindowEx window)
+   /*-{
+      var self = this;
+      window.onscroll = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.help.HelpPane::onScroll()();
+      });
+   }-*/;
+   
+   private void onScroll()
+   {
+      scrollTimer_.schedule(50);
+   }
 
    public interface Styles extends CssResource
    {
@@ -777,7 +849,6 @@ public class HelpPane extends WorkbenchPane
 
    private final VirtualHistory navStack_ ;
    private final ToolbarLinkMenu history_ ;
- 
    private Label title_ ;
    private RStudioThemedFrame frame_ ;
    private FindTextBox findTextBox_;
@@ -788,5 +859,8 @@ public class HelpPane extends WorkbenchPane
    private boolean navigated_;
    private boolean initialized_;
    private String targetUrl_;
+   private Point scrollPos_;
+   private Timer scrollTimer_;
+   private boolean selected_;
    private static int popoutCount_ = 0;
 }

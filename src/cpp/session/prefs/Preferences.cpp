@@ -83,11 +83,6 @@ Error Preferences::initialize()
    {
       for (auto layer: layers_)
       {
-         // Validate the layer and log errors for violations
-         error = layer->validatePrefs();
-         if (error)
-            LOG_ERROR(error);
-
          // Subscribe for layer change notifications
          layer->onChanged.connect(boost::bind(&Preferences::onPrefLayerChanged, this,
                   layer->layerName(), _1));
@@ -99,6 +94,22 @@ Error Preferences::initialize()
    initialized_ = true;
 
    return Success();
+}
+
+void Preferences::destroyLayers()
+{
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      // Give each layer a chance to destoy itself
+      for (auto layer: layers_)
+      {
+         layer->destroy();
+      }
+
+      // Remove all the destroyed layers
+      layers_.clear();
+   }
+   END_LOCK_MUTEX
 }
 
 core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)

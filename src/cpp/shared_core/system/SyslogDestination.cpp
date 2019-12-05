@@ -24,7 +24,11 @@
 #include <shared_core/system/SyslogDestination.hpp>
 
 #include <cassert>
+#include <iostream>
 #include <syslog.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Logger.hpp>
 
@@ -57,7 +61,8 @@ int logLevelToLogPriority(log::LogLevel in_logLevel)
 
 } // anonymous namespace
 
-SyslogDestination::SyslogDestination(const std::string& in_programId)
+SyslogDestination::SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId) :
+   ILogDestination(in_logLevel)
 {
    // Open the system log. Don't set a mask because filtering is done at a higher level.
    ::openlog(in_programId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
@@ -90,7 +95,21 @@ void SyslogDestination::writeLog(
    log::LogLevel in_logLevel,
    const std::string& in_message)
 {
-   ::syslog(logLevelToLogPriority(in_logLevel), "%s", in_message.c_str());
+   // Don't write logs that are more detailed than the configured maximum.
+   if (in_logLevel > m_logLevel)
+      return;
+
+   // Don't allow newlines in syslog messages since they delimit distinct log entries. Strip trailing whitespace first.
+   std::string forSyslog = boost::algorithm::trim_right_copy(in_message);
+   boost::algorithm::replace_all_copy(forSyslog, "\n", "|||");
+
+   // Also remove the leading date and program ID, since those are set by syslog directly.
+   forSyslog = boost::regex_replace(forSyslog, boost::regex("^[^\\]]*\\]\\s"), "");
+   ::syslog(logLevelToLogPriority(in_logLevel), "%s", forSyslog.c_str());
+
+   // Also log to stderr if there is a tty attached.
+   if (::isatty(STDERR_FILENO) == 1)
+      std::cerr << in_message;
 }
 
 } // namespace system

@@ -153,7 +153,22 @@ boost::shared_ptr<http::AsyncServer> s_pHttpServer;
 
 Error httpServerInit()
 {
-   s_pHttpServer.reset(server::httpServerCreate());
+   http::Headers additionalHeaders;
+   for (const std::string& headerStr : options().serverAddHeaders())
+   {
+      size_t pos = headerStr.find(':');
+      if (pos == std::string::npos)
+      {
+         LOG_WARNING_MESSAGE("Invalid header " + headerStr +
+                             " will be skipped and not be written to outgoing requests");
+         continue;
+      }
+
+      additionalHeaders.emplace_back(string_utils::trimWhitespace(headerStr.substr(0, pos)),
+                                     string_utils::trimWhitespace(headerStr.substr(pos+1)));
+   }
+
+   s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
@@ -613,7 +628,8 @@ int main(int argc, char * const argv[])
       if (!options.verifyInstallation())
       {
          // add a monitor log writer
-         core::log::addLogDestination(monitor::client().createLogDestination(kProgramIdentity));
+         core::log::addLogDestination(
+            monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
       }
 
       // call overlay initialize

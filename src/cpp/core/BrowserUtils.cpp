@@ -132,14 +132,31 @@ bool isTridentOlderThan(const std::string& userAgent, double version)
 
 bool hasRequiredBrowser(const std::string& userAgent)
 {
-   if (isChromeOlderThan(userAgent, 21))
+   if (isChromeOlderThan(userAgent, 71))
+   {
+      // Chrome user agent based on oldest supported Chrome release. See:
+      // https://endoflife.software/applications/browsers/google-chrome
       return false;
-   else if (isFirefoxOlderThan(userAgent, 10))
+   }
+   else if (isFirefoxOlderThan(userAgent, 68))
+   {
+      // Firefox user agent based on oldest ESR release. See:
+      // https://support.mozilla.org/en-US/kb/firefox-esr-release-cycle
       return false;
-   else if (isSafariOlderThan(userAgent, 5.1))
+   }
+   else if (isSafariOlderThan(userAgent, 12.1))
+   {
+      // Safari user agent based on the Safari version on the oldest supported version of macOS.
+      // See:
+      // https://en.wikipedia.org/wiki/Safari_version_history
       return false;
-   else if (isTridentOlderThan(userAgent, 6.0))
+   }
+   else if (isTridentOlderThan(userAgent, 7.0))
+   {
+      // Trident user agent based on IE 11, the last version of IE (and the only one we support
+      // since IE 10 is EOL and no further IE releases based on Trident are expected)
       return false;
+   }
    else
    {
       return isChrome(userAgent) ||

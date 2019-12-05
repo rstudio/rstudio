@@ -87,6 +87,11 @@ public:
       return core::FilePath(serverDataDir_);
    }
 
+   const std::vector<std::string>& serverAddHeaders() const
+   {
+      return serverAddHeaders_;
+   }
+
    // www 
    std::string wwwAddress() const
    { 
@@ -310,6 +315,7 @@ private:
    bool serverSetUmask_;
    bool serverOffline_;
    std::string serverDataDir_;
+   std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;

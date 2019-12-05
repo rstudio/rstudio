@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -85,10 +86,21 @@ public class RmdTemplateChooser extends Composite
          @Override
          public void onResponseReceived(JsArray<RmdDocumentTemplate> templates)
          {
-            for (int i = 0; i < templates.length(); i++)
+            // Sort the list by package, then template name
+            JsArrayUtil.fillList(templates, templates_);
+            templates_.sort((RmdDocumentTemplate a, RmdDocumentTemplate b) ->
             {
-               final RmdDocumentTemplate template = templates.get(i);
+               int result = a.getPackage().compareTo(b.getPackage());
+               if (result == 0)
+               {
+                  return a.getName().compareTo(b.getName());
+               }
+               return result;
+            });
 
+            // Add each to the UI
+            for (RmdDocumentTemplate template: templates_)
+            {
                String preferredTemplate = RStudioGinjector.INSTANCE.getUserPrefs()
                      .rmdPreferredTemplatePath().getValue();
 
@@ -96,7 +108,6 @@ public class RmdTemplateChooser extends Composite
                // end if it isn't the user's preferred template
                listTemplates_.addItem(new RmdDiscoveredTemplateItem(template), 
                      template.getPath() != preferredTemplate);
-               templates_.add(template);
             }
 
             state_ = STATE_POPULATED;

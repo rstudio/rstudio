@@ -14,36 +14,96 @@
  */
 package org.rstudio.core.client.patch;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.js.JsObject;
+
 public class SubstringDiff
 {
    public SubstringDiff(String origVal, String newVal)
    {
+      try
+      {
+         JsObject diff = diffImpl(origVal, newVal);
+         replacement_  = diff.getString("replacement");
+         offset_       = diff.getInteger("offset");
+         length_       = diff.getInteger("length");
+         valid_        = true;
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         replacement_ = "";
+         offset_ = 0;
+         length_ = 0;
+         valid_ = false;
+      }
+   }
+   
+   private static final native JsObject diffImpl(String origVal, String newVal)
+   /*-{
+   
+      // Convert to UTF-8 byte array.
+      var o = new TextEncoder("utf-8").encode(origVal);
+      var n = new TextEncoder("utf-8").encode(newVal);
+      
+      var olen = o.length;
+      var nlen = n.length;
+      
       // Figure out how many characters at the beginning of the two strings
       // are identical.
-      int headLimit = Math.min(origVal.length(), newVal.length());
-      int head;
+      var headLimit = Math.min(olen, nlen);
+      var head;
       for (head = 0;
-            head < headLimit && origVal.charAt(head) == newVal.charAt(head);
-            head++)
-      {}
+           head < headLimit && o[head] === n[head];
+           head++)
+      {
+      }
 
       // Figure out how many characters at the end of the two strings are
       // identical, but don't go past the range we established in the above
       // step (i.e., anything already in the head can't be part of the tail).
-      int tailDelta = newVal.length() - origVal.length();
-      int tailLimit = Math.max(head, head - tailDelta);
-      int tail;
-      for (tail = origVal.length();
-            tail > tailLimit && origVal.charAt(tail-1) == newVal.charAt(tail+tailDelta-1);
-            tail--)
-      {}
-
-      // Now we have a chunk of newVal that is unique (it may simply be "")
-      // and offset_/length_ show what region within oldDoc it replaces. 
-      replacement_ = newVal.substring(head, tail + tailDelta);
-      offset_ = head;
-      length_ = tail - head;
-   }
+      var tailDelta = nlen - olen;
+      var tailLimit = Math.max(head, head - tailDelta);
+      
+      var tail;
+      for (tail = olen;
+           tail > tailLimit && o[tail - 1] === n[tail + tailDelta - 1];
+           tail--)
+      {
+      }
+      
+      // Move head and tail to ensure we align on starts of UTF-8 characters.
+      // UTF-8 continuation bytes match the byte sequence 10xxxxxx;
+      // that is, are values in the range [128, 192). So we want to ensure
+      // head + tail land on bytes not containing those values.
+      while (head > 0)
+      {
+         var ch = o[head];
+         if (ch < 128 || ch >= 192)
+            break;
+         head--;
+      }
+      
+      while (tail < olen)
+      {
+         var ch = o[tail];
+         if (ch < 128 || ch >= 192)
+            break;
+         tail++;
+      }
+      
+      // Extract the modified slice of data, and decode it back to a string.
+      var slice = n.slice(head, tail + tailDelta);
+      var replacement = new TextDecoder().decode(slice);
+      
+      return {
+         "replacement": replacement,
+         "offset": head,
+         "length": tail - head
+      };
+      
+   
+   }-*/;
 
    public String getReplacement()
    {
@@ -59,53 +119,20 @@ public class SubstringDiff
    {
       return length_;
    }
-
-   public String patch(String original)
-   {
-      if (isEmpty())
-         return original;
-      
-      return original.substring(0, offset_)
-            + replacement_
-            + original.substring(offset_ + length_);
-   }
-
-   /**
-    * @return True iff there was no difference between the strings.
-    */
+   
    public boolean isEmpty()
    {
       return length_ == 0 && replacement_.length() == 0;
    }
-
-   private final int offset_;
-   private final int length_;
-   private final String replacement_;
-
-
-
-   /*
-   public static void test()
+   
+   public boolean isValid()
    {
-      test("", "", 0, 0, "");
-      test("a", "a", 1, 0, "");
-      test("ab", "ab", 2, 0, "");
-      test("ab", "a", 1, 1, "");
-      test("abc", "ac", 1, 1, "");
-      test("abc", "adc", 1, 1, "d");
-      test("abc", "bc", 0, 1, "");
-      test("bc", "abc", 0, 0, "a");
-      test("a\nb\nc", "a\nc", 2, 2, "");
+      return valid_;
    }
-   static void test(String old, String neu, int offset, int len, String repl)
-   {
-      SubstringDiff diff = new SubstringDiff(old, neu);
-      assert diff.getOffset() == offset
-            && diff.getLength() == len
-            && diff.getReplacement().equals(repl) :
-            "\"" + old + "\" - \"" + neu + "\" => " +
-            "\"" + diff.getReplacement() + "\" [" + diff.getOffset() + ", " + diff.getLength() + "]";
-      assert diff.patch(old).equals(neu);
-   }
-   */
+
+   private int offset_;
+   private int length_;
+   private String replacement_;
+   private boolean valid_;
+
 }

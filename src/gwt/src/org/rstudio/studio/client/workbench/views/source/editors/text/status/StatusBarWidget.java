@@ -1,7 +1,7 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,8 +24,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
@@ -37,7 +35,6 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
 {
-   
    interface Binder extends UiBinder<HorizontalPanel, StatusBarWidget>
    {
    }
@@ -45,13 +42,13 @@ public class StatusBarWidget extends Composite
    public StatusBarWidget()
    {
       Binder binder = GWT.create(Binder.class);
-      panel_ = binder.createAndBindUi(this);
-      panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
-      panel_.addStyleName("rstudio-themes-background");
-      
-      panel_.setCellWidth(scope_, "100%");
-      panel_.setCellWidth(message_, "100%");
-      
+      HorizontalPanel panel = binder.createAndBindUi(this);
+      panel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      panel.addStyleName("rstudio-themes-background");
+
+      panel.setCellWidth(scope_, "100%");
+      panel.setCellWidth(message_, "100%");
+
       hideTimer_ = new Timer()
       {
          @Override
@@ -60,7 +57,7 @@ public class StatusBarWidget extends Composite
             hideMessage();
          }
       };
-      
+
       hideProgressTimer_ = new Timer()
       {
          @Override
@@ -70,18 +67,18 @@ public class StatusBarWidget extends Composite
             language_.setVisible(true);
          }
       };
-      
+
       // The message widget should initially be hidden, but be shown in lieu of
       // the scope tree when requested.
       show(scope_);
       show(scopeIcon_);
       hide(message_);
-   
-      initWidget(panel_);
+
+      initWidget(panel);
 
       height_ = 16;
    }
-   
+
    // NOTE: The 'show' + 'hide' methods here take advantage of the fact that
    // status bar widgets live within table cells; to ensure proper sizing we
    // need to set the display property on those cells rather than the widgets
@@ -91,7 +88,7 @@ public class StatusBarWidget extends Composite
       widget.setVisible(false);
       widget.getElement().getParentElement().getStyle().setDisplay(Display.NONE);
    }
-   
+
    private void show(Widget widget)
    {
       widget.setVisible(true);
@@ -134,7 +131,7 @@ public class StatusBarWidget extends Composite
       scope_.setContentsVisible(visible);
       scopeIcon_.setVisible(visible);
    }
-   
+
    public void setScopeType(int type)
    {
       scopeType_ = type;
@@ -142,63 +139,90 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setVisible(false);
       else
          scopeIcon_.setVisible(true);
-         
-           if (type == StatusBar.SCOPE_CLASS)
+
+      if (type == StatusBar.SCOPE_CLASS)
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.clazz2x()));
+         scopeIcon_.setAltText("Class");
+      }
       else if (type == StatusBar.SCOPE_NAMESPACE)
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.namespace2x()));
+         scopeIcon_.setAltText("Namespace");
+      }
       else if (type == StatusBar.SCOPE_LAMBDA)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.lambdaLetter2x()));
+         scopeIcon_.setAltText("Lambda");
+      }
       else if (type == StatusBar.SCOPE_ANON)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
+         scopeIcon_.setAltText("Anonymous");
+      }
       else if (type == StatusBar.SCOPE_FUNCTION)
+      {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
+         scopeIcon_.setAltText("Function");
+      }
       else if (type == StatusBar.SCOPE_CHUNK)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.chunk2x()));
+         scopeIcon_.setAltText("Chunk");
+      }
       else if (type == StatusBar.SCOPE_SECTION)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.section2x()));
+         scopeIcon_.setAltText("Section");
+      }
       else if (type == StatusBar.SCOPE_SLIDE)
+      {
          scopeIcon_.setResource(new ImageResource2x(RES.slide2x()));
+         scopeIcon_.setAltText("Slide");
+      }
       else
+      {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.function2x()));
+         scopeIcon_.setAltText("Function");
+      }
    }
-   
+
    private void initMessage(String message)
    {
       hide(scope_);
       hide(scopeIcon_);
-      
+
       message_.setValue(message);
       show(message_);
    }
-   
+
    private void endMessage()
    {
       show(scope_);
       show(scopeIcon_);
       hide(message_);
-      
+
       setScopeType(scopeType_);
    }
-   
+
    @Override
    public void showMessage(String message)
    {
       initMessage(message);
    }
-   
+
    @Override
    public void showMessage(String message, int timeMs)
    {
       initMessage(message);
       hideTimer_.schedule(timeMs);
    }
-   
+
    @Override
    public void showMessage(String message, final HideMessageHandler handler)
    {
       initMessage(message);
-      
+
       // Protect against multiple messages shown at same time
       if (handler_ != null)
       {
@@ -206,21 +230,17 @@ public class StatusBarWidget extends Composite
          handler_ = null;
       }
       
-      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      handler_ = Event.addNativePreviewHandler(event ->
       {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
+         if (handler.onNativePreviewEvent(event))
          {
-            if (handler.onNativePreviewEvent(event))
-            {
-               endMessage();
-               handler_.removeHandler();
-               handler_ = null;
-            }
+            endMessage();
+            handler_.removeHandler();
+            handler_ = null;
          }
-      });
+     });
    }
-   
+
    @Override
    public void hideMessage()
    {
@@ -268,7 +288,7 @@ public class StatusBarWidget extends Composite
    {
       return progress_.addClickHandler(handler);
    }
-   
+
    @Override
    public HandlerRegistration addProgressCancelHandler(Command onCanceled)
    {
@@ -281,7 +301,7 @@ public class StatusBarWidget extends Composite
    @UiField StatusBarElementWidget language_;
    @UiField Image scopeIcon_;
    @UiField NotebookProgressWidget progress_;
-   
+
    public interface Resources extends ClientBundle
    {
       @Source("chunk_2x.png")
@@ -293,13 +313,12 @@ public class StatusBarWidget extends Composite
       @Source("slide_2x.png")
       ImageResource slide2x();
    }
-   
-   public static Resources RES = GWT.create(Resources.class);
-   private final HorizontalPanel panel_;
+
+   private static final Resources RES = GWT.create(Resources.class);
    private final Timer hideTimer_;
    private final Timer hideProgressTimer_;
-   
-   private int height_;
+
+   private final int height_;
    private HandlerRegistration handler_;
    private int scopeType_;
 }

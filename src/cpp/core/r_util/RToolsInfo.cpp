@@ -279,26 +279,31 @@ Error scanRegistryForRTools(HKEY key,
    return Success();
 }
 
-Error scanRegistryForRTools(bool usingMingwGcc49,
-                            std::vector<RToolsInfo>* pRTools)
+void scanRegistryForRTools(bool usingMingwGcc49,
+                           std::vector<RToolsInfo>* pRTools)
 {
    // try HKLM first (backwards compatible with previous code)
-   Error error = scanRegistryForRTools(HKEY_LOCAL_MACHINE,
-                                       usingMingwGcc49,
-                                       pRTools);
+   Error error = scanRegistryForRTools(
+            HKEY_LOCAL_MACHINE,
+            usingMingwGcc49,
+            pRTools);
+
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    // try HKCU as a fallback
    if (pRTools->empty())
-      return scanRegistryForRTools(HKEY_CURRENT_USER,
-                                   usingMingwGcc49,
-                                   pRTools);
-   else
-      return Success();
+   {
+      Error error = scanRegistryForRTools(
+               HKEY_CURRENT_USER,
+               usingMingwGcc49,
+               pRTools);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
-Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
 {
    // look for Rtools as installed by RStudio
    std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
@@ -307,7 +312,7 @@ Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTool
    // ensure it exists (may not exist if the user has not installed
    // any copies of Rtools through RStudio yet)
    if (!buildDirRoot.exists())
-      return Success();
+      return;
 
    // find sub-directories
    std::vector<FilePath> buildDirs;
@@ -324,25 +329,17 @@ Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTool
       else
          LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.getFilename());
    }
-
-   return Success();
 }
 
 } // end anonymous namespace
 
-Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
 {
-   Error error;
    std::vector<RToolsInfo> rtoolsInfo;
 
    // scan for Rtools
-   error = scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
-   if (error)
-      return error;
-
-   error = scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
-   if (error)
-      return error;
+   scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
+   scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
 
    // remove duplicates
    std::set<FilePath> knownPaths;
@@ -361,9 +358,6 @@ Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
    {
       return Version(lhs.name()) < Version(rhs.name());
    });
-
-   // we're done!
-   return Success();
 }
 
 } // namespace r_util

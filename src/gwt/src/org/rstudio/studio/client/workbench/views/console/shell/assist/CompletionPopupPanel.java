@@ -55,6 +55,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public CompletionPopupPanel()
    {
       super();
+      autoConstrain_ = false;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       
       help_ = new HelpInfoPopupPanel();

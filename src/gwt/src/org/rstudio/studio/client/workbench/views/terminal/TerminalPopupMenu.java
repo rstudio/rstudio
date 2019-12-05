@@ -101,6 +101,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addItem(commands_.interruptTerminal().createMenuItem(false));
          addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
          addItem(commands_.closeTerminal().createMenuItem(false));
+         addSeparator();
+         addItem(commands_.closeAllTerminals().createMenuItem(false));
       }
 
       callback.onPopupMenu(this);
@@ -271,10 +273,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          {
             if (StringUtil.equals(activeTerminalHandle_, handle))
             {
-               if (prevHandle == null)
-               {
-                  return null;
-               }
                return prevHandle;
             }
             else
@@ -311,7 +309,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
    private ToolbarMenuButton toolbarButton_;
    private String activeTerminalHandle_;
-   private TerminalList terminals_;
+   private final TerminalList terminals_;
 
    // Injected ----
    private Commands commands_;

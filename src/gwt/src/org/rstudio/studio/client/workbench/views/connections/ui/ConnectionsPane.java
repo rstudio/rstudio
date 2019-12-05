@@ -423,6 +423,7 @@ public class ConnectionsPane extends WorkbenchPane
       connectionIcon_ = new Image();
       connectionIcon_.setWidth("16px");
       connectionIcon_.setHeight("16px");
+      connectionIcon_.setAltText(""); // decorative image
       connectionType_ = new ToolbarLabel();
       connectionType_.getElement().getStyle().setMarginLeft(5, Unit.PX);
       connectionType_.getElement().getStyle().setMarginRight(10, Unit.PX);

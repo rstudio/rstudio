@@ -270,6 +270,7 @@ namespace prefs {
 #define kShowUserHomePageSessions "sessions"
 #define kReuseSessionsForProjectLinks "reuse_sessions_for_project_links"
 #define kVcsEnabled "vcs_enabled"
+#define kVcsAutorefresh "vcs_autorefresh"
 #define kGitExePath "git_exe_path"
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
@@ -281,6 +282,7 @@ namespace prefs {
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
 #define kHideObjectFiles "hide_object_files"
 #define kRestoreLastProject "restore_last_project"
+#define kUseTinytex "use_tinytex"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
@@ -295,6 +297,7 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
@@ -1183,6 +1186,12 @@ public:
    core::Error setVcsEnabled(bool val);
 
    /**
+    * Automatically refresh VCS status?
+    */
+   bool vcsAutorefresh();
+   core::Error setVcsAutorefresh(bool val);
+
+   /**
     * The path to the Git executable to use.
     */
    std::string gitExePath();
@@ -1249,6 +1258,12 @@ public:
    core::Error setRestoreLastProject(bool val);
 
    /**
+    * Use tinytex to compile .tex files.
+    */
+   bool useTinytex();
+   core::Error setUseTinytex(bool val);
+
+   /**
     * Whether to clean output after running Texi2Dvi.
     */
    bool cleanTexi2dviOutput();
@@ -1313,6 +1328,12 @@ public:
     */
    bool reducedMotion();
    core::Error setReducedMotion(bool val);
+
+   /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   bool tabKeyMoveFocus();
+   core::Error setTabKeyMoveFocus(bool val);
 
    /**
     * How to deal with changes to documents on idle.

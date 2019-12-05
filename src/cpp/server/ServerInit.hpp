@@ -18,11 +18,14 @@
 
 #include <string>
 
+#include <core/http/Header.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
    namespace http {
       class AsyncServer;
+
    }
 }
 }
@@ -30,7 +33,7 @@ namespace core {
 namespace rstudio {
 namespace server {
 
-core::http::AsyncServer* httpServerCreate();
+core::http::AsyncServer* httpServerCreate(const core::http::Headers& additionalHeaders);
 core::Error httpServerInit(core::http::AsyncServer* pAsyncServer);
 
 

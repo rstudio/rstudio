@@ -79,7 +79,14 @@ public class TerminalTabPresenter extends BasePresenter
        * process and removes it from the list of known processes. This should
        * only be invoked when the terminal tab itself is being unloaded.
        */
-      void terminateAllTerminals();
+
+      /**
+       * Terminate all terminals, whether busy or not. This kills any server-side
+       * process and removes it from the list of known processes.
+       *
+       * @param tabClosing is the terminal tab itself being closed?
+       */
+      void terminateAllTerminals(boolean tabClosing);
 
       void renameTerminal();
       void clearTerminalScrollbackBuffer(String caption);
@@ -156,6 +163,13 @@ public class TerminalTabPresenter extends BasePresenter
    public void onCloseTerminal()
    {
       view_.terminateCurrentTerminal();
+   }
+
+   @Handler
+   public void onCloseAllTerminals()
+   {
+      // Close all terminals but leave the Terminal tab showing
+      confirmClose(false, null);
    }
 
    @Handler
@@ -238,7 +252,8 @@ public class TerminalTabPresenter extends BasePresenter
    {
       // Request to display the terminal tab and optionally select a specific terminal; if
       // no terminal is specified, then make sure there is an active terminal
-      view_.activateTerminal(() -> {
+      view_.activateTerminal(() ->
+      {
          if (StringUtil.isNullOrEmpty(event.getId()))
             view_.ensureTerminal();
          else
@@ -251,20 +266,26 @@ public class TerminalTabPresenter extends BasePresenter
       view_.repopulateTerminals(procList);
    }
 
-   public void confirmClose(final Command onConfirmed)
+   public void confirmClose(boolean tabClosing, final Command onConfirmed)
    {
-      final String caption = "Close Terminal(s) ";
-      terminalHelper_.warnBusyTerminalBeforeCommand(() -> {
-         shutDownTerminals();
-         onConfirmed.execute();
-      }, caption, "Are you sure you want to close all terminals? Any running jobs " +
-            "will be stopped",
-            userPrefs_.busyDetection().getValue());
+      Command command = () ->
+      {
+         shutDownTerminals(tabClosing);
+         if (onConfirmed != null)
+            onConfirmed.execute();
+      };
+
+      terminalHelper_.warnBusyTerminalBeforeCommand(
+            command,
+            "Close All Terminals",
+            "Are you sure you want to close all terminals? Any running jobs will be stopped",
+            userPrefs_.busyDetection().getValue()
+      );
    }
 
-   private void shutDownTerminals()
+   private void shutDownTerminals(boolean tabClosing)
    {
-      view_.terminateAllTerminals();
+      view_.terminateAllTerminals(tabClosing);
    }
 
    // Injected ---- 

@@ -22,11 +22,14 @@ import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.LinkedList;
 
-public class AceEditorNative extends JavaScriptObject {
+public class AceEditorNative extends JavaScriptObject
+                             implements CanSetControlId
+{
    
    protected AceEditorNative() {}
 
@@ -210,6 +213,11 @@ public class AceEditorNative extends JavaScriptObject {
    {
       Element textInput = getTextInputElement();
       textInput.setAttribute("aria-label", label);
+   }
+
+   public final void setElementId(String id)
+   {
+      getTextInputElement().setId(id);
    }
 
    private native static JavaScriptObject addDomListener(
@@ -640,6 +648,20 @@ public class AceEditorNative extends JavaScriptObject {
       this.setOption("cursorStyle", style);
    }-*/;
    
+   public final native void setScrollSpeed(double speed) /*-{
+      this.setOption("scrollSpeed", speed);
+   }-*/;
+
+   public final native void setTabMovesFocus(boolean movesFocus) /*-{
+      if (movesFocus) {
+         this.commands.bindKey("Tab", null);
+         this.commands.bindKey("Shift+Tab", null);
+      } else {
+         this.commands.bindKey("Tab", "indent");
+         this.commands.bindKey("Shift+Tab", "outdent");
+      }
+   }-*/;
+
    private static final native void initialize()
    /*-{
       // Remove the 'Return' keybinding associated with Emacs.
@@ -654,8 +676,8 @@ public class AceEditorNative extends JavaScriptObject {
          delete bindings["return"];
       }
    }-*/;
-   
+
    static { initialize(); }
-   
+
    private static boolean uiPrefsSynced_ = false;
 }

@@ -13,13 +13,13 @@ set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
-set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
+set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.1.1b.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 
-set PANDOC_VERSION=2.7.2
+set PANDOC_VERSION=2.7.3
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-x86_64
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
@@ -51,11 +51,11 @@ if not exist msys-ssh-1000-18 (
   del "%MSYS_SSH_FILE%"
 )
 
-if not exist sumatra\3.1.1 (
-  wget %WGET_ARGS% "%BASEURL%%SUMATRA_PDF_FILE%"
-  mkdir sumatra\3.1.1
+if not exist sumatra\3.1.2 (
+  wget %WGET_ARGS% "%BASEURL%sumatrapdf/%SUMATRA_PDF_FILE%"
+  mkdir sumatra\3.1.2
   echo Unzipping %SUMATRA_PDF_FILE%
-  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\3.1.1
+  unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\3.1.2
   del "%SUMATRA_PDF_FILE%"
 )
 
@@ -113,11 +113,11 @@ if not exist "dictionaries\en_US.dic" (
   )
 )
 
-set MATHJAX=mathjax-26.zip
-if not exist "mathjax-26" (
+set MATHJAX=mathjax-27.zip
+if not exist "mathjax-27" (
   wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
   if exist "%MATHJAX%" (
-     mkdir mathjax-26
+     mkdir mathjax-27
      echo Unzipping %MATHJAX%
      unzip %UNZIP_ARGS% "%MATHJAX%"
      del "%MATHJAX%"

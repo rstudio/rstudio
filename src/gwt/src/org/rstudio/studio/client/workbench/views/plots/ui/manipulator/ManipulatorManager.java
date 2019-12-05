@@ -18,16 +18,16 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressImage;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.plots.PlotsSurface;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class ManipulatorManager
 {
-   public ManipulatorManager(Panel plotsSurface,
+   public ManipulatorManager(PlotsSurface plotsSurface,
                              Commands commands,
                              ManipulatorChangedHandler changedHandler,
                              final ClickHandler plotsClickHandler)
@@ -79,8 +79,6 @@ public class ManipulatorManager
    }
    
    
-   
-   
    public void setManipulator(Manipulator manipulator, boolean show)
    {
       if (isNewManipulatorState(manipulator))
@@ -99,10 +97,14 @@ public class ManipulatorManager
          {
             // show if requested and there are controls
             if (show && manipulator_.hasControls())
+            {
+               plotsSurface_.enableSurface();
                showManipulatorPopup();  
+            }
          }
          else
          {
+            plotsSurface_.disableSurface();
             manipulatorPopup_.hide();
          }
       }
@@ -184,7 +186,7 @@ public class ManipulatorManager
    }
    
    
-   private final Panel plotsSurface_;
+   private final PlotsSurface plotsSurface_;
    private Manipulator manipulator_;
    private ToolbarButton manipulatorButton_;
    private ProgressImage manipulatorProgress_;

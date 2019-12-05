@@ -42,8 +42,8 @@ public:
    PrefLayer(const std::string& layerName);
    virtual core::Error readPrefs() = 0;
    virtual core::Error writePrefs(const core::json::Object& prefs);
-   virtual core::Error validatePrefs() = 0;
    virtual ~PrefLayer();
+   virtual void destroy();
    std::string layerName();
 
    template<typename T> boost::optional<T> readPref(const std::string& name)
@@ -118,7 +118,7 @@ public:
 
 protected:
    // I/O methods
-   core::Error loadPrefsFromFile(const core::FilePath& prefsFile);
+   core::Error loadPrefsFromFile(const core::FilePath& prefsFile, const core::FilePath& schemaFile);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
    core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
 

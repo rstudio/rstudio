@@ -41,6 +41,7 @@ include_directories(
 # define library
 add_library(rstudio-monitor STATIC ${MONITOR_SOURCE_FILES}
                                    ${MONITOR_HEADER_FILES})
+define_source_file_names(rstudio-monitor)
 
 # link dependencies
 target_link_libraries(rstudio-monitor

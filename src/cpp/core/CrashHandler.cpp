@@ -108,7 +108,7 @@ FilePath userConfFile()
    return core::system::userSettingsPath(
       core::system::userHomePath(),
       "R",
-      false).completePath("crash-handler.conf");
+      true).completePath("crash-handler.conf");
 }
 
 void readOptions()

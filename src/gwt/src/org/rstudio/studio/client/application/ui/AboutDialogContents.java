@@ -126,7 +126,7 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel copyrightYearLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
-   @UiField Label licenseLabel;
+   @UiField HTMLPanel licenseLabel;
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;

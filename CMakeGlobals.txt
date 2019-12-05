@@ -216,6 +216,42 @@ set(RSTUDIO_EMBEDDED_PACKAGES renv CACHE INTERNAL "Embedded R Packages")
 # include utilities
 include(RStudioCMakeUtils)
 
+# define custom function to strip unnecessary path parts from binary filename
+function(define_source_file_names targetname)
+    get_target_property(SOURCE_FILES "${targetname}" SOURCES)
+    foreach(SOURCE_FILE ${SOURCE_FILES})
+        # Get source file's current list of compile definitions.
+        get_property(SOURCE_DEFS SOURCE "${SOURCE_FILE}" PROPERTY COMPILE_DEFINITIONS)
+
+        # Add the stripped filename to the list
+        # Provided source paths can either be full paths or simply filenames
+        string(FIND "${SOURCE_FILE}" "/src/cpp" SOURCE_INDEX)
+        if (SOURCE_INDEX GREATER -1)
+           set(FULL_SOURCE_NAME "${SOURCE_FILE}")
+           MATH(EXPR SOURCE_INDEX "${SOURCE_INDEX}+1")
+        else()
+           string(FIND "${SOURCE_FILE}" "${CMAKE_BINARY_DIR}" SOURCE_INDEX)
+           if (SOURCE_INDEX GREATER -1)
+              set(FULL_SOURCE_NAME "${SOURCE_FILE}")
+              string(LENGTH "${CMAKE_BINARY_DIR}" BINARY_DIR_LENGTH)
+              MATH(EXPR SOURCE_INDEX "${SOURCE_INDEX}+${BINARY_DIR_LENGTH}+1")
+           else()
+              set(FULL_SOURCE_NAME "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}")
+              string(FIND "${FULL_SOURCE_NAME}" "/src/cpp" SOURCE_INDEX)
+              MATH(EXPR SOURCE_INDEX "${SOURCE_INDEX}+1")
+           endif()
+        endif()
+
+        string(SUBSTRING "${FULL_SOURCE_NAME}" "${SOURCE_INDEX}" -1 STRIPPED_SOURCE)
+        list(APPEND SOURCE_DEFS "STRIPPED_FILENAME=\"${STRIPPED_SOURCE}\"")
+
+        # Set the updated compile definitions on the source file.
+        set_property(
+            SOURCE "${SOURCE_FILE}"
+            PROPERTY COMPILE_DEFINITIONS ${SOURCE_DEFS})
+    endforeach()
+endfunction()
+
 # define custom installation macro to strip symbols from the binary
 macro(add_stripped_executable _target)
    add_executable(${_target} ${ARGN})
@@ -238,4 +274,5 @@ macro(add_stripped_executable _target)
                             COMMENT "Stripping ${STRIP_TARGET}")
       endif()
    endif()
+   define_source_file_names("${_target}")
 endmacro(add_stripped_executable)

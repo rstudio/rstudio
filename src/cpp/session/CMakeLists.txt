@@ -22,8 +22,8 @@ add_subdirectory(workers)
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-26")
-  message(FATAL_ERROR "Mathjax 2.6 not found (re-run install-dependencies script to install)")
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
+  message(FATAL_ERROR "Mathjax 2.7 not found (re-run install-dependencies script to install)")
 endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
@@ -108,6 +108,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
+   modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp
    modules/SessionErrors.cpp
@@ -391,13 +392,6 @@ if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
    set_target_properties(rsession PROPERTIES SKIP_BUILD_RPATH TRUE)
 endif()
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rsession PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
-
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
@@ -503,7 +497,7 @@ if (NOT RSTUDIO_SESSION_WIN32)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install mathjax for local html preview
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-26"
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # icons for database connections
@@ -514,12 +508,12 @@ if (NOT RSTUDIO_SESSION_WIN32)
    install(DIRECTORY "resources/schema"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # dependency data
+   install(DIRECTORY "resources/dependencies"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install pandoc
-   if(WIN32)
-      set(PANDOC_VERSION "2.7.2" CACHE INTERNAL "Pandoc version")
-   else()
-      set(PANDOC_VERSION "2.3.1" CACHE INTERNAL "Pandoc version")
-   endif()
+   set(PANDOC_VERSION "2.7.3" CACHE INTERNAL "Pandoc version")
 
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
@@ -599,7 +593,7 @@ if (NOT RSTUDIO_SESSION_WIN32)
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
-      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/3.1.1/SumatraPDF.exe"
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/3.1.2/SumatraPDF.exe"
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")

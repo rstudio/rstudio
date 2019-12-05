@@ -73,13 +73,15 @@ public class TerminalSession extends XTermWidget
    /**
     * @param info terminal metadata
     * @param options terminal emulator options
+    * @param tabMovesFocus does pressing tab key move focus out of terminal
     * @param createdByApi was this terminal just created by the rstudioapi
     */
    public TerminalSession(ConsoleProcessInfo info,
                           XTermOptions options,
+                          boolean tabMovesFocus,
                           boolean createdByApi)
    {
-      super(options);
+      super(options, tabMovesFocus);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       procInfo_ = info;
@@ -169,17 +171,21 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
-            addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg -> {
+            addHandlerRegistration(uiPrefs_.tabKeyMoveFocus().bind(arg -> setTabMovesFocus(arg)));
+            addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg ->
+            {
                // don't enable bell if we aren't done loading, don't want beeps if reloading
                // previous output containing '\a'
                if (haveLoadedBuffer_)
                   updateStringOption("bellStyle", arg);
             }));
-            addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg -> {
+            addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg ->
+            {
                updateStringOption("rendererType", arg);
                onResize();
             }));
-            addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg -> {
+            addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg ->
+            {
                updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
                onResize();
             }));
@@ -765,7 +771,8 @@ public class TerminalSession extends XTermWidget
          return;
       }
 
-      Scheduler.get().scheduleDeferred(() -> {
+      Scheduler.get().scheduleDeferred(() ->
+      {
          onResize();
          if (consoleProcess_ != null)
          {

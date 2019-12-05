@@ -123,6 +123,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                          String replacement,
                          int offset,
                          int length,
+                         boolean valid,
                          String hash,
                          ServerRequestCallback<String> requestCallback);
 

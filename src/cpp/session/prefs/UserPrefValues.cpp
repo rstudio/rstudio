@@ -1922,6 +1922,19 @@ core::Error UserPrefValues::setVcsEnabled(bool val)
 }
 
 /**
+ * Automatically refresh VCS status?
+ */
+bool UserPrefValues::vcsAutorefresh()
+{
+   return readPref<bool>("vcs_autorefresh");
+}
+
+core::Error UserPrefValues::setVcsAutorefresh(bool val)
+{
+   return writePref("vcs_autorefresh", val);
+}
+
+/**
  * The path to the Git executable to use.
  */
 std::string UserPrefValues::gitExePath()
@@ -2065,6 +2078,19 @@ core::Error UserPrefValues::setRestoreLastProject(bool val)
 }
 
 /**
+ * Use tinytex to compile .tex files.
+ */
+bool UserPrefValues::useTinytex()
+{
+   return readPref<bool>("use_tinytex");
+}
+
+core::Error UserPrefValues::setUseTinytex(bool val)
+{
+   return writePref("use_tinytex", val);
+}
+
+/**
  * Whether to clean output after running Texi2Dvi.
  */
 bool UserPrefValues::cleanTexi2dviOutput()
@@ -2205,6 +2231,19 @@ bool UserPrefValues::reducedMotion()
 core::Error UserPrefValues::setReducedMotion(bool val)
 {
    return writePref("reduced_motion", val);
+}
+
+/**
+ * Tab key moves focus out of text editing controls instead of inserting tabs.
+ */
+bool UserPrefValues::tabKeyMoveFocus()
+{
+   return readPref<bool>("tab_key_move_focus");
+}
+
+core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
+{
+   return writePref("tab_key_move_focus", val);
 }
 
 /**
@@ -2395,6 +2434,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
       kVcsEnabled,
+      kVcsAutorefresh,
       kGitExePath,
       kSvnExePath,
       kTerminalPath,
@@ -2406,6 +2446,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kViewDirAfterRCmdCheck,
       kHideObjectFiles,
       kRestoreLastProject,
+      kUseTinytex,
       kCleanTexi2dviOutput,
       kLatexShellEscape,
       kRestoreProjectRVersion,
@@ -2417,6 +2458,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kTabKeyMoveFocus,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,

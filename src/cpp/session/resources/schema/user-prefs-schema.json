@@ -834,6 +834,11 @@
             "default": true,
             "description": "Whether to enable RStudio's version control system interface."
         },
+        "vcs_autorefresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically refresh VCS status?"
+        },
         "git_exe_path": {
             "type": "string",
             "default": "",
@@ -888,6 +893,11 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to restore the last project when starting RStudio."
+        },
+        "use_tinytex": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use tinytex to compile .tex files."
         },
         "clean_texi2dvi_output": {
             "type": "boolean",
@@ -956,6 +966,11 @@
             "type": "boolean",
             "default": false,
             "description": "Reduce use of animations in the user interface."
+        },
+        "tab_key_move_focus": {
+            "type": "boolean",
+            "default": false,
+            "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
         "auto_save_on_idle": {
             "type": "string",

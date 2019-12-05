@@ -53,6 +53,7 @@ public class JobProgress extends Composite
    {
       name_.setText(progress.name());
       progress_.setProgress(progress.units(), progress.max());
+      progress_.setLabel(progress.name());
       jobProgress_ = progress;
    }
    
@@ -60,6 +61,7 @@ public class JobProgress extends Composite
    public void showJob(Job job)
    {
       name_.setText(job.name);
+      progress_.setLabel(job.name);
       String status = JobConstants.stateDescription(job.state);
       if (job.completed > 0)
       {

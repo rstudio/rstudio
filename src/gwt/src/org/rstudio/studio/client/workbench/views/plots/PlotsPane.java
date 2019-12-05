@@ -21,9 +21,7 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -126,15 +124,12 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.setWidgetTopBottom(frame_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
 
-      // Stops mouse events from being routed to the iframe, which would
-      // interfere with dragging the workbench pane sizer. also provide
-      // a widget container where adornments can be added on top fo the
-      // plots panel (e.g. manipulator button)
-      plotsSurface_ = new FlowPanel();
-      plotsSurface_.setSize("100%", "100%");
+      // Provide a widget container where adornments can be added on top of the
+      // plots panel (e.g. manipulator button). Hidden initially so it doens't
+      // block context menu actions such as Copy Image.
+      plotsSurface_ = new PlotsSurface(panel_);
       panel_.add(plotsSurface_);
-      panel_.setWidgetTopBottom(plotsSurface_, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetLeftRight(plotsSurface_, 0, Unit.PX, 0, Unit.PX);
+      plotsSurface_.disableSurface();
       
       // return the panel
       return panel_;
@@ -179,7 +174,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          frame_.setImageUrl(plotUrl_);
    }
 
-   public Panel getPlotsSurface()
+   public PlotsSurface getPlotsSurface()
    {
       return plotsSurface_;
    }
@@ -221,7 +216,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    private ImageFrame frame_;
    private String plotUrl_;
    private PlotsToolbar plotsToolbar_ = null;
-   private FlowPanel plotsSurface_ = null;
+   private PlotsSurface plotsSurface_ = null;
    private Plots.Parent plotsParent_ = new Plots.Parent() { 
       public void add(Widget w)
       {

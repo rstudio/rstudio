@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -38,13 +38,6 @@ include_directories(
 
 # define executable
 add_stripped_executable(rserver-pam ${PAM_SOURCE_FILES} ${PAM_HEADER_FILES})
-
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rserver-pam PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
 
 # set link dependencies
 target_link_libraries(rserver-pam

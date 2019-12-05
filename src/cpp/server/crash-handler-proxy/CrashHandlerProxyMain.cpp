@@ -41,7 +41,6 @@ int main(int argc, const char* argv[])
 {
    // note: we log all errors and attempt to launch the crashpad handler
    // regardless, as this is a best effort proxy attempt
-   log::setLogLevel(log::LogLevel::WARN);
    log::setProgramId("crash-handler-proxy");
    initializeStderrLog("crash-handler-proxy", log::LogLevel::WARN);
 

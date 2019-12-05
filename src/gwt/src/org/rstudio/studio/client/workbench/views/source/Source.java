@@ -402,7 +402,7 @@ public class Source implements InsertSourceHandler,
       commands.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
 
       // If tab has been disabled for auto complete by the user, set the "shortcut" to ctrl-space instead.
-      if (userPrefs_.tabCompletion().getValue())
+      if (userPrefs_.tabCompletion().getValue() && !userPrefs_.tabKeyMoveFocus().getValue())
          commands.codeCompletion().setShortcut(new KeyboardShortcut("Tab", KeyCodes.KEY_TAB, KeyboardShortcut.NONE));
       else
       {
@@ -1203,6 +1203,20 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewCDoc()
+   {
+      newDoc(FileTypeRegistry.C, new ResultCallback<EditingTarget, ServerError>()
+      {
+         @Override
+         public void onSuccess(EditingTarget target)
+         {
+            target.verifyCppPrerequisites();
+         }
+      });
+   }
+   
+   
+   @Handler
    public void onNewCppDoc()
    {
       newSourceDocWithTemplate(
@@ -1221,6 +1235,26 @@ public class Source implements InsertSourceHandler,
    }
    
    @Handler
+   public void onNewHeaderDoc()
+   {
+      newDoc(FileTypeRegistry.H, new ResultCallback<EditingTarget, ServerError>()
+      {
+         @Override
+         public void onSuccess(EditingTarget target)
+         {
+            target.verifyCppPrerequisites();
+         }
+      });
+   }
+   
+   @Handler
+   public void onNewMarkdownDoc()
+   {
+      newDoc(FileTypeRegistry.MARKDOWN, null);
+   }
+   
+   
+   @Handler
    public void onNewPythonDoc()
    {
       newDoc(FileTypeRegistry.PYTHON, new ResultCallback<EditingTarget, ServerError>()
@@ -1231,6 +1265,30 @@ public class Source implements InsertSourceHandler,
             target.verifyPythonPrerequisites();
          }
       });
+   }
+   
+   @Handler
+   public void onNewShellDoc()
+   {
+      newDoc(FileTypeRegistry.SH, null);
+   }
+   
+   @Handler
+   public void onNewHtmlDoc()
+   {
+      newDoc(FileTypeRegistry.HTML, null);
+   }
+   
+   @Handler
+   public void onNewJavaScriptDoc()
+   {
+      newDoc(FileTypeRegistry.JS, null);
+   }
+   
+   @Handler
+   public void onNewCssDoc()
+   {
+      newDoc(FileTypeRegistry.CSS, null);
    }
    
    @Handler

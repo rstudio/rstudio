@@ -850,6 +850,8 @@ std::string websiteOutputDir();
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
 
+bool isPathViewAllowed(const core::FilePath& path);
+
 void onBackgroundProcessing(bool isIdle);
 
 } // namespace module_context

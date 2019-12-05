@@ -39,7 +39,8 @@ public:
                     const std::string& rLdScriptPath,
                     const std::string& ldLibraryPath,
                     const r_util::RVersion& profileDefaultR,
-                    const std::vector<core::FilePath>& profileRHomeDirs);
+                    const std::vector<core::FilePath>& profileRHomeDirs,
+                    const std::string& modulesBinaryPath);
 
    // scans for r versions and returns any that were found
    // subsequent calls return cached versions found in initial scan
@@ -59,6 +60,7 @@ private:
    std::string rLdLibraryPath_;
    core::r_util::RVersion profileDefaultR_;
    std::vector<FilePath> profileRHomeDirs_;
+   core::FilePath modulesBinaryPath_;
 
    // cached versions
    core::r_util::RVersion systemVersion_;

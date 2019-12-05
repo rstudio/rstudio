@@ -614,6 +614,18 @@ public:
    {
       return useSecureCookies_;
    }
+   
+   std::string directoryViewWhitelist() const
+   {
+      return directoryViewWhitelist_;
+   }
+
+   std::string envVarSaveBlacklist() const
+   {
+      return envVarSaveBlacklist_;
+   }
+
+   static std::string parseReposConfig(core::FilePath reposFile);
 
 private:
    void resolvePath(const core::FilePath& resourcePath,
@@ -628,7 +640,6 @@ private:
    bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
    void resolveOverlayOptions();
    bool allowOverlay() const;
-   std::string parseReposConfig(core::FilePath reposFile);
 
 private:
    // tests
@@ -688,6 +699,8 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   std::string directoryViewWhitelist_;
+   std::string envVarSaveBlacklist_;
 
    // r
    std::string coreRSourcePath_;
