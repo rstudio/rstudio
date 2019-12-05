@@ -928,7 +928,7 @@ Error executablePath(const char * argv0,
 
    // use argv[0] and initial path
    FilePath initialPath = FilePath::initialPath();
-   executablePath = initialPath.complete(argv0).absolutePath();
+   executablePath = initialPath.completePath(argv0).getAbsolutePath();
 
 #endif
 
