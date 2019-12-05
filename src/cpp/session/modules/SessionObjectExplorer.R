@@ -380,7 +380,10 @@
       (s4 && length(.rs.slotNames(.$object)) > 0) ||
       
       # is this a named atomic vector?
-      (is.atomic(.$object) && !is.null(names(.$object)) && n > 0)
+      (is.atomic(.$object) && !is.null(names(.$object)) && n > 0) ||
+
+      # do we have relevant attributes?
+      (.rs.explorer.hasRelevantAttributes(.$object) && n > 0)
    
    # extract attributes when relevant
    attributes <- NULL
