@@ -126,6 +126,7 @@ private:
    std::string packageBuildFileHash_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
+   bool forceRebuildPrecompiledHeaders_;
    bool restoredCompilationConfig_;
 };
 
