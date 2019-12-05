@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEv
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -106,17 +105,17 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
 
-      events.addHandler(RestartStatusEvent.TYPE,
-            event -> {
-               if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
-               {
-                  isRestartInProgress_ = true;
-               }
-               else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-               {
-                  isRestartInProgress_ = false;
-               }
-            });
+      events.addHandler(RestartStatusEvent.TYPE, event ->
+      {
+         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+         {
+            isRestartInProgress_ = true;
+         }
+         else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+         {
+            isRestartInProgress_ = false;
+         }
+      });
 
       ensureWidget();
    }
@@ -170,7 +169,8 @@ public class TerminalPane extends WorkbenchPane
 
    private void updateTerminalToolbar()
    {
-      Scheduler.get().scheduleDeferred(() -> {
+      Scheduler.get().scheduleDeferred(() ->
+      {
          boolean interruptable = false;
          boolean closable = false;
          boolean clearable = false;
@@ -324,8 +324,9 @@ public class TerminalPane extends WorkbenchPane
             uiPrefs_.terminalTrackEnvironment().getValue());
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
-                                                 false /*createdByApi*/, arg -> {
-         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
+                                                 false /*createdByApi*/, session ->
+      {
+         terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -498,7 +499,8 @@ public class TerminalPane extends WorkbenchPane
       globalDisplay_.promptForText("Rename Terminal",
             "Please enter the new terminal name:",
             origCaption,
-            newCaption -> {
+            newCaption ->
+            {
                // rename in the UI
                renameVisibleTerminalInClient(newCaption);
 
@@ -547,7 +549,8 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       suppressAutoFocus_ = !setFocus;
-      activateTerminal(() -> {
+      activateTerminal(() ->
+      {
          ensureTerminal(text);
          Scheduler.get().scheduleDeferred(() -> suppressAutoFocus_ = false);
       });
@@ -840,8 +843,9 @@ public class TerminalPane extends WorkbenchPane
 
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
-                                                 event.createdByApi(), arg -> {
-         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
+                                                 event.createdByApi(), session ->
+      {
+         terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -956,7 +960,8 @@ public class TerminalPane extends WorkbenchPane
       if (visibleTerminal != null)
       {
          if (!suppressAutoFocus_)
-            Scheduler.get().scheduleDeferred(() -> {
+            Scheduler.get().scheduleDeferred(() ->
+            {
                // On rare occasions (which I haven't been able to nail down), flow gets here
                // before xtermjs has initialized, and the setFocus call throws a null exception.
                // Nothing is obviously broken when that happens, but guard against it, wait
@@ -967,7 +972,8 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  Timers.singleShot(200, () -> {
+                  Timers.singleShot(200, () ->
+                  {
                      if (visibleTerminal.terminalEmulatorLoaded())
                         visibleTerminal.setFocus(true);
                   });
@@ -1061,23 +1067,16 @@ public class TerminalPane extends WorkbenchPane
       unregisterChildProcsHandler();
       if (terminal != null)
       {
-         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
-               event -> {
-                  // When terminal reports that there are child procs, there can
-                  // be a lag before it (potentially) enters a full-screen program,
-                  // and our toolbar controls use both bits of information to
-                  // set state. We don't get a notification on full-screen terminal
-                  // mode, we can only poll it. So, delay just a bit to improve
-                  // chances of it being current.
-                  Timer timer = new Timer()
-                  {
-                     public void run()
-                     {
-                        updateTerminalToolbar();
-                     }
-                  };
-                  timer.schedule(200);
-               });
+         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(event ->
+         {
+            // When terminal reports that there are child procs, there can
+            // be a lag before it (potentially) enters a full-screen program,
+            // and our toolbar controls use both bits of information to
+            // set state. We don't get a notification on full-screen terminal
+            // mode, we can only poll it. So, delay just a bit to improve
+            // chances of it being current.
+            Timers.singleShot(200, () -> updateTerminalToolbar());
+         });
       }
    }
 
