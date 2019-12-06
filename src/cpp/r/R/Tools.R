@@ -164,10 +164,22 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
 # load a package by name
 .rs.addFunction( "loadPackage", function(packageName, lib)
 {
-   if (nzchar(lib))
-      library(packageName, lib.loc = lib, character.only = TRUE)
-   else
-      library(packageName, character.only = TRUE)
+   # when R loads package dependencies through a call to `library()`, dependent
+   # packages will be searched for on the current library paths rather than the
+   # library path(s) passed to the lib.loc argument. for that reason, it is
+   # prudent to set the library paths explicitly when loading a package.
+   #
+   # note that we want to preserve the existing library paths as well since
+   # dependencies may live within a separate library path from the package to be
+   # loaded; it should suffice to place the requested library at the front of
+   # the library paths
+   if (nzchar(lib)) {
+      libPaths <- .libPaths()
+      .libPaths(c(lib, libPaths))
+      on.exit(.libPaths(libPaths), add = TRUE)
+   }
+   
+   library(packageName, character.only = TRUE)
 })
 
 # unload a package by name
