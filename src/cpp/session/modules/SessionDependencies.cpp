@@ -352,7 +352,10 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
       if (dep.location == kCRANPackageDependency)
       {
-         // Build install command for CRAN
+         // Build install command for CRAN. We specify lock = TRUE (here and elsewhere) to ensure
+         // that the package directory is locked during installation; since this will run in the
+         // background we want reduce the odds of corruption via a competing package install attempt
+         // in another process.
          script += "utils::install.packages('" + dep.name + "', " +
                 "repos = '"+ module_context::CRANReposURL() + "'";
 
@@ -362,7 +365,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
             script += ", type = 'source'";
          }
 
-         script += ")";
+         script += ", lock = TRUE)";
       }
       else if (dep.location == kEmbeddedPackageDependency)
       {
@@ -370,7 +373,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
          // Build install command for bundled archive
          script += "utils::install.packages('" + pkg.archivePath + 
-            "', repos = NULL, type = 'source')";
+            "', repos = NULL, type = 'source', lock = TRUE)";
       }
 
       script += "\n\n";
