@@ -123,6 +123,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
+import org.rstudio.studio.client.workbench.commands.CommandHighlighter;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.MetaServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -289,6 +290,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RnwWeaveRegistry.class).asEagerSingleton();
       bind(LatexProgramRegistry.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
+      bind(CommandHighlighter.class).asEagerSingleton();
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);

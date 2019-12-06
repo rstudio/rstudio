@@ -22,6 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
+import org.rstudio.core.client.events.HighlightCommandEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -1029,6 +1030,11 @@ public class ClientEventDispatcher
          {
             ExecuteAppCommandEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ExecuteAppCommandEvent(data));
+         }
+         else if (type == ClientEvent.HighlightCommand)
+         {
+            HighlightCommandEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new HighlightCommandEvent(data));
          }
          else
          {

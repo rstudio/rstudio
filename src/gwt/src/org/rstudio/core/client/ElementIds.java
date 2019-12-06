@@ -45,6 +45,7 @@ public class ElementIds
 
    public static void assignElementId(Element ele, String id)
    {
+      ele.addClassName(ID_PREFIX + id);
       ele.setId(getUniqueElementId(id));
    }
 

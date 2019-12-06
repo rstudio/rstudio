@@ -67,6 +67,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
+import org.rstudio.studio.client.workbench.commands.CommandHighlighter;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
@@ -114,6 +115,7 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
+                    CommandHighlighter commandHighlighter,      // force gin to create
                     ChooseFile chooseFile,                      // force gin to create
                     AskPassManager askPass,                     // force gin to create
                     PDFViewer pdfViewer,                        // force gin to create
