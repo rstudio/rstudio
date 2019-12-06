@@ -59,11 +59,20 @@ public:
       return "";
    }
    
+   void cancel()
+   {
+      if (job_)
+         cancelled_ = true;
+      // request terminate
+      terminate();
+   }
+
 private:
    ScriptJob(const ScriptLaunchSpec& spec, 
          boost::function<void()> onComplete):
       spec_(spec),
       completed_(false),
+      cancelled_(false),
       onComplete_(onComplete)
    {
    }
@@ -284,9 +293,15 @@ private:
          setJobStatus(job_, "");
       }
 
+      // !!! STATE SET HERE
       // mark job state
       if (job_)
-         setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
+      {
+         if (cancelled_)
+            setJobState(job_, JobCancelled);
+         else
+            setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
+      }
 
       // clean up temporary files, if we used them
       import_.removeIfExists();
@@ -330,6 +345,7 @@ private:
    boost::shared_ptr<Job> job_;
    ScriptLaunchSpec spec_;
    bool completed_;
+   bool cancelled_;
    FilePath import_;
    FilePath export_;
    FilePath tempCode_;
@@ -430,8 +446,7 @@ Error stopScriptJob(const std::string& id)
    {
       if (script->id() == id)
       {
-         // request terminate
-         script->terminate();
+         script->cancel();
          return Success();
       }
    }
