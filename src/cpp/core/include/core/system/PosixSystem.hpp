@@ -91,22 +91,6 @@ core::Error systemInformation(SysInfo* pSysInfo);
 
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 
-struct ProcessInfo
-{
-   ProcessInfo() : pid(0), ppid(0), pgrp(0) {}
-   PidType pid;
-   PidType ppid;
-   PidType pgrp;
-   std::string username;
-   std::string exe;
-   std::string state;
-   std::vector<std::string> arguments;
-
-#ifndef __APPLE__
-   core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
-#endif
-};
-
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 
 // get process by process name, or all processes if process name is empty

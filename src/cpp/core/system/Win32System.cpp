@@ -895,67 +895,6 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
    }
 }
 
-struct ProcessInfo
-{
-   DWORD processId;
-   DWORD parentProcessId;
-};
-
-// simple cass to encapsulate parent-child
-// relationship of processes
-struct ProcessTreeNode
-{
-   boost::shared_ptr<ProcessInfo> data;
-   std::vector<boost::shared_ptr<ProcessTreeNode> > children;
-};
-
-// process tree, indexed by pid
-typedef std::map<DWORD, boost::shared_ptr<ProcessTreeNode> > ProcessTreeT;
-
-void createProcessTree(const std::vector<ProcessInfo>& processes,
-                       ProcessTreeT *pOutTree)
-{
-   // first pass, create the nodes in the tree
-   for (const ProcessInfo& process : processes)
-   {
-      ProcessTreeT::iterator iter = pOutTree->find(process.processId);
-      if (iter == pOutTree->end())
-      {
-         // process not found, so create a new entry for it
-         boost::shared_ptr<ProcessTreeNode> nodePtr = boost::shared_ptr<ProcessTreeNode>(
-                                                         new ProcessTreeNode());
-
-         nodePtr->data = boost::shared_ptr<ProcessInfo>(new ProcessInfo(process));
-
-         (*pOutTree)[process.processId] = nodePtr;
-      }
-   }
-
-   // second pass, link the nodes together
-   for (ProcessTreeT::value_type& element : *pOutTree)
-   {
-      DWORD parent = element.second->data->parentProcessId;
-      ProcessTreeT::iterator iter = pOutTree->find(parent);
-
-      // if we cannot find the parent in the tree, move on
-      if (iter == pOutTree->end())
-         continue;
-
-      // add this node to its parent's children
-      iter->second->children.push_back(element.second);
-   }
-}
-
-void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
-                 std::vector<ProcessInfo> *pOutChildren)
-{
-   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
-   {
-      pOutChildren->push_back(*child->data.get());
-      getChildren(child, pOutChildren);
-   }
-}
-
 Error getProcesses(std::vector<ProcessInfo> *pOutProcesses)
 {
    PROCESSENTRY32 processEntry;
@@ -975,8 +914,8 @@ Error getProcesses(std::vector<ProcessInfo> *pOutProcesses)
       while (moreProcesses)
       {
          ProcessInfo process;
-         process.processId = processEntry.th32ProcessID;
-         process.parentProcessId = processEntry.th32ParentProcessID;
+         process.pid = processEntry.th32ProcessID;
+         process.ppid = processEntry.th32ParentProcessID;
          pOutProcesses->push_back(process);
 
          moreProcesses = ::Process32Next(hSnap, &processEntry);
@@ -1020,7 +959,7 @@ Error terminateChildProcesses()
 
    for (const ProcessInfo& process : childProcesses)
    {
-      HANDLE hChildProc = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, process.processId);
+      HANDLE hChildProc = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, process.pid);
       if (hChildProc)
       {
          if (!::TerminateProcess(hChildProc, 1))

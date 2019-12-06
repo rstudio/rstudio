@@ -377,6 +377,70 @@ test_context("ProcessTests")
          CHECK(outputs[i] == "Hello, " + safe_convert::numberToString(i) + "\n");
       }
    }
+
+   test_that("Can kill child processes")
+   {
+      IoServiceFixture fixture;
+
+      // create new supervisor
+      AsioProcessSupervisor supervisor(fixture.ioService);
+
+      std::atomic<int> numStarted(0);
+      std::atomic<int> numExited(0);
+      int numError = 0;
+
+      Error lastError;
+      for (int i = 0; i < 10; ++i)
+      {
+         // create process options and callbacks
+         ProcessOptions options;
+         options.threadSafe = true;
+
+         ProcessCallbacks callbacks;
+
+         callbacks.onStdout = [&numStarted](ProcessOperations&, const std::string& out) {
+            ++numStarted;
+         };
+
+         callbacks.onExit = [&numExited](int exitCode) {
+            ++numExited;
+         };
+
+         // run program
+         Error error = supervisor.runCommand("echo hello && sleep 60", options, callbacks);
+         if (error)
+         {
+            numError++;
+            lastError = error;
+         }
+      }
+
+      if (lastError)
+         std::cout << lastError.getSummary() << " " << lastError.getLocation().asString() << std::endl;
+
+      CHECK(numError == 0);
+
+      // wait for processes to start
+      int numTries = 0;
+      while (numStarted < 10)
+      {
+         sleep(1);
+
+         // make sure we fail out if the processes don't all start
+         REQUIRE((++numTries != 10));
+      }
+
+      // kill the child processes
+      Error error = core::system::terminateChildProcesses();
+      REQUIRE(!error);
+
+      // wait for processes to exit
+      bool success = supervisor.wait(boost::posix_time::seconds(10));
+      CHECK(success);
+
+      // check to make sure all processes really exited
+      CHECK(numExited == 10);
+   }
 }
 
 } // end namespace tests
