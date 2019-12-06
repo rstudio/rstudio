@@ -19,8 +19,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,6 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -105,54 +104,52 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       label_.setText(prompt);
       Roles.getTextboxRole().setAriaRequiredProperty(textbox_.getElement(), true);
 
-      install_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event) {
-            VerticalPanel verticalPanel = new VerticalPanel();
-            verticalPanel.getElement().setAttribute(
-               "style",
-               "padding-left: 6px; width: 320px;"
-            );
-            
-            Label infoLabel = new Label(
-               "Keyring is an R package that provides access to " +
-               "the operating systems credential store to allow you " +
-               "to remember, securely, passwords and secrets. "
-            );
-            
-            HTML questionHtml = new HTML(
-               "<br>Would you like to install keyring?<br><br>"
-            );
-            
-            verticalPanel.add(infoLabel);
-            verticalPanel.add(questionHtml);
-            
-            MessageDialog dialog = new MessageDialog(
-               MessageDialog.QUESTION,
-               "Keyring",
-               verticalPanel);
-            
-            dialog.addButton("Install", ElementIds.DIALOG_OK_BUTTON, new Operation()
+      install_.setClickHandler(() ->
+      {
+         VerticalPanel verticalPanel = new VerticalPanel();
+         verticalPanel.getElement().setAttribute(
+            "style",
+            "padding-left: 6px; width: 320px;"
+         );
+
+         Label infoLabel = new Label(
+            "Keyring is an R package that provides access to " +
+            "the operating systems credential store to allow you " +
+            "to remember, securely, passwords and secrets. "
+         );
+
+         HTML questionHtml = new HTML(
+            "<br>Would you like to install keyring?<br><br>"
+         );
+
+         verticalPanel.add(infoLabel);
+         verticalPanel.add(questionHtml);
+
+         MessageDialog dialog = new MessageDialog(
+            MessageDialog.QUESTION,
+            "Keyring",
+            verticalPanel);
+
+         dialog.addButton("Install", ElementIds.DIALOG_OK_BUTTON, new Operation()
+         {
+            @Override
+            public void execute()
             {
-               @Override
-               public void execute()
-               {
-                  dependencyManager.withKeyring(
-                     new Command()
+               dependencyManager.withKeyring(
+                  new Command()
+                  {
+                     @Override
+                     public void execute()
                      {
-                        @Override
-                        public void execute()
-                        {
-                           enableKeyring(true);
-                        }
+                        enableKeyring(true);
                      }
-                  );
-               }
-            }, true, false);
-            
-            dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
-            dialog.showModal();
-         }
+                  }
+               );
+            }
+         }, true, false);
+
+         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
+         dialog.showModal();
       });
 
 
@@ -240,7 +237,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    @UiField FormLabel label_;
    @UiField PasswordTextBox textbox_;
    @UiField CheckBox remember_;
-   @UiField Label install_;
+   @UiField HyperlinkLabel install_;
 
    @UiField HTMLPanel rememberEnabled_;
    @UiField HTMLPanel rememberDisabled_;
