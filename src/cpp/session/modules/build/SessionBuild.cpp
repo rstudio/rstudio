@@ -565,6 +565,20 @@ private:
                             "generate documentation");
       }
 
+      // make a copy of options so we can customize the environment
+      core::system::Options childEnv;
+      if (options.environment)
+         childEnv = *options.environment;
+      else
+         core::system::environment(&childEnv);
+
+      // allow child process to inherit our R_LIBS
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      
+      options.environment = childEnv;
+      
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
       cmd << "--slave";
