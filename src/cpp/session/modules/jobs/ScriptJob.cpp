@@ -62,9 +62,11 @@ public:
    void cancel()
    {
       if (job_)
+      {
          cancelled_ = true;
-      // request terminate
-      terminate();
+         // request terminate
+         terminate();
+      }
    }
 
 private:
