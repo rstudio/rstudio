@@ -1201,6 +1201,7 @@ bool isTextFile(const FilePath& targetPath)
           boost::algorithm::ends_with(fileType, "+xml") ||
           boost::algorithm::ends_with(fileType, "/xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
+          boost::algorithm::equals(fileType, "application/json") ||
           boost::algorithm::equals(fileType, "application/postscript");
 #else
 
