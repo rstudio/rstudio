@@ -293,7 +293,6 @@ private:
          setJobStatus(job_, "");
       }
 
-      // !!! STATE SET HERE
       // mark job state
       if (job_)
       {
