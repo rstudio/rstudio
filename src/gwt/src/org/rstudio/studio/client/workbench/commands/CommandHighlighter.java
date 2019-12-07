@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.commands;
 
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandEvent;
+import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HighlightCommandEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -26,14 +29,24 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class CommandHighlighter
-      implements HighlightCommandEvent.Handler
+      implements CommandHandler,
+                 HighlightCommandEvent.Handler
+                 
 {
    @Inject
-   public CommandHighlighter(EventBus events)
+   public CommandHighlighter(Commands commands,
+                             EventBus events)
    {
+      events.addHandler(CommandEvent.TYPE, this);
       events.addHandler(HighlightCommandEvent.TYPE, this);
    }
    
+   @Override
+   public void onCommand(AppCommand command)
+   {
+      String id = "rstudio_tb_" + command.getId().toLowerCase();
+      highlight(id);
+   }
 
    @Override
    public void onHighlightCommand(HighlightCommandEvent event)
@@ -41,7 +54,6 @@ public class CommandHighlighter
       String commandId = event.getData().getId();
       highlight(commandId.toLowerCase());
    }
-   
    
    private void highlight(String elementClass)
    {
@@ -88,5 +100,5 @@ public class CommandHighlighter
          "0%   { box-shadow: 0 0 2px 1px rgb(255, 255, 255, 1); }" +
          "100% { box-shadow: 0 0 2px 1px rgb(255, 255, 255, 0); }" +
          "}";
-         
+
 }
