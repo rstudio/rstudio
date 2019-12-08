@@ -86,6 +86,7 @@
 * Enable copying images to the clipboard from the Plots pane (#3142)
 * Update minimum supported browser versions (#5593)
 * Automatic refresh of the Git pane can now be enabled / disabled as required. (#4368)
+* Target directory can be changed from within the 'Upload Files' dialog (RStudio Server)
 
 ### Bugfixes
 

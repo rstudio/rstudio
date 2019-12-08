@@ -15,34 +15,26 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.Hidden;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HtmlFormModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
@@ -147,12 +139,16 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       directoryPanel.setWidth("100%");
       directoryPanel.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       
-      // directory name (informational field)
-      directoryNameWidget_ = new DirectoryNameWidget();
-      directoryNameWidget_.setDirectory(targetDirectory_);
-      panel.add(new FormLabel("Target directory:", directoryNameWidget_));
+      // target directory chooser
+      directoryNameWidget_ = new DirectoryChooserTextBox("Target directory:");
+      directoryNameWidget_.setText(targetDirectory_.getPath());
+      directoryNameWidget_.addValueChangeHandler((valueChangeEvent) ->
+      {
+         targetDirectory_ = FileSystemItem.createDir(valueChangeEvent.getValue());
+         targetDirectoryHidden_.setValue(targetDirectory_.getPath());
+      });
       directoryPanel.add(directoryNameWidget_);
-      
+
       panel.add(directoryPanel);
       
       // filename field
@@ -176,69 +172,11 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
             
       return panel;
    }
-   
-   // JJA: used by currently commented out browse directory button
-   @SuppressWarnings("unused")
-   private class BrowseDirectoryClickHandler implements ClickHandler
-   {   
-      public void onClick(ClickEvent event)
-      {
-         fileDialogs_.chooseFolder(
-             "Choose Target Directory",
-             fileSystemContext_,
-             targetDirectory_,
-             new ProgressOperationWithInput<FileSystemItem>() {
 
-               public void execute(FileSystemItem input,
-                                   ProgressIndicator indicator)
-               {
-                  if (input == null)
-                     return;
-                  
-                  indicator.onCompleted();
-                  targetDirectory_ = input;
-                  targetDirectoryHidden_.setValue(input.getPath());
-                  directoryNameWidget_.setDirectory(input);
-               }          
-             });
-      }   
-   }
-   
-   private class DirectoryNameWidget extends HorizontalPanel
-   {
-      public DirectoryNameWidget()
-      {
-         setHorizontalAlignment(HasHorizontalAlignment.ALIGN_LEFT);
-         
-         image_ = new DecorativeImage();
-         image_.setStyleName(FileDialogResources.INSTANCE.styles().columnIcon());
-         this.add(image_);
-         name_ = new HTML();
-         this.add(name_);
-      }
-      
-      public void setDirectory(FileSystemItem directoryItem)
-      {
-         if (directoryItem.equalTo(FileSystemItem.home()))
-         {
-            image_.setResource(new ImageResource2x(FileDialogResources.INSTANCE.homeImage2x()));
-            name_.setHTML("Home");
-         }
-         else
-         {
-            image_.setResource(new ImageResource2x(FileIconResources.INSTANCE.iconFolder2x()));
-            name_.setHTML("&nbsp;" + directoryItem.getPath());
-         }
-      }
-      
-      DecorativeImage image_ ;
-      HTML name_ ;
-   }
-   
    private FileUpload fileUpload_;
    private FileSystemItem targetDirectory_;
    private Hidden targetDirectoryHidden_;
-   private DirectoryNameWidget directoryNameWidget_;
+   private DirectoryChooserTextBox directoryNameWidget_;
    private final FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;
 }
