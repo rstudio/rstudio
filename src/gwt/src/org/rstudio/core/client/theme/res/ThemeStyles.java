@@ -141,6 +141,7 @@ public interface ThemeStyles extends CssResource
    
    String fileUploadPanel();
    String fileUploadField();
+   String fileUploadLabel();
    String fileUploadTipLabel();
    
    String fileList();

@@ -155,7 +155,9 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       fileUpload_ = new FileUpload();
       fileUpload_.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       fileUpload_.setName("file");
-      panel.add(new FormLabel("File to upload:", fileUpload_));
+      FormLabel uploadLabel = new FormLabel("File to upload:", fileUpload_);
+      uploadLabel.addStyleName(ThemeStyles.INSTANCE.fileUploadLabel());
+      panel.add(uploadLabel);
       panel.add(fileUpload_);
       
       // zip file tip field
