@@ -35,7 +35,7 @@
          &#x00a0;
          <g:CheckBox ui:field="checkboxRegex_" text="Regular expression"/>
          &#x00a0;
-         <g:CheckBox ui:field="checkboxIgnore_" text="Exclude ignore files"/>
+         <g:CheckBox ui:field="checkboxIgnore_" text="Exclude ignore files" visible="false"/>
       </p>
 
       <p>

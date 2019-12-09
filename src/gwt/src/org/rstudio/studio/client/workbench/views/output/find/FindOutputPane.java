@@ -167,6 +167,8 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_.addLeftWidget(useGitIgnore_);
       useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
       replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
+      useGitIgnore_.setVisible(false);
+      useGitIgnoreLabel_.setVisible(false);
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
