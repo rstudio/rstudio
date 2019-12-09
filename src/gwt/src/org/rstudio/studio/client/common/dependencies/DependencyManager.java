@@ -60,6 +60,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       DependencyRequest(
             String progressCaptionIn,
             String userActionIn,
+            String contextIn,
             CommandWith2Args<String,CommandWithArg<Boolean>> userPromptIn,
             List<Dependency> dependenciesIn,
             boolean silentEmbeddedUpdateIn,
@@ -68,12 +69,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          progressCaption = progressCaptionIn;
          userAction = userActionIn;
          userPrompt = userPromptIn;
+         context = contextIn;
          dependencies = dependenciesIn;
          silentEmbeddedUpdate = silentEmbeddedUpdateIn;
          onComplete = onCompleteIn;
       }
       String progressCaption;
       String userAction;
+      String context;
       CommandWith2Args<String,CommandWithArg<Boolean>> userPrompt;
       List<Dependency> dependencies;
       boolean silentEmbeddedUpdate;
@@ -107,6 +110,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    {
       withDependencies(progressCaption,
                        null,
+                       null,
                        userPrompt,
                        dependencies,
                        silentEmbeddedUpdate,
@@ -115,12 +119,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    
    public void withDependencies(String progressCaption,
                                 String userAction,
+                                String context,
                                 List<Dependency> dependencies,
                                 boolean silentEmbeddedUpdate,
                                 final CommandWithArg<Boolean> onComplete)
    {
       withDependencies(progressCaption, 
                        userAction, 
+                       context,
                        null, 
                        dependencies, 
                        silentEmbeddedUpdate,
@@ -132,6 +138,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
             progressCaption,
             userAction,
+            getFeatureDescription("roxygen"),
             getFeatureDependencies("roxygen"),
             false,
             succeeded -> { if (succeeded) command.execute(); });
@@ -142,6 +149,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
          "Converting Theme",
          userAction,
+         getFeatureDescription("theme_conversion"),
          getFeatureDependencies("theme_conversion"),
          true,
          succeeded ->
@@ -156,6 +164,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "R2D3",
          userAction,
+         getFeatureDescription("r2d3"),
          getFeatureDependencies("r2d3"),
          true,
          succeeded ->
@@ -170,6 +179,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "Plumber",
          userAction,
+         getFeatureDescription("plumber"),
          getFeatureDependencies("plumber"),
          true,
          new CommandWithArg<Boolean>()
@@ -189,6 +199,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
          "Packrat",
          userAction,
+         getFeatureDescription("packrat"),
          getFeatureDependencies("packrat"),
          false,
          new CommandWithArg<Boolean>()
@@ -207,6 +218,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
             "renv",
             userAction,
+            getFeatureDescription("renv"),
             getFeatureDependencies("renv"),
             false,
             onSuccess);
@@ -225,6 +237,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "Publishing",
         userAction,
+        getFeatureDescription("rsconnect"),
         userPrompt,
         deps,
         true, // silently update any embedded packages needed (none at present)
@@ -257,6 +270,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         progressCaption,
         userAction, 
+        getFeatureDescription("rmarkdown"),
         getFeatureDependencies("rmarkdown"),
         true, // we want to update to the embedded version if needed
         succeeded -> 
@@ -335,6 +349,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "Checking installed packages",
         "Executing addins", 
+        getFeatureDescription("shiny_addins"),
         getFeatureDependencies("shiny_addins"),
         false,
         new CommandWithArg<Boolean>()
@@ -363,6 +378,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
             progressCaption,
             userPrompt,
+            getFeatureDescription("reticulate"),
             getFeatureDependencies("reticulate"),
             true,
             new CommandWithArg<Boolean>()
@@ -383,6 +399,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
             progressCaption,
             userPrompt,
+            getFeatureDescription("stan"),
             getFeatureDependencies("stan"),
             true,
             (Boolean success) -> { if (success) command.execute(); });
@@ -395,6 +412,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
             progressCaption,
             userPrompt,
+            getFeatureDescription("tinytex"),
             getFeatureDependencies("tinytex"),
             true,
             (Boolean success) -> { if (success) command.execute(); });
@@ -415,6 +433,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from CSV",
         userAction, 
+        getFeatureDescription("import_csv"),
         getFeatureDependencies("import_csv"),
         false,
         new CommandWithArg<Boolean>()
@@ -434,6 +453,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from SPSS, SAS and Stata",
         userAction, 
+        getFeatureDescription("import_sav"),
         getFeatureDependencies("import_sav"),
         false,
         new CommandWithArg<Boolean>()
@@ -453,6 +473,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from Excel",
         userAction, 
+        getFeatureDescription("import_xls"),
         getFeatureDependencies("import_xls"),
         false,
         new CommandWithArg<Boolean>()
@@ -472,6 +493,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from XML",
         userAction, 
+        getFeatureDescription("import_xml"),
         getFeatureDependencies("import_xml"),
         false,
         new CommandWithArg<Boolean>()
@@ -491,6 +513,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from JSON",
         userAction, 
+        getFeatureDescription("import_json"),
         getFeatureDependencies("import_json"),
         false,
         new CommandWithArg<Boolean>()
@@ -510,6 +533,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from JDBC",
         userAction, 
+        getFeatureDescription("import_jdbc"),
         getFeatureDependencies("import_jdbc"),
         false,
         new CommandWithArg<Boolean>()
@@ -529,6 +553,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from ODBC",
         userAction, 
+        getFeatureDescription("import_odbc"),
         getFeatureDependencies("import_odbc"),
         false,
         new CommandWithArg<Boolean>()
@@ -548,6 +573,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Import from Mongo DB",
         userAction, 
+        getFeatureDescription("import_mongo"),
         getFeatureDependencies("import_mongo"),
         false,
         new CommandWithArg<Boolean>()
@@ -567,6 +593,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Profiler",
         userAction, 
+        getFeatureDescription("profvis"),
         getFeatureDependencies("profvis"),
         true, // update profvis if needed
         new CommandWithArg<Boolean>()
@@ -589,6 +616,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Connection",
         connectionName, 
+        "Database Connectivity",
         connectionPackageDependencies(packageName, packageVersion), 
         false,
         new CommandWithArg<Boolean>()
@@ -608,6 +636,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing Keyring",
         "Using keyring", 
+        getFeatureDescription("keyring"),
         getFeatureDependencies("keyring"),
         true, // update keyring if needed
         new CommandWithArg<Boolean>()
@@ -627,6 +656,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      withDependencies(
         "Preparing " + name,
         "Using " + name, 
+        getFeatureDescription("odbc"),
         getFeatureDependencies("odbc"),
         true, // update odbc if needed
         new CommandWithArg<Boolean>()
@@ -659,6 +689,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
          "Preparing Tests",
          message, 
+         "Testing Tools",
          dependencies, 
          true, // update package if needed
          new CommandWithArg<Boolean>()
@@ -679,6 +710,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "DBI",
          userAction,
+         getFeatureDescription("dbi"),
          getFeatureDependencies("dbi"),
          true,
          new CommandWithArg<Boolean>()
@@ -698,6 +730,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       withDependencies(
         "RSQLite",
          userAction,
+         getFeatureDescription("rsqlite"),
          getFeatureDependencies("rsqlite"),
          true,
          new CommandWithArg<Boolean>()
@@ -724,6 +757,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    
    private void withDependencies(String progressCaption,
          final String userAction,
+         final String context,
          final CommandWith2Args<String,CommandWithArg<Boolean>> userPrompt,
          List<Dependency> dependencies, 
          final boolean silentEmbeddedUpdate,
@@ -735,7 +769,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // results, all such duplicate requests will return simultaneously, fed
       // by a single RPC)
       requestQueue_.add(new DependencyRequest(progressCaption, userAction, 
-            userPrompt, dependencies, silentEmbeddedUpdate, 
+            context, userPrompt, dependencies, silentEmbeddedUpdate, 
             new CommandWithArg<Boolean>()
             {
                @Override
@@ -873,6 +907,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                         newArray.set(i, unsatisfiedDeps.get(i));
                      }
                      installDependencies(
+                           req.context,
                            newArray, 
                            req.silentEmbeddedUpdate, 
                            req.onComplete);
@@ -911,11 +946,13 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       
    }
    
-   private void installDependencies(final JsArray<Dependency> dependencies,
+   private void installDependencies(final String context,
+                                    final JsArray<Dependency> dependencies,
                                     final boolean silentEmbeddedUpdate,
                                     final CommandWithArg<Boolean> onComplete)
    {
       server_.installDependencies(
+         context,
          dependencies, 
          new ServerRequestCallback<String>() {
             @Override
@@ -1122,6 +1159,19 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       }
    }
    
+   /**
+    * Retrieves a user-friendly name for an IDE feature that requires
+    * dependencies
+    * 
+    * @param feature The identifier of the IDE feature.
+    * @return A string with a user-friendly name for the feature.
+    */
+   private String getFeatureDescription(String feature)
+   {
+      return session_.getSessionInfo().getPackageDependencies()
+            .getFeatureDescription(feature);
+   }
+
    /**
     * Retrieves a list of R package dependencies for an IDE feature.
     * 

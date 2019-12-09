@@ -28,6 +28,7 @@ public interface DependencyServerOperations extends CryptoServerOperations
        ServerRequestCallback<JsArray<Dependency>> requestCallback);
    
    void installDependencies(
+       String context,
        JsArray<Dependency> dependencies,
        ServerRequestCallback<String> requestCallback);
 }

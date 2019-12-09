@@ -295,7 +295,8 @@ Error installDependencies(const json::JsonRpcRequest& request,
 {
    // get list of dependencies
    json::Array depsJson;
-   Error error = json::readParams(request.params, &depsJson);
+   std::string context;
+   Error error = json::readParams(request.params, &context, &depsJson);
    if (error)
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
@@ -317,7 +318,11 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // Emit a message to the user at the beginning of the script declaring what we're about to do
    if (deps.size() > 1)
    {
-      script += "cat('Installing R packages: ";
+      script += "cat('** ";
+      if (context.empty()) 
+         script += "Installing R Packages: ";
+      else
+         script += "Installing R Package Dependencies for " + context + ": ";
       for (size_t i = 0; i < deps.size(); i++)
       {
          script += "\\'" + deps[i].name + "\\'";
@@ -328,7 +333,11 @@ Error installDependencies(const json::JsonRpcRequest& request,
    }
    else
    {
-      script += "cat('Installing " + deps[0].name + "...\\n\\n')\n";
+      if (context.empty())
+         script += "cat('Installing \\'" + deps[0].name + "\\' ...\\n\\n')\n";
+      else
+         script += "cat('Installing \\'" + deps[0].name + "\\' for " + context + 
+            "...\\n\\n')\n";
    }
 
    for (size_t i = 0; i < deps.size(); i++)
@@ -380,10 +389,12 @@ Error installDependencies(const json::JsonRpcRequest& request,
    }
 
    jobs::ScriptLaunchSpec installJob(
-         // Job name: just the package name if we have one 
-         deps.size() == 1 ? 
-            ("Install '" + deps[0].name + "'") :
-            ("Install R packages"),
+         // Supply job name; use context if we have one, otherwise auto-generate from dependency list
+         context.empty() ?
+            (deps.size() == 1 ? 
+                ("Install '" + deps[0].name + "'") :
+                ("Install R packages")) :
+            context + " Dependencies",
 
          // Script to run for job
          script,

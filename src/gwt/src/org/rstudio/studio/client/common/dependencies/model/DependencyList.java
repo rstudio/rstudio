@@ -36,4 +36,11 @@ public class DependencyList extends JavaScriptObject
          return packages["packages"];
       return [];
    }-*/;
+   
+   public final native String getFeatureDescription(String feature) /*-{
+      var feature = this.features[feature];
+      if (typeof feature !== "undefined")
+         return feature["description"];
+      return "";
+   }-*/;
 }

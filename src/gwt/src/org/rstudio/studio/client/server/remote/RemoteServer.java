@@ -5297,12 +5297,16 @@ public class RemoteServer implements Server
      
    @Override
    public void installDependencies(
+      String context,
       JsArray<Dependency> dependencies,
       ServerRequestCallback<String> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(context)));
+      params.set(1, new JSONArray(dependencies));
       sendRequest(RPC_SCOPE,
                   "install_dependencies",
-                  dependencies,
+                  params,
                   requestCallback);
    }
 
