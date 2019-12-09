@@ -1,7 +1,7 @@
 /*
  * ScriptJob.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 #define SESSION_SCRIPT_JOB_HPP
 
 #include <session/jobs/Job.hpp>
+#include <session/SessionAsyncRProcess.hpp>
 
 namespace rstudio {
 namespace core {
@@ -57,6 +58,8 @@ public:
    core::FilePath workingDir();
    bool importEnv();
    std::string exportEnv();
+   void setProcOptions(async_r::AsyncRProcessOptions options);
+   boost::optional<async_r::AsyncRProcessOptions> procOptions();
 private:
    std::string name_;
    std::string code_;
@@ -65,6 +68,7 @@ private:
    core::FilePath workingDir_;
    bool importEnv_;
    std::string exportEnv_;
+   boost::optional<async_r::AsyncRProcessOptions> procOptions_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 
