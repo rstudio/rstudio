@@ -34,18 +34,6 @@ core::Error initialize();
 // helper class used to process file replacements
 class Replacer : public boost::noncopyable
 {
-   core::Error completeReplace(const boost::regex* searchRegex, const std::string* replaceRegex,
-                               size_t matchOn, size_t matchOff, std::string* line,
-                               size_t* pReplaceMatchOff);
-
-   core::Error replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, std::string* line,
-                                      const std::string* findRegex, const std::string* replaceRegex,
-                                      size_t* pReplaceMatchOff);
-
-   core::Error replaceRegexWithCase(size_t matchOn, size_t matchOff, std::string* line,
-                                    const std::string* findRegex, const std::string* replaceRegex,
-                                    size_t* pReplaceMatchOff);
-
 public:
    explicit Replacer(bool ignoreCase) :
       ignoreCase_(ignoreCase)
@@ -53,24 +41,24 @@ public:
    }
 
    void replaceLiteralWithLiteral(size_t matchOn, size_t matchOff, std::string* line,
-                                  const std::string* replaceLiteral,
+                                  const std::string& replaceLiteral,
                                   size_t* pReplaceMatchOff)
    {
-      *line = line->replace(matchOn, (matchOff - matchOn), *replaceLiteral);
-      *pReplaceMatchOff = matchOn + replaceLiteral->size();
+      *line = line->replace(matchOn, (matchOff - matchOn), replaceLiteral);
+      *pReplaceMatchOff = matchOn + replaceLiteral.size();
    }
 
    core::Error replaceLiteralWithRegex(size_t matchOn, size_t matchOff, std::string* line,
-                                const std::string* replaceRegex,
+                                const std::string& replaceRegex,
                                 size_t* pReplaceMatchOff)
    {
       std::string find(line->substr(matchOn, matchOff));
-      return (replaceRegexWithRegex(matchOn, matchOff, line, &find,
+      return (replaceRegexWithRegex(matchOn, matchOff, line, find,
                                     replaceRegex, pReplaceMatchOff));
    }
 
    core::Error replaceRegexWithLiteral(size_t matchOn, size_t matchOff, std::string* line,
-                                       const std::string* findRegex, const std::string* replaceLiteral,
+                                       const std::string& findRegex, const std::string& replaceLiteral,
                                        size_t* pReplaceMatchOff)
    {
       return (replaceRegexWithRegex(matchOn, matchOff, line, findRegex, replaceLiteral,
@@ -78,7 +66,7 @@ public:
    }
 
    core::Error replaceRegexWithRegex(size_t matchOn, size_t matchOff, std::string* line,
-                                     const std::string* findRegex, const std::string* replaceRegex,
+                                     const std::string& findRegex, const std::string& replaceRegex,
                                      size_t* pReplaceMatchOff)
   {
      core::Error error;
@@ -93,6 +81,17 @@ public:
 
 private:
    bool ignoreCase_;
+   core::Error completeReplace(const boost::regex& searchRegex, const std::string& replaceRegex,
+                               size_t matchOn, size_t matchOff, std::string* line,
+                               size_t* pReplaceMatchOff);
+
+   core::Error replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, std::string* line,
+                                      const std::string& findRegex, const std::string& replaceRegex,
+                                      size_t* pReplaceMatchOff);
+
+   core::Error replaceRegexWithCase(size_t matchOn, size_t matchOff, std::string* line,
+                                    const std::string& findRegex, const std::string& replaceRegex,
+                                    size_t* pReplaceMatchOff);
 };
 
 } // namespace find

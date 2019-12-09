@@ -55,7 +55,7 @@ TEST_CASE("SessionFind")
    {
       Replacer replacer(true);
       replacer.replaceLiteralWithLiteral(matchOn, matchOff, &line,
-         &replaceString, &replaceMatchOff);
+         replaceString, &replaceMatchOff);
       CHECK(line.compare("RStudio is awesome") == 0);
       CHECK(replaceMatchOff == 18);
    }
@@ -64,9 +64,15 @@ TEST_CASE("SessionFind")
    {
       Replacer replacer(true);
       replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
-         &findRegex, &replaceString, &replaceMatchOff);
+         findRegex, replaceString, &replaceMatchOff);
+      CHECK(regexLine.compare("aba awesome okab AAOO aaabbb aa abab") == 0);
+      CHECK(replaceMatchOff == 11);
+
+      replacer.replaceRegexWithLiteral(22, 28, &regexLine,
+         findRegex, replaceString, &replaceMatchOff);
       CHECK(regexLine.compare("aba awesome okab AAOO awesome aa abab") == 0);
-      CHECK(replaceMatchOff == 37);
+      CHECK(replaceMatchOff == 29);
+
       regexLine = regexOriginalLine;
    }
 
@@ -75,7 +81,7 @@ TEST_CASE("SessionFind")
       std::string regexOriginalLine = regexLine;
       Replacer replacer(false);
       replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
-         &findRegex, &replaceString, &replaceMatchOff);
+         findRegex, replaceString, &replaceMatchOff);
       CHECK(regexLine.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
       CHECK(replaceMatchOff == 36);
       regexLine = regexOriginalLine;
@@ -85,9 +91,15 @@ TEST_CASE("SessionFind")
    {
       Replacer replacer(true);
       replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
-         &findRegex, &replaceRegex, &replaceMatchOff);
+         findRegex, replaceRegex, &replaceMatchOff);
+      CHECK(regexLine.compare("aba OOO okab AAOO aaabbb aa abab") == 0);
+      CHECK(replaceMatchOff == 7);
+
+      replacer.replaceRegexWithRegex(18, 24, &regexLine,
+         findRegex, replaceRegex, &replaceMatchOff);
       CHECK(regexLine.compare("aba OOO okab AAOO aaa aa abab") == 0);
-      CHECK(replaceMatchOff == 29);
+      CHECK(replaceMatchOff == 21);
+
       regexLine = regexOriginalLine;
    }
 
@@ -95,7 +107,7 @@ TEST_CASE("SessionFind")
    {
       Replacer replacer(false);
       replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
-         &findRegex, &replaceRegex, &replaceMatchOff);
+         findRegex, replaceRegex, &replaceMatchOff);
       CHECK(regexLine.compare("aba OOOkkk okab AAOO aaa aa abab") == 0);
       CHECK(replaceMatchOff == 32);
       regexLine = regexOriginalLine;
