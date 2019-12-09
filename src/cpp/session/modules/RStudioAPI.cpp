@@ -200,19 +200,17 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    return r::sexp::create(selection, &protect);
 }
 
-SEXP rs_highlight(SEXP querySEXP, SEXP parentSEXP)
+SEXP rs_highlight(SEXP queriesSEXP)
 {
-   std::string query = r::sexp::asString(querySEXP);
-   int parent = r::sexp::asInteger(parentSEXP);
-   
-   json::Object data;
-   data["query"] = query;
-   data["parent"] = parent;
+   json::Value data;
+   Error error = r::json::jsonValueFromList(queriesSEXP, &data);
+   if (error)
+      LOG_ERROR(error);
    
    ClientEvent event(client_events::kHighlight, data);
    module_context::enqueClientEvent(event);
    
-   return querySEXP;
+   return queriesSEXP;
 }
 
 Error initialize()

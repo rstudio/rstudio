@@ -14,22 +14,46 @@
  */
 package org.rstudio.core.client.events;
 
+import org.rstudio.core.client.JsVector;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
 {
-   public static class Data extends JavaScriptObject
+   public static class Data extends JsVector<HighlightQuery>
    {
       protected Data()
       {
       }
-
-      public final native String getQuery()  /*-{ return this.query;  }-*/;
-      public final native int    getParent() /*-{ return this.parent; }-*/;
    }
-
+   
+   public static class HighlightQuery extends JavaScriptObject
+   {
+      protected HighlightQuery()
+      {
+      }
+      
+      public static final native HighlightQuery create(String query, int parent)
+      /*-{
+         return {
+            query: query || "",
+            parent: parent || 0
+         }
+      }-*/;
+      
+      public final native String getQuery()
+      /*-{
+         return this.query || "";
+      }-*/;
+      
+      public final native int getParent()
+      /*-{
+         return this.parent || 0;
+      }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onHighlight(HighlightEvent event);

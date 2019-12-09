@@ -815,11 +815,6 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # highlight UI elements within the IDE
-.rs.addApiFunction("highlight", function(query, parent = 0L) {
-   
-   .Call("rs_highlight",
-         as.character(query),
-         as.integer(parent),
-         PACKAGE = "(embedding)")
-   
+.rs.addApiFunction("highlight", function(data) {
+   .Call("rs_highlight", data, PACKAGE = "(embedding)")
 })
