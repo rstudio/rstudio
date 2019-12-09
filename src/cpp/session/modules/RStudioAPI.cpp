@@ -200,17 +200,19 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    return r::sexp::create(selection, &protect);
 }
 
-SEXP rs_highlightCommand(SEXP commandIdSEXP)
+SEXP rs_highlight(SEXP querySEXP, SEXP parentSEXP)
 {
-   std::string commandId = r::sexp::asString(commandIdSEXP);
+   std::string query = r::sexp::asString(querySEXP);
+   int parent = r::sexp::asInteger(parentSEXP);
    
    json::Object data;
-   data["id"] = commandId;
+   data["query"] = query;
+   data["parent"] = parent;
    
-   ClientEvent event(client_events::kHighlightCommand, data);
+   ClientEvent event(client_events::kHighlight, data);
    module_context::enqueClientEvent(event);
    
-   return commandIdSEXP;
+   return querySEXP;
 }
 
 Error initialize()
@@ -225,7 +227,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
-   RS_REGISTER_CALL_METHOD(rs_highlightCommand);
+   RS_REGISTER_CALL_METHOD(rs_highlight);
    
    using boost::bind;
    ExecBlock initBlock;

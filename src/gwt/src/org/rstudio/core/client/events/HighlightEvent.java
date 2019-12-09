@@ -1,5 +1,5 @@
 /*
- * HighlightCommandEvent.java
+ * HighlightEvent.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -18,7 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class HighlightCommandEvent extends GwtEvent<HighlightCommandEvent.Handler>
+public class HighlightEvent extends GwtEvent<HighlightEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
@@ -26,17 +26,16 @@ public class HighlightCommandEvent extends GwtEvent<HighlightCommandEvent.Handle
       {
       }
 
-      public final native String getId() /*-{
-         return this.id;
-      }-*/;
+      public final native String getQuery()  /*-{ return this.query;  }-*/;
+      public final native int    getParent() /*-{ return this.parent; }-*/;
    }
 
    public interface Handler extends EventHandler
    {
-      void onHighlightCommand(HighlightCommandEvent event);
+      void onHighlight(HighlightEvent event);
    }
    
-   public HighlightCommandEvent(Data data)
+   public HighlightEvent(Data data)
    {
       data_ = data;
    }
@@ -55,7 +54,7 @@ public class HighlightCommandEvent extends GwtEvent<HighlightCommandEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onHighlightCommand(this);
+      handler.onHighlight(this);
    }
 
    private final Data data_;

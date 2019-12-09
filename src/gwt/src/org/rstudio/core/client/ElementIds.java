@@ -290,4 +290,12 @@ public class ElementIds
    // AboutDialogContents
    public final static String ABOUT_LICENSE_INFO = "about_license_info";
    public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
+   
+   // TextEditingTargetWidget
+   public final static String TOGGLE_DOC_OUTLINE_BUTTON = "toggle_doc_outline_button";
+   public static String getToggleDocOutlineButton() { return getElementId(TOGGLE_DOC_OUTLINE_BUTTON); }
+   
+   // AddinsToolbarButton
+   public final static String ADDINS_TOOLBAR_BUTTON = "addins_toolbar_button";
+   public static String getAddinsToolbarButton() { return getElementId(ADDINS_TOOLBAR_BUTTON); }
 }

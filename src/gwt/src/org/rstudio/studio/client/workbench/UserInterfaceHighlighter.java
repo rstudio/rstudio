@@ -1,5 +1,5 @@
 /*
- * CommandHighlighter.java
+ * UserInterfaceHighlighter.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.commands;
+package org.rstudio.studio.client.workbench;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +23,14 @@ import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
-import org.rstudio.core.client.events.HighlightCommandEvent;
+import org.rstudio.core.client.events.HighlightEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
@@ -38,9 +41,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class CommandHighlighter
+public class UserInterfaceHighlighter
       implements CommandHandler,
-                 HighlightCommandEvent.Handler
+                 HighlightEvent.Handler
                  
 {
    private static class HighlightPair
@@ -67,11 +70,11 @@ public class CommandHighlighter
    }
    
    @Inject
-   public CommandHighlighter(Commands commands,
-                             EventBus events)
+   public UserInterfaceHighlighter(Commands commands,
+                                   EventBus events)
    {
       events.addHandler(CommandEvent.TYPE, this);
-      events.addHandler(HighlightCommandEvent.TYPE, this);
+      events.addHandler(HighlightEvent.TYPE, this);
       
       highlightPairs_ = new ArrayList<>();
       
@@ -88,24 +91,26 @@ public class CommandHighlighter
    @Override
    public void onCommand(AppCommand command)
    {
-      for (String prefix : new String[] { "rstudio_", "rstudio_tb_" })
+      // TODO: Currently used for debugging + testing.
+      for (String prefix : new String[] { ".rstudio_", ".rstudio_tb_" })
       {
-         String id = prefix + command.getId().toLowerCase();
-         highlight(id);
+         String query = prefix + command.getId().toLowerCase();
+         highlight(query, 0);
       }
    }
 
    @Override
-   public void onHighlightCommand(HighlightCommandEvent event)
+   public void onHighlight(HighlightEvent event)
    {
-      String commandId = event.getData().getId();
-      highlight(commandId.toLowerCase());
+      String target = event.getData().getQuery();
+      int parent = event.getData().getParent();
+      highlight(target.toLowerCase(), parent);
    }
    
-   private void highlight(String elementClass)
+   private void highlight(String query, int parent)
    {
       removeHighlightElements();
-      addHighlightElements(elementClass);
+      addHighlightElements(query, parent);
    }
    
    private void removeHighlightElements()
@@ -116,11 +121,18 @@ public class CommandHighlighter
       highlightPairs_.clear();
    }
    
-   private void addHighlightElements(String elementClass)
+   private void addHighlightElements(String query, int parent)
    {
-      Element[] els = DomUtils.getElementsByClassName(elementClass); 
-      for (Element el : els)
+      NodeList<Element> els = DomUtils.querySelectorAll(Document.get().getBody(), query);
+      
+      int max = Math.min(20, els.getLength());
+      for (int i = 0; i < max; i++)
       {
+         // retrieve the requested element (selecting a parent if so requested)
+         Element el = els.getItem(i);
+         for (int j = 0; j < parent; j++)
+            el = el.getParentElement();
+         
          // create highlight element
          Element highlightEl = Document.get().createDivElement();
          highlightEl.addClassName(RES.styles().highlightEl());
@@ -161,6 +173,16 @@ public class CommandHighlighter
          int width = bounds.getWidth() + borderPx + borderPx;
          int height = bounds.getHeight() + borderPx + borderPx;
          
+         // Ignore out-of-bounds elements.
+         
+         // Avoid using too-narrow highlights.
+         if (width < 20)
+         {
+            int rest = 20 - width;
+            left = left - (rest / 2);
+            width = 20;
+         }
+         
          // This is a hack to give buttons with labels a bit more padding.
          if (width > height + 2)
             width = width + 2;
@@ -180,7 +202,7 @@ public class CommandHighlighter
 
    public interface Resources extends ClientBundle
    {
-      @Source("CommandHighlighter.css")
+      @Source("UserInterfaceHighlighter.css")
       Styles styles();
    }
 
