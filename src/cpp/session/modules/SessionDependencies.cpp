@@ -388,6 +388,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
       script += "\n\n";
    }
 
+   bool packrat = module_context::packratContext().modeOn;
    jobs::ScriptLaunchSpec installJob(
          // Supply job name; use context if we have one, otherwise auto-generate from dependency list
          context.empty() ?
@@ -400,12 +401,17 @@ Error installDependencies(const json::JsonRpcRequest& request,
          script,
 
          // Directory in which to run job
-         module_context::packratContext().modeOn ?
+         packrat ?
             projects::projectContext().directory() :
             FilePath(),
 
          false, // Import environment
          "");
+
+   // Run in a vanilla session if Packrat mode isn't on (prevents problematic startup scripts/etc
+   // from causing install trouble)
+   if (!packrat)
+      installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
 
    std::string jobId;
    error = jobs::startScriptJob(installJob, &jobId);

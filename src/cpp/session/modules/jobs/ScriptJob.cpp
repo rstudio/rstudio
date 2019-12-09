@@ -158,8 +158,14 @@ private:
          "exportRdata = " + exportRdata + ");";
         
       core::system::Options environment;
+
+      // build options for async R process; default to no rdata unless we have other options (most
+      // common is a vanilla R process)
+      async_r::AsyncRProcessOptions options = 
+         spec_.procOptions() ? *spec_.procOptions() : async_r::R_PROCESS_NO_RDATA;
+
       async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
-                                    async_r::R_PROCESS_NO_RDATA);
+                                    options);
    }
 
    void onStdout(const std::string& output)
@@ -404,6 +410,16 @@ bool ScriptLaunchSpec::importEnv()
 std::string ScriptLaunchSpec::encoding()
 {
    return encoding_;
+}
+
+void ScriptLaunchSpec::setProcOptions(async_r::AsyncRProcessOptions options)
+{
+   procOptions_ = options;
+}
+
+boost::optional<async_r::AsyncRProcessOptions> ScriptLaunchSpec::procOptions()
+{
+   return procOptions_;
 }
 
 Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pId)
