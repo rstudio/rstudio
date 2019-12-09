@@ -556,6 +556,13 @@ private:
                             gsl::narrow_cast<int>(newValue.getInt() + offset)));
    }
 
+   void addOffsetIntegersToJsonArray(
+         json::Array values, int offset, json::Array* pJsonArray)
+   {
+      for (json::Value value : values)
+         addOffsetIntegerToJsonArray(value, offset, pJsonArray);
+   }
+
    Error encodeAndWriteLineToFile(const std::string& decodedLine,
       const std::string& lineLeftContents, const std::string& lineRightContents)
    {
@@ -684,8 +691,8 @@ private:
                      int offset(gsl::narrow_cast<int>(replaceString.size() - matchSize));
                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
-                     addOffsetIntegerToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
-                     addOffsetIntegerToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
+                     addOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
+                     addOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
                   }
                   else if (lineSuccess)
                   {
@@ -1210,13 +1217,15 @@ core::Error Replacer::completeReplace(const boost::regex* searchRegex,
    std::string temp;
    try
    {
-      temp = boost::regex_replace(*line, *searchRegex, *replaceRegex, boost::format_sed);
+      temp = boost::regex_replace(line->substr(matchOn), *searchRegex, *replaceRegex,
+         boost::format_sed | boost::format_first_only);
    }
    catch (const std::runtime_error& e)
    {
       return core::Error(-1, e.what(), ERROR_LOCATION);
    }
 
+   temp.insert(0, line->substr(0, matchOn));
    std::string endOfString = line->substr(matchOff).c_str();
    size_t replaceMatchOff;
    if (endOfString.empty())
