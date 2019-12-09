@@ -31,29 +31,29 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
       {
       }
 
-      public native final int getMax() /*-{
-         return this.max;
+      public native final int getTotalReplaceCount() /*-{
+         return this.totalReplaceCount;
       }-*/;
 
-      public native final int getUnits() /*-{
-         return this.units;
+      public native final int getReplacedCount() /*-{
+         return this.replacedCount;
       }-*/;
    }
 
-   public ReplaceProgressEvent(int max, int units)
+   public ReplaceProgressEvent(int totalReplaceCount, int replacedCount)
    {
-      max_ = max;
-      units_ = units;
+      totalReplaceCount_ = totalReplaceCount;
+      replacedCount_ = replacedCount;
    }
 
-   public int units()
+   public int replacedCount()
    {
-      return units_;
+      return replacedCount_;
    }
 
-   public int max()
+   public int totalReplaceCount()
    {
-      return max_;
+      return totalReplaceCount_;
    }
 
    @Override
@@ -69,6 +69,6 @@ public class ReplaceProgressEvent extends GwtEvent<ReplaceProgressEvent.Handler>
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private int max_;
-   private int units_;
+   private int totalReplaceCount_;
+   private int replacedCount_;
 }

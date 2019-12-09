@@ -468,7 +468,8 @@ public class ClientEventDispatcher
          else if (type == ClientEvent.ReplaceProgress)
          {
             ReplaceProgressEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new ReplaceProgressEvent(data.getMax(), data.getUnits()));
+            eventBus_.dispatchEvent(
+               new ReplaceProgressEvent(data.getTotalReplaceCount(), data.getReplacedCount()));
          }
          else if (type == ClientEvent.RPubsUploadStatus)
          {

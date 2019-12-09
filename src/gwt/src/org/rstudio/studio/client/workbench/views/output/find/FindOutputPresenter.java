@@ -281,7 +281,6 @@ public class FindOutputPresenter extends BasePresenter
                      {
                         view_.setStopReplaceButtonVisible(true);
                         stopAndClear();
-
                         FileSystemItem searchPath =
                                                   FileSystemItem.createDir(dialogState_.getPath());
                         JsArrayString filePatterns = JsArrayString.createArray().cast();
@@ -322,8 +321,8 @@ public class FindOutputPresenter extends BasePresenter
          public void onReplaceProgress(ReplaceProgressEvent event)
          {
             view_.showProgress();
-            view_.getProgress().setProgress(event.units(), event.max());
-            if (event.units() >= event.max())
+            view_.getProgress().setProgress(event.replacedCount(), event.totalReplaceCount());
+            if (event.replacedCount() >= event.totalReplaceCount())
                view_.hideProgress();
          }
       });

@@ -34,7 +34,7 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
       return searchPattern_;
    }
 
-   public boolean getReplace()
+   public boolean isReplace()
    {
       return replace_;
    }

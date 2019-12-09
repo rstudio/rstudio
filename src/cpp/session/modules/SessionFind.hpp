@@ -40,41 +40,33 @@ public:
    {
    }
 
-   void replaceLiteralWithLiteral(size_t matchOn, size_t matchOff, std::string* line,
-                                  const std::string& replaceLiteral,
+   void replaceLiteralWithLiteral(size_t matchOn, size_t matchOff,
+                                  const std::string& replaceLiteral, std::string* pLine,
                                   size_t* pReplaceMatchOff)
    {
-      *line = line->replace(matchOn, (matchOff - matchOn), replaceLiteral);
+      *pLine = pLine->replace(matchOn, (matchOff - matchOn), replaceLiteral);
       *pReplaceMatchOff = matchOn + replaceLiteral.size();
    }
 
-   core::Error replaceLiteralWithRegex(size_t matchOn, size_t matchOff, std::string* line,
-                                const std::string& replaceRegex,
-                                size_t* pReplaceMatchOff)
-   {
-      std::string find(line->substr(matchOn, matchOff));
-      return (replaceRegexWithRegex(matchOn, matchOff, line, find,
-                                    replaceRegex, pReplaceMatchOff));
-   }
-
-   core::Error replaceRegexWithLiteral(size_t matchOn, size_t matchOff, std::string* line,
-                                       const std::string& findRegex, const std::string& replaceLiteral,
+   core::Error replaceRegexWithLiteral(size_t matchOn, size_t matchOff,
+                                       const std::string& findRegex,
+                                       const std::string& replaceLiteral, std::string* pLine,
                                        size_t* pReplaceMatchOff)
    {
-      return (replaceRegexWithRegex(matchOn, matchOff, line, findRegex, replaceLiteral,
+      return (replaceRegexWithRegex(matchOn, matchOff, findRegex, replaceLiteral, pLine,
                                     pReplaceMatchOff));
    }
 
-   core::Error replaceRegexWithRegex(size_t matchOn, size_t matchOff, std::string* line,
+   core::Error replaceRegexWithRegex(size_t matchOn, size_t matchOff,
                                      const std::string& findRegex, const std::string& replaceRegex,
-                                     size_t* pReplaceMatchOff)
+                                     std::string* pLine, size_t* pReplaceMatchOff)
   {
      core::Error error;
      if (ignoreCase_)
-        error = replaceRegexIgnoreCase(matchOn, matchOff, line, findRegex, replaceRegex,
+        error = replaceRegexIgnoreCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
                                        pReplaceMatchOff);
      else
-        error = replaceRegexWithCase(matchOn, matchOff, line, findRegex, replaceRegex,
+        error = replaceRegexWithCase(matchOn, matchOff, findRegex, replaceRegex, pLine,
                                      pReplaceMatchOff);
      return error;
   }
@@ -82,16 +74,16 @@ public:
 private:
    bool ignoreCase_;
    core::Error completeReplace(const boost::regex& searchRegex, const std::string& replaceRegex,
-                               size_t matchOn, size_t matchOff, std::string* line,
+                               size_t matchOn, size_t matchOff, std::string* pLine,
                                size_t* pReplaceMatchOff);
 
-   core::Error replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, std::string* line,
+   core::Error replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
                                       const std::string& findRegex, const std::string& replaceRegex,
-                                      size_t* pReplaceMatchOff);
+                                      std::string* pLine, size_t* pReplaceMatchOff);
 
-   core::Error replaceRegexWithCase(size_t matchOn, size_t matchOff, std::string* line,
+   core::Error replaceRegexWithCase(size_t matchOn, size_t matchOff,
                                     const std::string& findRegex, const std::string& replaceRegex,
-                                    size_t* pReplaceMatchOff);
+                                    std::string* pLine, size_t* pReplaceMatchOff);
 };
 
 } // namespace find

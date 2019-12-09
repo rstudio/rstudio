@@ -52,12 +52,12 @@ class LocalProgress : public boost::noncopyable
 {
 public:
 
-   LocalProgress(int max, int updateFrequency)
+   LocalProgress(int totalReplaceCount, int updateFrequency) :
+      totalReplaceCount_(totalReplaceCount)
    {
-      units_ = 0;
-      max_ = max;
+      replacedCount_ = 0;
       updateFrequency_ = updateFrequency;
-      updateIncrement_ = static_cast<int>((updateFrequency_ * max_) / 100);
+      updateIncrement_ = static_cast<int>((updateFrequency_ * totalReplaceCount_) / 100);
       if (updateIncrement_ < 1)
          updateIncrement_ = 1;
       nextUpdate_ = updateIncrement_;
@@ -65,15 +65,15 @@ public:
 
    void addUnits(int num)
    {
-      units_ += num;
-      while (units_ >= nextUpdate_)
+      replacedCount_ += num;
+      while (replacedCount_ >= nextUpdate_)
       {
          nextUpdate_ += updateIncrement_;
-         if (nextUpdate_ > max_)
-            nextUpdate_ = max_;
+         if (nextUpdate_ > totalReplaceCount_)
+            nextUpdate_ = totalReplaceCount_;
          notifyClient();
-         // prevent infinite loop when max is reached
-         if (units_ >= max_)
+         // prevent infinite loop when totalReplaceCount is reached
+         if (replacedCount_ >= totalReplaceCount_)
             break;
       }
    }
@@ -83,14 +83,14 @@ private:
    void notifyClient()
    {
       json::Object data;
-      data["max"] = max_;
-      data["units"] = units_;
+      data["totalReplaceCount"] = totalReplaceCount_;
+      data["replacedCount"] = replacedCount_;
       module_context::enqueClientEvent(
             ClientEvent(client_events::kReplaceUpdated, data));
    }
 
-   int units_;
-   int max_;
+   int replacedCount_;
+   const int totalReplaceCount_;
    int updateFrequency_;
    int updateIncrement_;
    int nextUpdate_;
@@ -637,8 +637,8 @@ private:
                {
                   Replacer replacer(findResults().ignoreCase());
                   std::string previewLine(newLine);
-                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, &previewLine, searchPattern,
-                     replacePattern, &replaceMatchOff);
+                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, searchPattern,
+                     replacePattern, &previewLine, &replaceMatchOff);
                   if (!error)
                      replaceString = previewLine.substr(matchOn, (replaceMatchOff - matchOn));
                   else
@@ -656,11 +656,11 @@ private:
                Replacer replacer(findResults().ignoreCase());
                if (findResults().regex() &&
                    !findResults().replaceRegex())
-                  error = replacer.replaceRegexWithLiteral(matchOn, matchOff, &newLine, searchPattern,
-                     replacePattern, &replaceMatchOff);
+                  error = replacer.replaceRegexWithLiteral(matchOn, matchOff, searchPattern,
+                     replacePattern, &newLine, &replaceMatchOff);
                else
-                  replacer.replaceLiteralWithLiteral(matchOn, matchOff, &newLine, replaceString,
-                     &replaceMatchOff);
+                  replacer.replaceLiteralWithLiteral(matchOn, matchOff, replaceString,
+                     &newLine, &replaceMatchOff);
                if (error)
                   addReplaceErrorMessage(error.asString(), pErrorMessage,
                      pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
@@ -1197,13 +1197,13 @@ core::Error initialize()
 
 core::Error Replacer::completeReplace(const boost::regex& searchRegex,
                                       const std::string& replaceRegex,
-                                      size_t matchOn, size_t matchOff, std::string* line,
+                                      size_t matchOn, size_t matchOff, std::string* pLine,
                                       size_t* pReplaceMatchOff)
 {
    std::string temp;
    try
    {
-      temp = boost::regex_replace(line->substr(matchOn), searchRegex, replaceRegex,
+      temp = boost::regex_replace(pLine->substr(matchOn), searchRegex, replaceRegex,
          boost::format_sed | boost::format_first_only);
    }
    catch (const std::runtime_error& e)
@@ -1211,29 +1211,29 @@ core::Error Replacer::completeReplace(const boost::regex& searchRegex,
       return core::Error(-1, e.what(), ERROR_LOCATION);
    }
 
-   temp.insert(0, line->substr(0, matchOn));
-   std::string endOfString = line->substr(matchOff).c_str();
+   temp.insert(0, pLine->substr(0, matchOn));
+   std::string endOfString = pLine->substr(matchOff).c_str();
    size_t replaceMatchOff;
    if (endOfString.empty())
       replaceMatchOff = temp.length();
    else
       replaceMatchOff = temp.find(endOfString);
 
-   *line = temp;
+   *pLine = temp;
    std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
    *pReplaceMatchOff = matchOn  + replaceString.size();
    return core::Success();
 }
 
-core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, std::string* line,
+core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
                                              const std::string& findRegex,
-                                             const std::string& replaceRegex,
+                                             const std::string& replaceRegex, std::string* pLine,
                                              size_t* pReplaceMatchOff)
 {
    try
    {
       boost::regex find(findRegex, boost::regex::grep | boost::regex::icase);
-      core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, line,
+      core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
    }
@@ -1243,15 +1243,15 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff, st
    }
 }
 
-core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff, std::string* line,
+core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
                                            const std::string& findRegex,
-                                           const std::string& replaceRegex,
+                                           const std::string& replaceRegex, std::string* pLine,
                                            size_t* pReplaceMatchOff)
 {
    try
    {
       boost::regex find(findRegex, boost::regex::grep);
-      core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, line,
+      core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
    }

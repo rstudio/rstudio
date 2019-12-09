@@ -54,8 +54,8 @@ TEST_CASE("SessionFind")
    SECTION("Replace literal with literal ignore case")
    {
       Replacer replacer(true);
-      replacer.replaceLiteralWithLiteral(matchOn, matchOff, &line,
-         replaceString, &replaceMatchOff);
+      replacer.replaceLiteralWithLiteral(matchOn, matchOff,
+         replaceString, &line, &replaceMatchOff);
       CHECK(line.compare("RStudio is awesome") == 0);
       CHECK(replaceMatchOff == 18);
    }
@@ -63,13 +63,13 @@ TEST_CASE("SessionFind")
    SECTION("Replace regex with literal ignore case")
    {
       Replacer replacer(true);
-      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
-         findRegex, replaceString, &replaceMatchOff);
+      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, findRegex, replaceString, &regexLine,
+         &replaceMatchOff);
       CHECK(regexLine.compare("aba awesome okab AAOO aaabbb aa abab") == 0);
       CHECK(replaceMatchOff == 11);
 
-      replacer.replaceRegexWithLiteral(22, 28, &regexLine,
-         findRegex, replaceString, &replaceMatchOff);
+      replacer.replaceRegexWithLiteral(22, 28, findRegex, replaceString, &regexLine,
+         &replaceMatchOff);
       CHECK(regexLine.compare("aba awesome okab AAOO awesome aa abab") == 0);
       CHECK(replaceMatchOff == 29);
 
@@ -80,8 +80,8 @@ TEST_CASE("SessionFind")
    {
       std::string regexOriginalLine = regexLine;
       Replacer replacer(false);
-      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, &regexLine,
-         findRegex, replaceString, &replaceMatchOff);
+      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff,
+         findRegex, replaceString, &regexLine, &replaceMatchOff);
       CHECK(regexLine.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
       CHECK(replaceMatchOff == 36);
       regexLine = regexOriginalLine;
@@ -90,13 +90,12 @@ TEST_CASE("SessionFind")
    SECTION("Replace regex with regex ignore case")
    {
       Replacer replacer(true);
-      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
-         findRegex, replaceRegex, &replaceMatchOff);
+      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &regexLine,
+         &replaceMatchOff);
       CHECK(regexLine.compare("aba OOO okab AAOO aaabbb aa abab") == 0);
       CHECK(replaceMatchOff == 7);
 
-      replacer.replaceRegexWithRegex(18, 24, &regexLine,
-         findRegex, replaceRegex, &replaceMatchOff);
+      replacer.replaceRegexWithRegex(18, 24, findRegex, replaceRegex, &regexLine, &replaceMatchOff);
       CHECK(regexLine.compare("aba OOO okab AAOO aaa aa abab") == 0);
       CHECK(replaceMatchOff == 21);
 
@@ -106,8 +105,8 @@ TEST_CASE("SessionFind")
    SECTION("Replace regex with regex case sensitive")
    {
       Replacer replacer(false);
-      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, &regexLine,
-         findRegex, replaceRegex, &replaceMatchOff);
+      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &regexLine,
+         &replaceMatchOff);
       CHECK(regexLine.compare("aba OOOkkk okab AAOO aaa aa abab") == 0);
       CHECK(replaceMatchOff == 32);
       regexLine = regexOriginalLine;
@@ -119,3 +118,4 @@ TEST_CASE("SessionFind")
 } // end namespace find
 } // end namespace session
 } // end namespace rstudio
+

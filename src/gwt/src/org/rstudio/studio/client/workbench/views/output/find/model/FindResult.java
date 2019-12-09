@@ -140,13 +140,11 @@ public class FindResult extends JavaScriptObject
       {
          ArrayList<Integer> on = getMatchOns();
          ArrayList<Integer> off = getMatchOffs();
-         ArrayList<Pair<Boolean, Integer>> parts
-                                         = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
    
          ArrayList<Integer> replaceOn = getReplaceMatchOns();
          ArrayList<Integer> replaceOff = getReplaceMatchOffs();
-         ArrayList<Pair<Boolean, Integer>> replaceParts
-                                      = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> replaceParts = new ArrayList<Pair<Boolean, Integer>>();
    
          int difference = 0;
          while (on.size() + off.size() > 0)

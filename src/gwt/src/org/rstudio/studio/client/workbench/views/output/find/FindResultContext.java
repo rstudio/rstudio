@@ -122,6 +122,11 @@ public class FindResultContext
       private String replace_;
    }
 
+   FindResultContext()
+   {
+      findResults_ = new ArrayList<FindResult>();
+   }
+
    private File getFile(String path)
    {
       File file = filesByName_.get(path);
@@ -132,11 +137,6 @@ public class FindResultContext
          filesByName_.put(path, file);
       }
       return file;
-   }
-
-   FindResultContext()
-   {
-      findResults_ = new ArrayList<FindResult>();
    }
 
    public int getMaxLineWidth()
