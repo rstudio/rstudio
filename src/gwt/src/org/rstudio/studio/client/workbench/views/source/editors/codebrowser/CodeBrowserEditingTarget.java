@@ -255,9 +255,21 @@ public class CodeBrowserEditingTarget implements EditingTarget
       
       codeExecution_.executeLastCode();
    }
-   
-   @Handler 
-   void onSendToTerminal() 
+
+   @Handler
+   void onRunSelectionAsJob()
+   {
+      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+   }
+
+   @Handler
+   void onRunSelectionAsLauncherJob()
+   {
+      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+   }
+
+   @Handler
+   void onSendToTerminal()
    { 
       codeExecution_.sendSelectionToTerminal(false);
    } 
@@ -440,6 +452,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
+      commands.add(commands_.runSelectionAsJob());
+      commands.add(commands_.runSelectionAsLauncherJob());
       commands.add(commands_.sendToTerminal());
 
       if (SourceWindowManager.isMainSourceWindow())
