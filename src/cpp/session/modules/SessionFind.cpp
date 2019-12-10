@@ -520,7 +520,7 @@ private:
          decodedLine.append(decode(std::string(inputPos, end)));
 
       *pFullLineContent = decodedLine;
-      adjustForPreview(decodedLine);
+      adjustForPreview(&decodedLine);
       *pContent = decodedLine;
    }
 
@@ -820,7 +820,7 @@ private:
                }
                lineInfo.decodedPreview = lineInfo.decodedContents;
 
-               adjustForPreview(lineInfo.decodedPreview);
+               adjustForPreview(&lineInfo.decodedPreview);
             }
 
             files.push_back(json::Value(file));

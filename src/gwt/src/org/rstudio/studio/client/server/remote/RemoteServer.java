@@ -4392,7 +4392,7 @@ public class RemoteServer implements Server
       params.set(6, JSONBoolean.getInstance(replaceRegex));
       params.set(7, JSONBoolean.getInstance(gitIgnore));
 
-      sendRequest(RPC_SCOPE, "preview_replace", params, requestCallback);
+      sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
 
    @Override
@@ -4419,14 +4419,14 @@ public class RemoteServer implements Server
       params.set(7, JSONBoolean.getInstance(replaceRegex));
       params.set(8, JSONBoolean.getInstance(gitIgnore));
 
-      sendRequest(RPC_SCOPE, "complete_replace", params, requestCallback);
+      sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
 
    @Override
    public void stopReplace(String findOperationHandle,
                            ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "stop_replace", findOperationHandle, requestCallback);
+      sendRequest(RPC_SCOPE, STOP_REPLACE, findOperationHandle, requestCallback);
    }
 
    @Override
@@ -6356,6 +6356,10 @@ public class RemoteServer implements Server
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
+ 
+   private static final String PREVIEW_REPLACE = "preview_replace";
+   private static final String COMPLETE_REPLACE = "complete_replace";
+   private static final String STOP_REPLACE = "stop_replace";
    
    private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";
