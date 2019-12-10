@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Event;
@@ -46,27 +47,41 @@ public class ShowDOMElementIDs
       panel_ = new MiniPopupPanel();
       html_ = new HTML();
       panel_.add(html_);
+      
+      panel_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (event.isAttached())
+            {
+               startMonitoring();
+            }
+            else
+            {
+               stopMonitoring();
+            }
+         }
+      });
    }
    
    @Handler
    public void onShowDomElementIds()
    {
-      showDomElementIds_ = !showDomElementIds_;
-      if (showDomElementIds_)
+      if (panel_.isShowing())
       {
-         startMonitoring();
-         panel_.setPopupPosition(100, 100);
-         panel_.show();
+         panel_.hide();
       }
       else
       {
-         stopMonitoring();
-         panel_.hide();
+         panel_.show();
       }
    }
    
    private void startMonitoring()
    {
+      stopMonitoring();
+      
       handler_ = Event.addNativePreviewHandler((NativePreviewEvent preview) ->
       {
          if (preview.getTypeInt() != Event.ONMOUSEMOVE)
@@ -80,10 +95,6 @@ public class ShowDOMElementIDs
          SafeHtmlBuilder builder = new SafeHtmlBuilder();
 
          builder.appendHtmlConstant("<div>");
-
-         builder.appendHtmlConstant("<strong>Element IDs</strong>");
-         builder.appendHtmlConstant("<br>");
-         
          for (Element el : els)
          {
             String id = el.getId();
@@ -138,11 +149,13 @@ public class ShowDOMElementIDs
    
    private void stopMonitoring()
    {
-      handler_.removeHandler();
-      handler_ = null;
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
    }
    
-   private boolean showDomElementIds_;
    private HandlerRegistration handler_;
    
    private final MiniPopupPanel panel_;
