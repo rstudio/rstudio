@@ -43,6 +43,7 @@ Error productInfo(const json::JsonRpcRequest& request,
    result["release_name"] = RSTUDIO_RELEASE_NAME;
    result["date"] = RSTUDIO_BUILD_DATE;
    result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
+   result["os"] = RSTUDIO_PACKAGE_OS;
    pResponse->setResult(result);
    return Success();
 }

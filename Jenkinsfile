@@ -15,7 +15,7 @@ properties([
                 ])
 ])
 
-def compile_package(type, flavor, variant) {
+def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
   def env = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}"
 
@@ -23,6 +23,9 @@ def compile_package(type, flavor, variant) {
   if (rstudioVersionSuffix != 0) {
    env = "${env} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}" 
   }
+
+  // add OS that the package was built for
+  env = "${env} PACKAGE_OS=${os}"
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
@@ -154,20 +157,20 @@ messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirec
 try {
     timestamps {
         def containers = [
-          [os: 'centos6',    arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'opensuse',   arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'xenial',     arch: 'amd64',  flavor: 'server',  variant: ''],
-          [os: 'xenial',     arch: 'amd64',  flavor: 'desktop', variant: ''],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: ''],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: ''],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: ''],
-          [os: 'centos8',   arch: 'x86_64', flavor: 'server',  variant: ''],
-          [os: 'centos8',   arch: 'x86_64', flavor: 'desktop', variant: '']
+          [os: 'centos6',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 6'],
+          [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE'],
+          [os: 'opensuse',   arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'OpenSUSE 15'],
+          [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'OpenSUSE 15'],
+          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE 15'],
+          [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 7'],
+          [os: 'xenial',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Xenial'],
+          [os: 'xenial',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Xenial'],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
+          [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
+          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
+          [os: 'centos8',   arch: 'x86_64', flavor: 'server',  variant: '',     package_os: 'CentOS 8'],
+          [os: 'centos8',   arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
         // create the version we're about to build
@@ -221,7 +224,7 @@ try {
                     }
                     container.inside() {
                         stage('compile package') {
-                            compile_package(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                            compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                         }
                         stage('run tests') {
                             run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
