@@ -217,11 +217,24 @@ public class UserInterfaceHighlighter
          // Ensure highlight displays above requested element.
          if (StringUtil.isNullOrEmpty(highlightEl.getStyle().getZIndex()))
          {
-            int value = 1000;
-            String zIndex = DomUtils.getInheritedProperty(monitoredEl, "zIndex");
-            if (zIndex != null)
-               value = StringUtil.parseInt(zIndex, value);
-            highlightEl.getStyle().setZIndex(value);
+            DomUtils.findParentElement(monitoredEl, (Element el) -> {
+               
+               Style style = DomUtils.getComputedStyles(el);
+               String zIndex = style.getZIndex();
+               if (StringUtil.isNullOrEmpty(zIndex))
+                  return false;
+               
+               if (zIndex.contentEquals("-1"))
+                  return false;
+               
+               int value = StringUtil.parseInt(zIndex, -1);
+               if (value == -1)
+                  return false;
+               
+               highlightEl.getStyle().setZIndex(value);
+               return true;
+               
+            });
          }
          
          Style style = highlightEl.getStyle();
