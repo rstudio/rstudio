@@ -298,4 +298,8 @@ public class ElementIds
    // AddinsToolbarButton
    public final static String ADDINS_TOOLBAR_BUTTON = "addins_toolbar_button";
    public static String getAddinsToolbarButton() { return getElementId(ADDINS_TOOLBAR_BUTTON); }
+   
+   // CodeSearchWidget
+   public final static String CODE_SEARCH_WIDGET = "code_search_widget";
+   public static String getCodeSearchWidget() { return getElementId(CODE_SEARCH_WIDGET); }
 }

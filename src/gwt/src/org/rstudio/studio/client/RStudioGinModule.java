@@ -116,6 +116,7 @@ import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
+import org.rstudio.studio.client.workbench.ShowDOMElementIDs;
 import org.rstudio.studio.client.workbench.UserInterfaceHighlighter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
@@ -291,6 +292,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(LatexProgramRegistry.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
       bind(UserInterfaceHighlighter.class).asEagerSingleton();
+      bind(ShowDOMElementIDs.class).asEagerSingleton();
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);

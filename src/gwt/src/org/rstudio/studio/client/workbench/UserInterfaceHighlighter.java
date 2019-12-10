@@ -34,6 +34,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
@@ -107,12 +108,11 @@ public class UserInterfaceHighlighter
       observer_ =
             new MutationObserver.Builder(callback)
             .childList(true)
-            .subtree(true)
             .get();
       
       observer_.observe(Document.get().getBody());
+      
    }
-   
    
    
    // Event Handlers ----
@@ -227,7 +227,10 @@ public class UserInterfaceHighlighter
             continue;
          }
          
-         highlightEl.getStyle().setVisibility(Visibility.VISIBLE);
+         Style style = highlightEl.getStyle();
+         if (style.getVisibility() != "visible")
+            style.setVisibility(Visibility.VISIBLE);
+         
          DOMRect bounds = ElementEx.getBoundingClientRect(monitoredEl);
          
          int top = scrollY + bounds.getTop() - borderPx;
@@ -254,10 +257,17 @@ public class UserInterfaceHighlighter
          if (width > height + 2)
             width = width + 2;
          
-         highlightEl.getStyle().setTop(top, Unit.PX);
-         highlightEl.getStyle().setLeft(left, Unit.PX);
-         highlightEl.getStyle().setWidth(width, Unit.PX);
-         highlightEl.getStyle().setHeight(height, Unit.PX);
+         if (style.getTop() != top + "px")
+            style.setTop(top, Unit.PX);
+         
+         if (style.getLeft() != left + "px")
+            style.setLeft(left, Unit.PX);
+         
+         if (style.getWidth() != width + "px")
+            style.setWidth(width, Unit.PX);
+         
+         if (style.getHeight() != height + "px")
+            style.setHeight(height, Unit.PX);
       }
    }
    

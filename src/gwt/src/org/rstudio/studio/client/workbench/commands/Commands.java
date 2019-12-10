@@ -621,4 +621,7 @@ public abstract class
    public abstract AppCommand toggleScreenReaderSupport();
    public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
+   
+   // Internal
+   public abstract AppCommand showDomElementIds();
 }
