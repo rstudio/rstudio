@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
 import com.google.gwt.event.shared.EventHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent.Handler;
@@ -34,6 +35,11 @@ public class CreateNewTerminalEvent extends CrossWindowEvent<Handler>
    public CreateNewTerminalEvent(String startingFolder)
    {
       startingFolder_ = startingFolder;
+   }
+
+   public CreateNewTerminalEvent(FileSystemItem startingFolder)
+   {
+      startingFolder_ = startingFolder.getPath();
    }
 
    public String getStartingFolder()

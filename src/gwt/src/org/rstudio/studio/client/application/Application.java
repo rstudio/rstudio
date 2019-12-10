@@ -1168,6 +1168,7 @@ public class Application implements ApplicationEventHandlers
       commands_.showTerminalOptions().remove();
       commands_.openNewTerminalAtEditorLocation().remove();
       commands_.sendFilenameToTerminal().remove();
+      commands_.openNewTerminalAtFilePaneLocation().remove();
    }
 
    private void removeProjectCommands()

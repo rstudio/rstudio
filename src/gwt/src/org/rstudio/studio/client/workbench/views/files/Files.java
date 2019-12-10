@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
 import java.util.ArrayList;
 
@@ -583,7 +584,13 @@ public class Files
    {
       consoleDispatcher_.executeSetWd(currentPath_, true);
    }
-   
+
+   @Handler
+   void onOpenNewTerminalAtFilePaneLocation()
+   {
+      eventBus_.fireEvent(new CreateNewTerminalEvent(currentPath_));
+   }
+
    void onSetWorkingDirToFilesPane()
    {
       onSetAsWorkingDir();
