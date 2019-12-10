@@ -87,10 +87,47 @@ public class ShowDOMElementIDs
          for (Element el : els)
          {
             String id = el.getId();
-            if (id.isEmpty())
+            String[] classNames = el.getClassName().split(" ");
+            
+            boolean interesting = false;
+            if (id.startsWith("rstudio_"))
+               interesting = true;
+            
+            for (String className : classNames)
+            {
+               if (className.startsWith("rstudio_"))
+               {
+                  interesting = true;
+                  break;
+               }
+            }
+            
+            if (!interesting)
                continue;
-
-            builder.appendEscaped(id);
+            
+            builder.appendHtmlConstant("<span style='color: rgb(217, 95, 2)'>");
+            builder.appendEscaped(el.getTagName().toLowerCase());
+            builder.appendHtmlConstant("</span>");
+            
+            for (String className : classNames)
+            {
+               if (className.startsWith("rstudio_"))
+               {
+                  builder.appendHtmlConstant("<span style='color: rgb(117, 112, 179)'>");
+                  builder.appendEscaped(".");
+                  builder.appendEscaped(className);
+                  builder.appendHtmlConstant("</span>");
+               }
+            }
+            
+            if (!id.isEmpty())
+            {
+               builder.appendHtmlConstant("<span style='color: rgb(28, 158, 119)'>");
+               builder.appendEscaped("#");
+               builder.appendEscaped(id);
+               builder.appendHtmlConstant("</span>");
+            }
+            
             builder.appendHtmlConstant("<br>");
          }
          
