@@ -430,7 +430,10 @@ public abstract class
    public abstract AppCommand interruptTerminal();
    public abstract AppCommand sendTerminalToEditor();
    public abstract AppCommand sendToTerminal();
-    
+   public abstract AppCommand showTerminalOptions();
+   public abstract AppCommand openNewTerminalHere();
+   public abstract AppCommand sendFilenameToTerminal();
+
    // Help
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();

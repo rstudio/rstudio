@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -39,7 +40,8 @@ public class TerminalTabPresenter extends BasePresenter
                                              ClearTerminalEvent.Handler,
                                              AddTerminalEvent.Handler,
                                              RemoveTerminalEvent.Handler,
-                                             ActivateNamedTerminalEvent.Handler
+                                             ActivateNamedTerminalEvent.Handler,
+                                             CreateNewTerminalEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
@@ -54,8 +56,9 @@ public class TerminalTabPresenter extends BasePresenter
       /**
        * Create a new terminal session
        * @param postCreateText text to insert in terminal after created, may be null
+       * @param initialDirectory working directory of terminal, may be null to use default
        */
-      void createTerminal(String postCreateText);
+      void createTerminal(String postCreateText, String initialDirectory);
 
       /**
        * Terminate current terminal.
@@ -148,7 +151,7 @@ public class TerminalTabPresenter extends BasePresenter
    @Handler
    public void onNewTerminal()
    {
-      view_.activateTerminal(() -> view_.createTerminal(null));
+      view_.activateTerminal(() -> view_.createTerminal(null, null));
    }
 
    @Handler
@@ -259,6 +262,12 @@ public class TerminalTabPresenter extends BasePresenter
          else
             view_.activateNamedTerminal(event.getId(), false /*createdByApi*/);
       });
+   }
+
+   @Override
+   public void onCreateNewTerminal(final CreateNewTerminalEvent event)
+   {
+      view_.activateTerminal(() -> view_.createTerminal(null, event.getStartingFolder()));
    }
 
    public void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList)

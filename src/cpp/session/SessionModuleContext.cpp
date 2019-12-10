@@ -2140,8 +2140,18 @@ void activatePane(const std::string& pane)
 
 FilePath shellWorkingDirectory()
 {
-   if (projects::projectContext().hasProject())
-      return projects::projectContext().directory();
+   std::string initialDirSetting = prefs::userPrefs().terminalInitialDirectory();
+   if (initialDirSetting == kTerminalInitialDirectoryProject)
+   {
+      if (projects::projectContext().hasProject())
+         return projects::projectContext().directory();
+      else
+         return module_context::safeCurrentPath();
+   }
+   else if (initialDirSetting == kTerminalInitialDirectoryCurrent)
+      return module_context::safeCurrentPath();
+   else if (initialDirSetting == kTerminalInitialDirectoryHome)
+      return system::User::getUserHomePath();
    else
       return module_context::safeCurrentPath();
 }

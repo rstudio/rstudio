@@ -290,7 +290,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal(postCreateText);
+         createTerminal(postCreateText, null);
          return;
       }
 
@@ -314,14 +314,15 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createTerminal(final String postCreateText)
+   public void createTerminal(String postCreateText, String initialDirectory)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
-            uiPrefs_.terminalTrackEnvironment().getValue());
+            uiPrefs_.terminalTrackEnvironment().getValue(),
+            initialDirectory == null ? "" : initialDirectory);
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  false /*createdByApi*/, session ->

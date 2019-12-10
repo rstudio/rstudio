@@ -2285,6 +2285,19 @@ core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
    return writePref("auto_save_on_blur", val);
 }
 
+/**
+ * Initial directory for new terminals.
+ */
+std::string UserPrefValues::terminalInitialDirectory()
+{
+   return readPref<std::string>("terminal_initial_directory");
+}
+
+core::Error UserPrefValues::setTerminalInitialDirectory(std::string val)
+{
+   return writePref("terminal_initial_directory", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2462,6 +2475,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
+      kTerminalInitialDirectory,
    });
 }
    

@@ -1,7 +1,7 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
 import com.google.inject.Inject;
@@ -228,7 +230,28 @@ public class EditingTargetCodeExecution
          moveCursorAfterExecution(selectionRange, skipBlankLines);
       }
    }
-   
+
+   public void openNewTerminalHere()
+   {
+      if (target_ == null)
+         return;
+      if (StringUtil.isNullOrEmpty(target_.getPath()))
+         return;
+      FileSystemItem file = FileSystemItem.createFile(target_.getPath());
+      events_.fireEvent(new CreateNewTerminalEvent(file.getParentPathString()));
+   }
+
+   public void sendFilenameToTerminal()
+   {
+      if (target_ == null)
+         return;
+      String filename = target_.getPath();
+      if (StringUtil.isNullOrEmpty(filename))
+         filename = target_.getName().getValue();
+      if (!StringUtil.isNullOrEmpty(filename))
+         events_.fireEvent(new SendToTerminalEvent(filename, true /*focus terminal*/));
+   }
+
    public void profileSelection()
    {
       // allow console a chance to execute code if we aren't focused

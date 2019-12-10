@@ -74,6 +74,24 @@ public class TerminalPreferencesPane extends PreferencesPane
       shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(shellLabel);
 
+      initialDirectory_ = new SelectWidget(
+            "Initial directory:",
+            new String[]
+                  {
+                        "Project directory",
+                        "Current directory",
+                        "Home directory"
+                  },
+            new String[]
+                  {
+                        UserPrefs.TERMINAL_INITIAL_DIRECTORY_PROJECT,
+                        UserPrefs.TERMINAL_INITIAL_DIRECTORY_CURRENT,
+                        UserPrefs.TERMINAL_INITIAL_DIRECTORY_HOME
+                  },
+            false, true, false);
+      spaced(initialDirectory_);
+      general.add(initialDirectory_);
+
       terminalShell_ = new SelectWidget("New terminals open with:");
       spaced(terminalShell_);
       general.add(terminalShell_);
@@ -124,7 +142,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       Label perfLabel = headerLabel("Connection");
       perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(perfLabel);
- 
+
       boolean showPerfLabel = false;
       if (haveLocalEchoPref())
       {
@@ -307,6 +325,22 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       chkAudibleBell_.setValue(prefs_.terminalBellStyle().getValue() == UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND);
       chkHardwareAcceleration_.setValue(prefs_.terminalRenderer().getValue() == UserPrefsAccessor.TERMINAL_RENDERER_CANVAS);
+
+      int terminalInitialDirIndex;
+      switch (prefs.terminalInitialDirectory().getValue())
+      {
+      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_PROJECT:
+      default:
+         terminalInitialDirIndex = 0;
+         break;
+      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_CURRENT:
+         terminalInitialDirIndex = 1;
+         break;
+      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_HOME:
+         terminalInitialDirIndex = 2;
+         break;
+      }
+      initialDirectory_.getListBox().setSelectedIndex(terminalInitialDirIndex);
    }
 
    @Override
@@ -332,6 +366,8 @@ public class TerminalPreferencesPane extends PreferencesPane
             UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND : UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE);
       prefs_.terminalRenderer().setGlobalValue(chkHardwareAcceleration_.getValue() ?
             UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
+
+      prefs_.terminalInitialDirectory().setGlobalValue(initialDirectory_.getValue());
 
       return restartRequirement;
    }
@@ -406,6 +442,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private final TextBoxWithButton customShellChooser_;
    private final FormLabel customShellOptionsLabel_;
    private final TextBox customShellOptions_;
+   private final SelectWidget initialDirectory_;
 
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
@@ -413,8 +450,8 @@ public class TerminalPreferencesPane extends PreferencesPane
    private SelectWidget busyMode_;
    private FormLabel busyWhitelistLabel_;
    private TextBox busyWhitelist_;
-   
-   // Injected ----  
+
+   // Injected ----
    private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
    private final Session session_;

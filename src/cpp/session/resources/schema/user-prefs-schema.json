@@ -987,6 +987,12 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to automatically save when the editor loses focus."
+        },
+        "terminal_initial_directory": {
+            "type": "string",
+            "enum": ["project", "current", "home"],
+            "default": "project",
+            "description": "Initial directory for new terminals."
         }
     }
 }

@@ -44,7 +44,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
    // See comment in C++ code about keeping this in sync with SessionConsoleProcessInfo 
    // constructor for terminal scenario.
    public static final native ConsoleProcessInfo createNewTerminalInfo(
-         boolean trackEnv) /*-{
+         boolean trackEnv, String initialDirectory) /*-{
          
       var procInfo = new Object();
 
@@ -63,7 +63,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
       procInfo.channel_id = "";
       procInfo.alt_buffer = false;
-      procInfo.cwd = "";
+      procInfo.cwd = initialDirectory;
       procInfo.cols = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_COLS;
       procInfo.rows = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_ROWS;
       procInfo.restarted = false;

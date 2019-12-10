@@ -103,8 +103,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addItem(commands_.closeTerminal().createMenuItem(false));
          addSeparator();
          addItem(commands_.closeAllTerminals().createMenuItem(false));
+         addSeparator();
       }
 
+      addItem(commands_.showTerminalOptions().createMenuItem(false));
       callback.onPopupMenu(this);
    }
 

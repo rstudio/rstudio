@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
@@ -387,6 +388,12 @@ public class WorkbenchScreen extends Composite
    void onShowAccessibilityOptions()
    {
       optionsLoader_.showOptions(AccessibilityPreferencesPane.class);
+   }
+
+   @Handler
+   void onShowTerminalOptions()
+   {
+      optionsLoader_.showOptions(TerminalPreferencesPane.class);
    }
 
    @Handler
