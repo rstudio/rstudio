@@ -103,8 +103,6 @@ public class UserInterfaceHighlighter
       
       // use mutation observer to detect changes to the DOM (primarily, for GWT
       // popups) and use that as a signal to refresh and reposition highlighters
-      //
-      // debounce to avoid excessive responses to a cascade of events
       Command callback = () -> refreshHighlighters();
       observer_ =
             new MutationObserver.Builder(callback)
@@ -179,7 +177,9 @@ public class UserInterfaceHighlighter
    {
       NodeList<Element> els = DomUtils.querySelectorAll(Document.get().getBody(), query);
       
-      int n = Math.min(20, els.getLength());
+      // guard against queries that might select an excessive number
+      // of UI elements
+      int n = Math.min(HIGHLIGHT_ELEMENT_MAX, els.getLength());
       if (n == 0)
          return;
       
@@ -217,8 +217,6 @@ public class UserInterfaceHighlighter
       int scrollX = Window.getScrollLeft();
       int scrollY = Window.getScrollTop();
       
-      final int borderPx = 0;
-      
       for (HighlightPair pair : highlightPairs_)
       {
          Element monitoredEl = pair.getMonitoredElement();
@@ -246,13 +244,13 @@ public class UserInterfaceHighlighter
          
          DOMRect bounds = ElementEx.getBoundingClientRect(monitoredEl);
          
-         int top = scrollY + bounds.getTop() - borderPx;
-         int left = scrollX + bounds.getLeft() - borderPx;
-         int width = bounds.getWidth() + borderPx + borderPx;
-         int height = bounds.getHeight() + borderPx + borderPx;
+         int top = scrollY + bounds.getTop();
+         int left = scrollX + bounds.getLeft();
+         int width = bounds.getWidth();
+         int height = bounds.getHeight();
          
          // Ignore out-of-bounds elements.
-         if (width == 0 && height == 0)
+         if (width == 0 || height == 0)
          {
             highlightEl.getStyle().setVisibility(Visibility.HIDDEN);
             continue;
@@ -266,17 +264,10 @@ public class UserInterfaceHighlighter
             width = 20;
          }
          
-         if (style.getTop() != top + "px")
-            style.setTop(top, Unit.PX);
-         
-         if (style.getLeft() != left + "px")
-            style.setLeft(left, Unit.PX);
-         
-         if (style.getWidth() != width + "px")
-            style.setWidth(width, Unit.PX);
-         
-         if (style.getHeight() != height + "px")
-            style.setHeight(height, Unit.PX);
+         style.setTop(top, Unit.PX);
+         style.setLeft(left, Unit.PX);
+         style.setWidth(width, Unit.PX);
+         style.setHeight(height, Unit.PX);
       }
    }
    
@@ -309,5 +300,6 @@ public class UserInterfaceHighlighter
    private final Timer repositionTimer_;
    private final MutationObserver observer_;
    
+   private static final int HIGHLIGHT_ELEMENT_MAX = 10;
    private static final int REPOSITION_DELAY_MS = 0;
 }

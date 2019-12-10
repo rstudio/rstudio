@@ -40,7 +40,7 @@ public class WebMenuCallback implements MenuCallback
       AppMenuBar newMenu = new AppMenuBar(true);
       
       // Adjust the z-index of the displayed sub-menu, so that it (and any
-      // adorning contents) are rendered above their parents.
+      // adorning contents) are rendered in front of their parents.
       final int depth = menuStack_.size();
       newMenu.addAttachHandler(new AttachEvent.Handler()
       {
