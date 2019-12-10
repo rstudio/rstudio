@@ -119,20 +119,6 @@ public class UserInterfaceHighlighter
    @Override
    public void onCommand(AppCommand command)
    {
-      // TODO: Currently used for debugging + testing.
-      
-      /*
-      JsVector<HighlightQuery> queries = JsVector.createVector();
-      for (String prefix : new String[] { ".rstudio_", ".rstudio_tb_", "#rstudio_", "#rstudio_label_" })
-      {
-         String query = prefix + command.getId().toLowerCase();
-         queries.push(HighlightQuery.create(query, 0));
-      }
-      
-      highlightQueries_ = queries;
-      refreshHighlighters();
-      repositionTimer_.schedule(REPOSITION_DELAY_MS);
-      */
    }
 
    @Override
