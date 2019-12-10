@@ -1,27 +1,54 @@
 @charset "UTF-8";
 
+@external rstudio-themes-light-menus, rstudio-themes-dark-menus;
+
 .highlightEl {
    position: fixed;
    pointer-events: none;
-   
-   animation-name: pulse;
+}
+
+.rstudio-themes-light-menus .highlightEl {
+   animation-name: pulse-light;
    animation-duration: 2s;
    animation-timing-function: ease-in-out;
    animation-iteration-count: infinite;
 }
 
-@keyframes pulse { 
+.rstudio-themes-dark-menus .highlightEl {
+   animation-name: pulse-dark;
+   animation-duration: 2s;
+   animation-timing-function: ease-in-out;
+   animation-iteration-count: infinite;
+}
+
+@keyframes pulse-dark { 
    
    0%   {
-      box-shadow: 0 0 2px 2px rgb(255, 255, 255, 1.0);
+      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 1.0);
    }
     
    50%  {
-      box-shadow: 0 0 2px 2px rgb(255, 255, 255, 0.5);
+      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 0.5);
    }
    
    100% {
-      box-shadow: 0 0 2px 2px rgb(255, 255, 255, 1.0);
+      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 1.0);
+   }
+   
+};
+
+@keyframes pulse-light { 
+   
+   0%   {
+      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 1.0);
+   }
+    
+   50%  {
+      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 0.5);
+   }
+   
+   100% {
+      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 1.0);
    }
    
 };

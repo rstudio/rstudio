@@ -534,7 +534,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="debugImportDump"/>
             <cmd refid="toggleEditorTokenInfo"/>
             <separator/>
-            <cmd refid="showDomElementIds"/>
+            <cmd refid="showDomElements"/>
          </menu>
       </menu>
    </menu>
@@ -3356,8 +3356,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Toggle Editor Token Information"
         rebindable="false"/>
         
-   <cmd id="showDomElementIds"
-        menuLabel="_Show DOM Element IDs"
+   <cmd id="showDomElements"
+        menuLabel="_Show DOM Elements"
         rebindable="false"/>
         
    <cmd id="newConnection"

@@ -195,15 +195,6 @@ public class UserInterfaceHighlighter
          highlightEl.addClassName(RES.styles().highlightEl());
          Document.get().getBody().appendChild(highlightEl);
          
-         // Ensure highlight displays above requested element.
-         String zIndex = DomUtils.getInheritedProperty(el, "zIndex");
-         if (zIndex != null)
-         {
-            int value = StringUtil.parseInt(zIndex, -1);
-            if (value != -1)
-               highlightEl.getStyle().setZIndex(value + 1);
-         }
-         
          // record the pair of elements
          highlightPairs_.add(new HighlightPair(el, highlightEl));
       }
@@ -239,6 +230,16 @@ public class UserInterfaceHighlighter
             continue;
          }
          
+         // Ensure highlight displays above requested element.
+         if (StringUtil.isNullOrEmpty(highlightEl.getStyle().getZIndex()))
+         {
+            int value = 1000;
+            String zIndex = DomUtils.getInheritedProperty(monitoredEl, "zIndex");
+            if (zIndex != null)
+               value = StringUtil.parseInt(zIndex, value);
+            highlightEl.getStyle().setZIndex(value);
+         }
+         
          Style style = highlightEl.getStyle();
          if (style.getVisibility() != "visible")
             style.setVisibility(Visibility.VISIBLE);
@@ -264,10 +265,6 @@ public class UserInterfaceHighlighter
             left = left - (rest / 2);
             width = 20;
          }
-         
-         // This is a hack to give buttons with labels a bit more padding.
-         if (width > height + 2)
-            width = width + 2;
          
          if (style.getTop() != top + "px")
             style.setTop(top, Unit.PX);

@@ -66,7 +66,7 @@ public class ShowDOMElementIDs
    }
    
    @Handler
-   public void onShowDomElementIds()
+   public void onShowDomElements()
    {
       if (panel_.isShowing())
       {

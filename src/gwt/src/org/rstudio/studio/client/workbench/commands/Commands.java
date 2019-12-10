@@ -623,5 +623,5 @@ public abstract class
    public abstract AppCommand showAccessibilityOptions();
    
    // Internal
-   public abstract AppCommand showDomElementIds();
+   public abstract AppCommand showDomElements();
 }
