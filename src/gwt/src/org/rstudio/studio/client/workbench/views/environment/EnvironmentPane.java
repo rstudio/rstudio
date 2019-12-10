@@ -19,12 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -126,6 +125,7 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
+      ElementIds.assignElementId(viewButton_, ElementIds.MB_OBJECT_LIST_VIEW);
       toolbar.addRightWidget(viewButton_);
       
       toolbar.addRightSeparator();
@@ -160,6 +160,7 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
+      ElementIds.assignElementId(environmentButton_, ElementIds.MB_ENVIRONMENT_LIST);
       toolbar.addLeftWidget(environmentButton_);
 
       ThemeStyles styles = ThemeStyles.INSTANCE;
@@ -175,6 +176,8 @@ public class EnvironmentPane extends WorkbenchPane
                   new Response(new ArrayList<Suggestion>()));
          }
       });
+      
+      ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
       searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -480,6 +483,8 @@ public class EnvironmentPane extends WorkbenchPane
               ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
+      
+      ElementIds.assignElementId(dataImportButton_, ElementIds.MB_IMPORT_DATASET);
       return dataImportButton_;
 
    }

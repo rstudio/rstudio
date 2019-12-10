@@ -814,3 +814,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
   .Call("rs_packageDependencies", PACKAGE = "(embedding)")
 })
 
+# highlight UI elements within the IDE
+.rs.addApiFunction("highlight", function(data = list()) {
+   .Call("rs_highlight", data, PACKAGE = "(embedding)")
+})

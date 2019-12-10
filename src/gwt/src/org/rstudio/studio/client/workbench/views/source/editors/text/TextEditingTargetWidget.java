@@ -115,13 +115,14 @@ public class TextEditingTargetWidget
       extendedType_ = extendedType;
       events_ = events;
       sourceOnSave_ = new CheckBox();
-      srcOnSaveLabel_ =
-                  new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
+      srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
+      
+      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
 
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -551,6 +552,10 @@ public class TextEditingTargetWidget
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
+      
+      ElementIds.assignElementId(
+            toggleDocOutlineButton_,
+            ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
 
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.

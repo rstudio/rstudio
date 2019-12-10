@@ -1238,6 +1238,18 @@ public class DomUtils
       headEl.appendChild(scriptEl);
    }
    
+   public static final String getInheritedProperty(Element el, String property)
+   {
+      for (; el != null; el = el.getParentElement())
+      {
+         String value = el.getStyle().getProperty(property);
+         if (!StringUtil.isNullOrEmpty(value))
+            return value;
+      }
+      
+      return null;
+   }
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
 }

@@ -114,6 +114,7 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
+                    UserInterfaceHighlighter highlighter,       // force gin to create
                     ChooseFile chooseFile,                      // force gin to create
                     AskPassManager askPass,                     // force gin to create
                     PDFViewer pdfViewer,                        // force gin to create
