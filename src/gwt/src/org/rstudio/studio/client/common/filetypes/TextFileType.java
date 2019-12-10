@@ -411,6 +411,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
+         results.add(commands.runSelectionAsJob());
+         results.add(commands.runSelectionAsLauncherJob());
       }
       if (canCheckSpelling())
       {
