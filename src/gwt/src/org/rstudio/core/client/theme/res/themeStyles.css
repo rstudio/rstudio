@@ -1433,7 +1433,7 @@ body.windows .toolbar {
    margin-top: 2px;
 }
 .toolbarButtonLabel {
-   margin: 4px 0 0 2px;
+   margin: 4px 2px 0 2px;
    font-family: proportionalFont;
    font-size: 11px !important;
    white-space: nowrap;

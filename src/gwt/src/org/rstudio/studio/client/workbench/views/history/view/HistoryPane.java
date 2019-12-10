@@ -31,6 +31,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -613,6 +615,8 @@ public class HistoryPane extends WorkbenchPane
             contextResults_.getFocusTarget().removeClassName(styles_.fakeFocus());
          }
       });
+      
+      ElementIds.assignElementId(searchWidget_, ElementIds.SW_HISTORY);
 
       Toolbar toolbar = new Toolbar("History Tab");
       toolbar.addLeftWidget(commands_.loadHistory().createToolbarButton());
