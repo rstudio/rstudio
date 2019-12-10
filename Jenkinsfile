@@ -25,7 +25,7 @@ def compile_package(os, type, flavor, variant) {
   }
 
   // add OS that the package was built for
-  env = "${env} PACKAGE_OS=${os}"
+  env = "${env} PACKAGE_OS=\"${os}\""
 
   // currently our nodes have access to 4 cores, so spread out the compile job
   // a little (currently using up all 4 cores causes problems)
