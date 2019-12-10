@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsVector;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandEvent;
 import org.rstudio.core.client.command.CommandHandler;
@@ -122,6 +123,7 @@ public class UserInterfaceHighlighter
    {
       // TODO: Currently used for debugging + testing.
       
+      /*
       JsVector<HighlightQuery> queries = JsVector.createVector();
       for (String prefix : new String[] { ".rstudio_", ".rstudio_tb_", "#rstudio_", "#rstudio_label_" })
       {
@@ -132,6 +134,7 @@ public class UserInterfaceHighlighter
       highlightQueries_ = queries;
       refreshHighlighters();
       repositionTimer_.schedule(REPOSITION_DELAY_MS);
+      */
    }
 
    @Override
@@ -191,6 +194,15 @@ public class UserInterfaceHighlighter
          Element highlightEl = Document.get().createDivElement();
          highlightEl.addClassName(RES.styles().highlightEl());
          Document.get().getBody().appendChild(highlightEl);
+         
+         // Ensure highlight displays above requested element.
+         String zIndex = DomUtils.getInheritedProperty(el, "zIndex");
+         if (zIndex != null)
+         {
+            int value = StringUtil.parseInt(zIndex, -1);
+            if (value != -1)
+               highlightEl.getStyle().setZIndex(value + 1);
+         }
          
          // record the pair of elements
          highlightPairs_.add(new HighlightPair(el, highlightEl));

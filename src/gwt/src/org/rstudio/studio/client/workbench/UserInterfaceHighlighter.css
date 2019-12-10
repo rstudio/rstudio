@@ -1,7 +1,6 @@
 @charset "UTF-8";
 
 .highlightEl {
-   
    position: fixed;
    pointer-events: none;
    
@@ -9,7 +8,6 @@
    animation-duration: 2s;
    animation-timing-function: ease-in-out;
    animation-iteration-count: infinite;
-   z-index: 10000;
 }
 
 @keyframes pulse { 

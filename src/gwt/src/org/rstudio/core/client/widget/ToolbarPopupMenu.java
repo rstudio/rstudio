@@ -100,7 +100,6 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          AppMenuItem appMenuItem = (AppMenuItem) menuItem;
          command = appMenuItem.getScheduledCommand(true);
-         getMenuTableElement().addClassName(appMenuItem.getId());
       }
       
       if (command != null)
