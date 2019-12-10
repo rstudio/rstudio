@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages;
 import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
@@ -247,6 +248,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   new Response(new ArrayList<Suggestion>()));
          }
       });
+      
       searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -254,6 +256,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             observer_.onPackageFilterChanged(event.getValue().trim());   
          }
       });
+      
+      ElementIds.assignElementId(searchWidget_, ElementIds.SW_PACKAGES);
       toolbar.addRightWidget(searchWidget_);
       
       toolbar.addRightSeparator();
