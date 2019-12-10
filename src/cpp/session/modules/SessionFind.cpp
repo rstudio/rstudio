@@ -609,6 +609,7 @@ private:
       {
          bool lineSuccess = true;
          ++inputLineNum_;
+         // write every line prior to our match to file
          if (inputLineNum_ != lineNum)
          {
             if (!findResults().preview())
@@ -617,7 +618,7 @@ private:
                outputStream_->write(line.c_str(), line.size());
             }
          }
-         else
+         else // perform replace
          {
             int pos = gsl::narrow_cast<int>(matchOnArray.getSize()) - 1;
             std::string newLine;
@@ -629,59 +630,66 @@ private:
                   static_cast<size_t>(matchOffArray.getValueAt(static_cast<size_t>(pos)).getInt());
                const size_t matchSize = matchOff - matchOn;
                size_t replaceMatchOff = matchOff;
-               std::string newLine(pLineInfo->decodedContents);
                Error error;
+               Replacer replacer(findResults().ignoreCase());
+               std::string newLine(pLineInfo->decodedContents);
 
                // if previewing, we need to display the original and replacement text
-               std::string replaceString(replacePattern);
-               // for regexes, determine replacePattern before creating the string
-               // that will be written to file so that previews are handled correctly
-               if (findResults().replaceRegex())
+               if (findResults().preview())
                {
-                  Replacer replacer(findResults().ignoreCase());
+                  std::string replaceString(replacePattern);
                   std::string previewLine(newLine);
                   error = replacer.replaceRegexWithRegex(matchOn, matchOff, searchPattern,
                      replacePattern, &previewLine, &replaceMatchOff);
                   if (!error)
+                  {
                      replaceString = previewLine.substr(matchOn, (replaceMatchOff - matchOn));
+                     replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
+                     replacer.replaceLiteralWithLiteral(matchOn, matchOff, replaceString, &newLine,
+                        &replaceMatchOff);
+                  }
                   else
                   {
-                     if (!findResults().preview())
-                        pProgress->addUnits(1);
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
-                                     pReplaceMatchOff, &lineSuccess);
+                        pReplaceMatchOff, &lineSuccess);
                      return error;
                   }
                }
-               if (findResults().preview())
-                  replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
+               else // perform replace
+               {
+                  pProgress->addUnits(1);
+                  if (findResults().replaceRegex())
+                     error = replacer.replaceRegexWithRegex(matchOn, matchOff, searchPattern,
+                        replacePattern, &newLine, &replaceMatchOff);
+                  else if (findResults().regex())
+                     error = replacer.replaceRegexWithLiteral(matchOn, matchOff, searchPattern,
+                        replacePattern, &newLine, &replaceMatchOff);
+                  else
+                     replacer.replaceLiteralWithLiteral(matchOn, matchOff, replacePattern, &newLine,
+                        &replaceMatchOff);
 
-               Replacer replacer(findResults().ignoreCase());
-               if (findResults().regex() &&
-                   !findResults().replaceRegex())
-                  error = replacer.replaceRegexWithLiteral(matchOn, matchOff, searchPattern,
-                     replacePattern, &newLine, &replaceMatchOff);
-               else
-                  replacer.replaceLiteralWithLiteral(matchOn, matchOff, replaceString,
-                     &newLine, &replaceMatchOff);
-               if (error)
-                  addReplaceErrorMessage(error.asString(), pErrorMessage,
-                     pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
+                  if (error)
+                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                        pReplaceMatchOff, &lineSuccess);
+               }
+
+               // Handle side-effects when replace is successful
                if (lineSuccess)
                {
                   pLineInfo->decodedContents = newLine;
 
                   // if multiple replaces in line, readjust previous match numbers
+                  size_t replaceSize = replaceMatchOff - matchOn;
                   if (pReplaceMatchOn->getSize() > 0 &&
-                      matchSize != replaceString.size())
+                      matchSize != replaceSize)
                   {
                      json::Array tempMatchOn(*pReplaceMatchOn);
                      json::Array tempMatchOff(*pReplaceMatchOff);
                      pReplaceMatchOn->clear();
                      pReplaceMatchOff->clear();
 
-                     // put back in reverse order
-                     int offset(gsl::narrow_cast<int>(replaceString.size() - matchSize));
+                     // put back in reverse order for the frontend
+                     int offset(gsl::narrow_cast<int>(replaceSize - matchSize));
                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                      substractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
@@ -693,21 +701,35 @@ private:
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
                   }
                }
-               if (!findResults().preview())
-                  pProgress->addUnits(1);
                pos--;
             }
+            // encode and write the new line to file
             if (!findResults().preview())
             {
                Error error = encodeAndWriteLineToFile(pLineInfo->decodedContents,
                   pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
                if (error)
-                  addReplaceErrorMessage(error.asString(), pErrorMessage,
-                     pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
+                  addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                     pReplaceMatchOff, &lineSuccess);
+
             }
          }
       }
       return Success();
+   }
+
+   bool shouldSkipFile(std::string file)
+   {
+      bool skipFile = false;
+      if (file.find("/.Rproj.user/") != std::string::npos ||
+          file.find("/.git/") != std::string::npos ||
+          file.find("/.svn/") != std::string::npos ||
+          file.find("/packrat/lib/") != std::string::npos ||
+          file.find("/packrat/src/") != std::string::npos ||
+          file.find("/renv/library/") != std::string::npos ||
+          file.find("/.Rhistory") != std::string::npos)
+         skipFile = true;
+      return (skipFile);
    }
 
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
@@ -745,24 +767,9 @@ private:
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
-
-            if (file.find("/.Rproj.user/") != std::string::npos)
-               continue;
-            if (file.find("/.git/") != std::string::npos)
-               continue;
-            if (file.find("/.svn/") != std::string::npos)
-               continue;
-            if (file.find("/packrat/lib/") != std::string::npos)
-               continue;
-            if (file.find("/packrat/src/") != std::string::npos)
-               continue;
-            if (file.find("/renv/library/") != std::string::npos)
-               continue;
-            if (file.find("/.Rhistory") != std::string::npos)
-               continue;
-
-            if (!websiteOutputDir.empty() &&
-                file.find(websiteOutputDir) != std::string::npos)
+            if (shouldSkipFile(file) ||
+                (!websiteOutputDir.empty() &&
+                 file.find(websiteOutputDir) != std::string::npos))
                continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
@@ -913,17 +920,51 @@ private:
 
 } // namespace
 
-core::Error runGrepOperation(
-      bool previewFlag, bool replaceFlag,
-      const std::string& searchPattern, const std::string& replacePattern,
-      bool asRegex, bool ignoreCase, bool replaceRegex, bool useGitIgnore,
-      const std::string& directory, const json::Array& filePatterns,
-      LocalProgress* pProgress,
-      json::JsonRpcResponse* pResponse)
+struct GrepOptions
 {
-   if (previewFlag && !replaceFlag)
-      LOG_DEBUG_MESSAGE("replaceFlag must be true when previewFlag is true");
+   GrepOptions(std::string search, std::string directory,
+      json::Array filePatterns, bool asRegex, bool ignoreCase) :
+      asRegex(asRegex),
+      ignoreCase(ignoreCase),
+      searchPattern(search),
+      directory(directory),
+      filePatterns(filePatterns)
+   {}
 
+   bool asRegex;
+   bool ignoreCase;
+
+   const std::string searchPattern;
+   const std::string directory;
+   const json::Array filePatterns;
+};
+
+struct ReplaceOptions
+{
+   ReplaceOptions() :
+      empty(true),
+      replacePattern("")
+   {}
+
+   ReplaceOptions(std::string replace, bool asRegex, bool useGitIgnore) :
+      empty(false),
+      preview(false),
+      asRegex(asRegex),
+      useGitIgnore(useGitIgnore),
+      replacePattern(replace)
+   {}
+
+   bool empty;
+   bool preview;
+   bool asRegex;
+   bool useGitIgnore;
+
+   const std::string replacePattern;
+};
+
+core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
+   LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
+{
    core::system::ProcessOptions options;
 
    core::system::Options childEnv;
@@ -948,7 +989,7 @@ core::Error runGrepOperation(
                           projects::projectContext().defaultEncoding() :
                           prefs::userPrefs().defaultEncoding();
    std::string encodedString;
-   error = r::util::iconvstr(searchPattern,
+   error = r::util::iconvstr(grepOptions.searchPattern,
                              "UTF-8",
                              encoding,
                              false,
@@ -956,7 +997,7 @@ core::Error runGrepOperation(
    if (error)
    {
       LOG_ERROR(error);
-      encodedString = searchPattern;
+      encodedString = grepOptions.searchPattern;
    }
 
    *pStream << encodedString << std::endl;
@@ -977,17 +1018,17 @@ core::Error runGrepOperation(
    cmd << "--devices=skip";
 #endif
 
-   if (ignoreCase)
+   if (grepOptions.ignoreCase)
       cmd << "-i";
 
    // Use -f to pass pattern via file, so we don't have to worry about
    // escaping double quotes, etc.
    cmd << "-f";
    cmd << tempFile;
-   if (!asRegex)
+   if (!grepOptions.asRegex)
       cmd << "-F";
 
-   for (json::Value filePattern : filePatterns)
+   for (json::Value filePattern : grepOptions.filePatterns)
    {
       cmd << "--include=" + filePattern.getString();
    }
@@ -997,7 +1038,7 @@ core::Error runGrepOperation(
 
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(directory);
+   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
 
    // Clear existing results
@@ -1010,15 +1051,15 @@ core::Error runGrepOperation(
       return error;
 
    findResults().onFindBegin(ptrGrepOp->handle(),
-                             searchPattern,
-                             directory,
-                             asRegex,
-                             ignoreCase);
-   if (replaceFlag)
+                             grepOptions.searchPattern,
+                             grepOptions.directory,
+                             grepOptions.asRegex,
+                             grepOptions.ignoreCase);
+   if (!replaceOptions.empty)
       findResults().onReplaceBegin(ptrGrepOp->handle(),
-                                   previewFlag,
-                                   replacePattern,
-                                   replaceRegex,
+                                   replaceOptions.preview,
+                                   replaceOptions.replacePattern,
+                                   replaceOptions.asRegex,
                                    pProgress);
    pResponse->setResult(ptrGrepOp->handle());
 
@@ -1042,11 +1083,8 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = runGrepOperation(
-      false, false, searchString, std::string(),
-      asRegex, ignoreCase, false, false,
-      directory, filePatterns, nullptr, pResponse);
-
+   GrepOptions grepOptions(searchString, directory, filePatterns, asRegex, ignoreCase);
+   error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
    return error;
 }
 
@@ -1093,10 +1131,10 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (!replaceRegex)
       LOG_DEBUG_MESSAGE("Replace Regex must be true during preview");
 
-   error = runGrepOperation(
-      true, true, searchString, replacePattern,
-      asRegex, ignoreCase, replaceRegex, useGitIgnore,
-      directory, filePatterns, nullptr, pResponse);
+   GrepOptions grepOptions(searchString, directory, filePatterns, asRegex, ignoreCase);
+   ReplaceOptions replaceOptions(replacePattern, replaceRegex, useGitIgnore);
+   replaceOptions.preview = true;
+   error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
 
    return error;
 }
@@ -1125,12 +1163,13 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   LocalProgress* pProgress = new LocalProgress(originalFindCount, 5);
+   static const int kUpdatePercent = 5;
+   LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
+   GrepOptions grepOptions(searchString, directory, filePatterns, asRegex, ignoreCase);
+   ReplaceOptions replaceOptions(replacePattern, replaceRegex, useGitIgnore);
 
    error = runGrepOperation(
-              false, true, searchString, replacePattern,
-              asRegex, ignoreCase, replaceRegex, useGitIgnore,
-              directory, filePatterns, pProgress, pResponse);
+      grepOptions, replaceOptions, pProgress, pResponse);
    return error;
 }
 
