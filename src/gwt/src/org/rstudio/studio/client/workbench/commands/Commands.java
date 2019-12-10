@@ -434,6 +434,7 @@ public abstract class
    public abstract AppCommand openNewTerminalAtEditorLocation();
    public abstract AppCommand openNewTerminalAtFilePaneLocation();
    public abstract AppCommand sendFilenameToTerminal();
+   public abstract AppCommand setTerminalToCurrentDirectory();
 
    // Help
    public abstract AppCommand helpBack();

@@ -132,6 +132,11 @@ public class TerminalTabPresenter extends BasePresenter
       void sendTerminalToEditor();
 
       /**
+       * Send "cd path" to terminal where "path" is RStudio's current working directory
+       */
+      void goToCurrentDirectory();
+
+      /**
        * Ensure there is at least one terminal.
        */
       void ensureTerminal();
@@ -215,6 +220,12 @@ public class TerminalTabPresenter extends BasePresenter
    public void onSendTerminalToEditor()
    {
       view_.sendTerminalToEditor();
+   }
+
+   @Handler
+   public void onSetTerminalToCurrentDirectory()
+   {
+      view_.goToCurrentDirectory();
    }
 
    @Override

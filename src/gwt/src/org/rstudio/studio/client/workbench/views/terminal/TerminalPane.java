@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -88,6 +89,7 @@ public class TerminalPane extends WorkbenchPane
                           Commands commands,
                           UserPrefs uiPrefs,
                           Provider<FontSizeManager> pFontSizeManager,
+                          WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
@@ -96,6 +98,7 @@ public class TerminalPane extends WorkbenchPane
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       pFontSizeManager_ = pFontSizeManager;
+      workbenchContext_ = workbenchContext;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -155,6 +158,7 @@ public class TerminalPane extends WorkbenchPane
       toolbar.addRightWidget(closeButton_);
 
       updateTerminalToolbar();
+      commands_.setTerminalToCurrentDirectory().setEnabled(false);
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
@@ -613,6 +617,23 @@ public class TerminalPane extends WorkbenchPane
             Debug.log(msg);
          }
       });
+   }
+
+   @Override
+   public void goToCurrentDirectory()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+
+      String command = "cd ";
+
+      if (visibleTerminal.isPosixShell())
+         command += StringUtil.escapeBashPath(workbenchContext_.getCurrentWorkingDir().getPath(), false);
+      else
+         command += "\"" + workbenchContext_.getCurrentWorkingDir().getPath() + "\"";
+      command += "\n";
+      sendToTerminal(command, true);
    }
 
    private String debug_dumpTerminalContext()
@@ -1135,4 +1156,5 @@ public class TerminalPane extends WorkbenchPane
    private final WorkbenchServerOperations server_;
    private final Provider<FontSizeManager> pFontSizeManager_;
    private final UserPrefs uiPrefs_;
+   private final WorkbenchContext workbenchContext_;
 }

@@ -595,7 +595,6 @@ public class Files
    {
       onSetAsWorkingDir();
    }
-   
 
    @Handler
    void onShowFolder()
