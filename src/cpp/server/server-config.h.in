@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
-
+#define RSTUDIO_PACKAGE_OS "Unknown OS"
 #cmakedefine RSTUDIO_DEVELOPMENT
 
 

@@ -24,7 +24,7 @@ pipeline {
     stage('build'){
       steps {
         script {
-          bat 'cd package/win32 && make-package.bat clean && cd ../..'
+          bat 'cd package/win32 && set "PACKAGE_OS=Windows" && make-package.bat clean && cd ../..'
         }
       }
     }
