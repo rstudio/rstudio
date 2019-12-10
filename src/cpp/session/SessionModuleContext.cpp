@@ -79,6 +79,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 
+#include <shared_core/system/User.hpp>
+
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
