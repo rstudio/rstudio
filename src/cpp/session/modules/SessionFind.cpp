@@ -393,8 +393,8 @@ public:
 private:
    struct LineInfo
    {
-      std::string leftContents;
-      std::string rightContents;
+      std::string leadingWhitespace;
+      std::string trailingWhitespace;
       std::string decodedPreview;
       std::string decodedContents;
       std::string encodedContents;
@@ -442,6 +442,15 @@ private:
 #ifdef _WIN32
       string_utils::convertLineEndings(str, string_utils::LineEndingWindows);
 #endif
+   }
+
+   void adjustForPreview(std::string* contents)
+   {
+      if (contents->size() > 300)
+      {
+         *contents = contents->erase(300);
+         contents->append("...");
+      }
    }
 
    Error completeFileReplace()
@@ -511,13 +520,7 @@ private:
          decodedLine.append(decode(std::string(inputPos, end)));
 
       *pFullLineContent = decodedLine;
-      if (decodedLine.size() > 300)
-      {
-         // if we are cutting off pContent, we need to store full lines for replaces
-         decodedLine = decodedLine.erase(300);
-         decodedLine.append("...");
-      }
-
+      adjustForPreview(decodedLine);
       *pContent = decodedLine;
    }
 
@@ -697,7 +700,7 @@ private:
             if (!findResults().preview())
             {
                Error error = encodeAndWriteLineToFile(pLineInfo->decodedContents,
-                  pLineInfo->leftContents, pLineInfo->rightContents);
+                  pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
                if (error)
                   addReplaceErrorMessage(error.asString(), pErrorMessage,
                      pReplaceMatchOn, pReplaceMatchOff, &lineSuccess);
@@ -772,8 +775,8 @@ private:
             if (lineInfo.encodedContents != lineInfo.decodedPreview)
             {
                size_t pos = lineInfo.encodedContents.find(lineInfo.decodedPreview);
-               lineInfo.leftContents = lineInfo.encodedContents.substr(0,pos);
-               lineInfo.rightContents =
+               lineInfo.leadingWhitespace = lineInfo.encodedContents.substr(0,pos);
+               lineInfo.trailingWhitespace =
                   lineInfo.encodedContents.substr(pos + lineInfo.decodedPreview.length());
             }
 
@@ -817,11 +820,7 @@ private:
                }
                lineInfo.decodedPreview = lineInfo.decodedContents;
 
-               if (lineInfo.decodedPreview.size() > 300)
-               {
-                  lineInfo.decodedPreview = lineInfo.decodedPreview.erase(300);
-                  lineInfo.decodedPreview.append("...");
-               }
+               adjustForPreview(lineInfo.decodedPreview);
             }
 
             files.push_back(json::Value(file));
