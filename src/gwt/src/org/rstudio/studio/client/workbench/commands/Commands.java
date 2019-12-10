@@ -431,7 +431,7 @@ public abstract class
    public abstract AppCommand sendTerminalToEditor();
    public abstract AppCommand sendToTerminal();
    public abstract AppCommand showTerminalOptions();
-   public abstract AppCommand openNewTerminalHere();
+   public abstract AppCommand openNewTerminalAtEditorLocation();
    public abstract AppCommand sendFilenameToTerminal();
 
    // Help

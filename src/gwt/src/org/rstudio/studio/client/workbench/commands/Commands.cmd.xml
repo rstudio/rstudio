@@ -245,7 +245,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="runSelectionAsJob"/>
          <menu label="_Terminal">
             <cmd refid="sendToTerminal"/>
-            <cmd refid="openNewTerminalHere"/>
+            <cmd refid="openNewTerminalAtEditorLocation"/>
             <cmd refid="sendFilenameToTerminal"/>
          </menu>
          <separator/>
@@ -2771,7 +2771,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Send _Filename to Terminal"
         windowMode="main"/>
 
-   <cmd id="openNewTerminalHere"
+   <cmd id="openNewTerminalAtEditorLocation"
         menuLabel="_Open New Terminal at File Location"
         windowMode="main"/>
 

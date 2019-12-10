@@ -4357,7 +4357,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onOpenNewTerminalHere()
+   void onOpenNewTerminalAtEditorLocation()
    {
       codeExecution_.openNewTerminalHere();
    }
