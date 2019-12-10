@@ -1,7 +1,7 @@
 /*
  * SessionShinyViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,14 @@ namespace session {
 namespace modules { 
 namespace shiny_viewer {
 
+enum AppDestination
+{
+   ForegroundApp,
+   BackgroundApp
+};
+
 namespace {
+
 
 // track a pending Shiny path launch
 FilePath s_pendingShinyPath;
@@ -166,14 +173,10 @@ Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
    return Success();
 }
 
-Error getShinyRunCmd(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+std::string shinyRunCmd(const std::string& targetPath
+      const std::string& extendedType, 
+      AppDestination dest)
 {
-   std::string targetPath, extendedType;
-   Error error = json::readParams(request.params, &targetPath, &extendedType);
-   if (error)
-      return error;
-
    modules::shiny::ShinyFileType shinyType = 
       modules::shiny::shinyTypeFromExtendedType(extendedType);
 
@@ -183,25 +186,31 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    if (shinyType == modules::shiny::ShinyDirectory)
       shinyPath = shinyPath.getParent();
 
-   std::string shinyRunPath = module_context::pathRelativeTo(
-            module_context::safeCurrentPath(),
-            shinyPath);
+   // check to see if Shiny is attached to the search path (if we're running the app in teh
+   // foreground)
+   bool isShinyAttached = false;
+   if (dest == AppDestination::ForegroundApp)
+   {
+      isShinyAttached = util::isPackageAttached("shiny");
 
-   // check to see if Shiny is attached to the search path
-   bool isShinyAttached = r::util::isPackageAttached("shiny");
-   
+      shinyPath = module_context::pathRelativeTo(
+               module_context::safeCurrentPath(),
+               shinyPath);
+   }
+
    std::string runCmd; 
+
    if (shinyType == modules::shiny::ShinyDirectory)
    {
       if (!isShinyAttached)
          runCmd = "shiny::";
       runCmd.append("runApp(");
-      if (shinyRunPath != ".")
+      if (shinyPath != ".")
       {
          // runApp defaults to the current working directory, so don't specify
          // it unless we need to.
          runCmd.append("'");
-         runCmd.append(shinyRunPath);
+         runCmd.append(shinyPath);
          runCmd.append("'");
       }
       runCmd.append(")");
@@ -215,22 +224,44 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
       if (module_context::isPackageVersionInstalled("shiny", "0.13.0") &&
           shinyType == modules::shiny::ShinySingleFile)
       {
-         runCmd.append("runApp('" + shinyRunPath + "')");
+         runCmd.append("runApp('" + shinyPath + "')");
       }
       else
       {
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("print(");
          runCmd.append("source('");
-         runCmd.append(shinyRunPath);
+         runCmd.append(shinyPath);
          runCmd.append("')");
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("$value)");
       }
    }
+}
+
+Error runShinyBackgroundApp(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
+   if (error)
+      return error;
+
+   std::string cmd = shinyRunCmd(targetPath, extendedType, 
+         AppDestination::BackgroundApp);
+}
+
+Error getShinyRunCmd(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
+   if (error)
+      return error;
 
    json::Object dataJson;
-   dataJson["run_cmd"] = runCmd;
+   dataJson["run_cmd"] = shinyRunCmd(targetPath, extendedType, 
+         AppDestination::ForegroundApp);
    pResponse->setResult(dataJson);
 
    return Success();
@@ -297,6 +328,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionShinyViewer.R"))
       (bind(registerRpcMethod, "get_shiny_run_cmd", getShinyRunCmd))
       (bind(registerRpcMethod, "set_shiny_viewer_type", setShinyViewerTypeRpc))
+      (bind(registerRpcMethod, "run_shiny_background_app", runShinyBackgroundApp))
       (bind(initShinyViewerPref, pShinyViewerType));
 
    return initBlock.execute();
