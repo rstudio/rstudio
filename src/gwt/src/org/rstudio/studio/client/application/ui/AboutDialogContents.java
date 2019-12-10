@@ -124,7 +124,6 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField InlineLabel copyrightYearLabel;
-   @UiField InlineLabel osLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
    @UiField HTMLPanel licenseLabel;
