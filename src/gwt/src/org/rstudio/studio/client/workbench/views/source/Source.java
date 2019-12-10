@@ -391,6 +391,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.renameSourceDoc());
       dynamicCommands_.add(commands.sourceAsLauncherJob());
       dynamicCommands_.add(commands.sourceAsJob());
+      dynamicCommands_.add(commands.runSelectionAsJob());
+      dynamicCommands_.add(commands.runSelectionAsLauncherJob());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

@@ -1,7 +1,7 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -194,10 +194,11 @@ public class EditingTargetCodeExecution
          return;
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
+      String targetPath = target_ == null ? null : target_.getPath();
       if (useJobLauncher)
-         events_.fireEvent(new LauncherJobRunSelectionEvent(target_.getPath(), code));
+         events_.fireEvent(new LauncherJobRunSelectionEvent(targetPath, code));
       else
-         events_.fireEvent(new JobRunSelectionEvent(target_.getPath(), code));
+         events_.fireEvent(new JobRunSelectionEvent(targetPath, code));
    }
    
    public void executeRange(Range range)
