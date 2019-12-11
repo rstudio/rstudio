@@ -92,6 +92,7 @@
 * Command to insert the full path and filename of current editor file into terminal
 * Command in File pane to open a new terminal at File pane's current location
 * Command in to change terminal to current RStudio working directory (#2363)
+* Zoom Left/Right Column commands for keyboard users (#5874)
 
 ### Bugfixes
 
