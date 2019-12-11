@@ -56,14 +56,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                              String path,
                                              boolean regex,
                                              boolean caseSensitive,
-                                             boolean excludeIgnore,
+                                             boolean gitIgnore,
                                              JsArrayString filePatterns) /*-{
          return {
             query: query,
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
-            excludeIgnore: excludeIgnore,
+            gitIgnore: gitIgnore,
             filePatterns: filePatterns,
             resultsCount: 0,
             errorCount: 0,
@@ -89,8 +89,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          return this.caseSensitive;
       }-*/;
 
-      public native final boolean excludeIgnore() /*-{
-         return this.excludeIgnore;
+      public native final boolean gitIgnore() /*-{
+         return this.gitIgnore;
       }-*/;
 
       public final String[] getFilePatterns()
@@ -255,7 +255,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxRegex_.setValue(dialogState.isRegex());
-      checkboxIgnore_.setValue(dialogState.excludeIgnore());
+      checkboxIgnore_.setValue(dialogState.gitIgnore());
       dirChooser_.setText(dialogState.getPath());
 
       String filePatterns = StringUtil.join(

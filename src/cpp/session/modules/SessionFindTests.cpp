@@ -31,21 +31,17 @@ using namespace modules::find;
 
 namespace {
 
-std::string line("RStudio is great");
-std::string regexLine("aba OOOkkk okab AAOO aaabbb aa abab");
-const std::string regexOriginalLine("aba OOOkkk okab AAOO aaabbb aa abab");
+const std::string kLine("RStudio is great");
+const std::string replaceString("awesome");
+const size_t matchOn = 11;
+const size_t matchOff = 16;
 
-std::string findRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
-std::string replaceString("awesome");
-std::string replaceRegex("\\1\\1\\1");
+const std::string kRegexLine("aba OOOkkk okab AAOO aaabbb aa abab");
+const size_t rMatchOn = 4;
+const size_t rMatchOff = 10;
 
-size_t matchOn = 11;
-size_t matchOff = 16;
-
-size_t rMatchOn = 4;
-size_t rMatchOff = 10;
-
-size_t replaceMatchOff = 0;
+const std::string findRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
+const std::string replaceRegex("\\1\\2\\1\\2");
 
 } // anonymous namespace
 
@@ -53,6 +49,9 @@ TEST_CASE("SessionFind")
 {
    SECTION("Replace literal with literal ignore case")
    {
+      std::string line(kLine);
+      size_t replaceMatchOff;
+
       Replacer replacer(true);
       replacer.replaceLiteralWithLiteral(matchOn, matchOff,
          replaceString, &line, &replaceMatchOff);
@@ -62,54 +61,74 @@ TEST_CASE("SessionFind")
 
    SECTION("Replace regex with literal ignore case")
    {
+      std::string line(kRegexLine);
+      size_t replaceMatchOff;
+
       Replacer replacer(true);
-      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, findRegex, replaceString, &regexLine,
+      replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff, findRegex, replaceString, &line,
          &replaceMatchOff);
-      CHECK(regexLine.compare("aba awesome okab AAOO aaabbb aa abab") == 0);
+      CHECK(line.compare("aba awesome okab AAOO aaabbb aa abab") == 0);
       CHECK(replaceMatchOff == 11);
 
-      replacer.replaceRegexWithLiteral(22, 28, findRegex, replaceString, &regexLine,
+      replacer.replaceRegexWithLiteral(22, 28, findRegex, replaceString, &line,
          &replaceMatchOff);
-      CHECK(regexLine.compare("aba awesome okab AAOO awesome aa abab") == 0);
+      CHECK(line.compare("aba awesome okab AAOO awesome aa abab") == 0);
       CHECK(replaceMatchOff == 29);
-
-      regexLine = regexOriginalLine;
    }
 
    SECTION("Replace regex with literal case sensitive")
    {
-      std::string regexOriginalLine = regexLine;
+      std::string line(kRegexLine);
+      size_t replaceMatchOff;
+
       Replacer replacer(false);
       replacer.replaceRegexWithLiteral(rMatchOn, rMatchOff,
-         findRegex, replaceString, &regexLine, &replaceMatchOff);
-      CHECK(regexLine.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
+         findRegex, replaceString, &line, &replaceMatchOff);
+      CHECK(line.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
       CHECK(replaceMatchOff == 36);
-      regexLine = regexOriginalLine;
    }
 
    SECTION("Replace regex with regex ignore case")
    {
+      std::string line(kRegexLine);
+      size_t replaceMatchOff;
+
       Replacer replacer(true);
-      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &regexLine,
+      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &line,
          &replaceMatchOff);
-      CHECK(regexLine.compare("aba OOO okab AAOO aaabbb aa abab") == 0);
-      CHECK(replaceMatchOff == 7);
+      CHECK(line.compare("aba OkOk okab AAOO aaabbb aa abab") == 0);
+      CHECK(replaceMatchOff == 8);
 
-      replacer.replaceRegexWithRegex(18, 24, findRegex, replaceRegex, &regexLine, &replaceMatchOff);
-      CHECK(regexLine.compare("aba OOO okab AAOO aaa aa abab") == 0);
-      CHECK(replaceMatchOff == 21);
-
-      regexLine = regexOriginalLine;
+      size_t matchOn = 18;
+      size_t matchOff = 24;
+      replacer.replaceRegexWithRegex(matchOn, matchOff, findRegex, replaceRegex, &line,
+         &replaceMatchOff);
+      CHECK(line.compare("aba OkOk okab AAOO abab aa abab") == 0);
+      CHECK(replaceMatchOff == 22);
    }
 
    SECTION("Replace regex with regex case sensitive")
    {
+      std::string line(kRegexLine);
+      size_t replaceMatchOff;
+
       Replacer replacer(false);
-      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &regexLine,
+      replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex, &line,
          &replaceMatchOff);
-      CHECK(regexLine.compare("aba OOOkkk okab AAOO aaa aa abab") == 0);
-      CHECK(replaceMatchOff == 32);
-      regexLine = regexOriginalLine;
+      CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
+      CHECK(replaceMatchOff == 33);
+   }
+
+   SECTION("Attempt replace without valid match")
+   {
+      std::string line(kLine);
+      size_t replaceMatchOff;
+
+      Replacer replacer(true);
+      Error error = replacer.replaceRegexWithRegex(rMatchOn, rMatchOff, findRegex, replaceRegex,
+         &line, &replaceMatchOff); 
+      //CHECK(error);
+      CHECK(line.compare(kLine) == 0);
    }
 }
 

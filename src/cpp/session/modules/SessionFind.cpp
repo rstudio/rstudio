@@ -586,7 +586,7 @@ private:
          }
          catch (const std::ios_base::failure& e)
          {
-            error = Error(e.code().value(), e.what(), ERROR_LOCATION);
+            error = systemError(e.code().value(), ERROR_LOCATION);
          }
       }
       return error;
@@ -1244,9 +1244,9 @@ core::Error Replacer::completeReplace(const boost::regex& searchRegex,
       temp = boost::regex_replace(pLine->substr(matchOn), searchRegex, replaceRegex,
          boost::format_sed | boost::format_first_only);
    }
-   catch (const std::runtime_error& e)
+   catch (const boost::regex_error& e)
    {
-      return core::Error(-1, e.what(), ERROR_LOCATION);
+      return core::Error(e.position(), e.what(), ERROR_LOCATION);
    }
 
    temp.insert(0, pLine->substr(0, matchOn));
@@ -1275,9 +1275,9 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
          pReplaceMatchOff);
       return error;
    }
-   catch (const std::runtime_error& e)
+   catch (const boost::regex_error& e)
    {
-      return core::Error(-1, e.what(), ERROR_LOCATION);
+      return core::Error(e.position(), e.what(), ERROR_LOCATION);
    }
 }
 
@@ -1293,9 +1293,9 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
          pReplaceMatchOff);
       return error;
    }
-   catch (const std::runtime_error& e)
+   catch (const boost::regex_error& e)
    {
-      return core::Error(-1, e.what(), ERROR_LOCATION);
+      return core::Error(e.position(), e.what(), ERROR_LOCATION);
    }
 }
 

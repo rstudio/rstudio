@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find.model;
 
+import org.rstudio.core.client.Debug;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
@@ -129,6 +130,7 @@ public class FindResult extends JavaScriptObject
    {
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
+      // display any errors highlighted in red
       if (getRegexPreviewIndicator() &&
           !StringUtil.isNullOrEmpty(getErrors()))
       {
@@ -136,16 +138,19 @@ public class FindResult extends JavaScriptObject
          out.appendEscapedLines(getErrors());
          out.appendHtmlConstant("</mark>");
       }
-      else
+      else // highlight found words and preview replaces
       {
+         // retrieve match positions
          ArrayList<Integer> on = getMatchOns();
          ArrayList<Integer> off = getMatchOffs();
          ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
    
+         // replaceMatchOn/Offs exist only when previewing a regex replace
          ArrayList<Integer> replaceOn = getReplaceMatchOns();
          ArrayList<Integer> replaceOff = getReplaceMatchOffs();
          ArrayList<Pair<Boolean, Integer>> replaceParts = new ArrayList<Pair<Boolean, Integer>>();
    
+         // combine the match on and match off lists into paired array lists for ease of use
          int difference = 0;
          while (on.size() + off.size() > 0)
          {
@@ -166,7 +171,10 @@ public class FindResult extends JavaScriptObject
                   if (replaceOnVal >= 0)
                      difference = offVal - onVal;
                   else
-                     difference = -1; // shouldn't get here
+                  {
+                     difference = -1;
+                     Debug.logWarning("Unexpected value, offVal must be greater than onVal");
+                  }
                   replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
                }
                else
@@ -174,13 +182,16 @@ public class FindResult extends JavaScriptObject
             }
          }
    
+         // create html for line
          String line = getLineValue();
+
          // Use a counter to ensure tags are balanced.
          int openStrongTags = 0;
          int openEmTags = 0;
    
          for (int i = 0; i < line.length(); i++)
          {
+            // when we reach a matchOn or matchOff position, apply a strong tag
             while (parts.size() > 0 && parts.get(0).second == i)
             {
                if (parts.remove(0).first)
@@ -192,6 +203,7 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("</strong>");
                   openStrongTags--;
+                  // if performing a non regex replace, we can use the replace value as a literal
                   String replace = getReplaceValue();
                   if (!StringUtil.isNullOrEmpty(replace))
                   {
@@ -202,6 +214,7 @@ public class FindResult extends JavaScriptObject
                   }
                }
             }
+            // when we reach a replaceMatchOn/Off position, apply an em tag
             while (replaceParts.size() > 0 && replaceParts.get(0).second == i)
             {
                if (replaceParts.remove(0).first)
@@ -219,6 +232,7 @@ public class FindResult extends JavaScriptObject
                out.append(line.charAt(i));
          }
    
+         // tags may left open if they are at the end of the line
          while (openStrongTags > 0)
          {
             openStrongTags--;
@@ -232,7 +246,6 @@ public class FindResult extends JavaScriptObject
                out.appendHtmlConstant("</em>");
             }
          }
-   
          while (openEmTags > 0)
          {
             openEmTags--;
@@ -247,20 +260,23 @@ public class FindResult extends JavaScriptObject
    {
       SafeHtmlBuilder out = new SafeHtmlBuilder();
 
+      // display any errors highlighted in red
       if (!StringUtil.isNullOrEmpty(getErrors()))
       {
          out.appendHtmlConstant("<mark>");
          out.appendEscaped(getErrors());
          out.appendHtmlConstant("</mark>");
       }
-      else
+      else // display replace values highlighted
       {
+         // retrieve match positions
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
    
          ArrayList<Pair<Boolean, Integer>> parts
                                          = new ArrayList<Pair<Boolean, Integer>>();
 
+         // consolidate matches into one ArrayList
          while (onReplace.size() + offReplace.size() > 0)
          {
             int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
@@ -271,6 +287,7 @@ public class FindResult extends JavaScriptObject
                parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
          }
    
+         // create html for line
          String line = getLineValue();
          // Use a counter to ensure tags are balanced.
          int openEmTags = 0;
@@ -278,6 +295,7 @@ public class FindResult extends JavaScriptObject
    
          for (int i = 0; i < line.length(); i++)
          {
+            // when we reach a match position, apply an em tag
             while (parts.size() > 0 && parts.get(0).second == i)
             {
                if (parts.remove(0).first)
@@ -294,6 +312,7 @@ public class FindResult extends JavaScriptObject
             out.append(line.charAt(i));
          }
    
+         // tags may left open if they are at the end of the line
          while (openEmTags > 0)
          {
             openEmTags--;
