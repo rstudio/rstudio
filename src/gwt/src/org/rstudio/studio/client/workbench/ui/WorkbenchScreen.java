@@ -373,6 +373,12 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
 
    @Handler
+   void onLayoutZoomLeftColumn() { paneManager_.zoomColumn(PaneManager.LEFT_COLUMN); }
+
+   @Handler
+   void onLayoutZoomRightColumn() { paneManager_.zoomColumn(PaneManager.RIGHT_COLUMN); }
+
+   @Handler
    void onMacPreferences()
    {
       onShowOptions();
