@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -88,6 +89,7 @@ public class TerminalPane extends WorkbenchPane
                           Commands commands,
                           UserPrefs uiPrefs,
                           Provider<FontSizeManager> pFontSizeManager,
+                          WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
@@ -96,6 +98,7 @@ public class TerminalPane extends WorkbenchPane
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       pFontSizeManager_ = pFontSizeManager;
+      workbenchContext_ = workbenchContext;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -155,6 +158,7 @@ public class TerminalPane extends WorkbenchPane
       toolbar.addRightWidget(closeButton_);
 
       updateTerminalToolbar();
+      commands_.setTerminalToCurrentDirectory().setEnabled(false);
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
@@ -290,7 +294,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal(postCreateText);
+         createTerminal(postCreateText, null);
          return;
       }
 
@@ -314,14 +318,15 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createTerminal(final String postCreateText)
+   public void createTerminal(String postCreateText, String initialDirectory)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
-            uiPrefs_.terminalTrackEnvironment().getValue());
+            uiPrefs_.terminalTrackEnvironment().getValue(),
+            initialDirectory == null ? "" : initialDirectory);
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
                                                  uiPrefs_.tabKeyMoveFocus().getValue(),
                                                  false /*createdByApi*/, session ->
@@ -612,6 +617,23 @@ public class TerminalPane extends WorkbenchPane
             Debug.log(msg);
          }
       });
+   }
+
+   @Override
+   public void goToCurrentDirectory()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+
+      String command = "cd ";
+
+      if (visibleTerminal.isPosixShell())
+         command += StringUtil.escapeBashPath(workbenchContext_.getCurrentWorkingDir().getPath(), false);
+      else
+         command += "\"" + workbenchContext_.getCurrentWorkingDir().getPath() + "\"";
+      command += "\n";
+      sendToTerminal(command, true);
    }
 
    private String debug_dumpTerminalContext()
@@ -1134,4 +1156,5 @@ public class TerminalPane extends WorkbenchPane
    private final WorkbenchServerOperations server_;
    private final Provider<FontSizeManager> pFontSizeManager_;
    private final UserPrefs uiPrefs_;
+   private final WorkbenchContext workbenchContext_;
 }

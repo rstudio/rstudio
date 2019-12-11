@@ -343,6 +343,14 @@ public class TerminalSession extends XTermWidget
       receivedInput(inputText);
    }
 
+   public boolean isPosixShell()
+   {
+      String shellType = getProcInfo().getShellType();
+      return shellType != UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS &&
+             shellType != UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE &&
+             shellType != UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD;
+   }
+
    @Override
    public void receivedInput(String input)
    {

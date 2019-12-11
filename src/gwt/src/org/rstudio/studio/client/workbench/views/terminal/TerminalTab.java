@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -49,7 +50,8 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                  ClearTerminalEvent.Handler,
                  AddTerminalEvent.Handler,
                  RemoveTerminalEvent.Handler,
-                 ActivateNamedTerminalEvent.Handler
+                 ActivateNamedTerminalEvent.Handler,
+                 CreateNewTerminalEvent.Handler
    {
       @Handler
       public abstract void onNewTerminal();
@@ -84,6 +86,9 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       @Handler
       public abstract void onSendTerminalToEditor();
 
+      @Handler
+      public abstract void onSetTerminalToCurrentDirectory();
+
       /**
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server
@@ -111,6 +116,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       events.addHandler(AddTerminalEvent.TYPE, shim_);
       events.addHandler(RemoveTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
+      events.addHandler(CreateNewTerminalEvent.TYPE, shim_);
 
       events.addHandler(SessionInitEvent.TYPE, sie ->
       {

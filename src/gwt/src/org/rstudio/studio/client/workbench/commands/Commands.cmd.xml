@@ -243,7 +243,11 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <cmd refid="runSelectionAsLauncherJob"/>
          <cmd refid="runSelectionAsJob"/>
-         <cmd refid="sendToTerminal"/>
+         <menu label="_Terminal">
+            <cmd refid="sendToTerminal"/>
+            <cmd refid="openNewTerminalAtEditorLocation"/>
+            <cmd refid="sendFilenameToTerminal"/>
+         </menu>
          <separator/>
          <cmd refid="previewJS"/>
          <cmd refid="previewSql"/>
@@ -443,6 +447,7 @@ well as menu structures (for main menu and popup menus).
          <menu label="_Terminal">
             <cmd refid="newTerminal"/>
             <separator/>
+            <cmd refid="setTerminalToCurrentDirectory"/>
             <cmd refid="renameTerminal"/>
             <cmd refid="sendTerminalToEditor"/>
             <cmd refid="showTerminalInfo"/>
@@ -456,6 +461,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="closeTerminal"/>
             <separator/>
             <cmd refid="closeAllTerminals"/>
+            <separator/>
+            <cmd refid="showTerminalOptions"/>
           </menu>
          <menu label="_Jobs">
             <cmd refid="startJob"/>
@@ -2756,6 +2763,26 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Send to _Terminal"
         desc="Send the current line or selection to terminal"/>
+
+   <cmd id="showTerminalOptions"
+        menuLabel="_Terminal Options..."
+        windowMode="main"/>
+
+   <cmd id="sendFilenameToTerminal"
+        menuLabel="Send _Filename to Terminal"
+        windowMode="main"/>
+
+   <cmd id="openNewTerminalAtEditorLocation"
+        menuLabel="_Open New Terminal at File Location"
+        windowMode="main"/>
+
+   <cmd id="openNewTerminalAtFilePaneLocation"
+        menuLabel="Open New Terminal Here"
+        windowMode="main"/>
+
+   <cmd id="setTerminalToCurrentDirectory"
+        menuLabel="_Go to Current Directory"
+        windowMode="main"/>
 
    <cmd id="browseAddins"
         label="Browse Addins"

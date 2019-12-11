@@ -1625,6 +1625,18 @@ public class UserPrefsAccessor extends Prefs
       return bool("auto_save_on_blur", false);
    }
 
+   /**
+    * Initial directory for new terminals.
+    */
+   public PrefValue<String> terminalInitialDirectory()
+   {
+      return string("terminal_initial_directory", "project");
+   }
+
+   public final static String TERMINAL_INITIAL_DIRECTORY_PROJECT = "project";
+   public final static String TERMINAL_INITIAL_DIRECTORY_CURRENT = "current";
+   public final static String TERMINAL_INITIAL_DIRECTORY_HOME = "home";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1975,6 +1987,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
+      if (source.hasKey("terminal_initial_directory"))
+         terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
    }
    
 

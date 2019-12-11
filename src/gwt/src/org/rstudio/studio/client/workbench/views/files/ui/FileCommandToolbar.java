@@ -26,13 +26,12 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class FileCommandToolbar extends Toolbar
 {
    @Inject
-   public FileCommandToolbar(Commands commands, Session session, UserPrefs prefs)
+   public FileCommandToolbar(Commands commands, UserPrefs prefs)
    {
       super("File Commands");
       StandardIcons icons = StandardIcons.INSTANCE;
@@ -55,6 +54,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
       moreMenu.addItem(commands.goToWorkingDir().createMenuItem(false));
+      moreMenu.addItem(commands.openNewTerminalAtFilePaneLocation().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();

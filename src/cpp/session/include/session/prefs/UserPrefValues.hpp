@@ -304,6 +304,10 @@ namespace prefs {
 #define kAutoSaveOnIdleNone "none"
 #define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
+#define kTerminalInitialDirectory "terminal_initial_directory"
+#define kTerminalInitialDirectoryProject "project"
+#define kTerminalInitialDirectoryCurrent "current"
+#define kTerminalInitialDirectoryHome "home"
 
 class UserPrefValues: public Preferences
 {
@@ -1352,6 +1356,12 @@ public:
     */
    bool autoSaveOnBlur();
    core::Error setAutoSaveOnBlur(bool val);
+
+   /**
+    * Initial directory for new terminals.
+    */
+   std::string terminalInitialDirectory();
+   core::Error setTerminalInitialDirectory(std::string val);
 
 };
 
