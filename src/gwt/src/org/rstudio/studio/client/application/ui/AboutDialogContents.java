@@ -73,7 +73,7 @@ public class AboutDialogContents extends Composite
             Window.Navigator.getUserAgent());
       buildLabel.setText(
            "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
-           info.date + ")");
+           info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
 

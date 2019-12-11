@@ -18,6 +18,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -28,6 +29,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -74,6 +77,7 @@ public abstract class ModalDialogBase extends DialogBox
       super(false, false);
       setGlassEnabled(true);
       addStyleDependentName("ModalDialog");
+      addStyleName(RES.styles().modalDialog());
 
       // a11y
       role_ = role;
@@ -803,6 +807,25 @@ public abstract class ModalDialogBase extends DialogBox
       }
       return null;
    }
+   
+   
+   public interface Styles extends CssResource
+   {
+      String modalDialog();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("ModalDialogBase.css")
+      Styles styles();
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
+
 
    private Handle shortcutDisableHandle_;
 

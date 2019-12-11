@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
@@ -65,6 +66,7 @@ public class FileCommandToolbar extends Toolbar
             "More file commands",
             new ImageResource2x(icons.more_actions2x()),
             moreMenu);
+      ElementIds.assignElementId(moreButton, ElementIds.MB_FILES_MORE);
       addLeftWidget(moreButton);
 
       // Refresh

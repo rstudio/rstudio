@@ -77,6 +77,11 @@ public class ElementEx extends Element
       return ((ElementEx) el).getClientTop();
    }
    
+   public static final DOMRect getBoundingClientRect(Element el)
+   {
+      return ((ElementEx) el).getBoundingClientRect();
+   }
+   
    public final native DOMRect getBoundingClientRect() /*-{
       return this.getBoundingClientRect();
    }-*/;

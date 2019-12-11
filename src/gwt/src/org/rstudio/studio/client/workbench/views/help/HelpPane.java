@@ -456,6 +456,7 @@ public class HelpPane extends WorkbenchPane
          findTextBox_ = new FindTextBox("Find in Topic");
          findTextBox_.addStyleName(RES.styles().findTopicTextbox());
          findTextBox_.setOverrideWidth(90);
+         ElementIds.assignElementId(findTextBox_, ElementIds.SW_HELP_FIND_IN_TOPIC);
          toolbar.addLeftWidget(findTextBox_);
          findTextBox_.addKeyUpHandler(new KeyUpHandler() { 
             

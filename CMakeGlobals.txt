@@ -117,6 +117,12 @@ else()
   # use build ID from Jenkins
   set(RSTUDIO_BUILD_ID $ENV{BUILD_ID})
 endif()
+if("$ENV{PACKAGE_OS}" STREQUAL "")
+  # no known package OS
+  set(RSTUDIO_PACKAGE_OS "Unknown OS")
+else()
+  set(RSTUDIO_PACKAGE_OS $ENV{PACKAGE_OS})
+endif()
 
 # required R version
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)

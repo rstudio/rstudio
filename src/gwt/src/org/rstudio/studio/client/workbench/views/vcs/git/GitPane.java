@@ -21,17 +21,16 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -139,11 +138,14 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(historyButton_ = commands_.vcsShowHistory().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(moreButton_ = new ToolbarMenuButton(
+      
+      moreButton_ = new ToolbarMenuButton(
             "More",
             ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
-            moreMenu));
+            moreMenu);
+      ElementIds.assignElementId(moreButton_, ElementIds.MB_GIT_MORE);
+      toolbar.addLeftWidget(moreButton_);
 
       toolbar.addRightWidget(createBranchToolbarButton_);
       
@@ -154,7 +156,7 @@ public class GitPane extends WorkbenchPane implements Display
       
       toolbar.addRightSeparator();
       
-      toolbar.addRightWidget(refreshButton_ = new ToolbarButton(
+      refreshButton_ = new ToolbarButton(
             ToolbarButton.NoText,
             commands_.vcsRefresh().getTooltip(),
             commands_.vcsRefresh().getImageResource(),
@@ -165,7 +167,9 @@ public class GitPane extends WorkbenchPane implements Display
                   table_.showProgress();
                   commands_.vcsRefresh().execute();
                }
-            }));
+            });
+      ElementIds.assignElementId(refreshButton_, ElementIds.TB_GIT_REFRESH);
+      toolbar.addRightWidget(refreshButton_);
       
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
       refreshMenu.addItem(new GitMonitoringMenuItem(true));
