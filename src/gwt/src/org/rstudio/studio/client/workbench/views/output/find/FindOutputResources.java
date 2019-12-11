@@ -20,12 +20,6 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface FindOutputResources extends ClientBundle
 {
-   @Source("ExpandReplaceIcon.png")
-   ImageResource expandReplaceIcon();
-
-   @Source("CollapseReplaceIcon.png")
-   ImageResource collapseReplaceIcon();
-
    public interface Styles extends CssResource
    {
       String findOutput();
