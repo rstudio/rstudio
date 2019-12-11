@@ -16,6 +16,8 @@
 #ifndef SESSION_ASYNC_R_JOB_MANAGER_HPP
 #define SESSION_ASYNC_R_JOB_MANAGER_HPP
 
+#include <session/SessionAsyncRProcess.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -26,7 +28,26 @@ namespace session {
 namespace modules { 
 namespace jobs {
 
+class AsyncRJob : public async_r::AsyncRProcess
+{
+public:
+   std::string id();
+   void cancel();
+   void start();
+   void onStderr(const std::string& output);
 
+protected:
+   bool completed_;
+   bool cancelled_;
+
+   boost::shared_ptr<Job> job_;
+   boost::function<void()> onComplete_;
+};
+
+core::Error startAsyncRJob(boost::shared_ptr<async_r::AsyncRProcess> job,
+      std::string *pId);
+
+core::Error stopAsyncRJob(const std::string& id);
  
 } // namespace jobs
 } // namespace modules

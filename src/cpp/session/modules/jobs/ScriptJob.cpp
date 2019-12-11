@@ -24,6 +24,7 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/jobs/JobsApi.hpp>
 
+#include "AsyncRJobManager.hpp"
 #include "ScriptJob.hpp"
 
 #define kProgressDelim  "__"
@@ -40,7 +41,7 @@ namespace jobs {
 
 namespace {
 
-class ScriptJob : public async_r::AsyncRProcess 
+class ScriptJob : public AsyncRJob
 {
 public:
    static boost::shared_ptr<ScriptJob> create(
@@ -48,27 +49,14 @@ public:
          boost::function<void()> onComplete)
    {
       boost::shared_ptr<ScriptJob> pJob(new ScriptJob(spec, onComplete));
-      pJob->start();
       return pJob;
    }
-   
-   std::string id()
-   {
-      if (job_)
-         return job_->id();
-      return "";
-   }
-   
-   void cancel()
-   {
-      if (job_)
-      {
-         cancelled_ = true;
-         // request terminate
-         terminate();
-      }
-   }
 
+   std::string name()
+   {
+      return spec_.name();
+   }
+   
 private:
    ScriptJob(const ScriptLaunchSpec& spec, 
          boost::function<void()> onComplete):
@@ -251,12 +239,6 @@ private:
             }
          }
       }
-   }
-
-   void onStderr(const std::string& output)
-   {
-      if (job_)
-         job_->addOutput(output, true);
    }
 
    void onCompleted(int exitStatus)
