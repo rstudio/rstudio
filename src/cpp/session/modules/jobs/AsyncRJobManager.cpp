@@ -46,6 +46,11 @@ void AsyncRJob::onStdout(const std::string& output)
       job_->addOutput(output, false);
 }
 
+void AsyncRJob::onCompleted(int exitStatus)
+{
+   onComplete_();
+}
+
 std::string AsyncRJob::id()
 {
    if (job_)
@@ -66,10 +71,22 @@ void AsyncRJob::cancel()
 Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
+   // remove the job from the registry when it's done
+   job->setOnComplete([&]() 
+   { 
+      // remove the job from the list of those running
+      s_scripts.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
+   });
+
+   // start the job now
    job->start();
+
+   // return and register the job
    if (pId != nullptr)
       *pId = job->id();
+
    s_jobs.push_back(job);
+
    return Success();
 }
 

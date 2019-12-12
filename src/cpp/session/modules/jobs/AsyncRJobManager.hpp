@@ -33,8 +33,12 @@ class AsyncRJob : public async_r::AsyncRProcess
 public:
    std::string id();
    void cancel();
-   void start();
+   void onStdout(const std::string& output);
    void onStderr(const std::string& output);
+   void setOnComplete(boost::function<void()> onComplete);
+
+   virtual void onCompleted(int exitStatus);
+   virtual void start() = 0;
 
 protected:
    bool completed_;

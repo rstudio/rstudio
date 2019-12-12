@@ -71,6 +71,26 @@ private:
    boost::optional<async_r::AsyncRProcessOptions> procOptions_;
 };
 
+
+class ScriptJob : public AsyncRJob
+{
+public:
+   static boost::shared_ptr<ScriptJob> create(
+         const ScriptLaunchSpec& spec);
+private:
+   ScriptJob(const ScriptLaunchSpec& spec);
+   void start();
+   void onStdout(const std::string& output);
+   void onStdout(const std::string& output);
+   void onCompleted(int exitStatus);
+   void onProgress(const std::string& cat, const std::string& argument);
+
+   ScriptLaunchSpec spec_;
+   FilePath import_;
+   FilePath export_;
+   FilePath tempCode_;
+};
+
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 
       std::string *pId);
 
