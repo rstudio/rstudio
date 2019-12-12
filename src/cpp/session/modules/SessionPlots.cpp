@@ -49,6 +49,8 @@ namespace plots {
   
 namespace {
 
+#define MAX_FIG_SIZE 3840*2
+
 // locations
 #define kGraphics "/graphics"
    
@@ -494,7 +496,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
 
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, 3000, &width, &height, pResponse))
+   if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
      return ;
 
    // fire off the plot zoom size changed event to notify the client
@@ -530,8 +532,8 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
                   "window.activeTimer = setTimeout( function() { "
 
                      "window.location.href = "
-                        "\"plot_zoom?width=\" + document.body.clientWidth "
-                              " + \"&height=\" + document.body.clientHeight "
+                        "\"plot_zoom?width=\" + Math.max(Math.min(document.body.clientWidth, " << MAX_FIG_SIZE << "), 100), "
+                              " + \"&height=\" + Math.max(Math.min(document.body.clientHeight, " << MAX_FIG_SIZE << "), 100), "
                               " + \"&scale=\" + #scale#;"
                    "}, 300);"
                "}"
@@ -561,7 +563,7 @@ void handleZoomPngRequest(const http::Request& request,
 
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, 5000, &width, &height, pResponse))
+   if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
      return ;
 
    // generate the file
@@ -593,7 +595,7 @@ void handlePngRequest(const http::Request& request,
 {
    // get the width and height parameters
    int width, height;
-   if (!extractSizeParams(request, 100, 5000, &width, &height, pResponse))
+   if (!extractSizeParams(request, 100, MAX_FIG_SIZE, &width, &height, pResponse))
       return ;
 
    // generate the image
