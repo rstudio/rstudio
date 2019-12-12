@@ -349,5 +349,17 @@ public class ElementIds
    // HelpSearchWidget
    public final static String SW_HELP = "sw_help";
    public static String getSwHelp() { return getElementId(SW_HELP); }
-   
+
+   // SvnResolveDialog
+   public final static String SVN_RESOLVE_GROUP = "svn_resolve_group";
+   public final static String SVN_RESOLVE_MINE = "svn_resolve_mine";
+   public final static String SVN_RESOLVE_MINE_DESC = "svn_resolve_mine_desc";
+   public final static String SVN_RESOLVE_MINE_CONFLICT = "svn_resolve_mine_conflict";
+   public final static String SVN_RESOLVE_MINE_CONFLICT_DESC = "svn_resolve_mine_conflict_desc";
+   public final static String SVN_RESOLVE_THEIRS_CONFLICT = "svn_resolve_theirs_conflict";
+   public final static String SVN_RESOLVE_THEIRS_CONFLICT_DESC = "svn_resolve_theirs_conflict_desc";
+   public final static String SVN_RESOLVE_MINE_ALL = "svn_resolve_mine_all";
+   public final static String SVN_RESOLVE_MINE_ALL_DESC = "svn_resolve_mine_all_desc";
+   public final static String SVN_RESOLVE_THEIRS_ALL = "svn_resolve_theirs_all";
+   public final static String SVN_RESOLVE_THEIRS_ALL_DESC = "svn_resolve_theirs_all_desc";
 }
