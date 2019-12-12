@@ -166,7 +166,8 @@ public class FindResult extends JavaScriptObject
             else
                parts.add(new Pair<Boolean, Integer>(false, off.remove(0) + offset));
    
-            if (getRegexPreviewIndicator() && replaceOn.size() + replaceOff.size() > 0)
+            if (getRegexPreviewIndicator() &&
+                replaceOn.size() + replaceOff.size() > 0)
             {
                if (replaceOnVal < replaceOffVal)
                {
@@ -209,12 +210,10 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("</strong>");
                   openStrongTags--;
-                  String replace = getReplaceValue();
                   if (!StringUtil.isNullOrEmpty(replace))
                   {
                      out.appendHtmlConstant("<em>");
-                     for (int j = 0; j < replace.length(); j++)
-                        out.append(replace.charAt(j));
+                     out.appendEscaped(getReplaceValue());
                      out.appendHtmlConstant("</em>");
                   }
                }
@@ -233,9 +232,7 @@ public class FindResult extends JavaScriptObject
                   openEmTags--;
                }
             }
-
-            if (getRegexPreviewIndicator() || openEmTags == 0)
-               out.append(line.charAt(i));
+            out.append(line.charAt(i));
          }
    
          // tags may left open if they are at the end of the line
@@ -245,12 +242,10 @@ public class FindResult extends JavaScriptObject
          {
             openStrongTags--;
             out.appendHtmlConstant("</strong>");
-            String replace = getReplaceValue();
             if (!StringUtil.isNullOrEmpty(replace))
             {
                out.appendHtmlConstant("<em>");
-               for (int j = 0; j < replace.length(); j++)
-                  out.append(replace.charAt(j));
+               out.appendEscaped(getReplaceValue());
                out.appendHtmlConstant("</em>");
             }
          }
