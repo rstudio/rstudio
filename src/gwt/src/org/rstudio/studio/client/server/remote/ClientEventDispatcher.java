@@ -1036,6 +1036,7 @@ public class ClientEventDispatcher
          {
             HighlightEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new HighlightEvent(data));
+         }
          else if (type == ClientEvent.TutorialCommand)
          {
             TutorialCommandEvent.Data data = event.getData();

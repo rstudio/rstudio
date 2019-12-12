@@ -207,7 +207,7 @@ SEXP rs_highlight(SEXP queriesSEXP)
    if (error)
       LOG_ERROR(error);
    
-   ClientEvent event(client_events::kHighlight, data);
+   ClientEvent event(client_events::kHighlightUi, data);
    module_context::enqueClientEvent(event);
    
    return queriesSEXP;
