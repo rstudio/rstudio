@@ -92,16 +92,6 @@ void PrefLayer::destroy()
       core::system::file_monitor::unregisterMonitor(*handle_);
       handle_ = boost::none;
    }
-
-   // Clear prefs cache
-   RECURSIVE_LOCK_MUTEX(mutex_)
-   {
-      if (cache_)
-      {
-         cache_.reset();
-      }
-   }
-   END_LOCK_MUTEX;
 }
 
 core::json::Object PrefLayer::allPrefs()
