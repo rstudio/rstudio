@@ -21,27 +21,6 @@ import com.google.gwt.http.client.URL;
 
 public class URIUtils
 {
-   public class URIBuilder
-   {
-      public URIBuilder(String uri)
-      {
-         uri_ = uri;
-      }
-      
-      public URIBuilder queryParam(String name, String value)
-      {
-         uri_ = addQueryParam(uri_, name, value);
-         return this;
-      }
-      
-      public String get()
-      {
-         return uri_;
-      }
-      
-      private String uri_;
-   }
-   
    public static String addQueryParam(String url, String name, String value)
    {
       // first split into base and anchor
