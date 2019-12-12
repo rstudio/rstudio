@@ -335,7 +335,13 @@ public class ElementIds
    // PackagesPane
    public final static String SW_PACKAGES = "sw_packages";
    public static String getSwPackages() { return getElementId(SW_PACKAGES); }
-   
+
+   // SpellingDialog
+   public final static String SPELLING_NOT_IN_DICT= "spelling_not_in_dict";
+   public static String getSpellingNotInDict() { return getElementId(SPELLING_NOT_IN_DICT); }
+   public final static String SPELLING_CHANGE_TO= "spelling_change_to";
+   public static String getSpellingChangeTo() { return getElementId(SPELLING_CHANGE_TO); }
+
    // HelpPane
    public final static String SW_HELP_FIND_IN_TOPIC = "sw_help_find_in_topic";
    public static String getSwHelpFindInTopic() { return getElementId(SW_HELP_FIND_IN_TOPIC); }
