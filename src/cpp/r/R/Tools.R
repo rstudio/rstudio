@@ -346,7 +346,8 @@ assign(envir = .rs.Env, ".rs.hasVar", function(name)
       restored <- as.pairlist(restored)
    
    # update plot items
-   plot[[1]] <- restored
+   if (!is.null(restored))
+      plot[[1]] <- restored
    
    # tag plot with process pid
    plotPid <- attr(plot, "pid")
