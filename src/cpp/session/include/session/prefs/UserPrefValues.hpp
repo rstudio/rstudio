@@ -219,7 +219,10 @@ namespace prefs {
 #define kShowTerminalTab "show_terminal_tab"
 #define kTerminalLocalEcho "terminal_local_echo"
 #define kTerminalWebsockets "terminal_websockets"
-#define kTerminalAutoClose "terminal_auto_close"
+#define kTerminalCloseBehavior "terminal_close_behavior"
+#define kTerminalCloseBehaviorAlways "always"
+#define kTerminalCloseBehaviorClean "clean"
+#define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
@@ -1046,10 +1049,10 @@ public:
    core::Error setTerminalWebsockets(bool val);
 
    /**
-    * Whether to automatically close the Terminal tab.
+    * Whether to close the terminal pane after the shell exits.
     */
-   bool terminalAutoClose();
-   core::Error setTerminalAutoClose(bool val);
+   std::string terminalCloseBehavior();
+   core::Error setTerminalCloseBehavior(std::string val);
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.

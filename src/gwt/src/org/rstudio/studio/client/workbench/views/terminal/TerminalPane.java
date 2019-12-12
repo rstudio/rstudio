@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.Console;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -756,15 +757,21 @@ public class TerminalPane extends WorkbenchPane
          int autoCloseMode = terminals_.autoCloseForHandle(handle);
          if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_DEFAULT)
          {
-            if (uiPrefs_.terminalAutoClose().getValue())
+            // map default to current user preference setting
+            String autoCloseSetting = uiPrefs_.terminalCloseBehavior().getValue();
+            if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS)
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
+            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER)
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
+            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN)
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT;
             else
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
          }
 
-         // always keep pane open for non-zero exit code so user can see what happened
-         if (exitCode != 0)
+         if (exitCode != 0 && autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT)
          {
+            // keep pane open for non-zero exit code so user can see what happened
             autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
          }
 

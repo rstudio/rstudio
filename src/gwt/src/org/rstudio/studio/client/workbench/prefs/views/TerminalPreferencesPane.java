@@ -181,10 +181,23 @@ public class TerminalPreferencesPane extends PreferencesPane
       closing.add(miscLabel);
       miscLabel.setVisible(true);
 
-      CheckBox chkTerminalAutoClose = checkboxPref("Close terminal when shell exits",
-            prefs_.terminalAutoClose(),
-            "Deselect this option to keep terminal pane open after shell exits.");
-      closing.add(chkTerminalAutoClose);
+      autoClosePref_ = new SelectWidget(
+            "When shell exits:",
+            new String[]
+                  {
+                        "Close the pane",
+                        "Don't close the pane",
+                        "Close pane if shell exits cleanly"
+                  },
+            new String[]
+                  {
+                        UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS,
+                        UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER,
+                        UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN
+                  },
+            false, true, false);
+      spaced(autoClosePref_);
+      closing.add(autoClosePref_);
 
       if (haveCaptureEnvPref())
       {
@@ -326,21 +339,11 @@ public class TerminalPreferencesPane extends PreferencesPane
       chkAudibleBell_.setValue(prefs_.terminalBellStyle().getValue() == UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND);
       chkHardwareAcceleration_.setValue(prefs_.terminalRenderer().getValue() == UserPrefsAccessor.TERMINAL_RENDERER_CANVAS);
 
-      int terminalInitialDirIndex;
-      switch (prefs.terminalInitialDirectory().getValue())
-      {
-      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_PROJECT:
-      default:
-         terminalInitialDirIndex = 0;
-         break;
-      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_CURRENT:
-         terminalInitialDirIndex = 1;
-         break;
-      case UserPrefs.TERMINAL_INITIAL_DIRECTORY_HOME:
-         terminalInitialDirIndex = 2;
-         break;
-      }
-      initialDirectory_.getListBox().setSelectedIndex(terminalInitialDirIndex);
+      if (!initialDirectory_.setValue(prefs.terminalInitialDirectory().getValue()))
+         initialDirectory_.getListBox().setSelectedIndex(0);
+
+      if (!autoClosePref_.setValue(prefs.terminalCloseBehavior().getValue()))
+         autoClosePref_.getListBox().setSelectedIndex(0);
    }
 
    @Override
@@ -368,6 +371,7 @@ public class TerminalPreferencesPane extends PreferencesPane
             UserPrefsAccessor.TERMINAL_RENDERER_CANVAS : UserPrefsAccessor.TERMINAL_RENDERER_DOM);
 
       prefs_.terminalInitialDirectory().setGlobalValue(initialDirectory_.getValue());
+      prefs_.terminalCloseBehavior().setGlobalValue(autoClosePref_.getValue());
 
       return restartRequirement;
    }
@@ -447,6 +451,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    private final CheckBox chkHardwareAcceleration_;
    private final CheckBox chkAudibleBell_;
 
+   private SelectWidget autoClosePref_;
    private SelectWidget busyMode_;
    private FormLabel busyWhitelistLabel_;
    private TextBox busyWhitelist_;
