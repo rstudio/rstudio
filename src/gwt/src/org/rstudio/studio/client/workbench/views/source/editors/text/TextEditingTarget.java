@@ -4355,7 +4355,19 @@ public class TextEditingTarget implements
    {
       codeExecution_.sendSelectionToTerminal(false);
    }
- 
+
+   @Handler
+   void onOpenNewTerminalAtEditorLocation()
+   {
+      codeExecution_.openNewTerminalHere();
+   }
+
+   @Handler
+   void onSendFilenameToTerminal()
+   {
+      codeExecution_.sendFilenameToTerminal();
+   }
+
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {

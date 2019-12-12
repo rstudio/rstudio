@@ -37,4 +37,12 @@ public class DOMRect extends JavaScriptObject
    public final native int getBottom() /*-{
       return this.bottom;
    }-*/;
+   
+   public final native int getWidth() /*-{
+      return this.width;
+   }-*/;
+   
+   public final native int getHeight() /*-{
+      return this.height;
+   }-*/;
 }

@@ -87,6 +87,11 @@
 * Update minimum supported browser versions (#5593)
 * Automatic refresh of the Git pane can now be enabled / disabled as required. (#4368)
 * Target directory can be changed from within the 'Upload Files' dialog (RStudio Server)
+* User preference to configure initial working directory of new terminals (#1557)
+* Command to open a new terminal at location of current editor file
+* Command to insert the full path and filename of current editor file into terminal
+* Command in File pane to open a new terminal at File pane's current location
+* Command in to change terminal to current RStudio working directory (#2363)
 
 ### Bugfixes
 

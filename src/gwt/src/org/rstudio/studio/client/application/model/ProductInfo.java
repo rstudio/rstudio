@@ -28,4 +28,5 @@ public class ProductInfo
    public String release_name;
    public String date;
    public String copyright_year;
+   public String os;
 }

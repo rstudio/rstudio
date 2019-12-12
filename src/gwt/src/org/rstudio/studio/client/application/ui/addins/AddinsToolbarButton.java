@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.CoreResources;
@@ -71,6 +72,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      ElementIds.assignElementId(this, ElementIds.ADDINS_TOOLBAR_BUTTON);
       menu_ = getMenu();
       
       menu_.setAutoHideRedundantSeparators(false);

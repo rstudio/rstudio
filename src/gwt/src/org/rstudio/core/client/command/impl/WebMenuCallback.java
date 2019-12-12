@@ -14,10 +14,17 @@
  */
 package org.rstudio.core.client.command.impl;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuBar;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.MenuCallback;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
+
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.logical.shared.AttachEvent;
 
 import java.util.Stack;
 
@@ -30,10 +37,37 @@ public class WebMenuCallback implements MenuCallback
 
    public void beginMenu(String label)
    {
-      label = AppMenuItem.replaceMnemonics(label, "");
-
       AppMenuBar newMenu = new AppMenuBar(true);
+      
+      // Adjust the z-index of the displayed sub-menu, so that it (and any
+      // adorning contents) are rendered in front of their parents.
+      final int depth = menuStack_.size();
+      newMenu.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            ElementPredicate callback = (Element el) -> {
+               return el.getParentElement().getTagName().toLowerCase().contentEquals("body");
+            };
+            
+            Element popupEl = DomUtils.findParentElement(newMenu.getElement(), callback);
+            if (popupEl == null)
+               return;
+            
+            Style style = DomUtils.getComputedStyles(popupEl);
+            int oldIndex = StringUtil.parseInt(style.getZIndex(), -1);
+            if (oldIndex == -1)
+               return;
+            
+            int newIndex = oldIndex + depth;
+            popupEl.getStyle().setZIndex(newIndex);
+         }
+      });
+      
+      label = AppMenuItem.replaceMnemonics(label, "");
       head().addItem(label, newMenu);
+      
       menuStack_.push(newMenu);
    }
 

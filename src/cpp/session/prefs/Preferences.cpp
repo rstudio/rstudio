@@ -105,9 +105,6 @@ void Preferences::destroyLayers()
       {
          layer->destroy();
       }
-
-      // Remove all the destroyed layers
-      layers_.clear();
    }
    END_LOCK_MUTEX
 }

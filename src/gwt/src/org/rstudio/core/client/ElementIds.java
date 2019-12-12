@@ -289,4 +289,59 @@ public class ElementIds
    // AboutDialogContents
    public final static String ABOUT_LICENSE_INFO = "about_license_info";
    public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
+   
+   // TextEditingTargetWidget
+   public final static String CB_SOURCE_ON_SAVE = "cb_source_on_save";
+   public static String getCbSourceOnSave() { return getElementId(CB_SOURCE_ON_SAVE); }
+   public final static String TOGGLE_DOC_OUTLINE_BUTTON = "toggle_doc_outline_button";
+   public static String getToggleDocOutlineButton() { return getElementId(TOGGLE_DOC_OUTLINE_BUTTON); }
+   
+   // AddinsToolbarButton
+   public final static String ADDINS_TOOLBAR_BUTTON = "addins_toolbar_button";
+   public static String getAddinsToolbarButton() { return getElementId(ADDINS_TOOLBAR_BUTTON); }
+   
+   // CodeSearchWidget
+   public final static String CODE_SEARCH_WIDGET = "code_search_widget";
+   public static String getCodeSearchWidget() { return getElementId(CODE_SEARCH_WIDGET); }
+   
+   // EnvironmentPane
+   public final static String MB_IMPORT_DATASET = "mb_import_dataset";
+   public static String getMbImportDataset() { return getElementId(MB_IMPORT_DATASET); }
+   public final static String MB_ENVIRONMENT_LIST = "mb_environment_list";
+   public static String getMbEnvironmentList() { return getElementId(MB_ENVIRONMENT_LIST); }
+   public final static String MB_OBJECT_LIST_VIEW = "mb_object_list_view";
+   public static String getMbObjectListView() { return getElementId(MB_OBJECT_LIST_VIEW); }
+   public final static String SW_ENVIRONMENT = "sw_environment";
+   public static String getSwEnvironment() { return getElementId(SW_ENVIRONMENT); }
+   
+   // HistoryPane
+   public final static String SW_HISTORY = "sw_history";
+   public static String getSwHistory() { return getElementId(SW_HISTORY); }
+   
+   // GitPane
+   public final static String MB_GIT_MORE = "mb_git_more";
+   public static String getMbGitMore() { return getElementId(MB_GIT_MORE); }
+   public final static String TB_GIT_REFRESH = "tb_git_refresh";
+   public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
+   
+   // FileCommandToolbar
+   public final static String MB_FILES_MORE = "mb_files_more";
+   public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
+   
+   // PlotsToolbar
+   public final static String MB_PLOTS_EXPORT = "mb_plots_export";
+   public static String getMbPlotsExport() { return getElementId(MB_PLOTS_EXPORT); }
+   
+   // PackagesPane
+   public final static String SW_PACKAGES = "sw_packages";
+   public static String getSwPackages() { return getElementId(SW_PACKAGES); }
+   
+   // HelpPane
+   public final static String SW_HELP_FIND_IN_TOPIC = "sw_help_find_in_topic";
+   public static String getSwHelpFindInTopic() { return getElementId(SW_HELP_FIND_IN_TOPIC); }
+   
+   // HelpSearchWidget
+   public final static String SW_HELP = "sw_help";
+   public static String getSwHelp() { return getElementId(SW_HELP); }
+   
 }

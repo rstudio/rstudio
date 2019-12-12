@@ -449,6 +449,8 @@ public class TextFileType extends EditableFileType
       }
 
       results.add(commands.sendToTerminal());
+      results.add(commands.sendFilenameToTerminal());
+      results.add(commands.openNewTerminalAtEditorLocation());
 
       return results;
    }
