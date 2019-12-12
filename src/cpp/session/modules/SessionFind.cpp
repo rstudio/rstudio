@@ -587,7 +587,7 @@ private:
          }
          catch (const std::ios_base::failure& e)
          {
-            error = systemError(e.code().value(), ERROR_LOCATION);
+            error = systemError(e.code().value(), e.what(), ERROR_LOCATION);
          }
       }
       return error;
@@ -690,6 +690,8 @@ private:
                      pReplaceMatchOff->clear();
 
                      // put back in reverse order for the frontend
+                     // the frontend requires the matches to be ordered from first match/line to last,
+                     // while we are iterating from last to first here
                      int offset(gsl::narrow_cast<int>(replaceSize - matchSize));
                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
@@ -721,16 +723,13 @@ private:
 
    bool shouldSkipFile(std::string file)
    {
-      bool skipFile = false;
-      if (file.find("/.Rproj.user/") != std::string::npos ||
-          file.find("/.git/") != std::string::npos ||
-          file.find("/.svn/") != std::string::npos ||
-          file.find("/packrat/lib/") != std::string::npos ||
-          file.find("/packrat/src/") != std::string::npos ||
-          file.find("/renv/library/") != std::string::npos ||
-          file.find("/.Rhistory") != std::string::npos)
-         skipFile = true;
-      return (skipFile);
+      return (file.find("/.Rproj.user/") != std::string::npos ||
+              file.find("/.git/") != std::string::npos ||
+              file.find("/.svn/") != std::string::npos ||
+              file.find("/packrat/lib/") != std::string::npos ||
+              file.find("/packrat/src/") != std::string::npos ||
+              file.find("/renv/library/") != std::string::npos ||
+              file.find("/.Rhistory") != std::string::npos);
    }
 
    void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
