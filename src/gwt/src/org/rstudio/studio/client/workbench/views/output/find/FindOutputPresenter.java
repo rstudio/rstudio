@@ -92,7 +92,6 @@ public class FindOutputPresenter extends BasePresenter
       public void setReplaceMode(boolean value);
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
-      boolean isReplaceRegex();
       boolean useGitIgnore();
 
       HasClickHandlers getStopReplaceButton();
@@ -197,6 +196,10 @@ public class FindOutputPresenter extends BasePresenter
                view_.showSearchCompleted();
                // replace may have been previously disabled
                view_.enableReplace();
+               if (dialogState_.isRegex())
+                  view_.setRegexPreviewMode(true);
+               else
+                  view_.setRegexPreviewMode(false);
             }
          }
       });
@@ -222,7 +225,6 @@ public class FindOutputPresenter extends BasePresenter
                                    searchPath,
                                    filePatterns,
                                    view_.getReplaceText(),
-                                   view_.isReplaceRegex(),
                                    view_.useGitIgnore(),
                                    new SimpleRequestCallback<String>()
                                    {
@@ -265,8 +267,7 @@ public class FindOutputPresenter extends BasePresenter
          {
             String message = "Are you sure you wish to permanently replace all? This will replace " +
                              dialogState_.getResultsCount();
-            if (dialogState_.isRegex() ||
-                view_.isReplaceRegex())
+            if (dialogState_.isRegex())
                message += " occurences and cannot be undone.";
             else
                message += " occurences of '" + dialogState_.getQuery() +
@@ -296,7 +297,6 @@ public class FindOutputPresenter extends BasePresenter
                                                 filePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
-                                                view_.isReplaceRegex(),
                                                 view_.useGitIgnore(),
                                                 new SimpleRequestCallback<String>()
                                                 {
@@ -307,8 +307,7 @@ public class FindOutputPresenter extends BasePresenter
                                                       updateSearchLabel(dialogState_.getQuery(),
                                                                         dialogState_.getPath(),
                                                                         dialogState_.isRegex(),
-                                                                        view_.getReplaceText(),
-                                                                        view_.isReplaceRegex());
+                                                                        view_.getReplaceText());
                                                    }
                                                 });
                      }
@@ -542,17 +541,19 @@ public class FindOutputPresenter extends BasePresenter
    }
 
    private void updateSearchLabel(String query, String path, boolean regex,
-      String replace, boolean replaceRegex)
+      String replace)
    {
       if (regex)
+      {
          query = "/" + query + "/";
-      else
-         query = "\"" + query + "\"";
-
-      if (replaceRegex)
          replace = "/" + replace + "/";
+      }
       else
+      {
+         query = "\"" + query + "\"";
          replace = "\"" + replace + "\"";
+      }
+
       view_.updateSearchLabel(query, path, replace);
    }
 

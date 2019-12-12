@@ -191,6 +191,7 @@ public class FindResult extends JavaScriptObject
    
          // create html for line
          String line = getLineValue();
+         String replace = getReplaceValue();
 
          // Use a counter to ensure tags are balanced.
          int openStrongTags = 0;
@@ -213,7 +214,7 @@ public class FindResult extends JavaScriptObject
                   if (!StringUtil.isNullOrEmpty(replace))
                   {
                      out.appendHtmlConstant("<em>");
-                     out.appendEscaped(getReplaceValue());
+                     out.appendEscaped(replace);
                      out.appendHtmlConstant("</em>");
                   }
                }

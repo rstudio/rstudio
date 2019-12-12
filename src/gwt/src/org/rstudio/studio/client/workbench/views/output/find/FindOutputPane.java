@@ -109,7 +109,7 @@ public class FindOutputPane extends WorkbenchPane
                setSecondaryToolbarVisible(false);
                if (!replaceTextBox_.getValue().isEmpty())
                {
-                  setRegexPreviewMode(false);
+                  //setRegexPreviewMode(false);
                   addReplaceMatches(new String());
                }
                setReplaceMode(false);
@@ -137,26 +137,6 @@ public class FindOutputPane extends WorkbenchPane
          public void onKeyUp(KeyUpEvent event)
          {
             displayPreview_.nudge();
-         }
-      });
-
-      regexCheckbox_ = new CheckBox();
-      regexCheckboxLabel_ =
-                     new CheckboxLabel(regexCheckbox_, "Regular expression").getLabel();
-      regexCheckbox_.getElement().getStyle().setMarginLeft(9, Unit.PX);
-      regexCheckbox_.getElement().getStyle().setMarginRight(0, Unit.PX);
-      replaceToolbar_.addLeftWidget(regexCheckbox_);
-      regexCheckboxLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
-      replaceToolbar_.addLeftWidget(regexCheckboxLabel_);
-      regexCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            regexPreviewMode_ = !regexPreviewMode_;
-            if (replaceMode_ && !replaceTextBox_.getValue().isEmpty())
-            {
-               displayPreview_.nudge();
-            }
          }
       });
 
@@ -441,12 +421,6 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public boolean isReplaceRegex()
-   {
-      return regexCheckbox_.getValue();
-   }
-
-   @Override
    public boolean useGitIgnore()
    {
       return useGitIgnore_.getValue();
@@ -507,7 +481,7 @@ public class FindOutputPane extends WorkbenchPane
          protected void execute()
          {
             setReplaceMode(true);
-            if (regexCheckbox_.getValue())
+            if (getRegexPreviewMode())
                eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
             else
                addReplaceMatches(replaceTextBox_.getValue());
@@ -565,8 +539,6 @@ public class FindOutputPane extends WorkbenchPane
    private ToolbarButton stopReplace_;
    private ProgressBar replaceProgress_;
 
-   private CheckBox regexCheckbox_;
-   private Label regexCheckboxLabel_;
    private DebouncedCommand displayPreview_;
 
    private CheckBox useGitIgnore_;

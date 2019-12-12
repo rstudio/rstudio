@@ -34,23 +34,21 @@ public interface FindInFilesServerOperations
    void clearFindResults(ServerRequestCallback<Void> requestCallback);
 
    void previewReplace(String searchString,
-                       boolean searchRegex,
+                       boolean regex,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString filePatterns,
                        String replaceString,
-                       boolean replaceRegex,
                        boolean gitIgnore,
                        ServerRequestCallback<String> requestCallback);
 
    void completeReplace(String searchString,
-                        boolean searchRegex,
+                        boolean regex,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString filePatterns,
                         int searchResults,
                         String replaceString,
-                        boolean replaceRegex,
                         boolean gitIgnore,
                         ServerRequestCallback<String> requestCallback);
 

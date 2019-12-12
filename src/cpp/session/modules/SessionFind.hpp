@@ -40,26 +40,17 @@ public:
    {
    }
 
-   void replaceLiteralWithLiteral(size_t matchOn, size_t matchOff,
-                                  const std::string& replaceLiteral, std::string* pLine,
-                                  size_t* pReplaceMatchOff)
+   void replaceLiteral(size_t matchOn, size_t matchOff,
+                       const std::string& replaceLiteral, std::string* pLine,
+                       size_t* pReplaceMatchOff)
    {
       *pLine = pLine->replace(matchOn, (matchOff - matchOn), replaceLiteral);
       *pReplaceMatchOff = matchOn + replaceLiteral.size();
    }
 
-   core::Error replaceRegexWithLiteral(size_t matchOn, size_t matchOff,
-                                       const std::string& findRegex,
-                                       const std::string& replaceLiteral, std::string* pLine,
-                                       size_t* pReplaceMatchOff)
-   {
-      return (replaceRegexWithRegex(matchOn, matchOff, findRegex, replaceLiteral, pLine,
-                                    pReplaceMatchOff));
-   }
-
-   core::Error replaceRegexWithRegex(size_t matchOn, size_t matchOff,
-                                     const std::string& findRegex, const std::string& replaceRegex,
-                                     std::string* pLine, size_t* pReplaceMatchOff)
+   core::Error replaceRegex(size_t matchOn, size_t matchOff,
+                            const std::string& findRegex, const std::string& replaceRegex,
+                            std::string* pLine, size_t* pReplaceMatchOff)
   {
      core::Error error;
      if (ignoreCase_)

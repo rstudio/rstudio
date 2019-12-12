@@ -109,7 +109,6 @@ public:
       running_(false),
       replace_(false),
       preview_(false),
-      replaceRegex_(false),
       pReplaceProgress_(nullptr)
    {
    }
@@ -147,11 +146,6 @@ public:
    bool preview()
    {
       return preview_;
-   }
-
-   bool replaceRegex()
-   {
-      return replaceRegex_;
    }
 
    std::string searchPattern()
@@ -218,7 +212,6 @@ public:
    void onReplaceBegin(const std::string& handle,
                        bool previewFlag,
                        const std::string& replacePattern,
-                       bool asRegex,
                        LocalProgress* pProgress)
    {
       if (handle_ == handle)
@@ -226,7 +219,6 @@ public:
          replace_ = true;
          preview_ = previewFlag;
          replacePattern_ = replacePattern;
-         replaceRegex_ = asRegex;
          running_ = true;
          pReplaceProgress_ = pProgress;
       }
@@ -333,7 +325,6 @@ private:
    bool running_;
    bool replace_;
    bool preview_;
-   bool replaceRegex_;
    std::string replacePattern_;
    json::Array replaceMatchOns_;
    json::Array replaceMatchOffs_;
@@ -640,13 +631,13 @@ private:
                {
                   std::string replaceString(replacePattern);
                   std::string previewLine(newLine);
-                  error = replacer.replaceRegexWithRegex(matchOn, matchOff, searchPattern,
-                     replacePattern, &previewLine, &replaceMatchOff);
+                  error = replacer.replaceRegex(matchOn, matchOff, searchPattern, replacePattern,
+                     &previewLine, &replaceMatchOff);
                   if (!error)
                   {
                      replaceString = previewLine.substr(matchOn, (replaceMatchOff - matchOn));
                      replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
-                     replacer.replaceLiteralWithLiteral(matchOn, matchOff, replaceString, &newLine,
+                     replacer.replaceLiteral(matchOn, matchOff, replaceString, &newLine,
                         &replaceMatchOff);
                   }
                   else
@@ -659,14 +650,14 @@ private:
                else // perform replace
                {
                   pProgress->addUnits(1);
-                  if (findResults().replaceRegex())
-                     error = replacer.replaceRegexWithRegex(matchOn, matchOff, searchPattern,
+                  if (findResults().regex())
+                     error = replacer.replaceRegex(matchOn, matchOff, searchPattern,
                         replacePattern, &newLine, &replaceMatchOff);
                   else if (findResults().regex())
-                     error = replacer.replaceRegexWithLiteral(matchOn, matchOff, searchPattern,
+                     error = replacer.replaceRegex(matchOn, matchOff, searchPattern,
                         replacePattern, &newLine, &replaceMatchOff);
                   else
-                     replacer.replaceLiteralWithLiteral(matchOn, matchOff, replacePattern, &newLine,
+                     replacer.replaceLiteral(matchOn, matchOff, replacePattern, &newLine,
                         &replaceMatchOff);
 
                   if (error)
@@ -946,17 +937,15 @@ struct ReplaceOptions
       replacePattern("")
    {}
 
-   ReplaceOptions(std::string replace, bool asRegex, bool useGitIgnore) :
+   ReplaceOptions(std::string replace, bool useGitIgnore) :
       empty(false),
       preview(false),
-      asRegex(asRegex),
       useGitIgnore(useGitIgnore),
       replacePattern(replace)
    {}
 
    bool empty;
    bool preview;
-   bool asRegex;
    bool useGitIgnore;
 
    const std::string replacePattern;
@@ -1059,7 +1048,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       findResults().onReplaceBegin(ptrGrepOp->handle(),
                                    replaceOptions.preview,
                                    replaceOptions.replacePattern,
-                                   replaceOptions.asRegex,
                                    pProgress);
    pResponse->setResult(ptrGrepOp->handle());
 
@@ -1113,7 +1101,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 {
    std::string searchString;
    std::string replacePattern;
-   bool asRegex, ignoreCase, replaceRegex, useGitIgnore = false;
+   bool asRegex, ignoreCase, useGitIgnore = false;
    std::string directory;
    json::Array filePatterns;
 
@@ -1124,15 +1112,14 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
                                   &directory,
                                   &filePatterns,
                                   &replacePattern,
-                                  &replaceRegex,
                                   &useGitIgnore);
    if (error)
       return error;
-   if (!replaceRegex)
-      LOG_DEBUG_MESSAGE("Replace Regex must be true during preview");
+   if (!asRegex)
+      LOG_DEBUG_MESSAGE("Regex should be true during preview");
 
    GrepOptions grepOptions(searchString, directory, filePatterns, asRegex, ignoreCase);
-   ReplaceOptions replaceOptions(replacePattern, replaceRegex, useGitIgnore);
+   ReplaceOptions replaceOptions(replacePattern, useGitIgnore);
    replaceOptions.preview = true;
    error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
 
@@ -1142,7 +1129,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   bool asRegex, ignoreCase, replaceRegex, useGitIgnore = false;
+   bool asRegex, ignoreCase, useGitIgnore = false;
    std::string searchString;
    std::string replacePattern;
    std::string directory;
@@ -1158,7 +1145,6 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &filePatterns,
                                   &originalFindCount,
                                   &replacePattern,
-                                  &replaceRegex,
                                   &useGitIgnore);
    if (error)
       return error;
@@ -1166,7 +1152,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    static const int kUpdatePercent = 5;
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
    GrepOptions grepOptions(searchString, directory, filePatterns, asRegex, ignoreCase);
-   ReplaceOptions replaceOptions(replacePattern, replaceRegex, useGitIgnore);
+   ReplaceOptions replaceOptions(replacePattern, useGitIgnore);
 
    error = runGrepOperation(
       grepOptions, replaceOptions, pProgress, pResponse);
