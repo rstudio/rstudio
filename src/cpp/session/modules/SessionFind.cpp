@@ -471,6 +471,7 @@ private:
             inputStream_.reset();
             outputStream_.reset();
             Error error = tempReplaceFile_.move(FilePath(currentFile_));
+            currentFile_.clear();
             return error;
          }
       }

@@ -274,15 +274,15 @@ public class FindOutputPane extends WorkbenchPane
       if (matchesToAdd > 0)
       {
          matchCount_ += matchesToAdd;
-         
+
          if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
             container_.setWidget(scrollPanel_);
-            
+
          if (!replaceMode_ || regexPreviewMode_)
             context_.addMatches(findResults.subList(0, matchesToAdd));
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
-      
+
       if (matchCount_ >= MAX_COUNT)
          showOverflow();
    }
@@ -305,19 +305,19 @@ public class FindOutputPane extends WorkbenchPane
       statusPanel_.setStatusText("");
       container_.setWidget(statusPanel_);
    }
-   
+
    @Override
    public void showSearchCompleted()
    {
       if (matchCount_ == 0)
          statusPanel_.setStatusText("(No results found)");
    }
-   
+
    @Override
    public void onSelected()
    {
       super.onSelected();
-      
+
       if (!regexPreviewMode_)
       {
          table_.focus();
@@ -403,7 +403,7 @@ public class FindOutputPane extends WorkbenchPane
             .appendEscaped(path);
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
-      
+
    @Override
    public void clearSearchLabel()
    {
@@ -498,7 +498,7 @@ public class FindOutputPane extends WorkbenchPane
       if (replaceProgress_.isVisible())
          replaceProgress_.setVisible(false);
    }
-   
+
    private void createDisplayPreview()
    {
       displayPreview_ = new DebouncedCommand(500)
@@ -529,15 +529,15 @@ public class FindOutputPane extends WorkbenchPane
          super(new Label(), 50);
          label_ = (Label)getWidget();
       }
-      
+
       public void setStatusText(String status)
       {
          label_.setText(status);
       }
-      
+
       private final Label label_;
    }
-   
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
@@ -551,20 +551,26 @@ public class FindOutputPane extends WorkbenchPane
    private int matchCount_;
 
    private SecondaryToolbar replaceToolbar_;
+
    private LeftRightToggleButton showFindButton_;
    private LeftRightToggleButton showReplaceButton_;
-   private boolean regexPreviewMode_;
+
    private boolean replaceMode_;
+   private boolean regexPreviewMode_;
+
    private Label replaceLabel_;
-   private CheckBox regexCheckbox_;
-   private Label regexCheckboxLabel_;
-   private CheckBox useGitIgnore_;
-   private Label useGitIgnoreLabel_;
-   private DebouncedCommand displayPreview_;
    private TextBoxWithCue replaceTextBox_;
    private ToolbarButton replaceAllButton_;
+
    private ToolbarButton stopReplace_;
    private ProgressBar replaceProgress_;
+
+   private CheckBox regexCheckbox_;
+   private Label regexCheckboxLabel_;
+   private DebouncedCommand displayPreview_;
+
+   private CheckBox useGitIgnore_;
+   private Label useGitIgnoreLabel_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

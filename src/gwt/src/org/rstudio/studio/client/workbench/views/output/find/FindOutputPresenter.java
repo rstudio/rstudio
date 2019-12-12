@@ -111,6 +111,7 @@ public class FindOutputPresenter extends BasePresenter
    public FindOutputPresenter(Display view,
                               Binder binder,
                               Commands commands,
+                              GlobalDisplay globalDisplay,
                               EventBus events,
                               FindInFilesServerOperations server,
                               final FileTypeRegistry ftr,
@@ -119,6 +120,7 @@ public class FindOutputPresenter extends BasePresenter
    {
       super(view);
       view_ = view;
+      globalDisplay_ = globalDisplay;
       commands_ = commands;
       binder.bind(commands, this);
       events_ = events;
@@ -178,8 +180,6 @@ public class FindOutputPresenter extends BasePresenter
                dialogState_.updateResultsCount(count);
             }
             view_.addMatches(event.getResults());
-            // replace may have been previously disabled
-            view_.enableReplace();
          }
       });
 
@@ -195,6 +195,8 @@ public class FindOutputPresenter extends BasePresenter
                   currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
+               // replace may have been previously disabled
+               view_.enableReplace();
             }
          }
       });
@@ -597,5 +599,5 @@ public class FindOutputPresenter extends BasePresenter
 
    private static final String GROUP_FIND_IN_FILES = "find-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
-   private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
+   private GlobalDisplay globalDisplay_;
 }

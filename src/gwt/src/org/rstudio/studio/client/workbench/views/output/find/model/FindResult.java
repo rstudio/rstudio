@@ -152,6 +152,8 @@ public class FindResult extends JavaScriptObject
    
          // combine the match on and match off lists into paired array lists for ease of use
          int difference = 0;
+         int offset = 0;
+         int previousOnVal = 0; // we need this to adjust the matches is a replace is before it
          while (on.size() + off.size() > 0)
          {
             int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);
@@ -159,14 +161,14 @@ public class FindResult extends JavaScriptObject
             int replaceOnVal = replaceOn.size() == 0 ? Integer.MAX_VALUE : replaceOn.get(0);
             int replaceOffVal = replaceOff.size() == 0 ? Integer.MAX_VALUE : replaceOff.get(0);
    
-            if (onVal <= offVal)
-               parts.add(new Pair<Boolean, Integer>(true, on.remove(0)));
+            if (onVal < offVal)
+               parts.add(new Pair<Boolean, Integer>(true, on.remove(0) + offset));
             else
-               parts.add(new Pair<Boolean, Integer>(false, off.remove(0)));
+               parts.add(new Pair<Boolean, Integer>(false, off.remove(0) + offset));
    
-            if (replaceOn.size() + replaceOff.size() > 0)
+            if (getRegexPreviewIndicator() && replaceOn.size() + replaceOff.size() > 0)
             {
-               if (replaceOnVal <= replaceOffVal)
+               if (replaceOnVal < replaceOffVal)
                {
                   if (replaceOnVal >= 0)
                      difference = offVal - onVal;
@@ -175,10 +177,14 @@ public class FindResult extends JavaScriptObject
                      difference = -1;
                      Debug.logWarning("Unexpected value, offVal must be greater than onVal");
                   }
+                  previousOnVal = replaceOn.get(0) + difference;
                   replaceParts.add(new Pair<Boolean, Integer>(true, (replaceOn.remove(0) + difference)));
                }
                else
+               {
+                  offset += (replaceOffVal - previousOnVal);
                   replaceParts.add(new Pair<Boolean, Integer>(false, (replaceOff.remove(0))));
+               }
             }
          }
    
@@ -203,7 +209,6 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("</strong>");
                   openStrongTags--;
-                  // if performing a non regex replace, we can use the replace value as a literal
                   String replace = getReplaceValue();
                   if (!StringUtil.isNullOrEmpty(replace))
                   {
@@ -214,7 +219,7 @@ public class FindResult extends JavaScriptObject
                   }
                }
             }
-            // when we reach a replaceMatchOn/Off position, apply an em tag
+            // when we reach a replaceOn or replaceOff position, apply an em tag
             while (replaceParts.size() > 0 && replaceParts.get(0).second == i)
             {
                if (replaceParts.remove(0).first)
@@ -228,11 +233,14 @@ public class FindResult extends JavaScriptObject
                   openEmTags--;
                }
             }
+
             if (getRegexPreviewIndicator() || openEmTags == 0)
                out.append(line.charAt(i));
          }
    
          // tags may left open if they are at the end of the line
+         if (openStrongTags > 1 || openEmTags > 1)
+            Debug.logWarning("Unexpected number of open tags");
          while (openStrongTags > 0)
          {
             openStrongTags--;
@@ -281,7 +289,7 @@ public class FindResult extends JavaScriptObject
          {
             int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
             int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
-            if (onReplaceVal <= offReplaceVal)
+            if (onReplaceVal < offReplaceVal)
                parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
             else
                parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
@@ -302,6 +310,8 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("<em>");
                   openEmTags++;
+                  Debug.logToConsole("openEmTags: " + Integer.toString(openEmTags));
+                  Debug.logToConsole("out: " + out.toSafeHtml().asString());
                }
                else if (openEmTags > 0)
                {
