@@ -1610,16 +1610,16 @@ core::Error UserPrefValues::setTerminalWebsockets(bool val)
 }
 
 /**
- * Whether to automatically close the Terminal tab.
+ * Whether to close the terminal pane after the shell exits.
  */
-bool UserPrefValues::terminalAutoClose()
+std::string UserPrefValues::terminalCloseBehavior()
 {
-   return readPref<bool>("terminal_auto_close");
+   return readPref<std::string>("terminal_close_behavior");
 }
 
-core::Error UserPrefValues::setTerminalAutoClose(bool val)
+core::Error UserPrefValues::setTerminalCloseBehavior(std::string val)
 {
-   return writePref("terminal_auto_close", val);
+   return writePref("terminal_close_behavior", val);
 }
 
 /**
@@ -2423,7 +2423,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowTerminalTab,
       kTerminalLocalEcho,
       kTerminalWebsockets,
-      kTerminalAutoClose,
+      kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
       kTerminalBellStyle,
       kTerminalRenderer,

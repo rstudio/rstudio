@@ -1151,12 +1151,16 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically close the Terminal tab.
+    * Whether to close the terminal pane after the shell exits.
     */
-   public PrefValue<Boolean> terminalAutoClose()
+   public PrefValue<String> terminalCloseBehavior()
    {
-      return bool("terminal_auto_close", true);
+      return string("terminal_close_behavior", "always");
    }
+
+   public final static String TERMINAL_CLOSE_BEHAVIOR_ALWAYS = "always";
+   public final static String TERMINAL_CLOSE_BEHAVIOR_CLEAN = "clean";
+   public final static String TERMINAL_CLOSE_BEHAVIOR_NEVER = "never";
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.
@@ -1883,8 +1887,8 @@ public class UserPrefsAccessor extends Prefs
          terminalLocalEcho().setValue(layer, source.getBool("terminal_local_echo"));
       if (source.hasKey("terminal_websockets"))
          terminalWebsockets().setValue(layer, source.getBool("terminal_websockets"));
-      if (source.hasKey("terminal_auto_close"))
-         terminalAutoClose().setValue(layer, source.getBool("terminal_auto_close"));
+      if (source.hasKey("terminal_close_behavior"))
+         terminalCloseBehavior().setValue(layer, source.getString("terminal_close_behavior"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
       if (source.hasKey("terminal_bell_style"))

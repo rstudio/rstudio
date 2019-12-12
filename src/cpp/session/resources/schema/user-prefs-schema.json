@@ -704,10 +704,11 @@
             "default": true,
             "description": "Whether to use websockets to communicate with the shell in the Terminal tab."
         },
-        "terminal_auto_close": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to automatically close the Terminal tab."
+        "terminal_close_behavior": {
+            "type": "string",
+            "enum": ["always", "clean", "never"],
+            "default": "always",
+            "description": "Whether to close the terminal pane after the shell exits."
         },
         "terminal_track_environment": {
             "type": "boolean",

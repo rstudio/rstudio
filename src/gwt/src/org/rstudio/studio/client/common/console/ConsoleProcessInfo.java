@@ -1,7 +1,7 @@
 /*
  * ConsoleProcessInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int AUTOCLOSE_DEFAULT = 0;
    public static final int AUTOCLOSE_ALWAYS = 1;
    public static final int AUTOCLOSE_NEVER = 2;
+   public static final int AUTOCLOSE_CLEAN_EXIT = 3;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;
    public static final int SEQUENCE_NEW_TERMINAL = -1;
