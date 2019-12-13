@@ -105,13 +105,53 @@ TEST_CASE("SessionFind")
    SECTION("Attempt replace without valid match")
    {
       std::string line(kLine);
-      size_t replaceMatchOff;
+      size_t replaceMatchOff = 99;
 
       Replacer replacer(true);
       Error error = replacer.replaceRegex(rMatchOn, rMatchOff, findRegex, replaceRegex,
          &line, &replaceMatchOff); 
-      //CHECK(error);
       CHECK(line.compare(kLine) == 0);
+   }
+
+   SECTION("Attempt replace with consecutive matches")
+   {
+      std::string line("hellohellohello");
+      std::string replacePattern("hello world");
+      size_t replaceMatchOff;
+      size_t on = 10;
+      size_t off = 15;
+
+      Replacer replacer(true);
+      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+      CHECK(line.compare("hellohellohello world") == 0);
+      CHECK(replaceMatchOff == 21);
+
+      on = 5;
+      off = 10;
+      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+      CHECK(line.compare("hellohello worldhello world") == 0);
+      CHECK(replaceMatchOff == 16);
+
+      on = 0;
+      off = 5;
+      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+      CHECK(line.compare("hello worldhello worldhello world") == 0);
+      CHECK(replaceMatchOff == 11);
+   }
+
+   SECTION("Attempt regex replace with nested results")
+   {
+      std::string line("hehello worldllo");
+      std::string findPattern("he[^ ].*llo");
+      std::string replacePattern("hello world");
+      size_t replaceMatchOff;
+      size_t on = 0;
+      size_t off = 16;
+
+      Replacer replacer(false);
+      replacer.replaceRegex(on, off, findPattern, replacePattern, &line, &replaceMatchOff);
+      CHECK(line.compare("hello world") == 0);
+      CHECK(replaceMatchOff == 11);
    }
 }
 

@@ -431,7 +431,7 @@ private:
    {
       str.append("\n");
 #ifdef _WIN32
-      string_utils::convertLineEndings(str, string_utils::LineEndingWindows);
+      string_utils::convertLineEndings(&str, string_utils::LineEndingWindows);
 #endif
    }
 
