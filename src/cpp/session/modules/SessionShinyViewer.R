@@ -13,13 +13,13 @@
 #
 #
 
-.rs.addFunction("invokeShinyPaneViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
-}, attrs = list(shinyViewerType = "pane"))
-
 .rs.addFunction("invokeShinyTutorialViewer", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "tutorial", PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "tutorial"))
+
+.rs.addFunction("invokeShinyPaneViewer", function(url) {
+   invisible(.Call("rs_shinyviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
+}, attrs = list(shinyViewerType = "pane"))
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
    invisible(.Call("rs_shinyviewer", url, getwd(), "window", PACKAGE = "(embedding)"))

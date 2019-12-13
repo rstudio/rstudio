@@ -819,49 +819,23 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("enqueueTutorialClientEvent", function(type, data)
-{
-   eventData <- list(type = .rs.scalar(type), data = data)
-   .rs.enqueClientEvent("tutorial_command", eventData)
-})
+# Tutorial ----
 
+# invoked by rstudioapi to instruct RStudio to open a particular
+# URL in the Tutorial pane. should be considered an internal contract
+# between the RStudio + rstudioapi packages rather than an official
+# user-facing API
 .rs.addApiFunction("tutorialLaunchBrowser", function(url) {
    .rs.invokeShinyTutorialViewer(url)
 })
 
+# given a tutorial 'name' from package 'package', run that tutorial
+# and show the application in the Tutorial pane
 .rs.addApiFunction("tutorialRun", function(name, package, shiny_args = NULL) {
-   
-   shiny_args$launch.browser <- quote(rstudioapi:::tutorialLaunchBrowser)
-   
-   call <- substitute(
-      
-      learnr::run_tutorial(
-         name = name,
-         package = package,
-         shiny_args = shiny_args
-      ),
-      
-      list(
-         name = name,
-         package = package,
-         shiny_args = shiny_args
-      )
-      
-   )
-   
-   deparsed <- deparse(call)
-   path <- tempfile("rstudio-tutorial-", fileext = ".R")
-   writeLines(deparsed, con = path)
-   
-   .rs.api.runScriptJob(
-      path = path,
-      name = paste("Tutorial:", name),
-      encoding = "UTF-8"
-   )
-   
+   .rs.tutorial.runTutorial(name, package, shiny_args)
 })
 
-.rs.addApiFunction("tutorialStop", function(job) {
-   .rs.api.stopJob(job)
-   .rs.enqueueTutorialClientEvent("stop", list(job = job))
+# stop a running tutorial
+.rs.addApiFunction("tutorialStop", function() {
+   .rs.tutorial.stopTutorial()
 })

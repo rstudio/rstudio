@@ -190,7 +190,6 @@ namespace prefs {
 #define kShinyViewerTypeUser "user"
 #define kShinyViewerTypeNone "none"
 #define kShinyViewerTypePane "pane"
-#define kShinyViewerTypeTutorial "tutorial"
 #define kShinyViewerTypeWindow "window"
 #define kShinyViewerTypeBrowser "browser"
 #define kPlumberViewerType "plumber_viewer_type"

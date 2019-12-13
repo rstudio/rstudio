@@ -12,17 +12,20 @@
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 
@@ -43,14 +46,17 @@ public class TutorialPresenter
       void back();
       void forward();
       void clear();
+      
       void openTutorial(ShinyApplicationParams params);
+      void showLandingPage();
    }
    
    @Inject
    protected TutorialPresenter(Display display,
                                EventBus events,
                                Commands commands,
-                               Binder binder)
+                               Binder binder,
+                               TutorialServerOperations server)
    {
       super(display);
       
@@ -59,6 +65,7 @@ public class TutorialPresenter
       display_ = display;
       events_ = events;
       commands_ = commands;
+      server_ = server;
       
       events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       events_.addHandler(TutorialCommandEvent.TYPE, this);
@@ -69,17 +76,19 @@ public class TutorialPresenter
    public void onTutorialCommand(TutorialCommandEvent event)
    {
       String type = event.getType();
-      if (StringUtil.equals(type, "stop"))
-         handleTutorialStop();
-      else
-         assert false : "Unhandled tutorial event '" + type + "'";
+      assert false : "Unhandled tutorial event '" + type + "'";
    }
    
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
-      if (event.getParams().getViewerType() == UserPrefs.SHINY_VIEWER_TYPE_TUTORIAL &&
-          event.getParams().getState() == ShinyApplicationParams.STATE_STARTED)
+      // discard non-tutorial events
+      String type = event.getParams().getViewerType();
+      if (!type.startsWith(VIEWER_TYPE_TUTORIAL))
+         return;
+      
+      String state = event.getParams().getState();
+      if (StringUtil.equals(state, ShinyApplicationParams.STATE_STARTED))
       {
          display_.bringToFront();
          if (Desktop.hasDesktopFrame())
@@ -91,6 +100,14 @@ public class TutorialPresenter
          params_ = event.getParams();
          display_.openTutorial(params_);
       }
+      else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPING))
+      {
+         Debug.logToRConsole("Tutorial: stopping");
+      }
+      else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPED))
+      {
+         Debug.logToRConsole("Tutorial: stopped");
+      }
    }
    
    @Override
@@ -99,14 +116,28 @@ public class TutorialPresenter
       // TODO Auto-generated method stub
    }
    
-   private void handleTutorialStop()
+   private void onTutorialStopped()
    {
-      display_.clear();
+      display_.showLandingPage();
    }
    
    @Handler
    void onTutorialStop()
    {
+      server_.tutorialStop(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            onTutorialStopped();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Handler
@@ -124,7 +155,10 @@ public class TutorialPresenter
    private final Display display_;
    private final EventBus events_;
    private final Commands commands_;
+   private final TutorialServerOperations server_;
    
    private ShinyApplicationParams params_;
+   
+   public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
 }

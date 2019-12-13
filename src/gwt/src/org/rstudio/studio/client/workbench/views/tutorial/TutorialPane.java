@@ -24,6 +24,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -47,7 +49,7 @@ public class TutorialPane
       frame_ = new RStudioFrame("Tutorial Pane");
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
-      frame_.setUrl(URIConstants.ABOUT_BLANK);
+      showLandingPage();
       return new AutoGlassPanel(frame_);
    }
    
@@ -71,14 +73,6 @@ public class TutorialPane
    }
    
    @Override
-   public void openTutorial(ShinyApplicationParams params)
-   {
-      commands_.tutorialStop().setVisible(true);
-      commands_.tutorialStop().setEnabled(true);
-      navigate(params.getUrl(), true);
-   }
-   
-   @Override
    public void back()
    {
       frame_.getWindow().back();
@@ -91,6 +85,26 @@ public class TutorialPane
       frame_.getWindow().forward();
       manageCommands(true);
    }
+   
+   @Override
+   public void openTutorial(ShinyApplicationParams params)
+   {
+      commands_.tutorialStop().setVisible(true);
+      commands_.tutorialStop().setEnabled(true);
+      navigate(params.getUrl(), true);
+   }
+   
+   @Override
+   public void showLandingPage()
+   {
+      String url = GWT.getHostPageBaseURL() + "tutorial/home/";
+      frame_.setUrl(url);
+   }
+   
+   private static final native void showLandingPageImpl(Element frame, String html)
+   /*-{
+      frame.contentWindow.document.write(html);
+   }-*/;
    
    private void navigate(String url, boolean useRawURL)
    {
