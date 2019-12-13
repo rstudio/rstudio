@@ -93,6 +93,7 @@
 * Command in File pane to open a new terminal at File pane's current location
 * Command in to change terminal to current RStudio working directory (#2363)
 * Zoom Left/Right Column commands for keyboard users (#5874)
+* Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
 
 ### Bugfixes
 
