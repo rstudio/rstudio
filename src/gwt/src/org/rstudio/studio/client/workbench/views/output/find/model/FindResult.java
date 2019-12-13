@@ -133,11 +133,7 @@ public class FindResult extends JavaScriptObject
       // display any errors highlighted in red
       if (getRegexPreviewIndicator() &&
           !StringUtil.isNullOrEmpty(getErrors()))
-      {
-         out.appendHtmlConstant("<mark>");
-         out.appendEscapedLines(getErrors());
-         out.appendHtmlConstant("</mark>");
-      }
+         out = appendTaggedString(out, "mark", getErrors());
       else // highlight found words and preview replaces
       {
          // retrieve match positions
@@ -212,11 +208,7 @@ public class FindResult extends JavaScriptObject
                   out.appendHtmlConstant("</strong>");
                   openStrongTags--;
                   if (!StringUtil.isNullOrEmpty(replace))
-                  {
-                     out.appendHtmlConstant("<em>");
-                     out.appendEscaped(replace);
-                     out.appendHtmlConstant("</em>");
-                  }
+                     out = appendTaggedString(out, "em", replace);
                }
             }
             // when we reach a replaceOn or replaceOff position, apply an em tag
@@ -244,11 +236,7 @@ public class FindResult extends JavaScriptObject
             openStrongTags--;
             out.appendHtmlConstant("</strong>");
             if (!StringUtil.isNullOrEmpty(replace))
-            {
-               out.appendHtmlConstant("<em>");
-               out.appendEscaped(getReplaceValue());
-               out.appendHtmlConstant("</em>");
-            }
+               out = appendTaggedString(out, "em", getReplaceValue());
          }
          while (openEmTags > 0)
          {
@@ -266,11 +254,7 @@ public class FindResult extends JavaScriptObject
 
       // display any errors highlighted in red
       if (!StringUtil.isNullOrEmpty(getErrors()))
-      {
-         out.appendHtmlConstant("<mark>");
-         out.appendEscaped(getErrors());
-         out.appendHtmlConstant("</mark>");
-      }
+         out = appendTaggedString(out, "mark", getErrors());
       else // display replace values highlighted
       {
          // retrieve match positions
@@ -327,6 +311,22 @@ public class FindResult extends JavaScriptObject
       }
 
       return out.toSafeHtml();
+   }
+
+   private SafeHtmlBuilder appendTaggedString(SafeHtmlBuilder out, String tag, String string)
+   {
+      StringBuilder tagBuilder = new StringBuilder();
+      tagBuilder.append("<");
+      tagBuilder.append(tag);
+      tagBuilder.append(">");
+      out.appendHtmlConstant(tagBuilder.toString());
+
+      out.appendEscaped(string);
+
+      tagBuilder.insert(1, '/');
+      out.appendHtmlConstant(tagBuilder.toString());
+
+      return out;
    }
 
    private ArrayList<Integer> getJavaArray(String property)
