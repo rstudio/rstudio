@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
@@ -411,6 +412,7 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
+         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
          headerBarCommandsPanel_.add(usernameLabel);
          
          overlayUserCommandsPanel_ = new HorizontalPanel();

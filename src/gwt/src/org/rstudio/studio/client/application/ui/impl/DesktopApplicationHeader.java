@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppMenuBar;
@@ -234,6 +235,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
+         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
 
          addRightCommand(usernameLabel);
 
