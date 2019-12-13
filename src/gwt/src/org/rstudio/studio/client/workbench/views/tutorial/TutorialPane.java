@@ -12,20 +12,22 @@
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIBuilder;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -34,10 +36,12 @@ public class TutorialPane
       implements TutorialPresenter.Display
 {
    @Inject
-   protected TutorialPane(Commands commands)
+   protected TutorialPane(GlobalDisplay globalDisplay,
+                          Commands commands)
    {
       super("Tutorial");
       
+      globalDisplay_ = globalDisplay;
       commands_ = commands;
       
       ensureWidget();
@@ -49,6 +53,9 @@ public class TutorialPane
       frame_ = new RStudioFrame("Tutorial Pane");
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
+      frame_.setUrl(URIConstants.ABOUT_BLANK);
+      ElementIds.assignElementId(frame_.getElement(), ElementIds.TUTORIAL_FRAME);
+      
       showLandingPage();
       return new AutoGlassPanel(frame_);
    }
@@ -57,18 +64,9 @@ public class TutorialPane
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Tutorial Tab");
-      
-      // add navigation buttons
-      toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.tutorialZoom().createToolbarButton());
-      toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
-      
-      toolbar_.addRightWidget(commands_.tutorialStop().createToolbarButton());
-     
-      manageCommands(false);
+      toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
+      toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
       return toolbar_;
    }
    
@@ -76,14 +74,36 @@ public class TutorialPane
    public void back()
    {
       frame_.getWindow().back();
-      manageCommands(true);
    }
    
    @Override
    public void forward()
    {
       frame_.getWindow().forward();
-      manageCommands(true);
+   }
+   
+   @Override
+   public void popout()
+   {
+      WindowEx window = frame_.getWindow();
+      String href = window.getLocationHref();
+      NewWindowOptions options = new NewWindowOptions();
+      
+      int width = Math.max(800, window.getInnerWidth());
+      int height = Math.max(800, window.getInnerHeight());
+      
+      globalDisplay_.openWebMinimalWindow(
+            href,
+            false,
+            width,
+            height,
+            options);
+   }
+   
+   @Override
+   public void refresh()
+   {
+      frame_.getWindow().reload();
    }
    
    @Override
@@ -100,11 +120,6 @@ public class TutorialPane
       String url = GWT.getHostPageBaseURL() + "tutorial/home/";
       frame_.setUrl(url);
    }
-   
-   private static final native void showLandingPageImpl(Element frame, String html)
-   /*-{
-      frame.contentWindow.document.write(html);
-   }-*/;
    
    private void navigate(String url, boolean useRawURL)
    {
@@ -141,22 +156,17 @@ public class TutorialPane
       }
    }
    
-   private void manageCommands(boolean enabled)
-   {
-      commands_.tutorialBack().setEnabled(false);
-      commands_.tutorialForward().setEnabled(false);
-      commands_.tutorialZoom().setEnabled(false);
-      commands_.tutorialPopout().setEnabled(false);
-      commands_.tutorialStop().setEnabled(false);
-      commands_.tutorialStop().setVisible(false);
-   }
+   
    
    
    private RStudioFrame frame_;
    private Toolbar toolbar_;
    private String baseUrl_;
    
+   private static int popoutCount_ = 0;
+   
    // Injected ----
+   private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
 
 }

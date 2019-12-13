@@ -75,7 +75,6 @@
 
 .rs.addFunction("tutorial.stopTutorial", function()
 {
-   browser()
    id <- .rs.tutorial.getActiveTutorialId()
    .rs.api.stopJob(id)
    .rs.tutorial.enqueueClientEvent("stop")

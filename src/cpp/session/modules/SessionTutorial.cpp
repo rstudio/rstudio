@@ -38,7 +38,6 @@ FilePath resourcesPath()
 void handleTutorialRequest(const http::Request& request,
                            http::Response* pResponse)
 {
-   std::cerr << "Hello, world!" << std::endl;
    FilePath homePath = resourcesPath().completePath("index.html");
    pResponse->setFile(homePath, request);
 }

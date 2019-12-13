@@ -362,4 +362,8 @@ public class ElementIds
    public final static String SVN_RESOLVE_MINE_ALL_DESC = "svn_resolve_mine_all_desc";
    public final static String SVN_RESOLVE_THEIRS_ALL = "svn_resolve_theirs_all";
    public final static String SVN_RESOLVE_THEIRS_ALL_DESC = "svn_resolve_theirs_all_desc";
+   
+   // TutorialPane
+   public final static String TUTORIAL_FRAME = "tutorial_frame";
+   
 }

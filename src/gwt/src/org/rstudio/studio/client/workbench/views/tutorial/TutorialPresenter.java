@@ -46,6 +46,8 @@ public class TutorialPresenter
       void back();
       void forward();
       void clear();
+      void popout();
+      void refresh();
       
       void openTutorial(ShinyApplicationParams params);
       void showLandingPage();
@@ -70,6 +72,8 @@ public class TutorialPresenter
       events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       events_.addHandler(TutorialCommandEvent.TYPE, this);
       events_.addHandler(InterruptStatusEvent.TYPE, this);
+      
+      manageCommands(false);
    }
    
    @Override
@@ -98,6 +102,7 @@ public class TutorialPresenter
          }
          
          params_ = event.getParams();
+         manageCommands(true);
          display_.openTutorial(params_);
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPING))
@@ -118,6 +123,7 @@ public class TutorialPresenter
    
    private void onTutorialStopped()
    {
+      manageCommands(false);
       display_.showLandingPage();
    }
    
@@ -151,6 +157,33 @@ public class TutorialPresenter
    {
       display_.forward();
    }
+   
+   @Handler
+   void onTutorialPopout()
+   {
+      display_.popout();
+   }
+   
+   @Handler
+   void onTutorialRefresh()
+   {
+      display_.refresh();
+   }
+   
+   private void manageCommands(boolean enabled)
+   {
+      commands_.tutorialBack().setEnabled(enabled);
+      commands_.tutorialForward().setEnabled(enabled);
+      commands_.tutorialZoom().setEnabled(enabled);
+      
+      commands_.tutorialPopout().setEnabled(enabled);
+    
+      commands_.tutorialRefresh().setEnabled(enabled);;
+      
+      commands_.tutorialStop().setEnabled(enabled);
+      commands_.tutorialStop().setVisible(enabled);
+   }
+   
    
    private final Display display_;
    private final EventBus events_;
