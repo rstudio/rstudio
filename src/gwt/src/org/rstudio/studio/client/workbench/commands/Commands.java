@@ -276,9 +276,6 @@ public abstract class
    public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
    
-   // Tutorial
-   public abstract AppCommand layoutZoomTutorial();
-   
    // PDF
    public abstract AppCommand showPdfExternal();
    
@@ -465,12 +462,14 @@ public abstract class
    
    // Tutorial
    public abstract AppCommand activateTutorial();
+   public abstract AppCommand layoutZoomTutorial();
    public abstract AppCommand tutorialPopout();
    public abstract AppCommand tutorialBack(); 
    public abstract AppCommand tutorialForward();
    public abstract AppCommand tutorialZoom();
    public abstract AppCommand tutorialRefresh();
    public abstract AppCommand tutorialStop();
+   public abstract AppCommand tutorialHome();
    
    
    // Viewer

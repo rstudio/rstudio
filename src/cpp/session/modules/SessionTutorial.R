@@ -86,3 +86,37 @@
    .rs.enqueClientEvent("tutorial_command", eventData)
 })
 
+.rs.addFunction("tutorial.findTutorials", function(pkgRoot)
+{
+   tutorialsRoot <- file.path(pkgRoot, "tutorials")
+   if (!file.exists(tutorialsRoot))
+      return(list())
+   
+   tutorialDirs <- sort(list.files(tutorialsRoot, full.names = TRUE))
+   tutorials <- lapply(tutorialDirs, .rs.tutorial.findTutorialsImpl)
+   Filter(Negate(is.null), tutorials)
+   
+})
+
+.rs.addFunction("tutorial.findTutorialsImpl", function(tutorialDir)
+{
+   tutorialFiles <- list.files(
+      tutorialDir,
+      pattern = "[.]Rmd$",
+      full.names = TRUE,
+      ignore.case = TRUE
+   )
+   
+   if (length(tutorialFiles) == 0)
+      return(NULL)
+   
+   tutorialFile <- tutorialFiles[[1]]
+   contents <- readLines(tutorialFile, encoding = "UTF-8", warn = FALSE)
+   yaml <- rmarkdown:::parse_yaml_front_matter(contents)
+   
+   list(
+      name    = .rs.scalar(basename(tutorialDir)),
+      file    = .rs.scalar(tutorialFile),
+      title   = .rs.scalar(yaml$title)
+   )
+})

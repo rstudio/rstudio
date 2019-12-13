@@ -2899,6 +2899,11 @@ well as menu structures (for main menu and popup menus).
         desc="Stop application"
         rebindable="false"/>
         
+   <cmd id="tutorialHome"
+        buttonLabel=""
+        desc="Return to Tutorial Home"
+        rebindable="false"/>
+        
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>

@@ -48,9 +48,9 @@ public class TutorialPresenter
       void clear();
       void popout();
       void refresh();
+      void home();
       
       void openTutorial(ShinyApplicationParams params);
-      void showLandingPage();
    }
    
    @Inject
@@ -124,7 +124,7 @@ public class TutorialPresenter
    private void onTutorialStopped()
    {
       manageCommands(false);
-      display_.showLandingPage();
+      display_.home();
    }
    
    @Handler
@@ -168,6 +168,13 @@ public class TutorialPresenter
    void onTutorialRefresh()
    {
       display_.refresh();
+   }
+   
+   @Handler
+   void onTutorialHome()
+   {
+      manageCommands(false);
+      display_.home();
    }
    
    private void manageCommands(boolean enabled)

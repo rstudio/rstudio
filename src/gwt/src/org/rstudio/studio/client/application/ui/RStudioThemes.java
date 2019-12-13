@@ -40,6 +40,15 @@ public class RStudioThemes
       initializeThemes(themeName, document, element);
    }
 
+   public static void initializeThemes(Document document,
+                                       Element element)
+   {
+      if (activeTheme_ != null)
+      {
+         initializeThemes(activeTheme_, document, element);
+      }
+   }
+   
    public static void initializeThemes(String themeName,
                                        Document document,
                                        Element element)
@@ -80,6 +89,8 @@ public class RStudioThemes
          element.addClassName("rstudio-themes-" + themeName);
          element.setId("rstudio_container");
       }
+      
+      activeTheme_ = themeName;
    }
 
    public static boolean isFlat(UserPrefs prefs)
@@ -165,4 +176,5 @@ public class RStudioThemes
    }
    
    private static Boolean usesScrollbars_ = null;
+   private static String activeTheme_ = null;
 }

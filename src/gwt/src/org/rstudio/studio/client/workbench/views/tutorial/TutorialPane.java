@@ -21,6 +21,8 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
@@ -28,21 +30,30 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.StyleElement;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class TutorialPane
       extends WorkbenchPane
-      implements TutorialPresenter.Display
+      implements TutorialPresenter.Display,
+                 ThemeChangedEvent.Handler
 {
    @Inject
    protected TutorialPane(GlobalDisplay globalDisplay,
+                          EventBus events,
                           Commands commands)
    {
       super("Tutorial");
       
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      
+      events.addHandler(ThemeChangedEvent.TYPE, this);
       
       ensureWidget();
    }
@@ -52,11 +63,14 @@ public class TutorialPane
    {
       frame_ = new RStudioFrame("Tutorial Pane");
       frame_.setSize("100%", "100%");
-      frame_.addStyleName("ace_editor_theme");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
       ElementIds.assignElementId(frame_.getElement(), ElementIds.TUTORIAL_FRAME);
       
-      showLandingPage();
+      frame_.addLoadHandler((LoadEvent event) -> {
+         initializeStyles();
+      });
+      
+      home();
       return new AutoGlassPanel(frame_);
    }
    
@@ -64,6 +78,7 @@ public class TutorialPane
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Tutorial Tab");
+      toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
@@ -115,9 +130,9 @@ public class TutorialPane
    }
    
    @Override
-   public void showLandingPage()
+   public void home()
    {
-      String url = GWT.getHostPageBaseURL() + "tutorial/home/";
+      String url = GWT.getHostPageBaseURL() + "tutorial/home";
       frame_.setUrl(url);
    }
    
@@ -156,7 +171,34 @@ public class TutorialPane
       }
    }
    
+   private void initializeStyles()
+   {
+      if (frame_.getWindow() == null || frame_.getWindow().getDocument() == null)
+         return;
+      
+      Document doc = frame_.getWindow().getDocument().cast();
+      StyleElement styleEl = doc.createStyleElement();
+      styleEl.setId("rstudio_tutorial_styles");
+      styleEl.setType("text/css");
+      styleEl.setInnerHTML(RES.styles().getText());
+      doc.getHead().appendChild(styleEl);
+   }
+ 
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+   }
    
+   
+   
+   // Resources ---- 
+   public interface Resources extends ClientBundle
+   {
+      @Source("TutorialPane.css")
+      CssResource styles();
+   }
+
+
    
    
    private RStudioFrame frame_;
@@ -169,4 +211,5 @@ public class TutorialPane
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
 
+   private static final Resources RES = GWT.create(Resources.class);
 }
