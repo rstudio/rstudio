@@ -273,6 +273,11 @@ public class WebApplicationHeader extends Composite
       return toolbarVisible_;
    }
    
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
+
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();

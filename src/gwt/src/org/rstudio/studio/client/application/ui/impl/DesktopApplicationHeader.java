@@ -214,6 +214,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       return toolbar_.isVisible();
    }
+
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
    
    public void focusGoToFunction()
    {

@@ -158,6 +158,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
+      events.addHandler(AriaLiveAnnouncementEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -285,6 +286,12 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onFocusMainToolbar()
+   {
+      view_.focusToolbar();
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -321,6 +328,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
       // if the user is currently uploading a file (which potentially takes a long time)
@@ -332,17 +340,29 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Override
    public void onFileUpload(FileUploadEvent event)
    {
       fileUploadInProgress_ = event.inProgress();
    }
    
+   @Override
+   public void onAriaLiveAnnoucement(AriaLiveAnnouncementEvent event)
+   {
+      if (event.getAssertive())
+         view_.reportStatusAssertive(event.getMessage());
+      else
+         view_.reportStatusPolite(event.getMessage());
+   }
+
+   @Override
    public void onServerOffline(ServerOfflineEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationOffline();
    }
     
+   @Override
    public void onLogoutRequested(LogoutRequestedEvent event)
    {
       cleanupWorkbench();
@@ -459,6 +479,7 @@ public class Application implements ApplicationEventHandlers
       SuperDevMode.reload();
    }
    
+   @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
@@ -505,6 +526,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Override
    public void onSessionRelaunch(SessionRelaunchEvent event)
    {
       switch (event.getType())
@@ -539,6 +561,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onServerUnavailable(ServerUnavailableEvent event)
    {
       view_.hideSerializationProgress();
@@ -565,6 +588,7 @@ public class Application implements ApplicationEventHandlers
       });
    }
 
+   @Override
    public void onReload(ReloadEvent event)
    {
       cleanupWorkbench();
@@ -572,6 +596,7 @@ public class Application implements ApplicationEventHandlers
       reloadWindowWithDelay(false);
    }
    
+   @Override
    public void onReloadWithLastChanceSave(ReloadWithLastChanceSaveEvent event)
    {
       Barrier barrier = new Barrier();
@@ -609,6 +634,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onQuit(QuitEvent event)
    {
       cleanupWorkbench();
@@ -694,18 +720,21 @@ public class Application implements ApplicationEventHandlers
       }.schedule(100);
    }
    
+   @Override
    public void onSuicide(SuicideEvent event)
    { 
       cleanupWorkbench();
       view_.showApplicationSuicide(event.getMessage());
    }
    
+   @Override
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationDisconnected();
    }
    
+   @Override
    public void onInvalidClientVersion(InvalidClientVersionEvent event)
    {
       cleanupWorkbench();
@@ -713,6 +742,7 @@ public class Application implements ApplicationEventHandlers
    }
    
 
+   @Override
    public void onInvalidSession(InvalidSessionEvent event)
    {
       // calculate the url without the scope
@@ -737,6 +767,7 @@ public class Application implements ApplicationEventHandlers
       navigateWindowWithDelay(baseURL);
    }
 
+   @Override
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {
       view_.showSessionAbendWarning();

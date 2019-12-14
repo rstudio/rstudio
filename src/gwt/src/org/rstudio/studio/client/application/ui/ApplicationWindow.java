@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,12 +21,19 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.LiveRegionWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.events.AriaLiveAnnouncementEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
 public class ApplicationWindow extends Composite 
@@ -37,10 +44,14 @@ public class ApplicationWindow extends Composite
    @Inject
    public ApplicationWindow(ApplicationHeader applicationHeader,
                             GlobalDisplay globalDisplay,
+                            Provider<UserPrefs> pPrefs,
+                            Provider<EventBus> pEvents,
                             CodeSearchLauncher launcher)
    {
       globalDisplay_ = globalDisplay;
-      
+      pPrefs_ = pPrefs;
+      pEvents_ = pEvents;
+
       // occupy full client area of the window
       Window.enableScrolling(false);
       Window.setMargin("0px");
@@ -56,16 +67,28 @@ public class ApplicationWindow extends Composite
       updateHeaderTopBottom();
       applicationHeaderWidget.setVisible(false);
 
+      // aria-live announcements
+      ariaPoliteStatus_ = new LiveRegionWidget(LiveRegionWidget.POLITE);
+      applicationPanel_.add(ariaPoliteStatus_);
+      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaPoliteStatus_));
+      ariaAssertiveStatus_ = new LiveRegionWidget(LiveRegionWidget.ASSERTIVE);
+      applicationPanel_.add(ariaAssertiveStatus_);
+      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaAssertiveStatus_));
+      
       // main view container
       initWidget(applicationPanel_);
    }
       
    public void showToolbar(boolean showToolbar)
    {
+      boolean currentVisibility = isToolbarShowing();
       applicationHeader_.showToolbar(showToolbar);
       updateHeaderTopBottom();
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
+      if (showToolbar != currentVisibility)
+         pEvents_.get().fireEvent(new AriaLiveAnnouncementEvent(
+               false, showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
    }
    
    public boolean isToolbarShowing()
@@ -73,6 +96,17 @@ public class ApplicationWindow extends Composite
       return applicationHeader_.isToolbarVisible();
    }
    
+   public void focusToolbar()
+   {
+      if (!isToolbarShowing())
+      {
+         pEvents_.get().fireEvent(new AriaLiveAnnouncementEvent(
+               false, "Toolbar hidden, unable to focus."));
+         return;
+      }
+      applicationHeader_.focusToolbar();
+   }
+
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,
@@ -231,6 +265,16 @@ public class ApplicationWindow extends Composite
             "You may have lost workspace data as a result of this crash.");
    }
    
+   public void reportStatusPolite(String message)
+   {
+      ariaPoliteStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
+   }
+
+   public void reportStatusAssertive(String message)
+   {
+      ariaAssertiveStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
+   }
+
    public void showSerializationProgress(String msg, 
                                          boolean modal, 
                                          int delayMs,
@@ -286,6 +330,10 @@ public class ApplicationWindow extends Composite
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
    private WarningBar warningBar_;
+   private final LiveRegionWidget ariaPoliteStatus_;
+   private final LiveRegionWidget ariaAssertiveStatus_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<UserPrefs> pPrefs_;
+   private final Provider<EventBus> pEvents_;
 }

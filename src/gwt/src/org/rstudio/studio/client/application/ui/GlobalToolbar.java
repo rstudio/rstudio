@@ -249,6 +249,11 @@ public class GlobalToolbar extends Toolbar
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
      
+   public void setFocus()
+   {
+      Scheduler.get().scheduleDeferred(() -> getElement().focus());
+   }
+   
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
    private final Provider<CodeSearch> pCodeSearch_;
