@@ -30,7 +30,7 @@ public interface ApplicationView
    void showWorkbenchView(Widget widget);
    
    // toolbar
-   void showToolbar(boolean showToolbar);
+   void showToolbar(boolean showToolbar, boolean announce);
    boolean isToolbarShowing();
    void focusToolbar();
    

@@ -26,8 +26,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -1072,17 +1070,11 @@ public class Application implements ApplicationEventHandlers
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( userPrefs_.get().toolbarVisible().getValue());
+      showToolbar(userPrefs_.get().toolbarVisible().getValue(), false);
       
       // sync to changes in the toolbar visibility state
       userPrefs_.get().toolbarVisible().addValueChangeHandler(
-                                          new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            showToolbar(event.getValue());
-         }
-      });
+            valueChangeEvent -> showToolbar(valueChangeEvent.getValue(), true));
    
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
@@ -1152,10 +1144,10 @@ public class Application implements ApplicationEventHandlers
       userPrefs_.get().writeUserPrefs();
    }
    
-   private void showToolbar(boolean showToolbar)
+   private void showToolbar(boolean showToolbar, boolean announce)
    {
       // show or hide the toolbar
-      view_.showToolbar(showToolbar);
+      view_.showToolbar(showToolbar, announce);
          
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);

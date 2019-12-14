@@ -74,24 +74,27 @@ public class ApplicationWindow extends Composite
       // main view container
       initWidget(applicationPanel_);
    }
-      
-   public void showToolbar(boolean showToolbar)
+
+   @Override
+   public void showToolbar(boolean showToolbar, boolean announce)
    {
       boolean currentVisibility = isToolbarShowing();
       applicationHeader_.showToolbar(showToolbar);
       updateHeaderTopBottom();
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
-      if (showToolbar != currentVisibility)
+      if (announce && showToolbar != currentVisibility)
          pEvents_.get().fireEvent(new AriaLiveStatusEvent(
                showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
    }
    
+   @Override
    public boolean isToolbarShowing()
    {
       return applicationHeader_.isToolbarVisible();
    }
    
+   @Override
    public void focusToolbar()
    {
       if (!isToolbarShowing())
@@ -102,6 +105,7 @@ public class ApplicationWindow extends Composite
       applicationHeader_.focusToolbar();
    }
 
+   @Override
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,
@@ -118,31 +122,37 @@ public class ApplicationWindow extends Composite
       return this ;
    }
    
+   @Override
    public void showApplicationQuit()
    {
       ApplicationEndedPopupPanel.showQuit();
    }
    
+   @Override
    public void showApplicationMultiSessionQuit()
    {
       ApplicationEndedPopupPanel.showMultiSessionQuit();
    }
    
+   @Override
    public void showApplicationSuicide(String reason)
    {
       ApplicationEndedPopupPanel.showSuicide(reason);
    }
    
+   @Override
    public void showApplicationDisconnected()
    {
       ApplicationEndedPopupPanel.showDisconnected();
    }
    
+   @Override
    public void showApplicationOffline()
    {
       ApplicationEndedPopupPanel.showOffline();
    }
    
+   @Override
    public void showApplicationUpdateRequired()
    {
       globalDisplay_.showMessage(
@@ -160,6 +170,7 @@ public class ApplicationWindow extends Composite
             });
    }
       
+   @Override
    public void showWorkbenchView(Widget workbenchScreen)
    {
       workbenchScreen_ = workbenchScreen;
@@ -201,11 +212,14 @@ public class ApplicationWindow extends Composite
       warningBar_.showLicenseButton(showLicenseButton);
    }
    
+   @Override
    public void showLicenseWarning(boolean severe, String message)
    {
       showWarning(severe, message, true);
       
    }
+
+   @Override
    public void showWarning(boolean severe, String message)
    {
       showWarning(severe, message, false);
@@ -236,6 +250,7 @@ public class ApplicationWindow extends Composite
             Unit.PX);
    }
 
+   @Override
    public void hideWarning()
    {
       if (warningBar_ != null)
@@ -251,6 +266,7 @@ public class ApplicationWindow extends Composite
       }
    }
 
+   @Override
    public void showSessionAbendWarning()
    {
       globalDisplay_.showErrorMessage(
@@ -260,11 +276,13 @@ public class ApplicationWindow extends Composite
             "You may have lost workspace data as a result of this crash.");
    }
    
+   @Override
    public void reportStatus(String message)
    {
       ariaPoliteStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
    }
 
+   @Override
    public void showSerializationProgress(String msg, 
                                          boolean modal, 
                                          int delayMs,
@@ -296,6 +314,7 @@ public class ApplicationWindow extends Composite
       }
    }
    
+   @Override
    public void hideSerializationProgress()
    {
       if (activeSerializationProgress_ != null)
@@ -305,6 +324,7 @@ public class ApplicationWindow extends Composite
       }
    }
   
+   @Override
    public void onResize()
    {
       applicationPanel_.onResize();
