@@ -158,7 +158,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
-      events.addHandler(AriaLiveAnnouncementEvent.TYPE, this);
+      events.addHandler(AriaLiveStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -347,12 +347,9 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Override
-   public void onAriaLiveAnnoucement(AriaLiveAnnouncementEvent event)
+   public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      if (event.getAssertive())
-         view_.reportStatusAssertive(event.getMessage());
-      else
-         view_.reportStatusPolite(event.getMessage());
+      view_.reportStatus(event.getMessage());
    }
 
    @Override

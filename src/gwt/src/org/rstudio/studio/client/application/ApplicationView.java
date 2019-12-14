@@ -45,11 +45,9 @@ public interface ApplicationView
    // error messages
    void showSessionAbendWarning();
    
-   // informative status message announced at next graceful opportunity
-   void reportStatusPolite(String message);
-
-   // informative status message that should notify the user immediately
-   void reportStatusAssertive(String message);
+   // informative status message for screen reader users,
+   // announced at next graceful opportunity
+   void reportStatus(String message);
 
    // progress
    void showSerializationProgress(String message, 

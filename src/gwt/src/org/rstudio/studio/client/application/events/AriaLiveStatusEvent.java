@@ -1,5 +1,5 @@
 /*
- * AriaLiveAnnouncementEvent.java
+ * AriaLiveStatusEvent.java
  *
  * Copyright (C) 2019 by RStudio, Inc.
  *
@@ -17,22 +17,16 @@ package org.rstudio.studio.client.application.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class AriaLiveAnnouncementEvent extends GwtEvent<AriaLiveAnnouncementEvent.Handler>
+public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onAriaLiveAnnoucement(AriaLiveAnnouncementEvent event);
+      void onAriaLiveStatus(AriaLiveStatusEvent event);
    }
 
-   public AriaLiveAnnouncementEvent(boolean assertive, String message)
+   public AriaLiveStatusEvent(String message)
    {
-      assertive_ = assertive;
       message_ = message;
-   }
-
-   public boolean getAssertive()
-   {
-      return assertive_;
    }
 
    public String getMessage()
@@ -41,19 +35,18 @@ public class AriaLiveAnnouncementEvent extends GwtEvent<AriaLiveAnnouncementEven
    }
 
    @Override
-   protected void dispatch(AriaLiveAnnouncementEvent.Handler handler)
+   protected void dispatch(AriaLiveStatusEvent.Handler handler)
    {
-      handler.onAriaLiveAnnoucement(this);
+      handler.onAriaLiveStatus(this);
    }
 
    @Override
-   public Type<AriaLiveAnnouncementEvent.Handler> getAssociatedType()
+   public Type<AriaLiveStatusEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
 
-   private final boolean assertive_;
    private final String message_;
 
-   public static final Type<AriaLiveAnnouncementEvent.Handler> TYPE = new Type<>();
+   public static final Type<AriaLiveStatusEvent.Handler> TYPE = new Type<>();
 }

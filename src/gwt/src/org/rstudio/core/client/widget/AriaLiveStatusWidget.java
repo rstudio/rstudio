@@ -1,5 +1,5 @@
 /*
- * LiveRegionWidget.java
+ * AriaLiveStatusWidget.java
  *
  * Copyright (C) 2019 by RStudio, Inc.
  *
@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.LiveValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Timer;
@@ -22,39 +21,21 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
 
 /**
- * A visually hidden panel for performing aria-live region announcements.
+ * A visually hidden panel for performing aria-live status announcements.
  */
-public class LiveRegionWidget extends Widget
+public class AriaLiveStatusWidget extends Widget
 {
-   public static boolean ASSERTIVE = true;
-   public static boolean POLITE = false;
-
-   public LiveRegionWidget()
-   {
-      commonInit();
-   }
-
-   public LiveRegionWidget(boolean assertive)
-   {
-      commonInit();
-      setAssertive(assertive);
-   }
-
-   private void commonInit()
+   public AriaLiveStatusWidget()
    {
       setElement(Document.get().createDivElement());
       A11y.setVisuallyHidden(getElement());
-      A11y.setStatusRole(getElement(), false /* non-assertive by default */);
-   }
-
-   public void setAssertive(boolean assertive)
-   {
-      Roles.getAlertRole().setAriaLiveProperty(getElement(),
-            assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
+      Roles.getStatusRole().set(getElement());
    }
 
    public void announce(String message, int speakDelayMs)
    {
+      // don't speak if negative delay, or if this element is currently
+      // inert (i.e. disabled by a modal dialog)
       if (speakDelayMs < 0)
       {
          if (updateReaderTimer_.isRunning())
@@ -82,4 +63,3 @@ public class LiveRegionWidget extends Widget
 
    private String resultsMessage_;
 }
-

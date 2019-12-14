@@ -23,12 +23,11 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.widget.LiveRegionWidget;
+import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
-import org.rstudio.studio.client.application.events.AriaLiveAnnouncementEvent;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
@@ -67,14 +66,11 @@ public class ApplicationWindow extends Composite
       updateHeaderTopBottom();
       applicationHeaderWidget.setVisible(false);
 
-      // aria-live announcements
-      ariaPoliteStatus_ = new LiveRegionWidget(LiveRegionWidget.POLITE);
+      // aria-live status announcements
+      ariaPoliteStatus_ = new AriaLiveStatusWidget();
       applicationPanel_.add(ariaPoliteStatus_);
       A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaPoliteStatus_));
-      ariaAssertiveStatus_ = new LiveRegionWidget(LiveRegionWidget.ASSERTIVE);
-      applicationPanel_.add(ariaAssertiveStatus_);
-      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaAssertiveStatus_));
-      
+
       // main view container
       initWidget(applicationPanel_);
    }
@@ -87,8 +83,8 @@ public class ApplicationWindow extends Composite
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
       if (showToolbar != currentVisibility)
-         pEvents_.get().fireEvent(new AriaLiveAnnouncementEvent(
-               false, showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
+         pEvents_.get().fireEvent(new AriaLiveStatusEvent(
+               showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
    }
    
    public boolean isToolbarShowing()
@@ -100,8 +96,7 @@ public class ApplicationWindow extends Composite
    {
       if (!isToolbarShowing())
       {
-         pEvents_.get().fireEvent(new AriaLiveAnnouncementEvent(
-               false, "Toolbar hidden, unable to focus."));
+         pEvents_.get().fireEvent(new AriaLiveStatusEvent("Toolbar hidden, unable to focus."));
          return;
       }
       applicationHeader_.focusToolbar();
@@ -265,14 +260,9 @@ public class ApplicationWindow extends Composite
             "You may have lost workspace data as a result of this crash.");
    }
    
-   public void reportStatusPolite(String message)
+   public void reportStatus(String message)
    {
       ariaPoliteStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
-   }
-
-   public void reportStatusAssertive(String message)
-   {
-      ariaAssertiveStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
    }
 
    public void showSerializationProgress(String msg, 
@@ -330,8 +320,7 @@ public class ApplicationWindow extends Composite
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
    private WarningBar warningBar_;
-   private final LiveRegionWidget ariaPoliteStatus_;
-   private final LiveRegionWidget ariaAssertiveStatus_;
+   private final AriaLiveStatusWidget ariaPoliteStatus_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
    private final Provider<UserPrefs> pPrefs_;
