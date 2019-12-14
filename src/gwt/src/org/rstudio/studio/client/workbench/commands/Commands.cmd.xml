@@ -848,6 +848,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
          <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
+         <shortcut refid="focusMainToolbar" value="Ctrl+Alt+L"/>
       </shortcutgroup>
 
       <!-- 
