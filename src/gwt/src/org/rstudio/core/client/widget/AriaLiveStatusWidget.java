@@ -49,6 +49,13 @@ public class AriaLiveStatusWidget extends Widget
       updateReaderTimer_.schedule(speakDelayMs);
    }
 
+   public void clearMessage()
+   {
+      if (updateReaderTimer_.isRunning())
+         updateReaderTimer_.cancel();
+      getElement().setInnerText("");
+   }
+
    /**
     * Timer for reporting the results via aria-live (to avoid interrupting typing)
     */

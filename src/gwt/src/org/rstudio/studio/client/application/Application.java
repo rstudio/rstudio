@@ -157,6 +157,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
+      events.addHandler(AriaLiveClearStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -348,6 +349,12 @@ public class Application implements ApplicationEventHandlers
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
       view_.reportStatus(event.getMessage());
+   }
+
+   @Override
+   public void onAriaLiveClearStatus(AriaLiveClearStatusEvent event)
+   {
+      view_.clearStatus();
    }
 
    @Override

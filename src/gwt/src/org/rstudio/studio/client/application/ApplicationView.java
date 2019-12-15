@@ -48,6 +48,7 @@ public interface ApplicationView
    // informative status message for screen reader users,
    // announced at next graceful opportunity
    void reportStatus(String message);
+   void clearStatus();
 
    // progress
    void showSerializationProgress(String message, 

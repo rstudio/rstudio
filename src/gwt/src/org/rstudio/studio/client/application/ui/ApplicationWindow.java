@@ -67,9 +67,9 @@ public class ApplicationWindow extends Composite
       applicationHeaderWidget.setVisible(false);
 
       // aria-live status announcements
-      ariaPoliteStatus_ = new AriaLiveStatusWidget();
-      applicationPanel_.add(ariaPoliteStatus_);
-      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaPoliteStatus_));
+      ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
+      applicationPanel_.add(ariaLiveStatusWidget_);
+      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaLiveStatusWidget_));
 
       // main view container
       initWidget(applicationPanel_);
@@ -279,7 +279,13 @@ public class ApplicationWindow extends Composite
    @Override
    public void reportStatus(String message)
    {
-      ariaPoliteStatus_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
+      ariaLiveStatusWidget_.announce(message, pPrefs_.get().typingStatusDelayMs().getValue());
+   }
+   
+   @Override
+   public void clearStatus()
+   {
+      ariaLiveStatusWidget_.clearMessage();
    }
 
    @Override
@@ -340,7 +346,7 @@ public class ApplicationWindow extends Composite
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
    private WarningBar warningBar_;
-   private final AriaLiveStatusWidget ariaPoliteStatus_;
+   private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
    private final Provider<UserPrefs> pPrefs_;

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -309,7 +310,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       A11y.setARIAHidden(lblCharCount_);
       
       // Expose a screen reader-only element with debounced updates
-      A11y.setStatusRole(lblReaderCharCount_, false);
+      Roles.getStatusRole().set(lblReaderCharCount_.getElement());
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
