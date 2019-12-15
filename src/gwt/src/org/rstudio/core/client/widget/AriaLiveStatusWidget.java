@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
 
 /**
- * A visually hidden panel for performing aria-live status announcements.
+ * A visually hidden widget for performing aria-live status announcements.
  */
 public class AriaLiveStatusWidget extends Widget
 {
@@ -34,8 +34,6 @@ public class AriaLiveStatusWidget extends Widget
 
    public void announce(String message, int speakDelayMs)
    {
-      // don't speak if negative delay, or if this element is currently
-      // inert (i.e. disabled by a modal dialog)
       if (speakDelayMs < 0)
       {
          if (updateReaderTimer_.isRunning())
