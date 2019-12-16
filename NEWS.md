@@ -94,6 +94,7 @@
 * Command in to change terminal to current RStudio working directory (#2363)
 * Zoom Left/Right Column commands for keyboard users (#5874)
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
+* RStudio now uses 2048 bit RSA keys by default.
 
 ### Bugfixes
 
