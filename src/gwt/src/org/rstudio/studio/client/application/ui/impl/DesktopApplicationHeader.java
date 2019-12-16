@@ -205,16 +205,25 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
    
+   @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbar_.setVisible(showToolbar);
    }
    
+   @Override
    public boolean isToolbarVisible()
    {
       return toolbar_.isVisible();
    }
+
+   @Override
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
    
+   @Override
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();

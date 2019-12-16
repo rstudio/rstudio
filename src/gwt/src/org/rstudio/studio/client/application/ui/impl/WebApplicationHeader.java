@@ -233,6 +233,7 @@ public class WebApplicationHeader extends Composite
       initWidget(outerPanel_);
    }
     
+   @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbarVisible_ = showToolbar;
@@ -268,11 +269,19 @@ public class WebApplicationHeader extends Composite
       overlay_.setGlobalToolbarVisible(this, showToolbar);
    }
    
+   @Override
    public boolean isToolbarVisible()
    {
       return toolbarVisible_;
    }
    
+   @Override
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
+
+   @Override
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();
@@ -368,6 +377,7 @@ public class WebApplicationHeader extends Composite
       commands.pasteWithIndentDummy().addHandler(useKeyboardNotification);
    }
 
+   @Override
    public int getPreferredHeight()
    {
       return preferredHeight_;

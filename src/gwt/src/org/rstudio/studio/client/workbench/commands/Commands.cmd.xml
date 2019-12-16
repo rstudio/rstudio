@@ -500,6 +500,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="toggleScreenReaderSupport"/>
             <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
+            <cmd refid="focusMainToolbar"/>
+            <separator/>
             <cmd refid="showAccessibilityOptions"/>
          </menu>
          <separator/>
@@ -846,6 +848,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
          <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
+         <shortcut refid="focusMainToolbar" value="Ctrl+Alt+L"/>
       </shortcutgroup>
 
       <!-- 
@@ -3565,5 +3568,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleTabKeyMovesFocus"
         menuLabel="_Tab Key Always Moves Focus"
         checkable="true"
+        windowMode="main"/>
+
+   <cmd id="focusMainToolbar"
+        menuLabel="Focus _Main Toolbar"
         windowMode="main"/>
 </commands>
