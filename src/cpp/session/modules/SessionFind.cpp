@@ -831,22 +831,23 @@ private:
                      addReplaceErrorMessage(error.asString(), &errorMessage,
                         &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                }
-
-               if (!fileSuccess_)
+               if (!fileSuccess_ || lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
                {
-                  // the first time a file is processed it gets a more detailed initialization error
-                  if (inputLineNum_ != 0)
-                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
-                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                   if (!findResults().preview())
                      findResults().replaceProgress()->
                         addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
-               }
-               else if (lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
-               {
-                  bool lineSuccess;
-                  addReplaceErrorMessage("Line too long", &errorMessage, &replaceMatchOn,
-                     &replaceMatchOff, &lineSuccess);
+                  if (!fileSuccess_ && inputLineNum_ != 0)
+                  {
+                     // the first time a file is processed it gets a more detailed initialization error
+                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
+                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
+                  }
+                  else if (fileSuccess_)
+                  {
+                     bool lineSuccess;
+                     addReplaceErrorMessage("Line too long", &errorMessage, &replaceMatchOn,
+                        &replaceMatchOff, &lineSuccess);
+                  }
                }
                else
                {
@@ -855,10 +856,9 @@ private:
                                   &lineInfo,
                                   &replaceMatchOn, &replaceMatchOff,
                                   &errorMessage);
+                  lineInfo.decodedPreview = lineInfo.decodedContents;
+                  adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
                }
-               lineInfo.decodedPreview = lineInfo.decodedContents;
-
-               adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
             }
 
             files.push_back(json::Value(file));
