@@ -173,7 +173,7 @@ Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
    return Success();
 }
 
-std::string shinyRunCmd(const std::string& targetPath
+std::string shinyRunCmd(const std::string& targetPath,
       const std::string& extendedType, 
       AppDestination dest)
 {
@@ -186,14 +186,16 @@ std::string shinyRunCmd(const std::string& targetPath
    if (shinyType == modules::shiny::ShinyDirectory)
       shinyPath = shinyPath.getParent();
 
-   // check to see if Shiny is attached to the search path (if we're running the app in teh
+   std::string runPath = shinyPath.getAbsolutePath();
+
+   // check to see if Shiny is attached to the search path (if we're running the app in the
    // foreground)
    bool isShinyAttached = false;
    if (dest == AppDestination::ForegroundApp)
    {
-      isShinyAttached = util::isPackageAttached("shiny");
+      isShinyAttached = r::util::isPackageAttached("shiny");
 
-      shinyPath = module_context::pathRelativeTo(
+      runPath = module_context::pathRelativeTo(
                module_context::safeCurrentPath(),
                shinyPath);
    }
@@ -205,12 +207,12 @@ std::string shinyRunCmd(const std::string& targetPath
       if (!isShinyAttached)
          runCmd = "shiny::";
       runCmd.append("runApp(");
-      if (shinyPath != ".")
+      if (runPath != ".")
       {
          // runApp defaults to the current working directory, so don't specify
          // it unless we need to.
          runCmd.append("'");
-         runCmd.append(shinyPath);
+         runCmd.append(runPath);
          runCmd.append("'");
       }
       runCmd.append(")");
@@ -224,19 +226,21 @@ std::string shinyRunCmd(const std::string& targetPath
       if (module_context::isPackageVersionInstalled("shiny", "0.13.0") &&
           shinyType == modules::shiny::ShinySingleFile)
       {
-         runCmd.append("runApp('" + shinyPath + "')");
+         runCmd.append("runApp('" + runPath + "')");
       }
       else
       {
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("print(");
          runCmd.append("source('");
-         runCmd.append(shinyPath);
+         runCmd.append(runPath);
          runCmd.append("')");
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("$value)");
       }
    }
+
+   return runCmd;
 }
 
 Error runShinyBackgroundApp(const json::JsonRpcRequest& request,

@@ -39,7 +39,7 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
-static boost::shared_ptr<ScriptJob> ScriptJob::create(
+boost::shared_ptr<ScriptJob> ScriptJob::create(
       const ScriptLaunchSpec& spec)
 {
    boost::shared_ptr<ScriptJob> pJob(new ScriptJob(spec));
@@ -282,7 +282,7 @@ void ScriptJob::onCompleted(int exitStatus)
    tempCode_.removeIfExists();
 
    // let base class run its cleanup
-   AsyncRJob::onComplete(exitStatus);
+   AsyncRJob::onCompleted(exitStatus);
 }
 
 void ScriptJob::onProgress(const std::string& cat, const std::string& argument)
@@ -388,6 +388,17 @@ void ScriptLaunchSpec::setProcOptions(async_r::AsyncRProcessOptions options)
 boost::optional<async_r::AsyncRProcessOptions> ScriptLaunchSpec::procOptions()
 {
    return procOptions_;
+}
+
+Error startScriptJob(const ScriptLaunchSpec& spec, std::string *pId)
+{
+   boost::shared_ptr<ScriptJob> pJob = ScriptJob::create(spec);
+   return startAsyncRJob(pJob, pId);
+}
+
+Error stopScriptJob(const std::string& id)
+{
+   return stopAsyncRJob(id);
 }
 
 } // namespace jobs

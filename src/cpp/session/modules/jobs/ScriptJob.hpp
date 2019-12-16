@@ -19,6 +19,8 @@
 #include <session/jobs/Job.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
+#include "AsyncRJobManager.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -81,14 +83,13 @@ private:
    ScriptJob(const ScriptLaunchSpec& spec);
    void start();
    void onStdout(const std::string& output);
-   void onStdout(const std::string& output);
    void onCompleted(int exitStatus);
    void onProgress(const std::string& cat, const std::string& argument);
 
    ScriptLaunchSpec spec_;
-   FilePath import_;
-   FilePath export_;
-   FilePath tempCode_;
+   core::FilePath import_;
+   core::FilePath export_;
+   core::FilePath tempCode_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 

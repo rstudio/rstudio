@@ -16,11 +16,13 @@
 #ifndef SESSION_ASYNC_R_JOB_MANAGER_HPP
 #define SESSION_ASYNC_R_JOB_MANAGER_HPP
 
+#include <session/jobs/Job.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
 namespace rstudio {
 namespace core {
    class Error;
+}
 }
 
 namespace rstudio {
@@ -31,13 +33,17 @@ namespace jobs {
 class AsyncRJob : public async_r::AsyncRProcess
 {
 public:
+   AsyncRJob();
+
    std::string id();
    void cancel();
-   void onStdout(const std::string& output);
-   void onStderr(const std::string& output);
    void setOnComplete(boost::function<void()> onComplete);
 
+   virtual void onStdout(const std::string& output);
+   virtual void onStderr(const std::string& output);
    virtual void onCompleted(int exitStatus);
+
+   // Pure virtuals
    virtual void start() = 0;
 
 protected:
@@ -48,7 +54,7 @@ protected:
    boost::function<void()> onComplete_;
 };
 
-core::Error startAsyncRJob(boost::shared_ptr<async_r::AsyncRProcess> job,
+core::Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId);
 
 core::Error stopAsyncRJob(const std::string& id);

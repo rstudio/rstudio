@@ -68,6 +68,11 @@ void AsyncRJob::cancel()
    }
 }
 
+void AsyncRJob::setOnComplete(boost::function<void()> onComplete)
+{
+   onComplete_ = onComplete;
+}
+
 Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
@@ -75,7 +80,7 @@ Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
    job->setOnComplete([&]() 
    { 
       // remove the job from the list of those running
-      s_scripts.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
+      s_jobs.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
    });
 
    // start the job now
