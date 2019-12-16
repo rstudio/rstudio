@@ -608,7 +608,9 @@ public abstract class
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand toggleEditorTokenInfo();
-   
+   public abstract AppCommand layoutZoomLeftColumn();
+   public abstract AppCommand layoutZoomRightColumn();
+
    // Main menu (server)
    public abstract AppCommand showFileMenu();
    public abstract AppCommand showEditMenu();
@@ -626,6 +628,7 @@ public abstract class
    public abstract AppCommand toggleScreenReaderSupport();
    public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
+   public abstract AppCommand focusMainToolbar();
    
    // Internal
    public abstract AppCommand showDomElements();

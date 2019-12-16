@@ -20,7 +20,6 @@
                            resource='{res.clearSearch2x}'
                            addStyleNames='{res.themeStyles.clearSearch}'/>
          </div>
-         <div class="{res.themeStyles.visuallyHidden}" ui:field="readerResultsLabel_"/>
          <div class="{res.themeStyles.right}"/>
       </div>
    </g:HTMLPanel>

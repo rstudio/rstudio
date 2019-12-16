@@ -56,6 +56,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
             btnAdd_, btnIgnoreAll_, btnSkip_, btnChange_, btnChangeAll_
       };
 
+      Roles.getListboxRole().setAriaLabelProperty(lstSuggestions_.getElement(), "Suggestions");
       addCancelButton();
    }
 

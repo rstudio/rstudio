@@ -532,8 +532,8 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
                   "window.activeTimer = setTimeout( function() { "
 
                      "window.location.href = "
-                        "\"plot_zoom?width=\" + Math.max(Math.min(document.body.clientWidth, " << MAX_FIG_SIZE << "), 100), "
-                              " + \"&height=\" + Math.max(Math.min(document.body.clientHeight, " << MAX_FIG_SIZE << "), 100), "
+                        "\"plot_zoom?width=\" + Math.max(Math.min(document.body.clientWidth, " << MAX_FIG_SIZE << "), 100) "
+                              " + \"&height=\" + Math.max(Math.min(document.body.clientHeight, " << MAX_FIG_SIZE << "), 100) "
                               " + \"&scale=\" + #scale#;"
                    "}, 300);"
                "}"

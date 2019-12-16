@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppMenuBar;
@@ -204,16 +205,25 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
    
+   @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbar_.setVisible(showToolbar);
    }
    
+   @Override
    public boolean isToolbarVisible()
    {
       return toolbar_.isVisible();
    }
+
+   @Override
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
    
+   @Override
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();
@@ -234,6 +244,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
+         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
 
          addRightCommand(usernameLabel);
 

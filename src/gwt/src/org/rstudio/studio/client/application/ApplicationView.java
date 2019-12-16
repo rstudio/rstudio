@@ -1,7 +1,7 @@
 /*
  * ApplicationView.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,8 +30,9 @@ public interface ApplicationView
    void showWorkbenchView(Widget widget);
    
    // toolbar
-   void showToolbar(boolean showToolbar);
+   void showToolbar(boolean showToolbar, boolean announce);
    boolean isToolbarShowing();
+   void focusToolbar();
    
    // application exit states
    void showApplicationQuit();
@@ -44,6 +45,11 @@ public interface ApplicationView
    // error messages
    void showSessionAbendWarning();
    
+   // informative status message for screen reader users,
+   // announced at next graceful opportunity
+   void reportStatus(String message);
+   void clearStatus();
+
    // progress
    void showSerializationProgress(String message, 
                                   boolean modal, 

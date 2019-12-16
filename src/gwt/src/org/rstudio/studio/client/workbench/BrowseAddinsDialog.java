@@ -1,5 +1,5 @@
 /*
- * ShowAddinsDialog.java
+ * BrowseAddinsDialog.java
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -52,12 +52,13 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -167,10 +168,10 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    }
    
    @Inject
-   private void initialize(AddinsCommandManager addinsCommandManager, UserPrefs prefs)
+   private void initialize(AddinsCommandManager addinsCommandManager, EventBus events)
    {
       addinsCommandManager_ = addinsCommandManager;
-      prefs_ = prefs;
+      events_ = events;
    }
    
    private void addColumns()
@@ -289,8 +290,8 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       dataProvider_.setList(data);
-      filterWidget_.speakResult("Found " + data.size() + " addins matching " +
-            StringUtil.spacedString(query), prefs_.typingStatusDelayMs().getValue());
+      events_.fireEvent(new AriaLiveStatusEvent(
+            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query)));
    }
    
    @Override
@@ -366,7 +367,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    
    // Injected ----
    private AddinsCommandManager addinsCommandManager_;
-   private UserPrefs prefs_;
+   private EventBus events_;
 
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

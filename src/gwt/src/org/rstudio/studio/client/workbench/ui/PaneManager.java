@@ -30,6 +30,8 @@ import com.google.inject.name.Named;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -84,7 +86,10 @@ public class PaneManager
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
       Presentation, Environment, Viewer, Source, Console
    }
-   
+
+   public static final String LEFT_COLUMN = "left";
+   public static final String RIGHT_COLUMN = "right";
+
    class SelectedTabStateValue extends IntStateValue
    {
       SelectedTabStateValue(String name,
@@ -269,8 +274,8 @@ public class PaneManager
       int splitterSize = RStudioThemes.isFlat(userPrefs) ? 7 : 3;
 
       panes_ = createPanes(config);
-      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4, splitterSize);
-      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right", 0.6, splitterSize);
+      left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
+      right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
@@ -702,21 +707,27 @@ public class PaneManager
       // widgets to size themselves vertically.
       for (LogicalWindow window : panes_)
          window.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL, true));
-      
+
+      restoreTwoColumnLayout();
+
+   }
+
+   private void restoreTwoColumnLayout()
+   {
       double rightWidth = panel_.getWidgetSize(right_);
       double panelWidth = panel_.getOffsetWidth();
-      
+
       double minThreshold = (2.0 / 5.0) * panelWidth;
       double maxThreshold = (3.0 / 5.0) * panelWidth;
-      
+
       if (rightWidth <= minThreshold)
          resizeHorizontally(rightWidth, minThreshold);
       else if (rightWidth >= maxThreshold)
          resizeHorizontally(rightWidth, maxThreshold);
-      
+
       invalidateSavedLayoutState(true);
    }
-   
+
    private void restoreSavedLayout()
    {
       // Ensure that all windows are in the 'normal' state. This allows
@@ -885,7 +896,73 @@ public class PaneManager
       
       toggleWindowZoom(parentWindow, tab);
    }
-   
+
+   /**
+    * @return name of zoomed column, or null if no zoomed column; zoomed in this case means
+    *         the splitter is dragged all the way to the left or right
+    */
+   private String getZoomedColumn()
+   {
+      double currentColumnSize = panel_.getWidgetSize(right_);
+      if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
+         return LEFT_COLUMN;
+
+      double rightZoomPosition = panel_.getOffsetWidth();
+      if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001))
+         return RIGHT_COLUMN;
+
+      return null;
+   }
+
+   /**
+    * Zoom (or unzoom if invoked on an already-zoomed) column
+    *
+    * @param columnId
+    */
+   public void zoomColumn(String columnId)
+   {
+      final double initialSize = panel_.getWidgetSize(right_);
+
+      String currentZoomedColumn = getZoomedColumn();
+      double targetSize;
+      boolean unZooming = false;
+
+      if (StringUtil.equals(currentZoomedColumn, columnId))
+      {
+         if (widgetSizePriorToZoom_ < 0)
+         {
+            // no prior position to restore to, just show defaults
+            restoreTwoColumnLayout();
+            return;
+         }
+         targetSize = widgetSizePriorToZoom_;
+         unZooming = true;
+      }
+      else if (StringUtil.equals(columnId, LEFT_COLUMN))
+      {
+         targetSize = 0;
+      }
+      else if (StringUtil.equals(columnId, RIGHT_COLUMN))
+      {
+         targetSize = panel_.getOffsetWidth();
+      }
+      else
+      {
+         Debug.logWarning("Unexpected column identifier: " + columnId);
+         return;
+      }
+
+      if (targetSize < 0)
+         targetSize = 0;
+
+      if (unZooming)
+         widgetSizePriorToZoom_ = -1;
+      else if (widgetSizePriorToZoom_ < 0)
+         widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+
+      resizeHorizontally(initialSize, targetSize, () -> manageLayoutCommands());
+   }
+
    public LogicalWindow getZoomedWindow()
    {
       return maximizedWindow_;
@@ -1144,9 +1221,26 @@ public class PaneManager
       {
          commands_.layoutConsoleOnLeft().setVisible(false);
          commands_.layoutConsoleOnRight().setVisible(false);
-      } 
+      }
+
+      manageZoomColumnCommands();
    }
-   
+
+   private void manageZoomColumnCommands()
+   {
+      boolean zoomLeftChecked = false;
+      boolean zoomRightChecked = false;
+
+      String column = getZoomedColumn();
+      if (StringUtil.equals(column, LEFT_COLUMN))
+         zoomLeftChecked = true;
+      else if (StringUtil.equals(column, RIGHT_COLUMN))
+         zoomRightChecked = true;
+
+      commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
+      commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
+   }
+
    private List<AppCommand> getLayoutCommands()
    {
       List<AppCommand> commands = new ArrayList<>();

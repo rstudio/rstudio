@@ -270,7 +270,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutConsoleOnLeft"/>
             <cmd refid="layoutConsoleOnRight"/>
             <separator/>
-            <cmd refid="paneLayout"/>
+            <cmd refid="layoutZoomLeftColumn"/>
+            <cmd refid="layoutZoomRightColumn"/>
             <separator/>
             <cmd refid="layoutZoomSource"/>
             <cmd refid="layoutZoomConsole"/>
@@ -286,6 +287,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomTutorial"/>
             <cmd refid="layoutZoomBuild"/>
             <cmd refid="layoutZoomConnections"/>
+            <separator/>
+            <cmd refid="paneLayout"/>
          </menu>
          
          <separator/>
@@ -497,6 +500,8 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="toggleScreenReaderSupport"/>
             <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
+            <cmd refid="focusMainToolbar"/>
+            <separator/>
             <cmd refid="showAccessibilityOptions"/>
          </menu>
          <separator/>
@@ -681,7 +686,7 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Panes">
          <shortcut refid="switchFocusSourceConsole" value="Ctrl+X O|Ctrl+X Ctrl+O" disableModes="default,vim,sublime"/>
          <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim,sublime"/>
-         
+
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
          <shortcut refid="activateTerminal" value="Alt+Shift+T"/>
@@ -843,6 +848,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
          <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
+         <shortcut refid="focusMainToolbar" value="Ctrl+Alt+L"/>
       </shortcutgroup>
 
       <!-- 
@@ -862,6 +868,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
          <shortcut refid="layoutZoomConnections" value="Ctrl+Shift+F5"/>
          <shortcut refid="layoutZoomTutorial" value="Ctrl+Shift+F6"/>
+         <shortcut refid="layoutZoomLeftColumn" value="Ctrl+Alt+Shift+F12"/>
+         <shortcut refid="layoutZoomRightColumn" value="Ctrl+Alt+Shift+F11"/>
       </shortcutgroup>
          
    </shortcuts>
@@ -1450,10 +1458,20 @@ well as menu structures (for main menu and popup menus).
         label="Console on Right"
         menuLabel="Console on _Right"
         windowMode="main"/>
-        
+
+   <cmd id="layoutZoomLeftColumn"
+        checkable="true"
+        label="Zoom Left Column"
+        menuLabel="_Zoom Left Column"/>
+
+   <cmd id="layoutZoomRightColumn"
+        checkable="true"
+        label="Zoom Right Column"
+        menuLabel="Zoo_m Right Column"/>
+
    <cmd id="paneLayout"
         menuLabel="Pane Layo_ut..."
-        windowMode="main"/>     
+        windowMode="main"/>
         
    <cmd id="jumpTo"
         label="Jump To..."
@@ -3550,5 +3568,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleTabKeyMovesFocus"
         menuLabel="_Tab Key Always Moves Focus"
         checkable="true"
+        windowMode="main"/>
+
+   <cmd id="focusMainToolbar"
+        menuLabel="Focus _Main Toolbar"
         windowMode="main"/>
 </commands>

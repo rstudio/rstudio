@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.ImageElement;
@@ -232,6 +233,7 @@ public class WebApplicationHeader extends Composite
       initWidget(outerPanel_);
    }
     
+   @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbarVisible_ = showToolbar;
@@ -267,11 +269,19 @@ public class WebApplicationHeader extends Composite
       overlay_.setGlobalToolbarVisible(this, showToolbar);
    }
    
+   @Override
    public boolean isToolbarVisible()
    {
       return toolbarVisible_;
    }
    
+   @Override
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
+
+   @Override
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();
@@ -367,6 +377,7 @@ public class WebApplicationHeader extends Composite
       commands.pasteWithIndentDummy().addHandler(useKeyboardNotification);
    }
 
+   @Override
    public int getPreferredHeight()
    {
       return preferredHeight_;
@@ -411,6 +422,7 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
+         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
          headerBarCommandsPanel_.add(usernameLabel);
          
          overlayUserCommandsPanel_ = new HorizontalPanel();

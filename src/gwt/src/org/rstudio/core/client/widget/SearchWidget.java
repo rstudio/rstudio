@@ -17,11 +17,19 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasAllFocusHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -31,7 +39,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
@@ -225,8 +232,6 @@ public class SearchWidget extends Composite implements SearchDisplay
       });
       
       focusTracker_ = new FocusTracker(suggestBox_);
-
-      A11y.setStatusRole(readerResultsLabel_, false);
    }
    
    public HandlerRegistration addFocusHandler(FocusHandler handler)
@@ -366,21 +371,6 @@ public class SearchWidget extends Composite implements SearchDisplay
       return inputEl;
    }
 
-   /**
-    * Report status using aria-live region, after a delay
-    * @param message
-    */
-   public void speakResult(String message, int speakDelayMs)
-   {
-      if (speakDelayMs <= 0)
-         return;
-
-      resultsMessage_ = message;
-      if (updateReaderTimer_.isRunning())
-         updateReaderTimer_.cancel();
-      updateReaderTimer_.schedule(speakDelayMs);
-   }
-
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;
    @UiField
@@ -389,22 +379,7 @@ public class SearchWidget extends Composite implements SearchDisplay
    DecorativeImage icon_;
    @UiField
    LabelElement hiddenLabel_;
-   @UiField
-   DivElement readerResultsLabel_;
-
-   /**
-    * Timer for reporting the results via aria-live (to avoid interrupting typing)
-    */
-   private Timer updateReaderTimer_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         readerResultsLabel_.setInnerText(resultsMessage_);
-      }
-   };
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;
-   private String resultsMessage_;
 }
