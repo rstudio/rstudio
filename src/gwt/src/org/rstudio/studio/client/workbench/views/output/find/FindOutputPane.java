@@ -78,6 +78,7 @@ public class FindOutputPane extends WorkbenchPane
       toolbar.addRightWidget(stopSearch_);
 
       showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      showFindButton_.setTabIndex(0);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -99,6 +100,7 @@ public class FindOutputPane extends WorkbenchPane
 
       showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
       showReplaceButton_.setVisible(false);
+      showReplaceButton_.setTabIndex(0);
       showReplaceButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
