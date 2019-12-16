@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
@@ -76,7 +77,7 @@ public class FindOutputPane extends WorkbenchPane
       stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
 
-      showFindButton_ = new LeftRightToggleButton("Find", "Replace", false);
+      showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -96,7 +97,7 @@ public class FindOutputPane extends WorkbenchPane
       });
       toolbar.addRightWidget(showFindButton_);
 
-      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
       showReplaceButton_.setVisible(false);
       showReplaceButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -127,10 +128,10 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_ = new SecondaryToolbar("Replace");
       replaceMode_ = true;
 
-      replaceLabel_ = new Label();
+      replaceLabel_ = new Label("Replace with: ");
       replaceToolbar_.addLeftWidget(replaceLabel_);
 
-      replaceTextBox_ = new TextBoxWithCue("Replace all");
+      replaceTextBox_ = new TextBox();
       replaceToolbar_.addLeftWidget(replaceTextBox_);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
@@ -533,7 +534,7 @@ public class FindOutputPane extends WorkbenchPane
    private boolean regexPreviewMode_;
 
    private Label replaceLabel_;
-   private TextBoxWithCue replaceTextBox_;
+   private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
 
    private ToolbarButton stopReplace_;
