@@ -79,5 +79,8 @@ public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.
    }
    
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   public static final String TYPE_STARTED = "started";
+   public static final String TYPE_INDEXING_COMPLETED = "indexing_completed";
 
 }

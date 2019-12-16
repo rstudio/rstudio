@@ -30,6 +30,7 @@
 
 const char * const kTutorialLocation = "/tutorial";
 
+const char * const kTutorialClientEventStarted = "started";
 const char * const kTutorialClientEventIndexingCompleted = "indexing_completed";
 
 using namespace rstudio::core;
@@ -180,6 +181,11 @@ void handleTutorialRunRequest(const http::Request& request,
    std::string package = request.queryParamValue("package");
    std::string name = request.queryParamValue("name");
    
+   json::Object event;
+   event["package"] = package;
+   event["name"] = name;
+   enqueueTutorialClientEvent(kTutorialClientEventStarted, event);
+   
    // TODO: Check tutorial pre-requisites first!
    Error error = r::exec::RFunction(".rs.tutorial.runTutorial")
          .addParam(name)
@@ -201,15 +207,32 @@ void handleTutorialHomeRequest(const http::Request& request,
    using namespace string_utils;
    
    std::stringstream ss;
+   
+   ss << "<h1>Tutorials</h1>";
+   ss << "<hr>";
+   
+   if (tutorialIndex().empty())
+   {
+      ss << "<p>No tutorials are currently available.</p>";
+      if (!module_context::isPackageInstalled("learnr"))
+      {
+         ss << "<p>Please install the learnr package to enable tutorials for RStudio.</p>";
+      }
+      else
+      {
+         ss << "<p>Please wait while RStudio finishes indexing...</p>";
+      }
+   }
+   
    for (auto entry : tutorialIndex())
    {
       std::string pkgName = entry.first;
       std::vector<TutorialInfo> tutorials = entry.second;
       if (tutorials.empty())
          continue;
-      
+
       ss << "<h2>" << htmlEscape(pkgName) << "</h2>";
-      
+
       ss << "<table>";
       for (auto tutorial : tutorials)
       {
@@ -219,7 +242,6 @@ void handleTutorialHomeRequest(const http::Request& request,
          ss << "</tr>";
       }
       ss << "</table>";
-      
    }
    
    std::map<std::string, std::string> vars;

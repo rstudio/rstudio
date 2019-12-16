@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
@@ -122,6 +123,13 @@ public class TutorialPane
    }
    
    @Override
+   public void onTutorialStarted(String packageName, String tutorialName)
+   {
+      String html = "<h2>Loading tutorial " + tutorialName + " ...</h2>";
+      setDocumentContents(frame_.getWindow().getDocument(), html);
+   }
+   
+   @Override
    public void openTutorial(ShinyApplicationParams params)
    {
       commands_.tutorialStop().setVisible(true);
@@ -132,8 +140,13 @@ public class TutorialPane
    @Override
    public void home()
    {
-      String url = GWT.getHostPageBaseURL() + "tutorial/home";
-      frame_.setUrl(url);
+      frame_.setUrl(TutorialPresenter.URLS_HOME);
+   }
+   
+   @Override
+   public String getUrl()
+   {
+      return frame_.getUrl();
    }
    
    private void navigate(String url, boolean useRawURL)
@@ -176,17 +189,37 @@ public class TutorialPane
       if (frame_.getWindow() == null || frame_.getWindow().getDocument() == null)
          return;
       
+      String url = frame_.getUrl();
+      if (!StringUtil.equals(url, TutorialPresenter.URLS_HOME))
+         return;
+         
+      RStudioThemes.initializeThemes(
+            frame_.getWindow().getDocument(),
+            frame_.getWindow().getDocument().getBody());
+      
+      final String STYLES_ID = "rstudio_tutorials_home_styles";
       Document doc = frame_.getWindow().getDocument().cast();
+      if (doc.getElementById(STYLES_ID) != null)
+         return;
+      
       StyleElement styleEl = doc.createStyleElement();
-      styleEl.setId("rstudio_tutorial_styles");
+      styleEl.setId(STYLES_ID);
       styleEl.setType("text/css");
       styleEl.setInnerHTML(RES.styles().getText());
       doc.getHead().appendChild(styleEl);
    }
+   
+   private static final native void setDocumentContents(Document doc, String html)
+   /*-{
+      doc.open();
+      doc.write(html);
+      doc.close();
+   }-*/;
  
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
+      initializeStyles();
    }
    
    

@@ -16,6 +16,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 public class TutorialPresenter
@@ -50,6 +52,9 @@ public class TutorialPresenter
       void refresh();
       void home();
       
+      String getUrl();
+      
+      void onTutorialStarted(String packageName, String tutorialName);
       void openTutorial(ShinyApplicationParams params);
    }
    
@@ -80,7 +85,21 @@ public class TutorialPresenter
    public void onTutorialCommand(TutorialCommandEvent event)
    {
       String type = event.getType();
-      assert false : "Unhandled tutorial event '" + type + "'";
+      
+      if (StringUtil.equals(type, TutorialCommandEvent.TYPE_STARTED))
+      {
+         JsObject data = event.getData();
+         display_.onTutorialStarted(
+               data.getString("package"),
+               data.getString("name"));
+      }
+      else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
+      {
+         if (StringUtil.equals(display_.getUrl(), TutorialPresenter.URLS_HOME))
+         {
+            display_.refresh();
+         }
+      }
    }
    
    @Override
@@ -200,5 +219,7 @@ public class TutorialPresenter
    private ShinyApplicationParams params_;
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
+   
+   public static final String URLS_HOME = GWT.getHostPageBaseURL() + "tutorial/home";
    
 }
