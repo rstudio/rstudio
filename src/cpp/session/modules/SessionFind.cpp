@@ -47,6 +47,8 @@ namespace {
 // This must be the same as MAX_COUNT in FindOutputPane.java
 const size_t MAX_COUNT = 1000;
 
+const size_t MAX_LINE_LENGTH = 1000;
+
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
 {
@@ -444,6 +446,37 @@ private:
       }
    }
 
+   void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
+   {
+      size_t maxPreviewLength = 300;
+      size_t firstMatchOn = pMatchOn->getValueAt(0).getInt();
+      if (contents->size() > maxPreviewLength)
+      {
+         if (firstMatchOn > maxPreviewLength)
+         {
+            int leadingCharactersErased = firstMatchOn - 27;
+            *contents = contents->erase(0, firstMatchOn - 30);
+            contents->insert(0, "...");
+            json::Array newMatchOnArray;
+            json::Array newMatchOffArray;
+            for (size_t i = 0; i < pMatchOn->getSize(); i++)
+            {
+               newMatchOnArray.push_back(
+                  json::Value(pMatchOn->getValueAt(i).getInt() - leadingCharactersErased));
+               if (i >= pMatchOff->getSize())
+                  LOG_WARNING_MESSAGE("pMatchOn and pMatchOff should be the same length");
+               else
+                  newMatchOffArray.push_back(
+                     json::Value(pMatchOff->getValueAt(i).getInt() - leadingCharactersErased));
+            }
+            *pMatchOn = newMatchOnArray;
+            *pMatchOff = newMatchOffArray;
+         }
+         if (contents->size() > maxPreviewLength)
+            adjustForPreview(contents);
+      }
+   }
+
    Error completeFileReplace()
    {
       if (fileSuccess_)
@@ -512,7 +545,8 @@ private:
          decodedLine.append(decode(std::string(inputPos, end)));
 
       *pFullLineContent = decodedLine;
-      adjustForPreview(&decodedLine);
+      if (!findResults().replace())
+         adjustForPreview(&decodedLine);
       *pContent = decodedLine;
    }
 
@@ -808,6 +842,12 @@ private:
                      findResults().replaceProgress()->
                         addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
                }
+               else if (lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
+               {
+                  bool lineSuccess;
+                  addReplaceErrorMessage("Line too long", &errorMessage, &replaceMatchOn,
+                     &replaceMatchOff, &lineSuccess);
+               }
                else
                {
                    processReplace(lineNum,
@@ -818,7 +858,7 @@ private:
                }
                lineInfo.decodedPreview = lineInfo.decodedContents;
 
-               adjustForPreview(&lineInfo.decodedPreview);
+               adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
             }
 
             files.push_back(json::Value(file));
