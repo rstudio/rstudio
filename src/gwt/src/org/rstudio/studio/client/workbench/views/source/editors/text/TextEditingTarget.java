@@ -116,6 +116,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -5398,13 +5399,19 @@ public class TextEditingTarget implements
    
    private void runShinyApp()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
+      sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
+      {
+         // determine whether to run the application in the foreground or the
+         // background based on the doc-level property
+         String destination = ShinyApplication.FOREGROUND_APP;
+         if (docUpdateSentinel_.getBoolProperty(
+               ShinyApplication.RUN_IN_BACKGROUND, false))
          {
-            events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
-                  getExtendedFileType()));
+            destination = ShinyApplication.BACKGROUND_APP;
          }
+           
+         events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
+               destination, getExtendedFileType()));
       }, "Run Shiny Application");
    }
    

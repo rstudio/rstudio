@@ -1,7 +1,7 @@
 /*
  * LaunchShinyApplicationEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,9 +36,10 @@ public class LaunchShinyApplicationEvent
    {
    }
    
-   public LaunchShinyApplicationEvent(String path, String extendedType)
+   public LaunchShinyApplicationEvent(String path, String destination, String extendedType)
    {
       path_ = path;
+      destination_ = destination;
       extendedType_ = extendedType;
    }
 
@@ -51,6 +52,11 @@ public class LaunchShinyApplicationEvent
    public String getExtendedType()
    {
       return extendedType_;
+   }
+   
+   public String getDestination()
+   {
+      return destination_;
    }
    
    @Override
@@ -66,5 +72,6 @@ public class LaunchShinyApplicationEvent
    }
    
    private String path_;
+   private String destination_;
    private String extendedType_;
 }

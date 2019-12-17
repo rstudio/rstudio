@@ -135,7 +135,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onLaunchShinyApplication(LaunchShinyApplicationEvent event)
    {
-      launchShinyApplication(event.getPath(), event.getExtendedType());
+      launchShinyApplication(event.getPath(), event.getDestination(), event.getExtendedType());
    }
 
    @Override
@@ -179,15 +179,20 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      // Close the satellite window when R restarts, since this leads to the
-      // Shiny server being terminated. Closing the window triggers a 
-      // ShinyApplicationStatusEvent that allows the rest of the UI a chance
-      // to react to the app's termination.
-      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED &&
-          currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
+      // Close all the satellite windows when R restarts, since this leads to
+      // the Shiny server being terminated. Closing the window triggers a 
+      // ShinyApplicationStatusEvent that allows the rest of the UI a chance to
+      // react to the app's termination.
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
       {
-            satelliteManager_.closeSatelliteWindow(
-                  ShinyApplicationSatellite.NAME);
+         for (ShinyApplicationParams params: params_)
+         {
+            if (params.getViewerType() == UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
+            {
+               satelliteManager_.closeSatelliteWindow(
+                     ShinyApplicationSatellite.getNameFromId(params.getId()));
+            }
+         }
       }
    }
 
@@ -206,7 +211,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          String id = ShinyApplicationSatellite.getIdFromName(event.getName());
          for (ShinyApplicationParams params: params_)
          {
-            if (StringUtil.equals(id, params.getId())
+            if (StringUtil.equals(id, params.getId()))
             {
                params.setState(ShinyApplicationParams.STATE_STOPPING);
                notifyShinyAppClosed(params);
@@ -278,7 +283,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                @Override
                public void onInterruptFinished()
                {
-                  launchShinyFile(filePath, extendedType);
+                  launchShinyFile(filePath, destination, extendedType);
                }
             });
             return;
@@ -291,7 +296,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                @Override
                public void execute()
                {
-                  launchShinyFile(filePath, extendedType);
+                  launchShinyFile(filePath, destination, extendedType);
                }
          });
    }
@@ -316,33 +321,43 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    private void notifyShinyAppClosed(final JavaScriptObject params)
    {
+      ShinyApplicationParams foreground = foregroundAppParams();
+
       // if we don't know that an app is running, ignore this event
-      if (params_ == null)
+      if (foreground == null)
          return;
 
-      satelliteClosePath_ = params_.getPath();
+      satelliteClosePath_ = foreground.getPath();
       
       // wait for confirmation of window closure (could be a reload)
       WindowCloseMonitor.monitorSatelliteClosure(
-            ShinyApplicationSatellite.NAME, new Command()
+            ShinyApplicationSatellite.getNameFromId(foreground.getId()),
+      () ->
       {
-         @Override
-         public void execute()
-         {
-            // satellite closed for real; shut down the app
-            satelliteClosePath_ = null;
-            onShinyApplicationClosed(params);
-         }
+         // satellite closed for real; shut down the app
+         satelliteClosePath_ = null;
+         onShinyApplicationClosed(params);
       }, 
-      new Command() 
+      () -> 
       {
-         @Override
-         public void execute()
-         {
-            // satellite didn't actually close (it was a reload)
-            satelliteClosePath_ = null;
-         }
+         // satellite didn't actually close (it was a reload)
+         satelliteClosePath_ = null;
       });
+   }
+   
+   /**
+    * Returns the parameters of the Shiny application running in the foreground,
+    * if any
+    */
+   private ShinyApplicationParams foregroundAppParams()
+   {
+      for (ShinyApplicationParams params: params_)
+      {
+         if (params.getId() == ShinyApplicationParams.ID_FOREGROUND)
+            return params;
+      }
+      
+      return null;
    }
    
    private void onShinyApplicationClosed(JavaScriptObject params)
@@ -391,11 +406,13 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       UserPrefs prefs = pPrefs_.get();
       prefs.shinyViewerType().setGlobalValue(viewerType);
       prefs.writeUserPrefs();
-
-      // if we have a running Shiny app and the viewer type has changed, 
-      // snap the app into the new location
+      
+      ShinyApplicationParams params = foregroundAppParams();
+      
+      // if we have a running Shiny foreground app and the viewer type has
+      // changed, snap the app into the new location
       if (currentViewType_ != viewerType &&
-          params_ != null)
+          params != null)
       {
          // if transitioning away from the pane or the window, close down
          // the old instance
@@ -406,7 +423,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             {
                stopOnNextClose_ = false;
                satelliteManager_.closeSatelliteWindow(
-                  ShinyApplicationSatellite.NAME);
+                  ShinyApplicationSatellite.getNameFromId(params.getId()));
             }
             else
             {
@@ -416,13 +433,13 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          
          // assign new viewer type
          currentViewType_ = viewerType;
-         params_.setViewerType(viewerType);
+         params.setViewerType(viewerType);
          
          if (currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_PANE ||
              currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_WINDOW ||
              currentViewType_ == UserPrefs.SHINY_VIEWER_TYPE_BROWSER)
          {
-            eventBus_.fireEvent(new ShinyApplicationStatusEvent(params_));
+            eventBus_.fireEvent(new ShinyApplicationStatusEvent(params));
          }
       }
    }
@@ -450,9 +467,24 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   }
                });
       }
-      else
+      else if (StringUtil.equals(destination, BACKGROUND_APP))
       {
-         
+         server_.runShinyBackgroundApp(file, extendedType, 
+               new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String id)
+                  {
+
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Shiny App Background Launch Failed", 
+                                               error.getMessage());
+                  }
+               });
       }
    }
    
@@ -464,13 +496,30 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private void activateWindow(ShinyApplicationParams params)
    {
       WindowEx win = satelliteManager_.getSatelliteWindowObject(
-            ShinyApplicationSatellite.NAME);
+            ShinyApplicationSatellite.getNameFromId(params.getId()));
+
       boolean isRefresh = win != null && 
             (params == null || (params_ != null &&
                                 params.getPath() == params_.getPath()));
       boolean isChrome = !Desktop.isDesktop() && BrowseCap.isChrome();
+      
+      // if we haven't seen these params before, load them
       if (params != null)
-         params_ = params;
+      {
+         boolean newParams = true;
+         for (ShinyApplicationParams p: params_)
+         {
+            if (p.equals(params))
+            {
+               newParams = false;
+               break;
+            }
+         }
+         
+         if (newParams)
+            params_.add(params);
+      }
+      
       if (win == null || (!isRefresh && !isChrome))
       {
          int width = 910;
@@ -479,20 +528,22 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          }
          // If there's no window yet, or we're switching apps in a browser
          // other than Chrome, do a normal open
-         satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,
-                                         params_, new Size(width, 1100));
+         satelliteManager_.openSatellite(
+               ShinyApplicationSatellite.getNameFromId(params.getId()),
+               params, new Size(width, 1100));
       } 
       else if (isChrome)
       {
          // we have a window and we're Chrome, so force a close and reopen
-         satelliteManager_.forceReopenSatellite(ShinyApplicationSatellite.NAME, 
-                                                params_,
-                                                true);
+         satelliteManager_.forceReopenSatellite(
+               ShinyApplicationSatellite.getNameFromId(params.getId()), 
+               params,
+               true);
       }
       else
       {
          satelliteManager_.activateSatelliteWindow(
-               ShinyApplicationSatellite.NAME);
+               ShinyApplicationSatellite.getNameFromId(params.getId()));
       }
    }
    
@@ -512,6 +563,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private String satelliteClosePath_ = null;
    private String currentViewType_;
    
-   public final String FOREGROUND_APP = "foreground";
-   public final String BACKGROUND_APP = "background";
+   public static final String RUN_IN_BACKGROUND = "run_in_background";
+   public static final String FOREGROUND_APP = "foreground";
+   public static final String BACKGROUND_APP = "background";
 }
