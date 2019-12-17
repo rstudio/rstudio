@@ -268,9 +268,9 @@ public class FindOutputPresenter extends BasePresenter
             String message = "Are you sure you wish to permanently replace all? This will replace " +
                              dialogState_.getResultsCount();
             if (dialogState_.isRegex())
-               message += " occurences and cannot be undone.";
+               message += " occurrences and cannot be undone.";
             else
-               message += " occurences of '" + dialogState_.getQuery() +
+               message += " occurrences of '" + dialogState_.getQuery() +
                           "' with '" + view_.getReplaceText() +
                           "' and cannot be undone.";
             globalDisplay_.showYesNoMessage(
