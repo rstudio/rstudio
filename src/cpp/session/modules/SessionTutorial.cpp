@@ -47,6 +47,7 @@ struct TutorialInfo
    std::string name;
    std::string file;
    std::string title;
+   std::string description;
 };
 
 using TutorialIndex = std::map<std::string, std::vector<TutorialInfo>>;
@@ -127,9 +128,10 @@ private:
          
          TutorialInfo info;
          error = json::readObject(tutorialJson.getObject(),
-                                  "name",  &info.name,
-                                  "file",  &info.file,
-                                  "title", &info.title);
+                                  "name",        &info.name,
+                                  "file",        &info.file,
+                                  "title",       &info.title,
+                                  "description", &info.description);
 
          if (error)
          {
@@ -168,8 +170,8 @@ std::string htmlFormatTutorialName(const std::string& packageName,
         << "&name=" + htmlEscape(tutorial.name);
    
    std::stringstream ss;
-   ss << "<a href=\"" << href.str() << "\">"
-      << "<pre>" << htmlEscape(tutorial.name) << "</pre>"
+   ss << "<a class=\"rstudio-tutorials-link\" href=\"" << href.str() << "\">"
+      << "<code>" << htmlEscape(tutorial.name) << "</code>"
       << "</a>";
    
    return ss.str();
@@ -231,17 +233,39 @@ void handleTutorialHomeRequest(const http::Request& request,
       if (tutorials.empty())
          continue;
 
-      ss << "<h2>" << htmlEscape(pkgName) << "</h2>";
+      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlEscape(pkgName) << "</h2>";
 
-      ss << "<table>";
       for (auto tutorial : tutorials)
       {
-         ss << "<tr>";
-         ss << "<td>" << htmlFormatTutorialName(pkgName, tutorial) << "</td>";
-         ss << "<td>" << htmlEscape(tutorial.title) << "</td>";
-         ss << "</tr>";
+         ss << "<div>";
+         
+         ss << "<div class=\"rstudio-tutorials-label-container\">";
+         
+         ss << "<span class=\"rstudio-tutorials-label\">"
+            << htmlEscape(tutorial.title)
+            << "</span>";
+         
+         ss << "<span class=\"rstudio-tutorials-name\">"
+            << htmlFormatTutorialName(pkgName, tutorial)
+            << "</span>";
+         
+         ss << "</div>";
+         
+         if (tutorial.description.empty())
+         {
+            ss << "<div class=\"rstudio-tutorials-description rstudio-tutorials-description-empty\">"
+               << "[No description available.]"
+               << "</div>";
+         }
+         else
+         {
+            ss << "<div class=\"rstudio-tutorials-description\">"
+               << tutorial.description
+               << "</div>";
+         }
+         
+         ss << "</div>";
       }
-      ss << "</table>";
    }
    
    std::map<std::string, std::string> vars;

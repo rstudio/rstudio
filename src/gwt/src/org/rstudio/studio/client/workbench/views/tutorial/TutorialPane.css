@@ -4,8 +4,17 @@
 @external rstudio-themes-light;
 @external rstudio-themes-dark-menus;
 @external rstudio-themes-dark;
+
 @external rstudio-tutorials;
 @external rstudio-tutorials-container;
+@external rstudio-tutorials-label-container;
+@external rstudio-tutorials-label;
+@external rstudio-tutorials-name;
+@external rstudio-tutorials-description;
+@external rstudio-tutorials-description-empty;
+
+
+/* Common styles */
 
 .rstudio-tutorials {
    font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -15,14 +24,61 @@
    margin: 10px;
 }
 
+.rstudio-tutorials a {
+   display: inline-block;
+}
+
+.rstudio-tutorials-name {
+   float: right;
+   font-size: large;
+}
+
+.rstudio-tutorials-name::before {
+   content: "[";
+}
+
+.rstudio-tutorials-name::after {
+   content: "]";
+}
+
+.rstudio-tutorials-label-container {
+   overflow: auto;
+   width: 100%;
+   margin-bottom: 16px;
+}
+
+.rstudio-tutorials-label {
+   float: left;
+   font-size: large;
+   font-weight: bold;
+}
+
+.rstudio-tutorials-description {
+   margin-bottom: 32px;
+}
+
+.rstudio-tutorials-description-empty {
+   font-style: italic;
+}
+
+
+
+/* Light styles */
+
 .rstudio-themes-light-menus.rstudio-tutorials {
    background: white;
    color: black;
 }
 
+/* Dark styles */
+
 .rstudio-themes-dark-menus.rstudio-tutorials {
    background: black;
    color: rgb(232, 232, 232);
+}
+
+.rstudio-themes-dark-menus.rstudio-tutorials a:visited {
+   color: rgb(78, 131, 181);
 }
 
 .rstudio-themes-dark-menus.rstudio-tutorials a:link {
