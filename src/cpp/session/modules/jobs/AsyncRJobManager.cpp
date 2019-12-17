@@ -73,7 +73,7 @@ void AsyncRJob::setOnComplete(boost::function<void()> onComplete)
    onComplete_ = onComplete;
 }
 
-Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
+Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
    // remove the job from the registry when it's done
@@ -82,9 +82,6 @@ Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       // remove the job from the list of those running
       s_jobs.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
    });
-
-   // start the job now
-   job->start();
 
    // return and register the job
    if (pId != nullptr)

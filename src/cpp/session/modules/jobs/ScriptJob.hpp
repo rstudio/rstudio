@@ -79,9 +79,10 @@ class ScriptJob : public AsyncRJob
 public:
    static boost::shared_ptr<ScriptJob> create(
          const ScriptLaunchSpec& spec);
+   void start();
+
 private:
    ScriptJob(const ScriptLaunchSpec& spec);
-   void start();
    void onStdout(const std::string& output);
    void onCompleted(int exitStatus);
    void onProgress(const std::string& cat, const std::string& argument);

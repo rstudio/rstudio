@@ -43,9 +43,6 @@ public:
    virtual void onStderr(const std::string& output);
    virtual void onCompleted(int exitStatus);
 
-   // Pure virtuals
-   virtual void start() = 0;
-
 protected:
    bool completed_;
    bool cancelled_;
@@ -54,7 +51,7 @@ protected:
    boost::function<void()> onComplete_;
 };
 
-core::Error startAsyncRJob(boost::shared_ptr<AsyncRJob> job,
+core::Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId);
 
 core::Error stopAsyncRJob(const std::string& id);

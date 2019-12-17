@@ -33,6 +33,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "shiny/SessionShiny.hpp"
+#include "jobs/AsyncRJobManager.hpp"
 #include "session-config.h"
 
 using namespace rstudio::core;
@@ -174,6 +175,7 @@ Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
 }
 
 std::string shinyRunCmd(const std::string& targetPath,
+      const FilePath& workingDir,
       const std::string& extendedType, 
       AppDestination dest)
 {
@@ -186,19 +188,16 @@ std::string shinyRunCmd(const std::string& targetPath,
    if (shinyType == modules::shiny::ShinyDirectory)
       shinyPath = shinyPath.getParent();
 
-   std::string runPath = shinyPath.getAbsolutePath();
-
    // check to see if Shiny is attached to the search path (if we're running the app in the
    // foreground)
    bool isShinyAttached = false;
    if (dest == AppDestination::ForegroundApp)
    {
       isShinyAttached = r::util::isPackageAttached("shiny");
-
-      runPath = module_context::pathRelativeTo(
-               module_context::safeCurrentPath(),
-               shinyPath);
    }
+
+   // for brevity, specify the app path as relative to the working directory
+   std::string runPath = module_context::pathRelativeTo(workingDir, shinyPath);
 
    std::string runCmd; 
 
@@ -251,8 +250,27 @@ Error runShinyBackgroundApp(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string cmd = shinyRunCmd(targetPath, extendedType, 
+   // always run the Shiny application from its own parent folder for consistency
+   FilePath appPath = module_context::resolveAliasedPath(targetPath).getParent();
+
+   // create the command that will be used to run the Shiny application in the background R session
+   std::string cmd = shinyRunCmd(targetPath, appPath, extendedType, 
          AppDestination::BackgroundApp);
+
+   // create and start the asynchronous R job that will be used to run the Shiny application
+   boost::shared_ptr<jobs::AsyncRJob> pJob = boost::make_shared<jobs::AsyncRJob>();
+   core::system::Options environment;
+   pJob->start(cmd.c_str(), environment, appPath, async_r::R_PROCESS_NO_RDATA);
+
+   // register it and return the ID to the caller
+   std::string id;
+   error = jobs::registerAsyncRJob(pJob, &id);
+   if (error)
+      return error;
+
+   pResponse->setResult(id);
+
+   return Success();
 }
 
 Error getShinyRunCmd(const json::JsonRpcRequest& request,
@@ -264,8 +282,8 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
       return error;
 
    json::Object dataJson;
-   dataJson["run_cmd"] = shinyRunCmd(targetPath, extendedType, 
-         AppDestination::ForegroundApp);
+   dataJson["run_cmd"] = shinyRunCmd(targetPath, module_context::safeCurrentPath(),
+         extendedType, AppDestination::ForegroundApp);
    pResponse->setResult(dataJson);
 
    return Success();

@@ -393,7 +393,10 @@ boost::optional<async_r::AsyncRProcessOptions> ScriptLaunchSpec::procOptions()
 Error startScriptJob(const ScriptLaunchSpec& spec, std::string *pId)
 {
    boost::shared_ptr<ScriptJob> pJob = ScriptJob::create(spec);
-   return startAsyncRJob(pJob, pId);
+
+   pJob->start();
+
+   return registerAsyncRJob(pJob, pId);
 }
 
 Error stopScriptJob(const std::string& id)
