@@ -230,7 +230,7 @@ void handleTutorialHomeRequest(const http::Request& request,
       if (tutorials.empty())
          continue;
 
-      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlFormatTitle(pkgName) << "</h2>";
+      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlEscape(pkgName) << "</h2>";
       ss << "<hr class=\"rstudio-tutorials-separator\">";
 
       for (auto tutorial : tutorials)

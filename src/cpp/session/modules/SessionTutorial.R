@@ -13,6 +13,12 @@
 #
 #
 
+# State ----
+
+.rs.setVar("tutorial.jobs", new.env(parent = emptyenv()))
+
+
+
 # JSON RPC ----
 .rs.addJsonRpcHandler("tutorial_stop", function() {
    .rs.tutorial.stopTutorial()
@@ -22,19 +28,51 @@
 
 # Methods ----
 
-.rs.addFunction("tutorial.setActiveTutorialId", function(id)
+.rs.addFunction("tutorial.launchBrowser", function(url)
 {
-   .rs.setVar("activeTutorialId", id)
+   # if this is a newly-launched tutorial, tag the associated
+   # job with the generated URL
+   pendingJob <- .rs.getVar("tutorial.pendingJob")
+   if (!is.null(pendingJob))
+   {
+      .rs.tutorial.setTutorialJobUrl(
+         pendingJob$package,
+         pendingJob$name,
+         url
+      )
+   }
+   
+   .rs.clearVar("tutorial.pendingJob")
+   .rs.invokeShinyTutorialViewer(url)
 })
 
-.rs.addFunction("tutorial.getActiveTutorialId", function()
+.rs.addFunction("tutorial.getTutorialJob", function(package, name)
 {
-   .rs.getVar("activeTutorialId")
+   key <- paste(package, name, sep = "::")
+   .rs.tutorial.jobs[[key]]
+})
+
+.rs.addFunction("tutorial.setTutorialJob", function(package, name, id)
+{
+   key <- paste(package, name, sep = "::")
+   .rs.tutorial.jobs[[key]] <- list(id = id)
+})
+
+.rs.addFunction("tutorial.setTutorialJobUrl", function(package, name, url)
+{
+   key <- paste(package, name, sep = "::")
+   .rs.tutorial.jobs[[key]][["url"]] <- url
 })
 
 .rs.addFunction("tutorial.runTutorial", function(name, package, shiny_args = NULL)
 {
-   # TODO: if we already have a running tutorial, stop it?
+   # if we already have a running tutorial, just open the associated URL
+   job <- .rs.tutorial.getTutorialJob(package, name)
+   if (!is.null(job) && !is.null(job$url))
+   {
+      url <- job$url
+      return(.rs.tutorial.launchBrowser(url))
+   }
    
    # prepare the call to learnr to run the tutorial
    shiny_args$launch.browser <- quote(rstudioapi:::tutorialLaunchBrowser)
@@ -68,7 +106,11 @@
    )
    
    # set and return job id for caller
-   .rs.tutorial.setActiveTutorialId(id)
+   .rs.tutorial.setTutorialJob(package, name, id)
+   
+   pendingJob <- list(package = package, name = name, id = id)
+   .rs.setVar("tutorial.pendingJob", pendingJob)
+   
    invisible(id)
    
 })

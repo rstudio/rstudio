@@ -826,7 +826,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # between the RStudio + rstudioapi packages rather than an official
 # user-facing API
 .rs.addApiFunction("tutorialLaunchBrowser", function(url) {
-   .rs.invokeShinyTutorialViewer(url)
+   .rs.tutorial.launchBrowser(url)
 })
 
 # given a tutorial 'name' from package 'package', run that tutorial
