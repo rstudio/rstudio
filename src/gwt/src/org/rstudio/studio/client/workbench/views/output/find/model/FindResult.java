@@ -200,15 +200,19 @@ public class FindResult extends JavaScriptObject
             {
                if (parts.remove(0).first)
                {
-                  out.appendHtmlConstant("<strong>");
+                  out.appendHtmlConstant("<span aria-label=\"original\"><strong>");
                   openStrongTags++;
                }
                else if (openStrongTags > 0)
                {
-                  out.appendHtmlConstant("</strong>");
+                  out.appendHtmlConstant("</strong></span>");
                   openStrongTags--;
                   if (!StringUtil.isNullOrEmpty(replace))
+                  {
+                     out.appendHtmlConstant("<span aria-label=\"replacement\">");
                      out = appendTaggedString(out, "em", replace);
+                     out.appendHtmlConstant("</span>");
+                  }
                }
             }
             // when we reach a replaceOn or replaceOff position, apply an em tag
@@ -216,12 +220,12 @@ public class FindResult extends JavaScriptObject
             {
                if (replaceParts.remove(0).first)
                {
-                  out.appendHtmlConstant("<em>");
+                  out.appendHtmlConstant("<span aria-label=\"replacement\"><em>");
                   openEmTags++;
                }
                else if (openEmTags > 0)
                {
-                  out.appendHtmlConstant("</em>");
+                  out.appendHtmlConstant("</em></span>");
                   openEmTags--;
                }
             }
@@ -234,14 +238,18 @@ public class FindResult extends JavaScriptObject
          while (openStrongTags > 0)
          {
             openStrongTags--;
-            out.appendHtmlConstant("</strong>");
+            out.appendHtmlConstant("</strong></span>");
             if (!StringUtil.isNullOrEmpty(replace))
-               out = appendTaggedString(out, "em", getReplaceValue());
+            {
+               out.appendHtmlConstant("<span aria-label=\"replacement\">");
+               out = appendTaggedString(out, "em", replace);
+               out.appendHtmlConstant("</span>");
+            }
          }
          while (openEmTags > 0)
          {
             openEmTags--;
-            out.appendHtmlConstant("</em>");
+            out.appendHtmlConstant("</em></span>");
          }
       }
 
@@ -288,14 +296,14 @@ public class FindResult extends JavaScriptObject
             {
                if (parts.remove(0).first)
                {
-                  out.appendHtmlConstant("<em>");
+                  out.appendHtmlConstant("<span aria-label=\"replacement\"><em>");
                   openEmTags++;
                   Debug.logToConsole("openEmTags: " + Integer.toString(openEmTags));
                   Debug.logToConsole("out: " + out.toSafeHtml().asString());
                }
                else if (openEmTags > 0)
                {
-                  out.appendHtmlConstant("</em>");
+                  out.appendHtmlConstant("</em></span>");
                   openEmTags--;
                }
             }
@@ -306,7 +314,7 @@ public class FindResult extends JavaScriptObject
          while (openEmTags > 0)
          {
             openEmTags--;
-            out.appendHtmlConstant("</em>");
+            out.appendHtmlConstant("</em></span>");
          }
       }
 
