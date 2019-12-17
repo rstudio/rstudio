@@ -210,9 +210,6 @@ void handleTutorialHomeRequest(const http::Request& request,
    
    std::stringstream ss;
    
-   ss << "<h1>Tutorials</h1>";
-   ss << "<hr>";
-   
    if (tutorialIndex().empty())
    {
       ss << "<p>No tutorials are currently available.</p>";
