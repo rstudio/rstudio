@@ -437,15 +437,6 @@ private:
 #endif
    }
 
-   void adjustForPreview(std::string* contents)
-   {
-      if (contents->size() > 300)
-      {
-         *contents = contents->erase(300);
-         contents->append("...");
-      }
-   }
-
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -454,9 +445,9 @@ private:
       {
          if (firstMatchOn > maxPreviewLength)
          {
-            int leadingCharactersErased = firstMatchOn - 27;
             *contents = contents->erase(0, firstMatchOn - 30);
             contents->insert(0, "...");
+            int leadingCharactersErased = firstMatchOn - 33;
             json::Array newMatchOnArray;
             json::Array newMatchOffArray;
             for (size_t i = 0; i < pMatchOn->getSize(); i++)
@@ -546,7 +537,7 @@ private:
 
       *pFullLineContent = decodedLine;
       if (!findResults().replace())
-         adjustForPreview(&decodedLine);
+         adjustForPreview(&decodedLine, pMatchOn, pMatchOff);
       *pContent = decodedLine;
    }
 
@@ -845,8 +836,8 @@ private:
                   else if (fileSuccess_)
                   {
                      bool lineSuccess;
-                     addReplaceErrorMessage("Line too long", &errorMessage, &replaceMatchOn,
-                        &replaceMatchOff, &lineSuccess);
+                     addReplaceErrorMessage("Line exceeds maximum character length for replace",
+                        &errorMessage, &replaceMatchOn, &replaceMatchOff, &lineSuccess);
                   }
                }
                else
