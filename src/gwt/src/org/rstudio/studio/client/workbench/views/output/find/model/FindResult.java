@@ -261,18 +261,19 @@ public class FindResult extends JavaScriptObject
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
    
-         ArrayList<Pair<Boolean, Integer>> parts
-                                         = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
 
          // consolidate matches into one ArrayList
          while (onReplace.size() + offReplace.size() > 0)
          {
-            int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
-            int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
+            int onIndex = onReplace.size() - 1;
+            int offIndex = offReplace.size() - 1;
+            int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(onIndex);
+            int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(offIndex);
             if (onReplaceVal < offReplaceVal)
-               parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
+               parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(onIndex)));
             else
-               parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
+               parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(offIndex)));
          }
    
          // create html for line
@@ -290,8 +291,6 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("<em>");
                   openEmTags++;
-                  Debug.logToConsole("openEmTags: " + Integer.toString(openEmTags));
-                  Debug.logToConsole("out: " + out.toSafeHtml().asString());
                }
                else if (openEmTags > 0)
                {

@@ -437,6 +437,15 @@ private:
 #endif
    }
 
+   void adjustForPreview(std::string* contents)
+   {
+      if (contents->size() > 300)
+      {
+         *contents = contents->erase(300);
+         contents->append("...");
+      }
+   }
+
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -561,7 +570,7 @@ private:
       return error;
    }
 
-   void substractOffsetIntegerToJsonArray(
+   void subtractOffsetIntegerToJsonArray(
        json::Value newValue, int offset, json::Array* pJsonArray)
    {
       // make sure negative values (errors) don't become positve
@@ -571,11 +580,11 @@ private:
                             gsl::narrow_cast<int>(newValue.getInt() + offset)));
    }
 
-   void substractOffsetIntegersToJsonArray(
+   void subtractOffsetIntegersToJsonArray(
          json::Array values, int offset, json::Array* pJsonArray)
    {
       for (json::Value value : values)
-         substractOffsetIntegerToJsonArray(value, offset, pJsonArray);
+         subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
    Error encodeAndWriteLineToFile(
@@ -695,7 +704,8 @@ private:
                {
                   pLineInfo->decodedContents = newLine;
 
-                  // if multiple replaces in line, readjust previous match numbers
+                  // if multiple replaces in line, readjust previous match numbers to account for
+                  // difference in find and replace sizes
                   size_t replaceSize = replaceMatchOff - matchOn;
                   if (pReplaceMatchOn->getSize() > 0 &&
                       matchSize != replaceSize)
@@ -705,14 +715,11 @@ private:
                      pReplaceMatchOn->clear();
                      pReplaceMatchOff->clear();
 
-                     // put back in reverse order for the frontend
-                     // the frontend requires the matches to be ordered from first match/line to last,
-                     // while we are iterating from last to first here
                      int offset(gsl::narrow_cast<int>(replaceSize - matchSize));
                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
-                     substractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
-                     substractOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
+                     subtractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
+                     subtractOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
                   }
                   else
                   {
