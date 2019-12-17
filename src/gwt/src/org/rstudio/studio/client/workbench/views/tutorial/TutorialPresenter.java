@@ -16,6 +16,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -31,6 +32,9 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 public class TutorialPresenter
@@ -54,8 +58,33 @@ public class TutorialPresenter
       
       String getUrl();
       
-      void onTutorialStarted(String packageName, String tutorialName);
+      void onTutorialStarted(Tutorial tutorial);
       void openTutorial(ShinyApplicationParams params);
+      
+      HandlerRegistration addLoadHandler(LoadHandler handler);
+   }
+   
+   public static class Tutorial
+   {
+      public Tutorial(String tutorialName,
+                      String packageName)
+      {
+         tutorialName_ = tutorialName;
+         packageName_ = packageName;
+      }
+      
+      public String getTutorialName()
+      {
+         return tutorialName_;
+      }
+      
+      public String getPackageName()
+      {
+         return packageName_;
+      }
+      
+      private final String tutorialName_;
+      private final String packageName_;
    }
    
    @Inject
@@ -89,9 +118,24 @@ public class TutorialPresenter
       if (StringUtil.equals(type, TutorialCommandEvent.TYPE_STARTED))
       {
          JsObject data = event.getData();
-         display_.onTutorialStarted(
-               data.getString("package"),
-               data.getString("name"));
+         
+         final Tutorial tutorial = new Tutorial(
+               data.getString("name"),
+               data.getString("package"));
+         
+         display_.onTutorialStarted(tutorial);
+         
+         if (tutorialLoadHandler_ != null)
+         {
+            tutorialLoadHandler_.removeHandler();
+            tutorialLoadHandler_ = null;
+         }
+         
+         tutorialLoadHandler_ = display_.addLoadHandler((LoadEvent loadEvent) -> {
+            String url = display_.getUrl();
+            URL_TO_TUTORIAL_MAP.put(url, tutorial);
+            tutorialLoadHandler_.removeHandler();
+         });
       }
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
@@ -149,20 +193,31 @@ public class TutorialPresenter
    @Handler
    void onTutorialStop()
    {
-      server_.tutorialStop(new ServerRequestCallback<Void>()
+      String url = display_.getUrl();
+      Tutorial tutorial = URL_TO_TUTORIAL_MAP.get(url);
+      if (tutorial == null)
       {
-         @Override
-         public void onResponseReceived(Void response)
-         {
-            onTutorialStopped();
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-      });
+         Debug.logWarning("No known tutorial for URL " + url);
+         return;
+      }
+      
+      server_.tutorialStop(
+            tutorial.getTutorialName(),
+            tutorial.getPackageName(),
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  onTutorialStopped();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
    
    @Handler
@@ -218,6 +273,9 @@ public class TutorialPresenter
    
    private ShinyApplicationParams params_;
    
+   private HandlerRegistration tutorialLoadHandler_;
+   
+   private static final SafeMap<String, Tutorial> URL_TO_TUTORIAL_MAP = new SafeMap<>();
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
    public static final String URLS_HOME = GWT.getHostPageBaseURL() + "tutorial/home";

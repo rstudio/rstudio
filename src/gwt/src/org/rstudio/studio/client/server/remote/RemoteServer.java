@@ -4191,9 +4191,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void tutorialStop(ServerRequestCallback<Void> requestCallback)
+   public void tutorialStop(String tutorialName,
+                            String packageName,
+                            ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, TUTORIAL_STOP, requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(tutorialName)
+            .add(packageName)
+            .get();
+      
+      sendRequest(RPC_SCOPE, TUTORIAL_STOP, params, requestCallback);
    }
    
    @Override

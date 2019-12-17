@@ -15,13 +15,13 @@
 
 # State ----
 
-.rs.setVar("tutorial.jobs", new.env(parent = emptyenv()))
+.rs.setVar("tutorial.registry", new.env(parent = emptyenv()))
 
 
 
 # JSON RPC ----
-.rs.addJsonRpcHandler("tutorial_stop", function() {
-   .rs.tutorial.stopTutorial()
+.rs.addJsonRpcHandler("tutorial_stop", function(name, package) {
+   .rs.tutorial.stopTutorial(name, package)
 })
 
 
@@ -32,47 +32,62 @@
 {
    # if this is a newly-launched tutorial, tag the associated
    # job with the generated URL
-   pendingJob <- .rs.getVar("tutorial.pendingJob")
-   if (!is.null(pendingJob))
+   pendingTutorial <- .rs.getVar("tutorial.pendingTutorial")
+   if (!is.null(pendingTutorial))
    {
-      .rs.tutorial.setTutorialJobUrl(
-         pendingJob$package,
-         pendingJob$name,
+      .rs.tutorial.setRunningTutorialUrl(
+         pendingTutorial$name,
+         pendingTutorial$package,
          url
       )
+      .rs.clearVar("tutorial.pendingTutorial")
    }
    
-   .rs.clearVar("tutorial.pendingJob")
    .rs.invokeShinyTutorialViewer(url)
 })
 
-.rs.addFunction("tutorial.getTutorialJob", function(package, name)
+.rs.addFunction("tutorial.getRunningTutorial", function(name, package)
 {
    key <- paste(package, name, sep = "::")
-   .rs.tutorial.jobs[[key]]
+   .rs.tutorial.registry[[key]]
 })
 
-.rs.addFunction("tutorial.setTutorialJob", function(package, name, id)
+.rs.addFunction("tutorial.setRunningTutorial", function(name, package, job)
 {
    key <- paste(package, name, sep = "::")
-   .rs.tutorial.jobs[[key]] <- list(id = id)
+   .rs.tutorial.registry[[key]] <- list(job = job)
 })
 
-.rs.addFunction("tutorial.setTutorialJobUrl", function(package, name, url)
+.rs.addFunction("tutorial.setRunningTutorialUrl", function(name, package, url)
 {
    key <- paste(package, name, sep = "::")
-   .rs.tutorial.jobs[[key]][["url"]] <- url
+   .rs.tutorial.registry[[key]][["url"]] <- url
+})
+
+.rs.addFunction("tutorial.openExistingTutorial", function(name, package)
+{
+   tutorial <- .rs.tutorial.getRunningTutorial(name, package)
+   if (is.null(tutorial))
+      return(FALSE)
+
+   url <- tutorial$url
+   if (is.null(url))
+      return(FALSE)   
+   
+   job <- tutorial$job
+   running <- .Call("rs_isJobRunning", job, PACKAGE = "(embedding)")
+   if (!running)
+      return(FALSE)
+   
+   .rs.tutorial.launchBrowser(url)
+   TRUE
 })
 
 .rs.addFunction("tutorial.runTutorial", function(name, package, shiny_args = NULL)
 {
    # if we already have a running tutorial, just open the associated URL
-   job <- .rs.tutorial.getTutorialJob(package, name)
-   if (!is.null(job) && !is.null(job$url))
-   {
-      url <- job$url
-      return(.rs.tutorial.launchBrowser(url))
-   }
+   if (.rs.tutorial.openExistingTutorial(name, package))
+      return()
    
    # prepare the call to learnr to run the tutorial
    shiny_args$launch.browser <- quote(rstudioapi:::tutorialLaunchBrowser)
@@ -99,26 +114,26 @@
    writeLines(deparsed, con = path)
    
    # run as job
-   id <- .rs.api.runScriptJob(
+   job <- .rs.api.runScriptJob(
       path = path,
       name = paste("Tutorial:", name),
       encoding = "UTF-8"
    )
    
    # set and return job id for caller
-   .rs.tutorial.setTutorialJob(package, name, id)
+   .rs.tutorial.setRunningTutorial(name, package, job)
    
-   pendingJob <- list(package = package, name = name, id = id)
-   .rs.setVar("tutorial.pendingJob", pendingJob)
+   pendingTutorial <- list(name = name, package = package, job = job)
+   .rs.setVar("tutorial.pendingTutorial", pendingTutorial)
    
-   invisible(id)
+   invisible(job)
    
 })
 
-.rs.addFunction("tutorial.stopTutorial", function()
+.rs.addFunction("tutorial.stopTutorial", function(name, package)
 {
-   id <- .rs.tutorial.getActiveTutorialId()
-   .rs.api.stopJob(id)
+   tutorial <- .rs.tutorial.getRunningTutorial(name, package)
+   .rs.api.stopJob(tutorial$job)
    .rs.tutorial.enqueueClientEvent("stop")
 })
 

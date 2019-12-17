@@ -12,7 +12,11 @@
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIBuilder;
 import org.rstudio.core.client.URIConstants;
@@ -30,10 +34,14 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Widget;
@@ -123,8 +131,9 @@ public class TutorialPane
    }
    
    @Override
-   public void onTutorialStarted(String packageName, String tutorialName)
+   public void onTutorialStarted(Tutorial tutorial)
    {
+      String tutorialName = tutorial.getTutorialName();
       String html = "<h2>Loading tutorial " + tutorialName + " ...</h2>";
       setDocumentContents(frame_.getWindow().getDocument(), html);
    }
@@ -222,6 +231,12 @@ public class TutorialPane
       initializeStyles();
    }
    
+   @Override
+   public HandlerRegistration addLoadHandler(LoadHandler handler)
+   {
+      return frame_.addLoadHandler(handler);
+   }
+   
    
    
    // Resources ---- 
@@ -237,8 +252,10 @@ public class TutorialPane
    private RStudioFrame frame_;
    private Toolbar toolbar_;
    private String baseUrl_;
+   private HandlerRegistration tutorialLoadHandler_;
    
    private static int popoutCount_ = 0;
+   private static final Map<String, Pair<String, String>> URL_TO_TUTORIAL_MAP = new HashMap<>();
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;

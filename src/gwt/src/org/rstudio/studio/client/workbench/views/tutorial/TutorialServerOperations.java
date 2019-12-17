@@ -17,5 +17,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface TutorialServerOperations
 {
-   void tutorialStop(ServerRequestCallback<Void> requestCallback);
+   void tutorialStop(String tutorialName,
+                     String packageName,
+                     ServerRequestCallback<Void> requestCallback);
 }
