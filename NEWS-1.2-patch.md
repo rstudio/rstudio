@@ -1,22 +1,19 @@
 
-## RStudio v1.2 Patch 2 "Elderflower"
+## RStudio v1.2 Patch 3 "Orange Blossom"
+
 
 ### Misc
 
-* Fully reset Connections pane objects when refreshing (#2136)	
-* Fix incorrect `memory.limit()` result with R >= 3.6.0 (#4986)
-* Unset `DYLD_INSERT_LIBRARIES` after launch on macOS to prevent spurious library load errors (#5313)
-* Include R/RStudio version in HTTP user agent header when installing required packages (#5369)
-* Eliminate warnings when using `_R_CHECK_LENGTH_1_LOGIC2_` (#5268, #5363)
-* Truncate console output in notebooks to avoid hang with long outputs (#5518)
-* Fix plain serif/sans-serif font rendering on macOS Catalina (#5525)
-* Restore First Project Template feature (Pro #1267)
+* Add compatibility with recent versions of the `shinytest` package (#5677, #5703)
+* Eliminate warnings when using `_R_CHECK_LENGTH_1_CONDITION_` (#5268, #5363)
+* Ensure compatibility with Boost 1.72.0 (#5742)
+* Set Server Name Indication (SNI) on outbound HTTPS requests for compatibility with TLS 1.3 (#5757)
+* Session configuration option to customize environment variables saved when session suspends (#5769)
 
 ### Server Pro
 
-* Include Job Launcher logs in diagnostics report (#1262)
-* Add ability to specify multiple R versions with same path but differing labels (#1034)
-* Include child processes and timing information in session diagnostic traces (#1192) 
-* Adds better Session UI/UX including sorting, label viewing, and creation visibility (#1215)
-* Respect user profile resource limits for local launcher R sessions (#1269)
-
+* Add ability to configure Slurm command line tools location for the Slurm Launcher Plugin (#1298)
+* Fix an issue where the Slurm service user must have a home directory for the Slurm Launcher Plugin (#1286)
+* Fix an issue where errors are ignored when validating the version of Slurm for the Slurm Launcher Plugin (#1287)
+* Add documentation for load balancing limitations, module support, and support for multiple versions of R with the Slurm Launcher Plugin (#1296)
+* Fix an issue where sessions would sometimes stall while executing commands due to heavy processing in rserver-monitor (#1338)
