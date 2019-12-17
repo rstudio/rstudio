@@ -1,5 +1,6 @@
 @charset "UTF-8";
 
+
 @external rstudio-themes-light-menus;
 @external rstudio-themes-light;
 @external rstudio-themes-dark-menus;
@@ -7,11 +8,13 @@
 
 @external rstudio-tutorials;
 @external rstudio-tutorials-container;
+@external rstudio-tutorials-package;
 @external rstudio-tutorials-label-container;
 @external rstudio-tutorials-label;
 @external rstudio-tutorials-name;
 @external rstudio-tutorials-description;
 @external rstudio-tutorials-description-empty;
+@external rstudio-tutorials-separator;
 
 
 /* Common styles */
@@ -24,6 +27,10 @@
    margin: 10px;
 }
 
+.rstudio-tutorials-package {
+   text-align: center;
+   font-size: 24px;
+}
 .rstudio-tutorials a {
    display: inline-block;
 }
@@ -53,14 +60,15 @@
    font-weight: bold;
 }
 
-.rstudio-tutorials-description {
-   margin-bottom: 32px;
-}
-
 .rstudio-tutorials-description-empty {
    font-style: italic;
 }
 
+.rstudio-tutorials-separator {
+   border-radius: 10px;
+   margin-top: 24px;
+   margin-bottom: 24px;
+}
 
 
 /* Light styles */
@@ -89,3 +97,6 @@
    color: rgb(78, 131, 181);
 }
 
+.rstudio-themes-dark-menus .rstudio-tutorials-separator {
+   border: 1px solid rgb(81, 92, 103);
+}

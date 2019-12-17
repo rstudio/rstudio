@@ -160,7 +160,7 @@ FilePath resourcesPath()
 }
 
 std::string htmlFormatTutorialName(const std::string& packageName,
-                                   const TutorialInfo tutorial)
+                                   const TutorialInfo& tutorial)
 {
    using namespace string_utils;
    
@@ -230,7 +230,8 @@ void handleTutorialHomeRequest(const http::Request& request,
       if (tutorials.empty())
          continue;
 
-      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlEscape(pkgName) << "</h2>";
+      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlFormatTitle(pkgName) << "</h2>";
+      ss << "<hr class=\"rstudio-tutorials-separator\">";
 
       for (auto tutorial : tutorials)
       {
@@ -262,6 +263,7 @@ void handleTutorialHomeRequest(const http::Request& request,
          }
          
          ss << "</div>";
+         ss << "<hr class=\"rstudio-tutorials-separator\">";
       }
    }
    
