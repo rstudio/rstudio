@@ -85,11 +85,11 @@
 }
 
 .rstudio-tutorials-name::before {
-   content: "[";
+   content: "[ ";
 }
 
 .rstudio-tutorials-name::after {
-   content: "]";
+   content: " ]";
 }
 
 .rstudio-tutorials-label-container {
