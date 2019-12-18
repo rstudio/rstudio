@@ -28,6 +28,17 @@
 
 # Methods ----
 
+# TODO: local jobs are stopped when the session is suspended, and so running
+# tutorials are stopped as well. do we want to take the extra step to allow
+# sessions to suspend with running tutorials active?
+.rs.addFunction("tutorial.onSuspend", function(path)
+{
+})
+
+.rs.addFunction("tutorial.onResume", function(path)
+{
+})
+
 .rs.addFunction("tutorial.launchBrowser", function(url)
 {
    # if this is a newly-launched tutorial, tag the associated
@@ -75,8 +86,8 @@
       return(FALSE)   
    
    job <- tutorial$job
-   running <- .Call("rs_isJobRunning", job, PACKAGE = "(embedding)")
-   if (!running)
+   running <- .rs.tryCatch(.Call("rs_isJobRunning", job, PACKAGE = "(embedding)"))
+   if (!identical(running, TRUE))
       return(FALSE)
    
    .rs.tutorial.launchBrowser(url)

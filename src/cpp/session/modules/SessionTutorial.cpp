@@ -42,6 +42,12 @@ namespace tutorial {
 
 namespace {
 
+FilePath tutorialResourcePath(const std::string& fileName = std::string())
+{
+   return module_context::scopedScratchPath()
+         .completePath("tutorial/" + fileName);
+}
+
 struct TutorialInfo
 {
    std::string name;
@@ -290,6 +296,27 @@ void handleTutorialRequest(const http::Request& request,
       pResponse->setStatusCode(http::status::NotFound);
    }
 }
+
+void onSuspend(const r::session::RSuspendOptions& suspendOptions,
+               Settings* pSettings)
+{
+   Error error = r::exec::RFunction(".rs.tutorial.onSuspend")
+         .addParam(tutorialResourcePath("tutorial-state").getAbsolutePath())
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onResume(const Settings& settings)
+{
+   Error error = r::exec::RFunction(".rs.tutorial.onResume")
+         .addParam(tutorialResourcePath("tutorial-state").getAbsolutePath())
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
    
 
 } // end anonymous namespace
@@ -299,6 +326,12 @@ Error initialize()
    using namespace module_context;
 
    ppe::indexer().addWorker(tutorialWorker());
+   
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   
+   Error error = tutorialResourcePath().ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
    
    using boost::bind;
    ExecBlock initBlock;
