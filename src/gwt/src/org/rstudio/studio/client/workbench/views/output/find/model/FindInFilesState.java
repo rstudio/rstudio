@@ -61,8 +61,4 @@ public class FindInFilesState extends JavaScriptObject
    public native final boolean isReplaceRegex() /*-{
       return this.replaceRegex;
    }-*/;
-
-   public native final boolean useGitIgnore() /*-{
-      return this.gitIgnore;
-   }-*/;
 }

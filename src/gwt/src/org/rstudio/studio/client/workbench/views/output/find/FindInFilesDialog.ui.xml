@@ -35,7 +35,6 @@
          &#x00a0;
          <g:CheckBox ui:field="checkboxRegex_" text="Regular expression"/>
          &#x00a0;
-         <g:CheckBox ui:field="checkboxIgnore_" text="Exclude ignore files" visible="false"/>
       </p>
 
       <p>
@@ -52,6 +51,20 @@
          </g:ListBox>
          <div ui:field="divCustomFilter_">
             <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
+            <br/>
+            <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+         </div>
+      </p>
+
+      <p><rw:FormLabel ui:field="labelExcludeFilePatterns_" text="Exclude these files:"/>
+         <g:ListBox ui:field="listPresetExcludeFilePatterns_"
+                    styleName="{style.presetFilePatterns}">
+            <g:item value="">None</g:item>
+            <g:item value="gitIgnore">Contents of .gitignore</g:item>
+            <g:item value="custom">Custom Filter</g:item>
+         </g:ListBox>
+         <div ui:field="divExcludeCustomFilter_">
+            <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
             <br/>
             <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
          </div>

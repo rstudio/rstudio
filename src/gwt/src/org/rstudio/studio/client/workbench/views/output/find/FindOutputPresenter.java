@@ -92,7 +92,6 @@ public class FindOutputPresenter extends BasePresenter
       public void setReplaceMode(boolean value);
       HasClickHandlers getReplaceAllButton();
       String getReplaceText();
-      boolean useGitIgnore();
 
       HasClickHandlers getStopReplaceButton();
       void setStopReplaceButtonVisible(boolean visible);
@@ -218,14 +217,17 @@ public class FindOutputPresenter extends BasePresenter
             JsArrayString filePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getFilePatterns())
                filePatterns.push(pattern);
+            JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
+            for (String pattern : dialogState_.getExcludeFilePatterns())
+               excludeFilePatterns.push(pattern);
 
             server_.previewReplace(dialogState_.getQuery(),
                                    dialogState_.isRegex(),
                                    !dialogState_.isCaseSensitive(),
                                    searchPath,
                                    filePatterns,
+                                   excludeFilePatterns,
                                    view_.getReplaceText(),
-                                   view_.useGitIgnore(),
                                    new SimpleRequestCallback<String>()
                                    {
                                       @Override
@@ -289,15 +291,18 @@ public class FindOutputPresenter extends BasePresenter
                         JsArrayString filePatterns = JsArrayString.createArray().cast();
                         for (String pattern : dialogState_.getFilePatterns())
                            filePatterns.push(pattern);
+                        JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
+                        for (String pattern : dialogState_.getExcludeFilePatterns())
+                           excludeFilePatterns.push(pattern);
 
                         server_.completeReplace(dialogState_.getQuery(),
                                                 dialogState_.isRegex(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 filePatterns,
+                                                excludeFilePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
-                                                view_.useGitIgnore(),
                                                 new SimpleRequestCallback<String>()
                                                 {
                                                    @Override
@@ -470,6 +475,9 @@ public class FindOutputPresenter extends BasePresenter
             JsArrayString filePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
                filePatterns.push(pattern);
+            JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
+            for (String pattern : input.getExcludeFilePatterns())
+               excludeFilePatterns.push(pattern);
 
             // find result always starts with !replaceMode
             view_.setReplaceMode(false);
@@ -480,6 +488,7 @@ public class FindOutputPresenter extends BasePresenter
                               !input.isCaseSensitive(),
                               searchPath,
                               filePatterns,
+                              excludeFilePatterns,
                               new SimpleRequestCallback<String>()
                               {
                                  @Override
