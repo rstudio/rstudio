@@ -127,9 +127,7 @@ public class TutorialPresenter
          final Tutorial tutorial = new Tutorial(
                data.getString("name"),
                data.getString("package"));
-         
-         display_.onTutorialStarted(tutorial);
-         
+       
          if (tutorialLoadHandler_ != null)
          {
             tutorialLoadHandler_.removeHandler();
@@ -141,6 +139,9 @@ public class TutorialPresenter
             URL_TO_TUTORIAL_MAP.put(url, tutorial);
             tutorialLoadHandler_.removeHandler();
          });
+         
+         display_.onTutorialStarted(tutorial);
+         
       }
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
