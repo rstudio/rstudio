@@ -147,6 +147,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       labelFilePatterns_.setFor(listPresetFilePatterns_);
+      labelExcludeFilePatterns_.setFor(listPresetExcludeFilePatterns_);
       setOkButtonCaption("Find");
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
@@ -158,6 +159,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          }
       });
       manageFilePattern();
+
+      listPresetExcludeFilePatterns_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageExcludeFilePattern();
+         }
+      });
 
       txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
       {
@@ -211,14 +221,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetExcludeFilePatterns_.getValue(
                listPresetExcludeFilePatterns_.getSelectedIndex());
       if (excludeFilePatterns == "custom")
-         filePatterns = txtFilePattern_.getText();
+         excludeFilePatterns = txtExcludeFilePattern_.getText();
 
       ArrayList<String> excludeList = new ArrayList<String>();
       for (String pattern : excludeFilePatterns.split(","))
       {
          String trimmedPattern = pattern.trim();
          if (trimmedPattern.length() > 0)
-            list.add(trimmedPattern);
+            excludeList.add(trimmedPattern);
       }
 
       return State.createState(txtSearchPattern_.getText(),
@@ -309,7 +319,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetExcludeFilePatterns_.setSelectedIndex(3);
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
-
    }
    
    private void updateOkButtonEnabled()
