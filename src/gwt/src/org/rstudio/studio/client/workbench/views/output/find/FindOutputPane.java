@@ -78,7 +78,6 @@ public class FindOutputPane extends WorkbenchPane
       toolbar.addRightWidget(stopSearch_);
 
       showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
-      showFindButton_.setTabIndex(0);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -100,7 +99,6 @@ public class FindOutputPane extends WorkbenchPane
 
       showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
       showReplaceButton_.setVisible(false);
-      showReplaceButton_.setTabIndex(0);
       showReplaceButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -130,11 +128,7 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_ = new SecondaryToolbar("Replace");
       replaceMode_ = true;
 
-      replaceLabel_ = new Label("Replace with: ");
-      replaceToolbar_.addLeftWidget(replaceLabel_);
-
       replaceTextBox_ = new TextBox();
-      replaceToolbar_.addLeftWidget(replaceTextBox_);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
@@ -142,6 +136,9 @@ public class FindOutputPane extends WorkbenchPane
             displayPreview_.nudge();
          }
       });
+      replaceLabel_ = new FormLabel("Replace with: ", replaceTextBox_);
+      replaceToolbar_.addLeftWidget(replaceLabel_);
+      replaceToolbar_.addLeftWidget(replaceTextBox_);
 
       useGitIgnore_ = new CheckBox();
       useGitIgnoreLabel_ =
@@ -535,7 +532,7 @@ public class FindOutputPane extends WorkbenchPane
    private boolean replaceMode_;
    private boolean regexPreviewMode_;
 
-   private Label replaceLabel_;
+   private FormLabel replaceLabel_;
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
 

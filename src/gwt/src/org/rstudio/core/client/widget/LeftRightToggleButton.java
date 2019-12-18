@@ -84,12 +84,6 @@ public class LeftRightToggleButton extends Widget
          addStyleName(styles.rightOn());
    }
 
-   public void setTabIndex(int value)
-   {
-      left_.setTabIndex(value);
-      right_.setTabIndex(value);
-   }
-
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {

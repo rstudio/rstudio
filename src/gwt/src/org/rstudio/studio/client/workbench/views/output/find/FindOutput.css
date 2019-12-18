@@ -83,16 +83,17 @@
    color: white;
 }
 
-.findOutputReplace strong {
+.findOutputReplace del {
    font-weight: bold;
    background-color: #A81900;
    text-decoration: line-through;
    color: white;
 }
 
-.findOutputReplace em {
+.findOutputReplace ins {
    font-weight: bold;
    background-color: #006600;
+   text-decoration: none;
    color: white;
 }
 
