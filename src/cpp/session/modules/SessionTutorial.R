@@ -20,7 +20,8 @@
 
 
 # JSON RPC ----
-.rs.addJsonRpcHandler("tutorial_stop", function(name, package) {
+.rs.addJsonRpcHandler("tutorial_stop", function(name, package)
+{
    .rs.tutorial.stopTutorial(name, package)
 })
 

@@ -24,6 +24,8 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
+import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -43,6 +45,7 @@ public class TutorialPresenter
       implements
          TutorialCommandEvent.Handler,
          ShinyApplicationStatusEvent.Handler,
+         ShinyDisconnectSource,
          InterruptStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, TutorialPresenter> {}
@@ -102,6 +105,8 @@ public class TutorialPresenter
       events_ = events;
       commands_ = commands;
       server_ = server;
+      
+      disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
       events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       events_.addHandler(TutorialCommandEvent.TYPE, this);
@@ -251,6 +256,18 @@ public class TutorialPresenter
       display_.home();
    }
    
+   @Override
+   public String getShinyUrl()
+   {
+      return display_.getUrl();
+   }
+
+   @Override
+   public void onShinyDisconnect()
+   {
+      commands_.tutorialStop().setEnabled(false);
+   }
+   
    private void manageCommands(boolean enabled)
    {
       commands_.tutorialBack().setEnabled(enabled);
@@ -270,6 +287,7 @@ public class TutorialPresenter
    private final EventBus events_;
    private final Commands commands_;
    private final TutorialServerOperations server_;
+   private final ShinyDisconnectNotifier disconnectNotifier_;
    
    private ShinyApplicationParams params_;
    
