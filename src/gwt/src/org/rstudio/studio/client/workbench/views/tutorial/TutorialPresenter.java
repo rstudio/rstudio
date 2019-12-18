@@ -135,9 +135,16 @@ public class TutorialPresenter
          }
          
          tutorialLoadHandler_ = display_.addLoadHandler((LoadEvent loadEvent) -> {
+            
+            // ignore spurious home request
             String url = display_.getUrl();
+            if (StringUtil.equals(url, URLS_HOME))
+               return;
+            
+            // cache tutorial URL
             URL_TO_TUTORIAL_MAP.put(url, tutorial);
             tutorialLoadHandler_.removeHandler();
+            
          });
          
          display_.onTutorialStarted(tutorial);
