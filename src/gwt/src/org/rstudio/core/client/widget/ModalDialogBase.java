@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.Widget;
 import elemental.client.Browser;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -55,16 +54,13 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveClearStatusEvent;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
 
 import java.util.ArrayList;
 
 public abstract class ModalDialogBase extends DialogBox
-                                      implements AriaLiveStatusEvent.Handler,
-                                                 AriaLiveClearStatusEvent.Handler
+                                      implements AriaLiveStatusReporter
    
 {
    private static final String firstFocusClass = "__rstudio_modal_first_focus";
@@ -102,8 +98,6 @@ public abstract class ModalDialogBase extends DialogBox
 
       ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
       bottomPanel_.add(ariaLiveStatusWidget_);
-      handlers_.add(RStudioGinjector.INSTANCE.getEventBus().addHandler(AriaLiveStatusEvent.TYPE, this));
-      handlers_.add(RStudioGinjector.INSTANCE.getEventBus().addHandler(AriaLiveClearStatusEvent.TYPE, this));
       
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       mainPanel_.add(bottomPanel_);
@@ -833,26 +827,9 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    @Override
-   public void onAriaLiveStatus(AriaLiveStatusEvent event)
+   public void reportStatus(String status, int delayMs)
    {
-      ariaLiveStatusWidget_.announce(event.getMessage(),
-            RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue());
-   }
-
-   @Override
-   public void onAriaLiveClearStatus(AriaLiveClearStatusEvent event)
-   {
-      ariaLiveStatusWidget_.clearMessage();
-   }
-
-   @Override
-   public void hide(boolean autoClosed)
-   {
-      handlers_.removeHandler();
-
-      // clear status we previously reported from other dialogs / main windows
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new AriaLiveClearStatusEvent());
-      super.hide(autoClosed);
+      ariaLiveStatusWidget_.announce(status, delayMs);
    }
 
    private static Resources RES = GWT.create(Resources.class);
@@ -879,6 +856,5 @@ public abstract class ModalDialogBase extends DialogBox
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
    private DialogRole role_;
-   private HandlerRegistrations handlers_ = new HandlerRegistrations();
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
 }

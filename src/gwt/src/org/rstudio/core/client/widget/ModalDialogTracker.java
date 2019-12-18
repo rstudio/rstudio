@@ -51,6 +51,26 @@ public class ModalDialogTracker
       return dialogStack_.size();
    }
 
+   /**
+    * Attempt to dispatch an aria-live message to the topmost popup that supports it, if any.
+    * 
+    * @param message message to announce
+    * @param delayMs delay before announcing
+    * @return true if message was dispatched, false if no popups support status messages
+    */
+   public static boolean dispatchAriaLiveStatus(String message, int delayMs)
+   {
+      for (int i = dialogStack_.size() - 1; i >= 0; i--)
+      {
+         if (dialogStack_.get(i) instanceof AriaLiveStatusReporter)
+         {
+            ((AriaLiveStatusReporter) dialogStack_.get(i)).reportStatus(message, delayMs);
+            return true;
+         }
+      }
+      return false;
+   }
+
    private static void updateInert()
    {
       Element ideWrapper = DOM.getElementById("rstudio_container");
