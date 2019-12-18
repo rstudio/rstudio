@@ -951,9 +951,32 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-std::string createGitIgnoreString(json::Array filePatterns)
+std::string createGitIgnoreString(FilePath dirPath)
 {
-   return std::string();
+   shell_utils::ShellCommand cmd("git");
+   cmd << "-C";
+
+   cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+
+   cmd << "ls-files";
+   cmd << "-i";
+   cmd << "--exclude-from=.gitIgnore";
+
+   core::system::ProcessResult* pResult = nullptr;
+   core::system::ProcessOptions options;
+   core::Error error = runCommand(cmd,
+                                  options,
+                                  pResult);
+
+   std::string results;
+   /*
+   if (pResult->exitStatus == 0)
+      results = pResult->stdOut;
+   else
+      results = pResult->stdErr;
+   */
+
+   return results;
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1027,11 +1050,14 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "--include=" + filePattern.getString();
    }
 
+   // Filepaths received from the client will be UTF-8 encoded;
+   // convert to system encoding here.
+   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
       if (filePattern.getString().compare("gitIgnore") == 0)
       {
-         std::string excludeGitIgnore(createGitIgnoreString(grepOptions.filePatterns));
+         std::string excludeGitIgnore(createGitIgnoreString(dirPath));
          //cmd << excludeGitIgnore;
       }
       else
@@ -1039,11 +1065,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-
-
-   // Filepaths received from the client will be UTF-8 encoded;
-   // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
 
    // Clear existing results
