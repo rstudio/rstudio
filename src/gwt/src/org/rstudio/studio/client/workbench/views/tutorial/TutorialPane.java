@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.tutorial;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -72,6 +74,8 @@ public class TutorialPane
    {
       frame_ = new RStudioFrame("Tutorial Pane");
       frame_.setSize("100%", "100%");
+      frame_.setStylePrimaryName("rstudio-TutorialFrame");
+      frame_.addStyleName("ace_editor_theme");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
       ElementIds.assignElementId(frame_.getElement(), ElementIds.TUTORIAL_FRAME);
       
@@ -202,12 +206,13 @@ public class TutorialPane
       if (!StringUtil.equals(url, TutorialPresenter.URLS_HOME))
          return;
          
-      RStudioThemes.initializeThemes(
-            frame_.getWindow().getDocument(),
-            frame_.getWindow().getDocument().getBody());
-      
+      Document doc = frame_.getWindow().getDocument();
+      BodyElement body = doc.getBody();
+      RStudioThemes.initializeThemes(doc, body);
+      body.addClassName("ace_editor_theme");
+      body.addClassName(BrowseCap.operatingSystem());
+
       final String STYLES_ID = "rstudio_tutorials_home_styles";
-      Document doc = frame_.getWindow().getDocument().cast();
       if (doc.getElementById(STYLES_ID) != null)
          return;
       

@@ -1,6 +1,13 @@
 @charset "UTF-8";
 
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE_TRANSPARENT org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveTransparentBackground;
 
+@external macintosh, windows, forceMacScrollbars;
+
+@external rstudio-themes-flat;
+@external rstudio-themes-scrollbars;
 @external rstudio-themes-light-menus;
 @external rstudio-themes-light;
 @external rstudio-themes-dark-menus;
@@ -15,6 +22,43 @@
 @external rstudio-tutorials-description;
 @external rstudio-tutorials-description-empty;
 @external rstudio-tutorials-separator;
+
+/* Scrollbars */
+
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar
+{
+   background: #FFF;
+}
+
+.windows.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.windows.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar
+{
+   width: 17px;
+   height: 17px;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb
+{
+   -webkit-border-radius: 10px;
+   background: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-track,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-track,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-corner,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-corner
+{
+   background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar-thumb,
+.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar-thumb
+{
+   border: solid 3px THEME_DARKGREY_MOST_INACTIVE;
+}
+
 
 
 /* Common styles */
