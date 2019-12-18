@@ -48,6 +48,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
@@ -157,7 +158,6 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
-      events.addHandler(AriaLiveClearStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -348,13 +348,9 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      view_.reportStatus(event.getMessage());
-   }
-
-   @Override
-   public void onAriaLiveClearStatus(AriaLiveClearStatusEvent event)
-   {
-      view_.clearStatus();
+      int delayMs = userPrefs_.get().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
+         view_.reportStatus(event.getMessage(), userPrefs_.get().typingStatusDelayMs().getValue());
    }
 
    @Override

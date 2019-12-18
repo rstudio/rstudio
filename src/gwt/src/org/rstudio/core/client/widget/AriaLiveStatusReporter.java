@@ -1,7 +1,7 @@
 /*
- * SatelliteWindowEventHandlers.java
+ * AriaLiveStatusReporter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,12 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.satellite.events;
+package org.rstudio.core.client.widget;
 
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
-import org.rstudio.studio.client.application.events.ThemeChangedEvent;
-
-public interface SatelliteWindowEventHandlers extends ThemeChangedEvent.Handler,
-                                                      AriaLiveStatusEvent.Handler
+public interface AriaLiveStatusReporter
 {
+   void reportStatus(String message, int delayMs);
 }

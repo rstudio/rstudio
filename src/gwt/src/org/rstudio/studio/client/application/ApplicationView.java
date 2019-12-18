@@ -46,9 +46,8 @@ public interface ApplicationView
    void showSessionAbendWarning();
    
    // informative status message for screen reader users,
-   // announced at next graceful opportunity
-   void reportStatus(String message);
-   void clearStatus();
+   // announced at next graceful opportunity after given delay
+   void reportStatus(String message, int delayMs);
 
    // progress
    void showSerializationProgress(String message, 
