@@ -939,19 +939,22 @@ struct ReplaceOptions
       replacePattern("")
    {}
 
-   ReplaceOptions(std::string replace, bool useGitIgnore) :
+   ReplaceOptions(std::string replace) :
       empty(false),
       preview(false),
-      useGitIgnore(useGitIgnore),
       replacePattern(replace)
    {}
 
    bool empty;
    bool preview;
-   bool useGitIgnore;
 
    const std::string replacePattern;
 };
+
+std::string createGitIgnoreString(json::Array filePatterns)
+{
+   return std::string();
+}
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
    LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
@@ -1026,7 +1029,13 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
-      cmd << "--exclude=" + filePattern.getString();
+      if (filePattern.getString().compare("gitIgnore") == 0)
+      {
+         std::string excludeGitIgnore(createGitIgnoreString(grepOptions.filePatterns));
+         //cmd << excludeGitIgnore;
+      }
+      else
+         cmd << "--exclude=" + filePattern.getString();
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
@@ -1110,7 +1119,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 {
    std::string searchString;
    std::string replacePattern;
-   bool asRegex, ignoreCase, useGitIgnore = false;
+   bool asRegex, ignoreCase;
    std::string directory;
    json::Array filePatterns, excludeFilePatterns;
 
@@ -1121,8 +1130,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
                                   &directory,
                                   &filePatterns,
                                   &excludeFilePatterns,
-                                  &replacePattern,
-                                  &useGitIgnore);
+                                  &replacePattern);
    if (error)
       return error;
    if (!asRegex)
@@ -1130,7 +1138,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 
    GrepOptions grepOptions(searchString, directory, filePatterns, excludeFilePatterns, asRegex,
       ignoreCase);
-   ReplaceOptions replaceOptions(replacePattern, useGitIgnore);
+   ReplaceOptions replaceOptions(replacePattern);
    replaceOptions.preview = true;
    error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
 
@@ -1140,7 +1148,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   bool asRegex, ignoreCase, useGitIgnore = false;
+   bool asRegex, ignoreCase;
    std::string searchString;
    std::string replacePattern;
    std::string directory;
@@ -1156,8 +1164,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &filePatterns,
                                   &excludeFilePatterns,
                                   &originalFindCount,
-                                  &replacePattern,
-                                  &useGitIgnore);
+                                  &replacePattern);
    if (error)
       return error;
 
@@ -1165,7 +1172,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
    GrepOptions grepOptions(searchString, directory, filePatterns, excludeFilePatterns, asRegex,
       ignoreCase);
-   ReplaceOptions replaceOptions(replacePattern, useGitIgnore);
+   ReplaceOptions replaceOptions(replacePattern);
 
    error = runGrepOperation(
       grepOptions, replaceOptions, pProgress, pResponse);

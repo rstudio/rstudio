@@ -313,10 +313,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetExcludeFilePatterns_.setSelectedIndex(0);
       else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
          listPresetExcludeFilePatterns_.setSelectedIndex(1);
-      else if (listPresetExcludeFilePatterns_.getValue(2) == excludeFilePatterns)
-         listPresetExcludeFilePatterns_.setSelectedIndex(2);
       else
-         listPresetExcludeFilePatterns_.setSelectedIndex(3);
+         listPresetExcludeFilePatterns_.setSelectedIndex(2);
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
    }
