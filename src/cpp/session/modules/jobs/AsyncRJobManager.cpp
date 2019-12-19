@@ -27,6 +27,7 @@ namespace modules {
 namespace jobs {
 namespace {
 
+// Vector of currently active async R jobs
 std::vector<boost::shared_ptr<AsyncRJob> > s_jobs;
 
 } // anonymous namespace
@@ -103,7 +104,6 @@ void AsyncRJob::setOnComplete(boost::function<void()> onComplete)
 Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
-
    // create the job 
    job->registerJob();
 

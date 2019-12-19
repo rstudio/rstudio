@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -308,8 +307,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    private void notifyShinyAppDisconnected(JavaScriptObject params)
    {
-      Debug.devlog("notify disconnected");
-      Debug.logObject(params);
       ShinyApplicationParams appState = params.cast();
       if (params_ == null || params_.isEmpty())
          return;
@@ -323,10 +320,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    {
       ShinyApplicationParams params = shinyParams.cast();
       
-      Debug.devlog("notify closed");
-
-      Debug.logObject(params);
-
       satelliteClosePath_ = params.getPath();
       
       // wait for confirmation of window closure (could be a reload)

@@ -37,6 +37,8 @@
 #include "jobs/AsyncRJobManager.hpp"
 #include "session-config.h"
 
+#define kForegroudAppId "foreground"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -77,7 +79,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
    dataJson["options"] = options;
-   dataJson["id"] = "foreground"; // magic string for foreground apps
+   dataJson["id"] = kForegroudAppId;
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -176,6 +178,9 @@ Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
    return Success();
 }
 
+/**
+ * Generates an R string to run the given Shiny application
+ */
 std::string shinyRunCmd(const std::string& targetPath,
       const FilePath& workingDir,
       const std::string& extendedType, 
@@ -190,8 +195,8 @@ std::string shinyRunCmd(const std::string& targetPath,
    if (shinyType == modules::shiny::ShinyDirectory)
       shinyPath = shinyPath.getParent();
 
-   // check to see if Shiny is attached to the search path (if we're running the app in the
-   // foreground)
+   // check to see if Shiny is attached to the search path, if we're running the app in the
+   // foreground; in the background we start with a clean session so Shiny is never attached
    bool isShinyAttached = false;
    if (dest == AppDestination::ForegroundApp)
    {
@@ -273,9 +278,7 @@ Error runShinyBackgroundApp(boost::shared_ptr<std::string> pShinyViewerType,
    if (error)
       return error;
 
-   core::system::Options environment;
-
-   // start the job and return the result
+   // start the job (actually creates the underlying R session)
    pJob->start();
 
    // return the ID we created
