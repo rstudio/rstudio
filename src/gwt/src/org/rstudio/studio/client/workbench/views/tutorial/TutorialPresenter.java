@@ -59,6 +59,7 @@ public class TutorialPresenter
       void home();
       
       String getUrl();
+      String getName();
       
       void launchTutorial(Tutorial tutorial);
       
@@ -284,6 +285,12 @@ public class TutorialPresenter
    public String getShinyUrl()
    {
       return display_.getUrl();
+   }
+   
+   @Override
+   public String getWindowName()
+   {
+      return display_.getName();
    }
 
    @Override

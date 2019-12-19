@@ -92,6 +92,7 @@ public class ViewerPresenter extends BasePresenter
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
+      String getName();
       void popout();
       void refresh();
       Size getViewerFrameSize();
@@ -268,6 +269,12 @@ public class ViewerPresenter extends BasePresenter
    public String getShinyUrl()
    {
       return display_.getUrl();
+   }
+   
+   @Override
+   public String getWindowName()
+   {
+      return display_.getName();
    }
 
    @Override

@@ -174,6 +174,12 @@ public class TutorialPane
       return frame_.getUrl();
    }
    
+   @Override
+   public String getName()
+   {
+      return frame_.getWindow().getName();
+   }
+   
    private void navigate(String url, boolean useRawURL)
    {
       // save the unmodified URL for pop-out

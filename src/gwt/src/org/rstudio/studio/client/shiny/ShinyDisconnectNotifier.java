@@ -22,6 +22,7 @@ public class ShinyDisconnectNotifier
    public interface ShinyDisconnectSource
    {
       public String getShinyUrl();
+      public String getWindowName();
       public void onShinyDisconnect();
    }
 
@@ -63,8 +64,11 @@ public class ShinyDisconnectNotifier
          if (typeof event.data !== "string")
             return;
          
-         debugger;
-         self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(e.data, e.origin);
+         self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(
+            e.data,
+            e.origin,
+            e.target.name
+         );
          
       });
       
@@ -72,24 +76,28 @@ public class ShinyDisconnectNotifier
       
    }-*/;
    
-   private void onMessage(String data, String origin)
+   private void onMessage(String data, String origin, String name)
    {
-      // TODO: only disconnect if the source of the message matches
-      // the Shiny frame we're hosting in our widget
-      if ("disconnected".equals(data))
+      // check to see whether we should handle this message
+      boolean ok =
+            StringUtil.equals(data, "disconnected") &&
+            StringUtil.equals(name, source_.getWindowName()) &&
+            source_.getShinyUrl().startsWith(origin);
+      
+      if (!ok)
+         return;
+      
+      if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
       {
-         if (source_.getShinyUrl().startsWith(origin)) 
-         {
-            if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
-            {
-               // we were suppressing disconnect notifications from this URL;
-               // consume this disconnection and resume
-               unsuppress();
-               return;
-            }
-            source_.onShinyDisconnect();
-         }
+         // we were suppressing disconnect notifications from this URL;
+         // consume this disconnection and resume
+         unsuppress();
       }
+      else
+      {
+         source_.onShinyDisconnect();
+      }
+      
    }
 
    private final ShinyDisconnectSource source_;

@@ -836,6 +836,6 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # stop a running tutorial
-.rs.addApiFunction("tutorialStop", function() {
-   .rs.tutorial.stopTutorial()
+.rs.addApiFunction("tutorialStop", function(name, package) {
+   .rs.tutorial.stopTutorial(name, package)
 })

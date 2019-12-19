@@ -374,6 +374,12 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    }
    
    @Override
+   public String getName()
+   {
+      return shinyFrame_.getWindow().getName();
+   }
+   
+   @Override
    public String getAnchor()
    {
       String url = getCurrentUrl();

@@ -44,6 +44,10 @@ public class WindowEx extends JavaScriptObject
    {
    }
    
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+   
    public final native double getDevicePixelRatio() /*-{
       return this.devicePixelRatio;
    }-*/;
