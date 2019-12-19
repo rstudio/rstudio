@@ -200,7 +200,7 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    return r::sexp::create(selection, &protect);
 }
 
-SEXP rs_highlight(SEXP queriesSEXP)
+SEXP rs_highlightUi(SEXP queriesSEXP)
 {
    json::Value data;
    Error error = r::json::jsonValueFromList(queriesSEXP, &data);
@@ -225,7 +225,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
-   RS_REGISTER_CALL_METHOD(rs_highlight);
+   RS_REGISTER_CALL_METHOD(rs_highlightUi);
    
    using boost::bind;
    ExecBlock initBlock;
