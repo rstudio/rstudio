@@ -701,6 +701,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateVcs" value="Ctrl+F1"/>
          <shortcut refid="activateBuild" value="Ctrl+F2"/>
          <shortcut refid="activateConnections" value="Ctrl+F5"/>
+         <shortcut refid="activateFindInFiles" value="Ctrl+F6"/>
 
          <!-- Windows masks Ctrl+Shift+0 for IME input -->
          <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0" if="!org.rstudio.core.client.BrowseCap.isWindowsDesktop()" />
