@@ -193,8 +193,6 @@ public class FindResult extends JavaScriptObject
          int openRedTags = 0;
          int openInsTags = 0;
          String redTag = new String("strong");
-         if (!StringUtil.isNullOrEmpty(replace) || getRegexPreviewIndicator())
-            redTag = "del";
    
          for (int i = 0; i < line.length(); i++)
          {

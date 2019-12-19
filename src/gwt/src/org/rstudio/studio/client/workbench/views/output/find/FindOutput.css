@@ -83,6 +83,13 @@
    color: white;
 }
 
+.findOutputReplace strong {
+   font-weight: bold;
+   background-color: #A81900;
+   text-decoration: line-through;
+   color: white;
+}
+
 .findOutputReplace del {
    font-weight: bold;
    background-color: #A81900;
