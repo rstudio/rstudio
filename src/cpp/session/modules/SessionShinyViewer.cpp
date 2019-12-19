@@ -244,7 +244,8 @@ std::string shinyRunCmd(const std::string& targetPath,
    return runCmd;
 }
 
-Error runShinyBackgroundApp(const json::JsonRpcRequest& request,
+Error runShinyBackgroundApp(boost::shared_ptr<std::string> pShinyViewerType,
+                            const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
    std::string targetPath, extendedType;
@@ -259,12 +260,11 @@ Error runShinyBackgroundApp(const json::JsonRpcRequest& request,
    std::string cmd = shinyRunCmd(targetPath, appPath, extendedType, 
          AppDestination::BackgroundApp);
 
-
    // create the asynchronous R job that will be used to run the Shiny application
    boost::shared_ptr<shiny::ShinyAsyncJob> pJob = boost::make_shared<shiny::ShinyAsyncJob>(
          "Shiny: " + appPath.getFilename(),
          module_context::resolveAliasedPath(targetPath),
-         kShinyViewerTypeWindow, // TODO: respect preference
+         *pShinyViewerType,
          cmd);
 
    // register it and create an ID
@@ -349,6 +349,9 @@ Error initialize()
    json::JsonRpcFunction setShinyViewerTypeRpc =
          boost::bind(setShinyViewer, pShinyViewerType, _1, _2);
 
+   json::JsonRpcFunction runShinyBackground =
+         boost::bind(runShinyBackgroundApp, pShinyViewerType, _1, _2);
+
    RS_REGISTER_CALL_METHOD(rs_shinyviewer);
 
    events().onConsoleInput.connect(onConsoleInput);
@@ -360,7 +363,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionShinyViewer.R"))
       (bind(registerRpcMethod, "get_shiny_run_cmd", getShinyRunCmd))
       (bind(registerRpcMethod, "set_shiny_viewer_type", setShinyViewerTypeRpc))
-      (bind(registerRpcMethod, "run_shiny_background_app", runShinyBackgroundApp))
+      (bind(registerRpcMethod, "run_shiny_background_app", runShinyBackground))
       (bind(initShinyViewerPref, pShinyViewerType));
 
    return initBlock.execute();

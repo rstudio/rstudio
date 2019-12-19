@@ -54,9 +54,13 @@ void ShinyAsyncJob::start()
          "}); " +
          runCmd_);
 
+   // start the R process
    core::system::Options environment;
    async_r::AsyncRProcess::start(cmd.c_str(), environment, path_.getParent(), 
          async_r::AsyncRProcessOptions::R_PROCESS_NO_RDATA);
+
+   // echo the command we submitted to R
+   onStdout("=> " + runCmd_ + "\n\n");
 }
 
 void ShinyAsyncJob::enqueueStateEvent(const std::string& state)
