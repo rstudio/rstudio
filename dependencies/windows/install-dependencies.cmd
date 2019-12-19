@@ -19,7 +19,7 @@ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.1.1b.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 
-set PANDOC_VERSION=2.7.2
+set PANDOC_VERSION=2.7.3
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-x86_64
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
@@ -113,11 +113,11 @@ if not exist "dictionaries\en_US.dic" (
   )
 )
 
-set MATHJAX=mathjax-26.zip
-if not exist "mathjax-26" (
+set MATHJAX=mathjax-27.zip
+if not exist "mathjax-27" (
   wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
   if exist "%MATHJAX%" (
-     mkdir mathjax-26
+     mkdir mathjax-27
      echo Unzipping %MATHJAX%
      unzip %UNZIP_ARGS% "%MATHJAX%"
      del "%MATHJAX%"

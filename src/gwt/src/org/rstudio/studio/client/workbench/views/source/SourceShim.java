@@ -76,11 +76,25 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewTextDoc();
       @Handler
+      public abstract void onNewCDoc();
+      @Handler
       public abstract void onNewCppDoc();
+      @Handler
+      public abstract void onNewHeaderDoc();
+      @Handler
+      public abstract void onNewMarkdownDoc();
       @Handler
       public abstract void onNewPythonDoc();
       @Handler
+      public abstract void onNewShellDoc();
+      @Handler
       public abstract void onNewStanDoc();
+      @Handler
+      public abstract void onNewHtmlDoc();
+      @Handler
+      public abstract void onNewJavaScriptDoc();
+      @Handler
+      public abstract void onNewCssDoc();
       @Handler
       public abstract void onNewD3Doc();
       @Handler

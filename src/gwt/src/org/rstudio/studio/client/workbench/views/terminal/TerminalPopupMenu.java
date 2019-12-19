@@ -92,6 +92,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             addItem(new MenuItem(menuHtml, true, cmd));
          }
          addSeparator();
+         addItem(commands_.setTerminalToCurrentDirectory().createMenuItem(false));
          addItem(commands_.renameTerminal().createMenuItem(false));
          addItem(commands_.sendTerminalToEditor().createMenuItem(false));
          addSeparator();
@@ -103,8 +104,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addItem(commands_.closeTerminal().createMenuItem(false));
          addSeparator();
          addItem(commands_.closeAllTerminals().createMenuItem(false));
+         addSeparator();
       }
 
+      addItem(commands_.showTerminalOptions().createMenuItem(false));
       callback.onPopupMenu(this);
    }
 
@@ -161,6 +164,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    public void updateTerminalCommands()
    {
       boolean haveActiveTerminal = activeTerminalHandle_ != null;
+      commands_.setTerminalToCurrentDirectory().setEnabled(haveActiveTerminal);
       commands_.closeTerminal().setEnabled(haveActiveTerminal);
       commands_.renameTerminal().setEnabled(haveActiveTerminal);
       commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);

@@ -1,7 +1,7 @@
 /*
  * DataImportFileChooser.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -25,10 +28,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Timer;
@@ -38,84 +37,62 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class DataImportFileChooser extends Composite
+                                   implements CanSetControlId
 {
-   private static String browseModeCaption_ = "Browse...";
-   private static String updateModeCaption_ = "Update";
-   private boolean updateMode_ = false;
-   private String lastTextBoxValue_;
-   private int checkTextBoxInterval_ = 250;
-   private final Operation updateOperation_;
-   
-   private static DataImportFileChooserUiBinder uiBinder = GWT
-         .create(DataImportFileChooserUiBinder.class);
-   
-   interface DataImportFileChooserUiBinder
-         extends UiBinder<Widget, DataImportFileChooser>
+   public DataImportFileChooser(Operation updateOperation, boolean growTextbox)
    {
-   }
-   
-   public DataImportFileChooser(Operation updateOperation,
-                                boolean growTextbox)
-   {  
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       initWidget(uiBinder.createAndBindUi(this));
-      
+
       updateOperation_ = updateOperation;
-      
+
       if (growTextbox)
       {
          locationTextBox_.getElement().getStyle().setHeight(22, Unit.PX);
          locationTextBox_.getElement().getStyle().setMarginTop(0, Unit.PX);
       }
-      
-      locationTextBox_.addValueChangeHandler(new ValueChangeHandler<String>()
+
+      locationTextBox_.addValueChangeHandler(stringValueChangeEvent ->
       {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> arg0)
-         {
-         }
       });
-      
-      actionButton_.addClickHandler(new ClickHandler()
+
+      actionButton_.addClickHandler(event ->
       {
-         public void onClick(ClickEvent event)
+         if (updateMode_)
          {
-            if (updateMode_)
-            {
-               updateOperation_.execute();
+            updateOperation_.execute();
+         }
+         else
+         {
+            FileSystemItem fileSystemItemPath = FileSystemItem.createFile(getText());
+            if (getText() == "") {
+               fileSystemItemPath = workbenchContext_.getDefaultFileDialogDir();
             }
-            else
-            {
-               FileSystemItem fileSystemItemPath = FileSystemItem.createFile(getText());
-               if (getText() == "") {
-                  fileSystemItemPath = workbenchContext_.getDefaultFileDialogDir();
-               }
-               
-               RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-                     "Choose File",
-                     RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
-                     fileSystemItemPath,
-                     new ProgressOperationWithInput<FileSystemItem>()
+
+            RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+                  "Choose File",
+                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+                  fileSystemItemPath,
+                  new ProgressOperationWithInput<FileSystemItem>()
+                  {
+                     public void execute(FileSystemItem input,
+                                         ProgressIndicator indicator)
                      {
-                        public void execute(FileSystemItem input,
-                                            ProgressIndicator indicator)
-                        {
-                           if (input == null)
-                              return;
-   
-                           locationTextBox_.setText(input.getPath());
-                           preventModeChange();
-                           
-                           indicator.onCompleted();
-                           
-                           updateOperation_.execute();
-                        }
-                     });
-            }
+                        if (input == null)
+                           return;
+
+                        locationTextBox_.setText(input.getPath());
+                        preventModeChange();
+
+                        indicator.onCompleted();
+
+                        updateOperation_.execute();
+                     }
+                  });
          }
       });
-      
+
       checkForTextBoxChange();
    }
 
@@ -124,40 +101,40 @@ public class DataImportFileChooser extends Composite
    {
       workbenchContext_ = workbenchContext;
    }
-   
+
    public void setEnabled(boolean enabled)
    {
       locationTextBox_.setEnabled(enabled);
       actionButton_.setEnabled(enabled);
    }
-   
+
    public String getText()
    {
       return locationTextBox_.getText();
    }
-   
+
    @Override
    public void onDetach()
    {
       checkTextBoxInterval_ = 0;
    }
-   
+
    public void setFocus()
    {
       locationTextBox_.setFocus(true);
    }
-   
+
    @UiField
    TextBox locationTextBox_;
-   
+
    @UiField
    ThemedButton actionButton_;
-   
+
    private void checkForTextBoxChange()
    {
       if (checkTextBoxInterval_ == 0)
          return;
-      
+
       // Check continuously for changes in the textbox to reliably detect changes even when OS pastes text
       new Timer()
       {
@@ -168,18 +145,18 @@ public class DataImportFileChooser extends Composite
             {
                switchToUpdateMode(!locationTextBox_.getText().isEmpty());
             }
-            
+
             lastTextBoxValue_ = locationTextBox_.getText();
             checkForTextBoxChange();
          }
       }.schedule(checkTextBoxInterval_);
    }
-   
+
    private void preventModeChange()
    {
       lastTextBoxValue_ = locationTextBox_.getText();
    }
-   
+
    public void switchToUpdateMode(Boolean updateMode)
    {
       if (updateMode_ != updateMode)
@@ -191,10 +168,53 @@ public class DataImportFileChooser extends Composite
          }
          else
          {
-            actionButton_.setText(browseModeCaption_);
+            actionButton_.setText(browseModeCaption_ + "...");
          }
+         updateButtonAriaLabel();
       }
    }
+
+   /**
+    * @param suffix aria-label for the button to provide additional context to
+    *               screen reader users; applied as a suffix to the visible
+    *               button text, e.g. "Browse..." becomes "Browse for File/URL..."
+    */
+   public void setAriaLabelSuffix(String suffix)
+   {
+      ariaLabelSuffix_ = suffix;
+      updateButtonAriaLabel();
+   }
+
+   public void updateButtonAriaLabel()
+   {
+      if (StringUtil.isNullOrEmpty(ariaLabelSuffix_))
+      {
+         Roles.getButtonRole().setAriaLabelProperty(actionButton_.getElement(), "");
+         return;
+      }
+
+      final String prefix = updateMode_ ? updateModeCaption_ : browseModeCaption_ + " for";
+      final String finalSuffix = updateMode_ ? "" : "...";
+      Roles.getButtonRole().setAriaLabelProperty(actionButton_.getElement(),
+         prefix + " " + ariaLabelSuffix_ + finalSuffix);
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      locationTextBox_.getElement().setId(id);
+   }
+
+   private static final String browseModeCaption_ = "Browse";
+   private static final String updateModeCaption_ = "Update";
+   private boolean updateMode_ = false;
+   private String lastTextBoxValue_;
+   private int checkTextBoxInterval_ = 250;
+   private final Operation updateOperation_;
+   private String ariaLabelSuffix_;
+
+   private static DataImportFileChooserUiBinder uiBinder = GWT.create(DataImportFileChooserUiBinder.class);
+   interface DataImportFileChooserUiBinder extends UiBinder<Widget, DataImportFileChooser> {}
 
    private WorkbenchContext workbenchContext_;
 }

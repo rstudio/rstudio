@@ -153,7 +153,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                UserPrefs.SAVE_WORKSPACE_ALWAYS,
                UserPrefs.SAVE_WORKSPACE_NEVER,
                UserPrefs.SAVE_WORKSPACE_ASK
-            }, false);
+            }, false, true, false);
       spaced(saveWorkspace_);
       basic.add(saveWorkspace_);
       

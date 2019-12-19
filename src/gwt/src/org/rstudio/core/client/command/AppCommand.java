@@ -171,7 +171,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
                   : "AppCommand executed but nobody was listening";
       }
       
-      handlers_.fireEvent(new CommandEvent(this));
+      CommandEvent event = new CommandEvent(this);
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
+      handlers_.fireEvent(event);
    }
 
    public boolean isEnabled()

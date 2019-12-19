@@ -704,10 +704,11 @@
             "default": true,
             "description": "Whether to use websockets to communicate with the shell in the Terminal tab."
         },
-        "terminal_auto_close": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to automatically close the Terminal tab."
+        "terminal_close_behavior": {
+            "type": "string",
+            "enum": ["always", "clean", "never"],
+            "default": "always",
+            "description": "Whether to close the terminal pane after the shell exits."
         },
         "terminal_track_environment": {
             "type": "boolean",
@@ -833,6 +834,11 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to enable RStudio's version control system interface."
+        },
+        "vcs_autorefresh": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically refresh VCS status?"
         },
         "git_exe_path": {
             "type": "string",
@@ -962,6 +968,11 @@
             "default": false,
             "description": "Reduce use of animations in the user interface."
         },
+        "tab_key_move_focus": {
+            "type": "boolean",
+            "default": false,
+            "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
+        },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
@@ -977,6 +988,12 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to automatically save when the editor loses focus."
+        },
+        "terminal_initial_directory": {
+            "type": "string",
+            "enum": ["project", "current", "home"],
+            "default": "project",
+            "description": "Initial directory for new terminals."
         }
     }
 }

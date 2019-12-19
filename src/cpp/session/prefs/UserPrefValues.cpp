@@ -1610,16 +1610,16 @@ core::Error UserPrefValues::setTerminalWebsockets(bool val)
 }
 
 /**
- * Whether to automatically close the Terminal tab.
+ * Whether to close the terminal pane after the shell exits.
  */
-bool UserPrefValues::terminalAutoClose()
+std::string UserPrefValues::terminalCloseBehavior()
 {
-   return readPref<bool>("terminal_auto_close");
+   return readPref<std::string>("terminal_close_behavior");
 }
 
-core::Error UserPrefValues::setTerminalAutoClose(bool val)
+core::Error UserPrefValues::setTerminalCloseBehavior(std::string val)
 {
-   return writePref("terminal_auto_close", val);
+   return writePref("terminal_close_behavior", val);
 }
 
 /**
@@ -1922,6 +1922,19 @@ core::Error UserPrefValues::setVcsEnabled(bool val)
 }
 
 /**
+ * Automatically refresh VCS status?
+ */
+bool UserPrefValues::vcsAutorefresh()
+{
+   return readPref<bool>("vcs_autorefresh");
+}
+
+core::Error UserPrefValues::setVcsAutorefresh(bool val)
+{
+   return writePref("vcs_autorefresh", val);
+}
+
+/**
  * The path to the Git executable to use.
  */
 std::string UserPrefValues::gitExePath()
@@ -2221,6 +2234,19 @@ core::Error UserPrefValues::setReducedMotion(bool val)
 }
 
 /**
+ * Tab key moves focus out of text editing controls instead of inserting tabs.
+ */
+bool UserPrefValues::tabKeyMoveFocus()
+{
+   return readPref<bool>("tab_key_move_focus");
+}
+
+core::Error UserPrefValues::setTabKeyMoveFocus(bool val)
+{
+   return writePref("tab_key_move_focus", val);
+}
+
+/**
  * How to deal with changes to documents on idle.
  */
 std::string UserPrefValues::autoSaveOnIdle()
@@ -2257,6 +2283,19 @@ bool UserPrefValues::autoSaveOnBlur()
 core::Error UserPrefValues::setAutoSaveOnBlur(bool val)
 {
    return writePref("auto_save_on_blur", val);
+}
+
+/**
+ * Initial directory for new terminals.
+ */
+std::string UserPrefValues::terminalInitialDirectory()
+{
+   return readPref<std::string>("terminal_initial_directory");
+}
+
+core::Error UserPrefValues::setTerminalInitialDirectory(std::string val)
+{
+   return writePref("terminal_initial_directory", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -2384,7 +2423,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowTerminalTab,
       kTerminalLocalEcho,
       kTerminalWebsockets,
-      kTerminalAutoClose,
+      kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
       kTerminalBellStyle,
       kTerminalRenderer,
@@ -2408,6 +2447,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
       kVcsEnabled,
+      kVcsAutorefresh,
       kGitExePath,
       kSvnExePath,
       kTerminalPath,
@@ -2431,9 +2471,11 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTypingStatusDelayMs,
       kAriaApplicationRole,
       kReducedMotion,
+      kTabKeyMoveFocus,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
+      kTerminalInitialDirectory,
    });
 }
    

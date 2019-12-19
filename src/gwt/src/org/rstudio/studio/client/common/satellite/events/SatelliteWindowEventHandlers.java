@@ -1,7 +1,7 @@
 /*
  * SatelliteWindowEventHandlers.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.common.satellite.events;
 
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 
-public interface SatelliteWindowEventHandlers extends ThemeChangedEvent.Handler
+public interface SatelliteWindowEventHandlers extends ThemeChangedEvent.Handler,
+                                                      AriaLiveStatusEvent.Handler
 {
 }

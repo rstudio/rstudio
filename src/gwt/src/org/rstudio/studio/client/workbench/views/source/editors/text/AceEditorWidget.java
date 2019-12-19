@@ -1,7 +1,7 @@
 /*
  * AceEditorWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasContextMenuHandlers;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,8 +52,8 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -79,7 +80,8 @@ public class AceEditorWidget extends Composite
                  HasContextMenuHandlers,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
-                 EditEvent.Handler
+                 EditEvent.Handler,
+                 CanSetControlId
 {
    public AceEditorWidget()
    {
@@ -298,8 +300,7 @@ public class AceEditorWidget extends Composite
                   fireEvent(new AceSelectionChangedEvent());
                }
             }));
-      
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -419,9 +420,10 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events, UserPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -462,6 +464,33 @@ public class AceEditorWidget extends Composite
    protected void onLoad()
    {
       super.onLoad();
+
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
+         if (uiPrefs_.tabKeyMoveFocus().getValue())
+         {
+            editor_.setTabMovesFocus(true);
+            tabMovesFocus_ = true;
+         }
+      }
+
+      // This command binding has to be an anonymous inner class (not a lambda)
+      // due to an issue with using lambda bindings with Ace, which sometimes 
+      // results in a blocking exception on startup in devmode.
+      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(
+            new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean movesFocus)
+         {
+            if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
+            {
+               editor_.setTabMovesFocus(movesFocus);
+               tabMovesFocus_ = movesFocus;
+            }
+         }
+      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -948,6 +977,12 @@ public class AceEditorWidget extends Composite
       return getEditor().getSession().createAnchoredRange(start, end);
    }
 
+   @Override
+   public void setElementId(String id)
+   {
+      editor_.setElementId(id);
+   }
+
    // This class binds an ace annotation (used for the gutter) with an
    // inline marker (the underlining for associated lint). We also store
    // the associated marker. Ie, with some beautiful ASCII art:
@@ -1186,21 +1221,52 @@ public class AceEditorWidget extends Composite
       return isRendered_;
    }
 
+   public enum TabKeyMode
+   {
+      TrackUserPref,
+      AlwaysMoveFocus
+   }
+
+   /**
+    * By default, editor tracks the tabKeyMovesFocus user preference to control whether Tab
+    * and Shift+Tab indent/outdent, or move keyboard focus. Alternatively can force the
+    * move keyboard-focus mode independently of the user preference.
+    *
+    * @param mode TrackUserPref (default) or AlwaysMoveFocus
+    */
+   public void setTabKeyMode(TabKeyMode mode)
+   {
+      if (mode == tabKeyMode_)
+         return;
+
+      tabKeyMode_ = mode;
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         tabMovesFocus_ = uiPrefs_.tabKeyMoveFocus().getValue();
+         editor_.setTabMovesFocus(tabMovesFocus_);
+      }
+      else
+      {
+         tabMovesFocus_ = true;
+         editor_.setTabMovesFocus(true);
+      }
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private ArrayList<AnchoredAceAnnotation> annotations_ =
-         new ArrayList<AnchoredAceAnnotation>();
-   private ArrayList<ChunkRowExecState> lineExecState_ =
-         new ArrayList<ChunkRowExecState>();
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
+   private ArrayList<AnchoredAceAnnotation> annotations_ = new ArrayList<>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = new ArrayList<>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
-   
-   private EventBus events_;
-   private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
    private static boolean hasEditHandlers_ = false;
+   private boolean tabMovesFocus_ = false;
+   private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
+
+   // injected
+   private EventBus events_;
+   private UserPrefs uiPrefs_;
 }

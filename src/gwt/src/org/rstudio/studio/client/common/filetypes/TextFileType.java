@@ -1,7 +1,7 @@
 /*
  * TextFileType.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -411,6 +411,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
+         results.add(commands.runSelectionAsJob());
+         results.add(commands.runSelectionAsLauncherJob());
       }
       if (canCheckSpelling())
       {
@@ -437,14 +439,18 @@ public class TextFileType extends EditableFileType
       results.add(commands.popoutDoc());
       if (!SourceWindowManager.isMainSourceWindow())
          results.add(commands.returnDocToMain());
-      
+
       if (isR())
       {
          results.add(commands.sourceAsLauncherJob());
          results.add(commands.sourceAsJob());
+         results.add(commands.runSelectionAsJob());
+         results.add(commands.runSelectionAsLauncherJob());
       }
 
       results.add(commands.sendToTerminal());
+      results.add(commands.sendFilenameToTerminal());
+      results.add(commands.openNewTerminalAtEditorLocation());
 
       return results;
    }

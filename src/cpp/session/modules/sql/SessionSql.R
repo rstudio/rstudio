@@ -96,6 +96,8 @@
       return(.rs.emptyCompletions(language = "SQL"))
    
    schemas <- .rs.tryCatch(.rs.db.listSchemas(conn))
+   if (inherits(schemas, "error"))
+      return(.rs.emptyCompletions(language = "SQL"))
    
    schemas <- setdiff(schemas, token)
    
@@ -121,6 +123,8 @@
       token  <- parts[[2]]
       
       tables <- .rs.tryCatch(.rs.db.listTables(conn, schema))
+      if (inherits(tables, "error"))
+         return(.rs.emptyCompletions(language = "SQL"))
       
       results <- .rs.selectFuzzyMatches(tables, token)
       completions <- .rs.makeCompletions(
@@ -129,6 +133,7 @@
          packages = "table",
          type = .rs.acCompletionTypes$DATAFRAME
       )
+      
       return(completions)
    }
    
@@ -247,6 +252,9 @@
    }
    
    # we got completions in time; use them
+   if (inherits(tables, "error"))
+      return(character())
+   
    tables
 })
 
@@ -266,10 +274,12 @@
       return(keywords)
    }
    
-   # try to see if we can figure out the set of keywords from
-   # the conn itself
-   if (is.character(conn))
-      conn <- .rs.tryCatch(eval(parse(text = conn), envir = globalenv()))
+   if ("DBI" %in% loadedNamespaces()) {
+      DBI <- asNamespace("DBI")
+      keywords <- DBI$.SQL92Keywords
+      if (is.character(keywords))
+         return(keywords)
+   }
    
    # NOTE: these are the keywords understood by SQLite, as per
    # https://www.sqlite.org/lang_keywords.html

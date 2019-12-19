@@ -39,12 +39,14 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.Console;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -54,7 +56,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEv
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -89,6 +90,7 @@ public class TerminalPane extends WorkbenchPane
                           Commands commands,
                           UserPrefs uiPrefs,
                           Provider<FontSizeManager> pFontSizeManager,
+                          WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
@@ -97,6 +99,7 @@ public class TerminalPane extends WorkbenchPane
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       pFontSizeManager_ = pFontSizeManager;
+      workbenchContext_ = workbenchContext;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -106,17 +109,17 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       events_.addHandler(TerminalSubprocEvent.TYPE, this);
 
-      events.addHandler(RestartStatusEvent.TYPE,
-            event -> {
-               if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
-               {
-                  isRestartInProgress_ = true;
-               }
-               else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-               {
-                  isRestartInProgress_ = false;
-               }
-            });
+      events.addHandler(RestartStatusEvent.TYPE, event ->
+      {
+         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+         {
+            isRestartInProgress_ = true;
+         }
+         else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+         {
+            isRestartInProgress_ = false;
+         }
+      });
 
       ensureWidget();
    }
@@ -156,6 +159,7 @@ public class TerminalPane extends WorkbenchPane
       toolbar.addRightWidget(closeButton_);
 
       updateTerminalToolbar();
+      commands_.setTerminalToCurrentDirectory().setEnabled(false);
       commands_.previousTerminal().setEnabled(false);
       commands_.nextTerminal().setEnabled(false);
       commands_.closeTerminal().setEnabled(false);
@@ -170,7 +174,8 @@ public class TerminalPane extends WorkbenchPane
 
    private void updateTerminalToolbar()
    {
-      Scheduler.get().scheduleDeferred(() -> {
+      Scheduler.get().scheduleDeferred(() ->
+      {
          boolean interruptable = false;
          boolean closable = false;
          boolean clearable = false;
@@ -290,7 +295,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminals_.terminalCount() == 0)
       {
          // No terminals at all, create a new one
-         createTerminal(postCreateText);
+         createTerminal(postCreateText, null);
          return;
       }
 
@@ -314,17 +319,20 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void createTerminal(final String postCreateText)
+   public void createTerminal(String postCreateText, String initialDirectory)
    {
       if (creatingTerminal_)
          return;
 
       creatingTerminal_ = true;
       ConsoleProcessInfo info = ConsoleProcessInfo.createNewTerminalInfo(
-            uiPrefs_.terminalTrackEnvironment().getValue());
+            uiPrefs_.terminalTrackEnvironment().getValue(),
+            initialDirectory == null ? "" : initialDirectory);
       terminalSessionsPanel_.addNewTerminalPanel(info, defaultTerminalOptions(),
-                                                 false /*createdByApi*/, arg -> {
-         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
+                                                 uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 false /*createdByApi*/, session ->
+      {
+         terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -497,7 +505,8 @@ public class TerminalPane extends WorkbenchPane
       globalDisplay_.promptForText("Rename Terminal",
             "Please enter the new terminal name:",
             origCaption,
-            newCaption -> {
+            newCaption ->
+            {
                // rename in the UI
                renameVisibleTerminalInClient(newCaption);
 
@@ -546,7 +555,8 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       suppressAutoFocus_ = !setFocus;
-      activateTerminal(() -> {
+      activateTerminal(() ->
+      {
          ensureTerminal(text);
          Scheduler.get().scheduleDeferred(() -> suppressAutoFocus_ = false);
       });
@@ -608,6 +618,23 @@ public class TerminalPane extends WorkbenchPane
             Debug.log(msg);
          }
       });
+   }
+
+   @Override
+   public void goToCurrentDirectory()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+         return;
+
+      String command = "cd ";
+
+      if (visibleTerminal.isPosixShell())
+         command += StringUtil.escapeBashPath(workbenchContext_.getCurrentWorkingDir().getPath(), false);
+      else
+         command += "\"" + workbenchContext_.getCurrentWorkingDir().getPath() + "\"";
+      command += "\n";
+      sendToTerminal(command, true);
    }
 
    private String debug_dumpTerminalContext()
@@ -730,15 +757,21 @@ public class TerminalPane extends WorkbenchPane
          int autoCloseMode = terminals_.autoCloseForHandle(handle);
          if (autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_DEFAULT)
          {
-            if (uiPrefs_.terminalAutoClose().getValue())
+            // map default to current user preference setting
+            String autoCloseSetting = uiPrefs_.terminalCloseBehavior().getValue();
+            if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_ALWAYS)
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_ALWAYS;
+            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_NEVER)
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
+            else if (autoCloseSetting == UserPrefs.TERMINAL_CLOSE_BEHAVIOR_CLEAN)
+               autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT;
             else
                autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
          }
 
-         // always keep pane open for non-zero exit code so user can see what happened
-         if (exitCode != 0)
+         if (exitCode != 0 && autoCloseMode == ConsoleProcessInfo.AUTOCLOSE_CLEAN_EXIT)
          {
+            // keep pane open for non-zero exit code so user can see what happened
             autoCloseMode = ConsoleProcessInfo.AUTOCLOSE_NEVER;
          }
 
@@ -838,8 +871,10 @@ public class TerminalPane extends WorkbenchPane
       }
 
       terminalSessionsPanel_.addNewTerminalPanel(existing, defaultTerminalOptions(),
-                                                 event.createdByApi(), arg -> {
-         terminals_.startTerminal(arg, new ResultCallback<Boolean, String>()
+                                                 uiPrefs_.tabKeyMoveFocus().getValue(),
+                                                 event.createdByApi(), session ->
+      {
+         terminals_.startTerminal(session, new ResultCallback<Boolean, String>()
             {
                @Override
                public void onSuccess(Boolean connected)
@@ -954,7 +989,8 @@ public class TerminalPane extends WorkbenchPane
       if (visibleTerminal != null)
       {
          if (!suppressAutoFocus_)
-            Scheduler.get().scheduleDeferred(() -> {
+            Scheduler.get().scheduleDeferred(() ->
+            {
                // On rare occasions (which I haven't been able to nail down), flow gets here
                // before xtermjs has initialized, and the setFocus call throws a null exception.
                // Nothing is obviously broken when that happens, but guard against it, wait
@@ -965,7 +1001,8 @@ public class TerminalPane extends WorkbenchPane
                }
                else
                {
-                  Timers.singleShot(200, () -> {
+                  Timers.singleShot(200, () ->
+                  {
                      if (visibleTerminal.terminalEmulatorLoaded())
                         visibleTerminal.setFocus(true);
                   });
@@ -1059,23 +1096,16 @@ public class TerminalPane extends WorkbenchPane
       unregisterChildProcsHandler();
       if (terminal != null)
       {
-         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(
-               event -> {
-                  // When terminal reports that there are child procs, there can
-                  // be a lag before it (potentially) enters a full-screen program,
-                  // and our toolbar controls use both bits of information to
-                  // set state. We don't get a notification on full-screen terminal
-                  // mode, we can only poll it. So, delay just a bit to improve
-                  // chances of it being current.
-                  Timer timer = new Timer()
-                  {
-                     public void run()
-                     {
-                        updateTerminalToolbar();
-                     }
-                  };
-                  timer.schedule(200);
-               });
+         terminalHasChildProcsHandler_ = terminal.addHasChildProcsChangeHandler(event ->
+         {
+            // When terminal reports that there are child procs, there can
+            // be a lag before it (potentially) enters a full-screen program,
+            // and our toolbar controls use both bits of information to
+            // set state. We don't get a notification on full-screen terminal
+            // mode, we can only poll it. So, delay just a bit to improve
+            // chances of it being current.
+            Timers.singleShot(200, () -> updateTerminalToolbar());
+         });
       }
    }
 
@@ -1133,4 +1163,5 @@ public class TerminalPane extends WorkbenchPane
    private final WorkbenchServerOperations server_;
    private final Provider<FontSizeManager> pFontSizeManager_;
    private final UserPrefs uiPrefs_;
+   private final WorkbenchContext workbenchContext_;
 }

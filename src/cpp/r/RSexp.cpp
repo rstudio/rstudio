@@ -913,14 +913,25 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
 namespace {
 
 template <typename T>
-SEXP createInteger(const core::json::Value& value, Protect* pProtect)
+SEXP createInteger(const core::json::Value& value, const std::string& type, Protect* pProtect)
 {
    try
    {
       int casted = boost::numeric_cast<int>(value.getValue<T>());
       return create(casted, pProtect);
    }
+   catch(const boost::bad_numeric_cast& e)
+   {
+      LOG_DEBUG_MESSAGE("Failed to cast from " + type + " to int: " + e.what());
+      try
+      {
+         double casted = boost::numeric_cast<double>(value.getValue<T>());
+         return create(casted, pProtect);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
    CATCH_UNEXPECTED_EXCEPTION
+
    
    // only reached if an exception occurs
    return R_NilValue;
@@ -939,19 +950,19 @@ SEXP create(const core::json::Value& value, Protect* pProtect)
    {
       if (value.isUInt64())
       {
-         return createInteger<uint64_t>(value, pProtect);
+         return createInteger<uint64_t>(value, "uint64_t", pProtect);
       }
       else if (value.isInt64())
       {
-         return createInteger<int64_t>(value, pProtect);
+         return createInteger<int64_t>(value, "int64_t", pProtect);
       }
       else if (value.isUInt())
       {
-         return createInteger<uint32_t>(value, pProtect);
+         return createInteger<uint32_t>(value, "uint32_t", pProtect);
       }
       else if (value.isInt())
       {
-         return createInteger<int32_t>(value, pProtect);
+         return createInteger<int32_t>(value, "int32_t", pProtect);
       }
       else
       {

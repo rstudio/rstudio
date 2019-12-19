@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -39,10 +40,10 @@ public class CodeSearchWidget extends SearchWidget
       oracle_ = oracle;   
       
       CodeSearchResources res = CodeSearchResources.INSTANCE;
-      
       setIcon(new ImageResource2x(res.gotoFunction2x()));
-      
       addStyleName(res.styles().codeSearchWidget());
+      
+      ElementIds.assignElementId(this, ElementIds.CODE_SEARCH_WIDGET);
    }
 
    @Override

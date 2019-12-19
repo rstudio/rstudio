@@ -131,6 +131,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
+import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
@@ -5351,13 +5352,17 @@ public class RemoteServer implements Server
      
    @Override
    public void installDependencies(
+      String context,
       JsArray<Dependency> dependencies,
-      ServerRequestCallback<ConsoleProcess> requestCallback)
+      ServerRequestCallback<String> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(context)));
+      params.set(1, new JSONArray(dependencies));
       sendRequest(RPC_SCOPE,
                   "install_dependencies",
-                  dependencies,
-                  new ConsoleProcessCallbackAdapter(requestCallback));
+                  params,
+                  requestCallback);
    }
 
    @Override
@@ -5948,11 +5953,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void hasShinyTestResults(String shinyApp, String testName, ServerRequestCallback<Boolean> callback)
+   public void hasShinyTestResults(String testFile, ServerRequestCallback<ShinyTestResults> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(shinyApp));
-      params.set(1, new JSONString(testName));
+      params.set(0, new JSONString(testFile));
 
       sendRequest(RPC_SCOPE,
                   HAS_SHINYTEST_RESULTS,

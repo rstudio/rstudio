@@ -956,7 +956,7 @@ var parseLocationUrl = function() {
     } else if (queryVar[0] == "id") {
       parsedLocation.id = queryVar[1];
     } else if (queryVar[0] == "max_cols") {
-      parsedLocation.maxCols = queryVar[1];
+      parsedLocation.maxCols = parseInt(queryVar[1], 10);
     }
   }
 

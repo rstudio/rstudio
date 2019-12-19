@@ -83,6 +83,9 @@ public class TextBoxWithButton extends Composite
 
       themedButton_ = new ThemedButton(action, handler);
 
+      // prevent button from triggering "submit" when hosted in a form, such as in FileUploadDialog
+      themedButton_.getElement().setAttribute("type", "button");
+
       inner_ = new HorizontalPanel();
       inner_.add(textBox_);
       inner_.add(themedButton_);

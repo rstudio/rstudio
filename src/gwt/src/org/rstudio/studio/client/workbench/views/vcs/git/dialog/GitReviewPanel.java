@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -35,7 +36,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
@@ -49,6 +49,8 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -307,9 +309,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
       
       // Hide frequently-updating character count from screen readers
       A11y.setARIAHidden(lblCharCount_);
-      
-      // Expose a screen reader-only element with debounced updates
-      A11y.setStatusRole(lblReaderCharCount_, false);
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -699,16 +698,20 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private void updateCharCount()
    {
       int length = commitMessage_.getText().length();
+      String liveRegionMessage;
       if (length == 0)
+      {
          lblCharCount_.setText("");
+         liveRegionMessage = "";
+      }
       else
+      {
          lblCharCount_.setText(length + " characters");
-      
+         liveRegionMessage = length + " characters in message";
+      }
+
       // Debounce an update to the accessible character count
-      if (updateCharCountTimer_.isRunning())
-         updateCharCountTimer_.cancel();
-      if (pPrefs_.get().typingStatusDelayMs().getValue() > 0)
-         updateCharCountTimer_.schedule(pPrefs_.get().typingStatusDelayMs().getValue());
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new AriaLiveStatusEvent(liveRegionMessage));
    }
 
    @UiField(provided = true)
@@ -738,8 +741,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @UiField
    Label lblCharCount_;
    @UiField
-   Label lblReaderCharCount_;
-   @UiField
    TextArea commitMessage_;
    @UiField
    CheckBox commitIsAmend_;
@@ -751,8 +752,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
    HorizontalPanel toolbarWrapper_;
    @UiField
    CheckBox ignoreWhitespaceCheckbox_;
-   @UiField
-   HTMLPanel panelCharCount_;
 
    private ListBoxAdapter listBoxAdapter_;
 
@@ -768,22 +767,6 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private LeftRightToggleButton switchViewButton_;
 
    private SizeWarningWidget overrideSizeWarning_;
-   
-   /**
-    * Timer for updating the accessible character count
-    */
-   private Timer updateCharCountTimer_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         int length = commitMessage_.getText().length();
-         if (length == 0)
-            lblReaderCharCount_.setText("");
-         else
-            lblReaderCharCount_.setText(length + " characters in message");
-      }
-   };
 
    private static final Resources RES = GWT.create(Resources.class);
    static {

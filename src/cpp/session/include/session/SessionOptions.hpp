@@ -620,6 +620,11 @@ public:
       return directoryViewWhitelist_;
    }
 
+   std::string envVarSaveBlacklist() const
+   {
+      return envVarSaveBlacklist_;
+   }
+
    static std::string parseReposConfig(core::FilePath reposFile);
 
 private:
@@ -695,6 +700,7 @@ private:
    std::string terminalPort_;
    bool useSecureCookies_;
    std::string directoryViewWhitelist_;
+   std::string envVarSaveBlacklist_;
 
    // r
    std::string coreRSourcePath_;

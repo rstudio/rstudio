@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
@@ -143,6 +145,13 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       labelFilePatterns_.setFor(listPresetFilePatterns_);
       setOkButtonCaption("Find");
+
+      // give custom pattern textbox a label and extended description using the visible
+      // example shown below it
+      spanPatternExample_.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      Roles.getTextboxRole().setAriaLabelProperty(txtFilePattern_.getElement(), "Custom Filter Pattern");
+      Roles.getTextboxRole().setAriaDescribedbyProperty(txtFilePattern_.getElement(),
+            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
@@ -295,6 +304,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    ListBox listPresetFilePatterns_;
    @UiField
    DivElement divCustomFilter_;
+   @UiField
+   SpanElement spanPatternExample_;
+
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
 }

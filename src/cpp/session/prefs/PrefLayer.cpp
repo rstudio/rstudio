@@ -81,6 +81,11 @@ PrefLayer::PrefLayer(const std::string& layerName):
 
 PrefLayer::~PrefLayer()
 {
+   destroy();
+}
+
+void PrefLayer::destroy()
+{
    // End file monitoring if not already terminated
    if (handle_)
    {
