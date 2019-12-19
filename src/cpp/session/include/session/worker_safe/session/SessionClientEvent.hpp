@@ -199,6 +199,7 @@ extern const int kExecuteAppCommand;
 extern const int kUserStateChanged;
 extern const int kHighlightUi;
 extern const int kTutorialCommand;
+extern const int kTutorialLaunch;
 }
    
 class ClientEvent

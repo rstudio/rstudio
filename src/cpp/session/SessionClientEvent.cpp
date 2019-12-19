@@ -198,6 +198,7 @@ const int kExecuteAppCommand = 180;
 const int kUserStateChanged = 181;
 const int kHighlightUi = 182;
 const int kTutorialCommand = 183;
+const int kTutorialLaunch = 184;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -549,6 +550,8 @@ std::string ClientEvent::typeName() const
          return "highlight_ui";
       case client_events::kTutorialCommand:
          return "tutorial_command";
+      case client_events::kTutorialLaunch:
+         return "tutorial_launch";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

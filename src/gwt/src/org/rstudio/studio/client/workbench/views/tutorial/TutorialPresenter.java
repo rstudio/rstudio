@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -61,6 +60,8 @@ public class TutorialPresenter
       
       String getUrl();
       
+      void launchTutorial(Tutorial tutorial);
+      
       void onTutorialStarted(Tutorial tutorial);
       void openTutorial(ShinyApplicationParams params);
       
@@ -86,6 +87,21 @@ public class TutorialPresenter
          return packageName_;
       }
       
+      public JsObject toJsObject()
+      {
+         JsObject object = JsObject.createJsObject();
+         object.setString("name", tutorialName_);
+         object.setString("package", packageName_);
+         return object;
+      }
+      
+      public static Tutorial fromJsObject(JsObject object)
+      {
+         return new Tutorial(
+               object.getString("name"),
+               object.getString("package"));
+      }
+      
       private final String tutorialName_;
       private final String packageName_;
    }
@@ -108,8 +124,8 @@ public class TutorialPresenter
       
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
-      events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       events_.addHandler(TutorialCommandEvent.TYPE, this);
+      events_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       events_.addHandler(InterruptStatusEvent.TYPE, this);
       
       manageCommands(false);
@@ -122,11 +138,7 @@ public class TutorialPresenter
       
       if (StringUtil.equals(type, TutorialCommandEvent.TYPE_STARTED))
       {
-         JsObject data = event.getData();
-         
-         final Tutorial tutorial = new Tutorial(
-               data.getString("name"),
-               data.getString("package"));
+         final Tutorial tutorial = Tutorial.fromJsObject(event.getData());
        
          if (tutorialLoadHandler_ != null)
          {
@@ -136,9 +148,9 @@ public class TutorialPresenter
          
          tutorialLoadHandler_ = display_.addLoadHandler((LoadEvent loadEvent) -> {
             
-            // ignore spurious home request
             String url = display_.getUrl();
-            if (StringUtil.equals(url, URLS_HOME))
+            String shinyPrefix = GWT.getHostPageBaseURL() + "p/";
+            if (!url.startsWith(shinyPrefix))
                return;
             
             // cache tutorial URL
@@ -148,7 +160,6 @@ public class TutorialPresenter
          });
          
          display_.onTutorialStarted(tutorial);
-         
       }
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
@@ -156,6 +167,11 @@ public class TutorialPresenter
          {
             display_.refresh();
          }
+      }
+      else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_LAUNCH_DEFAULT_TUTORIAL))
+      {
+         final Tutorial tutorial = Tutorial.fromJsObject(event.getData());
+         display_.launchTutorial(tutorial);
       }
    }
    

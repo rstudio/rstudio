@@ -25,6 +25,8 @@
 #include <r/RJson.hpp>
 #include <r/RSexp.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -297,6 +299,39 @@ void handleTutorialRequest(const http::Request& request,
    }
 }
 
+void onDeferredInit(bool newSession)
+{
+   static bool s_launched = false;
+   if (s_launched)
+      return;
+   
+   using namespace projects;
+   if (!projectContext().hasProject())
+      return;
+   
+   if (!projectContext().isNewProject())
+      return;
+   
+   std::string defaultTutorial = projectContext().config().defaultTutorial;
+   if (defaultTutorial.empty())
+      return;
+   
+   std::vector<std::string> parts =
+         core::algorithm::split(defaultTutorial, "::");
+   
+   if (parts.size() != 2)
+      return;
+   
+   json::Object data;
+   data["package"] = parts[0];
+   data["name"] = parts[1];
+   
+   ClientEvent event(client_events::kTutorialLaunch, data);
+   module_context::enqueClientEvent(event);
+   
+   s_launched = true;
+}
+
 void onSuspend(const r::session::RSuspendOptions& suspendOptions,
                Settings* pSettings)
 {
@@ -326,6 +361,8 @@ Error initialize()
    using namespace module_context;
 
    ppe::indexer().addWorker(tutorialWorker());
+ 
+   events().onDeferredInit.connect(onDeferredInit);
    
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
    

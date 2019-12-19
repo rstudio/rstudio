@@ -42,6 +42,12 @@ public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.
       data_ = data.getData();
    }
    
+   public TutorialCommandEvent(String type, JavaScriptObject data)
+   {
+      type_ = type;
+      data_ = data;
+   }
+   
    public final String getType()
    {
       return type_;
@@ -82,5 +88,6 @@ public class TutorialCommandEvent extends CrossWindowEvent<TutorialCommandEvent.
    
    public static final String TYPE_STARTED = "started";
    public static final String TYPE_INDEXING_COMPLETED = "indexing_completed";
+   public static final String TYPE_LAUNCH_DEFAULT_TUTORIAL = "launch_default_tutorial";
 
 }

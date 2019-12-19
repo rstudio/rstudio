@@ -143,6 +143,18 @@ public class TutorialPane
    }
    
    @Override
+   public void launchTutorial(Tutorial tutorial)
+   {
+      commands_.tutorialStop().setVisible(false);
+      commands_.tutorialStop().setEnabled(false);
+      String url = GWT.getHostPageBaseURL() +
+            "tutorial/run" +
+            "?package=" + tutorial.getPackageName() +
+            "&name=" + tutorial.getTutorialName();
+      navigate(url, true);
+   }
+   
+   @Override
    public void openTutorial(ShinyApplicationParams params)
    {
       commands_.tutorialStop().setVisible(true);

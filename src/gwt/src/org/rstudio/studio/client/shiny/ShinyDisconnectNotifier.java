@@ -56,19 +56,26 @@ public class ShinyDisconnectNotifier
    }
 
    private native void initializeEvents() /*-{  
-      var thiz = this;   
-      $wnd.addEventListener(
-            "message",
-            $entry(function(e) {
-               if (typeof e.data != 'string')
-                  return;
-               thiz.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-            }),
-            true);
+      
+      var self = this;
+      var callback = $entry(function(event) {
+         
+         if (typeof event.data !== "string")
+            return;
+         
+         debugger;
+         self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(e.data, e.origin);
+         
+      });
+      
+      $wnd.addEventListener("message", callback, true);
+      
    }-*/;
    
    private void onMessage(String data, String origin)
-   {  
+   {
+      // TODO: only disconnect if the source of the message matches
+      // the Shiny frame we're hosting in our widget
       if ("disconnected".equals(data))
       {
          if (source_.getShinyUrl().startsWith(origin)) 

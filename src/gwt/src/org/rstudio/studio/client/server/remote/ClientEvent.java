@@ -188,6 +188,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ExecuteAppCommand = "execute_app_command";
    public static final String HighlightUi = "highlight_ui";
    public static final String TutorialCommand = "tutorial_command";
+   public static final String TutorialLaunch = "tutorial_launch";
 
    protected ClientEvent()
    {
