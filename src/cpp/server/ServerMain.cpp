@@ -547,19 +547,6 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // initialize misc data directory
-      FilePath miscDataDir("/var/lib/rstudio-server");
-      error = miscDataDir.ensureDirectory();
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
-
-      if (core::system::effectiveUserIsRoot())
-      {
-         error = file_utils::changeOwnership(miscDataDir, options.serverUser());
-         if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
-      }
-
       // initialize server data directory
       FilePath serverDataDir = options.serverDataDir();
       error = serverDataDir.ensureDirectory();
