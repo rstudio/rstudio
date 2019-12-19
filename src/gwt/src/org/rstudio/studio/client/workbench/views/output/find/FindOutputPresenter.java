@@ -22,21 +22,28 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -44,6 +51,10 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
@@ -72,11 +83,36 @@ public class FindOutputPresenter extends BasePresenter
       void showSearchCompleted();
 
       void updateSearchLabel(String query, String path);
+      void updateSearchLabel(String query, String path, String replace);
+      void updateSearchLabel(String query, String path, String replace, int successCount,
+        int errorCount);
       void clearSearchLabel();
+
+      boolean getRegexPreviewMode();
+      boolean getReplaceMode();
+      public void setRegexPreviewMode(boolean value);
+      public void setReplaceMode(boolean value);
+      HasClickHandlers getReplaceAllButton();
+      String getReplaceText();
+      boolean useGitIgnore();
+
+      HasClickHandlers getStopReplaceButton();
+      void setStopReplaceButtonVisible(boolean visible);
+      void enableReplace();
+      void disableReplace();
+
+      void showProgress();
+      void hideProgress();
+      ProgressBar getProgress();
    }
+
+   public interface Binder extends CommandBinder<Commands, FindOutputPresenter> {}
 
    @Inject
    public FindOutputPresenter(Display view,
+                              Binder binder,
+                              Commands commands,
+                              GlobalDisplay globalDisplay,
                               EventBus events,
                               FindInFilesServerOperations server,
                               final FileTypeRegistry ftr,
@@ -85,6 +121,9 @@ public class FindOutputPresenter extends BasePresenter
    {
       super(view);
       view_ = view;
+      globalDisplay_ = globalDisplay;
+      commands_ = commands;
+      binder.bind(commands, this);
       events_ = events;
       server_ = server;
       session_ = session;
@@ -129,9 +168,19 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() != currentFindHandle_)
                return;
-            view_.addMatches(event.getResults());
-            
+
             view_.ensureVisible(true);
+            {
+               int count = 0;
+               for (FindResult fr : event.getResults())
+               {
+                  count += fr.getMatchOns().size();
+                  if (view_.getRegexPreviewMode())
+                     fr.setRegexPreviewIndicator();
+               }
+               dialogState_.updateResultsCount(count);
+            }
+            view_.addMatches(event.getResults());
          }
       });
 
@@ -143,9 +192,197 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() == currentFindHandle_)
             {
-               currentFindHandle_ = null;
+               if (!view_.getReplaceMode())
+                  currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
+               // replace may have been previously disabled
+               view_.enableReplace();
+               if (dialogState_.isRegex())
+                  view_.setRegexPreviewMode(true);
+               else
+                  view_.setRegexPreviewMode(false);
+            }
+         }
+      });
+
+      events_.addHandler(PreviewReplaceEvent.TYPE, new PreviewReplaceEvent.Handler()
+      {
+         @Override
+         public void onPreviewReplace(PreviewReplaceEvent event)
+         {
+            view_.setRegexPreviewMode(true);
+            stopAndClear();
+            dialogState_.clearResultsCount();
+
+            FileSystemItem searchPath =
+                                      FileSystemItem.createDir(dialogState_.getPath());
+            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            for (String pattern : dialogState_.getFilePatterns())
+               filePatterns.push(pattern);
+
+            server_.previewReplace(dialogState_.getQuery(),
+                                   dialogState_.isRegex(),
+                                   !dialogState_.isCaseSensitive(),
+                                   searchPath,
+                                   filePatterns,
+                                   view_.getReplaceText(),
+                                   view_.useGitIgnore(),
+                                   new SimpleRequestCallback<String>()
+                                   {
+                                      @Override
+                                      public void onResponseReceived(String handle)
+                                      {
+                                         view_.clearMatches();
+                                         currentFindHandle_ = handle;
+                                         dialogState_.clearResultsCount();
+                                      }
+                                   });
+         }
+      });
+
+      view_.getStopReplaceButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Stop Replace",
+                  "Are you sure you want to cancel the replace? Changes already made will not be reverted.",
+                  new Operation ()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        stopReplace();
+                     }
+                  },
+                  false);
+         }
+      });
+
+      view_.getReplaceAllButton().addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            String message = "Are you sure you wish to permanently replace all? This will ";
+            if (StringUtil.isNullOrEmpty(view_.getReplaceText()))
+               message += "remove ";
+            else
+               message += "replace ";
+            message += dialogState_.getResultsCount() +
+                       " occurrences of '" +
+                       dialogState_.getQuery() + "'";
+            if (dialogState_.isRegex() || StringUtil.isNullOrEmpty(view_.getReplaceText()))
+               message += " and cannot be undone.";
+            else
+               message += " with '" + view_.getReplaceText() +
+                          "' and cannot be undone.";
+            globalDisplay_.showYesNoMessage(
+                  GlobalDisplay.MSG_WARNING,
+                  "Replace All",
+                  message,
+                  new Operation ()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        view_.setStopReplaceButtonVisible(true);
+                        stopAndClear();
+                        FileSystemItem searchPath =
+                                                  FileSystemItem.createDir(dialogState_.getPath());
+                        JsArrayString filePatterns = JsArrayString.createArray().cast();
+                        for (String pattern : dialogState_.getFilePatterns())
+                           filePatterns.push(pattern);
+
+                        server_.completeReplace(dialogState_.getQuery(),
+                                                dialogState_.isRegex(),
+                                                !dialogState_.isCaseSensitive(),
+                                                searchPath,
+                                                filePatterns,
+                                                dialogState_.getResultsCount(),
+                                                view_.getReplaceText(),
+                                                view_.useGitIgnore(),
+                                                new SimpleRequestCallback<String>()
+                                                {
+                                                   @Override
+                                                   public void onResponseReceived(String handle)
+                                                   {
+                                                      currentFindHandle_ = handle;
+                                                      updateSearchLabel(dialogState_.getQuery(),
+                                                                        dialogState_.getPath(),
+                                                                        dialogState_.isRegex(),
+                                                                        view_.getReplaceText());
+                                                   }
+                                                });
+                     }
+                  },
+                  false);
+        }
+      });
+
+      events_.addHandler(ReplaceProgressEvent.TYPE, new ReplaceProgressEvent.Handler()
+      {
+         @Override
+         public void onReplaceProgress(ReplaceProgressEvent event)
+         {
+            view_.showProgress();
+            view_.getProgress().setProgress(event.replacedCount(), event.totalReplaceCount());
+            if (event.replacedCount() >= event.totalReplaceCount())
+               view_.hideProgress();
+         }
+      });
+
+      events_.addHandler(ReplaceResultEvent.TYPE, new ReplaceResultEvent.Handler()
+      {
+         @Override
+         public void onReplaceResult(ReplaceResultEvent event)
+         {
+            if (event.getHandle() != currentFindHandle_)
+               return;
+
+            // toggle replace mode so matches get added to context
+            view_.setReplaceMode(true);
+
+            ArrayList<FindResult> results = event.getResults();
+            int errorCount = 0;
+            for (FindResult fr : results)
+            {
+               fr.setReplaceIndicator();
+               if (!StringUtil.isNullOrEmpty(fr.getErrors()))
+               {
+                  errorCount++;
+               }
+               dialogState_.updateReplaceErrors(fr.getErrors());
+            }
+            dialogState_.updateErrorCount(errorCount);
+
+            view_.setReplaceMode(false);
+            view_.addMatches(results);
+            view_.setReplaceMode(true);
+            
+            view_.ensureVisible(true);
+            view_.disableReplace();
+            if (!view_.getProgress().isVisible())
+               events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
+         }
+      });
+
+      events_.addHandler(ReplaceOperationEndedEvent.TYPE, new ReplaceOperationEndedEvent.Handler()
+      {
+         @Override
+         public void onReplaceOperationEnded(
+               ReplaceOperationEndedEvent event)
+         {
+            if (event.getHandle() == currentFindHandle_)
+            {
+               view_.hideProgress();
+               view_.setStopReplaceButtonVisible(false);
+               updateSearchLabel(dialogState_.getQuery(), dialogState_.getPath(),
+                  dialogState_.isRegex(), view_.getReplaceText(), dialogState_.getErrorCount(),
+                  dialogState_.getResultsCount());
             }
          }
       });
@@ -185,7 +422,7 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          protected JsObject getValue()
          {
-            if (dialogState_ == null)
+            if (dialogState_ != null)
                return dialogState_.cast();
             
             JsObject object = dialogState_.<JsObject>cast().clone();
@@ -213,7 +450,10 @@ public class FindOutputPresenter extends BasePresenter
       view_.ensureVisible(false);
 
       currentFindHandle_ = state.getHandle();
+      dialogState_.clearResultsCount();
+      view_.clearMatches();
       view_.addMatches(state.getResults().toArrayList());
+
       updateSearchLabel(state.getInput(), state.getPath(), state.isRegex());
 
       if (state.isRunning())
@@ -232,6 +472,7 @@ public class FindOutputPresenter extends BasePresenter
             dialogState_ = input;
 
             stopAndClear();
+            dialogState_.clearResultsCount();
 
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(input.getPath());
@@ -240,6 +481,10 @@ public class FindOutputPresenter extends BasePresenter
             for (String pattern : input.getFilePatterns())
                filePatterns.push(pattern);
 
+            // find result always starts with !replaceMode
+            view_.setReplaceMode(false);
+
+            view_.disableReplace();
             server_.beginFind(input.getQuery(),
                               input.isRegex(),
                               !input.isCaseSensitive(),
@@ -288,19 +533,61 @@ public class FindOutputPresenter extends BasePresenter
       server_.clearFindResults(new VoidServerRequestCallback());
    }
 
+   @Handler
+   public void onActivateFindInFiles()
+   {
+      // Ensure that console pane is not minimized
+      commands_.activateConsolePane().execute();
+      view_.bringToFront();
+   }
+
    private void updateSearchLabel(String query, String path, boolean regex)
    {
       if (regex)
          query = "/" + query + "/";
       else
          query = "\"" + query + "\"";
-
       view_.updateSearchLabel(query, path);
+   }
+
+   private void updateSearchLabel(String query, String path, boolean regex,
+      String replace)
+   {
+      if (regex)
+      {
+         query = "/" + query + "/";
+         replace = "/" + replace + "/";
+      }
+      else
+      {
+         query = "\"" + query + "\"";
+         replace = "\"" + replace + "\"";
+      }
+
+      view_.updateSearchLabel(query, path, replace);
+   }
+
+   private void updateSearchLabel(String query, String path, boolean regex,
+      String replace, int errorCount, int resultsCount)
+   {
+      if (regex)
+      {
+         query = "/" + query + "/";
+         replace = "/" + replace + "/";
+      }
+      else
+      {
+         query = "\"" + query + "\"";
+         replace = "\"" + replace + "\"";
+      }
+      int successCount = resultsCount - errorCount;
+      view_.updateSearchLabel(query, path, replace, successCount, errorCount);
    }
 
    private void stopAndClear()
    {
       stop();
+      stopReplace();
       view_.clearMatches();
       view_.clearSearchLabel();
    }
@@ -316,16 +603,29 @@ public class FindOutputPresenter extends BasePresenter
       view_.setStopSearchButtonVisible(false);
    }
    
-   private String currentFindHandle_;
+   private void stopReplace()
+   {
+      if (currentFindHandle_ != null)
+      {
+         server_.stopReplace(currentFindHandle_,
+                             new VoidServerRequestCallback());
+         currentFindHandle_ = null;
+         view_.setStopReplaceButtonVisible(false);
+         view_.hideProgress();
+      }
+   }
 
+   private String currentFindHandle_;
    private FindInFilesDialog.State dialogState_;
 
    private final Display view_;
    private final FindInFilesServerOperations server_;
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
+   private final Commands commands_;
    private EventBus events_;
 
    private static final String GROUP_FIND_IN_FILES = "find-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
+   private GlobalDisplay globalDisplay_;
 }

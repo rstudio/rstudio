@@ -27,7 +27,7 @@
 }
 
 .line {
-   color: #777;
+   color: #6E6E6E;
    font-family: fixedWidthFont;
    text-align: right;
    padding-left: 12px;
@@ -75,4 +75,37 @@
 .findOutput strong {
    font-weight: normal;
    color: #66A;
+}
+
+.findOutput mark {
+   font-weight: bold;
+   background-color: #A81900;
+   color: white;
+}
+
+.findOutputReplace strong {
+   font-weight: bold;
+   background-color: #A81900;
+   text-decoration: line-through;
+   color: white;
+}
+
+.findOutputReplace del {
+   font-weight: bold;
+   background-color: #A81900;
+   text-decoration: line-through;
+   color: white;
+}
+
+.findOutputReplace ins {
+   font-weight: bold;
+   background-color: #006600;
+   text-decoration: none;
+   color: white;
+}
+
+.findOutputReplace mark {
+   font-weight: bold;
+   background-color: #A81900;
+   color: white;
 }
