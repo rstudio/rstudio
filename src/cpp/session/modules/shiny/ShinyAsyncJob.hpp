@@ -41,8 +41,6 @@ private:
    std::string viewerType_;
    std::string runCmd_;
    std::string url_;
-
-   bool running_;
 };
                       
 } // namespace shiny

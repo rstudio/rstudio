@@ -38,8 +38,7 @@ ShinyAsyncJob::ShinyAsyncJob(const std::string& name,
    AsyncRJob(name),
    path_(path),
    viewerType_(viewerType),
-   runCmd_(runCmd),
-   running_(false)
+   runCmd_(runCmd)
 {
 }
 
@@ -86,7 +85,7 @@ void ShinyAsyncJob::onStdout(const std::string& output)
 
       // set the job state so the Jobs tab will show the app 
       jobs::setJobStatus(job_, "Running");
-      running_ = true;
+      setJobState(job_, jobs::JobState::JobRunning);
 
       // no need to echo this to the user
       return;
@@ -98,9 +97,25 @@ void ShinyAsyncJob::onStdout(const std::string& output)
 
 void ShinyAsyncJob::onCompleted(int exitStatus)
 {
-   if (running_)
+   if (exitStatus == 0)
    {
-      running_ = false;
+      setJobState(job_, jobs::JobState::JobSucceeded);
+      onStdout("\nShiny application finished running.\n\n");
+   }
+   else
+   {
+      if (cancelled_)
+      {
+         // typically the only way Shiny applications exit is by being stopped, so don't treat that
+         // as a failure
+         setJobState(job_, jobs::JobState::JobSucceeded);
+         onStdout("\nShiny application successfully stopped.\n\n");
+      }
+      else
+      {
+         setJobState(job_, jobs::JobState::JobFailed);
+         onStdout("\nShiny application failed.\n\n");
+      }
    }
 
    AsyncRJob::onCompleted(exitStatus);
