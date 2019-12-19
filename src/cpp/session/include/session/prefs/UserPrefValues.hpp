@@ -192,6 +192,7 @@ namespace prefs {
 #define kShinyViewerTypePane "pane"
 #define kShinyViewerTypeWindow "window"
 #define kShinyViewerTypeBrowser "browser"
+#define kShinyBackgroundJobs "shiny_background_jobs"
 #define kPlumberViewerType "plumber_viewer_type"
 #define kPlumberViewerTypeUser "user"
 #define kPlumberViewerTypeNone "none"
@@ -951,6 +952,12 @@ public:
     */
    std::string shinyViewerType();
    core::Error setShinyViewerType(std::string val);
+
+   /**
+    * Whether to run Shiny applications as background jobs.
+    */
+   bool shinyBackgroundJobs();
+   core::Error setShinyBackgroundJobs(bool val);
 
    /**
     * Where to display Shiny applications when they are run.

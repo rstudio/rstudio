@@ -64,7 +64,7 @@ void ShinyAsyncJob::enqueueStateEvent(const std::string& state)
    json::Object dataJson;
    dataJson["url"] = url_ports::mapUrlPorts(url_);
    dataJson["path"] = module_context::createAliasedPath(path_);
-   dataJson["state"] = "started";
+   dataJson["state"] = state;
    dataJson["viewer"] = viewerType_;
    dataJson["options"] = shiny_viewer::SHINY_VIEWER_OPTIONS_NONE;
    dataJson["id"] = job_->id();

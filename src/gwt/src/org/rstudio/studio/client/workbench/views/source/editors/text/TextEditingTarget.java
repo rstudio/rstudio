@@ -5401,18 +5401,10 @@ public class TextEditingTarget implements
    {
       sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
       {
-         // determine whether to run the application in the foreground or the
-         // background based on the doc-level property
-         // TODO: should default to false
-         String destination = ShinyApplication.FOREGROUND_APP;
-         if (docUpdateSentinel_.getBoolProperty(
-               ShinyApplication.RUN_IN_BACKGROUND, true))
-         {
-            destination = ShinyApplication.BACKGROUND_APP;
-         }
-           
          events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
-               destination, getExtendedFileType()));
+               prefs_.shinyBackgroundJobs().getValue() ?
+                  ShinyApplication.BACKGROUND_APP :
+                  ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
       }, "Run Shiny Application");
    }
    

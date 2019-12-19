@@ -583,7 +583,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private String satelliteClosePath_ = null;
    private String currentViewType_;
    
-   public static final String RUN_IN_BACKGROUND = "run_in_background";
    public static final String FOREGROUND_APP = "foreground";
    public static final String BACKGROUND_APP = "background";
 }
