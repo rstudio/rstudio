@@ -17,12 +17,14 @@ import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIBuilder;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -63,6 +66,8 @@ public class TutorialPane
       
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      
+      indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
       
       events.addHandler(ThemeChangedEvent.TYPE, this);
       
@@ -137,9 +142,31 @@ public class TutorialPane
    @Override
    public void onTutorialStarted(Tutorial tutorial)
    {
-      String tutorialName = tutorial.getTutorialName();
-      String html = "<h2>Loading tutorial " + tutorialName + " ...</h2>";
-      setDocumentContents(frame_.getWindow().getDocument(), html);
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+         private boolean loaded_ = false;
+         
+         @Override
+         protected void invoke()
+         {
+            Timers.singleShot(500, () ->
+            {
+               if (!loaded_)
+                  indicator_.onProgress("Loading tutorial...");
+            });
+            
+            handler_ = frame_.addLoadHandler((LoadEvent event) ->
+            {
+               if (!isShinyUrl(frame_.getUrl()))
+                  return;
+               
+               loaded_ = true;
+               indicator_.onCompleted();
+               handler_.removeHandler();
+            });
+         }
+      };
    }
    
    @Override
@@ -241,13 +268,12 @@ public class TutorialPane
       doc.getHead().appendChild(styleEl);
    }
    
-   private static final native void setDocumentContents(Document doc, String html)
-   /*-{
-      doc.open();
-      doc.write(html);
-      doc.close();
-   }-*/;
- 
+   private boolean isShinyUrl(String url)
+   {
+      String shinyPrefix = GWT.getHostPageBaseURL() + "p/";
+      return url.startsWith(shinyPrefix);
+   }
+   
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
@@ -271,6 +297,7 @@ public class TutorialPane
 
 
    
+   private final ProgressIndicator indicator_;
    
    private RStudioFrame frame_;
    private Toolbar toolbar_;

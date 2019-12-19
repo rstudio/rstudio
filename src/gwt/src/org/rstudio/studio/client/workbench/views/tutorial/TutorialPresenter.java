@@ -301,14 +301,7 @@ public class TutorialPresenter
    
    private void manageCommands(boolean enabled)
    {
-      commands_.tutorialBack().setEnabled(enabled);
-      commands_.tutorialForward().setEnabled(enabled);
-      commands_.tutorialZoom().setEnabled(enabled);
-      
-      commands_.tutorialPopout().setEnabled(enabled);
-    
       commands_.tutorialRefresh().setEnabled(enabled);;
-      
       commands_.tutorialStop().setEnabled(enabled);
       commands_.tutorialStop().setVisible(enabled);
    }
