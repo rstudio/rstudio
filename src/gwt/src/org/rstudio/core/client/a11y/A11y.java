@@ -128,28 +128,6 @@ public class A11y
       Roles.getAlertRole().setAriaAtomicProperty(el, true);
    }
 
-   /**
-    * Mark a widget as an aria-live status
-    * @param widget
-    * @param assertive
-    */
-   public static void setStatusRole(Widget widget, boolean assertive)
-   {
-      setStatusRole(widget.getElement(), assertive);
-   }
-
-   /**
-    * Mark as widget as an aria-live status
-    * @param el
-    * @param assertive
-    */
-   public static void setStatusRole(Element el, boolean assertive)
-   {
-      Roles.getStatusRole().set(el);
-      Roles.getAlertRole().setAriaLiveProperty(el, assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
-      Roles.getAlertRole().setAriaAtomicProperty(el, true);
-   }
-
    public static void setVisuallyHidden(Widget widget)
    {
       setVisuallyHidden(widget.getElement());

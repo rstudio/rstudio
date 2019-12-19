@@ -661,12 +661,13 @@
 })
 
 .rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
+   
    columns <- list()
    if (ncol(data)) {
       columns <- .rs.describeCols(data, maxFactors)
       if (ncol(data) > maxCols) {
          columns <- head(columns, maxCols)
-         data <- data[, maxCols]
+         data <- data[1:maxCols]
       }
    }
    

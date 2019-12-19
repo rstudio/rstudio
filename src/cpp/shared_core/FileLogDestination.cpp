@@ -27,6 +27,7 @@
 
 #include <vector>
 
+#include <shared_core/Error.hpp>
 #include <shared_core/Logger.hpp>
 
 namespace rstudio {
@@ -160,7 +161,6 @@ struct FileLogDestination::Impl
 
       return LogFile.getSize() < maxSize;
    }
-
 
    FileLogOptions LogOptions;
    FilePath LogFile;

@@ -327,6 +327,25 @@ Error migrateUserPrefs()
    return Success();
 }
 
+void onShutdown(bool terminatedNormally)
+{
+   // Forcibly destroy pref layers when shutting down, since some shutdown processes (namely
+   // unregistering the file monitor) should be performed before memory is automatically released
+   userPrefs().destroyLayers();
+}
+
+void onSuspend(core::Settings*)
+{
+   // Treat suspends as a shutdown (destroy layers)
+   onShutdown(true);
+}
+
+void onResume(const core::Settings&)
+{
+   // No action required here; stub exists since we always register suspend/resume as
+   // a pair
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -351,6 +370,10 @@ core::Error initialize()
       LOG_ERROR(error);
    }
    
+   // Register handlers for session suspend/shutdown
+   events().onShutdown.connect(onShutdown);
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+
    RS_REGISTER_CALL_METHOD(rs_readUserPref);
    RS_REGISTER_CALL_METHOD(rs_writeUserPref);
    RS_REGISTER_CALL_METHOD(rs_readApiPref);

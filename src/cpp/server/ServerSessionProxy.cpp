@@ -394,8 +394,22 @@ void handleContentError(
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
-      http::Response& response = ptrConnection->response();
-      response.setError(http::status::Unauthorized, "Unauthorized");
+      // if regular content is somehow unauthorized, we should redirect
+      // the user to sign in fully once again - however, if this is a session scope
+      // workspaces request, then this was caused by manipulation of routing
+      // via ServerMultiSession, and to properly route back to the session we will need
+      // to redirect to the root of the application
+      if (ptrConnection->request().uri().find("/workspaces/default_session_scope") != std::string::npos)
+      {
+         const_cast<http::Request&>(ptrConnection->request()).setUri("/");
+
+         // for calls to default_session_scope, we want to prevent
+         // ServerMultiSession from  transforming the redirect which would
+         // cause the browser to inadvertently load that URL
+         ptrConnection->response().setHeader(kRStudioNoTransformRedirect, "1");
+      }
+
+      auth::handler::signInThenContinue(ptrConnection->request(), &ptrConnection->response());
       ptrConnection->writeResponse();
       return;
    }

@@ -23,6 +23,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -188,29 +189,18 @@ public class RSConnectDeploy extends Composite
       // Invoke the "add account" wizard
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
-         addAccountAnchor_.addClickHandler(new ClickHandler()
+         addAccountAnchor_.setClickHandler(() ->
          {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               connector_.showAccountWizard(false, 
-                     contentType == RSConnect.CONTENT_TYPE_APP ||
-                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE, 
-                     new OperationWithInput<Boolean>() 
-               {
-                  @Override
-                  public void execute(Boolean successful)
+            connector_.showAccountWizard(false,
+                  contentType == RSConnect.CONTENT_TYPE_APP ||
+                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE,
+                  successful ->
                   {
                      if (successful)
                      {
                         accountList_.refreshAccountList();
                      }
-                  }
-               });
-               
-               event.preventDefault();
-               event.stopPropagation();
-            }
+                  });
          });
       }
       else
@@ -1296,7 +1286,7 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setTitle(error);
    }
 
-   @UiField Anchor addAccountAnchor_;
+   @UiField HyperlinkLabel addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
    @UiField HTMLPanel appDetailsPanel_;

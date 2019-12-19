@@ -194,8 +194,7 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       return error;
 
    using namespace source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                  source_control::fileDecorationContext(rootPath);
+   auto pCtx = source_control::fileDecorationContext(rootPath, false);
 
    // sort the files by name
    std::sort(pFiles->begin(), pFiles->end(), FilePath::isEqualCaseInsensitive);

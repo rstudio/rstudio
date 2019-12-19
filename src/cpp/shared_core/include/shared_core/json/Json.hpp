@@ -74,9 +74,15 @@ enum class Type
 class Value
 {
 protected:
-   // Private implementation of Value is defined first so it may be referred to.
+   // This is defined first so it may be referred to in the class definition.
+   /**
+    * @brief Private implementation of Value.
+    */
    PRIVATE_IMPL_SHARED(m_impl);
 
+   /**
+    * @brief Convenience typedef for the type of the private implementation of json::Value.
+    */
    typedef std::shared_ptr<Impl> ValueImplPtr;
 
    friend class Array;
@@ -109,24 +115,67 @@ public:
    Value(Value&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup Conversion constructor.
-    *
-    * @brief Conversion constructors.
+    * @brief Conversion constructor.
     *
     * @param in_value   The literal value to set this JSON Value to.
-    *
-    * @{
     */
    explicit Value(bool in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(double in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(float in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(int in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(int64_t in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(const char* in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(const std::string& in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(unsigned int in_value);
+
+   /**
+    * @brief Conversion constructor.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    */
    explicit Value(uint64_t in_value);
-   /** @} */
 
    /**
     * @brief Virtual destructor.
@@ -152,26 +201,85 @@ public:
    Value& operator=(Value&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup operator=
-    *
-    * @brief Assignment operators.
+    * @brief Assignment operator.
     *
     * @param in_value   The literal value to set this JSON Value to.
     *
     * @return A reference to this value.
-    *
-    * @{
     */
    Value& operator=(bool in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(double in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(float in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(int in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(int64_t in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(const char* in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(const std::string& in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(unsigned int in_value);
+
+   /**
+    * @brief Assignment operator.
+    *
+    * @param in_value   The literal value to set this JSON Value to.
+    *
+    * @return A reference to this value.
+    */
    Value& operator=(uint64_t in_value);
-   /** @} */
 
    /**
     * @brief Equality operator.
@@ -371,19 +479,22 @@ public:
    bool isUInt64() const;
 
    /**
-    * \defgroup FunctionGroup parse
-    *
     * @brief Parses the JSON string into this value.
     *
     * @param in_jsonStr     The JSON string to parse.
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
-    *
-    * @{
     */
    Error parse(const char* in_jsonStr);
+
+   /**
+    * @brief Parses the JSON string into this value.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse; error otherwise (e.g. ParseError)
+    */
    Error parse(const std::string& in_jsonStr);
-   /** @} */
 
    /**
     * @brief Parses the JSON string and validates it against the schema.
@@ -430,7 +541,7 @@ public:
     *
     * @param io_ostream     The output stream to which to write this value.
     */
-   void writeFormatted(std::ostream& io_stream) const;
+   void writeFormatted(std::ostream& io_ostream) const;
 
 private:
    /**
@@ -573,17 +684,23 @@ public:
       reference operator*() const;
 
    private:
-      // The parent object that is being iterated.
+      /**
+       * The object that is being iterated.
+       */
       const Object* m_parent;
 
-      // The current position.
+      /**
+       * @brief The current position of the iterator.
+       */
       std::ptrdiff_t m_pos;
 
       // Let the parent class manipulate its iterators.
       friend class Object;
    };
 
-   // Reverse iterator for a JSON object.
+   /**
+    * @brief Reverse iterator for a JSON object.
+    */
    typedef std::reverse_iterator<Iterator> ReverseIterator;
 
    /**
@@ -662,35 +779,42 @@ public:
    Object& operator=(Object&& in_other) noexcept;
 
    /**
-    * \defgroup FunctionGroup operator[]
-    *
     * @brief Accessor operator. Gets the value a member of this JSON object by name. If no such object exists, an empty
     *        JSON value will be returned.
     *
     * @param in_name    The name of the member to access.
     *
     * @return The value of the member with the specified name, if it exists; empty JSON value otherwise.
-    *
-    * @{
     */
    Value operator[](const char* in_name);
-   Value operator[](const std::string& in_name);
-   /** @} */
 
    /**
-    * \defgroup FunctionGroup find
+    * @brief Accessor operator. Gets the value a member of this JSON object by name. If no such object exists, an empty
+    *        JSON value will be returned.
     *
+    * @param in_name    The name of the member to access.
+    *
+    * @return The value of the member with the specified name, if it exists; empty JSON value otherwise.
+    */
+   Value operator[](const std::string& in_name);
+
+   /**
     * @brief Finds a JSON member by name.
     *
     * @param in_name    The name of the member to find.
     *
     * @return If such a member exists, an iterator pointing to that member; the end iterator otherwise.
-    *
-    * @{
     */
    Iterator find(const char* in_name) const;
+
+   /**
+    * @brief Finds a JSON member by name.
+    *
+    * @param in_name    The name of the member to find.
+    *
+    * @return If such a member exists, an iterator pointing to that member; the end iterator otherwise.
+    */
    Iterator find(const std::string& in_name) const;
-   /** @} */
 
    /**
     * @brief Gets an iterator pointing to the first member of this object.
@@ -727,19 +851,22 @@ public:
    void clear();
 
    /**
-    * \defgroup FunctionGroup erase
-    *
     * @brief Erases a member by name.
     *
     * @param in_name    The name of the member to erase.
     *
     * @return True if a member was erased; false otherwise.
-    *
-    * @{
     */
    bool erase(const char* in_name);
+
+   /**
+    * @brief Erases a member by name.
+    *
+    * @param in_name    The name of the member to erase.
+    *
+    * @return True if a member was erased; false otherwise.
+    */
    bool erase(const std::string& in_name);
-   /** @} */
 
    /**
     * @brief Erases the member specified by the provided iterator.
@@ -765,6 +892,14 @@ public:
     * @return True if a member with the specified name exists; false otherwise.
     */
    bool hasMember(const char* in_name) const;
+
+   /**
+    * @brief Checks whether this object has a member with the specified name.
+    *
+    * @param in_name    The name of the member for which to check.
+    *
+    * @return True if a member with the specified name exists; false otherwise.
+    */
    bool hasMember(const std::string& in_name) const;
 
    /**
@@ -780,8 +915,7 @@ public:
     * @brief Inserts the specified member into this JSON object. If an object with the same name already exists, it will be
     *        overridden.
     *
-    * @param in_name        The name of the JSON value to insert.
-    * @param in_value       The value to insert.
+    * @param in_member      The member to insert.
     */
    void insert(const Member& in_member);
 
@@ -822,12 +956,20 @@ private:
    friend class Iterator;
 };
 
+/**
+ * @brief Class which represents a JSON array.
+ */
 class Array : public Value
 {
 public:
-   typedef Value value_type;
+
    /**
-    * @brief Class which allows iterating over the members of a JSON object.
+    * @brief Typedef required for the inheritance of std::iterator with a value_type of json::Value.
+    */
+   typedef Value value_type;
+
+   /**
+    * @brief Class which allows iterating over the elements of a JSON array.
     */
    class Iterator: public std::iterator<std::bidirectional_iterator_tag,   // iterator_category
       Value,                             // value_type
@@ -910,17 +1052,23 @@ public:
       reference operator*() const;
 
    private:
-      // The parent array that is being iterated.
+      /**
+       * @brief The parent array that is being iterated.
+       */
       const Array* m_parent;
 
-      // The current position.
+      /**
+       * @brief The current position of the iterator.
+       */
       std::ptrdiff_t m_pos;
 
       // Allow the array class to manipulate its own iterators.
       friend class Array;
    };
 
-   // Reverse iterator for a JSON object.
+   /**
+    * @brief Reverse iterator for a JSON array.
+    */
    typedef std::reverse_iterator<Iterator> ReverseIterator;
 
    /**
@@ -970,7 +1118,7 @@ public:
    /**
     * @brief Accessor operator. Gets the JSON value at the specified position in the array.
     *
-    * @param in_name    The name of the member to access.
+    * @param in_index   The position of the element to access.
     *
     * @throws std::out_of_range     If in_index is greater than or equal to the value returned by getSize().
     *
@@ -1022,11 +1170,12 @@ public:
    Iterator erase(const Iterator& in_itr);
 
    /**
-    * @brief Erases the member specified by the provided iterator.
+    * @brief Erases a range of member specified by the provided iterators to the first and last members to erase.
     *
-    * @param in_itr     The iterator pointing to the member to erase.
+    * @param in_first       The iterator pointing to the first member to erase.
+    * @param in_last        The iterator pointing to the last member to erase.
     *
-    * @return An iterator pointing to the member immediately after the erased member.
+    * @return An iterator pointing to the member immediately after the last erased member.
     */
    Iterator erase(const Iterator& in_first, const Iterator& in_last);
 

@@ -7,7 +7,7 @@
    font-family: fixedWidthFont;
    white-space: pre-wrap;
    color: #888;
-   -webkit-user-select: auto;
+   user-select: text;
 }
 .cellTableWidget > tbody > tr > td {
    vertical-align: top;

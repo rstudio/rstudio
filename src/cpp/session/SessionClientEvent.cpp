@@ -196,8 +196,9 @@ const int kRequestDocumentClose = 178;
 const int kRequestDocumentCloseCompleted = 179;
 const int kExecuteAppCommand = 180;
 const int kUserStateChanged = 181;
-const int kReplaceResult = 182;
-const int kReplaceUpdated = 183;
+const int kHighlight = 182;
+const int kReplaceResult = 183;
+const int kReplaceUpdated = 184;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -545,6 +546,8 @@ std::string ClientEvent::typeName() const
          return "execute_app_command";
       case client_events::kUserStateChanged:
          return "user_state_changed";
+      case client_events::kHighlight:
+         return "highlight";
       case client_events::kReplaceResult:
          return "replace_result";
       case client_events::kReplaceUpdated:

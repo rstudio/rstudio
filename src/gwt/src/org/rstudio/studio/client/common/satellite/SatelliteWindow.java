@@ -1,7 +1,7 @@
 /*
  * SatelliteWindow.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,13 @@
 package org.rstudio.studio.client.common.satellite;
 
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -51,6 +55,7 @@ public abstract class SatelliteWindow extends Composite
       pFontSizeManager_ = pFontSizeManager;
 
       pEventBus_.get().addHandler(ThemeChangedEvent.TYPE, this);
+      pEventBus_.get().addHandler(AriaLiveStatusEvent.TYPE, this);
       
       // occupy full client area of the window
       if (!allowScrolling())
@@ -70,7 +75,12 @@ public abstract class SatelliteWindow extends Composite
          userPrefs.editorTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
          userPrefs.globalTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
       });
-       
+
+      // aria-live status announcements
+      ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
+      mainPanel_.add(ariaLiveStatusWidget_);
+      A11y.setVisuallyHidden(mainPanel_.getWidgetContainerElement(ariaLiveStatusWidget_));
+
       // init widget
       initWidget(mainPanel_);
    }
@@ -130,7 +140,15 @@ public abstract class SatelliteWindow extends Composite
    {
       mainPanel_.onResize(); 
    }
-   
+
+   @Override
+   public void onAriaLiveStatus(AriaLiveStatusEvent event)
+   {
+      int delayMs = RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
+         ariaLiveStatusWidget_.announce(event.getMessage(), delayMs);
+   }
+
    abstract protected void onInitialize(LayoutPanel mainPanel, 
                                         JavaScriptObject params);
    
@@ -142,4 +160,5 @@ public abstract class SatelliteWindow extends Composite
    private final Provider<EventBus> pEventBus_;
    private final Provider<FontSizeManager> pFontSizeManager_;
    private LayoutPanel mainPanel_;
+   private final AriaLiveStatusWidget ariaLiveStatusWidget_;
 }

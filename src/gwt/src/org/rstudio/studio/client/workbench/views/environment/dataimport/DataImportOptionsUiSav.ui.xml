@@ -1,7 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
+    xmlns:rsw="urn:import:org.rstudio.core.client.widget"
     xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport">
+    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style src="res/DataImportStyles.css"
         type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
         .modelLabel {
@@ -36,20 +38,27 @@
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
-        <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
-        <div class="{style.optionsBlock}">
+        <g:Label ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"/>
+        <div ui:field="optionsGroup_" class="{style.optionsBlock}">
             <div class="{style.optionsRow}">
-                <div class="{style.optionLabel} {style.nameLabel}">Name:</div>
-                <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+                <rsw:FormLabel styleName="{style.optionLabel} {style.nameLabel}" text="Name:"
+                               for="{ElementIds.getDataImportOptionsName}"/>
+                <rsw:FormTextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"
+                                 elementId="{ElementIds.getDataImportOptionsName}"/>
             </div>
             <div class="{style.optionsRow}">
-                <div class="{style.optionLabel} {style.modelLabel}">Model:</div>
-                <rsdi:DataImportFileChooser ui:field="fileChooser_"/>
+                <rsw:FormLabel text="Model:" styleName="{style.optionLabel} {style.modelLabel}"
+                               for="{ElementIds.getDataImportOptionsFilechooser}"/>
+                <rsdi:DataImportFileChooser ui:field="fileChooser_"
+                                            elementId="{ElementIds.getDataImportOptionsFilechooser}"
+                                            ariaLabelSuffix="Model"/>
             </div>
             <div class="{style.optionsRow} {style.formatRow}">
                 <div class="{style.optionsLeftBlock}">
-                    <div class="{style.optionLabel} {style.formatLabel}">Format:</div>
-                    <g:ListBox ui:field="formatListBox_" styleName="{style.formatListBox}"/>
+                    <rsw:FormLabel styleName="{style.optionLabel} {style.formatLabel}" text="Format:"
+                                   for="{ElementIds.getDataImportOptionsFormat}"/>
+                    <rsw:FormListBox ui:field="formatListBox_" styleName="{style.formatListBox}"
+                                     elementId="{ElementIds.getDataImportOptionsFormat}"/>
                 </div>
                 <div class="{style.optionsRightBlock}">
                     <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>

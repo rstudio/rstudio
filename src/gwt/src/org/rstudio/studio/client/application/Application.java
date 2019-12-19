@@ -26,8 +26,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -50,6 +48,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
@@ -158,6 +157,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
+      events.addHandler(AriaLiveStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -285,6 +285,12 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onFocusMainToolbar()
+   {
+      view_.focusToolbar();
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -321,6 +327,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
       // if the user is currently uploading a file (which potentially takes a long time)
@@ -332,17 +339,28 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Override
    public void onFileUpload(FileUploadEvent event)
    {
       fileUploadInProgress_ = event.inProgress();
    }
    
+   @Override
+   public void onAriaLiveStatus(AriaLiveStatusEvent event)
+   {
+      int delayMs = userPrefs_.get().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
+         view_.reportStatus(event.getMessage(), userPrefs_.get().typingStatusDelayMs().getValue());
+   }
+
+   @Override
    public void onServerOffline(ServerOfflineEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationOffline();
    }
     
+   @Override
    public void onLogoutRequested(LogoutRequestedEvent event)
    {
       cleanupWorkbench();
@@ -459,6 +477,7 @@ public class Application implements ApplicationEventHandlers
       SuperDevMode.reload();
    }
    
+   @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
@@ -505,6 +524,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Override
    public void onSessionRelaunch(SessionRelaunchEvent event)
    {
       switch (event.getType())
@@ -539,6 +559,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onServerUnavailable(ServerUnavailableEvent event)
    {
       view_.hideSerializationProgress();
@@ -565,6 +586,7 @@ public class Application implements ApplicationEventHandlers
       });
    }
 
+   @Override
    public void onReload(ReloadEvent event)
    {
       cleanupWorkbench();
@@ -572,6 +594,7 @@ public class Application implements ApplicationEventHandlers
       reloadWindowWithDelay(false);
    }
    
+   @Override
    public void onReloadWithLastChanceSave(ReloadWithLastChanceSaveEvent event)
    {
       Barrier barrier = new Barrier();
@@ -609,6 +632,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onQuit(QuitEvent event)
    {
       cleanupWorkbench();
@@ -694,18 +718,21 @@ public class Application implements ApplicationEventHandlers
       }.schedule(100);
    }
    
+   @Override
    public void onSuicide(SuicideEvent event)
    { 
       cleanupWorkbench();
       view_.showApplicationSuicide(event.getMessage());
    }
    
+   @Override
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationDisconnected();
    }
    
+   @Override
    public void onInvalidClientVersion(InvalidClientVersionEvent event)
    {
       cleanupWorkbench();
@@ -713,6 +740,7 @@ public class Application implements ApplicationEventHandlers
    }
    
 
+   @Override
    public void onInvalidSession(InvalidSessionEvent event)
    {
       // calculate the url without the scope
@@ -737,6 +765,7 @@ public class Application implements ApplicationEventHandlers
       navigateWindowWithDelay(baseURL);
    }
 
+   @Override
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {
       view_.showSessionAbendWarning();
@@ -945,10 +974,7 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAV().setVisible(false);
          commands_.importDatasetFromSAS().setVisible(false);
          commands_.importDatasetFromStata().setVisible(false);
-         commands_.importDatasetFromXML().setVisible(false);
-         commands_.importDatasetFromODBC().setVisible(false);
-         commands_.importDatasetFromJDBC().setVisible(false);
-         
+
          try
          {
             String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
@@ -961,28 +987,11 @@ public class Application implements ApplicationEventHandlers
                commands_.importDatasetFromSAV().setVisible(true);
                commands_.importDatasetFromSAS().setVisible(true);
                commands_.importDatasetFromStata().setVisible(true);
-               
-               commands_.importDatasetFromXML().setVisible(true);
-            }
-            if (ApplicationUtils.compareVersions(rVersion, "3.0.0") >= 0)
-            {
-               commands_.importDatasetFromODBC().setVisible(true);
-            }
-            if (ApplicationUtils.compareVersions(rVersion, "2.4.0") >= 0)
-            {
-               commands_.importDatasetFromJDBC().setVisible(true);
             }
          }
          catch (Exception e)
          {
          }
-         
-         // Removing data import dialogs that are NYI
-         commands_.importDatasetFromXML().remove();
-         commands_.importDatasetFromJSON().remove();
-         commands_.importDatasetFromJDBC().remove();
-         commands_.importDatasetFromODBC().remove();
-         commands_.importDatasetFromMongo().remove();
       }
       else
       {
@@ -993,11 +1002,6 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();
          commands_.importDatasetFromXLS().remove();
-         commands_.importDatasetFromXML().remove();
-         commands_.importDatasetFromJSON().remove();
-         commands_.importDatasetFromJDBC().remove();
-         commands_.importDatasetFromODBC().remove();
-         commands_.importDatasetFromMongo().remove();
       }
 
       if (userPrefs_.get().ariaApplicationRole().getValue())
@@ -1069,17 +1073,11 @@ public class Application implements ApplicationEventHandlers
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( userPrefs_.get().toolbarVisible().getValue());
+      showToolbar(userPrefs_.get().toolbarVisible().getValue(), false);
       
       // sync to changes in the toolbar visibility state
       userPrefs_.get().toolbarVisible().addValueChangeHandler(
-                                          new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            showToolbar(event.getValue());
-         }
-      });
+            valueChangeEvent -> showToolbar(valueChangeEvent.getValue(), true));
    
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
@@ -1149,10 +1147,10 @@ public class Application implements ApplicationEventHandlers
       userPrefs_.get().writeUserPrefs();
    }
    
-   private void showToolbar(boolean showToolbar)
+   private void showToolbar(boolean showToolbar, boolean announce)
    {
       // show or hide the toolbar
-      view_.showToolbar(showToolbar);
+      view_.showToolbar(showToolbar, announce);
          
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);
@@ -1190,6 +1188,11 @@ public class Application implements ApplicationEventHandlers
       commands_.interruptTerminal().remove();
       commands_.sendTerminalToEditor().remove();
       commands_.sendToTerminal().remove();
+      commands_.showTerminalOptions().remove();
+      commands_.openNewTerminalAtEditorLocation().remove();
+      commands_.sendFilenameToTerminal().remove();
+      commands_.openNewTerminalAtFilePaneLocation().remove();
+      commands_.setTerminalToCurrentDirectory().remove();
    }
 
    private void removeProjectCommands()

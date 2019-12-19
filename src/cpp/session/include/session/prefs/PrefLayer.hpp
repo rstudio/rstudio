@@ -43,6 +43,7 @@ public:
    virtual core::Error readPrefs() = 0;
    virtual core::Error writePrefs(const core::json::Object& prefs);
    virtual ~PrefLayer();
+   virtual void destroy();
    std::string layerName();
 
    template<typename T> boost::optional<T> readPref(const std::string& name)

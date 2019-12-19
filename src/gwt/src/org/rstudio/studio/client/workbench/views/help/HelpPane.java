@@ -22,7 +22,6 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -72,7 +71,6 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -458,6 +456,7 @@ public class HelpPane extends WorkbenchPane
          findTextBox_ = new FindTextBox("Find in Topic");
          findTextBox_.addStyleName(RES.styles().findTopicTextbox());
          findTextBox_.setOverrideWidth(90);
+         ElementIds.assignElementId(findTextBox_, ElementIds.SW_HELP_FIND_IN_TOPIC);
          toolbar.addLeftWidget(findTextBox_);
          findTextBox_.addKeyUpHandler(new KeyUpHandler() { 
             

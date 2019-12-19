@@ -219,7 +219,10 @@ namespace prefs {
 #define kShowTerminalTab "show_terminal_tab"
 #define kTerminalLocalEcho "terminal_local_echo"
 #define kTerminalWebsockets "terminal_websockets"
-#define kTerminalAutoClose "terminal_auto_close"
+#define kTerminalCloseBehavior "terminal_close_behavior"
+#define kTerminalCloseBehaviorAlways "always"
+#define kTerminalCloseBehaviorClean "clean"
+#define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
@@ -270,6 +273,7 @@ namespace prefs {
 #define kShowUserHomePageSessions "sessions"
 #define kReuseSessionsForProjectLinks "reuse_sessions_for_project_links"
 #define kVcsEnabled "vcs_enabled"
+#define kVcsAutorefresh "vcs_autorefresh"
 #define kGitExePath "git_exe_path"
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
@@ -296,12 +300,17 @@ namespace prefs {
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
+#define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
 #define kAutoSaveOnIdleCommit "commit"
 #define kAutoSaveOnIdleBackup "backup"
 #define kAutoSaveOnIdleNone "none"
 #define kAutoSaveIdleMs "auto_save_idle_ms"
 #define kAutoSaveOnBlur "auto_save_on_blur"
+#define kTerminalInitialDirectory "terminal_initial_directory"
+#define kTerminalInitialDirectoryProject "project"
+#define kTerminalInitialDirectoryCurrent "current"
+#define kTerminalInitialDirectoryHome "home"
 
 class UserPrefValues: public Preferences
 {
@@ -1040,10 +1049,10 @@ public:
    core::Error setTerminalWebsockets(bool val);
 
    /**
-    * Whether to automatically close the Terminal tab.
+    * Whether to close the terminal pane after the shell exits.
     */
-   bool terminalAutoClose();
-   core::Error setTerminalAutoClose(bool val);
+   std::string terminalCloseBehavior();
+   core::Error setTerminalCloseBehavior(std::string val);
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.
@@ -1184,6 +1193,12 @@ public:
    core::Error setVcsEnabled(bool val);
 
    /**
+    * Automatically refresh VCS status?
+    */
+   bool vcsAutorefresh();
+   core::Error setVcsAutorefresh(bool val);
+
+   /**
     * The path to the Git executable to use.
     */
    std::string gitExePath();
@@ -1322,6 +1337,12 @@ public:
    core::Error setReducedMotion(bool val);
 
    /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   bool tabKeyMoveFocus();
+   core::Error setTabKeyMoveFocus(bool val);
+
+   /**
     * How to deal with changes to documents on idle.
     */
    std::string autoSaveOnIdle();
@@ -1338,6 +1359,12 @@ public:
     */
    bool autoSaveOnBlur();
    core::Error setAutoSaveOnBlur(bool val);
+
+   /**
+    * Initial directory for new terminals.
+    */
+   std::string terminalInitialDirectory();
+   core::Error setTerminalInitialDirectory(std::string val);
 
 };
 

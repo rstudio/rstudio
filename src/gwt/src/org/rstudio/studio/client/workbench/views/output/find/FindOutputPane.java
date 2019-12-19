@@ -385,6 +385,31 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void updateSearchLabel(String query, String path, String replace, int successCount, int errorCount)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Replace results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" with ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(replace)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      {
+         StringBuilder summary = new StringBuilder(": ");
+         summary.append(Integer.toString(successCount));
+         summary.append(" successful, ");
+         summary.append(Integer.toString(errorCount));
+         summary.append(" failed");
+         builder.appendEscaped(summary.toString());
+      }
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+
+   @Override
    public void clearSearchLabel()
    {
       searchLabel_.setText("");
@@ -454,7 +479,6 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void disableReplace()
    {
-      replaceTextBox_.setValue("");
       replaceTextBox_.setReadOnly(true);
       replaceAllButton_.setEnabled(false);
    }

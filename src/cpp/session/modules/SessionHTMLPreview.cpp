@@ -790,7 +790,7 @@ void modifyOutputForPreview(std::string* pOutput)
    }
 
    // serve mathjax locally from this directory
-   std::string previewMathjax = "mathjax-26";
+   std::string previewMathjax = "mathjax-27";
 
    // replace old mathjax CDN for compatibility with R packages that still use
    // the deprecated URL
@@ -961,7 +961,7 @@ void handlePreviewRequest(const http::Request& request,
    }
 
    // request for mathjax file
-   else if (boost::algorithm::starts_with(path, "mathjax-26"))
+   else if (boost::algorithm::starts_with(path, "mathjax-27"))
    {
 
       FilePath filePath =

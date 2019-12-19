@@ -1151,12 +1151,16 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically close the Terminal tab.
+    * Whether to close the terminal pane after the shell exits.
     */
-   public PrefValue<Boolean> terminalAutoClose()
+   public PrefValue<String> terminalCloseBehavior()
    {
-      return bool("terminal_auto_close", true);
+      return string("terminal_close_behavior", "always");
    }
+
+   public final static String TERMINAL_CLOSE_BEHAVIOR_ALWAYS = "always";
+   public final static String TERMINAL_CLOSE_BEHAVIOR_CLEAN = "clean";
+   public final static String TERMINAL_CLOSE_BEHAVIOR_NEVER = "never";
 
    /**
     * Whether to track and save changes to system environment variables in the Terminal.
@@ -1380,6 +1384,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Automatically refresh VCS status?
+    */
+   public PrefValue<Boolean> vcsAutorefresh()
+   {
+      return bool("vcs_autorefresh", true);
+   }
+
+   /**
     * The path to the Git executable to use.
     */
    public PrefValue<String> gitExePath()
@@ -1582,6 +1594,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Tab key moves focus out of text editing controls instead of inserting tabs.
+    */
+   public PrefValue<Boolean> tabKeyMoveFocus()
+   {
+      return bool("tab_key_move_focus", false);
+   }
+
+   /**
     * How to deal with changes to documents on idle.
     */
    public PrefValue<String> autoSaveOnIdle()
@@ -1608,6 +1628,18 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool("auto_save_on_blur", false);
    }
+
+   /**
+    * Initial directory for new terminals.
+    */
+   public PrefValue<String> terminalInitialDirectory()
+   {
+      return string("terminal_initial_directory", "project");
+   }
+
+   public final static String TERMINAL_INITIAL_DIRECTORY_PROJECT = "project";
+   public final static String TERMINAL_INITIAL_DIRECTORY_CURRENT = "current";
+   public final static String TERMINAL_INITIAL_DIRECTORY_HOME = "home";
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -1855,8 +1887,8 @@ public class UserPrefsAccessor extends Prefs
          terminalLocalEcho().setValue(layer, source.getBool("terminal_local_echo"));
       if (source.hasKey("terminal_websockets"))
          terminalWebsockets().setValue(layer, source.getBool("terminal_websockets"));
-      if (source.hasKey("terminal_auto_close"))
-         terminalAutoClose().setValue(layer, source.getBool("terminal_auto_close"));
+      if (source.hasKey("terminal_close_behavior"))
+         terminalCloseBehavior().setValue(layer, source.getString("terminal_close_behavior"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
       if (source.hasKey("terminal_bell_style"))
@@ -1903,6 +1935,8 @@ public class UserPrefsAccessor extends Prefs
          reuseSessionsForProjectLinks().setValue(layer, source.getBool("reuse_sessions_for_project_links"));
       if (source.hasKey("vcs_enabled"))
          vcsEnabled().setValue(layer, source.getBool("vcs_enabled"));
+      if (source.hasKey("vcs_autorefresh"))
+         vcsAutorefresh().setValue(layer, source.getBool("vcs_autorefresh"));
       if (source.hasKey("git_exe_path"))
          gitExePath().setValue(layer, source.getString("git_exe_path"));
       if (source.hasKey("svn_exe_path"))
@@ -1949,12 +1983,16 @@ public class UserPrefsAccessor extends Prefs
          ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
+      if (source.hasKey("tab_key_move_focus"))
+         tabKeyMoveFocus().setValue(layer, source.getBool("tab_key_move_focus"));
       if (source.hasKey("auto_save_on_idle"))
          autoSaveOnIdle().setValue(layer, source.getString("auto_save_on_idle"));
       if (source.hasKey("auto_save_idle_ms"))
          autoSaveIdleMs().setValue(layer, source.getInteger("auto_save_idle_ms"));
       if (source.hasKey("auto_save_on_blur"))
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
+      if (source.hasKey("terminal_initial_directory"))
+         terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
    }
    
 

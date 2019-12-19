@@ -59,11 +59,22 @@ public:
       return "";
    }
    
+   void cancel()
+   {
+      if (job_)
+      {
+         cancelled_ = true;
+         // request terminate
+         terminate();
+      }
+   }
+
 private:
    ScriptJob(const ScriptLaunchSpec& spec, 
          boost::function<void()> onComplete):
       spec_(spec),
       completed_(false),
+      cancelled_(false),
       onComplete_(onComplete)
    {
    }
@@ -158,8 +169,14 @@ private:
          "exportRdata = " + exportRdata + ");";
         
       core::system::Options environment;
+
+      // build options for async R process; default to no rdata unless we have other options (most
+      // common is a vanilla R process)
+      async_r::AsyncRProcessOptions options = 
+         spec_.procOptions() ? *spec_.procOptions() : async_r::R_PROCESS_NO_RDATA;
+
       async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
-                                    async_r::R_PROCESS_NO_RDATA);
+                                    options);
    }
 
    void onStdout(const std::string& output)
@@ -286,7 +303,12 @@ private:
 
       // mark job state
       if (job_)
-         setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
+      {
+         if (cancelled_)
+            setJobState(job_, JobCancelled);
+         else
+            setJobState(job_, exitStatus == 0 && completed_ ? JobSucceeded : JobFailed);
+      }
 
       // clean up temporary files, if we used them
       import_.removeIfExists();
@@ -330,6 +352,7 @@ private:
    boost::shared_ptr<Job> job_;
    ScriptLaunchSpec spec_;
    bool completed_;
+   bool cancelled_;
    FilePath import_;
    FilePath export_;
    FilePath tempCode_;
@@ -406,6 +429,16 @@ std::string ScriptLaunchSpec::encoding()
    return encoding_;
 }
 
+void ScriptLaunchSpec::setProcOptions(async_r::AsyncRProcessOptions options)
+{
+   procOptions_ = options;
+}
+
+boost::optional<async_r::AsyncRProcessOptions> ScriptLaunchSpec::procOptions()
+{
+   return procOptions_;
+}
+
 Error startScriptJob(const ScriptLaunchSpec& spec, std::string* pId)
 {
    boost::shared_ptr<ScriptJob> job = ScriptJob::create(spec,
@@ -430,8 +463,7 @@ Error stopScriptJob(const std::string& id)
    {
       if (script->id() == id)
       {
-         // request terminate
-         script->terminate();
+         script->cancel();
          return Success();
       }
    }

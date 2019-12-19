@@ -54,12 +54,10 @@ import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.KeyboardTracker;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
@@ -102,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.output.lint.DiagnosticsBackgroundPopup;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
@@ -205,7 +204,7 @@ public class AceEditor implements DocDisplay,
             return true;
 
          // Tab was pressed. Don't attempt auto-complete if the user opted out of tab completions.
-         if (!userPrefs_.tabCompletion().getValue())
+         if (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue())
             return false;
 
          // If the user opted in to multi-line tab completion, there is no case where we don't attempt auto-complete.
@@ -322,6 +321,7 @@ public class AceEditor implements DocDisplay,
    {
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
+      monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
@@ -4021,6 +4021,16 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().setTextInputAriaLabel(label);
    }
 
+   public void setTabAlwaysMovesFocus()
+   {
+      widget_.setTabKeyMode(TabKeyMode.AlwaysMoveFocus);
+   }
+
+   public final void setScrollSpeed(double speed)
+   {
+      widget_.getEditor().setScrollSpeed(speed);
+   }
+
    private void fireLineWidgetsChanged()
    {
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
@@ -4126,6 +4136,7 @@ public class AceEditor implements DocDisplay,
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
+   private final AceEditorMonitor monitor_;
    private ScrollAnimator scrollAnimator_;
    private CompletionManager completionManager_;
    private ScopeTreeManager scopes_;

@@ -651,7 +651,7 @@ void ConsoleProcess::onExit(int exitCode)
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
       procInfo_->setAutoClose(
-            prefs::userPrefs().terminalAutoClose() ? AlwaysAutoClose :  NeverAutoClose);
+            ConsoleProcessInfo::closeModeFromPref(prefs::userPrefs().terminalCloseBehavior()));
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)

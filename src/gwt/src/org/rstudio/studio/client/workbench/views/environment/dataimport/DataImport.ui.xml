@@ -3,8 +3,10 @@
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rs="urn:import:org.rstudio.core.client.widget"
     xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport"
+    xmlns:rsw="urn:import:org.rstudio.core.client.widget"
     xmlns:rsace="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
     <ui:with field="res" type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources"/>
+    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
         .flexPanel {
             display: -ms-flexbox;
@@ -17,17 +19,12 @@
 
             margin-bottom: 7px;
         }
-        .importLabel {    
-            margin-top: 12px;
-            margin-right: 5px;
-            margin-left: 5px;
-        }
       .codePreviewImportLabel {
          margin-top: 14px;
             margin-right: 5px;
             margin-left: 5px;
       }
-        .topImportLabel {    
+        .topImportLabel {
             margin-top: 0px;
             margin-right: 5px;
             margin-left: 5px;
@@ -113,7 +110,7 @@
             -ms-flex-direction: row;
             flex-direction: row;
         }
-        .dataPreviewLabel {    
+        .dataPreviewLabel {
             display: -ms-flexbox;
             display: -webkit-flex;
             display: flex;
@@ -121,17 +118,6 @@
             margin-top: 12px;
             margin-right: 5px;
             margin-left: 5px;
-        }
-        .interruptButton {
-            display: -ms-flexbox;
-            display: -webkit-flex;
-            display: flex;
-
-            margin-left: auto;
-            margin-top: 9px;
-            margin-right: 5px;
-            height: 20px;
-            cursor: pointer;
         }
         .headWithButton {
             display: -ms-flexbox;
@@ -157,33 +143,33 @@
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.flexPanel}">
-        <g:Label text="File/URL:" styleName="{style.topImportLabel}"/>
+        <rsw:FormLabel text="File/URL:" styleName="{style.topImportLabel}" for="{ElementIds.getDataImportFileUrl}"/>
         <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
-                                    styleName="{style.fileChooser}"/>
+                                    styleName="{style.fileChooser}"
+                                    elementId="{ElementIds.getDataImportFileUrl}"
+                                    ariaLabelSuffix="File/URL"/>
         <g:HTMLPanel styleName="{style.dataPreviewHeader}">
             <g:Label text="Data Preview:" styleName="{style.dataPreviewLabel}"/>
-            <g:PushButton ui:field="interruptButton_"
-                            styleName="{style.interruptButton}">
-            </g:PushButton>
         </g:HTMLPanel>
         <rs:GridViewerFrame ui:field="gridViewer_"
                             styleName="{style.gridViewerFrame}"/>
         <div class="{style.bottomPanel}">
             <g:HTMLPanel styleName="{style.optionsPanel}">
                 <g:HTMLPanel ui:field="optionsHost_"
-                             styleName="{style.optionsElement}"/>    
+                             styleName="{style.optionsElement}"/>
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{style.codePanel}">
                 <div class="{style.headWithButton}">
-                    <g:Label text="Code Preview:"
-                             styleName="{style.codePreviewImportLabel}"/>
-                    <g:PushButton ui:field="copyButton_"
-                                  styleName="{style.copyButton}">
-                    </g:PushButton>
+                    <rsw:FormLabel text="Code Preview:"
+                                   styleName="{style.codePreviewImportLabel}"
+                                   for="{ElementIds.getDataImportCodePreview}"/>
+                    <rsw:ImageButton ui:field="copyButton_"
+                                     addStyleNames="{style.copyButton}"/>
                 </div>
                 <div class="{style.codeTextArea}">
                     <div class="{style.textEditor}">
-                        <rsace:AceEditorWidget ui:field="codeArea_"/>
+                        <rsace:AceEditorWidget ui:field="codeArea_"
+                                               elementId="{ElementIds.getDataImportCodePreview}"/>
                     </div>
                 </div>
             </g:HTMLPanel>

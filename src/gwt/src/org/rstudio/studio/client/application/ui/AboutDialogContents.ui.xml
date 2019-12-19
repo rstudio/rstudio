@@ -3,6 +3,7 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:with field='res' type='org.rstudio.core.client.theme.res.ThemeResources' />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
       .productName {
@@ -116,10 +117,12 @@
                addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
                ui:field="showNoticelink_"/>
       </g:HTMLPanel>
-      <g:Label ui:field="licenseLabel" visible="false" text="RStudio Pro License Status" styleName="{style.licenseLabel}"></g:Label>
-        <g:TextArea ui:field="licenseBox" styleName="{style.licenseBox}"
-           visibleLines="10" visible="false" readOnly="true"></g:TextArea>
-
+      <g:HTMLPanel ui:field="licenseLabel" visible="false">
+         <rw:FormLabel text="RStudio Pro License Status" styleName="{style.licenseLabel}"
+            for="{ElementIds.getAboutLicenseInfo}"/>
+      </g:HTMLPanel>
+      <rw:FormTextArea ui:field="licenseBox" styleName="{style.licenseBox}"
+         visibleLines="10" visible="false" readOnly="true" elementId="{ElementIds.getAboutLicenseInfo}"/>
    </g:HTMLPanel>
 </ui:UiBinder> 
 

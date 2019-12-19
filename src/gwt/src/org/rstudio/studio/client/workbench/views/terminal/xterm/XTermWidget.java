@@ -65,9 +65,10 @@ public class XTermWidget extends Widget
    /**
     * Creates an XTermWidget.
     */
-   public XTermWidget(XTermOptions options)
+   public XTermWidget(XTermOptions options, boolean tabMovesFocus)
    {
       options_ = options;
+      tabMovesFocus_ = tabMovesFocus;
 
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
@@ -89,7 +90,7 @@ public class XTermWidget extends Widget
       load(() -> {
          Scheduler.get().scheduleDeferred(() -> {
             // Create and attach the native terminal object to this Widget
-            terminal_ = XTermNative.createTerminal(getElement(), options_);
+            terminal_ = XTermNative.createTerminal(getElement(), options_, tabMovesFocus_);
             terminal_.addClass("ace_editor");
             terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
@@ -262,6 +263,16 @@ public class XTermWidget extends Widget
    public int getCursorY()
    {
       return terminal_.cursorY();
+   }
+
+   /**
+    * Whether hitting Tab key moves focus out of terminal, or sends tab key to emulator
+    *
+    * @param movesFocus
+    */
+   public void setTabMovesFocus(boolean movesFocus)
+   {
+      terminal_.setTabMovesFocus(movesFocus);
    }
 
    /**
@@ -440,6 +451,7 @@ public class XTermWidget extends Widget
    private XTermNative terminal_;
    private boolean initialized_ = false;
    private XTermOptions options_;
+   private boolean tabMovesFocus_;
 
    private final static String XTERM_CLASS = "xterm-rstudio";
 }

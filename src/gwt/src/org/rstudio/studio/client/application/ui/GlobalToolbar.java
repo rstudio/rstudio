@@ -74,12 +74,12 @@ public class GlobalToolbar extends Toolbar
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
-      ToolbarMenuButton newButton = new ToolbarMenuButton(ToolbarButton.NoText,
+      newButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
                                                           "New File",
                                                           new ImageResource2x(icons.stock_new2x()),
                                                           newMenu_);
-      ElementIds.assignElementId(newButton, ElementIds.NEW_FILE_MENUBUTTON);
-      addLeftWidget(newButton);
+      ElementIds.assignElementId(newButton_, ElementIds.NEW_FILE_MENUBUTTON);
+      addLeftWidget(newButton_);
       addLeftSeparator();
       
       addLeftWidget(commands.newProject().createToolbarButton());
@@ -249,8 +249,14 @@ public class GlobalToolbar extends Toolbar
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
      
+   public void setFocus()
+   {
+      Scheduler.get().scheduleDeferred(() -> newButton_.setFocus(true));
+   }
+   
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
+   private final ToolbarMenuButton newButton_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();

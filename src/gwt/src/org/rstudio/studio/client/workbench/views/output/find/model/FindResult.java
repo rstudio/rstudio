@@ -264,8 +264,7 @@ public class FindResult extends JavaScriptObject
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
    
-         ArrayList<Pair<Boolean, Integer>> parts
-                                         = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
 
 
          // consolidate matches into one ArrayList
@@ -296,8 +295,6 @@ public class FindResult extends JavaScriptObject
                {
                   out.appendHtmlConstant("<ins>");
                   openInsTags++;
-                  Debug.logToConsole("openInsTags: " + Integer.toString(openInsTags));
-                  Debug.logToConsole("out: " + out.toSafeHtml().asString());
                }
                else if (openInsTags > 0)
                {

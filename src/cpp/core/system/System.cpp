@@ -14,6 +14,7 @@
  */
 
 #include <atomic>
+#include <unordered_set>
 
 #include <boost/variant.hpp>
 
@@ -382,6 +383,58 @@ const char* logLevelToStr(log::LogLevel level)
 std::string currentProcessPidStr()
 {
    return safe_convert::numberToString(currentProcessId());
+}
+
+void createProcessTree(const std::vector<ProcessInfo>& processes,
+                       ProcessTreeT *pOutTree)
+{
+   // first pass, create the nodes in the tree
+   for (const ProcessInfo& process : processes)
+   {
+      ProcessTreeT::iterator iter = pOutTree->find(process.pid);
+      if (iter == pOutTree->end())
+      {
+         // process not found, so create a new entry for it
+         boost::shared_ptr<ProcessTreeNode> nodePtr = boost::shared_ptr<ProcessTreeNode>(
+                                                         new ProcessTreeNode());
+
+         nodePtr->data = boost::shared_ptr<ProcessInfo>(new ProcessInfo(process));
+
+         (*pOutTree)[process.pid] = nodePtr;
+      }
+   }
+
+   // second pass, link the nodes together
+   for (ProcessTreeT::value_type& element : *pOutTree)
+   {
+      PidType parent = element.second->data->ppid;
+      ProcessTreeT::iterator iter = pOutTree->find(parent);
+
+      // if we cannot find the parent in the tree, move on
+      if (iter == pOutTree->end())
+         continue;
+
+      // add this node to its parent's children
+      iter->second->children.push_back(element.second);
+   }
+}
+
+void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
+                 std::vector<ProcessInfo>* pOutChildren,
+                 int depth)
+{
+   std::unordered_set<PidType> visited;
+   for (const boost::shared_ptr<ProcessTreeNode>& child : node->children)
+   {
+      // cycle protection - only visit the node and its children if it hasn't been visited already
+      // depth protection - do not infinitely recurse for process creation bombs
+      if (visited.count(child->data->pid) == 0 && depth < 100)
+      {
+         visited.insert(child->data->pid);
+         pOutChildren->push_back(*child->data.get());
+         getChildren(child, pOutChildren, depth + 1);
+      }
+   }
 }
 
 } // namespace system

@@ -96,6 +96,19 @@ Error Preferences::initialize()
    return Success();
 }
 
+void Preferences::destroyLayers()
+{
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      // Give each layer a chance to destoy itself
+      for (auto layer: layers_)
+      {
+         layer->destroy();
+      }
+   }
+   END_LOCK_MUTEX
+}
+
 core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
 {
    Error result;

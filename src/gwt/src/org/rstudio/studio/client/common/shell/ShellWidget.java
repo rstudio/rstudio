@@ -82,8 +82,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
-      ElementIds.assignElementId(output_.getElement(), 
-                                 ElementIds.CONSOLE_OUTPUT);
+      ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
 
       pendingInput_ = new PreWidget();
@@ -181,7 +180,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       inputLine_.setCellWidth(input_.asWidget(), "100%");
       inputLine_.setWidth("100%");
 
-      verticalPanel_ = new VerticalPanel();
+      VerticalPanel verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_.getWidget());
@@ -593,6 +592,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
                if (event.isControlKeyDown() || event.isMetaKeyDown())
                   return;
                break;
+            case KeyCodes.KEY_TAB:
+               if (prefs_.tabKeyMoveFocus().getValue())
+                  return;
          }
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);
@@ -610,7 +612,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
 
       private AceEditor input_;
-      private Timer inputFocus_ = new Timer()
+      private final Timer inputFocus_ = new Timer()
       {
          @Override
          public void run()
@@ -774,20 +776,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
-   private PreWidget pendingInput_ ;
-   private final HTML prompt_ ;
-   protected final AceEditor input_ ;
-   private final DockPanel inputLine_ ;
-   private final VerticalPanel verticalPanel_ ;
-   protected final ClickableScrollPanel scrollPanel_ ;
-   private ConsoleResources.ConsoleStyles styles_;
+   private final PreWidget pendingInput_;
+   private final HTML prompt_;
+   protected final AceEditor input_;
+   private final DockPanel inputLine_;
+   protected final ClickableScrollPanel scrollPanel_;
+   private final ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
    private final UserPrefs prefs_;
    
    // A list of errors that have occurred between console prompts. 
-   private Map<String, List<Element>> errorNodes_ = new TreeMap<>();
+   private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;

@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsUi.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -80,7 +85,28 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    {
       return null;
    }
-   
+
+   @Override
+   protected void initWidget(Widget widget)
+   {
+      super.initWidget(widget);
+      initOptionsGroup();
+   }
+
+   private void initOptionsGroup()
+   {
+      ElementIds.assignElementId(optionsLabel_, ElementIds.DATA_IMPORT_UI_OPTIONS);
+      Roles.getGroupRole().set(optionsGroup_);
+      Roles.getGroupRole().setAriaLabelledbyProperty(optionsGroup_,
+         ElementIds.getAriaElementId(ElementIds.DATA_IMPORT_UI_OPTIONS));
+   }
+
    @UiField
    protected TextBox nameTextBox_;
+
+   @UiField
+   protected Label optionsLabel_;
+
+   @UiField
+   protected DivElement optionsGroup_;
 }

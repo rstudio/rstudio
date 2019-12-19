@@ -192,6 +192,10 @@ public class XTermNative extends JavaScriptObject
       this.refresh();
    }-*/;
 
+   public final native void setTabMovesFocus(boolean movesFocus) /*-{
+      this.tabMovesFocus = movesFocus;
+   }-*/;
+
    /**
     * Factory to create a native Javascript terminal object.
     *
@@ -200,11 +204,19 @@ public class XTermNative extends JavaScriptObject
     *
     * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
-   public static native XTermNative createTerminal(Element container, XTermOptions options) /*-{
+   public static native XTermNative createTerminal(Element container,
+                                                   XTermOptions options,
+                                                   boolean tabMovesFocus) /*-{
       $wnd.Terminal.applyAddon($wnd.fit);
       var nativeTerm_ = new $wnd.Terminal(options);
       nativeTerm_.open(container);
       nativeTerm_.focus();
+      nativeTerm_.tabMovesFocus = tabMovesFocus;
+
+      nativeTerm_.attachCustomKeyEventHandler(function(event) {
+         return !(event.keyCode === 9 && nativeTerm_.tabMovesFocus);
+      });
+
       return nativeTerm_;
    }-*/;
 }

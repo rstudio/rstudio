@@ -489,6 +489,14 @@ public:
    
    void setError(const core::Error& error,
                  bool includeErrorProperties = false);
+   
+   void setError(const core::Error& error,
+                 const char* message,
+                 bool includeErrorProperties = false);
+   
+   void setError(const core::Error& error,
+                 const std::string& message,
+                 bool includeErrorProperties = false);
 
    void setError(const core::Error& error,
                  const Value& clientInfo,

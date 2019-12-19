@@ -1,6 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+    xmlns:rs="urn:import:org.rstudio.core.client.widget"
     xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style src="res/DataImportStyles.css"
         type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources.Style">
     .optionsColumn {
@@ -45,34 +47,45 @@
     }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
-        <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
-        <div class="{style.optionsBlock} {style.optionsDirectionRow}">
+        <rs:FormLabel ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"/>
+        <div ui:field="optionsGroup_" class="{style.optionsBlock} {style.optionsDirectionRow}">
             <div class="{style.optionsColumn}">
                 <div class="{style.optionsRow} {style.firstRow}">
-                    <div class="{style.optionSmallLabel} {style.nameLabel}">Name:</div>
-                    <g:TextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"/>
+                    <rs:FormLabel styleName="{style.optionSmallLabel} {style.nameLabel}" text="Name:"
+                                  for="{ElementIds.getDataImportOptionsName}"/>
+                    <rs:FormTextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsName}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.optionSmallLabel}">Sheet:</div>
-                    <g:ListBox ui:field="sheetListBox_" styleName="{style.optionsGrowListBox}"/>
+                    <rs:FormLabel styleName="{style.optionSmallLabel}" text="Sheet:"
+                                  for="{ElementIds.getDataImportOptionsSheet}"/>
+                    <rs:FormListBox ui:field="sheetListBox_" styleName="{style.optionsGrowListBox}"
+                                    elementId="{ElementIds.getDataImportOptionsSheet}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.optionSmallLabel} {style.nameLabel}">Range:</div>
-                    <g:TextBox ui:field="rangeTextBox_" styleName="{style.nameTextBox}"/>
+                    <rs:FormLabel styleName="{style.optionSmallLabel} {style.nameLabel}" text="Range:"
+                                  for="{ElementIds.getDataImportOptionsRange}"/>
+                    <rs:FormTextBox ui:field="rangeTextBox_" styleName="{style.nameTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsRange}"/>
                 </div>
             </div>
             <div class="{style.optionsColumn}">
                 <div class="{style.optionsRow} {style.firstRow}">
-                    <div class="{style.optionLabel}">Max Rows:</div>
-                    <g:TextBox ui:field="maxTextBox_" styleName="{style.paramsTextBox}"/>
+                    <rs:FormLabel styleName="{style.optionLabel}" text="Max Rows:"
+                                  for="{ElementIds.getDataImportOptionsMaxrows}"/>
+                    <rs:FormTextBox ui:field="maxTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsMaxrows}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.optionLabel}">Skip:</div>
-                    <g:TextBox ui:field="skipTextBox_" styleName="{style.paramsTextBox}"/>
+                    <rs:FormLabel styleName="{style.optionLabel}" text="Skip:"
+                                  for="{ElementIds.getDataImportOptionsSkip}"/>
+                    <rs:FormTextBox ui:field="skipTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsSkip}"/>
                 </div>
                 <div class="{style.optionsRow} {style.otherRow}">
-                    <div class="{style.optionLabel}">NA:</div>
-                    <g:TextBox ui:field="naTextBox_" styleName="{style.paramsTextBox}"/>
+                    <rs:FormLabel styleName="{style.optionLabel}" text="NA:" for="{ElementIds.getDataImportOptionsNa}"/>
+                    <rs:FormTextBox ui:field="naTextBox_" styleName="{style.paramsTextBox}"
+                                    elementId="{ElementIds.getDataImportOptionsNa}"/>
                 </div>
             </div>
             <div class="{style.optionsColumn}">

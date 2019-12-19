@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -195,6 +196,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ProjectPreferencesPane projectPrefsPane);
    void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
    void injectMembers(CodeFilesList codeFilesList);
+   void injectMembers(ToolbarPopupMenu toolbarPopupMenu);
    void injectMembers(ProjectPopupMenu projectPopupMenu);
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);

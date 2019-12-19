@@ -53,6 +53,7 @@ enum AutoCloseMode
    DefaultAutoClose = 0, // obey user preference
    AlwaysAutoClose = 1, // always auto-close
    NeverAutoClose = 2, // never auto-close
+   CleanExitAutoClose = 3, // auto-close only if shell returned zero exit code
 };
 
 enum SerializationMode
@@ -202,6 +203,8 @@ public:
    static void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
    static void saveConsoleProcesses(const std::string& metadata);
    static void loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv);
+
+   static AutoCloseMode closeModeFromPref(std::string prefValue);
 
 private:
    std::string caption_;

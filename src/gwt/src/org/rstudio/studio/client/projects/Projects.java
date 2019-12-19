@@ -571,6 +571,7 @@ public class Projects implements OpenProjectFileHandler,
                   RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
                         "Creating project",
                         "Creating a project with " + pkg,
+                        pkg + " Project",
                         deps,
                         false,
                         (Boolean success) -> {

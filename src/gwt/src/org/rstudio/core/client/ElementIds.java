@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.dom.DomUtils;
@@ -55,6 +56,11 @@ public class ElementIds
    public static String getElementId(String id)
    {
       return ID_PREFIX + id;
+   }
+
+   public static Id getAriaElementId(String id)
+   {
+      return Id.of(getElementId(id));
    }
 
    public static boolean isInstanceOf(Widget widget, String baseId)
@@ -166,6 +172,7 @@ public class ElementIds
    // FindInFilesDialog
    public final static String FIND_FILES_TEXT = "find_files_text";
    public static String getFindFilesText() { return getElementId(FIND_FILES_TEXT); }
+   public final static String FIND_FILES_PATTERN_EXAMPLE = "find_files_pattern_example";
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";
@@ -231,4 +238,128 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+
+   // DataImport
+   public final static String DATA_IMPORT_UI_OPTIONS = "data_import_ui_options";
+   public final static String DATA_IMPORT_FILE_URL = "data_import_file_url";
+   public static String getDataImportFileUrl() { return getElementId(DATA_IMPORT_FILE_URL); }
+   public final static String DATA_IMPORT_OPTIONS_FILECHOOSER = "data_import_options_filechooser";
+   public static String getDataImportOptionsFilechooser() { return getElementId(DATA_IMPORT_OPTIONS_FILECHOOSER); }
+   public final static String DATA_IMPORT_CODE_PREVIEW = "data_import_code_preview";
+   public static String getDataImportCodePreview() { return getElementId(DATA_IMPORT_CODE_PREVIEW); }
+   public final static String DATA_IMPORT_OPTIONS_NAME = "data_import_options_name";
+   public static String getDataImportOptionsName() { return getElementId(DATA_IMPORT_OPTIONS_NAME); }
+   public final static String DATA_IMPORT_OPTIONS_SKIP = "data_import_options_skip";
+   public static String getDataImportOptionsSkip() { return getElementId(DATA_IMPORT_OPTIONS_SKIP); }
+   public final static String DATA_IMPORT_OPTIONS_MAXROWS = "data_import_options_maxrows";
+   public static String getDataImportOptionsMaxrows() { return getElementId(DATA_IMPORT_OPTIONS_MAXROWS); }
+   public final static String DATA_IMPORT_OPTIONS_DELIMITER = "data_import_options_delimiter";
+   public static String getDataImportOptionsDelimiter() { return getElementId(DATA_IMPORT_OPTIONS_DELIMITER); }
+   public final static String DATA_IMPORT_OPTIONS_QUOTES = "data_import_options_quotes";
+   public static String getDataImportOptionsQuotes() { return getElementId(DATA_IMPORT_OPTIONS_QUOTES); }
+   public final static String DATA_IMPORT_OPTIONS_ESCAPE = "data_import_options_escape";
+   public static String getDataImportOptionsEscape() { return getElementId(DATA_IMPORT_OPTIONS_ESCAPE); }
+   public final static String DATA_IMPORT_OPTIONS_COMMENT = "data_import_options_comment";
+   public static String getDataImportOptionsComment() { return getElementId(DATA_IMPORT_OPTIONS_COMMENT); }
+   public final static String DATA_IMPORT_OPTIONS_NA = "data_import_options_na";
+   public static String getDataImportOptionsNa() { return getElementId(DATA_IMPORT_OPTIONS_NA); }
+   public final static String DATA_IMPORT_OPTIONS_SHEET = "data_import_options_sheet";
+   public static String getDataImportOptionsSheet() { return getElementId(DATA_IMPORT_OPTIONS_SHEET); }
+   public final static String DATA_IMPORT_OPTIONS_RANGE = "data_import_options_range";
+   public static String getDataImportOptionsRange() { return getElementId(DATA_IMPORT_OPTIONS_RANGE); }
+   public final static String DATA_IMPORT_OPTIONS_FORMAT = "data_import_options_format";
+   public static String getDataImportOptionsFormat() { return getElementId(DATA_IMPORT_OPTIONS_FORMAT); }
+
+   // DataImportOptionsUiCsvLocale
+   public final static String DATA_IMPORT_CSV_DATENAME = "data_import_csv_datename";
+   public static String getDataImportCsvDatename() { return getElementId(DATA_IMPORT_CSV_DATENAME); }
+   public final static String DATA_IMPORT_CSV_ENCODING = "data_import_csv_encoding";
+   public static String getDataImportCsvEncoding() { return getElementId(DATA_IMPORT_CSV_ENCODING); }
+   public final static String DATA_IMPORT_CSV_DATE_FORMAT = "data_import_csv_date_format";
+   public static String getDataImportCsvDateFormat() { return getElementId(DATA_IMPORT_CSV_DATE_FORMAT); }
+   public final static String DATA_IMPORT_CSV_TIME_FORMAT = "data_import_csv_time_format";
+   public static String getDataImportCsvTimeFormat() { return getElementId(DATA_IMPORT_CSV_TIME_FORMAT); }
+   public final static String DATA_IMPORT_CSV_DECIMAL_MARK = "data_import_csv_decimal_mark";
+   public static String getDataImportCsvDecimalMark() { return getElementId(DATA_IMPORT_CSV_DECIMAL_MARK); }
+   public final static String DATA_IMPORT_CSV_GROUPING_MARK = "data_import_csv_grouping_mark";
+   public static String getDataImportCsvGroupingMark() { return getElementId(DATA_IMPORT_CSV_GROUPING_MARK); }
+   public final static String DATA_IMPORT_CSV_TZ = "data_import_csv_tz";
+   public static String getDataImportCsvTz() { return getElementId(DATA_IMPORT_CSV_TZ); }
+
+   // AboutDialogContents
+   public final static String ABOUT_LICENSE_INFO = "about_license_info";
+   public static String getAboutLicenseInfo() { return getElementId(ABOUT_LICENSE_INFO); }
+   
+   // TextEditingTargetWidget
+   public final static String CB_SOURCE_ON_SAVE = "cb_source_on_save";
+   public static String getCbSourceOnSave() { return getElementId(CB_SOURCE_ON_SAVE); }
+   public final static String TOGGLE_DOC_OUTLINE_BUTTON = "toggle_doc_outline_button";
+   public static String getToggleDocOutlineButton() { return getElementId(TOGGLE_DOC_OUTLINE_BUTTON); }
+   
+   // AddinsToolbarButton
+   public final static String ADDINS_TOOLBAR_BUTTON = "addins_toolbar_button";
+   public static String getAddinsToolbarButton() { return getElementId(ADDINS_TOOLBAR_BUTTON); }
+   
+   // CodeSearchWidget
+   public final static String CODE_SEARCH_WIDGET = "code_search_widget";
+   public static String getCodeSearchWidget() { return getElementId(CODE_SEARCH_WIDGET); }
+   
+   // EnvironmentPane
+   public final static String MB_IMPORT_DATASET = "mb_import_dataset";
+   public static String getMbImportDataset() { return getElementId(MB_IMPORT_DATASET); }
+   public final static String MB_ENVIRONMENT_LIST = "mb_environment_list";
+   public static String getMbEnvironmentList() { return getElementId(MB_ENVIRONMENT_LIST); }
+   public final static String MB_OBJECT_LIST_VIEW = "mb_object_list_view";
+   public static String getMbObjectListView() { return getElementId(MB_OBJECT_LIST_VIEW); }
+   public final static String SW_ENVIRONMENT = "sw_environment";
+   public static String getSwEnvironment() { return getElementId(SW_ENVIRONMENT); }
+   
+   // HistoryPane
+   public final static String SW_HISTORY = "sw_history";
+   public static String getSwHistory() { return getElementId(SW_HISTORY); }
+   
+   // GitPane
+   public final static String MB_GIT_MORE = "mb_git_more";
+   public static String getMbGitMore() { return getElementId(MB_GIT_MORE); }
+   public final static String TB_GIT_REFRESH = "tb_git_refresh";
+   public static String getTbGitRefresh() { return getElementId(TB_GIT_REFRESH); }
+   
+   // FileCommandToolbar
+   public final static String MB_FILES_MORE = "mb_files_more";
+   public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
+   
+   // PlotsToolbar
+   public final static String MB_PLOTS_EXPORT = "mb_plots_export";
+   public static String getMbPlotsExport() { return getElementId(MB_PLOTS_EXPORT); }
+   
+   // PackagesPane
+   public final static String SW_PACKAGES = "sw_packages";
+   public static String getSwPackages() { return getElementId(SW_PACKAGES); }
+
+   // SpellingDialog
+   public final static String SPELLING_NOT_IN_DICT= "spelling_not_in_dict";
+   public static String getSpellingNotInDict() { return getElementId(SPELLING_NOT_IN_DICT); }
+   public final static String SPELLING_CHANGE_TO= "spelling_change_to";
+   public static String getSpellingChangeTo() { return getElementId(SPELLING_CHANGE_TO); }
+
+   // HelpPane
+   public final static String SW_HELP_FIND_IN_TOPIC = "sw_help_find_in_topic";
+   public static String getSwHelpFindInTopic() { return getElementId(SW_HELP_FIND_IN_TOPIC); }
+   
+   // HelpSearchWidget
+   public final static String SW_HELP = "sw_help";
+   public static String getSwHelp() { return getElementId(SW_HELP); }
+
+   // SvnResolveDialog
+   public final static String SVN_RESOLVE_GROUP = "svn_resolve_group";
+   public final static String SVN_RESOLVE_MINE = "svn_resolve_mine";
+   public final static String SVN_RESOLVE_MINE_DESC = "svn_resolve_mine_desc";
+   public final static String SVN_RESOLVE_MINE_CONFLICT = "svn_resolve_mine_conflict";
+   public final static String SVN_RESOLVE_MINE_CONFLICT_DESC = "svn_resolve_mine_conflict_desc";
+   public final static String SVN_RESOLVE_THEIRS_CONFLICT = "svn_resolve_theirs_conflict";
+   public final static String SVN_RESOLVE_THEIRS_CONFLICT_DESC = "svn_resolve_theirs_conflict_desc";
+   public final static String SVN_RESOLVE_MINE_ALL = "svn_resolve_mine_all";
+   public final static String SVN_RESOLVE_MINE_ALL_DESC = "svn_resolve_mine_all_desc";
+   public final static String SVN_RESOLVE_THEIRS_ALL = "svn_resolve_theirs_all";
+   public final static String SVN_RESOLVE_THEIRS_ALL_DESC = "svn_resolve_theirs_all_desc";
 }

@@ -32,9 +32,16 @@ public abstract class
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
+   public abstract AppCommand newCDoc();
    public abstract AppCommand newCppDoc();
+   public abstract AppCommand newHeaderDoc();
+   public abstract AppCommand newMarkdownDoc();
    public abstract AppCommand newPythonDoc();
+   public abstract AppCommand newShellDoc();
    public abstract AppCommand newStanDoc();
+   public abstract AppCommand newHtmlDoc();
+   public abstract AppCommand newJavaScriptDoc();
+   public abstract AppCommand newCssDoc();
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
@@ -270,6 +277,9 @@ public abstract class
    public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
    
+   // Tutorial
+   public abstract AppCommand layoutZoomTutorial();
+   
    // PDF
    public abstract AppCommand showPdfExternal();
    
@@ -345,11 +355,6 @@ public abstract class
    public abstract AppCommand importDatasetFromSAS();
    public abstract AppCommand importDatasetFromStata();
    public abstract AppCommand importDatasetFromXLS();
-   public abstract AppCommand importDatasetFromXML();
-   public abstract AppCommand importDatasetFromJSON();
-   public abstract AppCommand importDatasetFromJDBC();
-   public abstract AppCommand importDatasetFromODBC();
-   public abstract AppCommand importDatasetFromMongo();
 
    // Environment
    public abstract AppCommand activateEnvironment();
@@ -426,7 +431,12 @@ public abstract class
    public abstract AppCommand interruptTerminal();
    public abstract AppCommand sendTerminalToEditor();
    public abstract AppCommand sendToTerminal();
-    
+   public abstract AppCommand showTerminalOptions();
+   public abstract AppCommand openNewTerminalAtEditorLocation();
+   public abstract AppCommand openNewTerminalAtFilePaneLocation();
+   public abstract AppCommand sendFilenameToTerminal();
+   public abstract AppCommand setTerminalToCurrentDirectory();
+
    // Help
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();
@@ -599,7 +609,9 @@ public abstract class
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand toggleEditorTokenInfo();
-   
+   public abstract AppCommand layoutZoomLeftColumn();
+   public abstract AppCommand layoutZoomRightColumn();
+
    // Main menu (server)
    public abstract AppCommand showFileMenu();
    public abstract AppCommand showEditMenu();
@@ -615,5 +627,10 @@ public abstract class
 
    // Accessibility
    public abstract AppCommand toggleScreenReaderSupport();
+   public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
+   public abstract AppCommand focusMainToolbar();
+   
+   // Internal
+   public abstract AppCommand showDomElements();
 }

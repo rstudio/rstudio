@@ -381,9 +381,9 @@
       
       # is this a named atomic vector?
       (is.atomic(.$object) && !is.null(names(.$object)) && n > 0) ||
-      
+
       # do we have relevant attributes?
-      .rs.explorer.hasRelevantAttributes(.$object)
+      (.rs.explorer.hasRelevantAttributes(.$object) && n > 0)
    
    # extract attributes when relevant
    attributes <- NULL
