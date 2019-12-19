@@ -47,6 +47,7 @@ boost::shared_ptr<ScriptJob> ScriptJob::create(
 }
 
 ScriptJob::ScriptJob(const ScriptLaunchSpec& spec):
+   AsyncRJob(spec.name()),
    spec_(spec)
 {
 }
@@ -54,17 +55,7 @@ ScriptJob::ScriptJob(const ScriptLaunchSpec& spec):
 void ScriptJob::start()
 {
    Error error;
-   r::sexp::Protect protect;
 
-   // create the actions list
-   SEXP actions = R_NilValue;
-   error = r::exec::RFunction(".rs.scriptActions").call(&actions, &protect);
-   if (error)
-      LOG_ERROR(error);
-
-   // add the job -- currently idle until we get some content from it
-   job_ = addJob(spec_.name(), "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
-   
    std::string importRdata = "NULL";
    std::string exportRdata = "NULL";
 
@@ -345,37 +336,37 @@ ScriptLaunchSpec::ScriptLaunchSpec(
 {
 }
 
-FilePath ScriptLaunchSpec::path()
+FilePath ScriptLaunchSpec::path() const
 {
    return path_;
 }
 
-FilePath ScriptLaunchSpec::workingDir()
+FilePath ScriptLaunchSpec::workingDir() const
 {
    return workingDir_;
 }
 
-std::string ScriptLaunchSpec::exportEnv()
+std::string ScriptLaunchSpec::exportEnv() const
 {
    return exportEnv_;
 }
 
-std::string ScriptLaunchSpec::code()
+std::string ScriptLaunchSpec::code() const
 {
    return code_;
 }
 
-std::string ScriptLaunchSpec::name()
+std::string ScriptLaunchSpec::name() const
 {
    return name_;
 }
 
-bool ScriptLaunchSpec::importEnv()
+bool ScriptLaunchSpec::importEnv() const
 {
    return importEnv_;
 }
 
-std::string ScriptLaunchSpec::encoding()
+std::string ScriptLaunchSpec::encoding() const
 {
    return encoding_;
 }
@@ -394,9 +385,12 @@ Error startScriptJob(const ScriptLaunchSpec& spec, std::string *pId)
 {
    boost::shared_ptr<ScriptJob> pJob = ScriptJob::create(spec);
 
-   pJob->start();
+   Error error = registerAsyncRJob(pJob, pId);
+   if (error)
+      return error;
 
-   return registerAsyncRJob(pJob, pId);
+   pJob->start();
+   return Success();
 }
 
 Error stopScriptJob(const std::string& id)

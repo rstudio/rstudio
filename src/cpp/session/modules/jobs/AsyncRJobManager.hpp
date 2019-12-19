@@ -33,10 +33,11 @@ namespace jobs {
 class AsyncRJob : public async_r::AsyncRProcess
 {
 public:
-   AsyncRJob();
+   AsyncRJob(const std::string& name);
 
    std::string id();
    void cancel();
+   void registerJob();
    void setOnComplete(boost::function<void()> onComplete);
 
    virtual void onStdout(const std::string& output);
@@ -49,6 +50,8 @@ protected:
 
    boost::shared_ptr<Job> job_;
    boost::function<void()> onComplete_;
+
+   std::string name_;
 };
 
 core::Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,

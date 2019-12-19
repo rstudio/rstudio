@@ -34,6 +34,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -84,7 +85,8 @@ public class NewConnectionShinyHost extends Composite
 
    private void terminateShinyApp(final Operation operation)
    {
-      shinyServer_.stopShinyApp(new ServerRequestCallback<Void>()
+      shinyServer_.stopShinyApp(ShinyApplicationParams.ID_FOREGROUND,
+            new ServerRequestCallback<Void>()
       {
          public void onResponseReceived(Void v)
          {

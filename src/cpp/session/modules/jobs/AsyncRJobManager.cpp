@@ -15,6 +15,10 @@
 
 #include "AsyncRJobManager.hpp"
 
+#include <r/RExec.hpp>
+
+#include <session/jobs/JobsApi.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -28,10 +32,26 @@ std::vector<boost::shared_ptr<AsyncRJob> > s_jobs;
 } // anonymous namespace
 
 
-AsyncRJob::AsyncRJob():
+AsyncRJob::AsyncRJob(const std::string& name):
    completed_(false),
-   cancelled_(false)
+   cancelled_(false),
+   name_(name)
 {
+}
+
+void AsyncRJob::registerJob()
+{
+   Error error;
+   r::sexp::Protect protect;
+
+   // create the actions list
+   SEXP actions = R_NilValue;
+   error = r::exec::RFunction(".rs.scriptActions").call(&actions, &protect);
+   if (error)
+      LOG_ERROR(error);
+
+   // add the job -- currently idle until we get some content from it
+   job_ = addJob(name_, "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
 }
 
 void AsyncRJob::onStderr(const std::string& output)
@@ -48,6 +68,13 @@ void AsyncRJob::onStdout(const std::string& output)
 
 void AsyncRJob::onCompleted(int exitStatus)
 {
+   // if the job has not yet been marked complete, do so now
+   if (!job_->complete())
+   {
+      setJobState(job_, exitStatus == 0 ?  
+         JobState::JobSucceeded : JobState::JobFailed);
+   }
+   
    onComplete_();
 }
 
@@ -76,6 +103,10 @@ void AsyncRJob::setOnComplete(boost::function<void()> onComplete)
 Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
+
+   // create the job 
+   job->registerJob();
+
    // remove the job from the registry when it's done
    job->setOnComplete([&]() 
    { 

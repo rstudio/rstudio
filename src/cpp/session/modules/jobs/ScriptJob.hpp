@@ -53,13 +53,13 @@ public:
          bool importEnv,
          const std::string& exportEnv);
 
-   std::string name();
-   std::string code();
-   core::FilePath path();
-   std::string encoding();
-   core::FilePath workingDir();
-   bool importEnv();
-   std::string exportEnv();
+   std::string name() const;
+   std::string code() const;
+   core::FilePath path() const;
+   std::string encoding() const;
+   core::FilePath workingDir() const;
+   bool importEnv() const;
+   std::string exportEnv() const;
    void setProcOptions(async_r::AsyncRProcessOptions options);
    boost::optional<async_r::AsyncRProcessOptions> procOptions();
 private:

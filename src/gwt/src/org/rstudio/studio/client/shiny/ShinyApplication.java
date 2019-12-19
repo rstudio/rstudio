@@ -301,13 +301,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          });
    }
 
-   private String currentAppPath()
-   {
-      if (params_ != null)
-         return params_.getPath();
-      return null;
-   }
-   
    private void notifyShinyAppDisconnected(JavaScriptObject params)
    {
       ShinyApplicationParams appState = params.cast();
@@ -498,15 +491,12 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       WindowEx win = satelliteManager_.getSatelliteWindowObject(
             ShinyApplicationSatellite.getNameFromId(params.getId()));
 
-      boolean isRefresh = win != null && 
-            (params == null || (params_ != null &&
-                                params.getPath() == params_.getPath()));
       boolean isChrome = !Desktop.isDesktop() && BrowseCap.isChrome();
       
       // if we haven't seen these params before, load them
+      boolean newParams = true;
       if (params != null)
       {
-         boolean newParams = true;
          for (ShinyApplicationParams p: params_)
          {
             if (p.equals(params))
@@ -519,6 +509,9 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
          if (newParams)
             params_.add(params);
       }
+
+      boolean isRefresh = win != null && 
+            (params == null || !newParams);
       
       if (win == null || (!isRefresh && !isChrome))
       {

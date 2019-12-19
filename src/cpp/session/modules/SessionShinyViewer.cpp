@@ -33,6 +33,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "shiny/SessionShiny.hpp"
+#include "shiny/ShinyAsyncJob.hpp"
 #include "jobs/AsyncRJobManager.hpp"
 #include "session-config.h"
 
@@ -76,6 +77,7 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
    dataJson["options"] = options;
+   dataJson["id"] = "foreground"; // magic string for foreground apps
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -257,19 +259,27 @@ Error runShinyBackgroundApp(const json::JsonRpcRequest& request,
    std::string cmd = shinyRunCmd(targetPath, appPath, extendedType, 
          AppDestination::BackgroundApp);
 
-   // create and start the asynchronous R job that will be used to run the Shiny application
-   boost::shared_ptr<jobs::AsyncRJob> pJob = boost::make_shared<jobs::AsyncRJob>();
-   core::system::Options environment;
-   pJob->start(cmd.c_str(), environment, appPath, async_r::R_PROCESS_NO_RDATA);
 
-   // register it and return the ID to the caller
+   // create the asynchronous R job that will be used to run the Shiny application
+   boost::shared_ptr<shiny::ShinyAsyncJob> pJob = boost::make_shared<shiny::ShinyAsyncJob>(
+         "Shiny: " + appPath.getFilename(),
+         module_context::resolveAliasedPath(targetPath),
+         kShinyViewerTypeWindow, // TODO: respect preference
+         cmd);
+
+   // register it and create an ID
    std::string id;
    error = jobs::registerAsyncRJob(pJob, &id);
    if (error)
       return error;
 
-   pResponse->setResult(id);
+   core::system::Options environment;
 
+   // start the job and return the result
+   pJob->start();
+
+   // return the ID we created
+   pResponse->setResult(id);
    return Success();
 }
 

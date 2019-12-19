@@ -291,7 +291,6 @@ public interface RStudioGinjector extends Ginjector
    ApplicationInterrupt getApplicationInterrupt();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
-   ShinyApplicationSatellite getShinyApplicationSatellite();
    ShinyApplication getShinyApplication();
    ShinyViewerTypePopupMenu getShinyViewerTypePopupMenu();
    RmdOutputSatellite getRmdOutputSatellite();
