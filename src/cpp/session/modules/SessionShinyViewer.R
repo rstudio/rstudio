@@ -51,7 +51,13 @@
    .rs.scalar(.rs.getShinyViewerType())
 })
 
-.rs.addJsonRpcHandler("stop_shiny_app", function()
+.rs.addJsonRpcHandler("stop_shiny_app", function(id)
 {
-   shiny::stopApp()
+   if (identical(id, "foreground")) {
+      # if the app is running in the foreground, tell Shiny to stop it directly
+      shiny::stopApp()
+   } else {
+      # it's running in the background; stop the associated job
+      .rs.api.stopJob(id)
+   }
 })

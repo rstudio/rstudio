@@ -86,6 +86,7 @@ void ShinyAsyncJob::onStdout(const std::string& output)
 
       // set the job state so the Jobs tab will show the app 
       jobs::setJobStatus(job_, "Running");
+      running_ = true;
 
       // no need to echo this to the user
       return;
@@ -99,8 +100,6 @@ void ShinyAsyncJob::onCompleted(int exitStatus)
 {
    if (running_)
    {
-      // if the app is still running, tell the client it stopped
-      // TODO: maybe not necessary -- shiny disconnect should do this for us
       running_ = false;
    }
 

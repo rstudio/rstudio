@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -46,6 +48,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -72,6 +75,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                            Provider<UserPrefs> pPrefs,
                            final SatelliteManager satelliteManager, 
                            ShinyServerOperations server,
+                           JobsServerOperations jobsServer,
                            GlobalDisplay display,
                            DependencyManager dependencyManager,
                            ApplicationInterrupt interrupt)
@@ -81,6 +85,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       commands_ = commands;
       pPrefs_ = pPrefs;
       server_ = server;
+      jobsServer_ = jobsServer;
       display_ = display;
       isBusy_ = false;
       currentViewType_ = UserPrefs.SHINY_VIEWER_TYPE_NONE;
@@ -303,8 +308,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    private void notifyShinyAppDisconnected(JavaScriptObject params)
    {
+      Debug.devlog("notify disconnected");
+      Debug.logObject(params);
       ShinyApplicationParams appState = params.cast();
-      if (params_ == null)
+      if (params_ == null || params_.isEmpty())
          return;
       
       // remember that this URL is disconnecting (so we don't interrupt R when
@@ -312,19 +319,19 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       disconnectingUrl_ = appState.getUrl();
    }
 
-   private void notifyShinyAppClosed(final JavaScriptObject params)
+   private void notifyShinyAppClosed(final JavaScriptObject shinyParams)
    {
-      ShinyApplicationParams foreground = foregroundAppParams();
+      ShinyApplicationParams params = shinyParams.cast();
+      
+      Debug.devlog("notify closed");
 
-      // if we don't know that an app is running, ignore this event
-      if (foreground == null)
-         return;
+      Debug.logObject(params);
 
-      satelliteClosePath_ = foreground.getPath();
+      satelliteClosePath_ = params.getPath();
       
       // wait for confirmation of window closure (could be a reload)
       WindowCloseMonitor.monitorSatelliteClosure(
-            ShinyApplicationSatellite.getNameFromId(foreground.getId()),
+            ShinyApplicationSatellite.getNameFromId(params.getId()),
       () ->
       {
          // satellite closed for real; shut down the app
@@ -372,8 +379,27 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       // closing the app window. Interrupt R to stop the Shiny app.
       if (appState.getState() == ShinyApplicationParams.STATE_STOPPING)
       {
-         if (commands_.interruptR().isEnabled()) 
-            commands_.interruptR().execute();
+         if (appState.getId() == ShinyApplicationParams.ID_FOREGROUND)
+         {
+            // Foreground apps: interrupt R itself
+            if (commands_.interruptR().isEnabled()) 
+               commands_.interruptR().execute();
+         }
+         else
+         {
+            // Background apps: stop the associated job
+            jobsServer_.executeJobAction(appState.getId(), "stop", 
+                  new VoidServerRequestCallback()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  display_.showErrorMessage("Failed to Stop", 
+                        "Could not stop the Shiny application.\n\n" + 
+                        error.getMessage());
+               }
+            });
+         }
          appState.setState(ShinyApplicationParams.STATE_STOPPED);
       }
       eventBus_.fireEvent(new ShinyApplicationStatusEvent(
@@ -546,6 +572,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private final Commands commands_;
    private final Provider<UserPrefs> pPrefs_;
    private final ShinyServerOperations server_;
+   private final JobsServerOperations jobsServer_;
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;
    private final List<ShinyApplicationParams> params_;
