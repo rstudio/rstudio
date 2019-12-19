@@ -482,7 +482,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
 
 namespace {
 
-void setUrlHelper(const QString& requestedUrl, QString* pUrl)
+void setPaneUrl(const QString& requestedUrl, QString* pUrl)
 {
    // record about:blank literally
    if (requestedUrl == QStringLiteral("about:blank"))
@@ -504,12 +504,12 @@ void setUrlHelper(const QString& requestedUrl, QString* pUrl)
 
 void WebPage::setTutorialUrl(const QString& tutorialUrl)
 {
-   setUrlHelper(tutorialUrl, &tutorialUrl_);
+   setPaneUrl(tutorialUrl, &tutorialUrl_);
 }
 
 void WebPage::setViewerUrl(const QString& viewerUrl)
 {
-   setUrlHelper(viewerUrl, &viewerUrl_);
+   setPaneUrl(viewerUrl, &viewerUrl_);
 }
 
 QString WebPage::tutorialUrl()
