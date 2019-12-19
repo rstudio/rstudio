@@ -547,6 +547,19 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // initialize misc data directory
+      FilePath miscDataDir("/var/lib/rstudio-server");
+      error = miscDataDir.ensureDirectory();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      if (core::system::effectiveUserIsRoot())
+      {
+         error = file_utils::changeOwnership(miscDataDir, options.serverUser());
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+      }
+
       // initialize server data directory
       FilePath serverDataDir = options.serverDataDir();
       error = serverDataDir.ensureDirectory();
@@ -555,7 +568,17 @@ int main(int argc, char * const argv[])
 
       if (core::system::effectiveUserIsRoot())
       {
-         error = file_utils::changeOwnership(serverDataDir, options.serverUser());
+         auto shouldChown = [&](int depth, const FilePath& file)
+         {
+            // don't chown user sockets - they belong to the user
+            if (depth == 3 &&
+                boost::ends_with(file.getParent().getParent().getFilename(), "-ds"))
+               return false;
+
+            return true;
+         };
+
+         error = file_utils::changeOwnership(serverDataDir, options.serverUser(), true, shouldChown);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }

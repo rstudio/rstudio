@@ -34,7 +34,6 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   SessionInitHandler,
                                                   RestartStatusEvent.Handler,
                                                   FileUploadHandler,
-                                                  AriaLiveStatusEvent.Handler,
-                                                  AriaLiveClearStatusEvent.Handler
+                                                  AriaLiveStatusEvent.Handler
 {
 }

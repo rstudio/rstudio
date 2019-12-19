@@ -442,26 +442,21 @@ Error initialize()
    // initialize by loading the current contents of the revocation list into memory
 
    // create revocation list directory and ensure the server user has permission to write to it
-   // if the directory already exists, we will not attempt to change ownership as this means
-   // the directory was setup by an administrator and we should respect its permissions
    FilePath rootDir = options().authRevocationListDir();
-   if (!rootDir.exists())
+   Error error = rootDir.ensureDirectory();
+   if (error)
    {
-      Error error = rootDir.ensureDirectory();
+      LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
+      return error;
+   }
+
+   if (core::system::effectiveUserIsRoot())
+   {
+      error = file_utils::changeOwnership(rootDir, options().serverUser());
       if (error)
       {
-         LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
+         LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
          return error;
-      }
-
-      if (core::system::effectiveUserIsRoot())
-      {
-         error = file_utils::changeOwnership(rootDir, options().serverUser());
-         if (error)
-         {
-            LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
-            return error;
-         }
       }
    }
 
