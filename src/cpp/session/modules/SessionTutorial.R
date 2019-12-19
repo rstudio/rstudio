@@ -29,6 +29,23 @@
 
 # Methods ----
 
+.rs.addFunction("tutorial.registryKey", function(name, package)
+{
+   paste(package, name, sep = "::")
+})
+
+.rs.addFunction("tutorial.registryGet", function(name, package)
+{
+   key <- .rs.tutorial.registryKey(name, package)
+   .rs.tutorial.registry[[key]]
+})
+
+.rs.addFunction("tutorial.registrySet", function(name, package, tutorial)
+{
+   key <- .rs.tutorial.registryKey(name, package)
+   .rs.tutorial.registry[[key]] <- tutorial
+})
+
 # TODO: local jobs are stopped when the session is suspended, and so running
 # tutorials are stopped as well. do we want to take the extra step to allow
 # sessions to suspend with running tutorials active?
@@ -60,20 +77,20 @@
 
 .rs.addFunction("tutorial.getRunningTutorial", function(name, package)
 {
-   key <- paste(package, name, sep = "::")
-   .rs.tutorial.registry[[key]]
+   .rs.tutorial.registryGet(name, package)
 })
 
 .rs.addFunction("tutorial.setRunningTutorial", function(name, package, job)
 {
-   key <- paste(package, name, sep = "::")
-   .rs.tutorial.registry[[key]] <- list(job = job)
+   tutorial <- list(job = job)
+   .rs.tutorial.registrySet(name, package, tutorial)
 })
 
 .rs.addFunction("tutorial.setRunningTutorialUrl", function(name, package, url)
 {
-   key <- paste(package, name, sep = "::")
-   .rs.tutorial.registry[[key]][["url"]] <- url
+   tutorial <- .rs.tutorial.registryGet(name, package)
+   tutorial$url <- url
+   .rs.tutorial.registrySet(name, package, tutorial)
 })
 
 .rs.addFunction("tutorial.openExistingTutorial", function(name, package)
