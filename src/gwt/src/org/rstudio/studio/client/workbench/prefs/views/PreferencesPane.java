@@ -111,10 +111,32 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       return checkBox;
    }
 
+   /**
+    * Prompt for integer preference value in range [0 - maxint]
+    */
    protected NumericValueWidget numericPref(String label,
                                             final PrefValue<Integer> prefValue)
    {
-      final NumericValueWidget widget = new NumericValueWidget(label);
+      return numericPref(label, NumericValueWidget.ZeroMinimum,
+            NumericValueWidget.NoMaximum,
+            prefValue);
+   }
+
+   /**
+    * Prompt for integer preference value in range [min, max]
+    * 
+    * @param label
+    * @param minValue minimum value or NumericValueWidget.ZeroMinimum
+    * @param maxValue maximum value or NumericValueWidget.NoMaximum
+    * @param prefValue
+    * @return
+    */
+   protected NumericValueWidget numericPref(String label,
+                                            Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue)
+   {
+      final NumericValueWidget widget = new NumericValueWidget(label, minValue, maxValue);
       lessSpaced(widget);
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
