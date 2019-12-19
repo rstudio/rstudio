@@ -341,7 +341,9 @@ public class UserPrefs extends UserPrefsComputed
    public static final int LAYER_COMPUTED = 2;
    public static final int LAYER_USER     = 3;
    public static final int LAYER_PROJECT  = 4;
-   
+
+   public static final int MAX_TAB_WIDTH = 64;
+
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;

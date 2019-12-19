@@ -1,7 +1,7 @@
 /*
- * NumericTextBox.java
+ * AriaLiveStatusReporter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,23 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.ui.TextBox;
-
-public class NumericTextBox extends TextBox
+public interface AriaLiveStatusReporter
 {
-   public NumericTextBox()
-   {
-      super();
-      getElement().setAttribute("type", "number");
-   }
-
-   public void setMax(int max)
-   {
-      getElement().setAttribute("max", String.valueOf(max));
-   }
-
-   public void setMin(int min)
-   {
-      getElement().setAttribute("min", String.valueOf(min));
-   }
+   void reportStatus(String message, int delayMs);
 }

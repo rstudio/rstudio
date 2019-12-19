@@ -25,12 +25,7 @@
                                <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"/>
                              </g:cell>
                              <g:cell horizontalAlignment="ALIGN_RIGHT">
-                               <g:HTMLPanel>
-                                  <g:Label ui:field="lblCharCount_"/>
-                                  <g:HTMLPanel ui:field="panelCharCount_" styleName="{themeRes.themeStyles.visuallyHidden}">
-                                     <g:Label ui:field="lblReaderCharCount_"/>
-                                  </g:HTMLPanel>
-                               </g:HTMLPanel>
+                               <g:Label ui:field="lblCharCount_"/>
                              </g:cell>
                            </g:HorizontalPanel>
                         </g:layer>

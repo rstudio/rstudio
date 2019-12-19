@@ -1,7 +1,7 @@
 /*
  * FindOutputResources.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,14 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface FindOutputResources extends ClientBundle
 {
    public interface Styles extends CssResource
    {
       String findOutput();
+      String findOutputReplace();
       String headerRow();
       String line();
       String lineValue();

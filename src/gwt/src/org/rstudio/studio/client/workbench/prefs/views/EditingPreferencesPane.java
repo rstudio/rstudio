@@ -68,7 +68,9 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(headerLabel("General"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(), 
             false /*defaultSpace*/)));
-      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", prefs.numSpacesForTab())));
+      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", 1, UserPrefs.MAX_TAB_WIDTH,
+            prefs.numSpacesForTab())));
+      tabWidth_.setWidth("36px");
       editingPanel.add(checkboxPref(
             "Auto-detect code indentation",
             prefs_.autoDetectIndentation(),
@@ -225,7 +227,6 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(headerLabel("Console"));
       NumericValueWidget limitLengthPref =
             numericPref("Limit length of lines displayed in console to:", prefs_.consoleLineLengthLimit());
-      limitLengthPref.setWidth("36px");
       displayPanel.add(nudgeRightPlus(limitLengthPref));
 
       consoleColorMode_ = new SelectWidget(
@@ -439,10 +440,10 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(delayLabel);
       
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
-          numericPref("Show completions after characters entered:",
+          numericPref("Show completions after characters entered:", 1, 99,
                       prefs.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ = 
-          numericPref("Show completions after keyboard idle (ms):",
+          numericPref("Show completions after keyboard idle (ms):", 0, 9999,
                       prefs.codeCompletionDelay())));
         
       
@@ -481,7 +482,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time", 
             prefs.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref("Keyboard idle time (ms):", prefs.backgroundDiagnosticsDelayMs())));
+            numericPref("Keyboard idle time (ms):", 0, 9999, prefs.backgroundDiagnosticsDelayMs())));
       
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
       diagnosticsHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
@@ -605,11 +606,11 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!spacesForTab_.getValue() || tabWidth_.validatePositive("Tab width")) && 
+      return (!spacesForTab_.getValue() || tabWidth_.validate("Tab width")) && 
              (!showMargin_.getValue() || marginCol_.validate("Margin column")) &&
-             alwaysCompleteChars_.validateRange("Characters entered", 1, 100) &&
-             alwaysCompleteDelayMs_.validateRange("Completion keyboard idle (ms)", 0, 10000) &&
-             backgroundDiagnosticsDelayMs_.validateRange("Diagnostics keyboard idle (ms):", 0, 10000);
+             alwaysCompleteChars_.validate("Characters entered") &&
+             alwaysCompleteDelayMs_.validate("Completion keyboard idle (ms)") &&
+             backgroundDiagnosticsDelayMs_.validate("Diagnostics keyboard idle (ms):");
    }
 
    @Override

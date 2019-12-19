@@ -17,15 +17,11 @@
 #define CORE_FILEUTILS_HPP
 
 #include <string>
-
-
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
-
-class Error;
-class FilePath;
-
 namespace file_utils {
 
 FilePath uniqueFilePath(const core::FilePath& parent,
@@ -44,7 +40,10 @@ bool isDirectoryWriteable(const FilePath& directory);
 
 #ifndef _WIN32
 Error changeOwnership(const FilePath& file,
-                      const std::string& owner);
+                      const std::string& owner,
+                      bool recursive = false,
+                      const FilePath::RecursiveIterationFunction& shouldChown =
+                         FilePath::RecursiveIterationFunction());
 #endif
 
 } // namespace file_utils

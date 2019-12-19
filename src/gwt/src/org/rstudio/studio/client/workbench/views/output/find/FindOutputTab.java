@@ -1,7 +1,7 @@
 /*
  * FindOutputTab.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.output.find;
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -34,6 +35,9 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
    {
       abstract void initialize(FindInFilesState state);
       public abstract void onDismiss();
+
+      @Handler
+      public abstract void onActivateFindInFiles();
    }
 
    static interface Binder extends CommandBinder<Commands, Shim>

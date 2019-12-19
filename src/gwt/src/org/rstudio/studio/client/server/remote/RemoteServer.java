@@ -4385,6 +4385,61 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void previewReplace(String searchString,
+                              boolean regex,
+                              boolean searchIgnoreCase,
+                              FileSystemItem directory,
+                              JsArrayString filePatterns,
+                              String replaceString,
+                              boolean gitIgnore,
+                              ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(searchString));
+      params.set(1, JSONBoolean.getInstance(regex));
+      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(3, new JSONString(directory == null ? ""
+                                                     : directory.getPath()));
+      params.set(4, new JSONArray(filePatterns));
+      params.set(5, new JSONString(replaceString));
+      params.set(6, JSONBoolean.getInstance(gitIgnore));
+
+      sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
+   }
+
+   @Override
+   public void completeReplace(String searchString,
+                               boolean regex,
+                               boolean searchIgnoreCase,
+                               FileSystemItem directory,
+                               JsArrayString filePatterns,
+                               int searchResults,
+                               String replaceString,
+                               boolean gitIgnore,
+                               ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(searchString));
+      params.set(1, JSONBoolean.getInstance(regex));
+      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(3, new JSONString(directory == null ? ""
+                                                     : directory.getPath()));
+      params.set(4, new JSONArray(filePatterns));
+      params.set(5, new JSONNumber(searchResults));
+      params.set(6, new JSONString(replaceString));
+      params.set(7, JSONBoolean.getInstance(gitIgnore));
+
+      sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
+   }
+
+   @Override
+   public void stopReplace(String findOperationHandle,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, STOP_REPLACE, findOperationHandle, requestCallback);
+   }
+
+   @Override
    public void getCppCapabilities(
                      ServerRequestCallback<CppCapabilities> requestCallback)
    {
@@ -6315,6 +6370,10 @@ public class RemoteServer implements Server
 
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
+ 
+   private static final String PREVIEW_REPLACE = "preview_replace";
+   private static final String COMPLETE_REPLACE = "complete_replace";
+   private static final String STOP_REPLACE = "stop_replace";
    
    private static final String GET_CPP_COMPLETIONS = "get_cpp_completions";
    private static final String GET_CPP_DIAGNOSTICS = "get_cpp_diagnostics";

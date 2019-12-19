@@ -16,16 +16,22 @@ package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -33,9 +39,11 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
+import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
 import java.util.ArrayList;
 
@@ -45,10 +53,12 @@ public class FindOutputPane extends WorkbenchPane
                  HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    @Inject
-   public FindOutputPane(Commands commands)
+   public FindOutputPane(Commands commands,
+                         EventBus eventBus)
    {
       super("Find Results");
       commands_ = commands;
+      eventBus_ = eventBus;
       ensureWidget();
    }
 
@@ -65,10 +75,98 @@ public class FindOutputPane extends WorkbenchPane
             "Stop find in files",
             commands_.interruptR().getImageResource());
       stopSearch_.setVisible(false);
-
       toolbar.addRightWidget(stopSearch_);
 
+      showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      showFindButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (!replaceMode_)
+            {
+               showFindButton_.setVisible(false);
+               showReplaceButton_.setVisible(true);
+               setReplaceMode(true);
+               setSecondaryToolbarVisible(true);
+               if (displayPreview_ == null)
+                  createDisplayPreview();
+               if (!replaceTextBox_.getValue().isEmpty())
+                  displayPreview_.nudge();
+            }
+         }
+      });
+      toolbar.addRightWidget(showFindButton_);
+
+      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
+      showReplaceButton_.setVisible(false);
+      showReplaceButton_.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (replaceMode_)
+            {
+               showFindButton_.setVisible(true);
+               showReplaceButton_.setVisible(false);
+               setSecondaryToolbarVisible(false);
+               if (!replaceTextBox_.getValue().isEmpty())
+               {
+                  //setRegexPreviewMode(false);
+                  addReplaceMatches(new String());
+               }
+               setReplaceMode(false);
+            }
+         }
+      });
+      toolbar.addRightWidget(showReplaceButton_);
+
       return toolbar;
+   }
+
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      replaceToolbar_ = new SecondaryToolbar("Replace");
+      replaceMode_ = true;
+
+      replaceTextBox_ = new TextBox();
+      replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
+      {
+         public void onKeyUp(KeyUpEvent event)
+         {
+            displayPreview_.nudge();
+         }
+      });
+      replaceLabel_ = new FormLabel("Replace with: ", replaceTextBox_);
+      replaceToolbar_.addLeftWidget(replaceLabel_);
+      replaceToolbar_.addLeftWidget(replaceTextBox_);
+
+      useGitIgnore_ = new CheckBox();
+      useGitIgnoreLabel_ =
+                     new CheckboxLabel(useGitIgnore_, "Use .gitignore").getLabel();
+      useGitIgnore_.getElement().getStyle().setMarginRight(0, Unit.PX);
+      replaceToolbar_.addLeftWidget(useGitIgnore_);
+      useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
+      replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
+      useGitIgnore_.setVisible(false);
+      useGitIgnoreLabel_.setVisible(false);
+
+      stopReplace_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Stop replace",
+            commands_.interruptR().getImageResource());
+      stopReplace_.setVisible(false);
+      replaceToolbar_.addRightWidget(stopReplace_);
+
+      replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
+      replaceToolbar_.addRightWidget(replaceAllButton_);
+
+      replaceProgress_ = new ProgressBar();
+      replaceProgress_.setHeight("10px");
+      replaceProgress_.setWidth("195px");
+      replaceProgress_.setVisible(false);
+      replaceToolbar_.addLeftWidget(replaceProgress_);
+
+      return replaceToolbar_;
    }
 
    @Override
@@ -113,6 +211,9 @@ public class FindOutputPane extends WorkbenchPane
          }
       });
 
+      replaceMode_ = false;
+      setSecondaryToolbarVisible(replaceMode_);
+
       container_ =  new SimplePanel();
       container_.addStyleName("ace_editor_theme");
       container_.setSize("100%", "100%");
@@ -124,11 +225,25 @@ public class FindOutputPane extends WorkbenchPane
       return container_;
    }
 
-   private void fireSelectionCommitted()
+   @Override
+   public void setRegexPreviewMode(boolean value)
    {
-      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
-      if (values.size() == 1)
-         SelectionCommitEvent.fire(this, values.get(0));
+      regexPreviewMode_ = value;
+   }
+
+   @Override
+   public void setReplaceMode(boolean value)
+   {
+      FindOutputResources resources = GWT.create(FindOutputResources.class);
+      if (value)
+         table_.addStyleName(resources.styles().findOutputReplace());
+      else
+      {
+         table_.removeStyleName(resources.styles().findOutputReplace());
+         addReplaceMatches(new String());
+      }
+      // this needs to be done after addReplaceMatches is called
+      replaceMode_ = value;
    }
 
    @Override
@@ -139,15 +254,25 @@ public class FindOutputPane extends WorkbenchPane
       if (matchesToAdd > 0)
       {
          matchCount_ += matchesToAdd;
-         
+
          if (matchCount_ > 0 && container_.getWidget() != scrollPanel_)
             container_.setWidget(scrollPanel_);
-            
+
+         if (!replaceMode_ || regexPreviewMode_)
+            context_.addMatches(findResults.subList(0, matchesToAdd));
          table_.addItems(findResults.subList(0, matchesToAdd), false);
       }
-      
-      if (matchesToAdd != findResults.size())
+
+      if (matchCount_ >= MAX_COUNT)
          showOverflow();
+   }
+
+   public void addReplaceMatches(String value)
+   {
+      table_.clear();
+      matchCount_ = 0;
+      context_.updateFileMatches(value);
+      addMatches(context_.getFindResults());
    }
 
    @Override
@@ -160,23 +285,26 @@ public class FindOutputPane extends WorkbenchPane
       statusPanel_.setStatusText("");
       container_.setWidget(statusPanel_);
    }
-   
+
    @Override
    public void showSearchCompleted()
    {
       if (matchCount_ == 0)
          statusPanel_.setStatusText("(No results found)");
    }
-   
+
    @Override
    public void onSelected()
    {
       super.onSelected();
-      
-      table_.focus();
-      ArrayList<Integer> indices = table_.getSelectedRowIndexes();
-      if (indices.isEmpty())
-         table_.selectNextRow();
+
+      if (!regexPreviewMode_)
+      {
+         table_.focus();
+         ArrayList<Integer> indices = table_.getSelectedRowIndexes();
+         if (indices.isEmpty())
+            table_.selectNextRow();
+      }
    }
 
    @Override
@@ -240,6 +368,48 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void updateSearchLabel(String query, String path, String replace)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Replace results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" with ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(replace)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+
+   @Override
+   public void updateSearchLabel(String query, String path, String replace, int successCount, int errorCount)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Replace results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" with ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(replace)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      {
+         StringBuilder summary = new StringBuilder(": ");
+         summary.append(Integer.toString(successCount));
+         summary.append(" successful, ");
+         summary.append(Integer.toString(errorCount));
+         summary.append(" failed");
+         builder.appendEscaped(summary.toString());
+      }
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+
+   @Override
    public void clearSearchLabel()
    {
       searchLabel_.setText("");
@@ -251,28 +421,125 @@ public class FindOutputPane extends WorkbenchPane
       return addHandler(handler, SelectionCommitEvent.getType());
    }
 
+   @Override
+   public boolean getRegexPreviewMode()
+   {
+      return regexPreviewMode_;
+   }
+
+   @Override
+   public boolean getReplaceMode()
+   {
+      return replaceMode_;
+   }
+
+   @Override
+   public HasClickHandlers getReplaceAllButton()
+   {
+      return replaceAllButton_;
+   }
+
+   @Override
+   public String getReplaceText()
+   {
+      return replaceTextBox_.getValue();
+   }
+
+   @Override
+   public boolean useGitIgnore()
+   {
+      return useGitIgnore_.getValue();
+   }
+
+   @Override
+   public HasClickHandlers getStopReplaceButton()
+   {
+      return stopReplace_;
+   }
+
+   @Override
+   public void setStopReplaceButtonVisible(boolean visible)
+   {
+      stopReplace_.setVisible(visible);
+   }
+
+   @Override
+   public ProgressBar getProgress()
+   {
+      return replaceProgress_;
+   }
+
+   @Override
+   public void enableReplace()
+   {
+      replaceTextBox_.setReadOnly(false);
+      replaceAllButton_.setEnabled(true);
+   }
+
+   @Override
+   public void disableReplace()
+   {
+      replaceTextBox_.setReadOnly(true);
+      replaceAllButton_.setEnabled(false);
+   }
+
+   @Override
+   public void showProgress()
+   {
+      if (!replaceProgress_.isVisible())
+         replaceProgress_.setVisible(true);
+   }
+
+   @Override
+   public void hideProgress()
+   {
+      if (replaceProgress_.isVisible())
+         replaceProgress_.setVisible(false);
+   }
+
+   private void createDisplayPreview()
+   {
+      displayPreview_ = new DebouncedCommand(500)
+      {
+         @Override
+         protected void execute()
+         {
+            setReplaceMode(true);
+            if (getRegexPreviewMode())
+               eventBus_.fireEvent(new PreviewReplaceEvent(replaceTextBox_.getValue()));
+            else
+               addReplaceMatches(replaceTextBox_.getValue());
+         }
+      };
+   }
+
+   private void fireSelectionCommitted()
+   {
+      ArrayList<CodeNavigationTarget> values = table_.getSelectedValues();
+      if (values.size() == 1)
+         SelectionCommitEvent.fire(this, values.get(0));
+   }
+
    private class StatusPanel extends HorizontalCenterPanel
    {
       public StatusPanel()
       {
          super(new Label(), 50);
          label_ = (Label)getWidget();
-         
       }
-      
+
       public void setStatusText(String status)
       {
          label_.setText(status);
       }
-      
-      
+
       private final Label label_;
-      
    }
-   
+
    private FastSelectTable<FindResult, CodeNavigationTarget, Object> table_;
    private FindResultContext context_;
    private final Commands commands_;
+   private final EventBus eventBus_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
    private SimplePanel container_;
@@ -280,6 +547,26 @@ public class FindOutputPane extends WorkbenchPane
    private StatusPanel statusPanel_;
    private boolean overflow_ = false;
    private int matchCount_;
+
+   private SecondaryToolbar replaceToolbar_;
+
+   private LeftRightToggleButton showFindButton_;
+   private LeftRightToggleButton showReplaceButton_;
+
+   private boolean replaceMode_;
+   private boolean regexPreviewMode_;
+
+   private FormLabel replaceLabel_;
+   private TextBox replaceTextBox_;
+   private ToolbarButton replaceAllButton_;
+
+   private ToolbarButton stopReplace_;
+   private ProgressBar replaceProgress_;
+
+   private DebouncedCommand displayPreview_;
+
+   private CheckBox useGitIgnore_;
+   private Label useGitIgnoreLabel_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

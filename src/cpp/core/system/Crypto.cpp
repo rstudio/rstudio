@@ -547,7 +547,7 @@ std::string s_exponent;
 
 core::Error rsaInit()
 {
-   const int KEY_SIZE = 1024;
+   const int KEY_SIZE = 2048;
    const int ENTROPY_BYTES = 4096;
 
    const BIGNUM *bn_n;

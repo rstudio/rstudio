@@ -198,6 +198,8 @@ extern const int kRequestDocumentCloseCompleted;
 extern const int kExecuteAppCommand;
 extern const int kUserStateChanged;
 extern const int kHighlightUi;
+extern const int kReplaceResult;
+extern const int kReplaceUpdated;
 extern const int kTutorialCommand;
 extern const int kTutorialLaunch;
 }

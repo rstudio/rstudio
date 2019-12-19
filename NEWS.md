@@ -44,6 +44,7 @@
 
 ### Miscellaneous
 
+* Add global replace with live preview and regular expression support (#2066)
 * Show detailed logs and process output when R fails to start (#2097)
 * Enable large file uploads (over 4GB) in RStudio Server (#3299)
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
@@ -62,7 +63,7 @@
 * Update embedded Qt to 5.12.5 for Chromium update, stability and bugfixes (#5399)
 * Add preference for changing font size on help pane (#3282)
 * Improved keyboard and touch support for iPadOS 13.1
-* Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
+* Support `Ctrl+[` as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 * Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 * Improved browser tab names (project name first, complete product name) (Pro #1172)
 * Add 'Close All Terminals' command to Terminal menu (#3564)
@@ -94,6 +95,7 @@
 * Command in to change terminal to current RStudio working directory (#2363)
 * Zoom Left/Right Column commands for keyboard users (#5874)
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
+* RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
 
 ### Bugfixes
 
