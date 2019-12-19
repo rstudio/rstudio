@@ -23,4 +23,14 @@ public class NumericTextBox extends TextBox
       super();
       getElement().setAttribute("type", "number");
    }
+
+   public void setMax(int max)
+   {
+      getElement().setAttribute("max", String.valueOf(max));
+   }
+
+   public void setMin(int min)
+   {
+      getElement().setAttribute("min", String.valueOf(min));
+   }
 }

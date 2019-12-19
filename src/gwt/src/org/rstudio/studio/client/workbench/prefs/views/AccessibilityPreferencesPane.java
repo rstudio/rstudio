@@ -42,7 +42,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             prefs.ariaApplicationRole()));
 
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
-            prefs.typingStatusDelayMs());
+            1, 9999, prefs.typingStatusDelayMs());
       add(indent(typingStatusDelay_));
 
       Label displayLabel = headerLabel("Other");

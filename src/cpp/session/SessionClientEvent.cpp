@@ -197,6 +197,8 @@ const int kRequestDocumentCloseCompleted = 179;
 const int kExecuteAppCommand = 180;
 const int kUserStateChanged = 181;
 const int kHighlight = 182;
+const int kReplaceResult = 183;
+const int kReplaceUpdated = 184;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -546,6 +548,10 @@ std::string ClientEvent::typeName() const
          return "user_state_changed";
       case client_events::kHighlight:
          return "highlight";
+      case client_events::kReplaceResult:
+         return "replace_result";
+      case client_events::kReplaceUpdated:
+         return "replace_updated";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
