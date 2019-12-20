@@ -48,9 +48,8 @@
             <g:Label styleName="{res.style.firstControlLabel}" 
                      text="Publish From Account:">
             </g:Label>
-            <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
-                       ui:field="addAccountAnchor_" text="Add New Account">
-            </g:Anchor>
+            <rw:HyperlinkLabel styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}"
+                       ui:field="addAccountAnchor_" text="Add New Account"/>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_">

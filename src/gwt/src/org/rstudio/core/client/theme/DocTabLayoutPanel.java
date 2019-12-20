@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -113,10 +114,11 @@ public class DocTabLayoutPanel
       addStyleName(styles_.moduleTabPanel());
       dragManager_ = new DragManager();
       
-      // listen for global drag events (these are broadcasted from other windows
+      // listen for global drag events (these are broadcast from other windows
       // to notify us of incoming drags)
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
+      commands_ = RStudioGinjector.INSTANCE.getCommands();
 
       // sink drag-related events on the tab bar element; unfortunately
       // GWT does not provide bits for the drag-related events, and 
@@ -504,13 +506,12 @@ public class DocTabLayoutPanel
             JsObject evt = event.cast();
             double delta = evt.getDouble(event.getType() == "wheel" ?
                   "deltaY" : "wheelDeltaY");
-            
-            // translate wheel scroll into tab selection; don't wrap
-            int idx = getSelectedIndex();
-            if (delta > 0 && idx < (getWidgetCount() - 1))
-               selectTab(idx + 1);
-            else if (delta < 0 && idx > 0)
-               selectTab(idx - 1);
+
+            // translate wheel scroll into tab selection
+            if (delta > 0)
+               commands_.nextTab().execute();
+            else if (delta < 0)
+               commands_.previousTab().execute();
          }
       }
 
@@ -775,8 +776,7 @@ public class DocTabLayoutPanel
 
             // skip the element we're dragging and elements that are not tabs
             Element ele = (Element)node;
-            if (ele == dragElement_ || 
-                ele.getClassName().indexOf("gwt-TabLayoutPanelTab") < 0)
+            if (ele == dragElement_ || !ele.getClassName().contains("gwt-TabLayoutPanelTab"))
             {
                continue;
             }
@@ -1190,8 +1190,8 @@ public class DocTabLayoutPanel
          super.onBrowserEvent(event);
       }
       
-      private TabCloseObserver closeHandler_;
-      private Element closeElement_;
+      private final TabCloseObserver closeHandler_;
+      private final Element closeElement_;
       private Element clickTarget_;
       private final Label label_;
       private final String docId_;
@@ -1299,10 +1299,11 @@ public class DocTabLayoutPanel
 
    private final boolean closeableTabs_;
    private final EventBus events_;
+   private final Commands commands_;
    
-   private int padding_;
-   private int rightMargin_;
+   private final int padding_;
+   private final int rightMargin_;
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
-   private DragManager dragManager_;
+   private final DragManager dragManager_;
 }

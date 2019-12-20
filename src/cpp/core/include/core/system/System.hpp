@@ -35,6 +35,7 @@ typedef uid_t UidType;
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/date_time.hpp>
 
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
@@ -342,7 +343,40 @@ std::vector<SubprocInfo> getSubprocesses(PidType pid);
 // if unable to determine cwd
 FilePath currentWorkingDir(PidType pid);
 
+struct ProcessInfo
+{
+   ProcessInfo() : pid(0), ppid(0), pgrp(0) {}
+   PidType pid;
+   PidType ppid;
+   PidType pgrp;
+   std::string username;
+   std::string exe;
+   std::string state;
+   std::vector<std::string> arguments;
+
+#if !defined _WIN32 && !defined __APPLE__
+   core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
+#endif
+};
+
+// simple encapsulation of parent-child relationship of processes
+struct ProcessTreeNode
+{
+   boost::shared_ptr<ProcessInfo> data;
+   std::vector<boost::shared_ptr<ProcessTreeNode> > children;
+};
+
+// process tree, indexed by pid
+typedef std::map<PidType, boost::shared_ptr<ProcessTreeNode> > ProcessTreeT;
+
 Error terminateChildProcesses();
+
+void createProcessTree(const std::vector<ProcessInfo>& processes,
+                       ProcessTreeT *pOutTree);
+
+void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
+                 std::vector<ProcessInfo>* pOutChildren,
+                 int depth = 0);
    
 } // namespace system
 } // namespace core 

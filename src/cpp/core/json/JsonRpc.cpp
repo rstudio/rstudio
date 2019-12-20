@@ -253,6 +253,21 @@ void JsonRpcResponse::setError(const Error& error,
 {   
    setError(error, Value(), includeErrorProperties);
 }
+
+void JsonRpcResponse::setError(const Error& error,
+                               const char* message,
+                               bool includeErrorProperties)
+{   
+   setError(error, Value(message), includeErrorProperties);
+}
+
+void JsonRpcResponse::setError(const Error& error,
+                               const std::string& message,
+                               bool includeErrorProperties)
+{   
+   setError(error, Value(message), includeErrorProperties);
+}
+
    
 void JsonRpcResponse::setError(const boost::system::error_code& ec,
                                const Value& clientInfo)

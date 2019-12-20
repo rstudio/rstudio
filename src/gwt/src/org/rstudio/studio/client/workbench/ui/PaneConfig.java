@@ -53,6 +53,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push("Connections");
       tabSet1.push("Build");
       tabSet1.push("VCS");
+      tabSet1.push("Tutorial");
       tabSet1.push("Presentation");
 
       JsArrayString tabSet2 = createArray().cast();
@@ -80,7 +81,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Viewer", "Presentation"};
+                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
    }
 
    public static String[] getAlwaysVisibleTabs()
@@ -91,13 +92,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Packages" };
+      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Packages" };
    }
 
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Viewer" };
+      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Viewer" };
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets

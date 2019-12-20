@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,12 +21,18 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
 public class ApplicationWindow extends Composite 
@@ -37,10 +43,14 @@ public class ApplicationWindow extends Composite
    @Inject
    public ApplicationWindow(ApplicationHeader applicationHeader,
                             GlobalDisplay globalDisplay,
+                            Provider<UserPrefs> pPrefs,
+                            Provider<EventBus> pEvents,
                             CodeSearchLauncher launcher)
    {
       globalDisplay_ = globalDisplay;
-      
+      pPrefs_ = pPrefs;
+      pEvents_ = pEvents;
+
       // occupy full client area of the window
       Window.enableScrolling(false);
       Window.setMargin("0px");
@@ -56,23 +66,46 @@ public class ApplicationWindow extends Composite
       updateHeaderTopBottom();
       applicationHeaderWidget.setVisible(false);
 
+      // aria-live status announcements
+      ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
+      applicationPanel_.add(ariaLiveStatusWidget_);
+      A11y.setVisuallyHidden(applicationPanel_.getWidgetContainerElement(ariaLiveStatusWidget_));
+
       // main view container
       initWidget(applicationPanel_);
    }
-      
-   public void showToolbar(boolean showToolbar)
+
+   @Override
+   public void showToolbar(boolean showToolbar, boolean announce)
    {
+      boolean currentVisibility = isToolbarShowing();
       applicationHeader_.showToolbar(showToolbar);
       updateHeaderTopBottom();
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
+      if (announce && showToolbar != currentVisibility)
+         pEvents_.get().fireEvent(new AriaLiveStatusEvent(
+               showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
    }
    
+   @Override
    public boolean isToolbarShowing()
    {
       return applicationHeader_.isToolbarVisible();
    }
    
+   @Override
+   public void focusToolbar()
+   {
+      if (!isToolbarShowing())
+      {
+         pEvents_.get().fireEvent(new AriaLiveStatusEvent("Toolbar hidden, unable to focus."));
+         return;
+      }
+      applicationHeader_.focusToolbar();
+   }
+
+   @Override
    public void showApplicationAgreement(String title,
                                         String contents,
                                         Operation doNotAcceptOperation,
@@ -89,31 +122,37 @@ public class ApplicationWindow extends Composite
       return this ;
    }
    
+   @Override
    public void showApplicationQuit()
    {
       ApplicationEndedPopupPanel.showQuit();
    }
    
+   @Override
    public void showApplicationMultiSessionQuit()
    {
       ApplicationEndedPopupPanel.showMultiSessionQuit();
    }
    
+   @Override
    public void showApplicationSuicide(String reason)
    {
       ApplicationEndedPopupPanel.showSuicide(reason);
    }
    
+   @Override
    public void showApplicationDisconnected()
    {
       ApplicationEndedPopupPanel.showDisconnected();
    }
    
+   @Override
    public void showApplicationOffline()
    {
       ApplicationEndedPopupPanel.showOffline();
    }
    
+   @Override
    public void showApplicationUpdateRequired()
    {
       globalDisplay_.showMessage(
@@ -131,6 +170,7 @@ public class ApplicationWindow extends Composite
             });
    }
       
+   @Override
    public void showWorkbenchView(Widget workbenchScreen)
    {
       workbenchScreen_ = workbenchScreen;
@@ -172,11 +212,14 @@ public class ApplicationWindow extends Composite
       warningBar_.showLicenseButton(showLicenseButton);
    }
    
+   @Override
    public void showLicenseWarning(boolean severe, String message)
    {
       showWarning(severe, message, true);
       
    }
+
+   @Override
    public void showWarning(boolean severe, String message)
    {
       showWarning(severe, message, false);
@@ -207,6 +250,7 @@ public class ApplicationWindow extends Composite
             Unit.PX);
    }
 
+   @Override
    public void hideWarning()
    {
       if (warningBar_ != null)
@@ -222,6 +266,7 @@ public class ApplicationWindow extends Composite
       }
    }
 
+   @Override
    public void showSessionAbendWarning()
    {
       globalDisplay_.showErrorMessage(
@@ -231,6 +276,13 @@ public class ApplicationWindow extends Composite
             "You may have lost workspace data as a result of this crash.");
    }
    
+   @Override
+   public void reportStatus(String message, int delayMs)
+   {
+      ariaLiveStatusWidget_.announce(message, delayMs);
+   }
+
+   @Override
    public void showSerializationProgress(String msg, 
                                          boolean modal, 
                                          int delayMs,
@@ -262,6 +314,7 @@ public class ApplicationWindow extends Composite
       }
    }
    
+   @Override
    public void hideSerializationProgress()
    {
       if (activeSerializationProgress_ != null)
@@ -271,6 +324,7 @@ public class ApplicationWindow extends Composite
       }
    }
   
+   @Override
    public void onResize()
    {
       applicationPanel_.onResize();
@@ -286,6 +340,9 @@ public class ApplicationWindow extends Composite
    private static final int COMPONENT_SPACING = 6;
    private Widget workbenchScreen_;
    private WarningBar warningBar_;
+   private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<UserPrefs> pPrefs_;
+   private final Provider<EventBus> pEvents_;
 }

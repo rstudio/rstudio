@@ -128,11 +128,7 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_ = new SecondaryToolbar("Replace");
       replaceMode_ = true;
 
-      replaceLabel_ = new Label("Replace with: ");
-      replaceToolbar_.addLeftWidget(replaceLabel_);
-
       replaceTextBox_ = new TextBox();
-      replaceToolbar_.addLeftWidget(replaceTextBox_);
       replaceTextBox_.addKeyUpHandler(new KeyUpHandler()
       {
          public void onKeyUp(KeyUpEvent event)
@@ -140,6 +136,9 @@ public class FindOutputPane extends WorkbenchPane
             displayPreview_.nudge();
          }
       });
+      replaceLabel_ = new FormLabel("Replace with: ", replaceTextBox_);
+      replaceToolbar_.addLeftWidget(replaceLabel_);
+      replaceToolbar_.addLeftWidget(replaceTextBox_);
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
@@ -376,6 +375,31 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
+   public void updateSearchLabel(String query, String path, String replace, int successCount, int errorCount)
+   {
+      SafeHtmlBuilder builder = new SafeHtmlBuilder();
+      builder.appendEscaped("Replace results for ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(query)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" with ")
+            .appendHtmlConstant("<strong>")
+            .appendEscaped(replace)
+            .appendHtmlConstant("</strong>")
+            .appendEscaped(" in ")
+            .appendEscaped(path);
+      {
+         StringBuilder summary = new StringBuilder(": ");
+         summary.append(Integer.toString(successCount));
+         summary.append(" successful, ");
+         summary.append(Integer.toString(errorCount));
+         summary.append(" failed");
+         builder.appendEscaped(summary.toString());
+      }
+      searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
+   }
+
+   @Override
    public void clearSearchLabel()
    {
       searchLabel_.setText("");
@@ -439,7 +463,6 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void disableReplace()
    {
-      replaceTextBox_.setValue("");
       replaceTextBox_.setReadOnly(true);
       replaceAllButton_.setEnabled(false);
    }
@@ -517,7 +540,7 @@ public class FindOutputPane extends WorkbenchPane
    private boolean replaceMode_;
    private boolean regexPreviewMode_;
 
-   private Label replaceLabel_;
+   private FormLabel replaceLabel_;
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
 

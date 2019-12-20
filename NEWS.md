@@ -44,6 +44,7 @@
 
 ### Miscellaneous
 
+* Add global replace with live preview and regular expression support (#2066)
 * Show detailed logs and process output when R fails to start (#2097)
 * Enable large file uploads (over 4GB) in RStudio Server (#3299)
 * Improved 'Comment / Uncomment' handling of empty lines around selection (#4163)
@@ -62,7 +63,7 @@
 * Update embedded Qt to 5.12.5 for Chromium update, stability and bugfixes (#5399)
 * Add preference for changing font size on help pane (#3282)
 * Improved keyboard and touch support for iPadOS 13.1
-* Support Ctrl+[ as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
+* Support `Ctrl+[` as Esc key on iPadOS 13.1 keyboards lacking physical Esc key (#4663)
 * Warn when Xcode license has not been agreed to on macOS when command line tools required (#5481)
 * Improved browser tab names (project name first, complete product name) (Pro #1172)
 * Add 'Close All Terminals' command to Terminal menu (#3564)
@@ -78,10 +79,23 @@
 * Allow fuzzy matches in help topic search (#3316)
 * The diagnostics system better handles missing expressions (#5660)
 * Keyboard shortcuts for debugging commands can be customized (#3539)
+* Update Pandoc to 2.7.3 (#4512)
 * Update SumatraPDF to version 3.1.2 (#3155)
+* Allow previewing PDFs in fullscreen mode in Sumatra PDF (#4301)
 * RStudio Server runtime files are stored in `/var/run`, or another configurable location, instead of `/tmp` (#4666)
 * Errors encountered when attempting to find Rtools installations are handled more gracefully (#5720)
 * Enable copying images to the clipboard from the Plots pane (#3142)
+* Update minimum supported browser versions (#5593)
+* Automatic refresh of the Git pane can now be enabled / disabled as required. (#4368)
+* Target directory can be changed from within the 'Upload Files' dialog (RStudio Server)
+* User preference to configure initial working directory of new terminals (#1557)
+* Command to open a new terminal at location of current editor file
+* Command to insert the full path and filename of current editor file into terminal
+* Command in File pane to open a new terminal at File pane's current location
+* Command in to change terminal to current RStudio working directory (#2363)
+* Zoom Left/Right Column commands for keyboard users (#5874)
+* Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
+* RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
 
 ### Bugfixes
 
@@ -96,9 +110,13 @@
 * Fix an issue where Git did not work within projects whose paths contained multibyte characters (#2194)
 * Fix an issue where RStudio would fail to preview self-contained bookdown books (#5371)
 * Fix modal dialog boundaries extending out of the app window in certain cases (#1605)
+* Fix issue where session restore could fail when using multiple user libraries
+* Fix issue where library paths were not forwarded when building package documentation
+* Restore ability to select and copy text in version control diffs (#4734)
 
 ### RStudio Professional
 
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
 * New tools for viewing and managing server users when using named user licensing
+* The Launcher service now starts and runs automatically when the system starts

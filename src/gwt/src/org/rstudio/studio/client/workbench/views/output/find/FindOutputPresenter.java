@@ -84,6 +84,8 @@ public class FindOutputPresenter extends BasePresenter
 
       void updateSearchLabel(String query, String path);
       void updateSearchLabel(String query, String path, String replace);
+      void updateSearchLabel(String query, String path, String replace, int successCount,
+        int errorCount);
       void clearSearchLabel();
 
       boolean getRegexPreviewMode();
@@ -267,13 +269,18 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            String message = "Are you sure you wish to permanently replace all? This will replace " +
-                             dialogState_.getResultsCount();
-            if (dialogState_.isRegex())
-               message += " occurences and cannot be undone.";
+            String message = "Are you sure you wish to permanently replace all? This will ";
+            if (StringUtil.isNullOrEmpty(view_.getReplaceText()))
+               message += "remove ";
             else
-               message += " occurences of '" + dialogState_.getQuery() +
-                          "' with '" + view_.getReplaceText() +
+               message += "replace ";
+            message += dialogState_.getResultsCount() +
+                       " occurrences of '" +
+                       dialogState_.getQuery() + "'";
+            if (dialogState_.isRegex() || StringUtil.isNullOrEmpty(view_.getReplaceText()))
+               message += " and cannot be undone.";
+            else
+               message += " with '" + view_.getReplaceText() +
                           "' and cannot be undone.";
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
@@ -378,6 +385,9 @@ public class FindOutputPresenter extends BasePresenter
             {
                view_.hideProgress();
                view_.setStopReplaceButtonVisible(false);
+               updateSearchLabel(dialogState_.getQuery(), dialogState_.getPath(),
+                  dialogState_.isRegex(), view_.getReplaceText(), dialogState_.getErrorCount(),
+                  dialogState_.getResultsCount());
             }
          }
       });
@@ -564,6 +574,23 @@ public class FindOutputPresenter extends BasePresenter
       }
 
       view_.updateSearchLabel(query, path, replace);
+   }
+
+   private void updateSearchLabel(String query, String path, boolean regex,
+      String replace, int errorCount, int resultsCount)
+   {
+      if (regex)
+      {
+         query = "/" + query + "/";
+         replace = "/" + replace + "/";
+      }
+      else
+      {
+         query = "\"" + query + "\"";
+         replace = "\"" + replace + "\"";
+      }
+      int successCount = resultsCount - errorCount;
+      view_.updateSearchLabel(query, path, replace, successCount, errorCount);
    }
 
    private void stopAndClear()

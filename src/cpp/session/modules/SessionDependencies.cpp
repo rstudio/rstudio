@@ -32,6 +32,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
+#include "jobs/ScriptJob.hpp"
 
 using namespace rstudio::core;
 
@@ -294,7 +295,8 @@ Error installDependencies(const json::JsonRpcRequest& request,
 {
    // get list of dependencies
    json::Array depsJson;
-   Error error = json::readParams(request.params, &depsJson);
+   std::string context;
+   Error error = json::readParams(request.params, &context, &depsJson);
    if (error)
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
@@ -310,106 +312,113 @@ Error installDependencies(const json::JsonRpcRequest& request,
    if (error)
       LOG_ERROR(error);
 
-   // R binary
-   FilePath rProgramPath;
-   error = module_context::rScriptPath(&rProgramPath);
-   if (error)
-      return error;
+   // Start script with all the CRAN download settings
+   std::string script = module_context::CRANDownloadOptions() + "\n\n";
 
-   // options
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   options.redirectStdErrToStdOut = true;
-
-   // build lists of cran packages and archives
-   std::vector<std::string> cranPackages;
-   std::vector<std::string> cranSourcePackages;
-   std::vector<std::string> embeddedPackages;
-   for (const Dependency& dep : deps)
+   // Emit a message to the user at the beginning of the script declaring what we're about to do
+   if (deps.size() > 1)
    {
+      script += "cat('** ";
+      if (context.empty()) 
+         script += "Installing R Packages: ";
+      else
+         script += "Installing R Package Dependencies for " + context + ": ";
+      for (size_t i = 0; i < deps.size(); i++)
+      {
+         script += "\\'" + deps[i].name + "\\'";
+         if (i < deps.size() - 1)
+            script += ", ";
+      }
+      script += "\\n\\n')\n";
+   }
+   else
+   {
+      if (context.empty())
+         script += "cat('Installing \\'" + deps[0].name + "\\' ...\\n\\n')\n";
+      else
+         script += "cat('Installing \\'" + deps[0].name + "\\' for " + context + 
+            "...\\n\\n')\n";
+   }
+
+   for (size_t i = 0; i < deps.size(); i++)
+   {
+      const Dependency& dep = deps[i];
+
+      // Add a comment header with the name of the package. This will result in better progress
+      // treatment, since comment headers are used to show the currently executing section of a
+      // script.
+      script += "# " + dep.name + " -------------\n\n";
+
+      // If there's more than one dependency, indicate which one is being installed.
+      if (deps.size() > 1)
+      {
+         script += "cat('\\n[" + 
+            safe_convert::numberToString(i + 1) + 
+            "/" + 
+            safe_convert::numberToString(deps.size()) +
+            "] Installing " + dep.name + "...\\n\\n')\n";
+      }
+
       if (dep.location == kCRANPackageDependency)
       {
-         if (dep.source)
-            cranSourcePackages.push_back("'" + dep.name + "'");
-         else
-            cranPackages.push_back("'" + dep.name + "'");
+         // Build install command for CRAN. We specify lock = TRUE (here and elsewhere) to ensure
+         // that the package directory is locked during installation; since this will run in the
+         // background we want reduce the odds of corruption via a competing package install attempt
+         // in another process.
+         script += "utils::install.packages('" + dep.name + "', " +
+                "repos = '"+ module_context::CRANReposURL() + "'";
+
+         if (dep.source) 
+         {
+            // Install from source if requested
+            script += ", type = 'source'";
+         }
+
+         script += ", lock = TRUE)";
       }
       else if (dep.location == kEmbeddedPackageDependency)
       {
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
-         if (!pkg.empty())
-            embeddedPackages.push_back(pkg.archivePath);
+
+         // Build install command for bundled archive
+         script += "utils::install.packages('" + pkg.archivePath + 
+            "', repos = NULL, type = 'source', lock = TRUE)";
       }
+
+      script += "\n\n";
    }
 
-   // build install command
-   std::string cmd("{ " + module_context::CRANDownloadOptions() + "; ");
-   if (!cranPackages.empty())
-   {
-      std::string pkgList = boost::algorithm::join(cranPackages, ",");
-      cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() + "'";
-      cmd += ");";
-   }
-   if (!cranSourcePackages.empty())
-   {
-      std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
-      cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() + "', ";
-      cmd += "type = 'source');";
-   }
-   for (const std::string& pkg : embeddedPackages)
-   {
-      cmd += "utils::install.packages('" + pkg + "', "
-                                      "repos = NULL, type = 'source');";
-   }
-   cmd += "}";
+   bool packrat = module_context::packratContext().modeOn;
+   jobs::ScriptLaunchSpec installJob(
+         // Supply job name; use context if we have one, otherwise auto-generate from dependency list
+         context.empty() ?
+            (deps.size() == 1 ? 
+                ("Install '" + deps[0].name + "'") :
+                ("Install R packages")) :
+            context + " Dependencies",
 
-   // build args
-   std::vector<std::string> args;
-   args.push_back("--slave");
+         // Script to run for job
+         script,
 
-   // for packrat projects we execute the profile and set the working
-   // directory to the project directory; for other contexts we just
-   // propagate the R_LIBS
-   if (module_context::packratContext().modeOn)
-   {
-      options.workingDir = projects::projectContext().directory();
-   }
-   else
-   {
-      args.push_back("--vanilla");
-      core::system::Options childEnv;
-      core::system::environment(&childEnv);
-      std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
-      options.environment = childEnv;
-   }
+         // Directory in which to run job
+         packrat ?
+            projects::projectContext().directory() :
+            FilePath(),
 
-   // for windows we need to forward setInternet2
-#ifdef _WIN32
-   if (!r::session::utils::isR3_3() && prefs::userPrefs().useInternet2())
-      args.push_back("--internet2");
-#endif
+         false, // Import environment
+         "");
 
-   args.push_back("-e");
-   args.push_back(cmd);
+   // Run in a vanilla session if Packrat mode isn't on (prevents problematic startup scripts/etc
+   // from causing install trouble)
+   if (!packrat)
+      installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
 
-   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
-         boost::make_shared<console_process::ConsoleProcessInfo>(
-            "Installing Packages", console_process::InteractionNever);
+   std::string jobId;
+   error = jobs::startScriptJob(installJob, &jobId);
 
-   // create and execute console process
-   boost::shared_ptr<console_process::ConsoleProcess> pCP;
-   pCP = console_process::ConsoleProcess::create(
-            string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
-            args,
-            options,
-            pCPI);
+   // Return handle to script job
+   pResponse->setResult(jobId);
 
-   // return console process
-   pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
    return Success();
 }
 

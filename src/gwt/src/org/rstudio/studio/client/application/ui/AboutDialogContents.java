@@ -73,7 +73,7 @@ public class AboutDialogContents extends Composite
             Window.Navigator.getUserAgent());
       buildLabel.setText(
            "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
-           info.date + ")");
+           info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
 
@@ -126,7 +126,7 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel copyrightYearLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
-   @UiField Label licenseLabel;
+   @UiField HTMLPanel licenseLabel;
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;

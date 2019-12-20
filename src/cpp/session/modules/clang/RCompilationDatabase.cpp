@@ -187,14 +187,21 @@ std::string buildFileHash(const FilePath& filePath)
 std::string packageBuildFileHash()
 {
    std::ostringstream ostr;
+   
+   using namespace module_context;
+   ostr << buildFileHash(resolveAliasedPath("~/.R/Makevars"));
+   ostr << buildFileHash(resolveAliasedPath("~/.R/Makevars.win"));
+   
    FilePath buildPath = projects::projectContext().buildTargetPath();
    ostr << buildFileHash(buildPath.completeChildPath("DESCRIPTION"));
+   
    FilePath srcPath = buildPath.completeChildPath("src");
    if (srcPath.exists())
    {
       ostr << buildFileHash(srcPath.completeChildPath("Makevars"));
       ostr << buildFileHash(srcPath.completeChildPath("Makevars.win"));
    }
+   
    return ostr.str();
 }
 
@@ -288,7 +295,9 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 
 
 RCompilationDatabase::RCompilationDatabase()
-   : usePrecompiledHeaders_(true), restoredCompilationConfig_(false)
+   : usePrecompiledHeaders_(true),
+     forceRebuildPrecompiledHeaders_(false),
+     restoredCompilationConfig_(false)
 {
 }
 
@@ -306,6 +315,9 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (buildFileHash == packageBuildFileHash_)
       return;
 
+   // compilation config has changed; rebuild pch
+   forceRebuildPrecompiledHeaders_ = true;
+   
    // start with base args
    bool isCpp = true;
    core::r_util::RPackageInfo pkgInfo;
@@ -1088,8 +1100,10 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // now create the PCH if we need to
    std::string stdArg = extractStdArg(config.args);
    FilePath pchPath = platformPath.completeChildPath(pkgName + stdArg + ".pch");
-   if (!pchPath.exists())
+   if (forceRebuildPrecompiledHeaders_ || !pchPath.exists())
    {
+      forceRebuildPrecompiledHeaders_ = false;
+      
       // state cpp file for creating precompiled headers
       FilePath cppPath = platformPath.completeChildPath(pkgName + stdArg + ".cpp");
       boost::format fmt("#include <%1%.h>\n");
@@ -1169,7 +1183,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       clang().disposeIndex(index);
    }
 
-   // reutrn the pch header file args
+   // return the pch header file args
    args.push_back("-include-pch");
    args.push_back(pchPath.getAbsolutePath());
    return args;

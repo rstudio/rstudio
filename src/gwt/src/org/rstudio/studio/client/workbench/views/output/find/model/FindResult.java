@@ -133,7 +133,7 @@ public class FindResult extends JavaScriptObject
       // display any errors highlighted in red
       if (getRegexPreviewIndicator() &&
           !StringUtil.isNullOrEmpty(getErrors()))
-         out = appendTaggedString(out, "mark", getErrors());
+         out = appendHtmlTaggedString(out, "mark", getErrors());
       else // highlight found words and preview replaces
       {
          // retrieve match positions
@@ -190,58 +190,59 @@ public class FindResult extends JavaScriptObject
          String replace = getReplaceValue();
 
          // Use a counter to ensure tags are balanced.
-         int openStrongTags = 0;
-         int openEmTags = 0;
+         int openRedTags = 0;
+         int openInsTags = 0;
+         String redTag = new String("strong");
    
          for (int i = 0; i < line.length(); i++)
          {
-            // when we reach a matchOn or matchOff position, apply a strong tag
+            // when we reach a matchOn or matchOff position, apply red tag
             while (parts.size() > 0 && parts.get(0).second == i)
             {
                if (parts.remove(0).first)
                {
-                  out.appendHtmlConstant("<strong>");
-                  openStrongTags++;
+                  out = appendHtmlOpenTag(out, redTag);
+                  openRedTags++;
                }
-               else if (openStrongTags > 0)
+               else if (openRedTags > 0)
                {
-                  out.appendHtmlConstant("</strong>");
-                  openStrongTags--;
+                  out = appendHtmlCloseTag(out, redTag);
+                  openRedTags--;
                   if (!StringUtil.isNullOrEmpty(replace))
-                     out = appendTaggedString(out, "em", replace);
+                     out = appendHtmlTaggedString(out, "ins", replace);
                }
             }
-            // when we reach a replaceOn or replaceOff position, apply an em tag
+            // when we reach a replaceOn or replaceOff position, apply an ins tag
             while (replaceParts.size() > 0 && replaceParts.get(0).second == i)
             {
                if (replaceParts.remove(0).first)
                {
-                  out.appendHtmlConstant("<em>");
-                  openEmTags++;
+                  out.appendHtmlConstant("<ins>");
+                  openInsTags++;
                }
-               else if (openEmTags > 0)
+               else if (openInsTags > 0)
                {
-                  out.appendHtmlConstant("</em>");
-                  openEmTags--;
+                  out.appendHtmlConstant("</ins>");
+                  openInsTags--;
                }
             }
             out.append(line.charAt(i));
          }
    
          // tags may left open if they are at the end of the line
-         if (openStrongTags > 1 || openEmTags > 1)
+         if (openRedTags > 1 || openInsTags > 1)
             Debug.logWarning("Unexpected number of open tags");
-         while (openStrongTags > 0)
+         while (openRedTags > 0)
          {
-            openStrongTags--;
-            out.appendHtmlConstant("</strong>");
+            openRedTags--;
+            out = appendHtmlCloseTag(out, redTag);
             if (!StringUtil.isNullOrEmpty(replace))
-               out = appendTaggedString(out, "em", getReplaceValue());
+               out = appendHtmlTaggedString(out, "ins", replace);
          }
-         while (openEmTags > 0)
+         while (openInsTags > 0)
          {
-            openEmTags--;
-            out.appendHtmlConstant("</em>");
+            openInsTags--;
+            out.appendHtmlConstant("</ins>");
          }
       }
 
@@ -254,66 +255,88 @@ public class FindResult extends JavaScriptObject
 
       // display any errors highlighted in red
       if (!StringUtil.isNullOrEmpty(getErrors()))
-         out = appendTaggedString(out, "mark", getErrors());
+         out = appendHtmlTaggedString(out, "mark", getErrors());
       else // display replace values highlighted
       {
          // retrieve match positions
          ArrayList<Integer> onReplace = getReplaceMatchOns();
          ArrayList<Integer> offReplace = getReplaceMatchOffs();
    
-         ArrayList<Pair<Boolean, Integer>> parts
-                                         = new ArrayList<Pair<Boolean, Integer>>();
+         ArrayList<Pair<Boolean, Integer>> parts = new ArrayList<Pair<Boolean, Integer>>();
+
 
          // consolidate matches into one ArrayList
          while (onReplace.size() + offReplace.size() > 0)
          {
-            int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(0);
-            int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(0);
+            int onIndex = onReplace.size() - 1;
+            int offIndex = offReplace.size() - 1;
+            int onReplaceVal = onReplace.size() == 0 ? Integer.MAX_VALUE : onReplace.get(onIndex);
+            int offReplaceVal = offReplace.size() == 0 ? Integer.MAX_VALUE : offReplace.get(offIndex);
             if (onReplaceVal < offReplaceVal)
-               parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(0)));
+               parts.add(new Pair<Boolean, Integer>(true, onReplace.remove(onIndex)));
             else
-               parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(0)));
+               parts.add(new Pair<Boolean, Integer>(false, offReplace.remove(offIndex)));
          }
    
          // create html for line
          String line = getLineValue();
          // Use a counter to ensure tags are balanced.
-         int openEmTags = 0;
+         int openInsTags = 0;
          int openMarkTags = 0;
    
          for (int i = 0; i < line.length(); i++)
          {
-            // when we reach a match position, apply an em tag
+            // when we reach a match position, apply an ins tag
             while (parts.size() > 0 && parts.get(0).second == i)
             {
                if (parts.remove(0).first)
                {
-                  out.appendHtmlConstant("<em>");
-                  openEmTags++;
-                  Debug.logToConsole("openEmTags: " + Integer.toString(openEmTags));
-                  Debug.logToConsole("out: " + out.toSafeHtml().asString());
+                  out.appendHtmlConstant("<ins>");
+                  openInsTags++;
                }
-               else if (openEmTags > 0)
+               else if (openInsTags > 0)
                {
-                  out.appendHtmlConstant("</em>");
-                  openEmTags--;
+                  out.appendHtmlConstant("</ins>");
+                  openInsTags--;
                }
             }
             out.append(line.charAt(i));
          }
    
          // tags may left open if they are at the end of the line
-         while (openEmTags > 0)
+         while (openInsTags > 0)
          {
-            openEmTags--;
-            out.appendHtmlConstant("</em>");
+            openInsTags--;
+            out.appendHtmlConstant("</ins>");
          }
       }
 
       return out.toSafeHtml();
    }
 
-   private SafeHtmlBuilder appendTaggedString(SafeHtmlBuilder out, String tag, String string)
+   private SafeHtmlBuilder appendHtmlOpenTag(SafeHtmlBuilder out, String tag)
+   {
+      StringBuilder tagBuilder = new StringBuilder();
+      tagBuilder.append("<");
+      tagBuilder.append(tag);
+      tagBuilder.append(">");
+      out.appendHtmlConstant(tagBuilder.toString());
+
+      return out;
+   }
+
+   private SafeHtmlBuilder appendHtmlCloseTag(SafeHtmlBuilder out, String tag)
+   {
+      StringBuilder tagBuilder = new StringBuilder();
+      tagBuilder.append("</");
+      tagBuilder.append(tag);
+      tagBuilder.append(">");
+      out.appendHtmlConstant(tagBuilder.toString());
+
+      return out;
+   }
+
+   private SafeHtmlBuilder appendHtmlTaggedString(SafeHtmlBuilder out, String tag, String string)
    {
       StringBuilder tagBuilder = new StringBuilder();
       tagBuilder.append("<");

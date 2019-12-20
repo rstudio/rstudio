@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.animation.client.Animation;
@@ -33,6 +34,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
@@ -52,7 +54,9 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.ImageMenuItem;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -111,13 +115,14 @@ public class TextEditingTargetWidget
       extendedType_ = extendedType;
       events_ = events;
       sourceOnSave_ = new CheckBox();
-      srcOnSaveLabel_ =
-                  new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
+      srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
+      
+      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
 
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -547,6 +552,10 @@ public class TextEditingTargetWidget
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
+      
+      ElementIds.assignElementId(
+            toggleDocOutlineButton_,
+            ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
 
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.
@@ -888,20 +897,18 @@ public class TextEditingTargetWidget
       }
       
       Command onInstall = () -> {
-         StringBuilder builder = new StringBuilder();
-         if (packages.size() == 1)
-         {
-            builder.append("install.packages(\"")
-                   .append(packages.get(0))
-                   .append("\")");
-         }
-         else
-         {
-            builder.append("install.packages(c(\"")
-                   .append(StringUtil.join(packages, "\", \""))
-                   .append("\"))");
-         }
-         events_.fireEvent(new SendToConsoleEvent(builder.toString(), true));
+         // Form a list of all the dependencies to install
+         ArrayList<Dependency> deps = new ArrayList<Dependency>();
+         for (String pkg: packages)
+            deps.add(Dependency.cranPackage(pkg));
+         
+         // Install them using the dependency manager; provide a "prompt"
+         // function that just accepts the list (since the user has already been
+         // prompted here in the editor)
+         RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
+               "Install " + FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath()) + " dependencies", 
+               (String dependencies, CommandWithArg<Boolean> result) -> result.execute(true),
+               deps, false, null);
          hideWarningBar();
       };
       

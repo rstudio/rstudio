@@ -79,6 +79,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 
+#include <shared_core/system/User.hpp>
+
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
@@ -1090,11 +1092,16 @@ bool addTinytexToPathIfNecessary()
    if (!module_context::findProgram("pdflatex").isEmpty())
       return false;
    
-   std::string binDir;
-   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDir);
+   SEXP binDirSEXP;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDirSEXP, &protect);
    if (error)
       LOG_ERROR(error);
    
+   if (!r::sexp::isString(binDirSEXP))
+      return false;
+   
+   std::string binDir = r::sexp::asString(binDirSEXP);
    FilePath binPath = module_context::resolveAliasedPath(binDir);
    if (!binPath.exists())
       return false;
@@ -1196,6 +1203,7 @@ bool isTextFile(const FilePath& targetPath)
           boost::algorithm::ends_with(fileType, "+xml") ||
           boost::algorithm::ends_with(fileType, "/xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
+          boost::algorithm::equals(fileType, "application/json") ||
           boost::algorithm::equals(fileType, "application/postscript");
 #else
 
@@ -1880,6 +1888,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 }
 
 namespace {
+
 // enque file changed event
 void enqueFileChangedEvent(
       const core::system::FileChangeEvent& event,
@@ -1890,8 +1899,12 @@ void enqueFileChangedEvent(
    fileChange["type"] = event.type();
    json::Object fileSystemItem = createFileSystemItem(event.fileInfo());
 
-   pCtx->decorateFile(FilePath(event.fileInfo().absolutePath()),
-                      &fileSystemItem);
+   if (prefs::userPrefs().vcsAutorefresh())
+   {
+      pCtx->decorateFile(
+               FilePath(event.fileInfo().absolutePath()),
+               &fileSystemItem);
+   }
 
    fileChange["file"] = fileSystemItem;
 
@@ -1899,6 +1912,7 @@ void enqueFileChangedEvent(
    ClientEvent clientEvent(client_events::kFileChanged, fileChange);
    module_context::enqueClientEvent(clientEvent);
 }
+
 } // namespace
 
 void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
@@ -1906,9 +1920,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                       fileDecorationContext(filePath);
-
+   auto pCtx = fileDecorationContext(filePath, true);
    enqueFileChangedEvent(event, pCtx);
 }
 
@@ -1933,8 +1945,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
    }
 
    using namespace session::modules::source_control;
-   boost::shared_ptr<FileDecorationContext> pCtx =
-                                  fileDecorationContext(commonParentPath);
+   auto pCtx = fileDecorationContext(commonParentPath, true);
 
    // fire client events as necessary
    for (const core::system::FileChangeEvent& event : events)
@@ -2131,8 +2142,18 @@ void activatePane(const std::string& pane)
 
 FilePath shellWorkingDirectory()
 {
-   if (projects::projectContext().hasProject())
-      return projects::projectContext().directory();
+   std::string initialDirSetting = prefs::userPrefs().terminalInitialDirectory();
+   if (initialDirSetting == kTerminalInitialDirectoryProject)
+   {
+      if (projects::projectContext().hasProject())
+         return projects::projectContext().directory();
+      else
+         return module_context::safeCurrentPath();
+   }
+   else if (initialDirSetting == kTerminalInitialDirectoryCurrent)
+      return module_context::safeCurrentPath();
+   else if (initialDirSetting == kTerminalInitialDirectoryHome)
+      return system::User::getUserHomePath();
    else
       return module_context::safeCurrentPath();
 }

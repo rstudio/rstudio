@@ -116,6 +116,8 @@ import org.rstudio.studio.client.sql.model.SqlServerOperations;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
+import org.rstudio.studio.client.workbench.ShowDOMElementIDs;
+import org.rstudio.studio.client.workbench.UserInterfaceHighlighter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
@@ -241,6 +243,9 @@ import org.rstudio.studio.client.workbench.views.source.model.TexServerOperation
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPane;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalTab;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialPane;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialTab;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -286,6 +291,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RnwWeaveRegistry.class).asEagerSingleton();
       bind(LatexProgramRegistry.class).asEagerSingleton();
       bind(Commands.class).in(Singleton.class);
+      bind(UserInterfaceHighlighter.class).asEagerSingleton();
+      bind(ShowDOMElementIDs.class).asEagerSingleton();
       bind(DefaultCRANMirror.class).in(Singleton.class);
       bind(ChooseFile.class).in(Singleton.class);
       bind(ConsoleDispatcher.class).in(Singleton.class);
@@ -350,6 +357,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Edit.Display.class).to(EditView.class);
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
+      bind(TutorialPresenter.Display.class).to(TutorialPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
@@ -385,6 +393,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Jobs", JobsTab.class);
       bindTab("Launcher", LauncherJobsTab.class);
       bindTab("Data Output", DataOutputTab.class);
+      bindTab("Tutorial", TutorialTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

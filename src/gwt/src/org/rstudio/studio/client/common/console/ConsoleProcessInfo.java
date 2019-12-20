@@ -1,7 +1,7 @@
 /*
  * ConsoleProcessInfo.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int AUTOCLOSE_DEFAULT = 0;
    public static final int AUTOCLOSE_ALWAYS = 1;
    public static final int AUTOCLOSE_NEVER = 2;
+   public static final int AUTOCLOSE_CLEAN_EXIT = 3;
 
    public static final int SEQUENCE_NO_TERMINAL = 0;
    public static final int SEQUENCE_NEW_TERMINAL = -1;
@@ -44,7 +45,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
    // See comment in C++ code about keeping this in sync with SessionConsoleProcessInfo 
    // constructor for terminal scenario.
    public static final native ConsoleProcessInfo createNewTerminalInfo(
-         boolean trackEnv) /*-{
+         boolean trackEnv, String initialDirectory) /*-{
          
       var procInfo = new Object();
 
@@ -63,7 +64,7 @@ public class ConsoleProcessInfo extends JavaScriptObject
       procInfo.channel_mode = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::CHANNEL_RPC;
       procInfo.channel_id = "";
       procInfo.alt_buffer = false;
-      procInfo.cwd = "";
+      procInfo.cwd = initialDirectory;
       procInfo.cols = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_COLS;
       procInfo.rows = @org.rstudio.studio.client.common.console.ConsoleProcessInfo::DEFAULT_ROWS;
       procInfo.restarted = false;

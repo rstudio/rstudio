@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal.xterm;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**
@@ -85,7 +86,7 @@ public class XTermTheme extends JavaScriptObject
 
    private static boolean doubleEqualish(double d1, double d2)
    {
-      return Math.abs(d1 - d2) < 0.0001;
+      return MathUtil.isEqual(d1, d2, 0.0001);
    }
 
    public static double adjustFontSize(double size)

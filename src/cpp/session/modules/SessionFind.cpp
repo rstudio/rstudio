@@ -47,6 +47,8 @@ namespace {
 // This must be the same as MAX_COUNT in FindOutputPane.java
 const size_t MAX_COUNT = 1000;
 
+const size_t MAX_LINE_LENGTH = 1000;
+
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
 {
@@ -444,6 +446,37 @@ private:
       }
    }
 
+   void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
+   {
+      size_t maxPreviewLength = 300;
+      size_t firstMatchOn = pMatchOn->getValueAt(0).getInt();
+      if (contents->size() > maxPreviewLength)
+      {
+         if (firstMatchOn > maxPreviewLength)
+         {
+            *contents = contents->erase(0, firstMatchOn - 30);
+            contents->insert(0, "...");
+            int leadingCharactersErased = firstMatchOn - 33;
+            json::Array newMatchOnArray;
+            json::Array newMatchOffArray;
+            for (size_t i = 0; i < pMatchOn->getSize(); i++)
+            {
+               newMatchOnArray.push_back(
+                  json::Value(pMatchOn->getValueAt(i).getInt() - leadingCharactersErased));
+               if (i >= pMatchOff->getSize())
+                  LOG_WARNING_MESSAGE("pMatchOn and pMatchOff should be the same length");
+               else
+                  newMatchOffArray.push_back(
+                     json::Value(pMatchOff->getValueAt(i).getInt() - leadingCharactersErased));
+            }
+            *pMatchOn = newMatchOnArray;
+            *pMatchOff = newMatchOffArray;
+         }
+         if (contents->size() > maxPreviewLength)
+            adjustForPreview(contents);
+      }
+   }
+
    Error completeFileReplace()
    {
       if (fileSuccess_)
@@ -512,7 +545,8 @@ private:
          decodedLine.append(decode(std::string(inputPos, end)));
 
       *pFullLineContent = decodedLine;
-      adjustForPreview(&decodedLine);
+      if (!findResults().replace())
+         adjustForPreview(&decodedLine, pMatchOn, pMatchOff);
       *pContent = decodedLine;
    }
 
@@ -536,7 +570,7 @@ private:
       return error;
    }
 
-   void substractOffsetIntegerToJsonArray(
+   void subtractOffsetIntegerToJsonArray(
        json::Value newValue, int offset, json::Array* pJsonArray)
    {
       // make sure negative values (errors) don't become positve
@@ -546,11 +580,11 @@ private:
                             gsl::narrow_cast<int>(newValue.getInt() + offset)));
    }
 
-   void substractOffsetIntegersToJsonArray(
+   void subtractOffsetIntegersToJsonArray(
          json::Array values, int offset, json::Array* pJsonArray)
    {
       for (json::Value value : values)
-         substractOffsetIntegerToJsonArray(value, offset, pJsonArray);
+         subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
    Error encodeAndWriteLineToFile(
@@ -578,7 +612,7 @@ private:
          }
          catch (const std::ios_base::failure& e)
          {
-            error = systemError(e.code().value(), e.what(), ERROR_LOCATION);
+            error = systemError(errno, e.what(), ERROR_LOCATION);
          }
       }
       return error;
@@ -670,7 +704,8 @@ private:
                {
                   pLineInfo->decodedContents = newLine;
 
-                  // if multiple replaces in line, readjust previous match numbers
+                  // if multiple replaces in line, readjust previous match numbers to account for
+                  // difference in find and replace sizes
                   size_t replaceSize = replaceMatchOff - matchOn;
                   if (pReplaceMatchOn->getSize() > 0 &&
                       matchSize != replaceSize)
@@ -680,14 +715,11 @@ private:
                      pReplaceMatchOn->clear();
                      pReplaceMatchOff->clear();
 
-                     // put back in reverse order for the frontend
-                     // the frontend requires the matches to be ordered from first match/line to last,
-                     // while we are iterating from last to first here
                      int offset(gsl::narrow_cast<int>(replaceSize - matchSize));
                      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
                      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
-                     substractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
-                     substractOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
+                     subtractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
+                     subtractOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
                   }
                   else
                   {
@@ -797,16 +829,23 @@ private:
                      addReplaceErrorMessage(error.asString(), &errorMessage,
                         &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                }
-
-               if (!fileSuccess_)
+               if (!fileSuccess_ || lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
                {
-                  // the first time a file is processed it gets a more detailed initialization error
-                  if (inputLineNum_ != 0)
-                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
-                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                   if (!findResults().preview())
                      findResults().replaceProgress()->
                         addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
+                  if (!fileSuccess_ && inputLineNum_ != 0)
+                  {
+                     // the first time a file is processed it gets a more detailed initialization error
+                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
+                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
+                  }
+                  else if (fileSuccess_)
+                  {
+                     bool lineSuccess;
+                     addReplaceErrorMessage("Line exceeds maximum character length for replace",
+                        &errorMessage, &replaceMatchOn, &replaceMatchOff, &lineSuccess);
+                  }
                }
                else
                {
@@ -815,10 +854,9 @@ private:
                                   &lineInfo,
                                   &replaceMatchOn, &replaceMatchOff,
                                   &errorMessage);
+                  lineInfo.decodedPreview = lineInfo.decodedContents;
+                  adjustForPreview(&lineInfo.decodedPreview, &matchOn, &matchOff);
                }
-               lineInfo.decodedPreview = lineInfo.decodedContents;
-
-               adjustForPreview(&lineInfo.decodedPreview);
             }
 
             files.push_back(json::Value(file));

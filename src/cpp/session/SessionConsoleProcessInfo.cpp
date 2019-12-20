@@ -28,6 +28,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
@@ -372,6 +373,18 @@ void ConsoleProcessInfo::saveConsoleEnvironment(const core::system::Options& env
 void ConsoleProcessInfo::loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
 {
    console_persist::loadConsoleEnvironment(handle, pEnv);
+}
+
+AutoCloseMode ConsoleProcessInfo::closeModeFromPref(std::string prefValue)
+{
+   if (prefValue == kTerminalCloseBehaviorAlways)
+      return AlwaysAutoClose;
+   else if (prefValue == kTerminalCloseBehaviorClean)
+      return CleanExitAutoClose;
+   else if (prefValue == kTerminalCloseBehaviorNever)
+      return NeverAutoClose;
+   else
+      return NeverAutoClose;
 }
 
 } // namespace console_process_info

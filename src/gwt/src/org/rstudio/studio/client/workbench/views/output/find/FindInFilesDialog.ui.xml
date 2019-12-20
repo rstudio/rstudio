@@ -19,7 +19,7 @@
       }
 
       .example {
-         color: #999;
+         color: #696969;
       }
 
       .presetFilePatterns {
@@ -52,7 +52,7 @@
          <div ui:field="divCustomFilter_">
             <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
             <br/>
-            <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+            <span ui:field="spanPatternExample_" class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
          </div>
       </p>
 
