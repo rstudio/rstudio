@@ -43,6 +43,8 @@ import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tuto
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -54,7 +56,8 @@ import com.google.inject.Inject;
 
 public class TutorialPane
       extends WorkbenchPane
-      implements TutorialPresenter.Display,
+      implements LoadHandler,
+                 TutorialPresenter.Display,
                  ThemeChangedEvent.Handler
 {
    @Inject
@@ -83,10 +86,8 @@ public class TutorialPane
       frame_.addStyleName("ace_editor_theme");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
       ElementIds.assignElementId(frame_.getElement(), ElementIds.TUTORIAL_FRAME);
-      
-      frame_.addLoadHandler((LoadEvent event) -> {
-         initializeStyles();
-      });
+    
+      frame_.addLoadHandler(this);
       
       home();
       return new AutoGlassPanel(frame_);
@@ -96,6 +97,8 @@ public class TutorialPane
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Tutorial Tab");
+      toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
@@ -158,7 +161,7 @@ public class TutorialPane
             
             handler_ = frame_.addLoadHandler((LoadEvent event) ->
             {
-               if (!isShinyUrl(frame_.getUrl()))
+               if (!isShinyUrl(frame_.getWindowUrl()))
                   return;
                
                loaded_ = true;
@@ -242,15 +245,31 @@ public class TutorialPane
       }
    }
    
-   private void initializeStyles()
+   private void onTutorialLoaded()
    {
-      if (frame_.getWindow() == null || frame_.getWindow().getDocument() == null)
-         return;
-      
-      String url = frame_.getUrl();
-      if (!StringUtil.equals(url, TutorialPresenter.URLS_HOME))
-         return;
+      // find all links in the document, and ensure that they open
+      // in a separate frame
+      Document doc = frame_.getWindow().getDocument();
+      NodeList<Element> els = doc.getElementsByTagName("a");
+      for (int i = 0, n = els.getLength(); i < n; i++)
+      {
+         Element el = els.getItem(i);
          
+         String href = el.getPropertyString("href");
+         if (href == null)
+            continue;
+         
+         boolean isNonLocalHref =
+               href.contains("://") &&
+               !href.startsWith(GWT.getHostPageBaseURL());
+         
+         if (isNonLocalHref)
+            el.setPropertyString("target", "_blank");
+      }
+   }
+   
+   private void onPageLoaded()
+   {
       Document doc = frame_.getWindow().getDocument();
       BodyElement body = doc.getBody();
       RStudioThemes.initializeThemes(doc, body);
@@ -274,10 +293,25 @@ public class TutorialPane
       return url.startsWith(shinyPrefix);
    }
    
+   private void onFrameLoaded()
+   {
+      String url = frame_.getWindowUrl();
+      if (isShinyUrl(url))
+         onTutorialLoaded();
+      else
+         onPageLoaded();
+   }
+   
+   @Override
+   public void onLoad(LoadEvent event)
+   {
+      onFrameLoaded();
+   }
+   
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      initializeStyles();
+      onFrameLoaded();
    }
    
    @Override

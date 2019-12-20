@@ -52,5 +52,20 @@ public class RStudioFrame extends Frame
    {
       return getElement().cast();
    }
+   
+   public String getSrcUrl()
+   {
+      return getIFrame().getSrc();
+   }
+   
+   public void setSrcUrl(String url)
+   {
+      getIFrame().setSrc(url);
+   }
+   
+   public String getWindowUrl()
+   {
+      return getIFrame().getContentWindow().getLocationHref();
+   }
 
 }
