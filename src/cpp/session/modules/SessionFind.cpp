@@ -612,7 +612,7 @@ private:
          }
          catch (const std::ios_base::failure& e)
          {
-            error = systemError(e.code().value(), e.what(), ERROR_LOCATION);
+            error = systemError(errno, e.what(), ERROR_LOCATION);
          }
       }
       return error;
