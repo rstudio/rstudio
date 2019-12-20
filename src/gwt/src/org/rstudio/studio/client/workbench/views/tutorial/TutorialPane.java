@@ -12,13 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
-import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -36,12 +32,13 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -178,7 +175,7 @@ public class TutorialPane
             "tutorial/run" +
             "?package=" + tutorial.getPackageName() +
             "&name=" + tutorial.getTutorialName();
-      navigate(url, true);
+      navigate(url, false);
    }
    
    @Override
@@ -198,16 +195,19 @@ public class TutorialPane
    @Override
    public String getUrl()
    {
-      return frame_.getUrl();
+      return frame_.getWindowUrl();
    }
    
    @Override
    public String getName()
    {
-      return frame_.getWindow().getName();
+      return frame_.getWindowName();
    }
    
-   private void navigate(String url, boolean useRawURL)
+   // NOTE: we use replaceUrl for redirects from the Shiny loading page
+   // to the main Shiny application, so that history navigation doesn't
+   // navigate to the "loading" page.
+   private void navigate(String url, boolean replaceUrl)
    {
       if (URIUtils.isLocalUrl(url))
       {
@@ -215,33 +215,42 @@ public class TutorialPane
       }
       else
       {
-         frame_.getElement().setAttribute("sandbox", "allow-scripts");
+         frame_.getElement().setAttribute("sandbox", "allow-scripts allow-top-navigation");
       }
       
-      frame_.setUrl(url);
+      if (replaceUrl)
+      {
+         frame_.replaceWindowUrl(url);
+      }
+      else
+      {
+         frame_.setWindowUrl(url);
+      }
    }
    
    private void onTutorialLoaded()
    {
-      // find all links in the document, and ensure that they open
-      // in a separate frame
-      Document doc = frame_.getWindow().getDocument();
-      NodeList<Element> els = doc.getElementsByTagName("a");
-      for (int i = 0, n = els.getLength(); i < n; i++)
-      {
-         Element el = els.getItem(i);
-         
-         String href = el.getPropertyString("href");
-         if (href == null)
-            continue;
-         
-         boolean isNonLocalHref =
-               href.contains("://") &&
-               !href.startsWith(GWT.getHostPageBaseURL());
-         
-         if (isNonLocalHref)
-            el.setPropertyString("target", "_blank");
-      }
+      // TODO: Should non-local links open in a separate frame?
+      
+//      // find all links in the document, and ensure that they open
+//      // in a separate frame
+//      Document doc = frame_.getWindow().getDocument();
+//      NodeList<Element> els = doc.getElementsByTagName("a");
+//      for (int i = 0, n = els.getLength(); i < n; i++)
+//      {
+//         Element el = els.getItem(i);
+//         
+//         String href = el.getPropertyString("href");
+//         if (href == null)
+//            continue;
+//         
+//         boolean isNonLocalHref =
+//               href.contains("://") &&
+//               !href.startsWith(GWT.getHostPageBaseURL());
+//         
+//         if (isNonLocalHref)
+//            el.setPropertyString("target", "_blank");
+//      }
    }
    
    private void onPageLoaded()
@@ -284,6 +293,7 @@ public class TutorialPane
    @Override
    public void onLoad(LoadEvent event)
    {
+      initJsFrameWindowCallbacks(frame_.getWindow());
       onFrameLoaded();
    }
    
@@ -299,6 +309,25 @@ public class TutorialPane
       return frame_.addLoadHandler(handler);
    }
    
+   @Override
+   public HandlerRegistration addTutorialNavigateHandler(Handler handler)
+   {
+      return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
+   }
+   
+   private void onPageShow(NativeEvent event)
+   {
+      frame_.fireEvent(new TutorialNavigateEvent());
+   }
+   
+   private final native void initJsFrameWindowCallbacks(WindowEx window)
+   /*-{
+      var self = this;
+      window.addEventListener("pageshow", $entry(function(event) {
+         self.@TutorialPane::onPageShow(*)(event);
+      }));
+   }-*/;
+   
    // Resources ---- 
    public interface Resources extends ClientBundle
    {
@@ -312,10 +341,6 @@ public class TutorialPane
    
    private RStudioFrame frame_;
    private Toolbar toolbar_;
-   private HandlerRegistration tutorialLoadHandler_;
-   
-   private static int popoutCount_ = 0;
-   private static final Map<String, Pair<String, String>> URL_TO_TUTORIAL_MAP = new HashMap<>();
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;
