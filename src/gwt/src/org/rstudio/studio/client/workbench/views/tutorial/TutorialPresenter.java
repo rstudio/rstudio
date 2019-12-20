@@ -328,6 +328,7 @@ public class TutorialPresenter
       commands_.tutorialStop().setEnabled(isShiny);
       commands_.tutorialStop().setVisible(isShiny);
       commands_.tutorialBack().setEnabled(isShiny);
+      commands_.tutorialPopout().setEnabled(isShiny);
    }
    
    private boolean isShinyUrl(String url)

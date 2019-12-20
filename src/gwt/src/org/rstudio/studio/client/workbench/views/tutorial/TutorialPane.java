@@ -38,7 +38,10 @@ import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigat
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -128,6 +131,8 @@ public class TutorialPane
             width,
             height,
             options);
+      
+      home();
    }
    
    @Override
@@ -215,7 +220,7 @@ public class TutorialPane
       }
       else
       {
-         frame_.getElement().setAttribute("sandbox", "allow-scripts allow-top-navigation");
+         frame_.getElement().setAttribute("sandbox", "allow-scripts");
       }
       
       if (replaceUrl)
@@ -230,27 +235,25 @@ public class TutorialPane
    
    private void onTutorialLoaded()
    {
-      // TODO: Should non-local links open in a separate frame?
-      
-//      // find all links in the document, and ensure that they open
-//      // in a separate frame
-//      Document doc = frame_.getWindow().getDocument();
-//      NodeList<Element> els = doc.getElementsByTagName("a");
-//      for (int i = 0, n = els.getLength(); i < n; i++)
-//      {
-//         Element el = els.getItem(i);
-//         
-//         String href = el.getPropertyString("href");
-//         if (href == null)
-//            continue;
-//         
-//         boolean isNonLocalHref =
-//               href.contains("://") &&
-//               !href.startsWith(GWT.getHostPageBaseURL());
-//         
-//         if (isNonLocalHref)
-//            el.setPropertyString("target", "_blank");
-//      }
+      // find all links in the document, and ensure that they open
+      // in a separate frame
+      Document doc = frame_.getWindow().getDocument();
+      NodeList<Element> els = doc.getElementsByTagName("a");
+      for (int i = 0, n = els.getLength(); i < n; i++)
+      {
+         Element el = els.getItem(i);
+         
+         String href = el.getPropertyString("href");
+         if (href == null)
+            continue;
+         
+         boolean isNonLocalHref =
+               href.contains("://") &&
+               !href.startsWith(GWT.getHostPageBaseURL());
+         
+         if (isNonLocalHref)
+            el.setPropertyString("target", "_blank");
+      }
    }
    
    private void onPageLoaded()
@@ -273,6 +276,7 @@ public class TutorialPane
          doc.getHead().appendChild(styleEl);
       }
       
+      body.getStyle().setVisibility(Visibility.VISIBLE);
    }
    
    private boolean isShinyUrl(String url)
