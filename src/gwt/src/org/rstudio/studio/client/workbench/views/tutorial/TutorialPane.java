@@ -19,15 +19,12 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.URIBuilder;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -212,37 +209,16 @@ public class TutorialPane
    
    private void navigate(String url, boolean useRawURL)
    {
-      // save the unmodified URL for pop-out
-      baseUrl_ = url;
-      
-      // in desktop mode we need to be careful about loading URLs which are
-      // non-local; before changing the URL, set the iframe to be sandboxed
-      // based on whether we're working with a local URL (note that prior to
-      // RStudio 1.2 local URLs were forbidden entirely)
-      if (Desktop.hasDesktopFrame())
+      if (URIUtils.isLocalUrl(url))
       {
-         if (URIUtils.isLocalUrl(url))
-         {
-            frame_.getElement().removeAttribute("sandbox");
-         }
-         else
-         {
-            frame_.getElement().setAttribute("sandbox", "allow-scripts");
-         }
-      }
-
-      if (!useRawURL && !StringUtil.equals(URIConstants.ABOUT_BLANK, baseUrl_))
-      {
-         url = URIBuilder.fromUrl(url)
-               .queryParam("tutorial_pane", "1")
-               .get();
-         
-         frame_.setUrl(url);
+         frame_.getElement().removeAttribute("sandbox");
       }
       else
       {
-         frame_.setUrl(baseUrl_);
+         frame_.getElement().setAttribute("sandbox", "allow-scripts");
       }
+      
+      frame_.setUrl(url);
    }
    
    private void onTutorialLoaded()
@@ -270,21 +246,24 @@ public class TutorialPane
    
    private void onPageLoaded()
    {
+      // initialize styles for frame
       Document doc = frame_.getWindow().getDocument();
       BodyElement body = doc.getBody();
       RStudioThemes.initializeThemes(doc, body);
       body.addClassName("ace_editor_theme");
       body.addClassName(BrowseCap.operatingSystem());
 
+      // inject styles
       final String STYLES_ID = "rstudio_tutorials_home_styles";
-      if (doc.getElementById(STYLES_ID) != null)
-         return;
+      if (doc.getElementById(STYLES_ID) == null)
+      {
+         StyleElement styleEl = doc.createStyleElement();
+         styleEl.setId(STYLES_ID);
+         styleEl.setType("text/css");
+         styleEl.setInnerHTML(RES.styles().getText());
+         doc.getHead().appendChild(styleEl);
+      }
       
-      StyleElement styleEl = doc.createStyleElement();
-      styleEl.setId(STYLES_ID);
-      styleEl.setType("text/css");
-      styleEl.setInnerHTML(RES.styles().getText());
-      doc.getHead().appendChild(styleEl);
    }
    
    private boolean isShinyUrl(String url)
@@ -320,8 +299,6 @@ public class TutorialPane
       return frame_.addLoadHandler(handler);
    }
    
-   
-   
    // Resources ---- 
    public interface Resources extends ClientBundle
    {
@@ -335,7 +312,6 @@ public class TutorialPane
    
    private RStudioFrame frame_;
    private Toolbar toolbar_;
-   private String baseUrl_;
    private HandlerRegistration tutorialLoadHandler_;
    
    private static int popoutCount_ = 0;

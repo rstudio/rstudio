@@ -99,12 +99,12 @@ public class WindowEx extends JavaScriptObject
       this.location.reload(true);
    }-*/;
   
-   public final native void setLocationHref(String helpURL) /*-{
-      this.location.href = helpURL ;
+   public final native void setLocationHref(String url) /*-{
+      this.location.href = url ;
    }-*/;
 
-   public final native void replaceLocationHref(String helpURL) /*-{
-      this.location.replace(helpURL) ;
+   public final native void replaceLocationHref(String url) /*-{
+      this.location.replace(url) ;
    }-*/;
    
    public final native void replaceHistoryState(String url) /*-{
