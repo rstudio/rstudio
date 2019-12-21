@@ -72,8 +72,17 @@ void AsyncRJob::onCompleted(int exitStatus)
    // if the job has not yet been marked complete, do so now
    if (!job_->complete())
    {
-      setJobState(job_, exitStatus == 0 ?  
-         JobState::JobSucceeded : JobState::JobFailed);
+      if (cancelled_)
+      {
+         // if we know that this job exited due to a cancel, set that state
+         setJobState(job_, JobState::JobCancelled);
+      }
+      else
+      {
+         // otherwise infer state from the exit status
+         setJobState(job_, exitStatus == 0 ?  
+            JobState::JobSucceeded : JobState::JobFailed);
+      }
    }
    
    onComplete_();

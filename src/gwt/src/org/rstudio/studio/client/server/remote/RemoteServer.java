@@ -4786,7 +4786,6 @@ public class RemoteServer implements Server
             "run_shiny_background_app",
             params,
             requestCallback);
-      
    }
 
    @Override
