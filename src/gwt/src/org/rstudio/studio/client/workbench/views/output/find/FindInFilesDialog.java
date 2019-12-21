@@ -58,13 +58,18 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                              String path,
                                              boolean regex,
                                              boolean caseSensitive,
+                                             boolean gitIgnore,
                                              JsArrayString filePatterns) /*-{
          return {
             query: query,
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
-            filePatterns: filePatterns
+            gitIgnore: gitIgnore,
+            filePatterns: filePatterns,
+            resultsCount: 0,
+            errorCount: 0,
+            replaceErrors: ""
          };
       }-*/;
 
@@ -86,6 +91,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          return this.caseSensitive;
       }-*/;
 
+      public native final boolean gitIgnore() /*-{
+         return this.gitIgnore;
+      }-*/;
+
       public final String[] getFilePatterns()
       {
          return JsUtil.toStringArray(getFilePatternsNative());
@@ -93,6 +102,37 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       private native JsArrayString getFilePatternsNative() /*-{
          return this.filePatterns;
+      }-*/;
+
+      public native final void updateResultsCount(int count) /*-{
+         this.resultsCount += count;
+      }-*/;
+
+      public native final int getResultsCount() /*-{
+         return this.resultsCount;
+      }-*/;
+
+      public native final void clearResultsCount() /*-{
+         this.resultsCount = 0;
+      }-*/;
+
+      public native final void updateErrorCount(int count) /*-{
+         this.errorCount += count;
+      }-*/;
+
+      public native final int getErrorCount() /*-{
+         return this.errorCount;
+      }-*/;
+
+      public native final void updateReplaceErrors(String errors) /*-{
+         if (this.replaceErrors)
+            this.replaceErrors = this.replaceErrors.concat(errors);
+         else
+            this.replaceErrors = errors;
+      }-*/;
+
+      public native final int getReplaceErrors() /*-{
+         return this.replaceErrors;
       }-*/;
    }
 
@@ -167,6 +207,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                getEffectivePath().getPath(),
                                checkboxRegex_.getValue(),
                                checkboxCaseSensitive_.getValue(),
+                               checkboxIgnore_.getValue(),
                                JsUtil.toJsArrayString(list));
    }
 
@@ -223,6 +264,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxRegex_.setValue(dialogState.isRegex());
+      checkboxIgnore_.setValue(dialogState.gitIgnore());
       dirChooser_.setText(dialogState.getPath());
 
       String filePatterns = StringUtil.join(
@@ -248,6 +290,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    LabeledTextBox txtSearchPattern_;
    @UiField
    CheckBox checkboxRegex_;
+   @UiField
+   CheckBox checkboxIgnore_;
    @UiField
    CheckBox checkboxCaseSensitive_;
    @UiField(provided = true)

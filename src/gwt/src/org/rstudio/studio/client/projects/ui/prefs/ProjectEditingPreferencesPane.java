@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -49,8 +50,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       chkSpacesForTab_.addStyleName(RESOURCES.styles().useSpacesForTab());
       add(chkSpacesForTab_);
       
-      numSpacesForTab_ = new NumericValueWidget("Tab width");
+      numSpacesForTab_ = new NumericValueWidget("Tab width", 1, UserPrefs.MAX_TAB_WIDTH);
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
+      numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
       
       chkAutoAppendNewline_ = new CheckBox("Ensure that source files end with newline");

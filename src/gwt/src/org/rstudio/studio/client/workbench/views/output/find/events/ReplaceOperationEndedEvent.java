@@ -1,7 +1,7 @@
 /*
- * FindInFilesEvent.java
+ * ReplaceOperationEndedEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,31 +17,21 @@ package org.rstudio.studio.client.workbench.views.output.find.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
+public class ReplaceOperationEndedEvent extends GwtEvent<ReplaceOperationEndedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onFindInFiles(FindInFilesEvent event);
+      void onReplaceOperationEnded(ReplaceOperationEndedEvent event);
    }
 
-   public FindInFilesEvent(String searchPattern)
+   public ReplaceOperationEndedEvent(String handle)
    {
-      searchPattern_ = searchPattern;
+      handle_ = handle;
    }
 
-   public String getSearchPattern()
+   public String getHandle()
    {
-      return searchPattern_;
-   }
-
-   public boolean isReplace()
-   {
-      return replace_;
-   }
-
-   public String getReplacePattern()
-   {
-      return replacePattern_;
+      return handle_;
    }
 
    @Override
@@ -53,12 +43,10 @@ public class FindInFilesEvent extends GwtEvent<FindInFilesEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onFindInFiles(this);
+      handler.onReplaceOperationEnded(this);
    }
 
-   private final String searchPattern_;
-   private String replacePattern_;
-   private boolean replace_;
+   private final String handle_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
