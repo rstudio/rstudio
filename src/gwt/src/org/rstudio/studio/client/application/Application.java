@@ -291,6 +291,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onSignOut()
+   {
+      events_.fireEvent(new LogoutRequestedEvent());
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -923,7 +929,12 @@ public class Application implements ApplicationEventHandlers
       {
          removeProjectCommands();
       }
-      
+
+      if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+         commands_.signOut().remove();
+      else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
+         commands_.signOut().remove();
+
       if (!sessionInfo.getLauncherJobsEnabled())
       {
          removeJobLauncherCommands();
