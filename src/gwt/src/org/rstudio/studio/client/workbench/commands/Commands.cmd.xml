@@ -3583,9 +3583,9 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="signOut"
-        label="Sign out"
+        label="Sign Out"
         buttonLabel=""
-        menuLabel="Sign ou_t"
+        menuLabel="Sign Ou_t"
         desc="Sign out from RStudio"
         windowMode="main"/>
 </commands>
