@@ -438,6 +438,11 @@
             "default": 1000,
             "description": "The maximum number of characters to display in a single line in the R console."
         },
+        "console_max_lines": {
+            "type": "integer",
+            "default": 1000,
+            "description": "The maximum number of console actions to store and display in the console scrollback buffer."
+        },
         "ansi_console_mode": {
             "type": "string",
             "enum": ["off", "on", "strip"],

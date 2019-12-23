@@ -934,6 +934,19 @@ core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
 }
 
 /**
+ * The maximum number of console actions to store and display in the console scrollback buffer.
+ */
+int UserPrefValues::consoleMaxLines()
+{
+   return readPref<int>("console_max_lines");
+}
+
+core::Error UserPrefValues::setConsoleMaxLines(int val)
+{
+   return writePref("console_max_lines", val);
+}
+
+/**
  * How to treat ANSI escape codes in the console.
  */
 std::string UserPrefValues::ansiConsoleMode()
@@ -2384,6 +2397,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
       kConsoleLineLengthLimit,
+      kConsoleMaxLines,
       kAnsiConsoleMode,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
