@@ -1402,6 +1402,19 @@ core::Error UserPrefValues::setShinyViewerType(std::string val)
 }
 
 /**
+ * Whether to run Shiny applications as background jobs.
+ */
+bool UserPrefValues::shinyBackgroundJobs()
+{
+   return readPref<bool>("shiny_background_jobs");
+}
+
+core::Error UserPrefValues::setShinyBackgroundJobs(bool val)
+{
+   return writePref("shiny_background_jobs", val);
+}
+
+/**
  * Where to display Shiny applications when they are run.
  */
 std::string UserPrefValues::plumberViewerType()
@@ -2407,6 +2420,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckForUpdates,
       kShowInternalFunctions,
       kShinyViewerType,
+      kShinyBackgroundJobs,
       kPlumberViewerType,
       kDocumentAuthor,
       kRmdPreferredTemplatePath,

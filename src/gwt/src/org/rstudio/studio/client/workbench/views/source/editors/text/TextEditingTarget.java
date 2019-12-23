@@ -116,6 +116,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -5398,13 +5399,12 @@ public class TextEditingTarget implements
    
    private void runShinyApp()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
-                  getExtendedFileType()));
-         }
+      sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
+      {
+         events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
+               prefs_.shinyBackgroundJobs().getValue() ?
+                  ShinyApplication.BACKGROUND_APP :
+                  ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
       }, "Run Shiny Application");
    }
    

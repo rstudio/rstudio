@@ -340,11 +340,12 @@ public class RStudio implements EntryPoint
                RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
-      else if (ShinyApplicationSatellite.NAME.equals(view))
+      else if (view != null && view.startsWith(
+            ShinyApplicationSatellite.NAME_PREFIX))
       {
-         RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
-               RootLayoutPanel.get(),
-               dismissProgressAnimation_);
+         ShinyApplicationSatellite satellite = 
+               new ShinyApplicationSatellite(view);
+         satellite.go(RootLayoutPanel.get(), dismissProgressAnimation_);
       }
       else if (RmdOutputSatellite.NAME.equals(view))
       {

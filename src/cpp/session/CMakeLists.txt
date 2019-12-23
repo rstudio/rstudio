@@ -182,6 +182,7 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentMonitor.cpp
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
+   modules/jobs/AsyncRJobManager.cpp
    modules/jobs/SessionJobs.cpp
    modules/jobs/ScriptJob.cpp
    modules/jobs/Job.cpp
@@ -223,6 +224,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
    modules/shiny/SessionShiny.cpp
+   modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp
    modules/tex/SessionCompilePdf.cpp

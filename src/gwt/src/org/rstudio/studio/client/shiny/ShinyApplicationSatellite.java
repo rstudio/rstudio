@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationSatellite.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
@@ -25,18 +26,35 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-@Singleton
 public class ShinyApplicationSatellite extends SatelliteApplication
 {
-   public static final String NAME = "shiny";
+   public static final String NAME_PREFIX = "shiny_";
    
-   @Inject
-   public ShinyApplicationSatellite(ShinyApplicationView view,
-                                    Satellite satellite,
-                                    Provider<AceThemes> pAceThemes,
-                                    ApplicationUncaughtExceptionHandler exHandler,
-                                    Commands commands)
+   public static final String getIdFromName(String name)
    {
-      super(NAME, view, satellite, pAceThemes, exHandler, commands);
+      return name.substring(NAME_PREFIX.length());
    }
+   
+   public static final String getNameFromId(String id)
+   {
+      return NAME_PREFIX + id;
+   }
+   
+   public ShinyApplicationSatellite(String name)
+   {
+      name_ = name;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   @Inject
+   public void initialize(ShinyApplicationView view,
+                          Satellite satellite,
+                          Provider<AceThemes> pAceThemes,
+                          ApplicationUncaughtExceptionHandler exHandler,
+                          Commands commands)
+   {
+      initialize(name_, view, satellite, pAceThemes, exHandler, commands);
+   }
+   
+   private final String name_;
 }

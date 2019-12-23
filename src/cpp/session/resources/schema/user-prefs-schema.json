@@ -621,6 +621,11 @@
             "default": "window",
             "description": "Where to display Shiny applications when they are run."
         },
+        "shiny_background_jobs": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to run Shiny applications as background jobs."
+        },
         "plumber_viewer_type": {
             "type": "string",
             "enum": ["user", "none", "pane", "window", "browser"],

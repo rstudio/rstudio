@@ -1009,6 +1009,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String SHINY_VIEWER_TYPE_BROWSER = "browser";
 
    /**
+    * Whether to run Shiny applications as background jobs.
+    */
+   public PrefValue<Boolean> shinyBackgroundJobs()
+   {
+      return bool("shiny_background_jobs", false);
+   }
+
+   /**
     * Where to display Shiny applications when they are run.
     */
    public PrefValue<String> plumberViewerType()
@@ -1855,6 +1863,8 @@ public class UserPrefsAccessor extends Prefs
          showInternalFunctions().setValue(layer, source.getBool("show_internal_functions"));
       if (source.hasKey("shiny_viewer_type"))
          shinyViewerType().setValue(layer, source.getString("shiny_viewer_type"));
+      if (source.hasKey("shiny_background_jobs"))
+         shinyBackgroundJobs().setValue(layer, source.getBool("shiny_background_jobs"));
       if (source.hasKey("plumber_viewer_type"))
          plumberViewerType().setValue(layer, source.getString("plumber_viewer_type"));
       if (source.hasKey("document_author"))

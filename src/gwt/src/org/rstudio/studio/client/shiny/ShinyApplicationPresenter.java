@@ -166,6 +166,8 @@ public class ShinyApplicationPresenter implements
       
       ShinyApplicationParams params = ShinyApplicationParams.create(
             params_.getPath(), 
+            ShinyApplicationSatellite.getIdFromName(
+                  satellite_.getSatelliteName()),
             params_.getUrl(), 
             appStopped_ ?
                ShinyApplicationParams.STATE_STOPPED :
