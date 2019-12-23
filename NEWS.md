@@ -97,6 +97,7 @@
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
 * RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
 * Add support for running Shiny applications as background jobs (#5190)
+* Make maximum lines in R console configurable; was previously fixed at 1000 (#5919)
 
 ### Bugfixes
 
