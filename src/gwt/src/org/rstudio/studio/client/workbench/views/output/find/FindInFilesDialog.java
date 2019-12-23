@@ -106,6 +106,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       }
 
       private native JsArrayString getExcludeFilePatternsNative() /*-{
+
+         if (!this.excludeFilePatterns)
+            this.excludeFilePatterns="";
          return this.excludeFilePatterns;
       }-*/;
 
@@ -152,12 +155,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       labelExcludeFilePatterns_.setFor(listPresetExcludeFilePatterns_);
       setOkButtonCaption("Find");
 
-      // give custom pattern textbox a label and extended description using the visible
-      // example shown below it
-      spanPatternExample_.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
-      Roles.getTextboxRole().setAriaLabelProperty(txtFilePattern_.getElement(), "Custom Filter Pattern");
-      Roles.getTextboxRole().setAriaDescribedbyProperty(txtFilePattern_.getElement(),
-            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
+      setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
@@ -317,7 +316,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(
-            Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
+         Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
       if (listPresetExcludeFilePatterns_.getValue(0) == excludeFilePatterns)
          listPresetExcludeFilePatterns_.setSelectedIndex(0);
       else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
@@ -331,6 +330,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    private void updateOkButtonEnabled()
    {
       enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
+   }
+
+   private void setExampleIdAndAriaProperties(SpanElement span, TextBox textbox)
+   {
+      // give custom pattern textbox a label and extended description using the visible
+      // example shown below it
+      span.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      Roles.getTextboxRole().setAriaLabelProperty(textbox.getElement(), "Custom Filter Pattern");
+      Roles.getTextboxRole().setAriaDescribedbyProperty(textbox.getElement(),
+            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
    }
 
    @UiField
@@ -357,7 +366,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    ListBox listPresetExcludeFilePatterns_;
    @UiField
    DivElement divExcludeCustomFilter_;
+   @UiField
    SpanElement spanPatternExample_;
+   @UiField
+   SpanElement spanExcludePatternExample_;
 
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();

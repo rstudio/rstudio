@@ -989,7 +989,7 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-std::string createGitIgnoreString(FilePath dirPath)
+core::Error createGitIgnoreString(const FilePath& dirPath, std::string* pResultString)
 {
    shell_utils::ShellCommand cmd("git");
    cmd << "-C";
@@ -998,23 +998,22 @@ std::string createGitIgnoreString(FilePath dirPath)
 
    cmd << "ls-files";
    cmd << "-i";
-   cmd << "--exclude-from=.gitIgnore";
+   cmd << "--exclude-per-directory" << ".gitIgnore";
 
-   core::system::ProcessResult* pResult = nullptr;
+   core::system::ProcessResult result;
    core::system::ProcessOptions options;
    core::Error error = runCommand(cmd,
                                   options,
-                                  pResult);
+                                  &result);
+   if (error)
+      return error;
 
-   std::string results;
-   /*
-   if (pResult->exitStatus == 0)
-      results = pResult->stdOut;
-   else
-      results = pResult->stdErr;
-   */
+   *pResultString = result.stdOut;
+   size_t splitAt;
+   while ((splitAt = pResultString->find('\n')) != pResultString->npos)
+      pResultString->replace(splitAt, 1, " ");
 
-   return results;
+   return Success();
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1093,10 +1092,22 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
+      // to get the contents of each .gitignore file, we run a git command and parse the output
       if (filePattern.getString().compare("gitIgnore") == 0)
       {
-         std::string excludeGitIgnore(createGitIgnoreString(dirPath));
-         //cmd << excludeGitIgnore;
+         std::string excludeGitIgnore;
+         error = createGitIgnoreString(dirPath, &excludeGitIgnore);
+         if (error)
+            return error;
+
+         std::istringstream stream(excludeGitIgnore);
+         std::vector<std::string> results((std::istream_iterator<std::string>(stream)),
+            std::istream_iterator<std::string>());
+         for (std::string filePattern : results)
+         {
+            filePattern.insert(0, dirPath.getAbsolutePath());
+            cmd << "--exclude=" + filePattern;
+         }
       }
       else
          cmd << "--exclude=" + filePattern.getString();
