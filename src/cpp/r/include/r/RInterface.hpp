@@ -51,6 +51,59 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
+typedef struct R_BCSTACK_T {
+   int tag;
+   union {
+      int ival;
+      double dval;
+      SEXP sxpval;
+   } u;
+} R_BCSTACK_T;
+
+typedef struct RCNTXT_40 {
+    struct RCNTXT_40 *nextcontext;
+    int callflag;
+#ifdef _WIN32
+    struct
+    {
+      jmp_buf buf;
+      int sigmask;
+      int savedmask;
+    } cjumpbuf;
+#else
+    sigjmp_buf cjmpbuf;
+#endif
+    int cstacktop;
+    int evaldepth;
+    SEXP promargs;
+    SEXP callfun;
+    SEXP sysparent;
+    SEXP call;
+    SEXP cloenv;
+    SEXP conexit;
+    void (*cend)(void *);
+    void *cenddata;
+    void *vmax;
+    int intsusp;
+    int gcenabled;
+    int bcintactive;
+    SEXP bcbody;
+    void *bcpc;
+    SEXP handlerstack;
+    SEXP restartstack;
+    struct RPRSTACK *prstack;
+    R_BCSTACK_T *nodestack;
+    R_BCSTACK_T *bcprottop; // new in R 4.0
+#ifdef BC_INT_STACK
+    IStackval *intstack;
+#endif
+    SEXP srcref;
+    int browserfinish;
+    SEXP returnValue;
+    struct RCNTXT_40 *jumptarget;
+    int jumpmask;
+} RCNTXT_40;
+
 typedef struct RCNTXT_34 {
     struct RCNTXT_34 *nextcontext;
     int callflag;
@@ -83,14 +136,7 @@ typedef struct RCNTXT_34 {
     SEXP handlerstack;
     SEXP restartstack;
     struct RPRSTACK *prstack;
-    struct {
-       int tag;
-       union {
-          int ival;
-          double dval;
-          SEXP sxpval;
-       } u;
-    } *nodestack;
+    R_BCSTACK_T *nodestack;
 #ifdef BC_INT_STACK
     IStackval *intstack;
 #endif
