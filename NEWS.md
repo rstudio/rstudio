@@ -120,4 +120,5 @@
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
 * New tools for viewing and managing server users when using named user licensing
+* Floating licensing can now pass through an HTTPS proxy
 * The Launcher service now starts and runs automatically when the system starts
