@@ -989,7 +989,7 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-std::string createGitIgnoreString(FilePath dirPath)
+core::Error createGitIgnoreString(const FilePath& dirPath, std::string* pResultString)
 {
    shell_utils::ShellCommand cmd("git");
    cmd << "-C";
@@ -998,27 +998,22 @@ std::string createGitIgnoreString(FilePath dirPath)
 
    cmd << "ls-files";
    cmd << "-i";
-   cmd << "--exclude-from=.gitIgnore";
+   cmd << "--exclude-per-directory" << ".gitIgnore";
 
    core::system::ProcessResult result;
    core::system::ProcessOptions options;
-   LOG_DEBUG_MESSAGE("cmd: " + cmd.string());
    core::Error error = runCommand(cmd,
                                   options,
                                   &result);
    if (error)
-      LOG_DEBUG_MESSAGE(error.asString());
-   else if (result.exitStatus != EXIT_SUCCESS)
-      LOG_ERROR_MESSAGE("Error performing gitignore: " + result.stdErr);
+      return error;
 
-   LOG_DEBUG_MESSAGE("result.stdOut: " + result.stdOut);
-   std::string resultString = result.stdOut;
+   *pResultString = result.stdOut;
    size_t splitAt;
-   while ((splitAt = resultString.find('\n')) != resultString.npos)
-      resultString.replace(splitAt, 1, " ");
+   while ((splitAt = pResultString->find('\n')) != pResultString->npos)
+      pResultString->replace(splitAt, 1, " ");
 
-   LOG_DEBUG_MESSAGE("resultString: " + resultString);
-   return resultString;
+   return Success();
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1097,10 +1092,22 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
+      // to get the contents of each .gitignore file, we run a git command and parse the output
       if (filePattern.getString().compare("gitIgnore") == 0)
       {
-         std::string excludeGitIgnore(createGitIgnoreString(dirPath));
-         cmd << "--exclude=" + excludeGitIgnore;
+         std::string excludeGitIgnore;
+         error = createGitIgnoreString(dirPath, &excludeGitIgnore);
+         if (error)
+            return error;
+
+         std::istringstream stream(excludeGitIgnore);
+         std::vector<std::string> results((std::istream_iterator<std::string>(stream)),
+            std::istream_iterator<std::string>());
+         for (std::string filePattern : results)
+         {
+            filePattern.insert(0, dirPath.getAbsolutePath());
+            cmd << "--exclude=" + filePattern;
+         }
       }
       else
          cmd << "--exclude=" + filePattern.getString();
@@ -1112,7 +1119,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Clear existing results
    findResults().clear();
 
-   LOG_DEBUG_MESSAGE("cmd: " + cmd.string());
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
