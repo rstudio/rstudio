@@ -34,7 +34,9 @@ RCntxtVersion contextVersion()
    if (s_rCntxtVersion == RVersionUnknown)
    {
       // use current R version to divine the memory layout 
-      if (r::util::hasRequiredVersion("3.4"))
+      if (r::util::hasRequiredVersion("4.0"))
+         s_rCntxtVersion = RVersion40;
+      else if (r::util::hasRequiredVersion("3.4"))
          s_rCntxtVersion = RVersion34;
       else if (r::util::hasRequiredVersion("3.3"))
          s_rCntxtVersion = RVersion33;
