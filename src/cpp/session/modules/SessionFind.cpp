@@ -1000,21 +1000,25 @@ std::string createGitIgnoreString(FilePath dirPath)
    cmd << "-i";
    cmd << "--exclude-from=.gitIgnore";
 
-   core::system::ProcessResult* pResult = nullptr;
+   core::system::ProcessResult result;
    core::system::ProcessOptions options;
+   LOG_DEBUG_MESSAGE("cmd: " + cmd.string());
    core::Error error = runCommand(cmd,
                                   options,
-                                  pResult);
+                                  &result);
+   if (error)
+      LOG_DEBUG_MESSAGE(error.asString());
+   else if (result.exitStatus != EXIT_SUCCESS)
+      LOG_ERROR_MESSAGE("Error performing gitignore: " + result.stdErr);
 
-   std::string results;
-   /*
-   if (pResult->exitStatus == 0)
-      results = pResult->stdOut;
-   else
-      results = pResult->stdErr;
-   */
+   LOG_DEBUG_MESSAGE("result.stdOut: " + result.stdOut);
+   std::string resultString = result.stdOut;
+   size_t splitAt;
+   while ((splitAt = resultString.find('\n')) != resultString.npos)
+      resultString.replace(splitAt, 1, " ");
 
-   return results;
+   LOG_DEBUG_MESSAGE("resultString: " + resultString);
+   return resultString;
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1096,7 +1100,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       if (filePattern.getString().compare("gitIgnore") == 0)
       {
          std::string excludeGitIgnore(createGitIgnoreString(dirPath));
-         //cmd << excludeGitIgnore;
+         cmd << "--exclude=" + excludeGitIgnore;
       }
       else
          cmd << "--exclude=" + filePattern.getString();
@@ -1108,6 +1112,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Clear existing results
    findResults().clear();
 
+   LOG_DEBUG_MESSAGE("cmd: " + cmd.string());
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
