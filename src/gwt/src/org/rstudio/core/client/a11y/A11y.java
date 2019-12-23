@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.a11y;
 
-import com.google.gwt.aria.client.LiveValue;
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
@@ -102,30 +100,6 @@ public class A11y
    public static void setARIAHidden(Element el)
    {
       el.setAttribute("aria-hidden", "true");
-   }
-
-   /**
-    * Mark as widget as an aria-live alert
-    *
-    * @param widget
-    * @param assertive
-    */
-   public static void setAlertRole(Widget widget, boolean assertive)
-   {
-      setAlertRole(widget.getElement(), assertive);
-   }
-
-   /**
-    * Mark an element as an aria-live alert
-    *
-    * @param el
-    * @param assertive
-    */
-   public static void setAlertRole(Element el, boolean assertive)
-   {
-      Roles.getAlertRole().set(el);
-      Roles.getAlertRole().setAriaLiveProperty(el, assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
-      Roles.getAlertRole().setAriaAtomicProperty(el, true);
    }
 
    public static void setVisuallyHidden(Widget widget)
