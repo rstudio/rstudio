@@ -143,6 +143,7 @@ namespace prefs {
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kConsoleLineLengthLimit "console_line_length_limit"
+#define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
 #define kAnsiConsoleModeOff "off"
 #define kAnsiConsoleModeOn "on"
@@ -736,6 +737,12 @@ public:
     */
    int consoleLineLengthLimit();
    core::Error setConsoleLineLengthLimit(int val);
+
+   /**
+    * The maximum number of console actions to store and display in the console scrollback buffer.
+    */
+   int consoleMaxLines();
+   core::Error setConsoleMaxLines(int val);
 
    /**
     * How to treat ANSI escape codes in the console.

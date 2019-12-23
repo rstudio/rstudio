@@ -705,6 +705,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The maximum number of console actions to store and display in the console scrollback buffer.
+    */
+   public PrefValue<Integer> consoleMaxLines()
+   {
+      return integer("console_max_lines", 1000);
+   }
+
+   /**
     * How to treat ANSI escape codes in the console.
     */
    public PrefValue<String> ansiConsoleMode()
@@ -1791,6 +1799,8 @@ public class UserPrefsAccessor extends Prefs
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
+      if (source.hasKey("console_max_lines"))
+         consoleMaxLines().setValue(layer, source.getInteger("console_max_lines"));
       if (source.hasKey("ansi_console_mode"))
          ansiConsoleMode().setValue(layer, source.getString("ansi_console_mode"));
       if (source.hasKey("show_inline_toolbar_for_r_code_chunks"))
