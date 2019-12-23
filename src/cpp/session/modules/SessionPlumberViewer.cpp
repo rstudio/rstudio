@@ -211,7 +211,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_plumberviewer);
 
    prefs::userPrefs().onChanged.connect(bind(
-            onUserSettingsChanged, _1, pPlumberViewerType));
+            onUserSettingsChanged, _2, pPlumberViewerType));
 
    ExecBlock initBlock;
    initBlock.addFunctions()

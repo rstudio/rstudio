@@ -358,7 +358,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_shinyviewer);
 
    events().onConsoleInput.connect(onConsoleInput);
-   prefs::userPrefs().onChanged.connect(bind(onUserSettingsChanged, _1,
+   prefs::userPrefs().onChanged.connect(bind(onUserSettingsChanged, _2,
                                          pShinyViewerType));
 
    ExecBlock initBlock;
