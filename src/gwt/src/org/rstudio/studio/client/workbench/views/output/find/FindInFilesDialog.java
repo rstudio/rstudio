@@ -157,10 +157,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       // give custom pattern textbox a label and extended description using the visible
       // example shown below it
-      spanPatternExample_.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
-      Roles.getTextboxRole().setAriaLabelProperty(txtFilePattern_.getElement(), "Custom Filter Pattern");
-      Roles.getTextboxRole().setAriaDescribedbyProperty(txtFilePattern_.getElement(),
-            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      //spanPatternExample_.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      //Roles.getTextboxRole().setAriaLabelProperty(txtFilePattern_.getElement(), "Custom Filter Pattern");
+      //Roles.getTextboxRole().setAriaDescribedbyProperty(txtFilePattern_.getElement(),
+      //      ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
@@ -320,7 +320,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(
-            Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
+         Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
       if (listPresetExcludeFilePatterns_.getValue(0) == excludeFilePatterns)
          listPresetExcludeFilePatterns_.setSelectedIndex(0);
       else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
