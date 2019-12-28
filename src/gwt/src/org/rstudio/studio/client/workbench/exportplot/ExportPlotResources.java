@@ -29,7 +29,7 @@ public interface ExportPlotResources extends ClientBundle
       String fileNameLabel();
       String fileNameTextBox();
       String directoryButton();
-      String directoryLabel();
+      String directoryTextBox();
       
       String imagePreview();
       String imageOptionLabel();
