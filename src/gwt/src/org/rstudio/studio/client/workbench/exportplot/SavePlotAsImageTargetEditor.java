@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
@@ -32,7 +33,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -77,7 +77,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
             fileDialogs_.chooseFolder(
                "Choose Directory",
                fileSystemContext_,
-               FileSystemItem.createDir(directoryLabel_.getTitle().trim()),
+               FileSystemItem.createDir(directoryTextBox_.getText().trim()),
                new ProgressOperationWithInput<FileSystemItem>() {
 
                  public void execute(FileSystemItem input,
@@ -98,10 +98,13 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
          }
       });
       
-      directoryLabel_ = new Label();
+      directoryTextBox_ = new TextBox();
+      directoryTextBox_.setReadOnly(true);
+      Roles.getTextboxRole().setAriaLabelProperty(directoryTextBox_.getElement(), "Selected Directory");
+
       setDirectory(context_.getDirectory());
-      directoryLabel_.setStylePrimaryName(styles.directoryLabel());
-      grid.setWidget(1, 1, directoryLabel_);
+      directoryTextBox_.setStylePrimaryName(styles.directoryTextBox());
+      grid.setWidget(1, 1, directoryTextBox_);
       
       fileNameTextBox_ = new TextBox();
       fileNameTextBox_.setText(context.getUniqueFileStem());
@@ -148,17 +151,14 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
         
       // set label
       String dirLabel = ExportPlotUtils.shortDirectoryName(directory, 250);
-      directoryLabel_.setText(dirLabel);
-      
-      // set tooltip
-      directoryLabel_.setTitle(directory.getPath());
+      directoryTextBox_.setText(dirLabel);
    }
    
    
    private ListBox imageFormatListBox_;
    private TextBox fileNameTextBox_;
    private FileSystemItem directory_;
-   private Label directoryLabel_;
+   private TextBox directoryTextBox_;
   
    
    private final SavePlotAsImageContext context_;
