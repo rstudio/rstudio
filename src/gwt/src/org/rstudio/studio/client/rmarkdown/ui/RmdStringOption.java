@@ -30,7 +30,6 @@ public class RmdStringOption extends RmdNullableOption
       defaultValue_ = option.getDefaultValue();
 
       HTMLPanel panel = new HTMLPanel("");
-      panel.add(getOptionLabelWidget());
       txtValue_ = new TextBox();
       if (initialValue != "null")
          txtValue_.setValue(initialValue);
@@ -38,6 +37,7 @@ public class RmdStringOption extends RmdNullableOption
       txtValue_.getElement().getStyle().setMarginLeft(20, Unit.PX);
       txtValue_.getElement().getStyle().setMarginTop(3, Unit.PX);
       txtValue_.setWidth("75%");
+      panel.add(getOptionLabelWidget(txtValue_.getElement()));
       panel.add(txtValue_);
 
       updateNull();
