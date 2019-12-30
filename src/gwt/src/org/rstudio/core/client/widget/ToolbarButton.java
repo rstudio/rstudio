@@ -251,6 +251,20 @@ public class ToolbarButton extends FocusWidget
       leftImageWidget_.setResource(imageResource);
    }
 
+   public void setText(boolean visible, String text)
+   {
+      if (visible)
+      {
+         setText(text);
+         Roles.getButtonRole().setAriaLabelProperty(getElement(), "");
+      }
+      else
+      {
+         setText("");
+         Roles.getButtonRole().setAriaLabelProperty(getElement(), text);
+      }
+   }
+
    public void setText(String label)
    {
       if (!StringUtil.isNullOrEmpty(label))
