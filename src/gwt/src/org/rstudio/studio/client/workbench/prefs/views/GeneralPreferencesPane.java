@@ -302,6 +302,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                clipboardMonitoring_.setValue(monitoring);
             });
          }
+
+         fullPathInTitle_ = new CheckBox("Show full path to project in window title");
+         advanced.add(lessSpaced(fullPathInTitle_));
       }
       
       Label otherLabel = headerLabel("Other");
@@ -410,6 +413,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                                    prefs.restoreProjectRVersion().getValue());
       }
 
+      if (fullPathInTitle_ != null)
+         fullPathInTitle_.setValue(prefs.fullProjectPathInWindowTitle().getValue());
+
       enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
      
       // projects prefs
@@ -444,6 +450,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
       }
       
+      if (fullPathInTitle_ != null &&
+         fullPathInTitle_.getValue() != prefs.fullProjectPathInWindowTitle().getValue())
+      {
+         restartRequirement.setDesktopRestartRequired(true);
+         prefs.fullProjectPathInWindowTitle().setGlobalValue(fullPathInTitle_.getValue());
+      }
+
       if (renderingEngineWidget_ != null &&
           !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
@@ -536,6 +549,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
+   private CheckBox fullPathInTitle_ = null;
    private CheckBox useGpuBlacklist_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;

@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,7 +109,12 @@ public class DesktopHooks
    String getActiveProjectDir()
    {
       if (workbenchContext_.getActiveProjectDir() != null)
-         return workbenchContext_.getActiveProjectDir().getPath();
+      {
+         if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())
+            return workbenchContext_.getActiveProjectDir().getPath();
+         else
+            return workbenchContext_.getActiveProjectDir().getName();
+      }
       else
          return "";
    }
