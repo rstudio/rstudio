@@ -5,7 +5,7 @@
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1">
    <title>RStudio Server</title>
-   <script type="text/javascript">
+   <script>
       function getBaseUri()
       {
          var index = window.location.href.lastIndexOf("#!request_uri#");
@@ -28,9 +28,9 @@
       document.getElementsByTagName("head")[0].appendChild(cssLink);
       document.getElementsByTagName("head")[0].appendChild(iconLink);
    </script>
-   <style type="text/css">
+   <style>
       #banner {
-         margin-bottom: 0px;
+         margin-bottom: 0;
       }
       p {
          margin: 20px 20px 10px 20px;
@@ -44,7 +44,7 @@
    <form method="post" id="signOutForm" action="auth-sign-out">
      <input type="hidden" name="csrf-token" id="csrf-token"/>
      <div class="header-box">
-       <img class="logo-image" id="logo" src="/images/rstudio-logo.png" />
+       <img alt class="logo-image" id="logo" src="/images/rstudio-logo.png" />
        <span class="username">
         #!username#
         <input type="image" alt="Sign Out" id="signOut" src="/images/signOut.png" />
@@ -56,15 +56,15 @@
    <p>RStudio encountered an error and the request could not be processed:</p>
 
    <ul>
-      <b>#error_description#</b>
+      <li><b>#error_description#</b></li>
    </ul>
    <ul>
-      <b>#error_message#</b>
+      <li><b>#error_message#</b></li>
    </ul>
 
    <p>Please contact your system administrator for assistance, or click <a id="url" href="#" onClick="history.back();">here</a> to go back.</p>
 
-   <script type="text/javascript">
+   <script>
    
       document.getElementById("signOutForm").action = getBaseUri() + "/auth-sign-out";
       document.getElementById("signOut").src = getBaseUri() + "/images/signOut.png";
