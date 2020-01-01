@@ -366,4 +366,8 @@ public class ElementIds
    // ShowPublicKeyDialog
    public final static String PUBLIC_KEY_TEXT = "public_key_text";
    public final static String PUBLIC_KEY_LABEL = "public_key_label";
+
+   // JobQuitControls
+   public final static String JOB_QUIT_LISTBOX = "job_quit_listbox";
+   public static String getJobQuitListbox() { return getElementId(JOB_QUIT_LISTBOX); }
 }
