@@ -66,7 +66,7 @@
          <div ui:field="divExcludeCustomFilter_">
             <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
             <br/>
-            <span class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+            <span ui:field="spanExcludePatternExample_" class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
          </div>
       </p>
    </g:HTMLPanel>
