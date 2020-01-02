@@ -1,8 +1,10 @@
 
-## RStudio v1.2 Patch 3 "Orange Blossom"
+## RStudio v1.2 Patch 4 "Double Marigold"
 
 
 ### Misc
+
+* Fix a crash when debugging with R 4.0+ (#5888)
 
 ### Server Pro
 
