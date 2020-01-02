@@ -95,6 +95,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                });
          rVersion_.setWidth("100%");
          rVersion_.setText("Loading...");
+         rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
          Desktop.getFrame().getRVersion(version -> {
             rVersion_.setText(version);
          });
