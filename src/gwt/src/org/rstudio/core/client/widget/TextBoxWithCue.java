@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import org.rstudio.core.client.dom.DomUtils;
 
 public class TextBoxWithCue extends TextBox
+                            implements CanSetControlId
 {
    public TextBoxWithCue() 
    {
@@ -51,6 +52,12 @@ public class TextBoxWithCue extends TextBox
    {
       cueText_ = cueText;
       DomUtils.setPlaceholder(this, cueText);
+   }
+   
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 
    private String cueText_;

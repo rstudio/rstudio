@@ -6,14 +6,15 @@
     <ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
     <ui:with field="coreRes" type="org.rstudio.core.client.resources.CoreResources" />
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources" />
+    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <g:HTMLPanel ui:field="rootPanel_">
-    <g:Image ui:field="deployIllustration_"></g:Image>
+    <rw:DecorativeImage ui:field="deployIllustration_"/>
     <rw:LayoutGrid><rw:row>
     <rw:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:VerticalPanel ui:field="filePanel_">
            <g:HTMLPanel>
-             <g:InlineLabel text="Publish Files From:"></g:InlineLabel>
+             <g:InlineLabel text="Publish Files From:" ui:field="fileListLabel_"/>
              <g:InlineLabel styleName="{res.style.deployLabel}" 
                             ui:field="deployLabel_">
              </g:InlineLabel>
@@ -34,7 +35,7 @@
                           visible="false">
             <g:Label text="Publish: "></g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
-               <g:Image ui:field="descriptionImage_"></g:Image>
+               <rw:DecorativeImage ui:field="descriptionImage_"/>
             </g:HTMLPanel>
             <rw:ThemedButton ui:field="previewButton_"
                              text="Preview...">
@@ -45,14 +46,14 @@
      <rw:customCell styleName="{res.style.rootCell}">
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%" ui:field="publishFromPanel_">
-            <g:Label styleName="{res.style.firstControlLabel}" 
-                     text="Publish From Account:">
-            </g:Label>
+            <rw:FormLabel styleName="{res.style.firstControlLabel}" 
+                     text="Publish From Account:" elementId="{ElementIds.getRscAccountListLabel}"
+                     ui:field="accountListLabel_"/>
             <rw:HyperlinkLabel styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}"
                        ui:field="addAccountAnchor_" text="Add New Account"/>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
-                                   ui:field="accountList_">
+                                   ui:field="accountList_" elementId="{ElementIds.getRscAccountList}">
          </rsc:RSConnectAccountList>
          <g:Label styleName="{res.style.firstControlLabel}" 
                   text="Publish To Account:"
@@ -75,9 +76,8 @@
                                styleName="{res.style.controlLabel}">
                <g:Label text="Update:">
                </g:Label>
-               <g:Anchor styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
-                          ui:field="createNewAnchor_" text="Create New">
-               </g:Anchor>
+               <rw:HyperlinkLabel stylePrimaryName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
+                          ui:field="createNewAnchor_" text="Create New"/>
             </g:HorizontalPanel>
             <g:HTMLPanel ui:field="appDetailsPanel_" 
                          styleName="{res.style.appDetailsPanel}" 
