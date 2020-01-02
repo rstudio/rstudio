@@ -197,6 +197,10 @@ public class ElementIds
    public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
    public final static String NEW_RMD_AUTHOR = "new_rmd_author";
    public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+   public final static String NEW_RMD_TEMPLATE_LABEL = "new_rmd_template_label";
+   public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
+   public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
+   public static String getNewRmdTemplate() { return getElementId(NEW_RMD_TEMPLATE); }
 
    // RmdTemplateChooser
    public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";
