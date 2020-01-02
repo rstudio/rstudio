@@ -132,10 +132,11 @@ bool isTridentOlderThan(const std::string& userAgent, double version)
 
 bool hasRequiredBrowser(const std::string& userAgent)
 {
-   if (isChromeOlderThan(userAgent, 71))
+   if (isChromeOlderThan(userAgent, 69))
    {
-      // Chrome user agent based on oldest supported Chrome release. See:
-      // https://endoflife.software/applications/browsers/google-chrome
+      // Chrome user agent based on oldest supported Chrome release.
+      // Ideally this should be version 71, but our QT browser in use for RDP is pinned at version 69.
+      // See: https://endoflife.software/applications/browsers/google-chrome
       return false;
    }
    else if (isFirefoxOlderThan(userAgent, 68))

@@ -1004,6 +1004,11 @@
             "enum": ["project", "current", "home"],
             "default": "project",
             "description": "Initial directory for new terminals."
+        },
+        "full_project_path_in_window_title": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show the full path to project in desktop window title."
         }
     }
 }
