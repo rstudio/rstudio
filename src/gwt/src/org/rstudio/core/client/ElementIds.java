@@ -125,7 +125,6 @@ public class ElementIds
    public final static String PUBLISH_ITEM = "publish_item";
    public final static String PUBLISH_RECONNECT = "publish_reconnect";
    public final static String PUBLISH_SHOW_DEPLOYMENTS = "show_deployments";
-   public final static String RSC_SERVER_URL = "rsc_server_url";
    public final static String SHELL_WIDGET = "shell_widget";
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
    public final static String XTERM_WIDGET = "xterm_widget";
@@ -380,4 +379,13 @@ public class ElementIds
    // JobQuitControls
    public final static String JOB_QUIT_LISTBOX = "job_quit_listbox";
    public static String getJobQuitListbox() { return getElementId(JOB_QUIT_LISTBOX); }
+   
+   // RSConnect
+   public final static String RSC_SERVER_URL = "rsc_server_url";
+   public static String getRscServerUrl() { return getElementId(RSC_SERVER_URL); }
+   public final static String RSC_ACCOUNT_LIST_LABEL = "rsc_account_list_label";
+   public static String getRscAccountListLabel() { return getElementId(RSC_ACCOUNT_LIST_LABEL); }
+   public final static String RSC_ACCOUNT_LIST = "rsc_account_list";
+   public static String getRscAccountList() { return getElementId(RSC_ACCOUNT_LIST); }
+   public final static String RSC_FILES_LIST_LABEL = "rsc_files_list_label";
 }

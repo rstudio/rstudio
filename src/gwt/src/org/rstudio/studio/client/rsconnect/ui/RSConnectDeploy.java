@@ -16,8 +16,11 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -175,7 +178,12 @@ public class RSConnectDeploy extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       style_ = RESOURCES.style();
       nameLabel_.setFor(appName_.getTextBox());
-      
+      accountList_.setLabelledBy(accountListLabel_.getElement());
+      ElementIds.assignElementId(fileListLabel_, ElementIds.RSC_FILES_LIST_LABEL);
+      Roles.getListboxRole().set(fileListPanel_.getElement());
+      Roles.getListboxRole().setAriaLabelledbyProperty(fileListPanel_.getElement(),
+         Id.of(fileListLabel_.getElement()));
+
       if (asWizard)
       {
          deployIllustration_.setVisible(false);
@@ -210,18 +218,12 @@ public class RSConnectDeploy extends Composite
          addAccountAnchor_.setVisible(false);
       }
       
-      createNewAnchor_.addClickHandler(new ClickHandler()
+      createNewAnchor_.setClickHandler(() ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-            display_.showMessage(GlobalDisplay.MSG_INFO, 
-                  "Create New Content", 
-                  "To publish this content to a new location, click the Publish drop-down menu " +
-                  "and choose Other Destination.");
-         }
+         display_.showMessage(GlobalDisplay.MSG_INFO, 
+               "Create New Content", 
+               "To publish this content to a new location, click the Publish drop-down menu " +
+               "and choose Other Destination.");
       });
 
       checkUncheckAllButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -1287,7 +1289,7 @@ public class RSConnectDeploy extends Composite
    }
 
    @UiField HyperlinkLabel addAccountAnchor_;
-   @UiField Anchor createNewAnchor_;
+   @UiField HyperlinkLabel createNewAnchor_;
    @UiField Anchor urlAnchor_;
    @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appInfoPanel_;
@@ -1298,6 +1300,7 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel accountEntryPanel_;
    @UiField Image deployIllustration_;
    @UiField Image descriptionImage_;
+   @UiField InlineLabel fileListLabel_;
    @UiField InlineLabel deployLabel_;
    @UiField Label appErrorMessage_;
    @UiField Label appExistingName_;
@@ -1312,6 +1315,7 @@ public class RSConnectDeploy extends Composite
    @UiField VerticalPanel descriptionPanel_;
    @UiField HorizontalPanel publishFromPanel_;
    @UiField RSConnectAccountEntry accountEntry_;
+   @UiField FormLabel accountListLabel_;
    
    // provided fields
    @UiField(provided=true) RSConnectAccountList accountList_;

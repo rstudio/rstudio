@@ -25,7 +25,7 @@ import org.rstudio.core.client.StringUtil;
  * A label associated with a form control. Use in UiBinder-created labels where 
  * the association must be set manually after UI is generated.
  */
-public class FormLabel extends Label
+public class FormLabel extends Label implements CanSetControlId
 {
    public static String NoForId = null;
 
@@ -180,5 +180,11 @@ public class FormLabel extends Label
    public void setAriaHidden(boolean hidden)
    {
       Roles.getTextboxRole().setAriaHiddenState(getElement(), hidden);
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 }
