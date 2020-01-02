@@ -1657,6 +1657,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String TERMINAL_INITIAL_DIRECTORY_CURRENT = "current";
    public final static String TERMINAL_INITIAL_DIRECTORY_HOME = "home";
 
+   /**
+    * Whether to show the full path to project in desktop window title.
+    */
+   public PrefValue<Boolean> fullProjectPathInWindowTitle()
+   {
+      return bool("full_project_path_in_window_title", false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2013,6 +2021,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
       if (source.hasKey("terminal_initial_directory"))
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
+      if (source.hasKey("full_project_path_in_window_title"))
+         fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
    }
    
 

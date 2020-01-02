@@ -313,6 +313,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryProject "project"
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
+#define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 
 class UserPrefValues: public Preferences
 {
@@ -1379,6 +1380,12 @@ public:
     */
    std::string terminalInitialDirectory();
    core::Error setTerminalInitialDirectory(std::string val);
+
+   /**
+    * Whether to show the full path to project in desktop window title.
+    */
+   bool fullProjectPathInWindowTitle();
+   core::Error setFullProjectPathInWindowTitle(bool val);
 
 };
 
