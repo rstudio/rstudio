@@ -155,7 +155,9 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       // main widget
       VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
-            "The following files have unsaved changes:");
+         targets_.size() == 1 ?
+            "The following file has unsaved changes:" :
+            "The following " + targets_.size() + " files have unsaved changes:");
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
 

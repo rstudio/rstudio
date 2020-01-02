@@ -19,7 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.DOM;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -227,6 +230,13 @@ public class RmdTemplateOptionsWidget extends Composite
             panel = new FlowPanel();
             scrollPanel.add(panel);
             optionsTabs_.add(scrollPanel, new Label(category));
+
+            // associate tabpanel widget with controlling tab
+            Roles.getTabpanelRole().set(scrollPanel.getElement());
+            String tabId = DOM.createUniqueId();
+            optionsTabs_.setTabId(scrollPanel, tabId);
+            Roles.getTabpanelRole().setAriaLabelledbyProperty(scrollPanel.getElement(), Id.of(tabId));
+
             tabs_.put(category, panel);
          }
 

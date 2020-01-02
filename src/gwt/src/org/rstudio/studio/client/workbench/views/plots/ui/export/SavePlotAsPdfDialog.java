@@ -241,8 +241,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       
       // view after size
       viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
-      viewAfterSaveCheckBox_.setStylePrimaryName(
-                                       styles.savePdfViewAfterCheckbox());
+      viewAfterSaveCheckBox_.addStyleName(styles.savePdfViewAfterCheckbox());
       viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
       grid.setWidget(6, 1, viewAfterSaveCheckBox_);
       

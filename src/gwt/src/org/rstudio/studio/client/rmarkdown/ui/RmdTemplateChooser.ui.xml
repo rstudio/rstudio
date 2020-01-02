@@ -60,10 +60,10 @@
      }
    </ui:style>
    <g:HTMLPanel>
-   <rs:CaptionWithHelp ui:field="captionWithHelp_" styleName="{style.help}"></rs:CaptionWithHelp>
+   <rs:CaptionWithHelp ui:field="captionWithHelp_" styleName="{style.help}" labelId="{ElementIds.getNewRmdTemplateLabel}"/>
    <rs:SimplePanelWithProgress ui:field="progressPanel_" 
                                styleName="{style.templateListArea}">
-      <rs:WidgetListBox width="100%" height="100%" ui:field="listTemplates_"></rs:WidgetListBox>
+      <rs:WidgetListBox width="100%" height="100%" ui:field="listTemplates_" elementId="{ElementIds.getNewRmdTemplate}"/>
    </rs:SimplePanelWithProgress>
    <g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
                 visible="false" ui:field="noTemplatesFound_">

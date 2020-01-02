@@ -168,7 +168,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (enableNoHandlerAssertions_)
       {
          assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 
-                  : "AppCommand executed but nobody was listening";
+                  : "AppCommand executed but nobody was listening: " + getId();
       }
       
       CommandEvent event = new CommandEvent(this);

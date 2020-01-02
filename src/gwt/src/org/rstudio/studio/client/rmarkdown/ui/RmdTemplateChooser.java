@@ -16,6 +16,8 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
@@ -71,7 +73,8 @@ public class RmdTemplateChooser extends Composite
                   item.getTemplate().getCreateDir() == "true");
          }
       });
-      captionWithHelp_.setFor(listTemplates_);
+      Roles.getListboxRole().setAriaLabelledbyProperty(listTemplates_.getElement(),
+         Id.of(captionWithHelp_.getLabelElement()));
    }
    
    public void populateTemplates()
