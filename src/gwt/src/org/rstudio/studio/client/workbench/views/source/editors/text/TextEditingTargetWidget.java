@@ -121,8 +121,6 @@ public class TextEditingTargetWidget
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
       
-      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
-
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
          {  
@@ -551,10 +549,6 @@ public class TextEditingTargetWidget
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
-      
-      ElementIds.assignElementId(
-            toggleDocOutlineButton_,
-            ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
 
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.
@@ -1484,6 +1478,8 @@ public class TextEditingTargetWidget
 
       ElementIds.assignElementId(sourceButton_, ElementIds.TEXT_SOURCE_BUTTON);
       ElementIds.assignElementId(sourceMenuButton_, ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
+      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
+      ElementIds.assignElementId(toggleDocOutlineButton_, ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
    }
 
    private final TextEditingTarget target_;

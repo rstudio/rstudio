@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.widget.FormListBox;
+import org.rstudio.core.client.widget.FormTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -25,8 +27,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
@@ -96,9 +96,9 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
 
    
    @UiField
-   TextBox txtName_;
+   FormTextBox txtName_;
    @UiField
-   ListBox listDocType_;
+   FormListBox listDocType_;
    
    private Widget mainWidget_; 
 }
