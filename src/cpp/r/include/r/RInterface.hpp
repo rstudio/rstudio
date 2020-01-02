@@ -1,7 +1,7 @@
 /*
  * RInterface.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,7 @@ typedef struct SEXPREC *SEXP;
 
 typedef struct R_BCSTACK_T {
    int tag;
+   int flags;
    union {
       int ival;
       double dval;
@@ -94,9 +95,6 @@ typedef struct RCNTXT_40 {
     struct RPRSTACK *prstack;
     R_BCSTACK_T *nodestack;
     R_BCSTACK_T *bcprottop; // new in R 4.0
-#ifdef BC_INT_STACK
-    IStackval *intstack;
-#endif
     SEXP srcref;
     int browserfinish;
     SEXP returnValue;
@@ -136,7 +134,14 @@ typedef struct RCNTXT_34 {
     SEXP handlerstack;
     SEXP restartstack;
     struct RPRSTACK *prstack;
-    R_BCSTACK_T *nodestack;
+    struct {
+       int tag;
+       union {
+          int ival;
+          double dval;
+          SEXP sxpval;
+       } u;
+    } *nodestack;
 #ifdef BC_INT_STACK
     IStackval *intstack;
 #endif
