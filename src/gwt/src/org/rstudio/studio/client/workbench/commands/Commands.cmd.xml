@@ -1036,7 +1036,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newRDocumentationDoc"
-        menuLabel="R Doc_umentation"
+        menuLabel="R Doc_umentation..."
         desc="Create a new Rd documentation file"
         rebindable="false"/>
 
