@@ -998,7 +998,7 @@ core::Error createGitIgnoreString(const FilePath& dirPath, std::string* pResultS
 
    cmd << "ls-files";
    cmd << "-i";
-   cmd << "--exclude-per-directory" << ".gitIgnore";
+   cmd << "--exclude-per-directory" << ".gitignore";
 
    core::system::ProcessResult result;
    core::system::ProcessOptions options;
