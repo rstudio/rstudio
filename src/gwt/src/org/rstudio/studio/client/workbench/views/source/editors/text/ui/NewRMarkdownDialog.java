@@ -200,13 +200,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       style.ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
             updateOptions(getSelectedTemplate());
-            txtTitle_.setFocus(true);
          }
       });
 
