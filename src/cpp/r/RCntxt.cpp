@@ -39,6 +39,9 @@ RCntxt::RCntxt(void *rawCntxt)
 {
    if (rawCntxt == nullptr)
       return;
+   else if (contextVersion() == RVersion40)
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_40> >(
+                                   static_cast<RCNTXT_40*>(rawCntxt));
    else if (contextVersion() == RVersion34)
       pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34> >(
                                    static_cast<RCNTXT_34*>(rawCntxt));
