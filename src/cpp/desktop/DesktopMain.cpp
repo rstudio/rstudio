@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -481,6 +481,17 @@ int main(int argc, char* argv[])
 
       } while (dir.cdUp());
 #endif
+
+      // look for a version check request; if we have one, just do that and exit
+      static char versionCheck[] = "--version";
+      for (const auto arg: arguments)
+      {
+         if (::strcmp(arg, versionCheck) == 0)
+         {
+            std::cout << RSTUDIO_VERSION << std::endl;
+            return 0;
+         }
+      }
 
       initializeLang();
       initializeRenderingEngine(&arguments);
