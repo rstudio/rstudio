@@ -60,7 +60,7 @@
          <g:ListBox ui:field="listPresetExcludeFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">None</g:item>
-            <g:item value="gitIgnore">Contents of .gitignore</g:item>
+            <g:item value="gitExclusions">Standard Git exclusions</g:item>
             <g:item value="custom">Custom Filter</g:item>
          </g:ListBox>
          <div ui:field="divExcludeCustomFilter_">

@@ -989,7 +989,7 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-core::Error createGitIgnoreString(const FilePath& dirPath, std::string* pResultString)
+core::Error createGitExclusionString(const FilePath& dirPath, std::string* pResultString)
 {
    shell_utils::ShellCommand cmd("git");
    cmd << "-C";
@@ -1091,15 +1091,15 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
-      // to get the contents of each .gitignore file, we run a git command and parse the output
-      if (filePattern.getString().compare("gitIgnore") == 0)
+      // to retrieve the git exclusions, we run a git command and parse the output
+      if (filePattern.getString().compare("gitExclusions") == 0)
       {
-         std::string excludeGitIgnore;
-         error = createGitIgnoreString(dirPath, &excludeGitIgnore);
+         std::string excludeGitExclusion;
+         error = createGitExclusionString(dirPath, &excludeGitExclusion);
          if (error)
             return error;
 
-         std::istringstream stream(excludeGitIgnore);
+         std::istringstream stream(excludeGitExclusion);
          std::vector<std::string> results((std::istream_iterator<std::string>(stream)),
             std::istream_iterator<std::string>());
          for (std::string filePattern : results)
