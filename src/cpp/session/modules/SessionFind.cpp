@@ -993,15 +993,14 @@ core::Error createGitIgnoreString(const FilePath& dirPath, std::string* pResultS
 {
    shell_utils::ShellCommand cmd("git");
    cmd << "-C";
-
    cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
-
    cmd << "ls-files";
    cmd << "-i";
-   cmd << "--exclude-per-directory" << ".gitignore";
+   cmd << "--exclude-standard";
 
    core::system::ProcessResult result;
    core::system::ProcessOptions options;
+
    core::Error error = runCommand(cmd,
                                   options,
                                   &result);
@@ -1105,7 +1104,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
             std::istream_iterator<std::string>());
          for (std::string filePattern : results)
          {
-            filePattern.insert(0, dirPath.getAbsolutePath());
+            filePattern.insert(0, dirPath.getAbsolutePath() + "/");
             cmd << "--exclude=" + filePattern;
          }
       }
