@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.TextArea;
 
 public class FormTextArea extends TextArea
@@ -23,5 +24,10 @@ public class FormTextArea extends TextArea
    public void setElementId(String id)
    {
       getElement().setId(id);
+   }
+   
+   public void setAriaLabel(String label)
+   {
+      Roles.getTextboxRole().setAriaLabelProperty(getElement(), label);
    }
 }
