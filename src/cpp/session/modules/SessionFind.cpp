@@ -1008,9 +1008,7 @@ core::Error createGitExclusionString(const FilePath& dirPath, std::string* pResu
       return error;
 
    *pResultString = result.stdOut;
-   size_t splitAt;
-   while ((splitAt = pResultString->find('\n')) != pResultString->npos)
-      pResultString->replace(splitAt, 1, " ");
+   boost::algorithm::replace_all(*pResultString, "\n", " ");
 
    return Success();
 }
@@ -1091,25 +1089,30 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
    for (json::Value filePattern : grepOptions.excludeFilePatterns)
    {
-      // to retrieve the git exclusions, we run a git command and parse the output
-      if (filePattern.getString().compare("gitExclusions") == 0)
-      {
-         std::string excludeGitExclusion;
-         error = createGitExclusionString(dirPath, &excludeGitExclusion);
-         if (error)
-            return error;
-
-         std::istringstream stream(excludeGitExclusion);
-         std::vector<std::string> results((std::istream_iterator<std::string>(stream)),
-            std::istream_iterator<std::string>());
-         for (std::string filePattern : results)
-         {
-            filePattern.insert(0, dirPath.getAbsolutePath() + "/");
-            cmd << "--exclude=" + filePattern;
-         }
-      }
+      if (filePattern.getType() != json::Type::STRING)
+         LOG_WARNING_MESSAGE("Exclude files contain non-string value");
       else
-         cmd << "--exclude=" + filePattern.getString();
+      {
+         // to retrieve the git exclusions, we run a git command and parse the output
+         if (filePattern.getString().compare("gitExclusions") == 0)
+         {
+            std::string excludeGitExclusion;
+            error = createGitExclusionString(dirPath, &excludeGitExclusion);
+            if (error)
+               return error;
+   
+            std::istringstream stream(excludeGitExclusion);
+            std::vector<std::string> results((std::istream_iterator<std::string>(stream)),
+               std::istream_iterator<std::string>());
+            for (std::string filePattern : results)
+            {
+               filePattern.insert(0, dirPath.getAbsolutePath() + "/");
+               cmd << "--exclude=" + filePattern;
+            }
+         }
+         else
+            cmd << "--exclude=" + filePattern.getString();
+      }
    }
 
    cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;

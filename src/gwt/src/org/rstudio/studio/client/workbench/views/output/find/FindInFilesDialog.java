@@ -108,7 +108,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       private native JsArrayString getExcludeFilePatternsNative() /*-{
 
          if (!this.excludeFilePatterns)
-            this.excludeFilePatterns="";
+            this.excludeFilePatterns = [];
          return this.excludeFilePatterns;
       }-*/;
 
@@ -228,7 +228,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       String excludeFilePatterns =
          listPresetExcludeFilePatterns_.getValue(
                listPresetExcludeFilePatterns_.getSelectedIndex());
-      if (excludeFilePatterns == "custom")
+      if (StringUtil.equals(excludeFilePatterns, "custom"))
          excludeFilePatterns = txtExcludeFilePattern_.getText();
 
       ArrayList<String> excludeList = new ArrayList<String>();
