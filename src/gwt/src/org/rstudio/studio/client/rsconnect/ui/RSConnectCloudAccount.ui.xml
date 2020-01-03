@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
    <ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectCloudAccount.ConnectStyle">
     @eval fixedFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
    
@@ -29,9 +30,9 @@
        <p>Click <b>Show</b> on the token you want to use, then <b>Show
           Secret</b> and <b>Copy to Clipboard.</b> Paste the result here:</p>
      </g:HTML>
-     <g:TextArea styleName="{style.accountInfo} {style.spaced}"
-                 ui:field="accountInfo" visibleLines="5">
-     </g:TextArea>
+     <rw:FormTextArea styleName="{style.accountInfo} {style.spaced}"
+                 ui:field="accountInfo" visibleLines="5" ariaLabel="ShinyApps Token and Secret">
+     </rw:FormTextArea>
      <g:HTML>
         <small>
         Need a ShinyApps.io account? 
