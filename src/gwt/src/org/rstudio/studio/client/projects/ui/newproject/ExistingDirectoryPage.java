@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -78,6 +80,18 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
                "Error", 
                "You must specify an existing working directory to " +
                "create the new project within.");
+         
+         return false;
+      }
+      else if (StringUtil.equals(
+            FileSystemItem.createFile(input.getProjectFile()).getParentPathString(),
+            "~"))
+      {
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               "Error", 
+               "Your home directory cannot be treated as an RStudio Project; " +
+               "select a different directory.");
          
          return false;
       }

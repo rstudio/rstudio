@@ -1,7 +1,7 @@
 /*
  * SessionFilesListingMonitor.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,8 @@
 #include <core/system/FileChangeEvent.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionVCS.hpp"
 
@@ -62,7 +64,7 @@ Error FilesListingMonitor::start(const FilePath& filePath, bool includeHidden,
       return error;
 
    // copy the file listing into a vector of FileInfo which we will order so that it can
-   // be compared with the initial scan of the file montor for changes
+   // be compared with the initial scan of the file monitor for changes
    std::vector<FileInfo> prevFiles;
    std::transform(files.begin(),
                   files.end(),
@@ -72,17 +74,22 @@ Error FilesListingMonitor::start(const FilePath& filePath, bool includeHidden,
    // kickoff new monitor
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(&FilesListingMonitor::onRegistered,
-                                    this, _1, filePath, prevFiles, _2);
-   cb.onRegistrationError =  boost::bind(core::log::logError, _1, ERROR_LOCATION);
+         this, _1, filePath, prevFiles, _2);
+   cb.onRegistrationError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
    cb.onFilesChanged = boost::bind(module_context::enqueFileChangedEvents, filePath, _1);
    cb.onMonitoringError = boost::bind(core::log::logError, _1, ERROR_LOCATION);
    cb.onUnregistered = boost::bind(&FilesListingMonitor::onUnregistered, this, _1);
-   core::system::file_monitor::registerMonitor(filePath,
-                                               false,
-                                               includeHidden ? 
-                                                  acceptAllFiles : 
-                                                  module_context::fileListingFilter,
-                                               cb);
+   if (includeHidden)
+   {
+      core::system::file_monitor::registerMonitor(filePath, false, acceptAllFiles, cb);
+   }
+   else
+   {
+      core::system::file_monitor::registerMonitor(filePath, false, 
+            boost::bind(module_context::fileListingFilter, _1, 
+                  prefs::userPrefs().hideObjectFiles()), 
+            cb);
+   }
 
    return Success();
 }
@@ -155,16 +162,20 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
    // compare the previously returned listing with the initial scan to see if any
    // file changes occurred between listings
    std::vector<core::system::FileChangeEvent> events;
-   core::system::collectFileChangeEvents(prevFiles.begin(),
-                                         prevFiles.end(),
-                                         currFiles.begin(),
-                                         currFiles.end(),
-                                         includeHidden_ ?
-                                            acceptAllFiles :
-                                            module_context::fileListingFilter,
-                                         &events);
+   if (includeHidden_)
+   {
+      core::system::collectFileChangeEvents(prevFiles.begin(), prevFiles.end(),
+            currFiles.begin(), currFiles.end(), acceptAllFiles, &events);
+   }
+   else
+   {
+      core::system::collectFileChangeEvents(prevFiles.begin(), prevFiles.end(),
+            currFiles.begin(), currFiles.end(), 
+            boost::bind(module_context::fileListingFilter, _1, 
+                  prefs::userPrefs().hideObjectFiles()), &events);
+   }
 
-   // enque any events we discovered
+   // enqueue any events we discovered
    if (!events.empty())
       module_context::enqueFileChangedEvents(filePath, events);
 }
@@ -205,7 +216,8 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
       // files which may have been deleted after the listing or which
       // are not end-user visible
       if (filePath.exists() && 
-            (includeHidden || module_context::fileListingFilter(core::FileInfo(filePath))))
+            (includeHidden || module_context::fileListingFilter(core::FileInfo(filePath),
+                prefs::userPrefs().hideObjectFiles())))
       {
          core::json::Object fileObject = module_context::createFileSystemItem(filePath);
          pCtx->decorateFile(filePath, &fileObject);
