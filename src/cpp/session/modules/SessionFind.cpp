@@ -1009,6 +1009,24 @@ void processExcludeFilePatterns(
    }
 }
 
+void processExcludeFilePatterns(
+   const json::Array& excludeFilePatterns, std::string* pCmdArg, bool* pGitFlag)
+{
+   *pGitFlag = false;
+   for (json::Value filePattern : excludeFilePatterns)
+   {
+      if (filePattern.getType() != json::Type::STRING)
+         LOG_WARNING_MESSAGE("Exclude files contain non-string value");
+      else
+      {
+         if (filePattern.getString().compare("gitExclusions") == 0)
+            *pGitFlag = true;
+         else
+            pCmdArg->append("--exclude=" + filePattern.getString());
+      }
+   }
+}
+
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
    LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
 {
