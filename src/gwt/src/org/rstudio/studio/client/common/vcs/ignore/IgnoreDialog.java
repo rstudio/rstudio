@@ -1,7 +1,7 @@
 /*
  * IgnoreDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ public class IgnoreDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       dirChooser_ = new DirectoryChooserTextBox("Directory:", 
                                                 "", 
+                                                ElementIds.TextBoxButtonId.VCS_IGNORE,
                                                 null);
       dirChooser_.addStyleName(RES.styles().dirChooser());
       

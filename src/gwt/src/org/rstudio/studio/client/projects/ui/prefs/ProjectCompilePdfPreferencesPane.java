@@ -1,7 +1,7 @@
 /*
  * ProjectCompilePdfPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -109,6 +110,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
                "(Current Document)", 
                "Browse...", 
                new HelpButton("pdf_root_document", "Get help on Compile PDF root document"),
+               ElementIds.TextBoxButtonId.PDF_ROOT,
                true,
                null);
          

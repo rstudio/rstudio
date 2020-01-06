@@ -73,6 +73,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                "",
                "Change...",
                null,
+               ElementIds.TextBoxButtonId.R_VERSION,
                true,
                new ClickHandler()
                {
@@ -120,6 +121,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       basic.add(dirChooser_ = new DirectoryChooserTextBox(
             "Default working directory (when not in a project):",
+            ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
             null,
             fileDialogs_,
             fsContext_));

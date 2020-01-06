@@ -1,7 +1,7 @@
 /*
  * ExistingDirectoryPage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -41,7 +42,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    {
    
       existingProjectDir_ = new DirectoryChooserTextBox(
-            "Project working directory:", null);
+            "Project working directory:", ElementIds.TextBoxButtonId.EXISTING_PROJECT_DIR, null);
       addWidget(existingProjectDir_);
    }
    

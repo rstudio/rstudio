@@ -1,7 +1,7 @@
 /*
  * InstallPackageDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -189,6 +190,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                                               "",
                                               "Browse...",
                                               null,
+                                              ElementIds.TextBoxButtonId.PACKAGE_ARCHIVE,
                                               true,
                                               browseForArchiveClickHandler_);
             

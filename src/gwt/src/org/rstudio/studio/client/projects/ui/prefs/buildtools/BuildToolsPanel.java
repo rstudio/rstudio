@@ -1,7 +1,7 @@
 /*
  * BuildToolsPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
@@ -56,10 +57,11 @@ public abstract class BuildToolsPanel extends VerticalPanel
    
    protected abstract class PathSelector extends TextBoxWithButton
    {
-      public PathSelector(String label, 
-                          final String emptyLabel)
+      public PathSelector(String label,
+                          final String emptyLabel,
+                          ElementIds.TextBoxButtonId uniqueId)
       {
-         super(label, emptyLabel, "Browse...", null, true, null);
+         super(label, emptyLabel, "Browse...", null, uniqueId, true, null);
       }
       
       
@@ -82,7 +84,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       public DirectorySelector(String label)
       {
-         super(label, "(Project Root)");
+         super(label, "(Project Root)", ElementIds.TextBoxButtonId.PROJECT_ROOT);
          
          addStyleName(RES.styles().directorySelector());
          
@@ -142,9 +144,9 @@ public abstract class BuildToolsPanel extends VerticalPanel
    
    protected class FileSelector extends PathSelector
    {
-      public FileSelector(String label)
+      public FileSelector(String label, ElementIds.TextBoxButtonId uniqueId)
       {
-         super(label, "(None)");
+         super(label, "(None)", uniqueId);
          
          addClickHandler(new ClickHandler() {
 

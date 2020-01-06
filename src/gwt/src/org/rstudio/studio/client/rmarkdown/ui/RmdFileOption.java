@@ -1,7 +1,7 @@
 /*
  * RmdFileOption.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
@@ -30,7 +31,8 @@ public class RmdFileOption extends RmdNullableOption
 
       HTMLPanel panel = new HTMLPanel("");
 
-      fileChooser_ = new FileChooserTextBox("", "", false, null, null);
+      fileChooser_ = new FileChooserTextBox(
+         "", "", ElementIds.TextBoxButtonId.RMD_OPTION, false, null, null);
       if (initialValue != "null")
          fileChooser_.setText(initialValue);
       fileChooser_.getElement().getStyle().setMarginLeft(20, Unit.PX);

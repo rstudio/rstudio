@@ -1,7 +1,7 @@
 /*
  * ProjectTemplateWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
@@ -199,7 +200,7 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem fileInput(final ProjectTemplateWidgetDescription description)
    {
       final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), "",
-                                                               false, null, null);
+         ElementIds.TextBoxButtonId.PROJECT_TEMPLATE, false, null, null);
       
       String defaultValue = description.getDefault();
       if (!StringUtil.isNullOrEmpty(defaultValue))

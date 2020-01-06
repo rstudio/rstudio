@@ -1,7 +1,7 @@
 /*
  * SourceControlPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -54,7 +55,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                        GitServerOperations server,
                                        final GlobalDisplay globalDisplay,
                                        final Commands commands,
-                                       RemoteFileSystemContext fsContext,   
+                                       RemoteFileSystemContext fsContext,
                                        FileDialogs fileDialogs)
    {
       res_ = res;
@@ -104,6 +105,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       gitExePathLabel_ = new FormLabel("Git executable:");
       gitExePathChooser_ = new FileChooserTextBox(gitExePathLabel_,
                                                   "(Not Found)",
+                                                  ElementIds.TextBoxButtonId.GIT,
                                                   false,
                                                   null,
                                                   onGitExePathChosen);
@@ -115,6 +117,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnExePathLabel_ = new FormLabel("SVN executable:");
       svnExePathChooser_ = new FileChooserTextBox(svnExePathLabel_,
                                                   "(Not Found)",
+                                                  ElementIds.TextBoxButtonId.SVN,
                                                   false,
                                                   null,
                                                   null);
@@ -125,6 +128,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       terminalPathLabel_ = new FormLabel("Terminal executable:");
       terminalPathChooser_ = new FileChooserTextBox(terminalPathLabel_,
                                                     "(Not Found)",
+                                                    ElementIds.TextBoxButtonId.VCS_TERMINAL,
                                                     false,
                                                     null, 
                                                     null);

@@ -1,7 +1,7 @@
 /*
  * DirectoryChooserTextBox.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -23,80 +24,83 @@ import com.google.gwt.user.client.ui.Focusable;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
-   public DirectoryChooserTextBox()
+   public DirectoryChooserTextBox(String label, ElementIds.TextBoxButtonId uniqueId)
    {
-      this("", "", null);
-   }
-
-   public DirectoryChooserTextBox(String label)
-   {
-      this(label, "", null); 
+      this(label, "", uniqueId, null); 
    }
 
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel, 
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   Focusable focusAfter)
    {
       this(label, 
            emptyLabel,
+           uniqueId,
            focusAfter,
            RStudioGinjector.INSTANCE.getFileDialogs(),
            RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
    }
 
    public DirectoryChooserTextBox(String label,
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   boolean buttonDisabled,
                                   Focusable focusAfter)
    {
       this(label,
             "",
+            uniqueId,
             buttonDisabled,
             focusAfter,
             RStudioGinjector.INSTANCE.getFileDialogs(),
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext());
    }
 
-   public DirectoryChooserTextBox(String label, Focusable focusAfter)
+   public DirectoryChooserTextBox(String label, ElementIds.TextBoxButtonId uniqueId, Focusable focusAfter)
    {
-      this(label, "", focusAfter);
+      this(label, "", uniqueId, focusAfter);
    }
 
    public DirectoryChooserTextBox(String label, 
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   Focusable focusAfter,
                                   FileDialogs fileDialogs,
                                   FileSystemContext fsContext)
    {
-      this(label, "", focusAfter, fileDialogs, fsContext);
+      this(label, "", uniqueId, focusAfter, fileDialogs, fsContext);
    }
 
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel,
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      this(label, emptyLabel, false, focusAfter, fileDialogs, fsContext);
+      this(label, emptyLabel, uniqueId, false, focusAfter, fileDialogs, fsContext);
    }
 
    public DirectoryChooserTextBox(String label,
                                   String emptyLabel,
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   boolean buttonDisabled,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      this(label, emptyLabel, "Browse...", buttonDisabled, focusAfter, fileDialogs, fsContext);
+      this(label, emptyLabel, "Browse...", uniqueId, buttonDisabled, focusAfter, fileDialogs, fsContext);
    }
 
    public DirectoryChooserTextBox(String label, 
                                   String emptyLabel,
                                   String browseLabel,
+                                  ElementIds.TextBoxButtonId uniqueId,
                                   boolean buttonDisabled,
                                   final Focusable focusAfter,
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      super(label, emptyLabel, browseLabel, null, true, null);
+      super(label, emptyLabel, browseLabel, null, uniqueId, true, null);
 
       if (buttonDisabled)
       {

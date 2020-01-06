@@ -1,7 +1,7 @@
 /*
  * NewPlumberAPI.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.RegexUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -181,7 +182,10 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls_.add(apiNameLabel);
       controls_.add(apiNameTextBox_);
       
-      directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
+      directoryChooserTextBox_ = new DirectoryChooserTextBox(
+         "Create within directory:",
+         ElementIds.TextBoxButtonId.PLUMBER_DIR,
+         null);
       directoryChooserTextBox_.setText(defaultParentDirectory());
   
       controls_.add(new VerticalSpacer("12px"));

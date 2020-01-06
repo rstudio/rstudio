@@ -210,10 +210,61 @@ public class ElementIds
    public final static String NEW_SHINY_APP_SINGLE_FILE = "new_shiny_app_single_file";
    public final static String NEW_SHINY_APP_MULTI_FILE = "new_shiny_app_multi_file";
 
-   // TextBoxWithButton
-   public final static String TEXTBOXBUTTON_TEXT = "textboxbutton_text";
-   public final static String TEXTBOXBUTTON_BUTTON = "textboxbutton_button";
-   public final static String TEXTBOXBUTTON_HELP = "textboxbutton_help";
+   // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
+   public final static String TBB_TEXT = "tbb_text";
+   public final static String TBB_BUTTON = "tbb_button";
+   public final static String TBB_HELP = "tbb_help";
+
+   // TextBoxWithButton and subclasses -- unique suffix added to text field, button, and help link;
+   // only has to be unique within this enum
+   public enum TextBoxButtonId
+   {
+      BUILD_SCRIPT("build_Script"),
+      CA_BUNDLE("ca_bundle"),
+      DEFAULT_WORKING_DIR("default_working_dir"),
+      EXISTING_PROJECT_DIR("existing_project_dir"),
+      FIND_IN("find_in"),
+      GIT("git"),
+      JOB_SCRIPT("job_script"),
+      JOB_WORKING_DIR("job_working_dir"),
+      ODBC_PATH("odbc_path"),
+      PACKAGE_ARCHIVE("package_archive"),
+      PDF_ROOT("pdf_root"),
+      PLUMBER_DIR("plumber_dir"),
+      PRIMARY_CRAN("primary_cran"),
+      PRO_JOB_DIR("pro_job_dir"),
+      PRO_JOB_SCRIPT("pro_job_script"),
+      PRO_NEW_SESSION_DIR("pro_new_session_dir"),
+      PROJECT_PARENT("project_parent"),
+      PROJECT_REPO_DIR("project_repo_dir"),
+      PROJECT_ROOT("project_root"),
+      PROJECT_TEMPLATE("project_template"),
+      PROJECT_TEXT_ENCODING("project_text_encoding"),
+      RMD_DIR("rmd_dir"),
+      RMD_OPTION("rmd_option"),
+      RMD_TEMPLATE_DIR("rmd_template_dir"),
+      R_VERSION("r_version"),
+      SHINY_DIR("shiny_dir"),
+      SVN("svn"),
+      TERMINAL("terminal"),
+      TEXT_ENCODING("text_encoding"),
+      UPLOAD_TARGET("upload_target"),
+      VCS_IGNORE("vcs_ignore"),
+      VCS_TERMINAL("vcs_terminal");
+
+      TextBoxButtonId(String value)
+      {
+         value_ = value;
+      }
+
+      @Override
+      public String toString()
+      {
+         return value_;
+      }
+
+      private final String value_;
+   }
 
    // TerminalPane
    public final static String TERMINAL_DROPDOWN_MENUBUTTON = "terminal_dropdown_menubutton";
