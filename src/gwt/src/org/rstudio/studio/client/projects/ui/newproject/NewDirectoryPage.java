@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -104,7 +105,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // project dir
       newProjectParent_ = new DirectoryChooserTextBox(
-            "Create project as subdirectory of:", txtProjectName_);
+            "Create project as subdirectory of:",
+            ElementIds.TextBoxButtonId.PROJECT_PARENT,
+            txtProjectName_);
       addWidget(newProjectParent_);
       
       // if git is available then add git init

@@ -1,7 +1,7 @@
 /*
  * NewShinyWebApplication.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -230,7 +230,10 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       else
          appTypeSingleFileButton_.setValue(true);
       
-      directoryChooserTextBox_ = new DirectoryChooserTextBox("Create within directory:", null);
+      directoryChooserTextBox_ = new DirectoryChooserTextBox(
+         "Create within directory:",
+         ElementIds.TextBoxButtonId.SHINY_DIR,
+         null);
       directoryChooserTextBox_.setText(defaultParentDirectory());
       directoryChooserTextBox_.addStyleName(RES.styles().textBox());
       

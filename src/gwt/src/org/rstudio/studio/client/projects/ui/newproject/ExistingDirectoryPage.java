@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -43,7 +44,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    {
    
       existingProjectDir_ = new DirectoryChooserTextBox(
-            "Project working directory:", null);
+            "Project working directory:", ElementIds.TextBoxButtonId.EXISTING_PROJECT_DIR, null);
       addWidget(existingProjectDir_);
    }
    

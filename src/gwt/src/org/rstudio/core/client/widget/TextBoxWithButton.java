@@ -1,7 +1,7 @@
 /*
  * TextBoxWithButton.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ public class TextBoxWithButton extends Composite
     * @param emptyLabel placeholder text
     * @param action button text
     * @param helpButton optional HelpButton
+    * @param uniqueId unique elementId for this instance
     * @param readOnly textbox editability
     * @param handler button click callback
     */
@@ -45,26 +46,29 @@ public class TextBoxWithButton extends Composite
                             String emptyLabel,
                             String action,
                             HelpButton helpButton,
+                            ElementIds.TextBoxButtonId uniqueId,
                             boolean readOnly,
                             ClickHandler handler)
    {
-      this(label, null, emptyLabel, action, helpButton, readOnly, handler);
+      this(label, null, emptyLabel, action, helpButton, uniqueId, readOnly, handler);
    }
 
    /**
     * @param existingLabel label control to associate with textbox
     * @param emptyLabel placeholder text
     * @param action button text
+    * @param uniqueId unique elementId for this instance
     * @param readOnly textbox editability
     * @param handler button click callback
     */
    public TextBoxWithButton(FormLabel existingLabel,
                             String emptyLabel,
                             String action,
+                            ElementIds.TextBoxButtonId uniqueId,
                             boolean readOnly,
                             ClickHandler handler)
    {
-      this(null, existingLabel, emptyLabel, action, null, readOnly, handler);
+      this(null, existingLabel, emptyLabel, action, null, uniqueId, readOnly, handler);
    }
 
    protected TextBoxWithButton(String label,
@@ -72,10 +76,12 @@ public class TextBoxWithButton extends Composite
                                String emptyLabel,
                                String action,
                                HelpButton helpButton,
+                               ElementIds.TextBoxButtonId uniqueId,
                                boolean readOnly,
                                ClickHandler handler)
    {
       emptyLabel_ = StringUtil.isNullOrEmpty(emptyLabel) ? "" : emptyLabel;
+      uniqueId_ = "_" + uniqueId;
       
       textBox_ = new TextBox();
       textBox_.setWidth("100%");
@@ -215,13 +221,14 @@ public class TextBoxWithButton extends Composite
       // Some UI scenarios create multiple TextBoxWithButtons before adding them to the
       // DOM; defer assigning IDs until added to DOM in order to detect and
       // prevent duplicates.
-      ElementIds.assignElementId(textBox_, ElementIds.TEXTBOXBUTTON_TEXT);
-      ElementIds.assignElementId(themedButton_, ElementIds.TEXTBOXBUTTON_BUTTON);
+      ElementIds.assignElementId(textBox_, ElementIds.TBB_TEXT + uniqueId_);
+      ElementIds.assignElementId(themedButton_, ElementIds.TBB_BUTTON + uniqueId_);
       if (helpButton_ != null)
-         ElementIds.assignElementId(helpButton_, ElementIds.TEXTBOXBUTTON_HELP);
+         ElementIds.assignElementId(helpButton_, ElementIds.TBB_HELP + uniqueId_);
       if (lblCaption_ != null)
          lblCaption_.setFor(textBox_);
    }
+
 
    private final HorizontalPanel inner_;
    private FormLabel lblCaption_;
@@ -231,4 +238,5 @@ public class TextBoxWithButton extends Composite
    private final String emptyLabel_;
    private String useDefaultValue_;
    private String text_ = "";
+   private String uniqueId_;
 }
