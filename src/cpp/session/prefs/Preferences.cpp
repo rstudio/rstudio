@@ -100,7 +100,7 @@ void Preferences::destroyLayers()
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      // Give each layer a chance to destoy itself
+      // Give each layer a chance to destroy itself
       for (auto layer: layers_)
       {
          layer->destroy();

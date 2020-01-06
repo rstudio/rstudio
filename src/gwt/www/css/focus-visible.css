@@ -10,7 +10,7 @@
     outline: none;
 }
 
-.js-focus-visible .focus-visible, input[type="checkbox"].focus-visible {
+.js-focus-visible .focus-visible:not(.gwt-MenuBar), input[type="checkbox"].focus-visible {
     outline: #8AA9DB solid 2px !important;
     outline-offset: -1px !important;
 }

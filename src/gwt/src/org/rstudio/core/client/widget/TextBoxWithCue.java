@@ -1,7 +1,7 @@
 /*
  * TextBoxWithCue.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import org.rstudio.core.client.dom.DomUtils;
 
 public class TextBoxWithCue extends TextBox
+                            implements CanSetControlId
 {
    public TextBoxWithCue() 
    {
@@ -51,6 +52,12 @@ public class TextBoxWithCue extends TextBox
    {
       cueText_ = cueText;
       DomUtils.setPlaceholder(this, cueText);
+   }
+   
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 
    private String cueText_;

@@ -1,7 +1,7 @@
 /*
  * WidgetListBox.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,7 +56,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class WidgetListBox<T extends Widget> 
    extends FocusPanel 
    implements HasChangeHandlers,
-              HasSelectionCommitHandlers<T>
+              HasSelectionCommitHandlers<T>,
+              CanSetControlId
 {
    private class ClickableHTMLPanel extends HTMLPanel
       implements HasClickHandlers
@@ -301,7 +302,13 @@ public class WidgetListBox<T extends Widget>
       emptyTextLabel_.setText(text);
       updateEmptyText();
    }
-   
+
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
+   }
+
    private void updateEmptyText()
    {
       if (emptyTextBox_.getParent() == this && items_.size() > 0)

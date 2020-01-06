@@ -1,7 +1,7 @@
 /*
  * FormLabel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ import org.rstudio.core.client.StringUtil;
  * A label associated with a form control. Use in UiBinder-created labels where 
  * the association must be set manually after UI is generated.
  */
-public class FormLabel extends Label
+public class FormLabel extends Label implements CanSetControlId
 {
    public static String NoForId = null;
 
@@ -180,5 +180,11 @@ public class FormLabel extends Label
    public void setAriaHidden(boolean hidden)
    {
       Roles.getTextboxRole().setAriaHiddenState(getElement(), hidden);
+   }
+
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 }

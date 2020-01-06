@@ -138,6 +138,17 @@ private:
          {
             if (!ec)
             {
+               // work-around - in some rare instances, we've seen that Boost will still
+               // return us an empty endpoint_iterator, even when successful, which is
+               // contrary to the documentation
+               if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
+               {
+                  handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
+                                                            boost::system::system_category()),
+                                  ERROR_LOCATION);
+                  return;
+               }
+
                // try endpoints until we successfully connect with one
                boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
                pSocket_->async_connect(

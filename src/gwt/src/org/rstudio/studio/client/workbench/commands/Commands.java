@@ -505,6 +505,7 @@ public abstract class
    public abstract AppCommand rstudioAgreement();
    public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
+   public abstract AppCommand signOut();
  
    // Build
    public abstract AppCommand buildAll();

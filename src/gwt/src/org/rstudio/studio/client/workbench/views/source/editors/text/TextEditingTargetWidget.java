@@ -75,7 +75,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -122,8 +121,6 @@ public class TextEditingTargetWidget
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
       
-      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
-
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
          {  
@@ -552,10 +549,6 @@ public class TextEditingTargetWidget
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
-      
-      ElementIds.assignElementId(
-            toggleDocOutlineButton_,
-            ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
 
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.
@@ -847,11 +840,11 @@ public class TextEditingTargetWidget
       if (width == 0)
          return;
       
-      texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
-      compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
-      knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
+      texToolbarButton_.setText(width >= 520, "Format");
+      runButton_.setText(((width >= 480) && !isShinyFile()), "Run");
+      compilePdfButton_.setText(width >= 450, "Compile PDF");
+      previewHTMLButton_.setText(width >= 450, previewCommandText_);
+      knitDocumentButton_.setText(width >= 450, knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || 
           editor_.getFileType().isSql() || editor_.getFileType().canPreviewFromR())
@@ -864,7 +857,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       }
 
-      sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
+      sourceButton_.setText(width >= 400, sourceCommandText_);
    }
    
    
@@ -1485,6 +1478,8 @@ public class TextEditingTargetWidget
 
       ElementIds.assignElementId(sourceButton_, ElementIds.TEXT_SOURCE_BUTTON);
       ElementIds.assignElementId(sourceMenuButton_, ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
+      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
+      ElementIds.assignElementId(toggleDocOutlineButton_, ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
    }
 
    private final TextEditingTarget target_;

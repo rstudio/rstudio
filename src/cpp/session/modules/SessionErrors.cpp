@@ -208,7 +208,7 @@ Error initialize()
    events().onDeferredInit.connect(bind(detectHandlerChange,
                                         pErrorHandler, true));
    prefs::userState().onChanged.connect(bind(onUserSettingsChanged,
-                                         _1,
+                                         _2,
                                          pErrorHandler,
                                          pHandleUserErrorsOnly));
 

@@ -1,8 +1,8 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
-
+ * Copyright (C) 2009-20 by RStudio, Inc.
+ *
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -433,7 +433,7 @@ bool isDirectoryMonitored(const core::FilePath& directory);
 bool isRScriptInPackageBuildTarget(const core::FilePath& filePath);
 
 // convenience method for filtering out file listing and changes
-bool fileListingFilter(const core::FileInfo& fileInfo);
+bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles);
 
 // enque file changed events
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event);

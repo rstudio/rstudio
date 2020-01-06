@@ -13,17 +13,17 @@
 
 .fileNameTextBox {
    margin-top: -5px;
-   width: 165px;
+   width: 250px;
 }
 
 .directoryButton {
   margin-left: -2px;
 }
 
-.directoryLabel {
+.directoryTextBox {
    margin-top: -2px;
    width: 250px;
-   cursor: default;
+   background: #f3f4f4;
 }
 
 .imageOptionLabel {
@@ -125,6 +125,10 @@
 .savePdfDirectoryTextBox, .savePdfFileNameTextBox {
    margin-left: 10px;
    width: 280px;
+}
+
+.savePdfDirectoryTextBox {
+   background: #f3f4f4;
 }
 
 .savePdfViewAfterCheckbox {

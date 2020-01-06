@@ -41,6 +41,14 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
       addLeftButton(new ThemedButton("No", 
             returnResult(onSelected, RENDER_SHINY_NO)),
             ElementIds.DIALOG_NO_BUTTON);
+
+      setARIADescribedBy(warning_.getMessageElement());
+   }
+
+   @Override
+   protected void focusInitialControl()
+   {
+      focusOkButton();
    }
 
    @Override

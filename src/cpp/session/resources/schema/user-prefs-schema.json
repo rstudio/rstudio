@@ -438,6 +438,11 @@
             "default": 1000,
             "description": "The maximum number of characters to display in a single line in the R console."
         },
+        "console_max_lines": {
+            "type": "integer",
+            "default": 1000,
+            "description": "The maximum number of console actions to store and display in the console scrollback buffer."
+        },
         "ansi_console_mode": {
             "type": "string",
             "enum": ["off", "on", "strip"],
@@ -620,6 +625,11 @@
             "enum": ["user", "none", "pane", "window", "browser"],
             "default": "window",
             "description": "Where to display Shiny applications when they are run."
+        },
+        "shiny_background_jobs": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to run Shiny applications as background jobs."
         },
         "plumber_viewer_type": {
             "type": "string",
@@ -994,6 +1004,11 @@
             "enum": ["project", "current", "home"],
             "default": "project",
             "description": "Initial directory for new terminals."
+        },
+        "full_project_path_in_window_title": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show the full path to project in desktop window title."
         }
     }
 }

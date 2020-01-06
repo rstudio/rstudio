@@ -1,7 +1,7 @@
 /*
  * SessionConsole.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,8 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
+
+#define kMinConsoleLines 10
 
 using namespace rstudio::core;
 
@@ -198,6 +200,20 @@ Error initialize()
          return error;
    }
 
+   // set console action capacity from user pref, presuming the value is reasonable
+   int maxLines = prefs::userPrefs().consoleMaxLines();
+   if (maxLines < kMinConsoleLines)
+   {
+      LOG_WARNING_MESSAGE("Console must have at least " + 
+            safe_convert::numberToString(kMinConsoleLines) + 
+            " lines; ignoring invalid max line setting '" +
+            safe_convert::numberToString(maxLines) + "'");
+   }
+   else
+   {
+      r::session::consoleActions().setCapacity(maxLines);
+   }
+
    // register routines
    RS_REGISTER_CALL_METHOD(rs_getPendingInput);
    
@@ -212,7 +228,7 @@ Error initialize()
 
    // more initialization 
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionConsole.R"))
       (bind(registerRpcMethod, "reset_console_actions", resetConsoleActions));

@@ -480,7 +480,8 @@ void ProjectContext::onDeferredInit(bool newSession)
    core::system::file_monitor::registerMonitor(
                                          directory(),
                                          true,
-                                         module_context::fileListingFilter,
+                                         boost::bind(module_context::fileListingFilter,
+                                            _1, prefs::userPrefs().hideObjectFiles()),
                                          cb);
 }
 

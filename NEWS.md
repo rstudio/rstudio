@@ -96,6 +96,9 @@
 * Zoom Left/Right Column commands for keyboard users (#5874)
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
 * RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
+* Add support for running Shiny applications as background jobs (#5190)
+* Make maximum lines in R console configurable; was previously fixed at 1000 (#5919)
+* Option to only show project name instead of full path in desktop window title (#1817)
 
 ### Bugfixes
 
@@ -119,4 +122,5 @@
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
 * New tools for viewing and managing server users when using named user licensing
+* Floating licensing can now pass through an HTTPS proxy
 * The Launcher service now starts and runs automatically when the system starts

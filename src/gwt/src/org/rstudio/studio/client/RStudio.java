@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
@@ -124,7 +125,7 @@ public class RStudio implements EntryPoint
    {
       final Label background = new Label();
       ariaLoadingMessage_ = new Label();
-      A11y.setAlertRole(ariaLoadingMessage_, true);
+      Roles.getAlertRole().set(ariaLoadingMessage_.getElement());
       A11y.setVisuallyHidden(ariaLoadingMessage_);
 
       background.getElement().getStyle().setZIndex(1000);
@@ -340,11 +341,12 @@ public class RStudio implements EntryPoint
                RootLayoutPanel.get(),
                dismissProgressAnimation_);
       }
-      else if (ShinyApplicationSatellite.NAME.equals(view))
+      else if (view != null && view.startsWith(
+            ShinyApplicationSatellite.NAME_PREFIX))
       {
-         RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
-               RootLayoutPanel.get(),
-               dismissProgressAnimation_);
+         ShinyApplicationSatellite satellite = 
+               new ShinyApplicationSatellite(view);
+         satellite.go(RootLayoutPanel.get(), dismissProgressAnimation_);
       }
       else if (RmdOutputSatellite.NAME.equals(view))
       {

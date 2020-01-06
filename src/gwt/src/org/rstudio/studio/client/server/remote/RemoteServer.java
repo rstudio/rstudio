@@ -4789,6 +4789,19 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void runShinyBackgroundApp(String shinyFile, String extendedType,
+                                     ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(shinyFile));
+      params.set(1, new JSONString(extendedType));
+      sendRequest(RPC_SCOPE,
+            "run_shiny_background_app",
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getPlumberViewerType(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE,
@@ -5845,9 +5858,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void stopShinyApp(ServerRequestCallback<Void> callback)
+   public void stopShinyApp(String id, ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
       sendRequest(RPC_SCOPE, STOP_SHINY_APP, params, true, callback);
    }
   

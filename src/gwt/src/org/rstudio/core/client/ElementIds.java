@@ -1,7 +1,7 @@
 /*
  * ElementIds.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -125,7 +125,6 @@ public class ElementIds
    public final static String PUBLISH_ITEM = "publish_item";
    public final static String PUBLISH_RECONNECT = "publish_reconnect";
    public final static String PUBLISH_SHOW_DEPLOYMENTS = "show_deployments";
-   public final static String RSC_SERVER_URL = "rsc_server_url";
    public final static String SHELL_WIDGET = "shell_widget";
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
    public final static String XTERM_WIDGET = "xterm_widget";
@@ -197,6 +196,10 @@ public class ElementIds
    public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
    public final static String NEW_RMD_AUTHOR = "new_rmd_author";
    public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+   public final static String NEW_RMD_TEMPLATE_LABEL = "new_rmd_template_label";
+   public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
+   public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
+   public static String getNewRmdTemplate() { return getElementId(NEW_RMD_TEMPLATE); }
 
    // RmdTemplateChooser
    public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";
@@ -350,6 +353,12 @@ public class ElementIds
    public final static String SW_HELP = "sw_help";
    public static String getSwHelp() { return getElementId(SW_HELP); }
 
+   // NewRdDialog
+   public final static String NEW_RD_NAME = "new_rd_name";
+   public static String getNewRdName() { return getElementId(NEW_RD_NAME); }
+   public final static String NEW_RD_TEMPLATE = "new_rd_template";
+   public static String getNewRdTemplate() { return getElementId(NEW_RD_TEMPLATE); }
+
    // SvnResolveDialog
    public final static String SVN_RESOLVE_GROUP = "svn_resolve_group";
    public final static String SVN_RESOLVE_MINE = "svn_resolve_mine";
@@ -366,4 +375,20 @@ public class ElementIds
    // TutorialPane
    public final static String TUTORIAL_FRAME = "tutorial_frame";
    
+   // ShowPublicKeyDialog
+   public final static String PUBLIC_KEY_TEXT = "public_key_text";
+   public final static String PUBLIC_KEY_LABEL = "public_key_label";
+
+   // JobQuitControls
+   public final static String JOB_QUIT_LISTBOX = "job_quit_listbox";
+   public static String getJobQuitListbox() { return getElementId(JOB_QUIT_LISTBOX); }
+   
+   // RSConnect
+   public final static String RSC_SERVER_URL = "rsc_server_url";
+   public static String getRscServerUrl() { return getElementId(RSC_SERVER_URL); }
+   public final static String RSC_ACCOUNT_LIST_LABEL = "rsc_account_list_label";
+   public static String getRscAccountListLabel() { return getElementId(RSC_ACCOUNT_LIST_LABEL); }
+   public final static String RSC_ACCOUNT_LIST = "rsc_account_list";
+   public static String getRscAccountList() { return getElementId(RSC_ACCOUNT_LIST); }
+   public final static String RSC_FILES_LIST_LABEL = "rsc_files_list_label";
 }

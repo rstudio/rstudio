@@ -19,6 +19,8 @@
 #include <session/jobs/Job.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
+#include "AsyncRJobManager.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -51,13 +53,13 @@ public:
          bool importEnv,
          const std::string& exportEnv);
 
-   std::string name();
-   std::string code();
-   core::FilePath path();
-   std::string encoding();
-   core::FilePath workingDir();
-   bool importEnv();
-   std::string exportEnv();
+   std::string name() const;
+   std::string code() const;
+   core::FilePath path() const;
+   std::string encoding() const;
+   core::FilePath workingDir() const;
+   bool importEnv() const;
+   std::string exportEnv() const;
    void setProcOptions(async_r::AsyncRProcessOptions options);
    boost::optional<async_r::AsyncRProcessOptions> procOptions();
 private:
@@ -69,6 +71,26 @@ private:
    bool importEnv_;
    std::string exportEnv_;
    boost::optional<async_r::AsyncRProcessOptions> procOptions_;
+};
+
+
+class ScriptJob : public AsyncRJob
+{
+public:
+   static boost::shared_ptr<ScriptJob> create(
+         const ScriptLaunchSpec& spec);
+   void start();
+
+private:
+   ScriptJob(const ScriptLaunchSpec& spec);
+   void onStdout(const std::string& output);
+   void onCompleted(int exitStatus);
+   void onProgress(const std::string& cat, const std::string& argument);
+
+   ScriptLaunchSpec spec_;
+   core::FilePath import_;
+   core::FilePath export_;
+   core::FilePath tempCode_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 
