@@ -99,6 +99,7 @@
 * Add support for running Shiny applications as background jobs (#5190)
 * Make maximum lines in R console configurable; was previously fixed at 1000 (#5919)
 * Option to only show project name instead of full path in desktop window title (#1817)
+* New `rstudio --version` command to return the version of RStudio Desktop (#3922)
 
 ### Bugfixes
 
