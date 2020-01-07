@@ -72,7 +72,9 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    public JsArray<LintItem> getLint()
    {
       TextFileType fileType = docDisplay_.getFileType();
-      TokenPredicate tokenPredicate = fileType.isR() ? fileType.getCommentsTokenPredicate() : fileType.getTokenPredicate();
+
+      // only spell check comments in code files
+      TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
 
       // only get tokens for the visible screen
       Iterable<Range> wordSource = docDisplay_.getWords(
@@ -214,7 +216,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
          TextFileType fileType = docDisplay_.getFileType();
-         TokenPredicate tokenPredicate = fileType.isR() ? fileType.getCommentsTokenPredicate() : fileType.getTokenPredicate();
+         TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
          Position endOfLine = Position.create(pos.getRow()+1, 0);
          Iterable<Range> wordSource = docDisplay_.getWords(
             tokenPredicate,

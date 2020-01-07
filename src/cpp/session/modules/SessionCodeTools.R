@@ -1,7 +1,7 @@
 #
 # SessionCodeTools.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -2080,16 +2080,8 @@
    contents
 })
 
-.rs.addFunction("discoverPackageDependencies", function(id, extension)
+.rs.addFunction("parsePackageDependencies", function(contents, extension)
 {
-   # check to see if we have available packages -- if none, bail
-   available <- .rs.availablePackages()
-   if (is.null(available$value))
-      return(character())
-   
-   # read the associated source file
-   contents <- .rs.readSourceDocument(id)
-   
    # NOTE: the following regular expressions were extracted from knitr;
    # we pull these out here just to avoid potentially loading the knitr
    # package without the user's consent
@@ -2122,8 +2114,58 @@
       return(character())
 
    }
-   
+
    discoveries <- new.env(parent = emptyenv())
+
+   # for R Markdown docs, scan the YAML header (requires the YAML package, a dependency of
+   # rmarkdown)
+   if (requireNamespace("yaml", quietly = TRUE))
+   {
+      # split document into sections based on the YAML header delimter
+      sections <- unlist(strsplit(contents, "---", fixed = TRUE))
+      if (length(sections) > 2)
+      {
+         front <- yaml::read_yaml(text = sections[[2]])
+
+         # start with an empty output
+         output <- NULL
+
+         if (!is.null(names(front$output)))
+         {
+            # if the output key has children, it will appear as a list name
+            # output:
+            #   pkg_name::out_fmt:
+            #     foo: bar
+            output <- names(front$output)[[1]]
+         }
+         else if (is.character(front$output))
+         {
+            # if the output key doesn't have children, it will appear as a plain character
+            #
+            # output: pkg_name::out_fmt
+            output <- front$output
+         }
+
+         # check for references to an R package in output format
+         if (!is.null(output))
+         {
+            format <- unlist(strsplit(output, "::"))
+            if (length(format) > 1)
+            {
+               discoveries[[format[[1]]]] <- TRUE
+            }
+         }
+
+         # check for runtime: shiny or parameters (requires the Shiny R package)
+         if (identical(front$runtime, "shiny") || 
+             identical(front$runtime, "shiny_prerendered") ||
+             !is.null(front$params))
+         {
+            discoveries[["shiny"]] <- TRUE
+         }
+
+      }
+   }
    
    handleLibraryRequireCall <- function(node) {
       
@@ -2225,7 +2267,22 @@
       handleRequireNamespaceCall(node)
    })
    
-   packages <- ls(envir = discoveries)
+   # return discovered packages
+   ls(envir = discoveries)
+})
+
+.rs.addFunction("discoverPackageDependencies", function(id, extension)
+{
+   # check to see if we have available packages -- if none, bail
+   available <- .rs.availablePackages()
+   if (is.null(available$value))
+      return(character())
+   
+   # read the associated source file
+   contents <- .rs.readSourceDocument(id)
+
+   # parse to find packages
+   packages <- .rs.parsePackageDependencies(contents, extension)
    
    # keep only packages that are available in an active repository
    packages <- packages[packages %in% rownames(available$value)]

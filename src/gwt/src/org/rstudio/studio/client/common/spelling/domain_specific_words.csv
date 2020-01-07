@@ -15,6 +15,7 @@ artefacts
 asan
 aspirationally
 async
+atomicity
 autotool
 az
 backports
@@ -277,6 +278,7 @@ renviron
 repl
 repo
 reprex
+reproducibility
 restructing
 retryable
 revdep
@@ -296,9 +298,10 @@ roxygen
 rprofile
 rprojroot
 rray's
+rsconnect
 rstd
 rstudio
-rstudio's
+rstudioapi
 rstudio’s
 rticles
 rtools
@@ -344,6 +347,8 @@ sw
 symlink
 symlinks
 sys
+temp
+tempfile
 templated
 templating
 testthat
@@ -353,6 +358,7 @@ tibble
 tibbles
 tidyverse
 tierney
+tmp
 toc
 todo
 tokenizer

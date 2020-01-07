@@ -19,6 +19,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
 import java.util.HashSet;
 
@@ -64,5 +65,20 @@ public class RFileType extends TextFileType
       result.add(commands.debugBreakpoint());
       result.add(commands.insertRoxygenSkeleton());
       return result;
+   }
+
+   @Override
+   public TokenPredicate getSpellCheckTokenPredicate()
+   {
+      return (token, row, column) ->
+      {
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
+         }
+
+         return reCommentType_.match(token.getType(), 0) != null &&
+            reKeywordType_.match(token.getType(), 0) == null &&
+            reIdentifierType_.match(token.getType(), 0) == null;
+      };
    }
 }
