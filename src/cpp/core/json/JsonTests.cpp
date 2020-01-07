@@ -1008,6 +1008,46 @@ TEST_CASE("Json")
       REQUIRE(++itr1 != ++itr2);
       REQUIRE(arr1.end() != arr2.end());
    }
+
+   SECTION("Can set pointer value")
+   {
+      json::Object obj;
+      obj["a"] = 1;
+      obj["b"] = 2;
+
+      json::Array cArray;
+      cArray.push_back(json::Value("1"));
+      cArray.push_back(json::Value("2"));
+      cArray.push_back(json::Value("3"));
+
+      obj["c"] = cArray;
+
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/d", json::Value(4)));
+
+      json::Object eObj;
+      eObj["param1"] = "param1";
+      eObj["param2"] = "param2";
+
+      json::Object param3Obj;
+      param3Obj["nested"] = "nestedValue";
+      eObj["param3"] = param3Obj;
+
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/e", eObj));
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/c/3", json::Value("4")));
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/e/param3/nested2", json::Value("nestedValue2")));
+
+      REQUIRE(obj["c"].getArray().getSize() == 4);
+      REQUIRE(obj["c"].getArray()[3].getString() == "4");
+      REQUIRE(obj["d"].getInt() == 4);
+      REQUIRE(obj["e"].getObject()["param3"].getObject()["nested"].getString() == "nestedValue");
+      REQUIRE(obj["e"].getObject()["param3"].getObject()["nested2"].getString() == "nestedValue2");
+   }
+
+   SECTION("Invalid pointer path returns error on set")
+   {
+      json::Object obj;
+      REQUIRE(obj.setValueAtPointerPath("path must begin with a /", json::Value(1)));
+   }
 }
 
 } // end namespace tests

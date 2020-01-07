@@ -49,6 +49,12 @@ struct is_error_code_enum<rapidjson::ParseErrorCode>
    static const bool value = true;
 };
 
+template <>
+struct is_error_code_enum<rapidjson::PointerParseErrorCode>
+{
+   static const bool value = true;
+};
+
 } // namespace system
 } // namespace boost
 
@@ -56,6 +62,7 @@ namespace rstudio {
 namespace core {
 namespace json {
    const boost::system::error_category& jsonParseCategory();
+   const boost::system::error_category& jsonPointerParseCategory();
 }
 }
 }
@@ -67,6 +74,14 @@ inline boost::system::error_code make_error_code(ParseErrorCode e) {
 
 inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
    return { e, rstudio::core::json::jsonParseCategory() };
+}
+
+inline boost::system::error_code make_error_code(PointerParseErrorCode e) {
+   return { e, rstudio::core::json::jsonPointerParseCategory() };
+}
+
+inline boost::system::error_condition make_error_condition(PointerParseErrorCode e) {
+   return { e, rstudio::core::json::jsonPointerParseCategory() };
 }
 }
 
@@ -82,10 +97,24 @@ public:
    std::string message(int ev) const override;
 };
 
+class JsonPointerParseErrorCategory : public boost::system::error_category
+{
+public:
+   const char* name() const BOOST_NOEXCEPT override;
+
+   std::string message(int ev) const override;
+};
+
 const boost::system::error_category& jsonParseCategory()
 {
    static JsonParseErrorCategory jsonParseErrorCategoryConst;
    return jsonParseErrorCategoryConst;
+}
+
+const boost::system::error_category& jsonPointerParseCategory()
+{
+   static JsonPointerParseErrorCategory jsonPointerParseErrorCategoryConst;
+   return jsonPointerParseErrorCategoryConst;
 }
 
 const char* JsonParseErrorCategory::name() const BOOST_NOEXCEPT
@@ -96,6 +125,17 @@ const char* JsonParseErrorCategory::name() const BOOST_NOEXCEPT
 std::string JsonParseErrorCategory::message(int ev) const
 {
    return rapidjson::GetParseError_En(static_cast<rapidjson::ParseErrorCode>(ev));
+}
+
+const char* JsonPointerParseErrorCategory::name() const BOOST_NOEXCEPT
+{
+   return "json-pointer-parse";
+}
+
+std::string JsonPointerParseErrorCategory::message(int ev) const
+{
+   // rapidjson provides no friendly mapping of pointer parse errors
+   return "Pointer parse failure - see error code";
 }
 
 typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> JsonDocument;
@@ -657,6 +697,21 @@ Error Value::parseAndValidate(const std::string& in_jsonStr, const std::string& 
       return error;
 
    return validate(in_schema);
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath,
+                            const json::Value& in_value)
+{
+   JsonPointer pointer(in_pointerPath.c_str());
+   if (!pointer.IsValid())
+   {
+      Error error(pointer.GetParseErrorCode(), ERROR_LOCATION);
+      error.addProperty("offset", pointer.GetParseErrorOffset());
+      return error;
+   }
+
+   pointer.Set(*m_impl->Document, *in_value.clone().m_impl->Document);
+   return Success();
 }
 
 Error Value::validate(const std::string& in_schema) const

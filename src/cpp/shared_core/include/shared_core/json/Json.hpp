@@ -507,6 +507,16 @@ public:
    Error parseAndValidate(const std::string& in_jsonStr, const std::string& in_schema);
 
    /**
+    * @brief Sets a value within the current value based on the specified JSON Pointer path.
+    *
+    * @param in_pointerPath The JSON Pointer path.
+    * @param in_valie       The JSON value to set at the path. This value is copied before being set.
+    *
+    * @return Success if the pointer is valid; Error otherwise.
+    */
+   Error setValueAtPointerPath(const std::string& in_pointerPath, const json::Value& in_value);
+
+   /**
     * @brief Validates this JSON value against a schema.
     *
     * @param in_schema      The schema to validate this value against.
