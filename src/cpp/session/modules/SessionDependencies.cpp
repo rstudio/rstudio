@@ -392,7 +392,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // can presume everything installed successfully.
    script += "message('\\n\\n\\u2714 ";  // Heavy checkmark
    if (deps.size() < 2) 
-      script += "Package install completed.";
+      script += "Package \\'" + deps[0].name + "\\' successfully installed.";
    else
       script += safe_convert::numberToString(deps.size()) + " packages installed.";
    script += "')\n\n";
