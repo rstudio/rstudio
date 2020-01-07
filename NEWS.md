@@ -125,3 +125,6 @@
 * New tools for viewing and managing server users when using named user licensing
 * Floating licensing can now pass through an HTTPS proxy
 * The Launcher service now starts and runs automatically when the system starts
+* New Kubernetes Launcher plugin feature to modify the generated job/pod specs (#1353)
+* When containers are created when running RStudio Launcher sessions, user home directories are propagated to the container instead of requiring the home directories to be mounted at `/home`. This is a potentially breaking change, and will requiring updating the `/etc/rstudio/laucher-mounts` file to mount the home directory to the correct location (#1369)
+* New Kubernetes Launcher plugin feature to allow the specification of a `requests` limit to allow for oversubscription of Kubernetes resources (#1360)
