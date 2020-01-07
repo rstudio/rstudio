@@ -1,7 +1,7 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -352,7 +352,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
       // If there's more than one dependency, indicate which one is being installed.
       if (deps.size() > 1)
       {
-         script += "cat('\\n[" + 
+         script += "cat('\\n\\n[" + 
             safe_convert::numberToString(i + 1) + 
             "/" + 
             safe_convert::numberToString(deps.size()) +
@@ -387,6 +387,15 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
       script += "\n\n";
    }
+
+   // Emit a message indicating that we're done. The script aborts on error, so if we get here we
+   // can presume everything installed successfully.
+   script += "message('\\n\\n\\u2714 ";  // Heavy checkmark
+   if (deps.size() < 2) 
+      script += "Package \\'" + deps[0].name + "\\' successfully installed.";
+   else
+      script += safe_convert::numberToString(deps.size()) + " packages installed.";
+   script += "')\n\n";
 
    bool packrat = module_context::packratContext().modeOn;
    jobs::ScriptLaunchSpec installJob(
