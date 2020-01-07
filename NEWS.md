@@ -97,9 +97,11 @@
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
 * RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
 * Add support for running Shiny applications as background jobs (#5190)
+* Install missing package dependencies in a background job (#5584)
 * Make maximum lines in R console configurable; was previously fixed at 1000 (#5919)
 * Option to only show project name instead of full path in desktop window title (#1817)
 * New `rstudio --version` command to return the version of RStudio Desktop (#3922)
+* Scan R Markdown YAML header for R packages required to render document (#4779)
 
 ### Bugfixes
 
