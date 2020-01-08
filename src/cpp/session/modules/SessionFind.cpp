@@ -120,6 +120,11 @@ public:
       return handle_;
    }
 
+   std::string path() const
+   {
+      return path_;
+   }
+
    int resultCount() const
    {
       return gsl::narrow_cast<int>(files_.getSize());
@@ -165,6 +170,11 @@ public:
       return pReplaceProgress_;
    }
 
+   bool gitFlag() const
+   {
+      return gitFlag_;
+   }
+
    bool addResult(const std::string& handle,
                   const json::Array& files,
                   const json::Array& lineNums,
@@ -195,13 +205,15 @@ public:
                     const std::string& input,
                     const std::string& path,
                     bool asRegex,
-                    bool ignoreCase)
+                    bool ignoreCase,
+                    bool gitFlag)
    {
       handle_ = handle;
       input_ = input;
       path_ = path;
       regex_ = asRegex;
       ignoreCase_ = ignoreCase;
+      gitFlag_ = gitFlag;
       running_ = true;
    }
 
@@ -327,6 +339,7 @@ private:
    bool running_;
    bool replace_;
    bool preview_;
+   bool gitFlag_;
    std::string replacePattern_;
    json::Array replaceMatchOns_;
    json::Array replaceMatchOffs_;
@@ -514,8 +527,14 @@ private:
       const char* inputPos = pContent->c_str();
       const char* end = inputPos + pContent->size();
 
+      // the grep command return the match bolded so that we can determine the exact position here
+      boost::regex colorEncodings;
+      if (findResults().gitFlag())
+         colorEncodings = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+      else
+         colorEncodings = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
       boost::cmatch match;
-      while (regex_utils::search(inputPos, match, boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
+      while (regex_utils::search(inputPos, match, colorEncodings))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -535,7 +554,8 @@ private:
          nUtf8CharactersProcessed += charSize;
 
          // update the match state
-         if (match[1] == "01")
+         if ((match[2] == "1" && findResults().gitFlag()) ||
+             (match[1] == "01" && !findResults().gitFlag()))
             pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
          else
             pMatchOff->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
@@ -778,6 +798,17 @@ private:
       size_t nextLineStart = 0;
       size_t pos = -1;
       std::set<std::string> errorMessage;
+
+      // create a regex where the first reference group will return the file name,
+      // the second will return the line number, and the third will return the line
+      boost::regex fileLineNumberLineRegex;
+      if (findResults().gitFlag())
+         fileLineNumberLineRegex =
+            boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
+      else
+         fileLineNumberLineRegex = 
+            boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
+
       while (recordsToProcess &&
              std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
       {
@@ -786,10 +817,15 @@ private:
 
          errorMessage.clear();
          boost::smatch match;
-         if (regex_utils::match(line, match, boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)")))
+         if (regex_utils::match(line, match, fileLineNumberLineRegex))
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
+            if (findResults().gitFlag())
+            {
+               file.insert(0, "/");
+               file.insert(0, findResults().path());
+            }
             if (shouldSkipFile(file) ||
                 (!websiteOutputDir.empty() &&
                  file.find(websiteOutputDir) != std::string::npos))
@@ -1073,15 +1109,16 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-C";
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       cmd <<  "grep";
-      cmd << "--untracked";
-      cmd << "--exclude-standard";
+      cmd << "-I"; // ignore binaries
+      cmd << "--untracked"; // include files not tracked by git...
+      cmd << "--exclude-standard"; // but exclude gitignore
    }
-   cmd << "-rHn";
-   cmd << "--color=always";
-   if (!gitFlag)
+   else
    {
       cmd << "--binary-files=without-match";
    }
+   cmd << "-rHn";
+   cmd << "--color=always";
 
 #ifndef _WIN32
    if (!gitFlag)
@@ -1132,7 +1169,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
                              grepOptions.searchPattern,
                              grepOptions.directory,
                              grepOptions.asRegex,
-                             grepOptions.ignoreCase);
+                             grepOptions.ignoreCase,
+                             gitFlag);
    if (!replaceOptions.empty)
       findResults().onReplaceBegin(ptrGrepOp->handle(),
                                    replaceOptions.preview,
