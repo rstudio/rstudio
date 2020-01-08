@@ -17,7 +17,6 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -122,11 +121,10 @@ public class TutorialPane
    @Override
    public void popout()
    {
-      WindowEx window = frame_.getWindow();
       String url = frame_.getUrl();
       
-      int width = Math.max(800, window.getInnerWidth());
-      int height = Math.max(800, window.getInnerHeight());
+      int width = Math.max(800, frame_.getElement().getClientWidth());
+      int height = Math.max(800, frame_.getElement().getClientHeight());
       NewWindowOptions options = new NewWindowOptions();
       
       globalDisplay_.openWebMinimalWindow(
