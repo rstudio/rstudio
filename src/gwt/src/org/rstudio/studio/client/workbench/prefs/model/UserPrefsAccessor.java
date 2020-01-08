@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1594,14 +1594,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   public PrefValue<Boolean> ariaApplicationRole()
-   {
-      return bool("aria_application_role", true);
-   }
-
-   /**
     * Reduce use of animations in the user interface.
     */
    public PrefValue<Boolean> reducedMotion()
@@ -2007,8 +1999,6 @@ public class UserPrefsAccessor extends Prefs
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
          typingStatusDelayMs().setValue(layer, source.getInteger("typing_status_delay_ms"));
-      if (source.hasKey("aria_application_role"))
-         ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))

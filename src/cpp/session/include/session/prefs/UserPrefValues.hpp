@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -300,7 +300,6 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
-#define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -1338,12 +1337,6 @@ public:
     */
    int typingStatusDelayMs();
    core::Error setTypingStatusDelayMs(int val);
-
-   /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   bool ariaApplicationRole();
-   core::Error setAriaApplicationRole(bool val);
 
    /**
     * Reduce use of animations in the user interface.

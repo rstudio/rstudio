@@ -4,7 +4,7 @@
    <ui:with field='res' type='org.rstudio.studio.client.application.ui.impl.header.MenubarPanel.Resources'/>
 
    <g:HTMLPanel>
-      <table class="{res.styles.panel}" cellpadding='0' cellspacing='0' border='0'>
+      <table class="{res.styles.panel}" role='presentation' cellpadding='0' cellspacing='0' border='0'>
          <tr>
             <td class="{res.styles.left}"></td>
             <td class="{res.styles.center}" valign="middle">
