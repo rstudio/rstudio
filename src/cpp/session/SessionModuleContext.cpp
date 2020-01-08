@@ -248,6 +248,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kAvailablePackagesReady;
       else if (name == "compute_theme_colors")
          type = session::client_events::kComputeThemeColors;
+      else if (name == "tutorial_command")
+         type = session::client_events::kTutorialCommand;
+      else if (name == "tutorial_launch")
+         type = session::client_events::kTutorialLaunch;
 
       if (type != -1)
       {

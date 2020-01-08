@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.P
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 
@@ -106,7 +107,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ConnectionsServerOperations,
                                                    JobsServerOperations,
                                                    SecondaryReposServerOperations,
-                                                   ThemeServerOperations
+                                                   ThemeServerOperations,
+                                                   TutorialServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

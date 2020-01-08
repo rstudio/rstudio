@@ -277,7 +277,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             }
             return;
          }
-         
+
          if (StringUtil.equals(destination, FOREGROUND_APP) && isBusy_ && 
                params.getId() == ShinyApplicationParams.ID_FOREGROUND)
          {

@@ -119,6 +119,12 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    }
    
    @Override
+   public String getName()
+   {
+      return getFrame().getWindow().getName();
+   }
+   
+   @Override
    protected RStudioFrame createFrame(String url)
    {
       return new RStudioFrame("Shiny Application", url);

@@ -153,6 +153,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionTerminalShell.cpp
    modules/SessionTests.cpp
    modules/SessionThemes.cpp
+   modules/SessionTutorial.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp

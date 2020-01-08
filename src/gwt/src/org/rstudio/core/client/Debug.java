@@ -188,6 +188,29 @@ public class Debug
       return contentPanel.getElement();
    }
    
+   public static final native void logEvents(Element el)
+   /*-{
+      for (var key in el) {
+         var prefix = key.substr(0, 2);
+         if (prefix !== "on")
+            continue;
+         
+         var event = key.substr(2);
+         el.addEventListener(event, function(e) {
+            console.log(e);
+         });
+      }
+   }-*/;
+   
+   public static final native void logEvents(Element el, JsVector<String> events)
+   /*-{
+      for (var event in events) {
+         el.addEventListener(event, function(e) {
+            console.log(e);
+         });
+      }
+   }-*/;
+   
    public static native void breakpoint() /*-{
       debugger;
    }-*/;

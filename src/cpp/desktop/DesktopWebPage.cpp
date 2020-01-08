@@ -439,6 +439,13 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    {
       return true;
    }
+   // allow tutorial urls to be handled internally by Qt. note that the client is responsible for 
+   // ensuring that non-local tutorial urls are appropriately sandboxed.
+   else if (!tutorialUrl().isEmpty() &&
+            url.toString().startsWith(tutorialUrl()))
+   {
+      return true;
+   }
    // allow shiny dialog urls to be handled internally by Qt
    else if (isLocal && !shinyDialogUrl_.isEmpty() &&
             url.toString().startsWith(shinyDialogUrl_))
@@ -473,20 +480,52 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    }
 }
 
-void WebPage::setViewerUrl(const QString& viewerUrl)
+namespace {
+
+void setPaneUrl(const QString& requestedUrl, QString* pUrl)
 {
    // record about:blank literally
-   if (viewerUrl == QString::fromUtf8("about:blank"))
+   if (requestedUrl == QStringLiteral("about:blank"))
    {
-      viewerUrl_ = viewerUrl;
+      *pUrl = requestedUrl;
       return;
    }
 
    // extract the authority (domain and port) from the URL; we'll agree to
-   // serve requests for the viewer pane that match this prefix. 
-   QUrl url(viewerUrl);
-   viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
-                url.authority() + QString::fromUtf8("/");
+   // serve requests for the pane that match this prefix. 
+   QUrl url(requestedUrl);
+   *pUrl =
+         url.scheme() + QStringLiteral("://") +
+         url.authority() + QStringLiteral("/");
+   
+}
+
+} // end anonymous namespace
+
+void WebPage::setTutorialUrl(const QString& tutorialUrl)
+{
+   setPaneUrl(tutorialUrl, &tutorialUrl_);
+}
+
+void WebPage::setViewerUrl(const QString& viewerUrl)
+{
+   setPaneUrl(viewerUrl, &viewerUrl_);
+}
+
+QString WebPage::tutorialUrl()
+{
+   if (tutorialUrl_.isEmpty())
+   {
+      // if we don't know the tutorial URL ourselves but we're a child window, ask our parent
+      BrowserWindow *parent = dynamic_cast<BrowserWindow*>(view()->window());
+      if (parent != nullptr && parent->opener() != nullptr)
+      {
+         return parent->opener()->tutorialUrl();
+      }
+   }
+
+   // return our own tutorial URL
+   return tutorialUrl_;
 }
 
 QString WebPage::viewerUrl()

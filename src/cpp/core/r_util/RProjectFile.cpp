@@ -800,6 +800,18 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->defaultOpenDocs = "";
    }
+   
+   // extract default tutorial
+   it = dcfFields.find("DefaultTutorial");
+   if (it != dcfFields.end())
+   {
+      pConfig->defaultTutorial = it->second;
+   }
+   else
+   {
+      pConfig->defaultTutorial = "";
+   }
+   
 
    return Success();
 }
@@ -1003,6 +1015,14 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format docsFmt("\nDefaultOpenDocs: %1%\n");
       contents.append(boost::str(docsFmt % config.defaultOpenDocs));
    }
+   
+   // add default tutorial if present
+   if (!config.defaultTutorial.empty())
+   {
+      boost::format docsFmt("\nDefaultTutorial: %1%\n");
+      contents.append(boost::str(docsFmt % config.defaultTutorial));
+   }
+   
 
    // write it
    return writeStringToFile(projectFilePath,

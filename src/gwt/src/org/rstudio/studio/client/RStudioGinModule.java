@@ -245,6 +245,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalTab;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPane;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialServerOperations;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialTab;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
@@ -470,6 +471,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DesktopInfo.class).asEagerSingleton();
       bind(SecondaryReposServerOperations.class).to(RemoteServer.class);
       bind(ThemeServerOperations.class).to(RemoteServer.class);
+      bind(TutorialServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

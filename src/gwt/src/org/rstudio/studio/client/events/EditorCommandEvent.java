@@ -50,7 +50,6 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    @SuppressWarnings("unchecked")
    public final <T extends JavaScriptObject> T getData()
    {
-      // work around errors with older JDK (1.6)
       T casted = (T) data_;
       return casted;
    }

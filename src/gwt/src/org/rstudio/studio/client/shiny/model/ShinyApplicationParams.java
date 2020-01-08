@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.shiny.model;
 
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ShinyApplicationParams extends JavaScriptObject
@@ -58,6 +60,10 @@ public class ShinyApplicationParams extends JavaScriptObject
 
    public final native String getState() /*-{
       return this.state;
+   }-*/;
+   
+   public final native JsObject getMeta() /*-{
+      return this.meta;
    }-*/;
 
    public final native int getViewerOptions() /*-{

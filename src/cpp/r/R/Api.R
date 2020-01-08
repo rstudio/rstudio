@@ -815,6 +815,27 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # highlight UI elements within the IDE
-.rs.addApiFunction("highlight", function(data = list()) {
-   .Call("rs_highlight", data, PACKAGE = "(embedding)")
+.rs.addApiFunction("highlightUi", function(data = list()) {
+   .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
+})
+
+# Tutorial ----
+
+# invoked by rstudioapi to instruct RStudio to open a particular
+# URL in the Tutorial pane. should be considered an internal contract
+# between the RStudio + rstudioapi packages rather than an official
+# user-facing API
+.rs.addApiFunction("tutorialLaunchBrowser", function(url) {
+   .rs.tutorial.launchBrowser(url)
+})
+
+# given a tutorial 'name' from package 'package', run that tutorial
+# and show the application in the Tutorial pane
+.rs.addApiFunction("tutorialRun", function(name, package, shiny_args = NULL) {
+   .rs.tutorial.runTutorial(name, package, shiny_args)
+})
+
+# stop a running tutorial
+.rs.addApiFunction("tutorialStop", function(name, package) {
+   .rs.tutorial.stopTutorial(name, package)
 })

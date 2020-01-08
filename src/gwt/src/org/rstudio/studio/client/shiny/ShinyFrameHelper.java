@@ -167,6 +167,11 @@ public class ShinyFrameHelper
          window_.postMessage(method, origin_);
       }
    }
+   
+   public WindowEx getWindow()
+   {
+      return window_;
+   }
 
    private WindowEx window_ = null;
 

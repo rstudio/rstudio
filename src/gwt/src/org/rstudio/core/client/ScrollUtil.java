@@ -55,7 +55,7 @@ public class ScrollUtil
             if (doc.getScrollTop() > 0)
                return true;
 
-            if (doc.getURL() == ViewerPane.ABOUT_BLANK)
+            if (doc.getURL() == URIConstants.ABOUT_BLANK)
                return true;
             
             // restore scroll position
