@@ -55,10 +55,10 @@ class LocalProgress : public boost::noncopyable
 public:
 
    LocalProgress(int totalReplaceCount, int updateFrequency) :
-      totalReplaceCount_(totalReplaceCount)
+      totalReplaceCount_(totalReplaceCount),
+      updateFrequency_(updateFrequency)
    {
       replacedCount_ = 0;
-      updateFrequency_ = updateFrequency;
       updateIncrement_ = static_cast<int>((updateFrequency_ * totalReplaceCount_) / 100);
       if (updateIncrement_ < 1)
          updateIncrement_ = 1;
@@ -93,7 +93,7 @@ private:
 
    int replacedCount_;
    const int totalReplaceCount_;
-   int updateFrequency_;
+   const int updateFrequency_;
    int updateIncrement_;
    int nextUpdate_;
 };
@@ -276,7 +276,11 @@ public:
                                      "regex", &regex_,
                                      "ignoreCase", &ignoreCase_,
                                      "results", &results,
-                                     "running", &running_);
+                                     "running", &running_,
+                                     "replace", &replace_,
+                                     "preview", &preview_,
+                                     "gitFlag", &gitFlag_,
+                                     "replacePattern", &replacePattern_);
       if (error)
          return error;
 
@@ -322,10 +326,16 @@ public:
 
       obj["running"] = running_;
 
+      obj["replace"] = replace_;
+      obj["preview"] = preview_;
+      obj["gitFlag"] = gitFlag_;
+      obj["replacePattern"] = replacePattern_;
+
       return obj;
    }
 
 private:
+   // !!! several of these need to be added to json
    std::string handle_;
    std::string input_;
    std::string path_;
@@ -342,7 +352,9 @@ private:
    bool gitFlag_;
    std::string replacePattern_;
    json::Array replaceMatchOns_;
-   json::Array replaceMatchOffs_;
+   json::Array replaceMatchOffs_; 
+   // this is not tracked via json because it exclusively applies to replaces (not previews)
+   // which can not currently be paused
    LocalProgress* pReplaceProgress_;
 };
 
