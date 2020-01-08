@@ -968,11 +968,6 @@
             "default": 2000,
             "description": "Number of milliseconds to wait after last keystroke before updating live region."
         },
-        "aria_application_role": {
-            "type": "boolean",
-            "default": true,
-            "description": "Whether to tell screen readers that the entire page is an application."
-        },
         "reduced_motion": {
             "type": "boolean",
             "default": false,
