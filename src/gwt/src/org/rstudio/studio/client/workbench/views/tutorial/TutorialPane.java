@@ -28,7 +28,6 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
@@ -39,7 +38,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.dom.client.StyleElement;
@@ -94,12 +92,18 @@ public class TutorialPane
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar("Tutorial Tab");
-      toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
+      
+      // TODO: managing history within an iframe is surprisingly challenging,
+      // so we just leave these buttons unavailable for now and just allow
+      // navigation to home
+      // toolbar_.addLeftWidget(commands_.tutorialBack().createToolbarButton());
+      // toolbar_.addLeftWidget(commands_.tutorialForward().createToolbarButton());
+      
       toolbar_.addLeftWidget(commands_.tutorialHome().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialPopout().createToolbarButton());
       toolbar_.addLeftWidget(commands_.tutorialStop().createToolbarButton());
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
+      
       return toolbar_;
    }
    
@@ -160,9 +164,6 @@ public class TutorialPane
             
             handler_ = frame_.addLoadHandler((LoadEvent event) ->
             {
-               if (!isShinyUrl(frame_.getWindowUrl()))
-                  return;
-               
                loaded_ = true;
                indicator_.onCompleted();
                handler_.removeHandler();
@@ -184,11 +185,11 @@ public class TutorialPane
    }
    
    @Override
-   public void openTutorial(ShinyApplicationParams params)
+   public void openTutorial(String url)
    {
       commands_.tutorialStop().setVisible(true);
       commands_.tutorialStop().setEnabled(true);
-      navigate(params.getUrl(), true);
+      navigate(url, true);
    }
    
    @Override
@@ -200,7 +201,10 @@ public class TutorialPane
    @Override
    public String getUrl()
    {
-      return frame_.getWindowUrl();
+      // NOTE: when using a relative URL, browsers will
+      // automatically prepend the host to the URL string.
+      // we want to avoid that behavior
+      return frame_.getElement().getAttribute("src");
    }
    
    @Override
@@ -209,9 +213,6 @@ public class TutorialPane
       return frame_.getWindowName();
    }
    
-   // NOTE: we use replaceUrl for redirects from the Shiny loading page
-   // to the main Shiny application, so that history navigation doesn't
-   // navigate to the "loading" page.
    private void navigate(String url, boolean replaceUrl)
    {
       if (URIUtils.isLocalUrl(url))
@@ -222,21 +223,19 @@ public class TutorialPane
       {
          frame_.getElement().setAttribute("sandbox", "allow-scripts");
       }
-      
-      if (replaceUrl)
-      {
-         frame_.replaceWindowUrl(url);
-      }
-      else
-      {
-         frame_.setWindowUrl(url);
-      }
+     
+      frame_.setUrl(url);
    }
    
    private void onTutorialLoaded()
    {
-      // find all links in the document, and ensure that they open
-      // in a separate frame
+      // because we proxy Shiny applications on RSP, we're free
+      // to inject our own JS into the frame for running Shiny
+      // applications. this is not true on Desktop, so we avoid
+      // this here
+      if (!frame_.getUrl().startsWith(GWT.getHostPageBaseURL()))
+         return;
+      
       Document doc = frame_.getWindow().getDocument();
       NodeList<Element> els = doc.getElementsByTagName("a");
       for (int i = 0, n = els.getLength(); i < n; i++)
@@ -279,25 +278,22 @@ public class TutorialPane
       body.getStyle().setVisibility(Visibility.VISIBLE);
    }
    
-   private boolean isShinyUrl(String url)
-   {
-      String shinyPrefix = GWT.getHostPageBaseURL() + "p/";
-      return url.startsWith(shinyPrefix);
-   }
-   
    private void onFrameLoaded()
    {
-      String url = frame_.getWindowUrl();
-      if (isShinyUrl(url))
+      String url = frame_.getUrl();
+      if (TutorialUtil.isShinyUrl(url))
+      {
          onTutorialLoaded();
+      }
       else
+      {
          onPageLoaded();
+      }
    }
    
    @Override
    public void onLoad(LoadEvent event)
    {
-      initJsFrameWindowCallbacks(frame_.getWindow());
       onFrameLoaded();
    }
    
@@ -318,19 +314,6 @@ public class TutorialPane
    {
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
-   
-   private void onPageShow(NativeEvent event)
-   {
-      frame_.fireEvent(new TutorialNavigateEvent());
-   }
-   
-   private final native void initJsFrameWindowCallbacks(WindowEx window)
-   /*-{
-      var self = this;
-      window.addEventListener("pageshow", $entry(function(event) {
-         self.@TutorialPane::onPageShow(*)(event);
-      }));
-   }-*/;
    
    // Resources ---- 
    public interface Resources extends ClientBundle

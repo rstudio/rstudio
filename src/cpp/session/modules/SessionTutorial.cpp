@@ -32,7 +32,6 @@
 
 const char * const kTutorialLocation = "/tutorial";
 
-const char * const kTutorialClientEventStarted = "started";
 const char * const kTutorialClientEventIndexingCompleted = "indexing_completed";
 
 using namespace rstudio::core;
@@ -190,11 +189,6 @@ void handleTutorialRunRequest(const http::Request& request,
 {
    std::string package = request.queryParamValue("package");
    std::string name = request.queryParamValue("name");
-   
-   json::Object event;
-   event["package"] = package;
-   event["name"] = name;
-   enqueueTutorialClientEvent(kTutorialClientEventStarted, event);
    
    // TODO: Check tutorial pre-requisites first!
    Error error = r::exec::RFunction(".rs.tutorial.runTutorial")

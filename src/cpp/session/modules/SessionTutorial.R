@@ -20,6 +20,11 @@
 
 
 # JSON RPC ----
+.rs.addJsonRpcHandler("tutorial_started", function(name, package, url)
+{
+   .rs.tutorial.setRunningTutorialUrl(name, package, url)
+})
+
 .rs.addJsonRpcHandler("tutorial_stop", function(name, package)
 {
    .rs.tutorial.stopTutorial(name, package)
@@ -43,7 +48,15 @@
 .rs.addFunction("tutorial.registrySet", function(name, package, tutorial)
 {
    key <- .rs.tutorial.registryKey(name, package)
+   tutorial$package <- package
+   tutorial$name <- name
    .rs.tutorial.registry[[key]] <- tutorial
+})
+
+.rs.addFunction("tutorial.registryClear", function(name, package)
+{
+   key <- .rs.tutorial.registryKey(name, package)
+   .rs.tutorial.registry[[key]] <- NULL
 })
 
 # TODO: local jobs are stopped when the session is suspended, and so running
@@ -59,20 +72,11 @@
 
 .rs.addFunction("tutorial.launchBrowser", function(url)
 {
-   # if this is a newly-launched tutorial, tag the associated
-   # job with the generated URL
-   pendingTutorial <- .rs.getVar("tutorial.pendingTutorial")
-   if (!is.null(pendingTutorial))
-   {
-      .rs.tutorial.setRunningTutorialUrl(
-         pendingTutorial$name,
-         pendingTutorial$package,
-         url
-      )
-      .rs.clearVar("tutorial.pendingTutorial")
-   }
+   tutorial <- .rs.getVar("tutorial.pendingTutorial")
+   .rs.clearVar("tutorial.pendingTutorial")
    
-   .rs.invokeShinyTutorialViewer(url)
+   meta <- .rs.scalarListFromList(tutorial)
+   .rs.invokeShinyTutorialViewer(url, meta)
 })
 
 .rs.addFunction("tutorial.getRunningTutorial", function(name, package)
@@ -82,7 +86,7 @@
 
 .rs.addFunction("tutorial.setRunningTutorial", function(name, package, job)
 {
-   tutorial <- list(job = job)
+   tutorial <- list(name = name, package = package, job = job)
    .rs.tutorial.registrySet(name, package, tutorial)
 })
 
@@ -91,6 +95,11 @@
    tutorial <- .rs.tutorial.registryGet(name, package)
    tutorial$url <- url
    .rs.tutorial.registrySet(name, package, tutorial)
+})
+
+.rs.addFunction("tutorial.clearRunningTutorial", function(name, package)
+{
+   .rs.tutorial.registryClear(name, package)
 })
 
 .rs.addFunction("tutorial.openExistingTutorial", function(name, package)
@@ -108,7 +117,7 @@
    if (!identical(running, TRUE))
       return(FALSE)
    
-   .rs.tutorial.launchBrowser(url)
+   .rs.tutorial.enqueueClientEvent("navigate", list(url = url))
    TRUE
 })
 
@@ -163,6 +172,7 @@
 {
    tutorial <- .rs.tutorial.getRunningTutorial(name, package)
    .rs.api.stopJob(tutorial$job)
+   .rs.tutorial.clearRunningTutorial(name, package)
    .rs.tutorial.enqueueClientEvent("stop")
 })
 

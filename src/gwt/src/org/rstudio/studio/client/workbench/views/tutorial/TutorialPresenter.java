@@ -1,7 +1,7 @@
 /*
  * TutorialPresenter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -11,8 +11,6 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.tutorial;
-
-import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -26,6 +24,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -50,7 +49,8 @@ public class TutorialPresenter
          TutorialNavigateEvent.Handler,
          ShinyApplicationStatusEvent.Handler,
          ShinyDisconnectSource,
-         InterruptStatusEvent.Handler
+         InterruptStatusEvent.Handler,
+         LoadHandler
 {
    public interface Binder extends CommandBinder<Commands, TutorialPresenter> {}
    
@@ -69,7 +69,7 @@ public class TutorialPresenter
       void launchTutorial(Tutorial tutorial);
       
       void onTutorialStarted(Tutorial tutorial);
-      void openTutorial(ShinyApplicationParams params);
+      void openTutorial(String url);
       
       HandlerRegistration addLoadHandler(LoadHandler handler);
       HandlerRegistration addTutorialNavigateHandler(TutorialNavigateEvent.Handler handler);
@@ -77,8 +77,7 @@ public class TutorialPresenter
    
    public static class Tutorial
    {
-      public Tutorial(String tutorialName,
-                      String packageName)
+      public Tutorial(String tutorialName, String packageName)
       {
          tutorialName_ = tutorialName;
          packageName_ = packageName;
@@ -129,6 +128,7 @@ public class TutorialPresenter
       commands_ = commands;
       server_ = server;
       
+      paramsMap_ = new SafeMap<>();
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
       events_.addHandler(TutorialCommandEvent.TYPE, this);
@@ -136,6 +136,7 @@ public class TutorialPresenter
       events_.addHandler(InterruptStatusEvent.TYPE, this);
       
       display_.addTutorialNavigateHandler(this);
+      display_.addLoadHandler(this);
    }
    
    @Override
@@ -145,34 +146,26 @@ public class TutorialPresenter
    }
    
    @Override
+   public void onLoad(LoadEvent event)
+   {
+      manageCommands();
+   }
+   
+   @Override
    public void onTutorialCommand(TutorialCommandEvent event)
    {
       String type = event.getType();
       
-      if (StringUtil.equals(type, TutorialCommandEvent.TYPE_STARTED))
+      // Navigate to the URL associated with an already-running tutorial.
+      if (StringUtil.equals(type, TutorialCommandEvent.TYPE_NAVIGATE))
       {
-         final Tutorial tutorial = Tutorial.fromJsObject(event.getData());
-       
-         if (tutorialLoadHandler_ != null)
-         {
-            tutorialLoadHandler_.removeHandler();
-            tutorialLoadHandler_ = null;
-         }
-         
-         tutorialLoadHandler_ = display_.addLoadHandler((LoadEvent loadEvent) -> {
-            
-            String url = display_.getUrl();
-            if (!isShinyUrl(url))
-               return;
-            
-            // cache tutorial URL
-            URL_TO_TUTORIAL_MAP.put(url, tutorial);
-            tutorialLoadHandler_.removeHandler();
-            
-         });
-         
-         display_.onTutorialStarted(tutorial);
+         JsObject data = event.getData().cast();
+         String url = data.getString("url");
+         display_.openTutorial(url);
       }
+      
+      // Tutorial indexing completed; if we're viewing the list of available
+      // tutorials, we should refresh to get an updated view.
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
          if (StringUtil.equals(display_.getUrl(), TutorialPresenter.URLS_HOME))
@@ -180,10 +173,17 @@ public class TutorialPresenter
             display_.refresh();
          }
       }
+      
+      // Invoked on launch; the project specifies a default tutorial and we should open
+      // this tutorial on load.
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_LAUNCH_DEFAULT_TUTORIAL))
       {
          final Tutorial tutorial = Tutorial.fromJsObject(event.getData());
          display_.launchTutorial(tutorial);
+      }
+      else
+      {
+         assert false : "Unknown tutorial command event '" + type + "'";
       }
    }
    
@@ -205,8 +205,20 @@ public class TutorialPresenter
             Desktop.getFrame().setTutorialUrl(url);
          }
          
-         params_ = event.getParams();
-         display_.openTutorial(params_);
+         ShinyApplicationParams params = event.getParams();
+         String tutorialName = params.getMeta().getString("name");
+         String packageName  = params.getMeta().getString("package");
+         String url = params.getUrl();
+         
+         paramsMap_.put(url, params);
+         
+         server_.tutorialStarted(
+               tutorialName,
+               packageName,
+               url,
+               new VoidServerRequestCallback());
+         
+         display_.openTutorial(url);
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPING))
       {
@@ -229,33 +241,17 @@ public class TutorialPresenter
       display_.home();
    }
    
-   private Tutorial tutorialForUrl(String url)
-   {
-      for (Map.Entry<String, Tutorial> entry : URL_TO_TUTORIAL_MAP.entrySet())
-      {
-         String mappedUrl = entry.getKey();
-         Tutorial tutorial = entry.getValue();
-         if (url.startsWith(mappedUrl))
-            return tutorial;
-      }
-      
-      return null;
-   }
-   
    @Handler
    void onTutorialStop()
    {
       String url = display_.getUrl();
-      Tutorial tutorial = tutorialForUrl(url);
-      if (tutorial == null)
-      {
-         Debug.logWarning("No known tutorial for URL " + url);
-         return;
-      }
-      
+      ShinyApplicationParams params = paramsMap_.get(url);
+      assert params != null :
+         "no known tutorial associated with URL '" + url + "'";
+            
       server_.tutorialStop(
-            tutorial.getTutorialName(),
-            tutorial.getPackageName(),
+            params.getMeta().getString("name"),
+            params.getMeta().getString("package"),
             new ServerRequestCallback<Void>()
             {
                @Override
@@ -322,8 +318,7 @@ public class TutorialPresenter
    
    private void manageCommands()
    {
-      String url = display_.getUrl();
-      boolean isShiny = isShinyUrl(url);
+      boolean isShiny = TutorialUtil.isShinyUrl(display_.getUrl());
       commands_.tutorialRefresh().setEnabled(isShiny);
       commands_.tutorialStop().setEnabled(isShiny);
       commands_.tutorialStop().setVisible(isShiny);
@@ -331,11 +326,6 @@ public class TutorialPresenter
       commands_.tutorialPopout().setEnabled(isShiny);
    }
    
-   private boolean isShinyUrl(String url)
-   {
-      String shinyPrefix = GWT.getHostPageBaseURL() + "p/";
-      return url.startsWith(shinyPrefix);
-   }
    
    
    private final Display display_;
@@ -344,11 +334,8 @@ public class TutorialPresenter
    private final TutorialServerOperations server_;
    private final ShinyDisconnectNotifier disconnectNotifier_;
    
-   private ShinyApplicationParams params_;
+   private final SafeMap<String, ShinyApplicationParams> paramsMap_;
    
-   private HandlerRegistration tutorialLoadHandler_;
-   
-   private static final SafeMap<String, Tutorial> URL_TO_TUTORIAL_MAP = new SafeMap<>();
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
    public static final String URLS_HOME = GWT.getHostPageBaseURL() + "tutorial/home";

@@ -13,20 +13,20 @@
 #
 #
 
-.rs.addFunction("invokeShinyTutorialViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "tutorial", PACKAGE = "(embedding)"))
+.rs.addFunction("invokeShinyTutorialViewer", function(url, meta) {
+   invisible(.Call("rs_shinyviewer", url, getwd(), "tutorial", meta, PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "tutorial"))
 
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "pane", NULL, PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "pane"))
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "window", NULL, PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "window"))
 
 .rs.addFunction("invokeShinyWindowExternal", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd(), "browser", PACKAGE = "(embedding)"))
+   invisible(.Call("rs_shinyviewer", url, getwd(), "browser", NULL, PACKAGE = "(embedding)"))
 }, attrs = list(shinyViewerType = "browser"))
 
 .rs.addFunction("setShinyViewerType", function(type) {

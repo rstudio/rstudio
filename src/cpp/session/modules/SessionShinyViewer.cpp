@@ -21,6 +21,7 @@
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <r/RJson.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
@@ -58,8 +59,11 @@ namespace {
 // track a pending Shiny path launch
 FilePath s_pendingShinyPath;
 
-void enqueueStartEvent(const std::string& url, const std::string& path,
-                     const std::string& viewerType, int options)
+void enqueueStartEvent(const std::string& url,
+                       const std::string& path,
+                       const std::string& viewerType,
+                       const json::Value& meta,
+                       int options)
 {
    FilePath shinyPath(path);
    if (module_context::safeCurrentPath() == shinyPath &&
@@ -78,13 +82,17 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
    dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
+   dataJson["meta"] = meta;
    dataJson["options"] = options;
    dataJson["id"] = kForegroudAppId;
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
+SEXP rs_shinyviewer(SEXP urlSEXP,
+                    SEXP pathSEXP,
+                    SEXP viewerSEXP,
+                    SEXP metaSEXP)
 {   
    try
    {
@@ -93,6 +101,7 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          throw r::exec::RErrorException(
             "url must be a single element character vector.");
       }
+      std::string url = r::sexp::safeAsString(urlSEXP);
 
       if (!r::sexp::isString(pathSEXP) || (r::sexp::length(pathSEXP) != 1))
       {
@@ -126,11 +135,21 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
       {
           options |= SHINY_VIEWER_OPTIONS_WIDE;
       }
+      
+      json::Value meta;
+      Error error = r::json::jsonValueFromObject(metaSEXP, &meta);
+      if (error)
+      {
+         throw r::exec::RErrorException(
+                  "meta must be NULL or a named R list");
+      }
 
-      enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
-                        path,
-                        viewertype,
-                        options);
+      enqueueStartEvent(
+               url,
+               path,
+               viewertype,
+               meta,
+               options);
    }
    catch(const r::exec::RErrorException& e)
    {
