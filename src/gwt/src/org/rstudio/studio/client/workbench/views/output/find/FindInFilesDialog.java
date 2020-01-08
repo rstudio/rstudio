@@ -195,7 +195,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    private void manageFilePattern()
    {
       divCustomFilter_.getStyle().setDisplay(
-            listPresetFilePatterns_.getSelectedIndex() == 3
+            (listPresetFilePatterns_.getSelectedIndex() == 3 &&
+             listPresetExcludeFilePatterns_.getSelectedIndex() != 1)
             ? Style.Display.BLOCK
             : Style.Display.NONE);
    }
@@ -206,6 +207,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             listPresetExcludeFilePatterns_.getSelectedIndex() == 2
             ? Style.Display.BLOCK
             : Style.Display.NONE);
+      if (listPresetExcludeFilePatterns_.getSelectedIndex() != 1)
+         listPresetFilePatterns_.setEnabled(true);
+      else
+      {
+         listPresetFilePatterns_.setEnabled(false);
+         listPresetFilePatterns_.setSelectedIndex(0);
+         manageFilePattern();
+      }
    }
 
    @Override
