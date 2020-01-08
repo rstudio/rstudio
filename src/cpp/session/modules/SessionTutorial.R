@@ -173,7 +173,6 @@
    tutorial <- .rs.tutorial.getRunningTutorial(name, package)
    .rs.api.stopJob(tutorial$job)
    .rs.tutorial.clearRunningTutorial(name, package)
-   .rs.tutorial.enqueueClientEvent("stop")
 })
 
 .rs.addFunction("tutorial.enqueueClientEvent", function(type, data = list())

@@ -123,14 +123,14 @@ public class TutorialPane
    public void popout()
    {
       WindowEx window = frame_.getWindow();
-      String href = window.getLocationHref();
-      NewWindowOptions options = new NewWindowOptions();
+      String url = frame_.getUrl();
       
       int width = Math.max(800, window.getInnerWidth());
       int height = Math.max(800, window.getInnerHeight());
+      NewWindowOptions options = new NewWindowOptions();
       
       globalDisplay_.openWebMinimalWindow(
-            href,
+            url,
             false,
             width,
             height,
@@ -201,9 +201,12 @@ public class TutorialPane
    @Override
    public String getUrl()
    {
-      // NOTE: when using a relative URL, browsers will
-      // automatically prepend the host to the URL string.
-      // we want to avoid that behavior
+      return frame_.getUrl();
+   }
+   
+   @Override
+   public String getRawSrcUrl()
+   {
       return frame_.getElement().getAttribute("src");
    }
    

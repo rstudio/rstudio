@@ -35,7 +35,6 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -64,6 +63,7 @@ public class TutorialPresenter
       void home();
       
       String getUrl();
+      String getRawSrcUrl();
       String getName();
       
       void launchTutorial(Tutorial tutorial);
@@ -168,7 +168,7 @@ public class TutorialPresenter
       // tutorials, we should refresh to get an updated view.
       else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_INDEXING_COMPLETED))
       {
-         if (StringUtil.equals(display_.getUrl(), TutorialPresenter.URLS_HOME))
+         if (display_.getUrl().endsWith(TutorialPresenter.URLS_HOME))
          {
             display_.refresh();
          }
@@ -244,7 +244,10 @@ public class TutorialPresenter
    @Handler
    void onTutorialStop()
    {
-      String url = display_.getUrl();
+      // NOTE: 'getUrl()' will automatically prepend the scheme + authority
+      // to the 'raw' src attribute set on an iframe; in our case, we require
+      // the 'raw' src URL for our mapping so grab that instead
+      String url = display_.getRawSrcUrl();
       ShinyApplicationParams params = paramsMap_.get(url);
       assert params != null :
          "no known tutorial associated with URL '" + url + "'";
@@ -338,6 +341,6 @@ public class TutorialPresenter
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
-   public static final String URLS_HOME = GWT.getHostPageBaseURL() + "tutorial/home";
+   public static final String URLS_HOME = "/tutorial/home";
    
 }
