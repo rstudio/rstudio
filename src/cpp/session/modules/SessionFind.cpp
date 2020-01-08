@@ -538,15 +538,9 @@ private:
 
       const char* inputPos = pContent->c_str();
       const char* end = inputPos + pContent->size();
-
-      // the grep command return the match bolded so that we can determine the exact position here
-      boost::regex colorEncodings;
-      if (findResults().gitFlag())
-         colorEncodings = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
-      else
-         colorEncodings = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
       boost::cmatch match;
-      while (regex_utils::search(inputPos, match, colorEncodings))
+      while (regex_utils::search(
+               inputPos, match, retrieveColorEncodingRegex(findResults().gitFlag())))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -810,17 +804,6 @@ private:
       size_t nextLineStart = 0;
       size_t pos = -1;
       std::set<std::string> errorMessage;
-
-      // create a regex where the first reference group will return the file name,
-      // the second will return the line number, and the third will return the line
-      boost::regex fileLineNumberLineRegex;
-      if (findResults().gitFlag())
-         fileLineNumberLineRegex =
-            boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
-      else
-         fileLineNumberLineRegex = 
-            boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
-
       while (recordsToProcess &&
              std::string::npos != (pos = stdOutBuf_.find('\n', pos + 1)))
       {
@@ -829,7 +812,8 @@ private:
 
          errorMessage.clear();
          boost::smatch match;
-         if (regex_utils::match(line, match, fileLineNumberLineRegex))
+         if (regex_utils::match(
+               line, match, retrieveFileLineNumberLineRegex(findResults().gitFlag())))
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
@@ -1040,7 +1024,7 @@ struct ReplaceOptions
 };
 
 void processExcludeFilePatterns(
-   const json::Array& excludeFilePatterns, std::string* pCmdArg, bool* pGitFlag)
+   const json::Array& excludeFilePatterns, std::vector<std::string>* pCmdArgs, bool* pGitFlag)
 {
    *pGitFlag = false;
    for (json::Value filePattern : excludeFilePatterns)
@@ -1052,7 +1036,7 @@ void processExcludeFilePatterns(
          if (filePattern.getString().compare("gitExclusions") == 0)
             *pGitFlag = true;
          else
-            pCmdArg->append("--exclude=" + filePattern.getString());
+            pCmdArgs->push_back("--exclude=" + filePattern.getString());
       }
    }
 }
@@ -1112,7 +1096,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
-   std::string excludeArgs;
+   std::vector<std::string> excludeArgs;
    bool gitFlag = false;
    processExcludeFilePatterns(grepOptions.excludeFilePatterns, &excludeArgs, &gitFlag);
    if (gitFlag)
@@ -1153,6 +1137,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       {
          cmd << "--include=" + filePattern.getString();
       }
+      for (std::string arg : excludeArgs)
+         cmd << arg;
       cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
    }
@@ -1165,9 +1151,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       }
    }
 
-   if (!excludeArgs.empty())
-      cmd << excludeArgs;
- 
    // Clear existing results
    findResults().clear();
 
@@ -1360,6 +1343,26 @@ core::Error initialize()
       (bind(registerRpcMethod, "complete_replace", completeReplace))
       (bind(registerRpcMethod, "stop_replace", stopReplace));
    return initBlock.execute();
+}
+
+boost::regex retrieveFileLineNumberLineRegex(bool gitFlag)
+{
+   boost::regex regex;
+   if (gitFlag)
+      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
+   else
+      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
+   return regex;
+}
+
+boost::regex retrieveColorEncodingRegex(bool gitFlag)
+{
+   boost::regex regex;
+   if (gitFlag)
+      regex = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+   else
+      regex = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
+   return regex;
 }
 
 core::Error Replacer::completeReplace(const boost::regex& searchRegex,
