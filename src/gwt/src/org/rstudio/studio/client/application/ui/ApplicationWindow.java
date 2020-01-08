@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
@@ -190,6 +191,8 @@ public class ApplicationWindow extends Composite
       if (warningBar_ == null)
       {
          warningBar_ = new WarningBar();
+         Roles.getContentinfoRole().set(warningBar_.getElement());
+         Roles.getContentinfoRole().setAriaLabelProperty(warningBar_.getElement(), "Warning bar");
          warningBar_.addCloseHandler(warningBarCloseEvent -> hideWarning());
          applicationPanel_.add(warningBar_);
          applicationPanel_.setWidgetBottomHeight(warningBar_,

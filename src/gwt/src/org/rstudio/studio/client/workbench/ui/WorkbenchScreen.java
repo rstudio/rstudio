@@ -124,6 +124,7 @@ public class WorkbenchScreen extends Composite
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
       Roles.getMainRole().set(tabsPanel_.getElement());
+      Roles.getMainRole().setAriaLabelProperty(tabsPanel_.getElement(), "Workbench");
 
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
