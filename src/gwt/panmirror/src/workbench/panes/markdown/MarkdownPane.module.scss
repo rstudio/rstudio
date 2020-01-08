@@ -1,0 +1,34 @@
+
+
+@import '@blueprintjs/core/lib/scss/variables.scss';
+
+@import 'workbench/Theme.scss';
+
+.pane {
+  border-left: 1px solid $borderColor;
+  margin-left: 1px;
+}
+
+.toolbar {
+  color: white !important;
+  background-color: $gray1;
+  border-bottom: none;
+}
+
+.closeButton {
+  margin-left: auto !important;
+  background-color: $gray1 !important;
+}
+
+.closeButton :global(.bp3-icon) {
+  color: white !important;
+}
+
+.codemirrorParent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  font-size: 0.6rem;
+  overflow-y: scroll;
+  padding: 0 8px;
+}

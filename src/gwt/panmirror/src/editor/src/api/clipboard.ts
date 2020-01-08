@@ -1,0 +1,43 @@
+import { Slice, Fragment, MarkType, Node as ProsemirrorNode } from 'prosemirror-model';
+
+// add marks to plain text pasted into the editor (e.g. urls become links)
+export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: string) => {}) {
+  const handler = (fragment: Fragment) => {
+    const nodes: ProsemirrorNode[] = [];
+
+    fragment.forEach((child: ProsemirrorNode) => {
+      if (child.isText) {
+        const { text } = child;
+        let pos = 0;
+        let match;
+
+        do {
+          match = regexp.exec(text!);
+          if (match) {
+            const start = match.index;
+            const end = start + match[0].length;
+            const attrs = getAttrs instanceof Function ? getAttrs(match[0]) : getAttrs;
+
+            if (start > 0) {
+              nodes.push(child.cut(pos, start));
+            }
+
+            nodes.push(child.cut(start, end).mark(type.create(attrs).addToSet(child.marks)));
+
+            pos = end;
+          }
+        } while (match);
+
+        if (pos < text!.length) {
+          nodes.push(child.cut(pos));
+        }
+      } else {
+        nodes.push(child.copy(handler(child.content)));
+      }
+    });
+
+    return Fragment.fromArray(nodes);
+  };
+
+  return (slice: Slice) => new Slice(handler(slice.content), slice.openStart, slice.openEnd);
+}

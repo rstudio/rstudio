@@ -1,0 +1,17 @@
+
+.ProseMirror table {
+  margin: 0;
+}
+
+.ProseMirror th, .ProseMirror td {
+  min-width: 1em;
+}
+
+.ProseMirror .tableWrapper {
+  margin: 1em 0;
+}
+
+.ProseMirror .table-caption-inactive {
+  display: none;
+}
+

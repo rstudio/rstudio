@@ -1,0 +1,7 @@
+
+.ProseMirror figure {
+  margin: 0;
+  margin-block-end: 1em;
+  cursor: default;
+}
+

@@ -1,0 +1,6 @@
+
+.ProseMirror div.line-block > p {
+  white-space: pre-wrap; 
+}
+
+

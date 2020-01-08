@@ -1,0 +1,23 @@
+
+.ProseMirror .CodeMirror {
+  height: auto;
+}
+
+.ProseMirror .CodeMirror pre { 
+  white-space: pre-wrap !important 
+}
+
+.ProseMirror .CodeMirror-firstLineMeta .CodeMirror-lines {
+  padding-top: 0;
+}
+
+.ProseMirror .CodeMirror .CodeMirror-line.pm-block-border-color {
+  border-bottom: 1px solid;
+}
+
+.ProseMirror .CodeMirror .CodeMirror-line.pm-light-text-color span {
+  color: inherit !important;
+}
+
+
+

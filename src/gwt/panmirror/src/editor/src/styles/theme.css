@@ -1,0 +1,65 @@
+
+
+.pm-background-color {
+  background-color: white !important;
+}
+
+.pm-metadata-background-color {
+  background-color: rgb(251,251,251) !important;
+}
+
+.pm-chunk-header-background-color {
+  background-color: rgb(242,242,242) !important;
+}
+
+.pm-span-background-color {
+  background-color: #fff8dc !important;
+}
+
+.pm-div-background-color {
+  background-color: rgb(236, 249, 250) !important;
+}
+
+.pm-text-color {
+  color: black !important;
+}
+
+.pm-light-text-color {
+  color: rgb(60, 76, 114) !important;
+}
+
+.pm-link-text-color {
+  color: #106ba3 !important;
+}
+
+.pm-markup-text-color {
+  color: rgb(185, 6, 144) !important;
+}
+
+.pm-border-background-color {
+  background-color:#ddd !important;
+}
+
+.pm-block-border-color {
+  border-color: #ddd !important;
+}
+
+.pm-pane-border-color {
+  border-color: silver !important;
+}
+
+.pm-focus-outline-color {
+  outline-color: #ddd !important;
+}
+
+.pm-selected-node-outline-color,
+.ProseMirror-selectednode {
+  outline-color: #8cf !important;
+}
+
+.ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
+  background: #d7d4f0;
+}
+
+
+

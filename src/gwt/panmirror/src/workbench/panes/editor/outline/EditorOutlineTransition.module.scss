@@ -1,0 +1,35 @@
+
+
+
+@import 'workbench/Theme.scss';
+
+$transitionTime: 300ms;
+
+.enter {
+  width: 0;
+}
+
+.enterActive {
+  width: $sidebarWidth;
+  transition: width $transitionTime;
+}
+
+.enterDone {
+  width: $sidebarWidth;
+}
+
+.exit {
+  width: $sidebarWidth;
+  display: initial;
+}
+
+.exitActive {
+  width: 0;
+  transition: width $transitionTime;
+}
+
+.exitDone {
+  width: 0;
+  display: none;
+}
+

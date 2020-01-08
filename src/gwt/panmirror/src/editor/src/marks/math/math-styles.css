@@ -1,0 +1,5 @@
+
+
+.ProseMirror .math[data-type='DisplayMath'] {
+  white-space: pre-wrap;  
+}

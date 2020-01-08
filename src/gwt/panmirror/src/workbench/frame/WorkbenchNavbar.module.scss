@@ -1,0 +1,29 @@
+
+
+$margin: 9px;
+
+.navbar {
+  padding-left: 5px !important;
+}
+
+.logo, .controls {
+  display: inline-block;
+}
+
+.logo > img {
+  height: 40px;
+  width: auto;
+  margin-left: $margin;
+  padding-left: 2px;
+}
+
+.controls {
+  margin-left: $margin;
+}
+
+.title {
+  margin-left: $margin;
+  margin-top: 9px;
+  font-size: 18px;
+}
+

@@ -1,0 +1,7 @@
+
+
+
+.ProseMirror .raw-inline[data-format="tex"] {
+  color: inherit !important;
+}
+

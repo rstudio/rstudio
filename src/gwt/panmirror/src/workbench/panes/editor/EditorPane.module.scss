@@ -1,0 +1,82 @@
+
+
+@import '@blueprintjs/core/lib/scss/variables.scss';
+@import 'workbench/Theme.scss';
+
+
+.editorParent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: $backgroundColor;
+}
+
+
+.editorParent {
+  :global {
+    .ProseMirror {
+      position: static;
+      height: calc(100% - #{$toolbarHeight});
+      overflow-y: scroll;
+    }
+    .ProseMirror .body, .ProseMirror .notes { 
+      width: 900px;
+      max-width: calc(100% - (2 * #{$sidebarWidth}) - 20px);
+      margin: 12px auto;  
+      padding: 10px 30px;
+      overflow-y: initial;
+    }
+    .ProseMirror .body {
+      position: static;
+      box-shadow: $paneBoxShadow;
+      min-height: calc(100% - #{$toolbarHeight});
+    }
+    .ProseMirror .notes {
+      position: absolute;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      visibility: hidden;
+      overflow-y: scroll;
+    }
+    .ProseMirror .body.editing-footnote {
+      margin-bottom: 0;
+    }
+    .ProseMirror .notes.editing-footnote {
+      border-top: 1px solid;
+      visibility: visible;
+      top: calc(100% - #{$toolbarHeight} - 100px - 10px);
+    }
+  }
+}
+
+/* Pseudo-element so that outline navigation leaves some 
+   space above headings */
+.editorParent {
+  :global {
+    .ProseMirror h1::before,
+    .ProseMirror h2::before,
+    .ProseMirror h3::before,
+    .ProseMirror h4::before,
+    .ProseMirror h5::before,
+    .ProseMirror h6::before {
+      content: "";
+      display: block;
+      height: 20px;
+      margin: -20px 0 0;
+    }
+  }
+}
+
+.toolbar {
+  padding-left: 10px;
+}
+
+.toolbarBlockFormatMenu {
+  :global {
+    .bp3-button-text {
+      min-width: 75px;
+    }
+  }
+}
+
+

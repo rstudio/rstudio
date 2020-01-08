@@ -1,0 +1,83 @@
+import { MarkType } from 'prosemirror-model';
+import { LinkEditorFn, LinkProps } from '../../api/ui';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+
+import { markIsActive, getMarkAttrs, getSelectionMarkRange } from '../../api/mark';
+
+import { linkTargets, LinkCapabilities, LinkType } from '../../api/link';
+
+export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabilities: LinkCapabilities) {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    // if the current node doesn't allow this mark return false
+    if (!state.selection.$from.node().type.allowsMarkType(markType)) {
+      return false;
+    }
+
+    async function asyncEditLink() {
+      if (dispatch) {
+        // collect link targets
+        const targets = await linkTargets(state.doc);
+
+        // get the range of the mark
+        const range = getSelectionMarkRange(state.selection, markType);
+
+        // get link attributes if we have them
+        let link: { [key: string]: any } = {};
+        link.text = state.doc.textBetween(range.from, range.to);
+        if (markIsActive(state, markType)) {
+          link = {
+            ...link,
+            ...getMarkAttrs(state.doc, state.selection, markType),
+          };
+        }
+
+        // determine type
+        if (link.heading) {
+          link.type = LinkType.Heading;
+        } else if (link.href && link.href.startsWith('#')) {
+          link.type = LinkType.ID;
+        } else {
+          link.type = LinkType.URL;
+        }
+
+        // show edit ui
+        const result = await onEditLink({ ...link } as LinkProps, targets, capabilities);
+        if (result) {
+          const tr = state.tr;
+          tr.removeMark(range.from, range.to, markType);
+          if (result.action === 'edit') {
+            // create the link attributes
+            const attrs = {
+              ...result.link,
+              heading: result.link.type === LinkType.Heading ? result.link.href : undefined,
+            };
+
+            // create the mark
+            const mark = markType.create(attrs);
+
+            // if the content changed then replace the range, otherwise
+            if (link.text !== result.link.text) {
+              const node = markType.schema.text(result.link.text, [mark]);
+              // if we are editing an existing link then replace it, otherwise replace the selection
+              if (link.href) {
+                tr.replaceRangeWith(range.from, range.to, node);
+              } else {
+                tr.replaceSelectionWith(node, false);
+              }
+            } else {
+              tr.addMark(range.from, range.to, mark);
+            }
+          }
+          dispatch(tr);
+        }
+        if (view) {
+          view.focus();
+        }
+      }
+    }
+    asyncEditLink();
+
+    return true;
+  };
+}

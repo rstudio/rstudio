@@ -1,0 +1,39 @@
+@import '@blueprintjs/core/lib/scss/variables.scss';
+
+.alertDialog {
+  :global {
+    .bp3-alert-contents > p:first-of-type > strong {
+      font-size: 1.2em;
+    }
+  }
+}
+
+.alertDialog {
+  :global {
+    .bp3-alert-body > .bp3-icon-error {
+      color: $red4;
+    }
+  }
+}
+
+.alertDialog {
+  :global {
+    .bp3-alert-body > .bp3-icon-warning-sign {
+      color: $orange4;
+    }
+  }
+}
+
+.alertDialog {
+  :global {
+    .bp3-alert-body > .bp3-icon-info-sign {
+      color: $blue4;
+    }
+  }
+}
+
+
+
+
+
+

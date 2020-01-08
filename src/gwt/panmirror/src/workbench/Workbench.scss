@@ -1,0 +1,45 @@
+
+
+@import '@blueprintjs/core/lib/scss/variables.scss';
+
+$navbarHeight: 64px;
+
+.workbench {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $light-gray5;
+}
+
+.workbench .navbar {
+  height: $navbarHeight;
+  box-shadow: none;
+}
+
+.workbench .workspace {
+  position: fixed;
+  top: $navbarHeight;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+}
+
+.workbench .editor-pane {
+  flex: 1 0 auto;
+  height: 100%;
+}
+
+.workbench .markdown-pane {
+  flex: none;
+  height: 100%;
+  display: none;
+}
+
+.workbench .markdown-pane.markdown-visible {
+  display: initial;
+  width: 350px;
+}
+

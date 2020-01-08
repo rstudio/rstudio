@@ -1,0 +1,84 @@
+
+<!doctype html>
+<html>
+<head>
+  $title
+  $author
+  $charset
+  $description
+  $keywords
+  $css
+</head>
+<body>
+  $bundles
+
+  <div id="editor" ></div>
+
+  <style type="text/css">
+    #editor {
+      height: 800px;
+      width: 90%;
+      margin: 10px auto;
+      border: 1px solid;
+      position: relative;
+    }
+  </style>
+
+  <script type="text/javascript">
+  
+    const pandocEngine = () => {
+
+      const pandoc = async (method, params) => {
+        const response = await fetch(`/pandoc/${method}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(params)
+        });
+        const result = await response.json();
+        if (result.error) {
+          return Promise.reject(new Error(result.error));
+        } else {
+          return result;
+        }
+      }
+
+      return {
+        markdownToAst: async (markdown, format, options) => {
+          const result = await pandoc('ast', { markdown, format, options });
+          return result.ast;
+        },
+        astToMarkdown: async (ast, format, options) => {
+          const result = await pandoc('markdown', { ast, format, options});
+          return result.markdown;
+        },
+        listExtensions: async (format) => {
+          const result = await pandoc('extensions', { format });
+          return result.extensions;
+        }
+      }
+    }
+
+  
+    async function initializeEditor() {
+     
+      var editor = await window.panmirror.Editor.create({
+        parent: document.getElementById('editor'),
+        pandoc: pandocEngine(),
+        format: 'markdown',
+        ui: { dialogs: {} },
+        options: {}
+      });
+
+      editor.setMarkdown('The *quick*, brown **fox** jumped over the lazy dog.')
+      return editor;
+
+    }
+
+    initializeEditor();
+   
+  </script>
+</body>
+</html>
+
