@@ -1,7 +1,7 @@
 /*
  * ConnectionCodePanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,13 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -105,6 +107,14 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             connectPanel, HasHorizontalAlignment.ALIGN_RIGHT);
       if (connectViaUI)
          container_.add(codeHeaderPanel);
+      else
+      {
+         // accessibility requires a label for the editor, so put the one we're not using 
+         // into our container
+         codeHeaderPanel.remove(codeLabel_);
+         container_.add(codeLabel_);
+         codeLabel_.setStyleName(ThemeStyles.INSTANCE.visuallyHidden());
+      }
      
       initWidget(container_);
    }
@@ -150,7 +160,8 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       
       // create new code viewer
       codeViewer_ = new AceEditorWidget(false);
-      codeLabel_.setFor(codeViewer_);
+      codeViewer_.setTabKeyMode(TabKeyMode.AlwaysMoveFocus);
+      codeLabel_.setFor(codeViewer_.getTextInputElement());
       codeViewer_.addStyleName(RES.styles().codeViewer());
       codeViewer_.getEditor().getSession().setEditorMode(
             EditorLanguage.LANG_R.getParserName(), false);
