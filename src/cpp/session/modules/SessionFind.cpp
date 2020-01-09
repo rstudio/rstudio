@@ -335,7 +335,6 @@ public:
    }
 
 private:
-   // !!! several of these need to be added to json
    std::string handle_;
    std::string input_;
    std::string path_;
