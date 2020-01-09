@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -46,6 +47,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
@@ -484,7 +486,13 @@ public class FindOutputPresenter extends BasePresenter
 
             JsArrayString filePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
+            {
                filePatterns.push(pattern);
+               if (StringUtil.equals(pattern, "package") &&
+                   !session_.getSessionInfo().getBuildToolsType().equals(
+                      SessionInfo.BUILD_TOOLS_PACKAGE))
+                  Debug.logToConsole("Request to search package source when not in a package project.");
+            }
             JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);

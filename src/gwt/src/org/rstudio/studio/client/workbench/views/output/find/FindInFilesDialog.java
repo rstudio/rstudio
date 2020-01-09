@@ -213,16 +213,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       {
          listPresetFilePatterns_.setEnabled(false);
          listPresetFilePatterns_.setSelectedIndex(0);
-         manageFilePattern();
-      }
-   }
+            manageFilePattern();
+       }
+    }
 
    @Override
    protected State collectInput()
    {
       String filePatterns =
-            listPresetFilePatterns_.getValue(
-                  listPresetFilePatterns_.getSelectedIndex());
+         listPresetFilePatterns_.getValue(
+               listPresetFilePatterns_.getSelectedIndex());
       if (filePatterns == "custom")
          filePatterns = txtFilePattern_.getText();
 
