@@ -9,7 +9,7 @@
    <table class="{res.styles.warningBar}" role="presentation"
           cellpadding="0" cellspacing="0" border="0" width="100%">
       <tr>
-         <td class="{res.styles.left}"></td>
+         <td class="{res.styles.left}"/>
          <td class="{res.styles.center}" valign="top">
             <rw:DecorativeImage resource="{res.warningIconSmall2x}"
                      width="21"
@@ -20,14 +20,14 @@
             <g:Button ui:field="moreButton_"/>
          </td>
          <td class="{res.styles.center}" align="right">
-            <g:Image ui:field="dismiss_"
+            <rw:ImageButton ui:field="dismiss_"
                      resource="{themeRes.closeTab2x}"
                      width="9"
                      height="9"
-                     styleName="{res.styles.dismiss}"
-                     title="Dismiss"/>
+                     addStyleNames="{res.styles.dismiss}"
+                     description="Dismiss Warning Bar"/>
          </td>
-         <td class="{res.styles.right}"></td>
+         <td class="{res.styles.right}"/>
       </tr>
    </table>
    </g:HTMLPanel>
