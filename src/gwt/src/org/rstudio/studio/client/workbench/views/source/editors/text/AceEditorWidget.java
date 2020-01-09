@@ -1,7 +1,7 @@
 /*
  * AceEditorWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -981,6 +981,11 @@ public class AceEditorWidget extends Composite
    public void setElementId(String id)
    {
       editor_.setElementId(id);
+   }
+
+   public Element getTextInputElement()
+   {
+      return editor_.getTextInputElement();
    }
 
    // This class binds an ace annotation (used for the gutter) with an

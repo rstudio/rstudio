@@ -1,7 +1,7 @@
 /*
  * ChangelistTable.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -209,7 +209,7 @@ public abstract class ChangelistTable extends Composite
    }
    
 
-   public void showInfoBar(String message)
+   public void showInfoBar(String message, boolean animate)
    {
       if (infoBar_ == null)
       {
@@ -223,7 +223,7 @@ public abstract class ChangelistTable extends Composite
                                     infoBar_.getHeight(), Unit.PX,
                                     0, Unit.PX);
          infoBar_.setText(message);
-         layout_.animate(250);
+         layout_.animate(animate ? 250 : 0);
       }
       else
       {
@@ -231,13 +231,13 @@ public abstract class ChangelistTable extends Composite
       }
    }
 
-   public void hideInfoBar()
+   public void hideInfoBar(boolean animate)
    {
       if (infoBar_ != null)
       {
          layout_.remove(infoBar_);
          layout_.setWidgetTopBottom(scrollPanel_, 0, Unit.PX, 0, Unit.PX);
-         layout_.animate(250);
+         layout_.animate(animate ? 250 : 0);
          infoBar_ = null;
       }
    }

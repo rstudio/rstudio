@@ -425,7 +425,6 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
-         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
          headerBarCommandsPanel_.add(usernameLabel);
          
          overlayUserCommandsPanel_ = new HorizontalPanel();
