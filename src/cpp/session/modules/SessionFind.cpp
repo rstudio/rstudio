@@ -923,7 +923,6 @@ private:
          results["replaceMatchOn"] = replaceMatchOns;
          results["replaceMatchOff"] = replaceMatchOffs;
          results["errors"] = errors;
-         results["running"] = findResults().isRunning();
          result["results"] = results;
 
          findResults().addResult(handle(),

@@ -45,6 +45,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -152,6 +153,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       AllFiles,
       CommonRSourceFiles,
       RScripts,
+      Package,
       CustomFilter
    }
 
@@ -220,6 +222,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
              ExcludeFilePatterns.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
+
+      // disable 'Package' option when chosen directory is not a package
+      String dir = dirChooser_.getText();
+      //if (!session_.getSessionInfo().getBuildToolsType().equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      if (getEffectivePath().
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               IncludeFilePatterns.Package.ordinal()))
+            .setAttribute("disabled", "disabled");
    }
 
    private void manageExcludeFilePattern()
@@ -228,7 +238,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       // this should come first as it may change the value of listPresetExcludeFilePatterns
       if (!session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
+               ExcludeFilePatterns.StandardGit.ordinal()))
             .setAttribute("disabled", "disabled");
          if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
              ExcludeFilePatterns.StandardGit.ordinal())
