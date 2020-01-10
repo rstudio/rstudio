@@ -186,6 +186,7 @@
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
+#include "modules/panmirror/SessionPanmirror.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
@@ -583,6 +584,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_addins::initialize)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
+      (modules::panmirror::initialize)
       (modules::rstudioapi::initialize)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)

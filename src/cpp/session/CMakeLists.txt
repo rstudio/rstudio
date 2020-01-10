@@ -189,6 +189,7 @@ set (SESSION_SOURCE_FILES
    modules/jobs/Job.cpp
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
+   modules/panmirror/SessionPanmirror.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
