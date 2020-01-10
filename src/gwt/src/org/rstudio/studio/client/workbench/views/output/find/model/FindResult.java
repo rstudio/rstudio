@@ -38,7 +38,6 @@ public class FindResult extends JavaScriptObject
          replace: "",
          replaceIndicator: false,
          regexPreviewIndicator: false,
-         running: running,
          errors: ""
       });
    }-*/;
@@ -57,7 +56,6 @@ public class FindResult extends JavaScriptObject
          matchOff: this.matchOff,
          replaceMatchOn: this.replaceMatchOn,
          replaceMatchOff: this.replaceMatchOff,
-         running: this.running,
          errors: this.errors
       });
    }-*/;
@@ -92,10 +90,6 @@ public class FindResult extends JavaScriptObject
 
    public native final void setRegexPreviewIndicator()/*-{
       this.regexPreviewIndicator = true;
-   }-*/;
-
-   public native final boolean isRunning()/*-{
-      return this.running;
    }-*/;
 
    public final ArrayList<Integer> getMatchOns()
