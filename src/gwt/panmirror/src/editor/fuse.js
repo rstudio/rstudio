@@ -12,7 +12,7 @@ const kIdeOutputDir = path.join(kIdeJsDir, kLibraryName);
 
 context(
   class {
-    getConfig(outputDir, devServer = false) {
+    getConfig(outputDir, webIndex = false) {
       return FuseBox.init({
         homeDir: "src",
         modulesFolder: "../../node_modules",
@@ -22,7 +22,7 @@ context(
         sourceMaps: { inline: true },
         plugins: [
           CSSPlugin(),
-          devServer && WebIndexPlugin({ template: "dev/index.html" }),
+          webIndex && WebIndexPlugin({ template: "dev/index.html" }),
           this.isProduction && QuantumPlugin({ uglify: { es6: true }, bakeApiIntoBundle: true, containedAPI: true }),
         ],
       });
@@ -42,18 +42,8 @@ const watch = (fuse) => {
     .watch()
 }
 
-const dev = (context, devServer, watchChanges, outputDir = kOutputDir) => {
-  const fuse = context.getConfig(outputDir, devServer);
-  if (devServer) {
-    fuse.dev( { root: false }, server => {
-      const app = server.httpServer.app;
-      devserver.initialize(app)
-      const dist = path.resolve(outputDir);
-      app.get("*", function(req, res) {
-        res.sendFile(path.join(dist, req.path));
-      });
-    })
-  }
+const dev = (context, webIndex, watchChanges, outputDir = kOutputDir) => {
+  const fuse = context.getConfig(outputDir, webIndex);
   const bdl = bundle(fuse)
   if (watchChanges)
     watch(bdl)
@@ -68,7 +58,16 @@ const dist = (context, outputDir = kOutputDir) => {
 }
 
 task("dev", async context => {
-  await dev(context, true, true).run()
+  const fuse = dev(context, true, true);
+  fuse.dev( { root: false }, server => {
+    const app = server.httpServer.app;
+    devserver.initialize(app)
+    const dist = path.resolve(kOutputDir);
+    app.get("*", function(req, res) {
+      res.sendFile(path.join(dist, req.path));
+    });
+  })
+  await fuse.run()
 });
 
 task("dist", async context => {
@@ -81,7 +80,9 @@ task("ide-dev", async context => {
 });
 
 task("ide-dev-watch", async context => {
-  await dev(context, false, true, kIdeOutputDir).run()
+  const fuse = dev(context, false, true, kIdeOutputDir);
+  fuse.dev( { httpServer: false } )
+  await fuse.run();
 })
 
 
