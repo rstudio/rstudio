@@ -1,0 +1,6 @@
+Hi, I got a problem with adding a line with a density function of chi square to my histagram . How can i add that? Im a newbie into r 
+x=1000
+hist(rchisq(x,3),xlim=c(0,15),type="l")
+lines(x,dchisq(x,3),xlim=c(0,15),type="l")
+
+I have to generate 1000 values of chi square  with df=3 and put them on histogram with xlim 0-15, then add a line with a density function with the same df.
