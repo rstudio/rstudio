@@ -192,7 +192,9 @@ public class FindOutputPresenter extends BasePresenter
          {
             if (event.getHandle() == currentFindHandle_)
             {
-               if (!view_.getReplaceMode())
+               if (view_.getProgress().isVisible()) // check if a replace is in progress
+                  events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
+               else
                   currentFindHandle_ = null;
                view_.setStopSearchButtonVisible(false);
                view_.showSearchCompleted();
@@ -336,8 +338,6 @@ public class FindOutputPresenter extends BasePresenter
          {
             view_.showProgress();
             view_.getProgress().setProgress(event.replacedCount(), event.totalReplaceCount());
-            if (event.replacedCount() >= event.totalReplaceCount())
-               view_.hideProgress();
          }
       });
 
@@ -352,7 +352,6 @@ public class FindOutputPresenter extends BasePresenter
             // toggle replace mode so matches get added to context
             view_.setReplaceMode(true);
 
-            boolean isRunning = false;
             ArrayList<FindResult> results = event.getResults();
             int errorCount = 0;
             for (FindResult fr : results)
@@ -363,11 +362,6 @@ public class FindOutputPresenter extends BasePresenter
                   errorCount++;
                }
                dialogState_.updateReplaceErrors(fr.getErrors());
-               if (fr.isRunning())
-               {
-                  isRunning = true;
-                  Debug.logToConsole("running...");
-               }
             }
             dialogState_.updateErrorCount(errorCount);
 
@@ -377,12 +371,6 @@ public class FindOutputPresenter extends BasePresenter
             
             view_.ensureVisible(true);
             view_.disableReplace();
-            //if (!view_.getProgress().isVisible())
-            if (!isRunning)
-            {
-               Debug.logToConsole("Team !isRunning");
-               events_.fireEvent(new ReplaceOperationEndedEvent(currentFindHandle_));
-            }
          }
       });
 
@@ -392,10 +380,9 @@ public class FindOutputPresenter extends BasePresenter
          public void onReplaceOperationEnded(
                ReplaceOperationEndedEvent event)
          {
-            Debug.logToConsole("ReplaceOperationEnded handle:" + event.getHandle());
-            Debug.logToConsole("currentFindHandle_: "  + currentFindHandle_);
             if (event.getHandle() == currentFindHandle_)
             {
+               currentFindHandle_ = null;
                view_.hideProgress();
                view_.setStopReplaceButtonVisible(false);
                updateSearchLabel(dialogState_.getQuery(), dialogState_.getPath(),
@@ -477,16 +464,7 @@ public class FindOutputPresenter extends BasePresenter
       if (state.isRunning())
          view_.setStopSearchButtonVisible(true);
       else
-      {
          events_.fireEvent(new FindOperationEndedEvent(state.getHandle()));
-         if (view_.getReplaceMode())
-         {
-            Debug.logToConsole("Team initialize");
-            events_.fireEvent(new ReplaceOperationEndedEvent(state.getHandle()));
-         }
-         else
-            Debug.logToConsole("Not in replace mode, hun");
-      }
    }
 
    public void onFindInFiles(FindInFilesEvent event)
