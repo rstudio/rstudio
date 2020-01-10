@@ -36,17 +36,17 @@ const bundle = (fuse) => {
     .instructions("> editor.ts")
 } 
 
-const watch = (fuse) => {
+const watch = (fuse, hmrReload) => {
   return fuse
-    .hmr()
+    .hmr({ reload: hmrReload })
     .watch()
 }
 
-const dev = (context, webIndex, watchChanges, outputDir = kOutputDir) => {
+const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir) => {
   const fuse = context.getConfig(outputDir, webIndex);
   const bdl = bundle(fuse)
   if (watchChanges)
-    watch(bdl)
+    watch(bdl, hmrReload)
   return fuse;
 }
 
@@ -58,7 +58,7 @@ const dist = (context, outputDir = kOutputDir) => {
 }
 
 task("dev", async context => {
-  const fuse = dev(context, true, true);
+  const fuse = dev(context, true, true, false);
   fuse.dev( { root: false }, server => {
     const app = server.httpServer.app;
     devserver.initialize(app)
@@ -76,11 +76,11 @@ task("dist", async context => {
 
 
 task("ide-dev", async context => {
-  await dev(context, false, false, kIdeOutputDir).run()
+  await dev(context, false, false, false, kIdeOutputDir).run()
 });
 
 task("ide-dev-watch", async context => {
-  const fuse = dev(context, false, true, kIdeOutputDir);
+  const fuse = dev(context, false, true, true, kIdeOutputDir);
   fuse.dev( { httpServer: false } )
   await fuse.run();
 })
