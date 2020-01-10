@@ -1,26 +1,28 @@
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;;
 
 
-public class Panmirror extends JavaScriptObject
-{
-   public static void get(CommandWithArg<Panmirror> onReady) {    
-      panmirrorLoader_.addCallback(() -> {
-         onReady.execute(getPanmirror());
-      });
+
+@JsType(isNative = true, namespace = JsPackage.GLOBAL)
+public class Panmirror {
+
+   @JsOverlay
+   public static void load(ExternalJavaScriptLoader.Callback onLoaded) {    
+      panmirrorLoader_.addCallback(onLoaded);
    }
    
-   protected Panmirror()
-   {
-   }
+   public static String kEventUpdate;
+   public static String kEventSelectionChange;
    
-   final static native Panmirror getPanmirror()  /*-{ return $wnd.panmirror;  }-*/;
    
+   
+   @JsOverlay
    private static final ExternalJavaScriptLoader panmirrorLoader_ =
-      new ExternalJavaScriptLoader("js/panmirror/panmirror.js");
-       
+     new ExternalJavaScriptLoader("js/panmirror/panmirror.js");
+   
 }

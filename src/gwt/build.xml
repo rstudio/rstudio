@@ -41,6 +41,7 @@
      <pathelement location="${build.dir}"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
       <fileset dir="${lib.dir}/gin/2.1.2" includes="*.jar"/>
+      <fileset dir="${lib.dir}/elemental2/" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">

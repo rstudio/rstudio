@@ -5,10 +5,11 @@ const { FuseBox, CSSPlugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box"
 const path = require('path');
 const devserver = require('./dev/server.js')
 
-const kLibraryName = "panmirror"
+const kLibraryName = "Panmirror"
+const kLibraryNameLower = kLibraryName.toLowerCase()
 const kOutputDir = "./dist"
 const kIdeJsDir = "../../../www/js"
-const kIdeOutputDir = path.join(kIdeJsDir, kLibraryName);
+const kIdeOutputDir = path.join(kIdeJsDir, kLibraryNameLower);
 
 context(
   class {
@@ -32,7 +33,7 @@ context(
 
 const bundle = (fuse) => {
   return fuse
-    .bundle(kLibraryName)
+    .bundle(kLibraryNameLower)
     .instructions("> editor.ts")
 } 
 
