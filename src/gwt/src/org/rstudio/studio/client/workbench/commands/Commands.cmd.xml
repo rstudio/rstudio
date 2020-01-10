@@ -835,8 +835,8 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
-         <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
-         <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
+         <shortcut refid="previousTerminal" value="Shift+Alt+F11"/>
+         <shortcut refid="nextTerminal" value="Shift+Alt+F12"/>
       </shortcutgroup>
 
       <shortcutgroup name="Main Menu (Server)">

@@ -102,6 +102,7 @@
 * Option to only show project name instead of full path in desktop window title (#1817)
 * New `rstudio --version` command to return the version of RStudio Desktop (#3922)
 * Scan R Markdown YAML header for R packages required to render document (#4779)
+* Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
 
 ### Bugfixes
 
