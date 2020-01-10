@@ -1,7 +1,7 @@
 /*
  * UserPrefs.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,7 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
       Scheduler.get().scheduleDeferred(() ->
       {
+         origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
          loadScreenReaderEnabledSetting();
          syncToggleTabKeyMovesFocusState();
       });
@@ -231,6 +232,14 @@ public class UserPrefs extends UserPrefsComputed
       server_.viewPreferences(new VoidServerRequestCallback());
    }
 
+   private void setScreenReaderMenuState(boolean checked)
+   {
+      commands_.toggleScreenReaderSupport().setChecked(checked);
+      commands_.toggleScreenReaderSupport().setMenuLabel(checked ?
+            origScreenReaderLabel_ + " (enabled)" :
+            origScreenReaderLabel_ + " (disabled)");
+   }
+
    /**
     * Screen-reader enabled setting is stored differently on desktop vs server.
     * On desktop is must be available earlier in startup so the RStudio.app/exe native
@@ -243,7 +252,7 @@ public class UserPrefs extends UserPrefsComputed
       if (screenReaderEnabled_ != null)
          return;
 
-      Command onCompleted = () -> commands_.toggleScreenReaderSupport().setChecked(screenReaderEnabled_);
+      Command onCompleted = () -> setScreenReaderMenuState(screenReaderEnabled_);
 
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().getEnableAccessibility(enabled ->
@@ -301,7 +310,7 @@ public class UserPrefs extends UserPrefsComputed
                });
             },
             () -> {
-               commands_.toggleScreenReaderSupport().setChecked(getScreenReaderEnabled());
+               setScreenReaderMenuState(getScreenReaderEnabled());
             },
             false);
    }
@@ -354,4 +363,5 @@ public class UserPrefs extends UserPrefsComputed
 
    private boolean reloadAfterInit_;
    private Boolean screenReaderEnabled_ = null;
+   private String origScreenReaderLabel_;
 }
