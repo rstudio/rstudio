@@ -539,7 +539,7 @@ private:
       const char* end = inputPos + pContent->size();
       boost::cmatch match;
       while (regex_utils::search(
-               inputPos, match, retrieveColorEncodingRegex(findResults().gitFlag())))
+               inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -812,7 +812,7 @@ private:
          errorMessage.clear();
          boost::smatch match;
          if (regex_utils::match(
-               line, match, retrieveFileLineNumberLineRegex(findResults().gitFlag())))
+               line, match, getFileLineNumberLineRegex(findResults().gitFlag())))
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
@@ -923,6 +923,7 @@ private:
          results["replaceMatchOn"] = replaceMatchOns;
          results["replaceMatchOff"] = replaceMatchOffs;
          results["errors"] = errors;
+         results["running"] = findResults().isRunning();
          result["results"] = results;
 
          findResults().addResult(handle(),
@@ -1366,7 +1367,7 @@ core::Error initialize()
    return initBlock.execute();
 }
 
-boost::regex retrieveFileLineNumberLineRegex(bool gitFlag)
+boost::regex getFileLineNumberLineRegex(bool gitFlag)
 {
    boost::regex regex;
    if (gitFlag)
@@ -1376,7 +1377,7 @@ boost::regex retrieveFileLineNumberLineRegex(bool gitFlag)
    return regex;
 }
 
-boost::regex retrieveColorEncodingRegex(bool gitFlag)
+boost::regex getColorEncodingRegex(bool gitFlag)
 {
    boost::regex regex;
    if (gitFlag)
