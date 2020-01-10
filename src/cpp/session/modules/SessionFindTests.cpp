@@ -156,9 +156,9 @@ TEST_CASE("SessionFind")
       CHECK(replaceMatchOff == 11);
    }
 
-   SECTION("Grep retrieve file, line number, and contents")
+   SECTION("Grep get file, line number, and contents")
    {
-      boost::regex regex = retrieveFileLineNumberLineRegex(/*gitFlag*/ false);
+      boost::regex regex = getFileLineNumberLineRegex(/*gitFlag*/ false);
       std::string contents(
          "case.test:2:aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
 
@@ -169,17 +169,17 @@ TEST_CASE("SessionFind")
       CHECK(match[3].str().compare(kGrepPattern) == 0);
    }
 
-   SECTION("Grep retrieve color encoding regex")
+   SECTION("Grep get color encoding regex")
    {
-      boost::regex regex = retrieveColorEncodingRegex(/*gitFlag*/ false);
+      boost::regex regex = getColorEncodingRegex(/*gitFlag*/ false);
       boost::cmatch match;
       CHECK(regex_utils::search(kGrepPattern.c_str(), match, regex));
       CHECK(match[1].str().compare("01") == 0);
    }
 
-   SECTION("Git grep retrieve file, line number, and contents")
+   SECTION("Git grep get file, line number, and contents")
    {
-      boost::regex regex = retrieveFileLineNumberLineRegex(/*gitFlag*/ true);
+      boost::regex regex = getFileLineNumberLineRegex(/*gitFlag*/ true);
       std::string contents(
    "case.test\033[36m:\033[m2\033[36m:\033[maba \033[1;31mOOOkkk\033[m okab AAOO awesome aa abab");
 
@@ -190,9 +190,9 @@ TEST_CASE("SessionFind")
       CHECK(match[3].str().compare(kGitGrepPattern) == 0);
    }
 
-   SECTION("Git grep retrieve color encoding regex")
+   SECTION("Git grep get color encoding regex")
    {
-      boost::regex regex = retrieveColorEncodingRegex(/*gitFlag*/ true);
+      boost::regex regex = getColorEncodingRegex(/*gitFlag*/ true);
       boost::cmatch match;
       CHECK(regex_utils::search(kGitGrepPattern.c_str(), match, regex));
       CHECK(match[2].str().compare("1") == 0);
