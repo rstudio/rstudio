@@ -1,6 +1,8 @@
 package org.rstudio.studio.client.panmirror;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
+
+
 import com.google.gwt.dom.client.Element;
 
 import jsinterop.annotations.JsType;
@@ -11,15 +13,13 @@ public class PanmirrorEditorConfig
    
    public PanmirrorEditorConfig(
         Element parent,
-        PanmirrorPandocEngine pandoc,
         String format,
-        JavaScriptObject ui,
         PanmirrorEditorOptions options) {
       
       this.parent = parent;
-      this.pandoc = pandoc;
+      this.pandoc = new PanmirrorPandocEngine();
       this.format = format;
-      this.ui = ui;
+      this.ui = new PanmirrorEditorUI();
       this.options = options;
    
    }
@@ -28,7 +28,7 @@ public class PanmirrorEditorConfig
    public Element parent;
    public PanmirrorPandocEngine pandoc;
    public String format;
-   public JavaScriptObject ui;
+   public PanmirrorEditorUI ui;
    public PanmirrorEditorOptions options;
    
    
