@@ -642,7 +642,7 @@ public class FindOutputPresenter extends BasePresenter
    private final Commands commands_;
    private EventBus events_;
 
-   private static final String GROUP_FIND_IN_FILES = "find-in-files";
+   private static final String GROUP_FIND_IN_FILES = "find-replace-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
    private GlobalDisplay globalDisplay_;
 }
