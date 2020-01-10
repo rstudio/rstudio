@@ -39,7 +39,6 @@ public class PanmirrorEditorUI {
    
    public Promise<Boolean> alert(String message, String title, AlertType type) {
       
-      GlobalDisplay globalDisplay = this.globalDisplay_;
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          
          int alertType = MessageDisplay.MSG_INFO;
@@ -54,7 +53,7 @@ public class PanmirrorEditorUI {
               alertType = MessageDisplay.MSG_ERROR;
               break;
          }
-         globalDisplay.showMessage(alertType, title, message, new Operation() {
+         PanmirrorEditorUI.this.globalDisplay_.showMessage(alertType, title, message, new Operation() {
             @Override
             public void execute()
             {
