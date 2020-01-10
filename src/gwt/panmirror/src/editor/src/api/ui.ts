@@ -25,7 +25,7 @@ export enum AlertType {
   Error,
 }
 
-export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<void>;
+export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<boolean>;
 
 export type AttrEditorFn = (attr: AttrProps) => Promise<AttrEditResult | null>;
 

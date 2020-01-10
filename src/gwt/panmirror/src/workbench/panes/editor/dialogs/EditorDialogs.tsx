@@ -91,7 +91,7 @@ export default class EditorDialogs extends React.Component<Readonly<{}>, EditorD
     );
   }
 
-  public alert(message: string, title?: string, type = AlertType.Info): Promise<void> {
+  public alert(message: string, title?: string, type = AlertType.Info): Promise<boolean> {
     return new Promise(resolve => {
       this.setState({
         alert: {
@@ -101,7 +101,7 @@ export default class EditorDialogs extends React.Component<Readonly<{}>, EditorD
           type,
           onClosed: () => {
             this.setState({ alert: { ...this.state.alert, isOpen: false } });
-            resolve();
+            resolve(true);
           },
         },
       });

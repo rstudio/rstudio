@@ -6,5 +6,5 @@ export interface EditorOptions {
   readonly braceMatching?: boolean;
   readonly rmdCodeChunks?: boolean;
   readonly atxHeaders?: boolean;
-  readonly wrapColumn?: boolean | number;
+  readonly wrapColumn?: number;
 }
