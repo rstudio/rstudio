@@ -6,5 +6,5 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorEditorUI
 {    
-   public PanmirrorEditorDialogs dialogs;
+   public PanmirrorEditorDialogs dialogs = new PanmirrorEditorDialogs();
 }
