@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -212,6 +212,8 @@ public class TextEditingTargetWidget
             editorPanel_,
             statusBar_);
       
+      Roles.getTabpanelRole().set(panel_.getElement());
+      setAccessibleName(null);
       adaptToFileType(fileType);
       
       editor.addFocusHandler(event ->
@@ -812,6 +814,14 @@ public class TextEditingTargetWidget
    public void setNotebookUIVisible(boolean visible)
    {
       runSetupChunkOptionMenu_.setVisible(visible);
+   }
+
+   @Override
+   public void setAccessibleName(String name)
+   {
+      if (StringUtil.isNullOrEmpty(name))
+         name = "Text editor";
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name);
    }
 
    public HasValue<Boolean> getSourceOnSave()
