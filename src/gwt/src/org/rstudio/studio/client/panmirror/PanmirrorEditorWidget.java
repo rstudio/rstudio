@@ -37,7 +37,6 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
                   return Promise.resolve(editor);
                }
             }, new ThenOnRejectedCallbackFn<PanmirrorEditor>() {
-
                @Override
                public IThenable<PanmirrorEditor> onInvoke(Object error)
                {
