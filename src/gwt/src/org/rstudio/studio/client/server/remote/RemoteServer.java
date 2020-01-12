@@ -6097,7 +6097,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(markdown));
       params.set(1, new JSONString(format));
       setArrayString(params, 2, options);
-      sendRequest(RPC_SCOPE, PANDOC_MARKDOWN_TO_AST, callback);
+      sendRequest(RPC_SCOPE, PANDOC_MARKDOWN_TO_AST, params, callback);
    }
 
    @Override
@@ -6108,7 +6108,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONObject(ast));
       params.set(1, new JSONString(format));
       setArrayString(params, 2, options);
-      sendRequest(RPC_SCOPE, PANDOC_AST_TO_MARKDOWN, callback);
+      sendRequest(RPC_SCOPE, PANDOC_AST_TO_MARKDOWN, params, callback);
    }
 
    @Override
