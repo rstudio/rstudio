@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -551,6 +551,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
 
    # install profiler
    install(DIRECTORY "resources/profiler"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # install tutorials
+   install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang

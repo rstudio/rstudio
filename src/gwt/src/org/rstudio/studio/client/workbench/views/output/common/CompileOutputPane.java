@@ -1,7 +1,7 @@
 /*
  * CompileOutputPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ public class CompileOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Compile Output Tab");
+      Toolbar toolbar = new Toolbar(getTitle() + " Tab");
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       

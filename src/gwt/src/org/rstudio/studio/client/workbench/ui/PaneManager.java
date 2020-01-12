@@ -1,7 +1,7 @@
 /*
  * PaneManager.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1007,7 +1007,8 @@ public class PaneManager
 
    private LogicalWindow createConsole()
    {
-      PrimaryWindowFrame frame = new PrimaryWindowFrame("Console", null);
+      String frameName = "Console";
+      PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
       
       ToolbarButton goToWorkingDirButton =
             commands_.goToWorkingDir().createToolbarButton();
@@ -1015,7 +1016,7 @@ public class PaneManager
             ThemeResources.INSTANCE.themeStyles().windowFrameToolbarButton());
       
       LogicalWindow logicalWindow =
-            new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
+            new LogicalWindow(frame, new MinimizedWindowFrame(frameName, frameName));
 
       consoleTabPanel_ = new ConsoleTabPanel(
             frame,
@@ -1042,20 +1043,21 @@ public class PaneManager
 
    private LogicalWindow createSource()
    {
-      WindowFrame sourceFrame = new WindowFrame();
+      String frameName = "Source";
+      WindowFrame sourceFrame = new WindowFrame(frameName);
       sourceFrame.setFillWidget(source_.asWidget());
       source_.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,
-            new MinimizedWindowFrame("Source"));
+            new MinimizedWindowFrame(frameName, frameName));
    }
 
    private
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame();
-      final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel();
+      final WindowFrame frame = new WindowFrame(persisterName);
+      final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);

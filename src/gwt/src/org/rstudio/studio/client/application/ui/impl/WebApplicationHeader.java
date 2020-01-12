@@ -250,6 +250,7 @@ public class WebApplicationHeader extends Composite
          }
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
          Roles.getNavigationRole().set(headerPanel.getElement());
+         Roles.getNavigationRole().setAriaLabelProperty(headerPanel.getElement(), "Main menu and toolbar");
          outerPanel_.add(headerPanel);
          preferredHeight_ = 65;
          showProjectMenu(false);
@@ -264,6 +265,7 @@ public class WebApplicationHeader extends Composite
          }
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
          Roles.getNavigationRole().set(menubarPanel.getElement());
+         Roles.getNavigationRole().setAriaLabelProperty(menubarPanel.getElement(), "Main menu");
          outerPanel_.add(menubarPanel);
          preferredHeight_ = 45;
          showProjectMenu(true);
@@ -425,7 +427,6 @@ public class WebApplicationHeader extends Composite
          usernameLabel.setTitle(userIdentity);
          userIdentity = userIdentity.split("@")[0];
          usernameLabel.setText(userIdentity);
-         Roles.getPresentationRole().setAriaLabelProperty(usernameLabel.getElement(), "Username");
          headerBarCommandsPanel_.add(usernameLabel);
          
          overlayUserCommandsPanel_ = new HorizontalPanel();

@@ -1,7 +1,7 @@
 /*
  * WindowFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,14 +17,13 @@ package org.rstudio.core.client.theme;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
 import java.util.HashMap;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
@@ -42,13 +41,13 @@ public class WindowFrame extends Composite
               EnsureVisibleHandler,
               EnsureHeightHandler
 {  
-   public WindowFrame(Widget mainWidget)
+   public WindowFrame(Widget mainWidget, String name)
    {
-      this();
+      this(name);
       setMainWidget(mainWidget);
    }
    
-   public WindowFrame()
+   public WindowFrame(String name)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -60,27 +59,15 @@ public class WindowFrame extends Composite
       borderPositioner_ = new SimplePanel();
       borderPositioner_.add(border_);
 
-      HTML maximize = new HTML();
-      maximize.setStylePrimaryName(styles.maximize());
-      maximize.addStyleName(ThemeStyles.INSTANCE.handCursor());
-      maximize.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            maximize();
-         }
-      });
+      maximizeButton_ = new WindowFrameButton(name, WindowState.MAXIMIZE);
+      maximizeButton_.setElementId(ElementIds.FRAME_MAX_BTN + "_" + ElementIds.idSafeString(name));
+      maximizeButton_.setStylePrimaryName(styles.maximize());
+      maximizeButton_.setClickHandler(() -> maximize());
 
-      HTML minimize = new HTML();
-      minimize.setStylePrimaryName(styles.minimize());
-      minimize.addStyleName(ThemeStyles.INSTANCE.handCursor());
-      minimize.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            minimize();
-         }
-      });
+      minimizeButton_ = new WindowFrameButton(name, WindowState.MINIMIZE);
+      minimizeButton_.setElementId(ElementIds.FRAME_MIN_BTN + "_" + ElementIds.idSafeString(name));
+      minimizeButton_.setStylePrimaryName(styles.minimize());
+      minimizeButton_.setClickHandler(() -> minimize());
 
       frame_ = new LayoutPanel();
       frame_.setStylePrimaryName(styles.windowframe());
@@ -92,22 +79,22 @@ public class WindowFrame extends Composite
       frame_.setWidgetLeftRight(borderPositioner_, 0, Style.Unit.PX,
                                                    0, Style.Unit.PX);
 
-      frame_.add(maximize);
-      frame_.setWidgetTopHeight(maximize,
+      frame_.add(minimizeButton_);
+      frame_.setWidgetTopHeight(minimizeButton_,
+            ShadowBorder.TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+            14, Style.Unit.PX);
+      frame_.setWidgetRightWidth(minimizeButton_,
+            ShadowBorder.RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
+            14, Style.Unit.PX);
+
+      frame_.add(maximizeButton_);
+      frame_.setWidgetTopHeight(maximizeButton_,
                                 ShadowBorder.TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
                                 14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(maximize,
+      frame_.setWidgetRightWidth(maximizeButton_,
                                  ShadowBorder.RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
                                  14, Style.Unit.PX);
 
-      frame_.add(minimize);
-      frame_.setWidgetTopHeight(minimize,
-                                ShadowBorder.TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(minimize,
-                                 ShadowBorder.RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
-                                 14, Style.Unit.PX);
-      
       buttonsArea_ = new FlowPanel();
       frame_.add(buttonsArea_);
       
@@ -372,9 +359,33 @@ public class WindowFrame extends Composite
       return fill_;
    }
 
+   public void setMaximizedDependentState(WindowState state)
+   {
+      if (state == WindowState.MAXIMIZE)
+      {
+         addStyleDependentName("maximized");
+      }
+      else
+      {
+         removeStyleDependentName("maximized");
+      }
+      maximizeButton_.setMaximized(state == WindowState.MAXIMIZE);
+   }
+
+   public void setExclusiveDependentState(WindowState state)
+   {
+      if (state == WindowState.EXCLUSIVE)
+         addStyleDependentName("exclusive");
+      else
+         removeStyleDependentName("exclusive");
+      maximizeButton_.setExclusive(state == WindowState.EXCLUSIVE);
+   }
+
    private final LayoutPanel frame_;
    private final ShadowBorder border_;
    private final SimplePanel borderPositioner_;
+   private final WindowFrameButton maximizeButton_;
+   private final WindowFrameButton minimizeButton_;
    private Widget main_;
    private Widget header_;
    private Widget fill_;

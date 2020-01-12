@@ -1,7 +1,7 @@
 /*
  * MinimizedWindowFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
@@ -43,12 +44,12 @@ public class MinimizedWindowFrame
       }
    }
 
-   public MinimizedWindowFrame(String title)
+   public MinimizedWindowFrame(String title, String accessibleName)
    {
-      this(title, null);
+      this(title, accessibleName, null);
    }
 
-   public MinimizedWindowFrame(String title, Widget extraWidget)
+   public MinimizedWindowFrame(String title, String accessibleName, Widget extraWidget)
    {
       ThemeStyles themeStyles = ThemeResources.INSTANCE.themeStyles();
 
@@ -87,29 +88,21 @@ public class MinimizedWindowFrame
          inner.setCellWidth(extraWidget, "100%");
       }
 
-      HTML minimize = createDiv(themeStyles.minimize() + " " +
-                                ThemeStyles.INSTANCE.handCursor());
-      minimize.addClickHandler(new ClickHandler()
+      WindowFrameButton minimize = new WindowFrameButton(accessibleName, WindowState.NORMAL);
+      minimize.setElementId(ElementIds.MIN_FRAME_MIN_BTN + "_" + ElementIds.idSafeString(accessibleName));
+      minimize.setStylePrimaryName(themeStyles.minimize());
+      minimize.setClickHandler(() ->
       {
-         public void onClick(ClickEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-            fireEvent(new WindowStateChangeEvent(WindowState.MINIMIZE));
-         }
+         fireEvent(new WindowStateChangeEvent(WindowState.MINIMIZE));
       });
       inner.add(minimize);
 
-      HTML maximize = createDiv(themeStyles.maximize() + " " + 
-                                themeStyles.handCursor());
-      maximize.addClickHandler(new ClickHandler()
+      WindowFrameButton maximize = new WindowFrameButton(accessibleName, WindowState.MAXIMIZE);
+      maximize.setElementId(ElementIds.MIN_FRAME_MAX_BTN + "_" + ElementIds.idSafeString(accessibleName));
+      maximize.setStylePrimaryName(themeStyles.maximize());
+      maximize.setClickHandler(() ->
       {
-         public void onClick(ClickEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-            fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
-         }
+         fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
       });
       inner.add(maximize);
 

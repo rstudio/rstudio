@@ -145,13 +145,19 @@ std::vector<RVersion> enumerateRVersions(
       FilePath rScriptPath = rEntry.homeDir().completeChildPath("bin/R");
       if (!rScriptPath.exists())
       {
-         // if we are loading a module and no R path is defined, that's okay
-         // just mark the path as empty and the default R on the module path
-         // will be used instead
          if (rEntry.module().empty())
+         {
+            LOG_ERROR_MESSAGE("Invalid R version specified - path does not exist: " +
+                              rScriptPath.getAbsolutePath() + " - version will be skipped");
             continue;
+         }
          else
+         {
+            // if we are loading a module and no R path is defined, that's okay
+            // just mark the path as empty and the default R on the module path
+            // will be used instead
             rScriptPath = FilePath();
+         }
       }
 
       // get the prelaunch script to be executed before attempting to load R to read version info

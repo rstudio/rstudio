@@ -442,4 +442,10 @@ public class ElementIds
    public final static String RSC_ACCOUNT_LIST = "rsc_account_list";
    public static String getRscAccountList() { return getElementId(RSC_ACCOUNT_LIST); }
    public final static String RSC_FILES_LIST_LABEL = "rsc_files_list_label";
+   
+   // WindowFrameButton (combined with unique suffix for each quadrant
+   public final static String FRAME_MIN_BTN = "frame_min_btn";
+   public final static String FRAME_MAX_BTN = "frame_max_btn";
+   public final static String MIN_FRAME_MIN_BTN = "min_frame_min_btn";
+   public final static String MIN_FRAME_MAX_BTN = "min_frame_max_btn";
 }
