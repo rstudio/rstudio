@@ -9,7 +9,8 @@ import jsinterop.annotations.JsPackage;;
 
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
-public class Panmirror {
+public class Panmirror 
+{
 
    @JsOverlay
    public static void load(ExternalJavaScriptLoader.Callback onLoaded) {    
