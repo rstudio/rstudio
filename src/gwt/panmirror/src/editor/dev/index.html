@@ -63,7 +63,7 @@
   
     async function initializeEditor() {
      
-      var editor = await window.panmirror.Editor.create({
+      var editor = await window.Panmirror.Editor.create({
         parent: document.getElementById('editor'),
         pandoc: pandocEngine(),
         format: 'markdown',
