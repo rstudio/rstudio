@@ -14,7 +14,6 @@ import elemental2.promise.IThenable;
 import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
 import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
 import elemental2.promise.Promise;
-import elemental2.promise.Promise.CatchOnRejectedCallbackFn;
 
 
 public class PanmirrorEditorWidget extends Composite implements RequiresResize
