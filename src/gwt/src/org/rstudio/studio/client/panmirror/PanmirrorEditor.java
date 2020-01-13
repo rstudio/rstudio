@@ -2,6 +2,8 @@ package org.rstudio.studio.client.panmirror;
 
 import jsinterop.annotations.JsType;
 
+import org.rstudio.core.client.jsinterop.JsVoidFunction;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 import elemental2.promise.Promise;
@@ -24,6 +26,8 @@ public class PanmirrorEditor
    
    public native Promise<Boolean> setMarkdown(String markdown, boolean emitUpdate);
    public native Promise<String> getMarkdown();
+   
+   public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
    
    public native String getHTML();
    
