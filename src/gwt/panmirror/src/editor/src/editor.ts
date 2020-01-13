@@ -15,7 +15,7 @@ import { findChildren, setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
-import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
+import { ProsemirrorCommand, CommandFn, EditorCommand, EditorCommandId } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
 import { PandocNode } from './api/node';
 import { EditorUI } from './api/ui';
@@ -35,6 +35,9 @@ import { PandocConverter } from './pandoc/converter';
 import './styles/frame.css';
 import './styles/styles.css';
 import './styles/theme.css';
+
+const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
+
 
 export interface EditorConfig {
   readonly parent: HTMLElement;
@@ -58,7 +61,6 @@ export interface EditorKeybindings {
 export const kEventUpdate = 'update';
 export const kEventSelectionChange = 'selectionChange';
 
-const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
 export class Editor {
   private static readonly keybindingsPlugin = new PluginKey('keybindings');
