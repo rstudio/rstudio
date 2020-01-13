@@ -189,7 +189,7 @@ public class TextEditingTargetWidget
                      clamped = 0;
                   
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
-                  toggleDocOutlineButton_.setLatched(clamped != 0);
+                  setDocOutlineLatchState(clamped != 0);
                   editor_.onResize();
                }
                
@@ -217,7 +217,7 @@ public class TextEditingTargetWidget
       adaptToFileType(fileType);
       
       editor.addFocusHandler(event ->
-            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0));
+            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0));
 
       editor_.setTextInputAriaLabel("Text editor");
 
@@ -245,7 +245,7 @@ public class TextEditingTargetWidget
          double widgetSize = target_.getPreferredOutlineWidgetSize();
          double size = Math.min(editorSize, widgetSize);
          editorPanel_.setWidgetSize(docOutlineWidget_, size);
-         toggleDocOutlineButton_.setLatched(true);
+         setDocOutlineLatchState(true);
       }
    }
    
@@ -525,7 +525,7 @@ public class TextEditingTargetWidget
                   title = title.replace("Hide ", "Show ");
                toggleDocOutlineButton_.setTitle(title);
 
-               toggleDocOutlineButton_.setLatched(destination != 0);
+               setDocOutlineLatchState(destination != 0);
 
                int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
                new Animation()
@@ -564,7 +564,7 @@ public class TextEditingTargetWidget
                   ? title.replace("Show ", "Hide ")
                   : title.replace("Hide ", "Show ");
             toggleDocOutlineButton_.setTitle(title);
-            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
+            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
       
@@ -588,6 +588,12 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
+   }
+   
+   private void setDocOutlineLatchState(boolean latched)
+   {
+      toggleDocOutlineButton_.setLatched(latched);
+      docOutlineWidget_.setAriaVisible(latched);
    }
    
    private ToolbarButton createLatexFormatButton()
@@ -775,7 +781,7 @@ public class TextEditingTargetWidget
       if (!fileType.canShowScopeTree())
       {
          editorPanel_.setWidgetSize(docOutlineWidget_, 0);
-         toggleDocOutlineButton_.setLatched(false);
+         setDocOutlineLatchState(false);
       }
       
       toolbar_.invalidateSeparators();
@@ -820,7 +826,7 @@ public class TextEditingTargetWidget
    public void setAccessibleName(String name)
    {
       if (StringUtil.isNullOrEmpty(name))
-         name = "Text editor";
+         name = "Untitled Text editor";
       Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name);
    }
 

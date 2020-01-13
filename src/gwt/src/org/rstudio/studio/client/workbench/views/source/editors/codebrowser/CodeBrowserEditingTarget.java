@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,6 +88,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       void findPrevious();
       void findFromSelection();
       void scrollToLeft();
+      void setAccessibleName(String name);
    }
 
    interface MyBinder extends CommandBinder<Commands, CodeBrowserEditingTarget>
@@ -201,6 +202,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
       {
          docDisplay_.setCode("", false);
       }
+
+      name_.addValueChangeHandler(event -> view_.setAccessibleName(name_.getValue()));
+      name_.fireChangeEvent();
    }
    
    public void showFunction(SearchPathFunctionDefinition functionDef)
@@ -812,8 +816,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private SourceDocument doc_;
  
    private final Value<Boolean> dirtyState_ = new Value<Boolean>(false);
-   private ArrayList<HandlerRegistration> releaseOnDismiss_ =
-         new ArrayList<HandlerRegistration>();
+   private ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
    private final SourceServerOperations server_;
    private final Commands commands_;
    private final EventBus events_;
@@ -823,7 +826,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private Display view_;
    private HandlerRegistration commandReg_;
    private boolean shownWarningBar_ = false;
-   private final Value<String> name_ = new Value<String>("Source Viewer");  
+   private final Value<String> name_ = new Value<>("Source Viewer");
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
    

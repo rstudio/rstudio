@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -4182,6 +4183,19 @@ public class Source implements InsertSourceHandler,
    public void onOpenPreviousFileOnFilesystem()
    {
       openAdjacentFile(false);
+   }
+   
+   @Handler
+   public void onSpeakEditorLocation()
+   {
+      String announcement;
+      if (view_.getTabCount() == 0)
+         announcement = "No documents open in editor";
+      else
+      {
+         announcement = "Nothing to see here";
+      }
+      events_.fireEvent(new AriaLiveStatusEvent(announcement, true));
    }
    
    @Handler

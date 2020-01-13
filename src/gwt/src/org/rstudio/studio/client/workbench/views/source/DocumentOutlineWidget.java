@@ -1,7 +1,7 @@
 /*
  * DocumentOutlineWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.aria.client.OrientationValue;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Counter;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -63,6 +66,9 @@ public class DocumentOutlineWidget extends Composite
       {
          panel_ = new FlowPanel();
          panel_.addStyleName(RES.styles().leftSeparator());
+         Roles.getSeparatorRole().set(panel_.getElement());
+         Roles.getSeparatorRole().setAriaOrientationProperty(panel_.getElement(),
+               OrientationValue.VERTICAL);
          initWidget(panel_);
       }
       
@@ -228,6 +234,7 @@ public class DocumentOutlineWidget extends Composite
       
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
+      Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), "Document Outline");
       
       panel_ = new FlowPanel();
       panel_.addStyleName(RES.styles().panel());
@@ -252,6 +259,14 @@ public class DocumentOutlineWidget extends Composite
       updateStyles(emptyPlaceholder_, event.getStyle());
    }
    
+   public void setAriaVisible(boolean visible)
+   {
+      if (visible)
+         A11y.setARIAVisible(getElement());
+      else
+         A11y.setARIAHidden(getElement());
+   }
+
    private void initHandlers()
    {
       handlers_.add(target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()

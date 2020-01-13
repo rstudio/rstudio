@@ -640,6 +640,7 @@ public abstract class
    public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
    public abstract AppCommand focusMainToolbar();
+   public abstract AppCommand speakEditorLocation();
    
    // Internal
    public abstract AppCommand showDomElements();

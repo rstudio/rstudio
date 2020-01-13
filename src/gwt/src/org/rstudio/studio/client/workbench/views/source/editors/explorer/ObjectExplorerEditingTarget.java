@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -52,12 +54,19 @@ public class ObjectExplorerEditingTarget
    {
       progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setSize("100%", "100%");
+      Roles.getTabpanelRole().set(progressPanel_.getElement());
+      setAccessibleName(null);
       reloadDisplay();
       return new Display()
       {
          public void print()
          {
             ((Display)progressPanel_.getWidget()).print();
+         }
+
+         public void setAccessibleName(String name)
+         {
+            ObjectExplorerEditingTarget.this.setAccessibleName(name);
          }
 
          public Widget asWidget()
@@ -157,7 +166,14 @@ public class ObjectExplorerEditingTarget
       view_.setSize("100%", "100%");
       progressPanel_.setWidget(view_);
    }
-   
+
+   private void setAccessibleName(String accessibleName)
+   {
+      if (StringUtil.isNullOrEmpty(accessibleName))
+         accessibleName = "Untitled Object Explorer";
+      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(), accessibleName +
+            " Object Explorer");
+   }
 
    private SimplePanelWithProgress progressPanel_;
    private ObjectExplorerEditingTargetWidget view_;

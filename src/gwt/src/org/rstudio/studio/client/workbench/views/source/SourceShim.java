@@ -1,7 +1,7 @@
 /*
  * SourceShim.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -155,7 +155,9 @@ public class SourceShim extends Composite
       public abstract void onOpenNextFileOnFilesystem();
       @Handler
       public abstract void onOpenPreviousFileOnFilesystem();
-      
+      @Handler
+      public abstract void onSpeakEditorLocation();
+
       // NOTE: These aren't really Source-level commands, but we
       // need them to be registered for both the whole application
       // as well as popped-out source windows.
