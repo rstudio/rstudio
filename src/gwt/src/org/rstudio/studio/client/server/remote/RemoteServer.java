@@ -1444,9 +1444,16 @@ public class RemoteServer implements Server
    
    @Override
    public void isGitDirectory(String path,
-                          ServerRequestCallback<Boolean> requestCallback)
+                              ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, IS_GIT_DIRECTORY, path, requestCallback);
+   }
+
+   @Override
+   public void isPackageDirectory(String path,
+                                  ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, IS_PACKAGE_DIRECTORY, path, requestCallback);
    }
 
    @Override
@@ -6180,6 +6187,7 @@ public class RemoteServer implements Server
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
    private static final String IS_GIT_DIRECTORY = "is_git_directory";
+   private static final String IS_PACKAGE_DIRECTORY = "is_package_directory";
    private static final String LIST_FILES = "list_files";
    private static final String LIST_ALL_FILES = "list_all_files";
    private static final String CREATE_FOLDER = "create_folder";

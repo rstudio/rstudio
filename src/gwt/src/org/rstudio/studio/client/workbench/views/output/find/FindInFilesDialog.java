@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -153,6 +154,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       AllFiles,
       CommonRSourceFiles,
       RScripts,
+      Package,
       CustomFilter
    }
 
@@ -227,6 +229,12 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       manageExcludeFilePattern();
    }
 
+   public void setPackageStatus(boolean status)
+   {
+      packageStatus_ = status;
+      manageFilePattern();
+   }
+
    private void manageFilePattern()
    {
       // disable custom filter text box when 'Custom Filter' is not selected
@@ -237,6 +245,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
              ExcludeFilePatterns.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
+
+      // disable 'Package' option when chosen directory is not a package
+      if (!packageStatus_)
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               IncludeFilePatterns.Package.ordinal()))
+            .setAttribute("disabled", "disabled");
+      else
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            IncludeFilePatterns.Package.ordinal())).removeAttribute("disabled");
    }
 
    private void manageExcludeFilePattern()
@@ -247,15 +264,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (!gitStatus_ ||
           !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
+               ExcludeFilePatterns.StandardGit.ordinal()))
             .setAttribute("disabled", "disabled");
          if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
              ExcludeFilePatterns.StandardGit.ordinal())
             listPresetExcludeFilePatterns_.setSelectedIndex(ExcludeFilePatterns.None.ordinal());
       }
       else
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
-            .removeAttribute("disabled");
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
+            ExcludeFilePatterns.StandardGit.ordinal())).removeAttribute("disabled");
 
 
       // disable custom filter text box when 'Custom Filter' is not selected
@@ -445,6 +463,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    SpanElement spanExcludePatternExample_;
 
    private boolean gitStatus_;
+   private boolean packageStatus_;
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
    private Session session_ = RStudioGinjector.INSTANCE.getSession();

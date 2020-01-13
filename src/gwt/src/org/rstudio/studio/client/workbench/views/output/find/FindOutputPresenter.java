@@ -537,7 +537,7 @@ public class FindOutputPresenter extends BasePresenter
          public void onValueChange(ValueChangeEvent<String> event)
          {
             fileServer_.isGitDirectory(dialog.getDirectory(),
-                                   new ServerRequestCallback<Boolean>() {
+                                       new ServerRequestCallback<Boolean>() {
                @Override
                public void onResponseReceived(Boolean isGitDirectory)
                {
@@ -551,8 +551,26 @@ public class FindOutputPresenter extends BasePresenter
                public void onError(ServerError error)
                {
                   // assume true if we are not sure
-                  // if the user enters invalid data it will be handled later
+                  // if the user enters invalid data it will be handled by the backend
                   dialog.setGitStatus(true);
+                  Debug.logError(error);
+               }
+            });
+
+            fileServer_.isPackageDirectory(dialog.getDirectory(),
+                                           new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(final Boolean isPackageDirectory)
+               {
+                  dialog.setPackageStatus(isPackageDirectory);
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  // assume true if we are not sure
+                  // if the user enters invalid data it will be handled by the backend
+                  dialog.setPackageStatus(true);
                   Debug.logError(error);
                }
             });
