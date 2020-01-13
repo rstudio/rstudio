@@ -506,6 +506,7 @@ public class TextEditingTargetWidget
       toggleDocOutlineButton_ = new LatchingToolbarButton(
             ToolbarButton.NoText,
             ToolbarButton.NoTitle,
+            true, /* textIndicatesState */
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             event -> {
                final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
