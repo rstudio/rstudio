@@ -25,11 +25,14 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       PanmirrorEditorWidget.create("markdown", options, editorWidget -> {
          if (editorWidget != null) {
             this.editorWidget_ = editorWidget;
-            this.editorWidget_.setMarkdown("The *quick* brown **fox** jumped over the lazy dog", true, () -> {
-               mainWidget_.add(this.editorWidget_);
-               this.editorWidget_.getMarkdown(markdown -> {
-                  Debug.logToConsole(markdown);
-               });
+            mainWidget_.add(this.editorWidget_);
+            this.editorWidget_.setMarkdown("The *quick* brown **fox** jumped over the lazy dog", true, (success) -> {
+               if (success) 
+               {  
+                  this.editorWidget_.getMarkdown(markdown -> {
+                     Debug.logToConsole(markdown);
+                  });
+               }
             });
          }
       });

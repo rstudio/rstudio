@@ -4,7 +4,6 @@ package org.rstudio.studio.client.panmirror;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -60,14 +59,14 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
    }
    
    
-   public void setMarkdown(String markdown, boolean emitUpdate, Command completed) {
+   public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) {
       
       this.editor_.setMarkdown(markdown, emitUpdate)
          .then(new ThenOnFulfilledCallbackFn<Object,Object>() {
             @Override
             public IThenable<Object> onInvoke(Object v)
             {
-               completed.execute();
+               completed.execute(true);
                return null;
               
             }
@@ -77,7 +76,7 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
             public IThenable<String> onInvoke(Object error)
             {
                Debug.logToConsole("Error setting Panmirorr markdown: " + error.toString());
-               completed.execute();
+               completed.execute(false);
                return null;
             }
          });
