@@ -5033,6 +5033,25 @@ public class TextEditingTarget implements
    {
       return null;
    }
+
+   @Override
+   public String getCurrentStatus()
+   {
+      Position pos = docDisplay_.getCursorPosition();
+      String scope = statusBar_.getScope().getValue();
+      if (StringUtil.isNullOrEmpty(scope))
+         scope = "None";
+      String name = getName().getValue();
+      if (StringUtil.isNullOrEmpty(name))
+         name = "No name";
+
+      StringBuilder status = new StringBuilder();
+      status.append("Row ").append(pos.getRow() + 1).append(" Column ").append(pos.getColumn() + 1);
+      status.append(" Scope ").append(scope);
+      status.append(" File type ").append(fileType_.getLabel());
+      status.append(" File name ").append(name);
+      return status.toString();
+   }
    
    private boolean isRChunk(Scope scope)
    {

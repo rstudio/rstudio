@@ -151,7 +151,13 @@ public class ObjectExplorerEditingTarget
       
       view_.refresh();
    }
-   
+
+   @Override
+   public String getCurrentStatus()
+   {
+      return "Object Explorer displayed";
+   }
+
    // Private methods ----
    
    private void reloadDisplay()

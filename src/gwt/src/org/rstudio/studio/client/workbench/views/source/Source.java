@@ -4189,11 +4189,11 @@ public class Source implements InsertSourceHandler,
    public void onSpeakEditorLocation()
    {
       String announcement;
-      if (view_.getTabCount() == 0)
-         announcement = "No documents open in editor";
+      if (activeEditor_ == null)
+         announcement = "No document tabs open";
       else
       {
-         announcement = "Nothing to see here";
+         announcement = activeEditor_.getCurrentStatus();
       }
       events_.fireEvent(new AriaLiveStatusEvent(announcement, true));
    }

@@ -211,6 +211,12 @@ public class DataEditingTarget extends UrlContentEditingTarget
       events_.fireEvent(new PopoutDocEvent(getId(), null));
    }
 
+   @Override
+   public String getCurrentStatus()
+   {
+      return "Data Browser displayed";
+   }
+
    protected String getCacheKey()
    {
       return getDataItem().getCacheKey();

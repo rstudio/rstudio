@@ -752,7 +752,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public void endDebugHighlighting()
    {
-      docDisplay_.endDebugHighlighting();      
+      docDisplay_.endDebugHighlighting();
    } 
    
    @Override 
@@ -770,6 +770,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public String getDefaultNamePrefix()
    {
       return null;
+   }
+
+   @Override
+   public String getCurrentStatus()
+   {
+      return "Code Browser displayed";
    }
 
    // Private methods --------------------------------------------------------

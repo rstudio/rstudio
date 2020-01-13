@@ -465,6 +465,12 @@ public class UrlContentEditingTarget implements EditingTarget
       return null;
    }
 
+   @Override
+   public String getCurrentStatus()
+   {
+      return "URL Viewer displayed";
+   }
+
    private ContentItem getContentItem()
    {
       return (ContentItem)doc_.getProperties().cast();
