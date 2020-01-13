@@ -11,7 +11,6 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import elemental2.promise.IThenable;
 import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
 import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
-import elemental2.promise.Promise;
 
 
 public class PanmirrorEditorWidget extends Composite implements RequiresResize
@@ -31,7 +30,7 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
                {
                   editorWidget.attachEditor(editor);
                   command.execute(editorWidget);
-                  return Promise.resolve(editor);
+                  return null;
                }
             }, new ThenOnRejectedCallbackFn<PanmirrorEditor>() {
                @Override
