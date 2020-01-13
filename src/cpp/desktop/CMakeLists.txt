@@ -94,6 +94,13 @@ else()
    endif()
 endif()
 
+if(NOT QT_QMAKE_EXECUTABLE AND RSTUDIO_SEARCH_SYSTEM_PATHS_FOR_DEPENDENCIES)
+   find_program(QT_QMAKE_EXECUTABLE
+      NAMES "qmake"
+      PATHS "/usr/lib64/qt5/bin/" "/usr/lib/qt5/bin")
+   message(STATUS ${QT_QMAKE_EXECUTABLE})
+endif()
+
 if(QT_QMAKE_EXECUTABLE)
    message(STATUS "Found Qt: ${QT_QMAKE_EXECUTABLE}")
 else()
