@@ -43,6 +43,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 
@@ -205,9 +206,25 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
    }
 
+   public String getDirectory()
+   {
+      return dirChooser_.getText();
+   }
+
    public void setDirectory(FileSystemItem directory)
    {
       dirChooser_.setText(directory.getPath());
+   }
+
+   public DirectoryChooserTextBox getDirectoryChooser()
+   {
+      return dirChooser_;
+   }
+
+   public void setGitStatus(boolean status)
+   {
+      gitStatus_ = status;
+      manageExcludeFilePattern();
    }
 
    private void manageFilePattern()
@@ -224,9 +241,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    private void manageExcludeFilePattern()
    {
-      // disable 'Standard Git exclusions' when git is not installed
+      // disable 'Standard Git exclusions' when directory is not a git repository
+      // or git is not installed
       // this should come first as it may change the value of listPresetExcludeFilePatterns
-      if (!session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
+      if (!gitStatus_ ||
+          !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
          ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
             .setAttribute("disabled", "disabled");
@@ -234,9 +253,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
              ExcludeFilePatterns.StandardGit.ordinal())
             listPresetExcludeFilePatterns_.setSelectedIndex(ExcludeFilePatterns.None.ordinal());
       }
+      else
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
+            .removeAttribute("disabled");
 
-      // disable 'Standard Git exclusions' when selected directory is not a git repo
-      String dir = dirChooser_.getText();
 
       // disable custom filter text box when 'Custom Filter' is not selected
       divExcludeCustomFilter_.getStyle().setDisplay(
@@ -422,6 +442,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    SpanElement spanExcludePatternExample_;
 
+   private boolean gitStatus_;
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
    private Session session_ = RStudioGinjector.INSTANCE.getSession();
