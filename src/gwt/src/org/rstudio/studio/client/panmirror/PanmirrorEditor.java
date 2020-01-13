@@ -18,20 +18,15 @@ package org.rstudio.studio.client.panmirror;
 import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
+import elemental2.core.JsObject;
 import elemental2.promise.Promise;
 
 
 @JsType(isNative = true, name="Editor", namespace = "Panmirror")
 public class PanmirrorEditor
-{  
-   
-   // TODO:
-   // subscribe
-   // getOutline
-   
+{
    public native static Promise<PanmirrorEditor> create(PanmirrorEditorConfig config);
    
    public native void destroy();
@@ -44,9 +39,11 @@ public class PanmirrorEditor
    
    public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
    
+   public native PanmirrorCommand[] commands();
+   
    public native String getHTML();
    
-   public native JavaScriptObject getSelection();
+   public native JsObject getSelection();
    
    public native void focus();
    public native void blur();

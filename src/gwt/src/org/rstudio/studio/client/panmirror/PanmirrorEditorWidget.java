@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -35,6 +36,8 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
+
+import elemental2.core.JsObject;
 
 
 public class PanmirrorEditorWidget extends Composite implements 
@@ -71,14 +74,15 @@ public class PanmirrorEditorWidget extends Composite implements
    
    private void attachEditor(PanmirrorEditor editor) {
       
-      this.editor_ = editor;
+      editor_ = editor;
+      commands_ = editor.commands();
       
-      editorEventUnsubscribe_.add(this.editor_.subscribe(Panmirror.kEventUpdate, () -> {
-         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), this.handlers_);
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.kEventUpdate, () -> {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       }));
       
      
-      editorEventUnsubscribe_.add(this.editor_.subscribe(Panmirror.kEventSelectionChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.kEventSelectionChange, () -> {
          SelectionChangeEvent.fire(this);
       }));
    }
@@ -88,15 +92,16 @@ public class PanmirrorEditorWidget extends Composite implements
    {
       try 
       {
-         if (this.editor_ != null) 
+         if (editor_ != null) 
          {
             // unsubscribe from editor events
             for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
                unsubscribe.call();
+            editorEventUnsubscribe_.clear();
             
             // destroy editor
-            this.editor_.destroy();
-            this.editor_ = null;
+            editor_.destroy();
+            editor_ = null;
          }
       }
       finally
@@ -105,10 +110,21 @@ public class PanmirrorEditorWidget extends Composite implements
       }
    }
    
+   public void setTitle(String title)
+   {
+      editor_.setTitle(title);
+   }
    
-   public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) {
+   public String getTitle()
+   {
+      return editor_.getTitle();
+   }
+   
+   
+   public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) 
+   {
       new PromiseWithProgress<Boolean>(
-         this.editor_.setMarkdown(markdown, emitUpdate),
+         editor_.setMarkdown(markdown, emitUpdate),
          false,
          completed
       );
@@ -116,10 +132,57 @@ public class PanmirrorEditorWidget extends Composite implements
    
    public void getMarkdown(CommandWithArg<String> completed) {
       new PromiseWithProgress<String>(
-         this.editor_.getMarkdown(),
+         editor_.getMarkdown(),
          null,
          completed   
       );
+   }
+   
+   public PanmirrorCommand[] getCommands()
+   {
+      return commands_;
+   }
+  
+   public boolean execCommand(String id)
+   {
+      for (PanmirrorCommand command : commands_)
+      {
+         if (command.id == id)
+         {
+            if (command.isEnabled())
+            {
+               command.execute();
+            }
+            return true;
+          }
+      }
+      return false;
+   }
+   
+   
+   public void navigate(String id)
+   {
+      editor_.navigate(id);
+   }
+   
+   public String getHTML()
+   {
+      return editor_.getHTML();
+   }
+   
+   public JsObject getSelection()
+   {
+      return editor_.getSelection();
+   }
+   
+   public void focus()
+   {
+      editor_.focus();
+   }
+   
+   public void blur()
+   {
+      editor_.blur();
    }
    
    
@@ -146,13 +209,14 @@ public class PanmirrorEditorWidget extends Composite implements
    @Override
    public void onResize()
    {
-      if (this.editor_ != null) {
-         this.editor_.resize();
+      if (editor_ != null) {
+         editor_.resize();
       }
    }
     
    
    private PanmirrorEditor editor_ = null;
+   private PanmirrorCommand[] commands_ = null;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
 }

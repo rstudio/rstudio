@@ -4,6 +4,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorWidget;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -13,7 +14,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
-// TODO: how to handle error conditions? confirm all the flow of control actually works
 
 public class PanmirrorTestDialog extends ModalDialog<String>
 {
@@ -23,6 +23,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       
       mainWidget_ = new SimplePanel();
       mainWidget_.setSize("500px", "400px");
+      
       
       PanmirrorEditorOptions options = new PanmirrorEditorOptions();
       PanmirrorEditorWidget.create("markdown", options, editorWidget -> {
@@ -55,6 +56,9 @@ public class PanmirrorTestDialog extends ModalDialog<String>
             this.editorWidget_.setMarkdown("The *quick* brown **fox** jumped over the lazy dog", true, (success) -> {
                if (success) 
                {  
+                  
+                  this.editorWidget_.execCommand(PanmirrorCommand.SelectAll);
+                  
                   this.editorWidget_.getMarkdown(markdown -> {
                      Debug.logToConsole(markdown);
                   });
