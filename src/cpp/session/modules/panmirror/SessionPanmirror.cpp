@@ -31,10 +31,6 @@ namespace session {
 namespace modules {
 namespace panmirror {
 
-// "pandoc_ast_to_markdown";
-// "pandoc_markdown_to_ast";
-// "pandoc_list_extensions";
-
 namespace {
 
 
@@ -66,19 +62,34 @@ Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOp
    return Success();
 }
 
+std::string errorMessage(const Error& error)
+{
+   std::string msg = error.getMessage();
+   if (msg.length() == 0)
+   {
+      msg = error.getProperty("category");
+   }
+   if (msg.length() == 0)
+   {
+      msg = error.getName();
+   }
+   return msg;
+}
+
+
 void setPandocErrorResponse(const Error& error,
                             json::JsonRpcResponse* pResponse)
 {
    LOG_ERROR(error);
-   pResponse->setError(error);
+   pResponse->setError(error, errorMessage(error));
 }
 
 void setPandocErrorResponse(const core::system::ProcessResult& result,
                             json::JsonRpcResponse* pResponse)
 {
-   const std::string errMsg = "Error executing pandoc: " + result.stdErr;
-   Error error(json::errc::ExecutionError, errMsg, ERROR_LOCATION);
-   setPandocErrorResponse(error, pResponse);
+   Error error = systemError(boost::system::errc::state_not_recoverable, result.stdErr, ERROR_LOCATION);
+   LOG_ERROR(error);
+   pResponse->setError(error, result.stdErr);
 }
 
 Error pandocAstToMarkdown(const json::JsonRpcRequest& request,
@@ -90,11 +101,17 @@ Error pandocAstToMarkdown(const json::JsonRpcRequest& request,
    json::Array jsonOptions;
    Error error = json::readParams(request.params, &jsonAst, &format, &jsonOptions);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
    std::vector<std::string> options;
    error = readOptionsParam(jsonOptions, &options);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    // build args
    std::vector<std::string> args;
@@ -108,7 +125,10 @@ Error pandocAstToMarkdown(const json::JsonRpcRequest& request,
    core::system::ProcessResult result;
    error = runPandoc(args, jsonAst.write(), &result);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    if (result.exitStatus == EXIT_SUCCESS)
    {
@@ -130,11 +150,17 @@ Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
    std::string markdown, format;
    Error error = json::readParams(request.params, &markdown, &format, &jsonOptions);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
    std::vector<std::string> options;
    error = readOptionsParam(jsonOptions, &options);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    // build args
    std::vector<std::string> args;
@@ -148,21 +174,27 @@ Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
    core::system::ProcessResult result;
    error = runPandoc(args, markdown, &result);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    // return output on success
    if (result.exitStatus == EXIT_SUCCESS)
    {
       using namespace json;
       json::Value jsonAst;
-      Error parseError = jsonAst.parse(result.stdOut);
-      if (parseError)
+      Error error = jsonAst.parse(result.stdOut);
+      if (error)
       {
+         Error parseError(boost::system::errc::state_not_recoverable,
+                          errorMessage(error),
+                          ERROR_LOCATION);
          setPandocErrorResponse(parseError, pResponse);
       }
       else if (!isType<json::Object>(jsonAst))
       {
-         Error outputError(json::errc::ExecutionError,
+         Error outputError(boost::system::errc::state_not_recoverable,
                            "Unexpected JSON output from pandoc",
                            ERROR_LOCATION);
          setPandocErrorResponse(outputError, pResponse);
@@ -187,7 +219,10 @@ Error pandocListExtensions(const json::JsonRpcRequest& request,
    std::string format;
    Error error = json::readParams(request.params, &format);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    // build args
    std::vector<std::string> args;
@@ -200,7 +235,10 @@ Error pandocListExtensions(const json::JsonRpcRequest& request,
    core::system::ProcessResult result;
    error = runPandoc(args, "", &result);
    if (error)
-      return error;
+   {
+      setPandocErrorResponse(error, pResponse);
+      return Success();
+   }
 
    // return output on success
    if (result.exitStatus == EXIT_SUCCESS)

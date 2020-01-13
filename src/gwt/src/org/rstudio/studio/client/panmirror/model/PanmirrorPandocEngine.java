@@ -6,6 +6,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.json.client.JSONValue;
 import com.google.inject.Inject;
 
 import elemental2.core.JsError;
@@ -77,7 +78,13 @@ class PromiseServerRequestCallback<T> extends ServerRequestCallback<T> {
    @Override
    public void onError(ServerError error)
    {
-      reject_.onInvoke(new JsError(error.getMessage())); 
+      String errMsg = error.getUserMessage();
+      JSONValue clientInfo = error.getClientInfo();
+      if (clientInfo != null && clientInfo.isString() != null) 
+      {
+         errMsg = clientInfo.isString().stringValue();
+      }
+      reject_.onInvoke(new JsError(errMsg)); 
    }
    
    
