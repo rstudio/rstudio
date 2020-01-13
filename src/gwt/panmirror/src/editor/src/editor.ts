@@ -180,7 +180,7 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, emitUpdate = true): Promise<void> {
+  public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown);
 
@@ -200,6 +200,8 @@ export class Editor {
       this.emitEvent(kEventUpdate);
       this.emitEvent(kEventSelectionChange);
     }
+
+    return true;
   }
 
   public getMarkdown(): Promise<string> {

@@ -2,46 +2,31 @@ package org.rstudio.studio.client.panmirror;
 
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.promise.PromiseWithProgress;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
-
-import elemental2.promise.IThenable;
-import elemental2.promise.IThenable.ThenOnFulfilledCallbackFn;
-import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
 
 
 public class PanmirrorEditorWidget extends Composite implements RequiresResize
 {
    public static void create(String format, 
                              PanmirrorEditorOptions options, 
-                             CommandWithArg<PanmirrorEditorWidget> command) {
+                             CommandWithArg<PanmirrorEditorWidget> completed) {
       
       PanmirrorEditorWidget editorWidget = new PanmirrorEditorWidget();
       PanmirrorEditorConfig editorConfig = new PanmirrorEditorConfig(editorWidget.getElement(), format, options);
       
       Panmirror.load(() -> {
-         PanmirrorEditor.create(editorConfig)
-            .then(new ThenOnFulfilledCallbackFn<PanmirrorEditor, PanmirrorEditor>() {
-               @Override
-               public IThenable<PanmirrorEditor> onInvoke(PanmirrorEditor editor)
-               {
-                  editorWidget.attachEditor(editor);
-                  command.execute(editorWidget);
-                  return null;
-               }
-            }, new ThenOnRejectedCallbackFn<PanmirrorEditor>() {
-               @Override
-               public IThenable<PanmirrorEditor> onInvoke(Object error)
-               {
-                  Debug.logToConsole("Error creating Panmirror widget: " + error.toString());
-                  command.execute(null);
-                  return null;
-               }
-               
-            });
+         new PromiseWithProgress<PanmirrorEditor>(
+            PanmirrorEditor.create(editorConfig),
+            null,
+            editor -> {
+               editorWidget.attachEditor(editor);
+               completed.execute(editorWidget);
+            }
+         );
        });
      
    }
@@ -59,49 +44,19 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
    
    
    public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) {
-      
-      this.editor_.setMarkdown(markdown, emitUpdate)
-         .then(new ThenOnFulfilledCallbackFn<Object,Object>() {
-            @Override
-            public IThenable<Object> onInvoke(Object v)
-            {
-               completed.execute(true);
-               return null;
-              
-            }
-         },new ThenOnRejectedCallbackFn<String>() {
-         
-            @Override
-            public IThenable<String> onInvoke(Object error)
-            {
-               Debug.logToConsole("Error setting Panmirorr markdown: " + error.toString());
-               completed.execute(false);
-               return null;
-            }
-         });
-        
-         
+      new PromiseWithProgress<Boolean>(
+         this.editor_.setMarkdown(markdown, emitUpdate),
+         false,
+         completed
+      );
    }
    
-   public void getMarkdown(CommandWithArg<String> command) {
-      this.editor_.getMarkdown()
-         .then(new ThenOnFulfilledCallbackFn<String, String>() {
-            @Override
-            public IThenable<String> onInvoke(String markdown)
-            {
-               command.execute(markdown);
-               return null;
-            }
-         },new ThenOnRejectedCallbackFn<String>() {
-         
-            @Override
-            public IThenable<String> onInvoke(Object error)
-            {
-               Debug.logToConsole("Error getting Panmirror markdown: " + error.toString());
-               command.execute("");
-               return null;
-            }
-         });
+   public void getMarkdown(CommandWithArg<String> completed) {
+      new PromiseWithProgress<String>(
+         this.editor_.getMarkdown(),
+         null,
+         completed   
+      );
    }
    
    
@@ -113,8 +68,13 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
          this.editor_.resize();
       }
    }
+    
    
    private PanmirrorEditor editor_ = null;
 }
+
+
+
+
 
 

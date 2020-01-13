@@ -22,7 +22,7 @@ public class PanmirrorEditor
    public native void setTitle(String title);
    public native String getTitle();
    
-   public native Promise<Object> setMarkdown(String markdown, boolean emitUpdate);
+   public native Promise<Boolean> setMarkdown(String markdown, boolean emitUpdate);
    public native Promise<String> getMarkdown();
    
    public native String getHTML();
