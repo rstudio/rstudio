@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
@@ -40,6 +42,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -49,6 +53,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
@@ -117,7 +122,8 @@ public class FindOutputPresenter extends BasePresenter
                               FindInFilesServerOperations server,
                               final FileTypeRegistry ftr,
                               Session session,
-                              WorkbenchContext workbenchContext)
+                              WorkbenchContext workbenchContext,
+                              FilesServerOperations fileServer)
    {
       super(view);
       view_ = view;
@@ -128,6 +134,7 @@ public class FindOutputPresenter extends BasePresenter
       server_ = server;
       session_ = session;
       workbenchContext_ = workbenchContext;
+      fileServer_ = fileServer;
 
       view_.addSelectionChangedHandler(new SelectionChangedHandler()
       {
@@ -518,6 +525,33 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
+      dialog.getDirectoryChooser().addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            fileServer_.isGitDirectory(dialog.getDirectory(),
+                                   new ServerRequestCallback<Boolean>() {
+               @Override
+               public void onResponseReceived(Boolean isGitDirectory)
+               {
+                  if (isGitDirectory)
+                     dialog.setGitStatus(true);
+                  else
+                     dialog.setGitStatus(false);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // assume true if we are not sure
+                  // if the user enters invalid data it will be handled later
+                  dialog.setGitStatus(true);
+                  Debug.logError(error);
+               }
+            });
+         }
+      });
+
       if (!StringUtil.isNullOrEmpty(event.getSearchPattern()))
          dialog.setSearchPattern(event.getSearchPattern());
       
@@ -631,6 +665,7 @@ public class FindOutputPresenter extends BasePresenter
    private final FindInFilesServerOperations server_;
    private final Session session_;
    private final WorkbenchContext workbenchContext_;
+   private final FilesServerOperations fileServer_;
    private final Commands commands_;
    private EventBus events_;
 
