@@ -53,7 +53,10 @@ public class PanmirrorTestDialog extends ModalDialog<String>
               
             
             
-            this.editorWidget_.setMarkdown("The *quick* brown **fox** jumped over the lazy dog", true, (success) -> {
+            this.editorWidget_.setMarkdown(
+                  "## Heading 1\n\nThe *quick* brown **fox** jumped over the lazy dog\n\n" +
+                  "## Heading 2\n\nThis is the `second` section.",
+                  true, (success) -> {
                if (success) 
                {  
                   

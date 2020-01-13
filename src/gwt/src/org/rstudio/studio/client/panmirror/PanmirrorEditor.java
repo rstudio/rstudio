@@ -19,6 +19,7 @@ import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 
 import elemental2.core.JsObject;
 import elemental2.promise.Promise;
@@ -44,6 +45,8 @@ public class PanmirrorEditor
    public native String getHTML();
    
    public native JsObject getSelection();
+   
+   public native PanmirrorOutlineItem[] getOutline();
    
    public native void focus();
    public native void blur();
