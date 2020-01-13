@@ -1,7 +1,7 @@
 /*
  * AriaLiveStatusWidget.java
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,14 +36,15 @@ public class AriaLiveStatusWidget extends Widget
    {
       if (speakDelayMs < 0)
       {
-         if (updateReaderTimer_.isRunning())
-            updateReaderTimer_.cancel();
+         clearMessage();
          return;
       }
 
       resultsMessage_ = message;
       if (updateReaderTimer_.isRunning())
          updateReaderTimer_.cancel();
+      if (clearReaderTimer_.isRunning())
+         clearReaderTimer_.cancel();
       updateReaderTimer_.schedule(speakDelayMs);
    }
 
@@ -51,6 +52,8 @@ public class AriaLiveStatusWidget extends Widget
    {
       if (updateReaderTimer_.isRunning())
          updateReaderTimer_.cancel();
+      if (clearReaderTimer_.isRunning())
+         clearReaderTimer_.cancel();
       getElement().setInnerText("");
    }
 
@@ -63,7 +66,22 @@ public class AriaLiveStatusWidget extends Widget
       public void run()
       {
          getElement().setInnerText(resultsMessage_);
+         if (clearReaderTimer_.isRunning())
+            clearReaderTimer_.cancel();
+         clearReaderTimer_.schedule(4000);
       }
+   };
+
+   /**
+    * Timer for clearing the previous message if nothing new arrives
+    */
+   private Timer clearReaderTimer_ = new Timer()
+   {
+     @Override
+     public void run()
+     {
+        getElement().setInnerText("");
+     }
    };
 
    private String resultsMessage_;

@@ -1,7 +1,7 @@
 /*
  * A11y.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,6 +100,15 @@ public class A11y
    public static void setARIAHidden(Element el)
    {
       el.setAttribute("aria-hidden", "true");
+   }
+
+   /**
+    * Make an element visible to screen readers.
+    * @param el
+    */
+   public static void setARIAVisible(Element el)
+   {
+      el.removeAttribute("aria-hidden");
    }
 
    public static void setVisuallyHidden(Widget widget)

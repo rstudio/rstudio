@@ -1,7 +1,7 @@
 /*
  * AriaLiveStatusEvent.java
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,12 +26,23 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
 
    public AriaLiveStatusEvent(String message)
    {
+      this(message, false);
+   }
+   
+   public AriaLiveStatusEvent(String message, boolean immediate)
+   {
       message_ = message;
+      immediate_ = immediate;
    }
 
    public String getMessage()
    {
       return message_;
+   }
+   
+   public boolean getImmediate()
+   {
+      return immediate_;
    }
 
    @Override
@@ -47,6 +58,7 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
    }
 
    private final String message_;
+   private final boolean immediate_;
 
    public static final Type<AriaLiveStatusEvent.Handler> TYPE = new Type<>();
 }

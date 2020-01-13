@@ -502,6 +502,9 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="toggleScreenReaderSupport"/>
             <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
+            <menu label="Speak">
+               <cmd refid="speakEditorLocation"/>
+            </menu>
             <cmd refid="focusMainToolbar"/>
             <separator/>
             <cmd refid="showAccessibilityOptions"/>
@@ -828,6 +831,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
+         <shortcut refid="speakEditorLocation" value="Ctrl+Shift+B"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -3620,5 +3624,9 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Sign Ou_t"
         desc="Sign out from RStudio"
+        windowMode="main"/>
+
+   <cmd id="speakEditorLocation"
+        menuLabel="Speak Text Editor Location"
         windowMode="main"/>
 </commands>

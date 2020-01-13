@@ -351,7 +351,7 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      int delayMs = userPrefs_.get().typingStatusDelayMs().getValue();
+      int delayMs = event.getImmediate() ? 0 : userPrefs_.get().typingStatusDelayMs().getValue();
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
          view_.reportStatus(event.getMessage(), userPrefs_.get().typingStatusDelayMs().getValue());
    }
@@ -1010,6 +1010,12 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();
          commands_.importDatasetFromXLS().remove();
+      }
+
+      // remove commands that only make sense if screen reader is enabled
+      if (!userPrefs_.get().enableScreenReader().getValue())
+      {
+         commands_.speakEditorLocation().remove();
       }
 
       // If no project, ensure we show the product-edition title; if there is a project

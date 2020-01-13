@@ -1,7 +1,7 @@
 /*
  * EditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -146,7 +146,13 @@ public interface EditingTarget extends IsWidget,
    long getLargeFileSize();
    
    String getDefaultNamePrefix();
-   
+
+   /**
+    * @return Summary of the pane's current state for screen readers (read out 
+    * loud by user request)
+    */
+   public String getCurrentStatus();
+
    public final static int DISMISS_TYPE_CLOSE = 0;
    public final static int DISMISS_TYPE_MOVE = 1;
 }
