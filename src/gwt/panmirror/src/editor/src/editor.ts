@@ -249,6 +249,10 @@ export class Editor {
     }
   }
 
+  public resize() {
+    this.applyLayoutFixups();
+  }
+
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
     initFn(this.view, { EditorState });
   }

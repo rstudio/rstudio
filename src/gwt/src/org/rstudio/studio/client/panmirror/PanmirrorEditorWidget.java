@@ -4,7 +4,6 @@ package org.rstudio.studio.client.panmirror;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
@@ -52,15 +51,14 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
    
    private PanmirrorEditorWidget()
    {
-      initWidget(new HTML());
-      setSize("100%", "100%");
-      this.getElement().getStyle().setPosition(Position.RELATIVE);
-      
+      initWidget(new HTML()); 
+      this.setSize("100%", "100%");
    }
    
    private void attachEditor(PanmirrorEditor editor) {
       this.editor_ = editor;
    }
+   
    
    public void setMarkdown(String markdown, boolean emitUpdate, Command completed) {
       
@@ -94,7 +92,7 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
             public IThenable<String> onInvoke(String markdown)
             {
                command.execute(markdown);
-               return Promise.resolve(markdown);
+               return null;
             }
          },new ThenOnRejectedCallbackFn<String>() {
          
@@ -113,7 +111,9 @@ public class PanmirrorEditorWidget extends Composite implements RequiresResize
    @Override
    public void onResize()
    {
-            
+      if (this.editor_ != null) {
+         this.editor_.resize();
+      }
    }
    
    private PanmirrorEditor editor_ = null;

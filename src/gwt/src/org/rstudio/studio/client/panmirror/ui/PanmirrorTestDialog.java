@@ -10,7 +10,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: should .Prosemirror set postiion: absolute (may need to for footnotes)
 // TODO: how to handle error conditions? confirm all the flow of control actually works
 
 public class PanmirrorTestDialog extends ModalDialog<String>

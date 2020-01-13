@@ -32,6 +32,8 @@ public class PanmirrorEditor
    public native void focus();
    public native void blur();
    
+   public native void resize();
+   
    public native void navigate(String id);
  
 }
