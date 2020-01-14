@@ -62,6 +62,11 @@ if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
+# unless explicitly enabled, don't search system paths
+if (NOT RSTUDIO_SEARCH_SYSTEM_PATHS_FOR_DEPENDENCIES)
+  set(RSTUDIO_SEARCH_SYSTEM_PATHS_FOR_DEPENDENCIES false)
+endif()
+
 # platform specific default for targets
 if(NOT RSTUDIO_TARGET)
    set(RSTUDIO_TARGET "Development")
