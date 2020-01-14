@@ -15,7 +15,7 @@ import { findChildren, setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
-import { ProsemirrorCommand, CommandFn, EditorCommand, EditorCommandId } from './api/command';
+import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
 import { PandocNode } from './api/node';
 import { EditorUI } from './api/ui';
