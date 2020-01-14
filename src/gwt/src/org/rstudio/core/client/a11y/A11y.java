@@ -25,11 +25,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
  */
 public class A11y
 {
-   public static void setARIADialogModal(Element element)
-   {
-      element.setAttribute("aria-modal", "true");
-   }
-
    /**
     * Flag an image that does not convey content, is decorative, or is
     * redundant (purpose already conveyed in text).
