@@ -46,10 +46,11 @@ public class PanmirrorEditorConfig
    public String format;
    public PanmirrorEditorUI ui;
    public PanmirrorEditorOptions options;
+   public PanmirrorEditorHooks hooks;
    
    
    /*  
-   readonly hooks?: EditorHooks;
+ 
    readonly keybindings?: EditorKeybindings;
    readonly extensions?: readonly Extension[];
    */

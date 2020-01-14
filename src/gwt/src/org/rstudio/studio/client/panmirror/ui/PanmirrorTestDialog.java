@@ -3,6 +3,7 @@ package org.rstudio.studio.client.panmirror.ui;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.Panmirror;
+import org.rstudio.studio.client.panmirror.PanmirrorEditorHooks;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
@@ -27,7 +28,11 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       
       
       PanmirrorEditorOptions options = new PanmirrorEditorOptions();
-      PanmirrorEditorWidget.create("markdown", options, editorWidget -> {
+      PanmirrorEditorHooks hooks = new PanmirrorEditorHooks();
+      hooks.isEditable = () -> true;
+      
+      
+      PanmirrorEditorWidget.create("markdown", options, hooks, editorWidget -> {
          if (editorWidget != null) {
             
             this.editorWidget_ = editorWidget;

@@ -1,5 +1,5 @@
 /*
- * PanmirrorPandocFormat.java
+ * PanmirrorEditorHooks.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,15 +13,22 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.pandoc;
+package org.rstudio.studio.client.panmirror;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorPandocFormat
+public class PanmirrorEditorHooks
 {
-   public String baseName;
-   public String fullName;
-   public PanmirrorPandocExtensions extensions;
-   public PanmirrorPandocFormatWarnings warnings;
+   
+   public IsEditable isEditable;
+
+   
+   
+   @JsFunction
+   public interface IsEditable
+   {
+      boolean isEditable();
+   }
 }

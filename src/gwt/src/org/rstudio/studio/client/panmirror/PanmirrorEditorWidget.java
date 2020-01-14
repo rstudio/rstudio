@@ -53,10 +53,12 @@ public class PanmirrorEditorWidget extends Composite implements
 {
    public static void create(String format, 
                              PanmirrorEditorOptions options, 
+                             PanmirrorEditorHooks hooks,
                              CommandWithArg<PanmirrorEditorWidget> completed) {
       
       PanmirrorEditorWidget editorWidget = new PanmirrorEditorWidget();
       PanmirrorEditorConfig editorConfig = new PanmirrorEditorConfig(editorWidget.getElement(), format, options);
+      editorConfig.hooks = hooks;
       
       Panmirror.load(() -> {
          new PromiseWithProgress<PanmirrorEditor>(
