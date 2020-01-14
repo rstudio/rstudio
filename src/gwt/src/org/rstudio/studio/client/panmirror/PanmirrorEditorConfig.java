@@ -21,6 +21,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
 
 import com.google.gwt.dom.client.Element;
 
+import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -40,19 +41,16 @@ public class PanmirrorEditorConfig
    
    }
    
+   public final Element parent;
+   public final String format;
+   public final PanmirrorEditorOptions options;
+   public final PanmirrorPandocEngine pandoc;
+   public final PanmirrorEditorUI ui;
    
-   public Element parent;
-   public PanmirrorPandocEngine pandoc;
-   public String format;
-   public PanmirrorEditorUI ui;
-   public PanmirrorEditorOptions options;
+   // TODO: separate parent element from config?
+   // TODO: keybindings?: EditorKeybindings;
+   
    public PanmirrorEditorHooks hooks;
-   
-   
-   /*  
- 
-   readonly keybindings?: EditorKeybindings;
-   readonly extensions?: readonly Extension[];
-   */
+   public JsObject[] extensions;
  
 }
