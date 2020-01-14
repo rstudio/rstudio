@@ -281,14 +281,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @Override
    protected State collectInput()
    {
-      String filePatterns =
+      String includeFilePatterns =
             listPresetFilePatterns_.getValue(
                   listPresetFilePatterns_.getSelectedIndex());
-      if (filePatterns == "custom")
-         filePatterns = txtFilePattern_.getText();
+      if (includeFilePatterns == "custom")
+         includeFilePatterns = txtFilePattern_.getText();
 
       ArrayList<String> list = new ArrayList<String>();
-      for (String pattern : filePatterns.split(","))
+      for (String pattern : includeFilePatterns.split(","))
       {
          String trimmedPattern = pattern.trim();
          if (trimmedPattern.length() > 0)
@@ -373,17 +373,17 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       dirChooser_.setText(dialogState.getPath());
 
       // indexes refer to corresponding enums, but left as ints for readability
-      String filePatterns = StringUtil.join(
+      String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (listPresetFilePatterns_.getValue(0) == filePatterns)
+      if (listPresetFilePatterns_.getValue(0) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(0);
-      else if (listPresetFilePatterns_.getValue(1) == filePatterns)
+      else if (listPresetFilePatterns_.getValue(1) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(1);
-      else if (listPresetFilePatterns_.getValue(2) == filePatterns)
+      else if (listPresetFilePatterns_.getValue(2) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(2);
       else
          listPresetFilePatterns_.setSelectedIndex(3);
-      txtFilePattern_.setText(filePatterns);
+      txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(

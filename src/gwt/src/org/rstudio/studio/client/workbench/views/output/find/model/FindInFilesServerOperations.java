@@ -25,7 +25,7 @@ public interface FindInFilesServerOperations
                   boolean regex,
                   boolean ignoreCase,
                   FileSystemItem directory,
-                  JsArrayString filePatterns,
+                  JsArrayString includeFilePatterns,
                   JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
@@ -38,7 +38,7 @@ public interface FindInFilesServerOperations
                        boolean regex,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
-                       JsArrayString filePatterns,
+                       JsArrayString includeFilePatterns,
                        JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
@@ -47,7 +47,7 @@ public interface FindInFilesServerOperations
                         boolean regex,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
-                        JsArrayString filePatterns,
+                        JsArrayString includeFilePatterns,
                         JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,
