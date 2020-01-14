@@ -82,8 +82,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
 
   public async componentDidMount() {
     // create editor
-    this.editor = await Editor.create({
-      parent: this.parent!,
+    this.editor = await Editor.create(this.parent!, {
       pandoc: this.pandocEngine,
       format: 'markdown',
       ui: {

@@ -18,39 +18,22 @@ package org.rstudio.studio.client.panmirror;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
 
-
-import com.google.gwt.dom.client.Element;
-
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorEditorConfig
 {  
+   public String format = "markdown";
+   public PanmirrorEditorOptions options = new PanmirrorEditorOptions();
+   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
+   public PanmirrorEditorUI ui =  new PanmirrorEditorUI();
+   public PanmirrorEditorHooks hooks = new PanmirrorEditorHooks();
    
-   public PanmirrorEditorConfig(
-        Element parent,
-        String format,
-        PanmirrorEditorOptions options) {
-      
-      this.parent = parent;
-      this.pandoc = new PanmirrorPandocEngine();
-      this.format = format;
-      this.ui = new PanmirrorEditorUI();
-      this.options = options;
    
-   }
-   
-   public final Element parent;
-   public final String format;
-   public final PanmirrorEditorOptions options;
-   public final PanmirrorPandocEngine pandoc;
-   public final PanmirrorEditorUI ui;
-   
-   // TODO: separate parent element from config?
    // TODO: keybindings?: EditorKeybindings;
    
-   public PanmirrorEditorHooks hooks;
+  
    public JsObject[] extensions;
  
 }

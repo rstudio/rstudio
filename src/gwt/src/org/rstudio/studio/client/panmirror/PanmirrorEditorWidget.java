@@ -51,18 +51,14 @@ public class PanmirrorEditorWidget extends Composite implements
    HasChangeHandlers, 
    HasSelectionChangedHandlers
 {
-   public static void create(String format, 
-                             PanmirrorEditorOptions options, 
-                             PanmirrorEditorHooks hooks,
+   public static void create(PanmirrorEditorConfig config,
                              CommandWithArg<PanmirrorEditorWidget> completed) {
       
       PanmirrorEditorWidget editorWidget = new PanmirrorEditorWidget();
-      PanmirrorEditorConfig editorConfig = new PanmirrorEditorConfig(editorWidget.getElement(), format, options);
-      editorConfig.hooks = hooks;
       
       Panmirror.load(() -> {
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorConfig),
+            PanmirrorEditor.create(editorWidget.getElement(), config),
             null,
             editor -> {
                editorWidget.attachEditor(editor);

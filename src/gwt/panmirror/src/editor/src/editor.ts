@@ -40,7 +40,6 @@ const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) :
 
 
 export interface EditorConfig {
-  readonly parent: HTMLElement;
   readonly pandoc: PandocEngine;
   readonly format: string;
   readonly ui: EditorUI;
@@ -81,14 +80,14 @@ export class Editor {
   private events: ReadonlyMap<string, Event>;
   private keybindings: EditorKeybindings;
 
-  public static async create(config: EditorConfig): Promise<Editor> {
+  public static async create(parent: HTMLElement, config: EditorConfig): Promise<Editor> {
     const formatInfo = await pandocFormat(config.pandoc, config.format);
-    return Promise.resolve(new Editor(config, formatInfo));
+    return Promise.resolve(new Editor(parent, config, formatInfo));
   }
 
-  private constructor(config: EditorConfig, pandocFormat: PandocFormat) {
+  private constructor(parent: HTMLElement, config: EditorConfig, pandocFormat: PandocFormat) {
     // initialize references
-    this.parent = config.parent;
+    this.parent = parent;
     this.ui = config.ui;
     this.keybindings = config.keybindings || {};
     this.hooks = config.hooks || {};

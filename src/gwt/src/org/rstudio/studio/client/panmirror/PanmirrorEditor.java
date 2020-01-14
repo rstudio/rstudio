@@ -22,6 +22,8 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
+import com.google.gwt.dom.client.Element;
+
 import elemental2.core.JsObject;
 import elemental2.promise.Promise;
 
@@ -29,7 +31,7 @@ import elemental2.promise.Promise;
 @JsType(isNative = true, name="Editor", namespace = "Panmirror")
 public class PanmirrorEditor
 {
-   public native static Promise<PanmirrorEditor> create(PanmirrorEditorConfig config);
+   public native static Promise<PanmirrorEditor> create(Element parent, PanmirrorEditorConfig config);
    
    public native void destroy();
    
