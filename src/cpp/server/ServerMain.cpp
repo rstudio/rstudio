@@ -563,6 +563,11 @@ int main(int argc, char * const argv[])
                 boost::ends_with(file.getParent().getParent().getFilename(), "-ds"))
                return false;
 
+            if (depth == 1 &&
+                (boost::ends_with(file.getFilename(), "-d") ||
+                 boost::ends_with(file.getFilename(), "-d.pid")))
+               return false;
+
             return true;
          };
 
