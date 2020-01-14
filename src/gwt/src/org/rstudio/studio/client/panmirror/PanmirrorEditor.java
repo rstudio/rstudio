@@ -54,5 +54,7 @@ public class PanmirrorEditor
    public native void resize();
    
    public native void navigate(String id);
+   
+   public native void enableDevTools(JsObject initFn);
  
 }

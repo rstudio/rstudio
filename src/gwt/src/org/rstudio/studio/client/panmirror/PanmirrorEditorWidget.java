@@ -19,6 +19,7 @@ package org.rstudio.studio.client.panmirror;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
@@ -39,6 +40,9 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 
 import elemental2.core.JsObject;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 
 public class PanmirrorEditorWidget extends Composite implements 
@@ -191,6 +195,12 @@ public class PanmirrorEditorWidget extends Composite implements
       editor_.blur();
    }
    
+   public void enableDevTools() 
+   { 
+      ProseMirrorDevTools.load(() -> {
+         editor_.enableDevTools(ProseMirrorDevTools.applyDevTools);
+      });
+   }
    
    @Override
    public HandlerRegistration addChangeHandler(ChangeHandler handler)
@@ -227,6 +237,21 @@ public class PanmirrorEditorWidget extends Composite implements
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
 }
 
+
+@JsType(isNative = true, namespace = JsPackage.GLOBAL)
+class ProseMirrorDevTools
+{
+   @JsOverlay
+   public static void load(ExternalJavaScriptLoader.Callback onLoaded) {    
+      devtoolsLoader_.addCallback(onLoaded);
+   }
+   
+   public static JsObject applyDevTools;
+ 
+   @JsOverlay
+   private static final ExternalJavaScriptLoader devtoolsLoader_ =
+     new ExternalJavaScriptLoader("js/panmirror/prosemirror-dev-tools.min.js");
+}
 
 
 

@@ -3,6 +3,7 @@ const { task, context } = require("fuse-box/sparky");
 const { FuseBox, CSSPlugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
 
 const path = require('path');
+const fs = require('fs');
 const devserver = require('./dev/server.js')
 
 const kLibraryName = "Panmirror"
@@ -44,10 +45,20 @@ const watch = (fuse, hmrReload) => {
 }
 
 const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir) => {
+  
+  // setup fuse for development
   const fuse = context.getConfig(outputDir, webIndex);
   const bdl = bundle(fuse)
   if (watchChanges)
     watch(bdl, hmrReload)
+  
+  // copy prosemirror-devtools
+  const devtools = 'prosemirror-dev-tools.min.js';
+  fs.copyFileSync(
+    path.join('../../node_modules/prosemirror-dev-tools/dist/umd', devtools),
+    path.join(outputDir, devtools)
+  );
+
   return fuse;
 }
 

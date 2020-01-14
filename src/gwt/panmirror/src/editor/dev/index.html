@@ -8,6 +8,7 @@
   $description
   $keywords
   $css
+  <script type="text/javascript" src="prosemirror-dev-tools.min.js"></script>
 </head>
 <body>
   $bundles
@@ -63,7 +64,7 @@
   
     async function initializeEditor() {
      
-      var editor = await window.Panmirror.Editor.create({
+      var editor  = await window.Panmirror.Editor.create({
         parent: document.getElementById('editor'),
         pandoc: pandocEngine(),
         format: 'markdown',
@@ -71,6 +72,7 @@
         options: {}
       });
 
+      editor.enableDevTools(window.ProseMirrorDevTools.applyDevTools);
       editor.setMarkdown('The *quick*, brown **fox** jumped over the lazy dog.')
       return editor;
 

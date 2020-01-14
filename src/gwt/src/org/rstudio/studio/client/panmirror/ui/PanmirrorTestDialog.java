@@ -65,6 +65,8 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   this.editorWidget_.getMarkdown(markdown -> {
                      Debug.logToConsole(markdown);
                   });
+                  
+                  this.editorWidget_.enableDevTools();
                }
             });
          }
