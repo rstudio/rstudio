@@ -1,5 +1,5 @@
 /*
- * PanmirrorServerOperations.java
+ * PanmirrorPandocServerOperations.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
