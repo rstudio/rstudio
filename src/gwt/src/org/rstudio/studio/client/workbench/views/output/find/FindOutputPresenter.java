@@ -227,9 +227,9 @@ public class FindOutputPresenter extends BasePresenter
 
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(dialogState_.getPath());
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getFilePatterns())
-               filePatterns.push(pattern);
+               includeFilePatterns.push(pattern);
             JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
@@ -238,7 +238,7 @@ public class FindOutputPresenter extends BasePresenter
                                    dialogState_.isRegex(),
                                    !dialogState_.isCaseSensitive(),
                                    searchPath,
-                                   filePatterns,
+                                   includeFilePatterns,
                                    excludeFilePatterns,
                                    view_.getReplaceText(),
                                    new SimpleRequestCallback<String>()
@@ -306,9 +306,9 @@ public class FindOutputPresenter extends BasePresenter
                         stopAndClear();
                         FileSystemItem searchPath =
                                                   FileSystemItem.createDir(dialogState_.getPath());
-                        JsArrayString filePatterns = JsArrayString.createArray().cast();
+                        JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
                         for (String pattern : dialogState_.getFilePatterns())
-                           filePatterns.push(pattern);
+                           includeFilePatterns.push(pattern);
                         JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
                         for (String pattern : dialogState_.getExcludeFilePatterns())
                            excludeFilePatterns.push(pattern);
@@ -317,7 +317,7 @@ public class FindOutputPresenter extends BasePresenter
                                                 dialogState_.isRegex(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
-                                                filePatterns,
+                                                includeFilePatterns,
                                                 excludeFilePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
@@ -490,9 +490,9 @@ public class FindOutputPresenter extends BasePresenter
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(input.getPath());
 
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
-               filePatterns.push(pattern);
+               includeFilePatterns.push(pattern);
             JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
@@ -505,7 +505,7 @@ public class FindOutputPresenter extends BasePresenter
                               input.isRegex(),
                               !input.isCaseSensitive(),
                               searchPath,
-                              filePatterns,
+                              includeFilePatterns,
                               excludeFilePatterns,
                               new SimpleRequestCallback<String>()
                               {
