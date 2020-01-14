@@ -64,7 +64,7 @@ import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
-import org.rstudio.studio.client.panmirror.model.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorDialogs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;

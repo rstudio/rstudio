@@ -84,7 +84,7 @@ import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
-import org.rstudio.studio.client.panmirror.model.PanmirrorServerOperations;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPIPresenter;

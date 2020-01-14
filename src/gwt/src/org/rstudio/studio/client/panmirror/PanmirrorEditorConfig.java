@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import org.rstudio.studio.client.panmirror.model.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
 
 

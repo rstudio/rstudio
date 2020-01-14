@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.model;
+package org.rstudio.studio.client.panmirror.pandoc;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
