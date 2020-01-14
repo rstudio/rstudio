@@ -61,6 +61,8 @@ export interface EditorKeybindings {
 export const kEventUpdate = 'update';
 export const kEventSelectionChange = 'selectionChange';
 
+export { EditorCommandId as Commands } from './api/command';
+
 
 export class Editor {
   private static readonly keybindingsPlugin = new PluginKey('keybindings');

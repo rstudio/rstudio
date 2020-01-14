@@ -2,9 +2,9 @@ package org.rstudio.studio.client.panmirror.ui;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorWidget;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -60,7 +60,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                if (success) 
                {  
                   
-                  this.editorWidget_.execCommand(PanmirrorCommand.SelectAll);
+                  this.editorWidget_.execCommand(Panmirror.Commands.SelectAll);
                   
                   this.editorWidget_.getMarkdown(markdown -> {
                      Debug.logToConsole(markdown);

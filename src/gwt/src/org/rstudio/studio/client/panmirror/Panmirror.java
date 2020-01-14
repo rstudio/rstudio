@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommandId;
 
 import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsOverlay;
@@ -33,6 +34,8 @@ public class Panmirror
    
    public static String kEventUpdate;
    public static String kEventSelectionChange;
+   
+   public static PanmirrorCommandId Commands;
    
    
    
