@@ -20,7 +20,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-public interface PanmirrorServerOperations 
+public interface PanmirrorPandocServerOperations 
 {
    void pandocMarkdownToAst(String markdown, String format, JsArrayString options, ServerRequestCallback<JavaScriptObject> callback);
    void pandocAstToMarkdown(JavaScriptObject ast, String format, JsArrayString options, ServerRequestCallback<String> callback);

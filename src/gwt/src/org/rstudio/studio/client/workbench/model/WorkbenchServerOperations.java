@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
-import org.rstudio.studio.client.panmirror.pandoc.PanmirrorServerOperations;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
@@ -96,7 +96,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    ViewerServerOperations,
                                                    ProfilerServerOperations,
                                                    RMarkdownServerOperations,
-                                                   PanmirrorServerOperations,
+                                                   PanmirrorPandocServerOperations,
                                                    DependencyServerOperations,
                                                    PackratServerOperations,
                                                    RenvServerOperations,

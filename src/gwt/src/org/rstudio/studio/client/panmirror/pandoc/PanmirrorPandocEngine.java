@@ -38,7 +38,7 @@ public class PanmirrorPandocEngine {
    }
    
    @Inject
-   void initialize(PanmirrorServerOperations server)
+   void initialize(PanmirrorPandocServerOperations server)
    {
       server_ = server;
    }
@@ -70,6 +70,6 @@ public class PanmirrorPandocEngine {
       });
    }
 
-   private PanmirrorServerOperations server_;
+   private PanmirrorPandocServerOperations server_;
    
 }
