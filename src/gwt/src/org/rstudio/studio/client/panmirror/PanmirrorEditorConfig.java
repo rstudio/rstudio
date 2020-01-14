@@ -19,7 +19,13 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
 
 import elemental2.core.JsObject;
+
 import jsinterop.annotations.JsType;
+import jsinterop.base.JsPropertyMap;
+
+// TODO: keybindings
+// TODO: events more like commands
+
 
 @JsType
 public class PanmirrorEditorConfig
@@ -29,11 +35,5 @@ public class PanmirrorEditorConfig
    public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
    public PanmirrorEditorUI ui =  new PanmirrorEditorUI();
    public PanmirrorEditorHooks hooks = new PanmirrorEditorHooks();
-   
-   
-   // TODO: keybindings?: EditorKeybindings;
-   
-  
    public JsObject[] extensions;
- 
 }
