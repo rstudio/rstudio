@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -247,6 +248,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       // clear output
       view_.clearOutput();
+      
+      eventBus_.fireEvent(new AriaLiveStatusEvent("Console cleared", true));
       
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
