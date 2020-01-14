@@ -1012,12 +1012,6 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromXLS().remove();
       }
 
-      // remove commands that only make sense if screen reader is enabled
-      if (!userPrefs_.get().enableScreenReader().getValue())
-      {
-         commands_.speakEditorLocation().remove();
-      }
-
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done
       if (!Desktop.isDesktop() &&
