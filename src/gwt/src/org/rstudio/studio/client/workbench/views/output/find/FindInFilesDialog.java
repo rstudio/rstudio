@@ -286,10 +286,27 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       // user cannot specify include patterns when using git grep
       if (listPresetExcludeFilePatterns_.getSelectedIndex() != 
           ExcludeFilePatterns.StandardGit.ordinal())
-         listPresetFilePatterns_.setEnabled(true);
+      {
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            IncludeFilePatterns.CommonRSourceFiles.ordinal())).removeAttribute("disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            IncludeFilePatterns.RScripts.ordinal())).removeAttribute("disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            IncludeFilePatterns.CustomFilter.ordinal())).removeAttribute("disabled");
+      }
       else
       {
-         listPresetFilePatterns_.setEnabled(false);
+         // when using standard git exclusions we don't have the option to search recursively and
+         // specify file types
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               IncludeFilePatterns.CommonRSourceFiles.ordinal()))
+            .setAttribute("disabled", "disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               IncludeFilePatterns.RScripts.ordinal()))
+            .setAttribute("disabled", "disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               IncludeFilePatterns.CustomFilter.ordinal()))
+            .setAttribute("disabled", "disabled");
          listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
          manageFilePattern();
       }
