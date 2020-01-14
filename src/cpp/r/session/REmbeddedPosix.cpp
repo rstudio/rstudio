@@ -1,7 +1,7 @@
 /*
  * REmbeddedPosix.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,8 @@ extern "C" void (*ptr_R_ProcessEvents)(void);
 #define QCF_SET_FRONT  2  /* set application mode to front */
 extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 #endif
+
+#include "config.h"
 
 extern int R_running_as_main_program;  // from unix/system.c
 
@@ -103,14 +105,20 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //
    structRstart rp;
    Rstart Rp = &rp;
-   R_DefParams(Rp) ;
-   Rp->R_Slave = FALSE ;
+   R_DefParams(Rp);
+#if R_VERSION_MAJOR > 3
+   // R 4.0 and above use --no-echo to suppress output
+   Rp->R_NoEcho = FALSE;
+#else
+   // R 3.x and below use --slave
+   Rp->R_Slave = FALSE;
+#endif
    Rp->R_Quiet = quiet ? TRUE : FALSE;
-   Rp->R_Interactive = TRUE ;
-   Rp->SaveAction = defaultSaveAction ;
+   Rp->R_Interactive = TRUE;
+   Rp->SaveAction = defaultSaveAction;
    Rp->RestoreAction = SA_NORESTORE; // handled within initialize()
    Rp->LoadInitFile = loadInitFile ? TRUE : FALSE;
-   R_SetParams(Rp) ;
+   R_SetParams(Rp);
 
    // redirect console
    R_Interactive = TRUE; // should have also been set by call to Rf_initialize_R
