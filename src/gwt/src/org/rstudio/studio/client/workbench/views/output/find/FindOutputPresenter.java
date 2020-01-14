@@ -46,6 +46,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -525,32 +526,32 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      dialog.getDirectoryChooser().addValueChangeHandler(new ValueChangeHandler<String>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            fileServer_.isGitDirectory(dialog.getDirectory(),
-                                   new ServerRequestCallback<Boolean>() {
-               @Override
-               public void onResponseReceived(Boolean isGitDirectory)
-               {
-                  if (isGitDirectory)
+      if (session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
+      {
+         dialog.getDirectoryChooser().addValueChangeHandler(new ValueChangeHandler<String>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<String> event)
+            {
+               fileServer_.isGitDirectory(dialog.getDirectory(),
+                                      new ServerRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean isGitDirectory)
+                  {
+                     dialog.setGitStatus(isGitDirectory);
+                  }
+   
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // assume true if we are not sure
+                     // if the user enters invalid data it will be handled later
                      dialog.setGitStatus(true);
-                  else
-                     dialog.setGitStatus(false);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // assume true if we are not sure
-                  // if the user enters invalid data it will be handled later
-                  dialog.setGitStatus(true);
-                  Debug.logError(error);
-               }
-            });
-         }
-      });
+                     Debug.logError(error);
+                  }
+               });
+            }
+         });
+      }
 
       if (!StringUtil.isNullOrEmpty(event.getSearchPattern()))
          dialog.setSearchPattern(event.getSearchPattern());
