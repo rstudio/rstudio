@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Unit;
@@ -70,6 +71,8 @@ public class WindowFrame extends Composite
       minimizeButton_.setClickHandler(() -> minimize());
 
       frame_ = new LayoutPanel();
+      Roles.getRegionRole().set(frame_.getElement());
+      Roles.getRegionRole().setAriaLabelProperty(frame_.getElement(), name);
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 
