@@ -55,7 +55,7 @@ export interface EditorHooks {
 }
 
 export interface EditorKeybindings {
-  [key: string]: string[];
+  [id: string]: string[];
 }
 
 export const kEventUpdate = 'update';
