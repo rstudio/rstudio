@@ -20,6 +20,7 @@ import jsinterop.annotations.JsType;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
 import elemental2.core.JsObject;
 import elemental2.promise.Promise;
@@ -54,6 +55,8 @@ public class PanmirrorEditor
    public native void resize();
    
    public native void navigate(String id);
+   
+   public native PanmirrorPandocFormat getPandocFormat();
    
    public native void enableDevTools(JsObject initFn);
  

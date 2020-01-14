@@ -24,6 +24,7 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -178,6 +179,11 @@ public class PanmirrorEditorWidget extends Composite implements
    public String getHTML()
    {
       return editor_.getHTML();
+   }
+   
+   public PanmirrorPandocFormat getPandocFormat()
+   {
+      return editor_.getPandocFormat();
    }
    
    public JsObject getSelection()

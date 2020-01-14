@@ -5,6 +5,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorEditorWidget;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -65,6 +66,10 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   this.editorWidget_.getMarkdown(markdown -> {
                      Debug.logToConsole(markdown);
                   });
+                  
+                  PanmirrorPandocExtensions extensions = this.editorWidget_.getPandocFormat().extensions;
+                  Debug.logObject(extensions);
+                  
                   
                   this.editorWidget_.enableDevTools();
                }
