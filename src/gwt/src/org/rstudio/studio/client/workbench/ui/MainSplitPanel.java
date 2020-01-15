@@ -1,7 +1,7 @@
 /*
  * MainSplitPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -199,6 +199,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       enforceBoundaries();
       deferredSaveWidthPercent();
+   }
+
+   public void focusSplitter()
+   {
+      // TODO (gary)
    }
 
    private void enforceBoundaries()
