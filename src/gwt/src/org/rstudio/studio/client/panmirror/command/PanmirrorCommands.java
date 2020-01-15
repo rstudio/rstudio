@@ -1,5 +1,5 @@
 /*
- * PanmirrorCommandId.java
+ * PanmirrorCommands.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -17,8 +17,8 @@ package org.rstudio.studio.client.panmirror.command;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, name="EditorCommandId", namespace = "Panmirror")
-public class PanmirrorCommandId
+@JsType(isNative = true)
+public class PanmirrorCommands
 {
    // editing
    public String Undo;

@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommandId;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 
 import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsOverlay;
@@ -32,10 +32,8 @@ public class Panmirror
       panmirrorLoader_.addCallback(onLoaded);
    }
    
-   public static String kEventUpdate;
-   public static String kEventSelectionChange;
-   
-   public static PanmirrorCommandId Commands;
+   public static PanmirrorEvents Events;
+   public static PanmirrorCommands Commands;
    
    
    

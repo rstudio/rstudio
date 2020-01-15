@@ -81,12 +81,12 @@ public class PanmirrorWidget extends Composite implements
       editor_ = editor;
       commands_ = editor.commands();
       
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.kEventUpdate, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.Events.Update, () -> {
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       }));
       
      
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.kEventSelectionChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.Events.SelectionChange, () -> {
          SelectionChangeEvent.fire(this);
       }));
    }
