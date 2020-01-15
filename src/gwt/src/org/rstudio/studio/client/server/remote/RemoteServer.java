@@ -4359,7 +4359,7 @@ public class RemoteServer implements Server
                          boolean regex,
                          boolean ignoreCase,
                          FileSystemItem directory,
-                         JsArrayString filePatterns,
+                         JsArrayString includeFilePatterns,
                          JsArrayString excludeFilePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
@@ -4369,7 +4369,7 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(ignoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
+      params.set(4, new JSONArray(includeFilePatterns));
       params.set(5, new JSONArray(excludeFilePatterns));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
@@ -4392,7 +4392,7 @@ public class RemoteServer implements Server
                               boolean regex,
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
-                              JsArrayString filePatterns,
+                              JsArrayString includeFilePatterns,
                               JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
@@ -4403,7 +4403,7 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
+      params.set(4, new JSONArray(includeFilePatterns));
       params.set(5, new JSONArray(excludeFilePatterns));
       params.set(6, new JSONString(replaceString));
 
@@ -4415,7 +4415,7 @@ public class RemoteServer implements Server
                                boolean regex,
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
-                               JsArrayString filePatterns,
+                               JsArrayString includeFilePatterns,
                                JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
@@ -4427,7 +4427,7 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
+      params.set(4, new JSONArray(includeFilePatterns));
       params.set(5, new JSONArray(excludeFilePatterns));
       params.set(6, new JSONNumber(searchResults));
       params.set(7, new JSONString(replaceString));

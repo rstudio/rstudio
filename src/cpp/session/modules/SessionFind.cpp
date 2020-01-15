@@ -559,7 +559,7 @@ private:
          nUtf8CharactersProcessed += charSize;
 
          // update the match state
-         if ((match[2] == "1" && findResults().gitFlag()) ||
+         if ((match.size() > 2 && match[2] == "1" && findResults().gitFlag()) ||
              (match[1] == "01" && !findResults().gitFlag()))
             pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
          else
@@ -812,15 +812,20 @@ private:
          errorMessage.clear();
          boost::smatch match;
          if (regex_utils::match(
-               line, match, getFileLineNumberLineRegex(findResults().gitFlag())))
+               line, match, getGrepOutputRegex(findResults().gitFlag())) &&
+             match.size() > 1)
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
+            // git grep returns the path within the repo
+            // we use this combined with the find request's directory
+            // to locate the file on the user's system
             if (findResults().gitFlag())
             {
                file.insert(0, "/");
                file.insert(0, findResults().path());
             }
+
             if (shouldSkipFile(file) ||
                 (!websiteOutputDir.empty() &&
                  file.find(websiteOutputDir) != std::string::npos))
@@ -985,12 +990,13 @@ private:
 struct GrepOptions
 {
    GrepOptions(std::string search, std::string directory,
-      json::Array filePatterns, json::Array excludeFilePatterns, bool asRegex, bool ignoreCase) :
+      json::Array includeFilePatterns, json::Array excludeFilePatterns,
+      bool asRegex, bool ignoreCase) :
       asRegex(asRegex),
       ignoreCase(ignoreCase),
       searchPattern(search),
       directory(directory),
-      filePatterns(filePatterns),
+      includeFilePatterns(includeFilePatterns),
       excludeFilePatterns(excludeFilePatterns)
    {}
 
@@ -999,7 +1005,7 @@ struct GrepOptions
 
    const std::string searchPattern;
    const std::string directory;
-   const json::Array filePatterns;
+   const json::Array includeFilePatterns;
    const json::Array excludeFilePatterns;
 };
 
@@ -1121,21 +1127,21 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
+   std::vector<std::string> includeArgs;
+   std::vector<std::string> excludeArgs;
+   bool packageFlag = false;
+   bool gitFlag = false;
+   processIncludeFilePatterns(grepOptions.includeFilePatterns, &includeArgs, &packageFlag);
+   processExcludeFilePatterns(grepOptions.excludeFilePatterns, &excludeArgs, &gitFlag);
+   // Filepaths received from the client will be UTF-8 encoded;
+   // convert to system encoding here.
+   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
+
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
-
-   // Filepaths received from the client will be UTF-8 encoded;
-   // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
-   std::vector<std::string> includeArgs;
-   std::vector<std::string> excludeArgs;
-   bool packageFlag = false;
-   bool gitFlag = false;
-   processIncludeFilePatterns(grepOptions.filePatterns, &includeArgs, &packageFlag);
-   processExcludeFilePatterns(grepOptions.excludeFilePatterns, &excludeArgs, &gitFlag);
    if (gitFlag)
    {
       cmd = shell_utils::ShellCommand("git");
@@ -1145,35 +1151,42 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << "--exclude-standard"; // but exclude gitignore
+      cmd << "-rHn";
+      cmd << "--color=always";
+      if (grepOptions.ignoreCase)
+         cmd << "-i";
+      // Use -f to pass pattern via file, so we don't have to worry about
+      // escaping double quotes, etc.
+      cmd << "-f";
+      cmd << tempFile;
+      if (!grepOptions.asRegex)
+         cmd << "-F";
+      for (std::string arg : includeArgs)
+         cmd << arg;
+      if (packageFlag)
+         addPackageDirectoriesToCommand(dirPath, &cmd);
    }
    else
    {
       cmd << "--binary-files=without-match";
-   }
-   cmd << "-rHn";
-   cmd << "--color=always";
-
+      cmd << "-rHn";
+      cmd << "--color=always";
 #ifndef _WIN32
-   if (!gitFlag)
       cmd << "--devices=skip";
 #endif
-
-   if (grepOptions.ignoreCase)
-      cmd << "-i";
-
-   // Use -f to pass pattern via file, so we don't have to worry about
-   // escaping double quotes, etc.
-   cmd << "-f";
-   cmd << tempFile;
-   if (!grepOptions.asRegex)
-      cmd << "-F";
-
-   if (!gitFlag)
-   {
+      if (grepOptions.ignoreCase)
+         cmd << "-i";
+      // Use -f to pass pattern via file, so we don't have to worry about
+      // escaping double quotes, etc.
+      cmd << "-f";
+      cmd << tempFile;
+      if (!grepOptions.asRegex)
+         cmd << "-F";
       for (std::string arg : includeArgs)
          cmd << arg;
       for (std::string arg : excludeArgs)
          cmd << arg;
+
       if (packageFlag)
          addPackageDirectoriesToCommand(dirPath, &cmd);
       else
@@ -1181,11 +1194,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
          cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       }
-   }
-   else
-   {
-      if (packageFlag)
-         addPackageDirectoriesToCommand(dirPath, &cmd);
    }
 
    // Clear existing results
@@ -1219,20 +1227,20 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    std::string searchString;
    bool asRegex, ignoreCase;
    std::string directory;
-   json::Array filePatterns, excludeFilePatterns;
+   json::Array includeFilePatterns, excludeFilePatterns;
 
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
                                   &ignoreCase,
                                   &directory,
-                                  &filePatterns,
+                                  &includeFilePatterns,
                                   &excludeFilePatterns);
    if (error)
       return error;
 
-   GrepOptions grepOptions(searchString, directory, filePatterns, excludeFilePatterns, asRegex,
-      ignoreCase);
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+      asRegex, ignoreCase);
    error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
    return error;
 }
@@ -1264,14 +1272,14 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    std::string replacePattern;
    bool asRegex, ignoreCase;
    std::string directory;
-   json::Array filePatterns, excludeFilePatterns;
+   json::Array includeFilePatterns, excludeFilePatterns;
 
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
                                   &ignoreCase,
                                   &directory,
-                                  &filePatterns,
+                                  &includeFilePatterns,
                                   &excludeFilePatterns,
                                   &replacePattern);
    if (error)
@@ -1279,8 +1287,8 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (!asRegex)
       LOG_DEBUG_MESSAGE("Regex should be true during preview");
 
-   GrepOptions grepOptions(searchString, directory, filePatterns, excludeFilePatterns, asRegex,
-      ignoreCase);
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+      asRegex, ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
    replaceOptions.preview = true;
    error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
@@ -1295,7 +1303,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    std::string searchString;
    std::string replacePattern;
    std::string directory;
-   json::Array filePatterns, excludeFilePatterns;
+   json::Array includeFilePatterns, excludeFilePatterns;
    // only used to estimate progress
    int originalFindCount;
 
@@ -1304,17 +1312,19 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &asRegex,
                                   &ignoreCase,
                                   &directory,
-                                  &filePatterns,
+                                  &includeFilePatterns,
                                   &excludeFilePatterns,
                                   &originalFindCount,
                                   &replacePattern);
    if (error)
       return error;
 
+   // 5 was chosen based on testing to find a value that was both responsive
+   // and not overly frequent
    static const int kUpdatePercent = 5;
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
-   GrepOptions grepOptions(searchString, directory, filePatterns, excludeFilePatterns, asRegex,
-      ignoreCase);
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+      asRegex, ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
 
    error = runGrepOperation(
@@ -1382,20 +1392,20 @@ core::Error initialize()
    return initBlock.execute();
 }
 
-boost::regex getFileLineNumberLineRegex(bool gitFlag)
+boost::regex getGrepOutputRegex(bool isGitGrep)
 {
    boost::regex regex;
-   if (gitFlag)
+   if (isGitGrep)
       regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
    else
       regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
    return regex;
 }
 
-boost::regex getColorEncodingRegex(bool gitFlag)
+boost::regex getColorEncodingRegex(bool isGitGrep)
 {
    boost::regex regex;
-   if (gitFlag)
+   if (isGitGrep)
       regex = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
    else
       regex = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");

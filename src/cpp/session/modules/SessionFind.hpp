@@ -31,9 +31,9 @@ core::json::Object findInFilesStateAsJson();
 
 core::Error initialize();
 
-boost::regex getFileLineNumberLineRegex(bool gitFlag);
+boost::regex getGrepOutputRegex(bool isGitGrep);
 
-boost::regex getColorEncodingRegex(bool gitFlag);
+boost::regex getColorEncodingRegex(bool isGitGrep);
 
 // helper class used to process file replacements
 class Replacer : public boost::noncopyable

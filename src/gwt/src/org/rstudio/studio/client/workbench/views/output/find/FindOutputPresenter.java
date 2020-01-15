@@ -46,6 +46,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -227,9 +228,9 @@ public class FindOutputPresenter extends BasePresenter
 
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(dialogState_.getPath());
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getFilePatterns())
-               filePatterns.push(pattern);
+               includeFilePatterns.push(pattern);
             JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
@@ -238,7 +239,7 @@ public class FindOutputPresenter extends BasePresenter
                                    dialogState_.isRegex(),
                                    !dialogState_.isCaseSensitive(),
                                    searchPath,
-                                   filePatterns,
+                                   includeFilePatterns,
                                    excludeFilePatterns,
                                    view_.getReplaceText(),
                                    new SimpleRequestCallback<String>()
@@ -306,9 +307,9 @@ public class FindOutputPresenter extends BasePresenter
                         stopAndClear();
                         FileSystemItem searchPath =
                                                   FileSystemItem.createDir(dialogState_.getPath());
-                        JsArrayString filePatterns = JsArrayString.createArray().cast();
+                        JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
                         for (String pattern : dialogState_.getFilePatterns())
-                           filePatterns.push(pattern);
+                           includeFilePatterns.push(pattern);
                         JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
                         for (String pattern : dialogState_.getExcludeFilePatterns())
                            excludeFilePatterns.push(pattern);
@@ -317,7 +318,7 @@ public class FindOutputPresenter extends BasePresenter
                                                 dialogState_.isRegex(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
-                                                filePatterns,
+                                                includeFilePatterns,
                                                 excludeFilePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
@@ -490,15 +491,9 @@ public class FindOutputPresenter extends BasePresenter
             FileSystemItem searchPath =
                                       FileSystemItem.createDir(input.getPath());
 
-            JsArrayString filePatterns = JsArrayString.createArray().cast();
+            JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getFilePatterns())
-            {
-               filePatterns.push(pattern);
-               if (StringUtil.equals(pattern, "package") &&
-                   !session_.getSessionInfo().getBuildToolsType().equals(
-                      SessionInfo.BUILD_TOOLS_PACKAGE))
-                  Debug.logToConsole("Request to search package source when not in a package project.");
-            }
+               includeFilePatterns.push(pattern);
             JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : input.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
@@ -511,7 +506,7 @@ public class FindOutputPresenter extends BasePresenter
                               input.isRegex(),
                               !input.isCaseSensitive(),
                               searchPath,
-                              filePatterns,
+                              includeFilePatterns,
                               excludeFilePatterns,
                               new SimpleRequestCallback<String>()
                               {
@@ -536,26 +531,26 @@ public class FindOutputPresenter extends BasePresenter
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            fileServer_.isGitDirectory(dialog.getDirectory(),
-                                       new ServerRequestCallback<Boolean>() {
-               @Override
-               public void onResponseReceived(Boolean isGitDirectory)
-               {
-                  if (isGitDirectory)
-                     dialog.setGitStatus(true);
-                  else
-                     dialog.setGitStatus(false);
-               }
+            if (session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
+            {
+               fileServer_.isGitDirectory(dialog.getDirectory(),
+                                          new ServerRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean isGitDirectory)
+                  {
+                     dialog.setGitStatus(isGitDirectory);
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  // assume true if we are not sure
-                  // if the user enters invalid data it will be handled by the backend
-                  dialog.setGitStatus(true);
-                  Debug.logError(error);
-               }
-            });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // assume true if we are not sure
+                     // if the user enters invalid data it will be handled by the backend
+                     dialog.setGitStatus(true);
+                     Debug.logError(error);
+                  }
+               });
+            }
 
             fileServer_.isPackageDirectory(dialog.getDirectory(),
                                            new ServerRequestCallback<Boolean>()
