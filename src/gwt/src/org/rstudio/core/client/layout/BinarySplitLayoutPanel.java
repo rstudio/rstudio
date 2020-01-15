@@ -29,6 +29,11 @@ public class BinarySplitLayoutPanel extends LayoutPanel
       implements MouseDownHandler, MouseMoveHandler, MouseUpHandler,
                  KeyDownHandler, BlurHandler, FocusHandler
 {
+   /**
+    * Default number of pixels pane splitters are moved by arrow keys
+    */
+   public static final int KEYBOARD_MOVE_SIZE = 20;
+
    public BinarySplitLayoutPanel(String name, Widget[] widgets, int splitterHeight)
    {
       widgets_ = widgets;
@@ -337,11 +342,11 @@ public class BinarySplitLayoutPanel extends LayoutPanel
       switch (event.getNativeKeyCode())
       {
          case KeyCodes.KEY_UP:
-            delta = 20;
+            delta = KEYBOARD_MOVE_SIZE;
             break;
 
          case KeyCodes.KEY_DOWN:
-            delta = -20;
+            delta = -KEYBOARD_MOVE_SIZE;
             break;
       }
       if (delta == 0)
