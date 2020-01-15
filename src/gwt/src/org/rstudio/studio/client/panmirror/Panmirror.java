@@ -32,8 +32,8 @@ public class Panmirror
       panmirrorLoader_.addCallback(onLoaded);
    }
    
-   public static PanmirrorEvents Events;
-   public static PanmirrorCommands Commands;
+   public static PanmirrorEvents EditorEvents;
+   public static PanmirrorCommands EditorCommands;
    
    
    

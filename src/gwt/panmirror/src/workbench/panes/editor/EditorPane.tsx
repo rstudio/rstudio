@@ -2,7 +2,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 
-import { Editor, Events} from 'editor/src/editor';
+import { Editor, EditorEvents} from 'editor/src/editor';
 import { EditorOutline } from 'editor/src/api/outline';
 import { EditorDialogs as IEditorDialogs } from 'editor/src/api/ui';
 
@@ -102,8 +102,8 @@ class EditorPane extends React.Component<EditorPaneProps> {
     this.showPandocWarnings();
 
     // subscribe to events
-    this.onEditorEvent(Events.Update, this.onEditorDocChanged);
-    this.onEditorEvent(Events.SelectionChange, this.onEditorSelectionChanged);
+    this.onEditorEvent(EditorEvents.Update, this.onEditorDocChanged);
+    this.onEditorEvent(EditorEvents.SelectionChange, this.onEditorSelectionChanged);
 
     // add commands
     this.props.commandManager.addCommands([

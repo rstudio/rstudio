@@ -56,13 +56,13 @@ export interface EditorKeybindings {
   [id: string]: string[];
 }
 
-export enum Events  {
+export enum EditorEvents  {
   Update = 'update',
   SelectionChange = 'selectionChange'
 }
 
 
-export { EditorCommandId as Commands } from './api/command';
+export { EditorCommandId as EditorCommands } from './api/command';
 
 
 export class Editor {
@@ -202,8 +202,8 @@ export class Editor {
 
     // notify listeners if requested
     if (emitUpdate) {
-      this.emitEvent(Events.Update);
-      this.emitEvent(Events.SelectionChange);
+      this.emitEvent(EditorEvents.Update);
+      this.emitEvent(EditorEvents.SelectionChange);
     }
 
     return true;
@@ -304,12 +304,12 @@ export class Editor {
     this.view.updateState(this.state);
 
     // notify listeners of selection change
-    this.emitEvent(Events.SelectionChange);
+    this.emitEvent(EditorEvents.SelectionChange);
 
     // notify listeners of updates
     if (tr.docChanged) {
       // notify listeners
-      this.emitEvent(Events.Update);
+      this.emitEvent(EditorEvents.Update);
     }
   }
 
@@ -322,8 +322,8 @@ export class Editor {
 
   private initEvents(): ReadonlyMap<string, Event> {
     const events = new Map<string, Event>();
-    events.set(Events.Update, new Event(Events.Update));
-    events.set(Events.SelectionChange, new Event(Events.SelectionChange));
+    events.set(EditorEvents.Update, new Event(EditorEvents.Update));
+    events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
     return events;
   }
 

@@ -37,7 +37,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
             mainWidget_.add(this.editorWidget_);
             
             PanmirrorKeybindings keys = new PanmirrorKeybindings();
-            keys.add(Panmirror.Commands.Strong, new String[]{"Mod-5"});
+            keys.add(Panmirror.EditorCommands.Strong, new String[]{"Mod-5"});
             this.editorWidget_.setKeybindings(keys);
             
             this.editorWidget_.addChangeHandler(new ChangeHandler()
@@ -67,7 +67,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                if (success) 
                {  
                   
-                  this.editorWidget_.execCommand(Panmirror.Commands.SelectAll);
+                  this.editorWidget_.execCommand(Panmirror.EditorCommands.SelectAll);
                   
                   this.editorWidget_.getMarkdown(markdown -> {
                      Debug.logToConsole(markdown);
