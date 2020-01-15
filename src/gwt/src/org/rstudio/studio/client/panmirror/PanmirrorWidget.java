@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.toolbar.PanmirrorToolbar;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
@@ -87,8 +88,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
      
       if (options.toolbar)
       {
-         toolbar_ =  new SecondaryToolbar(false, "Markdown Editor Toolbar");
-         addNorth(toolbar_, toolbar_.getHeight() - 2);
+         toolbar_ =  new PanmirrorToolbar();
+         addNorth(toolbar_, toolbar_.getHeight());
       }
       
       editorParent_ = new HTML();
