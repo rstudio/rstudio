@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.ui;
+package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.widget.Operation;

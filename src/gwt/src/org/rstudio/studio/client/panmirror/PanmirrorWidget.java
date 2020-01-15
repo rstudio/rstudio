@@ -92,7 +92,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
       
       editorParent_ = new HTML();
-      
       add(editorParent_);
    }
    

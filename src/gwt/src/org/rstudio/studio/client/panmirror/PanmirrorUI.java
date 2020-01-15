@@ -13,8 +13,10 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.ui;
+package org.rstudio.studio.client.panmirror;
 
+
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 
 import jsinterop.annotations.JsType;
 
