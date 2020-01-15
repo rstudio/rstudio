@@ -30,7 +30,10 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       config.hooks.isEditable = () -> true;
      
       
-      PanmirrorWidget.create(config, editorWidget -> {
+      PanmirrorWidget.Options options = new PanmirrorWidget.Options();
+      options.toolbar = true;
+      
+      PanmirrorWidget.create(config, options, editorWidget -> {
          if (editorWidget != null) {
             
             this.editorWidget_ = editorWidget;

@@ -22,11 +22,13 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.DomEvent;
@@ -35,6 +37,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -51,14 +54,21 @@ public class PanmirrorWidget extends Composite implements
    HasChangeHandlers, 
    HasSelectionChangedHandlers
 {
+   
+   public static class Options 
+   {
+      public boolean toolbar = true;
+   }
+   
    public static void create(PanmirrorConfig config,
+                             Options options,
                              CommandWithArg<PanmirrorWidget> completed) {
       
-      PanmirrorWidget editorWidget = new PanmirrorWidget();
+      PanmirrorWidget editorWidget = new PanmirrorWidget(options);
       
       Panmirror.load(() -> {
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorWidget.getElement(), config),
+            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), config),
             null,
             editor -> {
                editorWidget.attachEditor(editor);
@@ -70,9 +80,21 @@ public class PanmirrorWidget extends Composite implements
    }
    
  
-   private PanmirrorWidget()
+   private PanmirrorWidget(Options options)
    {
-      initWidget(new HTML()); 
+      dockPanel_ = new DockLayoutPanel(Style.Unit.PX);
+      dockPanel_.setSize("100%", "100%");
+      
+      if (options.toolbar)
+      {
+         toolbar_ =  new SecondaryToolbar(false, "Markdown Editor Toolbar");
+         dockPanel_.addNorth(toolbar_, toolbar_.getHeight());
+      }
+      
+      editorParent_ = new HTML();
+      dockPanel_.add(editorParent_);
+            
+      initWidget(dockPanel_); 
       this.setSize("100%", "100%");
    }
    
@@ -241,6 +263,9 @@ public class PanmirrorWidget extends Composite implements
     
    
    private PanmirrorEditor editor_ = null;
+   private DockLayoutPanel dockPanel_ = null;
+   private SecondaryToolbar toolbar_ = null;
+   private HTML editorParent_ = null;
    private PanmirrorCommand[] commands_ = null;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
