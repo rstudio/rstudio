@@ -19,7 +19,7 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 
 import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsPackage;;
+import jsinterop.annotations.JsPackage;
 
 
 

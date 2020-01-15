@@ -4,6 +4,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
 
@@ -27,6 +28,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       
       PanmirrorConfig config = new PanmirrorConfig();
       config.hooks.isEditable = () -> true;
+     
       
       PanmirrorWidget.create(config, editorWidget -> {
          if (editorWidget != null) {
@@ -34,6 +36,9 @@ public class PanmirrorTestDialog extends ModalDialog<String>
             this.editorWidget_ = editorWidget;
             mainWidget_.add(this.editorWidget_);
             
+            PanmirrorKeybindings keys = new PanmirrorKeybindings();
+            keys.add(Panmirror.Commands.Strong, new String[]{"Mod-5"});
+            this.editorWidget_.setKeybindings(keys);
             
             this.editorWidget_.addChangeHandler(new ChangeHandler()
             {

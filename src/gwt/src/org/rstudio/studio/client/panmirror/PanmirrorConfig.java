@@ -22,8 +22,6 @@ import elemental2.core.JsObject;
 
 import jsinterop.annotations.JsType;
 
-// TODO: keybindings
-
 @JsType
 public class PanmirrorConfig
 {  

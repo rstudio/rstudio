@@ -45,7 +45,6 @@ export interface EditorConfig {
   readonly ui: EditorUI;
   readonly options: EditorOptions;
   readonly hooks?: EditorHooks;
-  readonly keybindings?: EditorKeybindings;
   readonly extensions?: readonly Extension[];
 }
 
@@ -92,7 +91,7 @@ export class Editor {
     // initialize references
     this.parent = parent;
     this.ui = config.ui;
-    this.keybindings = config.keybindings || {};
+    this.keybindings = {};
     this.hooks = config.hooks || {};
     this.pandocFormat = pandocFormat;
 

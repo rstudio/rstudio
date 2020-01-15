@@ -174,6 +174,11 @@ public class PanmirrorWidget extends Composite implements
       editor_.navigate(id);
    }
    
+   public void setKeybindings(PanmirrorKeybindings keybindings) 
+   {
+      editor_.setKeybindings(keybindings);
+   }
+   
    public String getHTML()
    {
       return editor_.getHTML();
