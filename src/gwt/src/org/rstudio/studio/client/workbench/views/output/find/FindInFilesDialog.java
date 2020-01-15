@@ -307,7 +307,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          ((Element) listPresetFilePatterns_.getElement().getChild(
                IncludeFilePatterns.CustomFilter.ordinal()))
             .setAttribute("disabled", "disabled");
-         listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
+
+         // if a disabled index is selected, change it to All Files
+         if (listPresetFilePatterns_.getSelectedIndex() ==
+                IncludeFilePatterns.CommonRSourceFiles.ordinal() || 
+             listPresetFilePatterns_.getSelectedIndex() ==
+                IncludeFilePatterns.RScripts.ordinal() || 
+             listPresetFilePatterns_.getSelectedIndex() ==
+                IncludeFilePatterns.CustomFilter.ordinal())
+            listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
+
          manageFilePattern();
       }
 

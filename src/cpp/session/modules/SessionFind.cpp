@@ -1022,6 +1022,24 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
+void processIncludeFilePatterns(
+   const json::Array& includeFilePatterns, std::vector<std::string>* pCmdArgs, bool* pPackageFlag)
+{
+   *pPackageFlag = false;
+   for (json::Value filePattern : includeFilePatterns)
+   {
+      if (filePattern.getType() != json::Type::STRING)
+         LOG_WARNING_MESSAGE("Include files contain non-string value");
+      else
+      {
+         if (filePattern.getString().compare("package") == 0)
+            *pPackageFlag = true;
+         else
+            pCmdArgs->push_back("--include=" + filePattern.getString());
+      }
+   }
+}
+
 void processExcludeFilePatterns(
    const json::Array& excludeFilePatterns, std::vector<std::string>* pCmdArgs, bool* pGitFlag)
 {
@@ -1038,6 +1056,23 @@ void processExcludeFilePatterns(
             pCmdArgs->push_back("--exclude=" + filePattern.getString());
       }
    }
+}
+
+void addPackageDirectoriesToCommand(const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+{
+   FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
+   FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+   FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+
+   *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+   if (rPath.exists())
+      *pCmd << rPath; 
+   if (srcPath.exists())
+      *pCmd << srcPath;
+   if (testsPath.exists())
+      *pCmd << testsPath;
+   else if (!rPath.exists() && !srcPath.exists())
+      LOG_ERROR_MESSAGE("Package directories not found"); //!!! need to return error
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1095,8 +1130,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
+   std::vector<std::string> includeArgs;
    std::vector<std::string> excludeArgs;
+   bool packageFlag = false;
    bool gitFlag = false;
+   processIncludeFilePatterns(grepOptions.filePatterns, &includeArgs, &packageFlag);
    processExcludeFilePatterns(grepOptions.excludeFilePatterns, &excludeArgs, &gitFlag);
    if (gitFlag)
    {
@@ -1132,44 +1170,22 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 
    if (!gitFlag)
    {
+      for (std::string arg : includeArgs)
+         cmd << arg;
       for (std::string arg : excludeArgs)
          cmd << arg;
-      bool packageFlag = false;
-      for (json::Value filePattern : grepOptions.filePatterns)
-      {
-         if (filePattern.getType() != json::Type::STRING)
-            LOG_WARNING_MESSAGE("Include files contain non-string value");
-         else if (filePattern.getString().compare("package") == 0)
-            packageFlag = true;
-         else
-            cmd << "--include=" + filePattern.getString();
-      }
-      cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-      if (!packageFlag)
-         cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+      if (packageFlag)
+         addPackageDirectoriesToCommand(dirPath, &cmd);
       else
       {
-         FilePath rPath(string_utils::utf8ToSystem(dirPath.getAbsolutePath() + "/R/"));
-         FilePath srcPath(string_utils::utf8ToSystem(dirPath.getAbsolutePath() + "/src/"));
-         FilePath testsPath(string_utils::utf8ToSystem(dirPath.getAbsolutePath() + "/tests/"));
-
-         if (rPath.exists())
-            cmd << rPath; 
-         if (srcPath.exists())
-            cmd << srcPath;
-         if (testsPath.exists())
-            cmd << testsPath;
-         else if (!rPath.exists() && !srcPath.exists())
-            LOG_ERROR_MESSAGE("Package directories not found"); //!!! need to return error
+         cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+         cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       }
    }
    else
    {
-      for (json::Value filePattern : grepOptions.filePatterns)
-      {
-         cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-         cmd << filePattern.getString();
-      }
+      if (packageFlag)
+         addPackageDirectoriesToCommand(dirPath, &cmd);
    }
 
    // Clear existing results
