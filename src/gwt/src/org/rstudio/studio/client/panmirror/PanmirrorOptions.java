@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditorUI.java
+ * PanmirrorOptions.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,13 +13,20 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.ui;
+package org.rstudio.studio.client.panmirror;
 
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorEditorUI
+public class PanmirrorOptions
 {    
-   public PanmirrorEditorDialogs dialogs = new PanmirrorEditorDialogs();
+   public boolean autoFocus;
+   public boolean spellCheck;
+   public boolean codemirror;
+   public boolean autoLink;
+   public boolean braceMatching;
+   public boolean rmdCodeChunks;
+   public boolean atxHeaders;
+   public int wrapColumn;
 }

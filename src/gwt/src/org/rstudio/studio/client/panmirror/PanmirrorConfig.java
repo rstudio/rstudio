@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditorConfig.java
+ * PanmirrorConfig.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -16,24 +16,22 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
-import org.rstudio.studio.client.panmirror.ui.PanmirrorEditorUI;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 
 import elemental2.core.JsObject;
 
 import jsinterop.annotations.JsType;
-import jsinterop.base.JsPropertyMap;
 
 // TODO: keybindings
 // TODO: events more like commands
 
-
 @JsType
-public class PanmirrorEditorConfig
+public class PanmirrorConfig
 {  
    public String format = "markdown";
-   public PanmirrorEditorOptions options = new PanmirrorEditorOptions();
+   public PanmirrorOptions options = new PanmirrorOptions();
    public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
-   public PanmirrorEditorUI ui =  new PanmirrorEditorUI();
-   public PanmirrorEditorHooks hooks = new PanmirrorEditorHooks();
+   public PanmirrorUI ui =  new PanmirrorUI();
+   public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions;
 }

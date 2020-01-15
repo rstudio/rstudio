@@ -3,10 +3,8 @@ package org.rstudio.studio.client.panmirror.ui;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.Panmirror;
-import org.rstudio.studio.client.panmirror.PanmirrorEditorConfig;
-import org.rstudio.studio.client.panmirror.PanmirrorEditorHooks;
-import org.rstudio.studio.client.panmirror.PanmirrorEditorOptions;
-import org.rstudio.studio.client.panmirror.PanmirrorEditorWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
 
 import com.google.gwt.aria.client.Roles;
@@ -27,10 +25,10 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       mainWidget_ = new SimplePanel();
       mainWidget_.setSize("500px", "400px");
       
-      PanmirrorEditorConfig config = new PanmirrorEditorConfig();
+      PanmirrorConfig config = new PanmirrorConfig();
       config.hooks.isEditable = () -> true;
       
-      PanmirrorEditorWidget.create(config, editorWidget -> {
+      PanmirrorWidget.create(config, editorWidget -> {
          if (editorWidget != null) {
             
             this.editorWidget_ = editorWidget;
@@ -95,5 +93,5 @@ public class PanmirrorTestDialog extends ModalDialog<String>
    }
 
    private SimplePanel mainWidget_;
-   private PanmirrorEditorWidget editorWidget_;
+   private PanmirrorWidget editorWidget_;
 }

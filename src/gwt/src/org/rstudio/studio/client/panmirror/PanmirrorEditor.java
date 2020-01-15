@@ -31,7 +31,7 @@ import elemental2.promise.Promise;
 @JsType(isNative = true, name="Editor", namespace = "Panmirror")
 public class PanmirrorEditor
 {
-   public native static Promise<PanmirrorEditor> create(Element parent, PanmirrorEditorConfig config);
+   public native static Promise<PanmirrorEditor> create(Element parent, PanmirrorConfig config);
    
    public native void destroy();
    

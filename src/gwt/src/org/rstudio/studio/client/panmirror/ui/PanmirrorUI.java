@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditorHooks.java
+ * PanmirrorUI.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,22 +13,13 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.ui;
 
-import jsinterop.annotations.JsFunction;
+
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorEditorHooks
-{
-   
-   public IsEditable isEditable;
-
-   
-   
-   @JsFunction
-   public interface IsEditable
-   {
-      boolean isEditable();
-   }
+public class PanmirrorUI
+{    
+   public PanmirrorDialogs dialogs = new PanmirrorDialogs();
 }

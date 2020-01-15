@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditorDialogs.java
+ * PanmirrorDialogs.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -37,10 +37,10 @@ enum AlertType {
 }
 
 @JsType
-public class PanmirrorEditorDialogs {
+public class PanmirrorDialogs {
    
   
-   public PanmirrorEditorDialogs() {
+   public PanmirrorDialogs() {
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -66,7 +66,7 @@ public class PanmirrorEditorDialogs {
               alertType = MessageDisplay.MSG_ERROR;
               break;
          }
-         PanmirrorEditorDialogs.this.globalDisplay_.showMessage(alertType, title, message, new Operation() {
+         PanmirrorDialogs.this.globalDisplay_.showMessage(alertType, title, message, new Operation() {
             @Override
             public void execute()
             {

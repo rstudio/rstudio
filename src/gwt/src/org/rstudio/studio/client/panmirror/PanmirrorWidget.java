@@ -46,15 +46,15 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 
-public class PanmirrorEditorWidget extends Composite implements 
+public class PanmirrorWidget extends Composite implements 
    RequiresResize, 
    HasChangeHandlers, 
    HasSelectionChangedHandlers
 {
-   public static void create(PanmirrorEditorConfig config,
-                             CommandWithArg<PanmirrorEditorWidget> completed) {
+   public static void create(PanmirrorConfig config,
+                             CommandWithArg<PanmirrorWidget> completed) {
       
-      PanmirrorEditorWidget editorWidget = new PanmirrorEditorWidget();
+      PanmirrorWidget editorWidget = new PanmirrorWidget();
       
       Panmirror.load(() -> {
          new PromiseWithProgress<PanmirrorEditor>(
@@ -70,7 +70,7 @@ public class PanmirrorEditorWidget extends Composite implements
    }
    
  
-   private PanmirrorEditorWidget()
+   private PanmirrorWidget()
    {
       initWidget(new HTML()); 
       this.setSize("100%", "100%");
