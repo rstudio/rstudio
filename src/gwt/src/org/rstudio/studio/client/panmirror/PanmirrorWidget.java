@@ -36,7 +36,6 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -49,7 +48,7 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 
-public class PanmirrorWidget extends Composite implements 
+public class PanmirrorWidget extends DockLayoutPanel implements 
    RequiresResize, 
    HasChangeHandlers, 
    HasSelectionChangedHandlers
@@ -82,20 +81,19 @@ public class PanmirrorWidget extends Composite implements
  
    private PanmirrorWidget(Options options)
    {
-      dockPanel_ = new DockLayoutPanel(Style.Unit.PX);
-      dockPanel_.setSize("100%", "100%");
-      
+      super(Style.Unit.PX);
+      this.setSize("100%", "100%");
+    
+     
       if (options.toolbar)
       {
          toolbar_ =  new SecondaryToolbar(false, "Markdown Editor Toolbar");
-         dockPanel_.addNorth(toolbar_, toolbar_.getHeight());
+         addNorth(toolbar_, toolbar_.getHeight() - 2);
       }
       
       editorParent_ = new HTML();
-      dockPanel_.add(editorParent_);
-            
-      initWidget(dockPanel_); 
-      this.setSize("100%", "100%");
+      
+      add(editorParent_);
    }
    
    private void attachEditor(PanmirrorEditor editor) {
@@ -260,13 +258,13 @@ public class PanmirrorWidget extends Composite implements
          editor_.resize();
       }
    }
-    
    
-   private PanmirrorEditor editor_ = null;
-   private DockLayoutPanel dockPanel_ = null;
    private SecondaryToolbar toolbar_ = null;
    private HTML editorParent_ = null;
+   
+   private PanmirrorEditor editor_ = null;
    private PanmirrorCommand[] commands_ = null;
+   
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
 }
