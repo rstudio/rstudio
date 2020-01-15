@@ -812,7 +812,8 @@ private:
          errorMessage.clear();
          boost::smatch match;
          if (regex_utils::match(
-               line, match, getGrepOutputRegex(findResults().gitFlag())))
+               line, match, getGrepOutputRegex(findResults().gitFlag())) &&
+             match.size() > 1)
          {
             std::string file = module_context::createAliasedPath(
                   FilePath(string_utils::systemToUtf8(match[1])));
@@ -1277,6 +1278,8 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // 5 was chosen based on testing to find a value that was both responsive
+   // and not overly frequent
    static const int kUpdatePercent = 5;
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
