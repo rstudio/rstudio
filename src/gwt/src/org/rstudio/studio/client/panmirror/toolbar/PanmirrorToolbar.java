@@ -17,13 +17,11 @@
 package org.rstudio.studio.client.panmirror.toolbar;
 
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
-
-import com.google.gwt.resources.client.ImageResource;
 
 public class PanmirrorToolbar extends SecondaryToolbar
 {
@@ -42,43 +40,43 @@ public class PanmirrorToolbar extends SecondaryToolbar
  
    public void init(PanmirrorCommand[] commands)
    { 
-      // set commands
-      commands_ = commands;
-      
-      // add all known commands
-      addCommand(Panmirror.EditorCommands.Strong, "Bold", RES.bold());
-      addCommand(Panmirror.EditorCommands.Em, "Italic", RES.italic());
-      
+      commands_ = new PanmirrorToolbarCommands(commands);
+      commandButtons_.clear();
       
       // populate toolbar buttons
       addLeftButton(Panmirror.EditorCommands.Strong);
       addLeftButton(Panmirror.EditorCommands.Em);
+      addLeftButton(Panmirror.EditorCommands.Code);
+      addLeftSeparator();
+      addLeftButton(Panmirror.EditorCommands.Blockquote);
+      addLeftSeparator();
+      addLeftButton(Panmirror.EditorCommands.CodeBlock);
       
       
       // populate menu
    }
    
+   public void sync()
+   {
+      commandButtons_.forEach((button) -> button.sync());
+   }
+   
    private void addLeftButton(String id)
    {
-      addLeftWidget(new PanmirrorCommandToolbarButton(commandsUI_.get(id)));
+      addLeftWidget(addButton(id));
    }
    
-   private void addCommand(String id, String menuText, ImageResource image)
+   private PanmirrorCommandToolbarButton addButton(String id)
    {
-      // lookup the underlying command
-      PanmirrorCommand command = null;
-      for (PanmirrorCommand cmd : commands_) {
-         if (cmd.id == id) {
-            command = cmd;
-            break;
-         }
-      }
-      // add it
-      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, image));
+      PanmirrorCommandToolbarButton button = new PanmirrorCommandToolbarButton(commands_.get(id));
+      commandButtons_.add(button);
+      return button;
    }
-  
-   private PanmirrorCommand[] commands_ = null;
-   private final HashMap<String,PanmirrorCommandUI> commandsUI_ = new HashMap<String,PanmirrorCommandUI>();
    
-   private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
+   
+  
+   private PanmirrorToolbarCommands commands_ = null;
+  
+   private ArrayList<PanmirrorCommandToolbarButton> commandButtons_ = new ArrayList<PanmirrorCommandToolbarButton>();
+   
 }

@@ -22,7 +22,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
-import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
@@ -100,10 +99,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       toolbar_.init(commands_);
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
+         // fire to clients
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.SelectionChange, () -> {
+         // sync toolbar commands
+         if (toolbar_ != null)
+            toolbar_.sync();
+         // fire to clients
          SelectionChangeEvent.fire(this);
       }));
    }
