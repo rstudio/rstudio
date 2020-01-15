@@ -17,7 +17,7 @@ package org.rstudio.studio.client.panmirror.command;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true)
+@JsType
 public class PanmirrorCommand
 {
    public String id;

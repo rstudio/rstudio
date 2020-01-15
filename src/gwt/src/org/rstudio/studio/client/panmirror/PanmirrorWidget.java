@@ -75,16 +75,13 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                completed.execute(editorWidget);
             }
          );
-       });
-     
+       });  
    }
    
- 
    private PanmirrorWidget(Options options)
    {
       super(Style.Unit.PX);
-      this.setSize("100%", "100%");
-    
+      this.setSize("100%", "100%");   
      
       if (options.toolbar)
       {
@@ -100,12 +97,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       editor_ = editor;
       commands_ = editor.commands();
+      toolbar_.init(commands_);
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       }));
       
-     
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.SelectionChange, () -> {
          SelectionChangeEvent.fire(this);
       }));
@@ -259,7 +256,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
-   private SecondaryToolbar toolbar_ = null;
+   private PanmirrorToolbar toolbar_ = null;
    private HTML editorParent_ = null;
    
    private PanmirrorEditor editor_ = null;
