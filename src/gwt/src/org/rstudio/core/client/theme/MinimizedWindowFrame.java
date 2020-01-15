@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -56,6 +57,9 @@ public class MinimizedWindowFrame
       layout_ = new ClickDockLayoutPanel(Style.Unit.PX);
       layout_.setStylePrimaryName(themeStyles.minimizedWindow());
       layout_.addStyleName(themeStyles.rstheme_minimizedWindowObject());
+
+      Roles.getRegionRole().set(layout_.getElement());
+      Roles.getRegionRole().setAriaLabelProperty(layout_.getElement(), accessibleName + " minimized");
 
       int leftPadding = title != null ? 8 : 4;
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);
