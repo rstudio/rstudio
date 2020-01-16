@@ -149,7 +149,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       }-*/;
    }
 
-   public enum IncludeFilePatterns
+   public enum Include
    {
       AllFiles,
       CommonRSourceFiles,
@@ -158,7 +158,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       CustomFilter
    }
 
-   public enum ExcludeFilePatterns
+   public enum Exclude
    {
       None,
       StandardGit,
@@ -240,20 +240,20 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       // disable custom filter text box when 'Custom Filter' is not selected
       divCustomFilter_.getStyle().setDisplay(
             (listPresetFilePatterns_.getSelectedIndex() ==
-             IncludeFilePatterns.CustomFilter.ordinal() &&
+             Include.CustomFilter.ordinal() &&
              listPresetExcludeFilePatterns_.getSelectedIndex() != 
-             ExcludeFilePatterns.StandardGit.ordinal())
+             Exclude.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
 
       // disable 'Package' option when chosen directory is not a package
       if (!packageStatus_)
          ((Element) listPresetFilePatterns_.getElement().getChild(
-               IncludeFilePatterns.Package.ordinal()))
+               Include.Package.ordinal()))
             .setAttribute("disabled", "disabled");
       else
          ((Element) listPresetFilePatterns_.getElement().getChild(
-            IncludeFilePatterns.Package.ordinal())).removeAttribute("disabled");
+            Include.Package.ordinal())).removeAttribute("disabled");
    }
 
    private void manageExcludeFilePattern()
@@ -265,56 +265,56 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
           !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
          ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
-               ExcludeFilePatterns.StandardGit.ordinal()))
+               Exclude.StandardGit.ordinal()))
             .setAttribute("disabled", "disabled");
          if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
-             ExcludeFilePatterns.StandardGit.ordinal())
-            listPresetExcludeFilePatterns_.setSelectedIndex(ExcludeFilePatterns.None.ordinal());
+             Exclude.StandardGit.ordinal())
+            listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.None.ordinal());
       }
       else
          ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
-            ExcludeFilePatterns.StandardGit.ordinal())).removeAttribute("disabled");
+            Exclude.StandardGit.ordinal())).removeAttribute("disabled");
 
       // disable custom filter text box when 'Custom Filter' is not selected
       divExcludeCustomFilter_.getStyle().setDisplay(
             listPresetExcludeFilePatterns_.getSelectedIndex() == 
-            ExcludeFilePatterns.CustomFilter.ordinal()
+            Exclude.CustomFilter.ordinal()
             ? Style.Display.BLOCK
             : Style.Display.NONE);
 
       // user cannot specify include patterns when using git grep
       if (listPresetExcludeFilePatterns_.getSelectedIndex() != 
-          ExcludeFilePatterns.StandardGit.ordinal())
+          Exclude.StandardGit.ordinal())
       {
          ((Element) listPresetFilePatterns_.getElement().getChild(
-            IncludeFilePatterns.CommonRSourceFiles.ordinal())).removeAttribute("disabled");
+            Include.CommonRSourceFiles.ordinal())).removeAttribute("disabled");
          ((Element) listPresetFilePatterns_.getElement().getChild(
-            IncludeFilePatterns.RScripts.ordinal())).removeAttribute("disabled");
+            Include.RScripts.ordinal())).removeAttribute("disabled");
          ((Element) listPresetFilePatterns_.getElement().getChild(
-            IncludeFilePatterns.CustomFilter.ordinal())).removeAttribute("disabled");
+            Include.CustomFilter.ordinal())).removeAttribute("disabled");
       }
       else
       {
          // when using standard git exclusions we don't have the option to search recursively and
          // specify file types
          ((Element) listPresetFilePatterns_.getElement().getChild(
-               IncludeFilePatterns.CommonRSourceFiles.ordinal()))
+               Include.CommonRSourceFiles.ordinal()))
             .setAttribute("disabled", "disabled");
          ((Element) listPresetFilePatterns_.getElement().getChild(
-               IncludeFilePatterns.RScripts.ordinal()))
+               Include.RScripts.ordinal()))
             .setAttribute("disabled", "disabled");
          ((Element) listPresetFilePatterns_.getElement().getChild(
-               IncludeFilePatterns.CustomFilter.ordinal()))
+               Include.CustomFilter.ordinal()))
             .setAttribute("disabled", "disabled");
 
          // if a disabled index is selected, change selection to All Files
          if (listPresetFilePatterns_.getSelectedIndex() ==
-                IncludeFilePatterns.CommonRSourceFiles.ordinal() || 
+                Include.CommonRSourceFiles.ordinal() || 
              listPresetFilePatterns_.getSelectedIndex() ==
-                IncludeFilePatterns.RScripts.ordinal() || 
+                Include.RScripts.ordinal() || 
              listPresetFilePatterns_.getSelectedIndex() ==
-                IncludeFilePatterns.CustomFilter.ordinal())
-            listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
+                Include.CustomFilter.ordinal())
+            listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
 
          manageFilePattern();
       }
@@ -415,30 +415,41 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       checkboxRegex_.setValue(dialogState.isRegex());
       dirChooser_.setText(dialogState.getPath());
 
-      // indexes refer to corresponding enums, but left as ints for readability
       String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (listPresetFilePatterns_.getValue(0) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(0);
-      else if (listPresetFilePatterns_.getValue(1) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(1);
-      else if (listPresetFilePatterns_.getValue(2) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(2);
-      else if (listPresetFilePatterns_.getValue(3) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(3);
+      if (includeFilePatterns == 
+          listPresetFilePatterns_.getValue(Include.AllFiles.ordinal()))
+         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
+      else if (includeFilePatterns ==
+               listPresetFilePatterns_.getValue(Include.CommonRSourceFiles.ordinal()))
+         listPresetFilePatterns_.setSelectedIndex(Include.CommonRSourceFiles.ordinal());
+      else if (includeFilePatterns ==
+               listPresetFilePatterns_.getValue(Include.RScripts.ordinal()))
+         listPresetFilePatterns_.setSelectedIndex(Include.RScripts.ordinal());
+      else if (includeFilePatterns ==
+               listPresetFilePatterns_.getValue(Include.Package.ordinal()))
+      {
+         listPresetFilePatterns_.setSelectedIndex(Include.Package.ordinal());
+         packageStatus_ = true;
+      }
       else
-         listPresetFilePatterns_.setSelectedIndex(4);
+         listPresetFilePatterns_.setSelectedIndex(Include.CustomFilter.ordinal());
       txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(
          Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
-      if (listPresetExcludeFilePatterns_.getValue(0) == excludeFilePatterns)
-         listPresetExcludeFilePatterns_.setSelectedIndex(0);
-      else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
-         listPresetExcludeFilePatterns_.setSelectedIndex(1);
+      if (excludeFilePatterns ==
+          listPresetExcludeFilePatterns_.getValue(Exclude.None.ordinal()))
+         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.None.ordinal());
+      else if (excludeFilePatterns ==
+               listPresetExcludeFilePatterns_.getValue(Exclude.StandardGit.ordinal()))
+      {
+         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.StandardGit.ordinal());
+         gitStatus_ = true;
+      }
       else
-         listPresetExcludeFilePatterns_.setSelectedIndex(2);
+         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.CustomFilter.ordinal());
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
    }
