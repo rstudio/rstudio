@@ -17,14 +17,20 @@ package org.rstudio.studio.client.panmirror.toolbar;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
-public class PanmirrorToolbarMenu extends ToolbarPopupMenu
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.MenuItem;
+
+public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorCommandUIObject
 {
    
    public PanmirrorToolbarMenu(PanmirrorToolbarCommands commands)
    {
       commands_ = commands;
+      getElement().getStyle().setZIndex(1000);
    }
    
    public PanmirrorToolbarMenu(PanmirrorToolbarMenu parent, PanmirrorToolbarCommands commands)
@@ -37,7 +43,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu
    public void getDynamicPopupMenu 
       (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
    {
-      uiObjects_.forEach(object -> object.sync());
+      sync();
       callback.onPopupMenu(this);
    }
    
@@ -47,9 +53,25 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu
       addItem(item);
       uiObjects_.add(item); 
    }
-  
    
- 
+   public void addSubmenu(String text, PanmirrorToolbarMenu menu)
+   { 
+      addItem(new MenuItem(menuText(text)), menu);
+      uiObjects_.add(menu);
+   }
+  
+   @Override
+   public void sync()
+   {
+      uiObjects_.forEach(object -> object.sync());
+   }
+   
+   private static SafeHtml menuText(String text)
+   {
+      return SafeHtmlUtils.fromTrustedString(AppCommand.formatMenuLabel(null, text, null));
+   }
+   
    private final ArrayList<PanmirrorCommandUIObject> uiObjects_ = new ArrayList<PanmirrorCommandUIObject>();
    private final PanmirrorToolbarCommands commands_;
+   
 }

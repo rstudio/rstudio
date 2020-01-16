@@ -17,16 +17,12 @@ package org.rstudio.studio.client.panmirror.toolbar;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.MenuItem;
 
 public class PanmirrorToolbar extends SecondaryToolbar
 {
@@ -71,7 +67,7 @@ public class PanmirrorToolbar extends SecondaryToolbar
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnRight);
       alignMenu.addSeparator();
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnDefault);
-      tableMenu.addItem(new MenuItem(menuText("Align Column")), alignMenu);
+      tableMenu.addSubmenu("Align Column", alignMenu);
       tableMenu.addSeparator();
       tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowBefore);
       tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowAfter);
@@ -111,11 +107,6 @@ public class PanmirrorToolbar extends SecondaryToolbar
       PanmirrorCommandToolbarButton button = new PanmirrorCommandToolbarButton(commands_.get(id));
       commandObjects_.add(button);
       return button;
-   }
-   
-   private static SafeHtml menuText(String text)
-   {
-      return SafeHtmlUtils.fromTrustedString(AppCommand.formatMenuLabel(null, text, null));
    }
    
    

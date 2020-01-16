@@ -20,7 +20,6 @@ package org.rstudio.studio.client.panmirror.toolbar;
 
 import org.rstudio.core.client.command.AppCommand;
 
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorCommandUIObject
@@ -51,12 +50,6 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
       
       setChecked(commandUI_.isActive());
       setVisible(commandUI_.isVisible());
-   }
-   
-   @Override
-   public ScheduledCommand getScheduledCommand()
-   {
-      return commandUI_.isEnabled() ? commandUI_ : null;
    }
    
    private final PanmirrorCommandUI commandUI_;
