@@ -1,7 +1,7 @@
 /*
  * BinarySplitLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.layout;
 
+import com.google.gwt.aria.client.OrientationValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style;
@@ -24,9 +26,15 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 
 public class BinarySplitLayoutPanel extends LayoutPanel
-      implements MouseDownHandler, MouseMoveHandler, MouseUpHandler
+      implements MouseDownHandler, MouseMoveHandler, MouseUpHandler,
+                 KeyDownHandler, BlurHandler, FocusHandler
 {
-   public BinarySplitLayoutPanel(Widget[] widgets, int splitterHeight)
+   /**
+    * Default number of pixels pane splitters are moved by arrow keys
+    */
+   public static final int KEYBOARD_MOVE_SIZE = 20;
+
+   public BinarySplitLayoutPanel(String name, Widget[] widgets, int splitterHeight)
    {
       widgets_ = widgets;
       splitterHeight_ = splitterHeight;
@@ -40,7 +48,15 @@ public class BinarySplitLayoutPanel extends LayoutPanel
       splitter_.addMouseDownHandler(this);
       splitter_.addMouseMoveHandler(this);
       splitter_.addMouseUpHandler(this);
+      splitter_.addDomHandler(this, KeyDownEvent.getType());
+      splitter_.addDomHandler(this, BlurEvent.getType());
+      splitter_.addDomHandler(this, FocusEvent.getType());
       splitter_.getElement().getStyle().setZIndex(200);
+      Roles.getSeparatorRole().set(splitter_.getElement());
+      Roles.getSeparatorRole().setAriaOrientationProperty(splitter_.getElement(),
+         OrientationValue.HORIZONTAL);
+      Roles.getSeparatorRole().setAriaLabelProperty(splitter_.getElement(), name + " splitter");
+      splitter_.getElement().setTabIndex(-1);
       add(splitter_);
       setWidgetLeftRight(splitter_, 0, Style.Unit.PX, 0, Style.Unit.PX);
       setWidgetBottomHeight(splitter_,
@@ -316,6 +332,52 @@ public class BinarySplitLayoutPanel extends LayoutPanel
          fireEvent(new SplitterResizedEvent());
       }
    }
+
+   public void onKeyDown(KeyDownEvent event)
+   {
+      if (!isVisible())
+         return;
+
+      int delta = 0;
+      switch (event.getNativeKeyCode())
+      {
+         case KeyCodes.KEY_UP:
+            delta = KEYBOARD_MOVE_SIZE;
+            break;
+
+         case KeyCodes.KEY_DOWN:
+            delta = -KEYBOARD_MOVE_SIZE;
+            break;
+      }
+      if (delta == 0)
+         return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      // use Shift key with arrows to make small adjustments
+      if (event.getNativeEvent().getShiftKey())
+         delta = delta < 0 ? -1 : 1; 
+      fireEvent(new SplitterBeforeResizeEvent());
+      setSplitterPos(splitterPos_ + delta, topIsFixed_);
+      fireEvent(new SplitterResizedEvent());
+   }
+
+   public void onBlur(BlurEvent event)
+   {
+      splitter_.removeStyleDependentName("focused");
+   }
+
+   public void onFocus(FocusEvent event)
+   {
+      splitter_.addStyleDependentName("focused");
+   }
+
+   public void focusSplitter()
+   {
+      if (isSplitterVisible())
+         splitter_.getElement().focus();
+   }  
 
    public int getSplitterHeight()
    {

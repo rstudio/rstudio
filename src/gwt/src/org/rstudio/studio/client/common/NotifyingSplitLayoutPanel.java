@@ -1,7 +1,7 @@
 /*
  * NotifyingSplitLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.BinarySplitLayoutPanel;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 
@@ -29,7 +30,7 @@ public class NotifyingSplitLayoutPanel extends SplitLayoutPanel
    @Inject
    public NotifyingSplitLayoutPanel(int splitterSize, EventBus events)
    {
-      super(splitterSize);
+      super(splitterSize, true /* keyboardSupport */, BinarySplitLayoutPanel.KEYBOARD_MOVE_SIZE);
 
       events_ = events;
 

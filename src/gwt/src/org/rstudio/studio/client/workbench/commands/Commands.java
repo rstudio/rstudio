@@ -621,6 +621,10 @@ public abstract class
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();
+   public abstract AppCommand focusLeftSeparator();
+   public abstract AppCommand focusRightSeparator();
+   public abstract AppCommand focusCenterSeparator();
+   
 
    // Main menu (server)
    public abstract AppCommand showFileMenu();

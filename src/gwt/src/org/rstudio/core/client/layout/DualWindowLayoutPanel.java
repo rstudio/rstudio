@@ -1,7 +1,7 @@
 /*
  * DualWindowLayoutPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -374,7 +374,7 @@ public class DualWindowLayoutPanel extends SimplePanel
       windowB_ = windowB;
       session_ = session;
       setSize("100%", "100%");
-      layout_ = new BinarySplitLayoutPanel(new Widget[] {
+      layout_ = new BinarySplitLayoutPanel(clientStateKeyName, new Widget[] {
             windowA.getNormal(), windowA.getMinimized(),
             windowB.getNormal(), windowB.getMinimized()}, splitterSize);
       layout_.setSize("100%", "100%");
@@ -455,7 +455,12 @@ public class DualWindowLayoutPanel extends SimplePanel
          });
       }
    }
-   
+
+   public void focusSplitter()
+   {
+      layout_.focusSplitter();
+   }
+
    // resize the panes based on the specified bottom height and return the
    // new window state for the top pane (this implements snap to minimize)
    private WindowState resizePanes(int bottom)
