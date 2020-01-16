@@ -3,6 +3,8 @@
 
 ## TODO
 
+- Table header seems to not work (or in the IDE it doesn't show up?)
+
 
 ## Enhancements
 
