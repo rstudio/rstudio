@@ -1,6 +1,6 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -934,6 +934,19 @@ core::Error UserPrefValues::setConsoleLineLengthLimit(int val)
 }
 
 /**
+ * The maximum number of console actions to store and display in the console scrollback buffer.
+ */
+int UserPrefValues::consoleMaxLines()
+{
+   return readPref<int>("console_max_lines");
+}
+
+core::Error UserPrefValues::setConsoleMaxLines(int val)
+{
+   return writePref("console_max_lines", val);
+}
+
+/**
  * How to treat ANSI escape codes in the console.
  */
 std::string UserPrefValues::ansiConsoleMode()
@@ -1399,6 +1412,19 @@ std::string UserPrefValues::shinyViewerType()
 core::Error UserPrefValues::setShinyViewerType(std::string val)
 {
    return writePref("shiny_viewer_type", val);
+}
+
+/**
+ * Whether to run Shiny applications as background jobs.
+ */
+bool UserPrefValues::shinyBackgroundJobs()
+{
+   return readPref<bool>("shiny_background_jobs");
+}
+
+core::Error UserPrefValues::setShinyBackgroundJobs(bool val)
+{
+   return writePref("shiny_background_jobs", val);
 }
 
 /**
@@ -2208,19 +2234,6 @@ core::Error UserPrefValues::setTypingStatusDelayMs(int val)
 }
 
 /**
- * Whether to tell screen readers that the entire page is an application.
- */
-bool UserPrefValues::ariaApplicationRole()
-{
-   return readPref<bool>("aria_application_role");
-}
-
-core::Error UserPrefValues::setAriaApplicationRole(bool val)
-{
-   return writePref("aria_application_role", val);
-}
-
-/**
  * Reduce use of animations in the user interface.
  */
 bool UserPrefValues::reducedMotion()
@@ -2298,6 +2311,19 @@ core::Error UserPrefValues::setTerminalInitialDirectory(std::string val)
    return writePref("terminal_initial_directory", val);
 }
 
+/**
+ * Whether to show the full path to project in desktop window title.
+ */
+bool UserPrefValues::fullProjectPathInWindowTitle()
+{
+   return readPref<bool>("full_project_path_in_window_title");
+}
+
+core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
+{
+   return writePref("full_project_path_in_window_title", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2371,6 +2397,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
       kConsoleLineLengthLimit,
+      kConsoleMaxLines,
       kAnsiConsoleMode,
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
@@ -2407,6 +2434,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckForUpdates,
       kShowInternalFunctions,
       kShinyViewerType,
+      kShinyBackgroundJobs,
       kPlumberViewerType,
       kDocumentAuthor,
       kRmdPreferredTemplatePath,
@@ -2469,13 +2497,13 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDataViewerMaxColumns,
       kEnableScreenReader,
       kTypingStatusDelayMs,
-      kAriaApplicationRole,
       kReducedMotion,
       kTabKeyMoveFocus,
       kAutoSaveOnIdle,
       kAutoSaveIdleMs,
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
+      kFullProjectPathInWindowTitle,
    });
 }
    

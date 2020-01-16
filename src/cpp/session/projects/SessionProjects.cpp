@@ -603,6 +603,11 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       {
          config.defaultOpenDocs = existingConfig.defaultOpenDocs;
       }
+      
+      if (!existingConfig.defaultTutorial.empty())
+      {
+         config.defaultTutorial = existingConfig.defaultTutorial;
+      }
    }
 
    error = json::readObject(
@@ -854,11 +859,10 @@ void startup(const std::string& firstProjectPath)
 
    // if we have a project file path then try to initialize the
    // project context (show a warning to the user if we can't)
-   bool isNewProject = false;
    if (!projectFilePath.isEmpty())
    {
       std::string userErrMsg;
-      Error error = s_projectContext.startup(projectFilePath, &userErrMsg, &isNewProject);
+      Error error = s_projectContext.startup(projectFilePath, &userErrMsg);
       if (error)
       {
          // log the error
@@ -878,7 +882,7 @@ void startup(const std::string& firstProjectPath)
    // add default open docs if specified in the project
    // and the project has never been opened before
    std::string defaultOpenDocs = projectContext().config().defaultOpenDocs;
-   if (!defaultOpenDocs.empty() && isNewProject)
+   if (!defaultOpenDocs.empty() && projects::projectContext().isNewProject())
    {
       std::vector<std::string> docs;
       boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));

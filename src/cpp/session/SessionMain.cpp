@@ -155,6 +155,7 @@
 #include "modules/SessionSource.hpp"
 #include "modules/SessionTests.hpp"
 #include "modules/SessionThemes.hpp"
+#include "modules/SessionTutorial.hpp"
 #include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionHistory.hpp"
@@ -595,6 +596,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_versions::initialize)
       (modules::terminal::initialize)
       (modules::config_file::initialize)
+      (modules::tutorial::initialize)
 
       // workers
       (workers::web_request::initialize)

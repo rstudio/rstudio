@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -108,17 +109,17 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 ConsoleEditorProvider editorProvider,
                 ConsoleLanguageTracker languageTracker)
    {
-      super() ;
+      super();
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
-      server_ = server ;
-      eventBus_ = eventBus ;
-      view_ = display ;
+      server_ = server;
+      eventBus_ = eventBus;
+      view_ = display;
       commands_ = commands;
       errorManager_ = errorManager;
       dependencyManager_ = dependencyManager;
-      input_ = view_.getInputEditorDisplay() ;
+      input_ = view_.getInputEditorDisplay();
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
@@ -140,10 +141,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
 
-      keyDownPreviewHandlers_ = new ArrayList<>() ;
-      keyPressPreviewHandlers_ = new ArrayList<>() ;
+      keyDownPreviewHandlers_ = new ArrayList<>();
+      keyPressPreviewHandlers_ = new ArrayList<>();
 
-      InputKeyHandler handler = new InputKeyHandler() ;
+      InputKeyHandler handler = new InputKeyHandler();
 
       // This needs to be a capturing key down handler or else Ace will have
       // handled the event before we had a chance to prevent it
@@ -176,8 +177,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                                           null,
                                           (DocDisplay) view_.getInputEditorDisplay(),
                                           true);
-      addKeyDownPreviewHandler(completionManager) ;
-      addKeyPressPreviewHandler(completionManager) ;
+      addKeyDownPreviewHandler(completionManager);
+      addKeyPressPreviewHandler(completionManager);
       
       historyCompletion_ = new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server);
@@ -239,7 +240,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public Display getDisplay()
    {
-      return view_ ;
+      return view_;
    }
 
    @Handler
@@ -247,6 +248,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    {
       // clear output
       view_.clearOutput();
+      
+      eventBus_.fireEvent(new AriaLiveStatusEvent("Console cleared", true));
       
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
@@ -263,12 +266,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
    {
-      keyDownPreviewHandlers_.add(handler) ;
+      keyDownPreviewHandlers_.add(handler);
    }
    
    public void addKeyPressPreviewHandler(KeyPressPreviewHandler handler)
    {
-      keyPressPreviewHandlers_.add(handler) ;
+      keyPressPreviewHandlers_.add(handler);
    }
    
    public void onConsoleInput(final ConsoleInputEvent event)
@@ -289,7 +292,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      view_.consoleWriteOutput(event.getOutput()) ;
+      view_.consoleWriteOutput(event.getOutput());
    }
 
    public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
@@ -321,14 +324,14 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsolePrompt(ConsolePromptEvent event)
    {
-      String prompt = event.getPrompt().getPromptText() ;
-      boolean addToHistory = event.getPrompt().getAddToHistory() ;
-      consolePrompt(prompt, addToHistory) ;
+      String prompt = event.getPrompt().getPromptText();
+      boolean addToHistory = event.getPrompt().getAddToHistory();
+      consolePrompt(prompt, addToHistory);
    }
 
    private void consolePrompt(String prompt, boolean addToHistory)
    {
-      view_.consolePrompt(prompt, true) ;
+      view_.consolePrompt(prompt, true);
 
       if (lastPromptText_ == null
             && initialInput_ != null
@@ -340,7 +343,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
       addToHistory_ = addToHistory;
       resetHistoryPosition();
-      lastPromptText_ = prompt ;
+      lastPromptText_ = prompt;
 
       if (restoreFocus_)
       {
@@ -365,7 +368,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    private void processCommandEntry()
    {
-      String commandText = view_.processCommandEntry() ;
+      String commandText = view_.processCommandEntry();
       if (addToHistory_ && (commandText.length() > 0))
          eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
@@ -540,8 +543,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          {
             if (handler.previewKeyDown(event.getNativeEvent()))
             {
-               event.preventDefault() ;
-               event.stopPropagation() ;
+               event.preventDefault();
+               event.stopPropagation();
                return;
             }
          }
@@ -632,8 +635,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                switch (keyCode)
                {
                   case 'L':
-                     Shell.this.onConsoleClear() ;
-                     event.preventDefault() ;
+                     Shell.this.onConsoleClear();
+                     event.preventDefault();
                      break;
                }
             }
@@ -682,8 +685,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          {
             if (handler.previewKeyPress(event.getCharCode()))
             {
-               event.preventDefault() ;
-               event.stopPropagation() ;
+               event.preventDefault();
+               event.stopPropagation();
                return;
             }
          }
@@ -770,20 +773,20 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.onSelected();
    }
 
-   private final ConsoleServerOperations server_ ;
-   private final EventBus eventBus_ ;
-   private final Display view_ ;
+   private final ConsoleServerOperations server_;
+   private final EventBus eventBus_;
+   private final Display view_;
    private final Commands commands_;
    private final ErrorManager errorManager_;
    private final DependencyManager dependencyManager_;
-   private final InputEditorDisplay input_ ;
-   private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
-   private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
+   private final InputEditorDisplay input_;
+   private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_;
+   private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_;
    private final HistoryCompletionManager historyCompletion_;
    
    // indicates whether the next command should be added to history
-   private boolean addToHistory_ ;
-   private String lastPromptText_ ;
+   private boolean addToHistory_;
+   private String lastPromptText_;
    private final UserPrefs prefs_;
    
    private final ConsoleLanguageTracker languageTracker_;
@@ -793,7 +796,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    private final ShellInputAnimator inputAnimator_;
 
-   private String initialInput_ ;
+   private String initialInput_;
 
    private static final String GROUP_CONSOLE = "console";
    private static final String STATE_INPUT = "input";

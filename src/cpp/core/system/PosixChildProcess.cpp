@@ -836,6 +836,7 @@ Error ChildProcess::run()
       }
 
       delete pProcessArgs;
+      delete pEnvironment;
 
       if (options_.threadSafe)
       {

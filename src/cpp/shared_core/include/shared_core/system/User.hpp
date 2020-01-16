@@ -164,6 +164,13 @@ public:
     * @return The ID of this user's primary group.
     */
    GidType getGroupId() const;
+   
+   /**
+    * @brief Returns the login shell of this user.
+    *
+    * @return The login shell of this user.
+    */
+   const std::string& getShell() const;
 
    /**
     * @brief Gets the ID of this user.

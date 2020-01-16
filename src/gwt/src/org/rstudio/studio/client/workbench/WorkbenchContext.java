@@ -1,7 +1,7 @@
 /*
  * WorkbenchContext.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -40,10 +41,11 @@ public class WorkbenchContext
 
    @Inject
    public WorkbenchContext(Session session, EventBus eventBus,
-         Provider<GitState> pGitState)
+         Provider<GitState> pGitState, Provider<UserPrefs> pUserPrefs)
    {
       session_ = session;
       pGitState_ = pGitState;
+      pUserPrefs_ = pUserPrefs;
       
       // track current working dir
       currentWorkingDir_ = FileSystemItem.home();
@@ -229,7 +231,11 @@ public class WorkbenchContext
       FileSystemItem projDir = getActiveProjectDir();
       if (projDir != null)
       {
-         String title = projDir.getPath();
+         String title;
+         if (pUserPrefs_.get().fullProjectPathInWindowTitle().getValue())
+            title = projDir.getPath();
+         else
+            title = projDir.getName();
          BranchesInfo branchInfo = pGitState_.get().getBranchInfo();
          if (branchInfo != null)
          {
@@ -256,6 +262,7 @@ public class WorkbenchContext
    private FileSystemItem activeProjectDir_ = null;
    private final Session session_; 
    private final Provider<GitState> pGitState_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private RVersionsInfo rVersionsInfo_ = null;
    
 }

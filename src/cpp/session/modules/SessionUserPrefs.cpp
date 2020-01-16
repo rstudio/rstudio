@@ -1,7 +1,7 @@
 /*
  * SessionUserPrefs.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -258,6 +258,10 @@ SEXP rs_allPrefs()
    std::vector<std::string> keys = userPrefs().allKeys();
    std::vector<std::string> sources;
    std::vector<std::string> values;
+
+   // Sort preference keys alphabetically for convenience
+   std::sort(keys.begin(), keys.end());
+
    for (const auto key: keys) 
    {
       std::string layer;

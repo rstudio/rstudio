@@ -1,7 +1,7 @@
 /*
  * RPubsUploadDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressImage;
@@ -40,7 +41,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -91,7 +91,7 @@ public class RPubsUploadDialog extends ModalDialogBase
   
       HorizontalPanel headerPanel = new HorizontalPanel();
       headerPanel.addStyleName(styles.headerPanel());
-      headerPanel.add(new Image(new ImageResource2x(RESOURCES.publishLarge2x())));
+      headerPanel.add(new DecorativeImage(new ImageResource2x(RESOURCES.publishLarge2x())));
       
       Label headerLabel = new Label("Publish to RPubs");
       headerLabel.addStyleName(styles.headerLabel());
@@ -117,6 +117,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       Label descLabel = new Label(msg);
       descLabel.addStyleName(styles.descLabel());
       verticalPanel.add(descLabel);
+      setARIADescribedBy(descLabel.getElement());
 
       HTML warningLabel =  new HTML(
         "<strong>IMPORTANT: All documents published to RPubs are " +

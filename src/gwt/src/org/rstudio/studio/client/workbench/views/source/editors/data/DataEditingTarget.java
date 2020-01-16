@@ -1,7 +1,7 @@
 /*
  * DataEditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -62,12 +64,19 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setSize("100%", "100%");
+      Roles.getTabpanelRole().set(progressPanel_.getElement());
+      setAccessibleName(null);
       reloadDisplay();
       return new Display()
       {
          public void print()
          {
             ((Display)progressPanel_.getWidget()).print();
+         }
+
+         public void setAccessibleName(String accessibleName)
+         {
+            DataEditingTarget.this.setAccessibleName(accessibleName);
          }
 
          public Widget asWidget()
@@ -98,6 +107,14 @@ public class DataEditingTarget extends UrlContentEditingTarget
             doQueuedRefresh(false);
          }
       }
+   }
+
+   private void setAccessibleName(String accessibleName)
+   {
+      if (StringUtil.isNullOrEmpty(accessibleName))
+         accessibleName = "Untitled Data Browser";
+      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(), accessibleName + 
+            " Data Browser");
    }
 
    @Override
@@ -151,7 +168,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private void reloadDisplay()
    {
       view_ = new DataEditingTargetWidget(
-            "Data Editing Target",
+            "Data Browser",
             commands_,
             events_,
             getDataItem());
@@ -192,6 +209,12 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void popoutDoc()
    {
       events_.fireEvent(new PopoutDocEvent(getId(), null));
+   }
+
+   @Override
+   public String getCurrentStatus()
+   {
+      return "Data Browser displayed";
    }
 
    protected String getCacheKey()

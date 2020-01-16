@@ -475,8 +475,9 @@ public class TextFileType extends EditableFileType
       };
    }
 
-   // special token predicate for only getting commented words
-   public TokenPredicate getCommentsTokenPredicate()
+   // default to only returning comments and text, override in subclasses
+   // for more or less specificity
+   public TokenPredicate getSpellCheckTokenPredicate()
    {
       return (token, row, column) ->
       {
@@ -484,9 +485,10 @@ public class TextFileType extends EditableFileType
             return false;
          }
 
-         return reCommentType_.match(token.getType(), 0) != null &&
-            reKeywordType_.match(token.getType(), 0) == null &&
-            reIdentifierType_.match(token.getType(), 0) == null;
+         return (reCommentType_.match(token.getType(), 0) != null ||
+                 reTextType_.match(token.getType(), 0) != null) &&
+                 reKeywordType_.match(token.getType(), 0) == null &&
+                 reIdentifierType_.match(token.getType(), 0) == null;
       };
    }
 
@@ -537,11 +539,11 @@ public class TextFileType extends EditableFileType
    private final boolean canPreviewFromR_;
    private final String defaultExtension_;
 
-   private static Pattern reTextType_ = Pattern.create("\\btext\\b");
-   private static Pattern reStringType_ = Pattern.create("\\bstring\\b");
-   private static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
-   private static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
-   private static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
-   private static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
-   private static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
+   protected static Pattern reTextType_ = Pattern.create("\\btext\\b");
+   protected static Pattern reStringType_ = Pattern.create("\\bstring\\b");
+   protected static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
+   protected static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
+   protected static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
+   protected static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
+   protected static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
 }

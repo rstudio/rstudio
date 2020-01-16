@@ -1,7 +1,7 @@
 /*
  * RmdChoiceOption.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ public class RmdChoiceOption extends RmdNullableOption
       defaultValue_ = option.getDefaultValue();
 
       HTMLPanel panel = new HTMLPanel("");
-      panel.add(getOptionLabelWidget());
       choices_ = new ListBox();
       
       JsArrayString choiceList = option.getChoiceList();
@@ -42,6 +41,7 @@ public class RmdChoiceOption extends RmdNullableOption
          }
       }
       choices_.setSelectedIndex(selectedIdx);
+      panel.add(getOptionLabelWidget(choices_.getElement()));
       panel.add(choices_);
 
       updateNull();

@@ -1,7 +1,7 @@
 /*
  * RmdNullableOption.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.dom.client.Element;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class RmdNullableOption extends RmdBaseOption
@@ -40,6 +41,10 @@ public abstract class RmdNullableOption extends RmdBaseOption
             }
          });
       }
+      else
+      {
+         notNullableLabel_ = new FormLabel(true, getOption().getUiName() + ": ", FormLabel.NoForId);
+      }
    }
 
    public abstract void updateNull();
@@ -48,14 +53,29 @@ public abstract class RmdNullableOption extends RmdBaseOption
    {
       return nonNullCheck_ != null && !nonNullCheck_.getValue();
    }
-   
-   protected Widget getOptionLabelWidget()
+
+   /**
+    * Associates label with an element and returns it
+    * @param ele element referred to by the label
+    * @return label
+    */
+   protected Widget getOptionLabelWidget(Element ele)
    {
       if (nonNullCheck_ != null)
+      {
+         // visible "label" is the checkbox, apply it's text as the aria-label on the
+         // control associated with the checkbox
+         ele.setAttribute("aria-label", nonNullCheck_.getText());
          return nonNullCheck_;
+      }
       else
-         return new InlineLabel(getOption().getUiName() + ": ");
+      {
+         // visible label is the label for this control
+         notNullableLabel_.setFor(ele);
+         return notNullableLabel_;
+      }
    }
-   
+
    private CheckBox nonNullCheck_;
+   private FormLabel notNullableLabel_;
 }

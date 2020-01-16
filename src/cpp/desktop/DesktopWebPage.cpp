@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -397,10 +397,12 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    if (url.toString() == QStringLiteral("chrome://gpu/"))
       return true;
 
+   if (url.scheme() == QStringLiteral("data"))
+      return true;
+
    if (url.scheme() != QStringLiteral("http") &&
        url.scheme() != QStringLiteral("https") &&
-       url.scheme() != QStringLiteral("mailto") &&
-       url.scheme() != QStringLiteral("data"))
+       url.scheme() != QStringLiteral("mailto"))
    {
       qDebug() << url.toString();
       return false;
@@ -408,8 +410,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
-   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1" ||
-                  url.scheme() == QStringLiteral("data");
+   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1";
    
    // accept Chrome Developer Tools navigation attempts
 #ifndef NDEBUG
@@ -436,6 +437,13 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    // ensuring that non-local viewer urls are appropriately sandboxed.
    else if (!viewerUrl().isEmpty() &&
             url.toString().startsWith(viewerUrl()))
+   {
+      return true;
+   }
+   // allow tutorial urls to be handled internally by Qt. note that the client is responsible for 
+   // ensuring that non-local tutorial urls are appropriately sandboxed.
+   else if (!tutorialUrl().isEmpty() &&
+            url.toString().startsWith(tutorialUrl()))
    {
       return true;
    }
@@ -473,20 +481,52 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    }
 }
 
-void WebPage::setViewerUrl(const QString& viewerUrl)
+namespace {
+
+void setPaneUrl(const QString& requestedUrl, QString* pUrl)
 {
    // record about:blank literally
-   if (viewerUrl == QString::fromUtf8("about:blank"))
+   if (requestedUrl == QStringLiteral("about:blank"))
    {
-      viewerUrl_ = viewerUrl;
+      *pUrl = requestedUrl;
       return;
    }
 
    // extract the authority (domain and port) from the URL; we'll agree to
-   // serve requests for the viewer pane that match this prefix. 
-   QUrl url(viewerUrl);
-   viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
-                url.authority() + QString::fromUtf8("/");
+   // serve requests for the pane that match this prefix. 
+   QUrl url(requestedUrl);
+   *pUrl =
+         url.scheme() + QStringLiteral("://") +
+         url.authority() + QStringLiteral("/");
+   
+}
+
+} // end anonymous namespace
+
+void WebPage::setTutorialUrl(const QString& tutorialUrl)
+{
+   setPaneUrl(tutorialUrl, &tutorialUrl_);
+}
+
+void WebPage::setViewerUrl(const QString& viewerUrl)
+{
+   setPaneUrl(viewerUrl, &viewerUrl_);
+}
+
+QString WebPage::tutorialUrl()
+{
+   if (tutorialUrl_.isEmpty())
+   {
+      // if we don't know the tutorial URL ourselves but we're a child window, ask our parent
+      BrowserWindow *parent = dynamic_cast<BrowserWindow*>(view()->window());
+      if (parent != nullptr && parent->opener() != nullptr)
+      {
+         return parent->opener()->tutorialUrl();
+      }
+   }
+
+   // return our own tutorial URL
+   return tutorialUrl_;
 }
 
 QString WebPage::viewerUrl()

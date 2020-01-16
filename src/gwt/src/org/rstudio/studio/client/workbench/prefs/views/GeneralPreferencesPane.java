@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,6 +73,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                "",
                "Change...",
                null,
+               ElementIds.TextBoxButtonId.R_VERSION,
                true,
                new ClickHandler()
                {
@@ -95,6 +96,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                });
          rVersion_.setWidth("100%");
          rVersion_.setText("Loading...");
+         rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
          Desktop.getFrame().getRVersion(version -> {
             rVersion_.setText(version);
          });
@@ -119,6 +121,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       basic.add(dirChooser_ = new DirectoryChooserTextBox(
             "Default working directory (when not in a project):",
+            ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
             null,
             fileDialogs_,
             fsContext_));
@@ -302,6 +305,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                clipboardMonitoring_.setValue(monitoring);
             });
          }
+
+         fullPathInTitle_ = new CheckBox("Show full path to project in window title");
+         advanced.add(lessSpaced(fullPathInTitle_));
       }
       
       Label otherLabel = headerLabel("Other");
@@ -410,6 +416,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                                    prefs.restoreProjectRVersion().getValue());
       }
 
+      if (fullPathInTitle_ != null)
+         fullPathInTitle_.setValue(prefs.fullProjectPathInWindowTitle().getValue());
+
       enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
      
       // projects prefs
@@ -444,6 +453,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setClipboardMonitoring(desktopMonitoring);
       }
       
+      if (fullPathInTitle_ != null &&
+         fullPathInTitle_.getValue() != prefs.fullProjectPathInWindowTitle().getValue())
+      {
+         restartRequirement.setDesktopRestartRequired(true);
+         prefs.fullProjectPathInWindowTitle().setGlobalValue(fullPathInTitle_.getValue());
+      }
+
       if (renderingEngineWidget_ != null &&
           !StringUtil.equals(renderingEngineWidget_.getValue(), renderingEngine_))
       {
@@ -536,6 +552,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
+   private CheckBox fullPathInTitle_ = null;
    private CheckBox useGpuBlacklist_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;

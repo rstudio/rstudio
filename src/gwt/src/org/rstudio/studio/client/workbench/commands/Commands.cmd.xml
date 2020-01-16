@@ -152,6 +152,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="closeProject"/>
          <separator/>
+         <cmd refid="signOut"/>
          <cmd refid="quitSession"/>
       </menu>
 
@@ -287,6 +288,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomTutorial"/>
             <cmd refid="layoutZoomBuild"/>
             <cmd refid="layoutZoomConnections"/>
+            <separator/>
+            <cmd refid="focusLeftSeparator"/>
+            <cmd refid="focusRightSeparator"/>
+            <cmd refid="focusCenterSeparator"/>
             <separator/>
             <cmd refid="paneLayout"/>
          </menu>
@@ -501,6 +506,9 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="toggleScreenReaderSupport"/>
             <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
+            <menu label="_Speak">
+               <cmd refid="speakEditorLocation"/>
+            </menu>
             <cmd refid="focusMainToolbar"/>
             <separator/>
             <cmd refid="showAccessibilityOptions"/>
@@ -827,6 +835,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
+         <shortcut refid="speakEditorLocation" value="Ctrl+Shift+B"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -834,8 +843,8 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Terminal">
          <shortcut refid="newTerminal" value="Alt+Shift+R"/>
-         <shortcut refid="previousTerminal" value="Ctrl+Alt+F11"/>
-         <shortcut refid="nextTerminal" value="Ctrl+Alt+F12"/>
+         <shortcut refid="previousTerminal" value="Shift+Alt+F11"/>
+         <shortcut refid="nextTerminal" value="Shift+Alt+F12"/>
       </shortcutgroup>
 
       <shortcutgroup name="Main Menu (Server)">
@@ -1035,7 +1044,7 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
         
    <cmd id="newRDocumentationDoc"
-        menuLabel="R Doc_umentation"
+        menuLabel="R Doc_umentation..."
         desc="Create a new Rd documentation file"
         rebindable="false"/>
 
@@ -1353,7 +1362,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="activateFindInFiles"
         label="Show Find in Files"
-        menuLabel="Show Find in Files"
+        menuLabel="Show Fin_d in Files"
         windowMode="main"/>
 
    <cmd id="activateLauncherJobs"
@@ -1423,7 +1432,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="layoutZoomTutorial"
         checkable="true"
         label="Zoom Tutorial"
-        menuLabel="Zoom Tutorial"
+        menuLabel="Zoom _Tutorial"
         windowMode="main"/>
         
    <cmd id="layoutZoomBuild"
@@ -2877,7 +2886,40 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHelp"
         menuLabel="Refresh"
         desc="Refresh topic"/>
-
+        
+   <cmd id="tutorialPopout"
+        buttonLabel=""
+        desc="Show in new window"/>
+        
+   <cmd id="tutorialBack"
+        buttonLabel=""
+        desc="Go back"
+        rebindable="false"/>
+        
+   <cmd id="tutorialForward"
+        buttonLabel=""
+        desc="Go forward"
+        rebindable="false"/>
+        
+   <cmd id="tutorialZoom"
+        buttonLabel="Zoom"
+        desc="View a larger version in a new window"
+        rebindable="false"/>
+        
+   <cmd id="tutorialRefresh"
+        desc="Refresh tutorial"
+        rebindable="false"/>
+        
+   <cmd id="tutorialStop"
+        buttonLabel=""
+        desc="Stop tutorial"
+        rebindable="false"/>
+        
+   <cmd id="tutorialHome"
+        buttonLabel=""
+        desc="Return to home"
+        rebindable="false"/>
+        
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>
@@ -3579,5 +3621,28 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="focusMainToolbar"
         menuLabel="Focus _Main Toolbar"
+        windowMode="main"/>
+
+   <cmd id="signOut"
+        label="Sign Out"
+        buttonLabel=""
+        menuLabel="Sign Ou_t"
+        desc="Sign out from RStudio"
+        windowMode="main"/>
+
+   <cmd id="speakEditorLocation"
+        menuLabel="Speak Text _Editor Location"
+        windowMode="main"/>
+
+   <cmd id="focusLeftSeparator"
+        menuLabel="A_djust Left Splitter"
+        windowMode="main"/>
+
+   <cmd id="focusRightSeparator"
+        menuLabel="Ad_just Right Splitter"
+        windowMode="main"/>
+
+   <cmd id="focusCenterSeparator"
+        menuLabel="Adjust Center S_plitter"
         windowMode="main"/>
 </commands>

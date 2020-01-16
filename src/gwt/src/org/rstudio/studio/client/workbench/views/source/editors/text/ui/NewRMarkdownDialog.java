@@ -1,7 +1,7 @@
 /*
  * NewRMarkdownDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -200,13 +200,13 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       style.ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
             updateOptions(getSelectedTemplate());
-            txtTitle_.setFocus(true);
          }
       });
 

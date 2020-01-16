@@ -1,7 +1,7 @@
 /*
  * A11y.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 package org.rstudio.core.client.a11y;
 
-import com.google.gwt.aria.client.LiveValue;
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Widget;
@@ -27,11 +25,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
  */
 public class A11y
 {
-   public static void setARIADialogModal(Element element)
-   {
-      element.setAttribute("aria-modal", "true");
-   }
-
    /**
     * Flag an image that does not convey content, is decorative, or is
     * redundant (purpose already conveyed in text).
@@ -105,27 +98,12 @@ public class A11y
    }
 
    /**
-    * Mark as widget as an aria-live alert
-    *
-    * @param widget
-    * @param assertive
-    */
-   public static void setAlertRole(Widget widget, boolean assertive)
-   {
-      setAlertRole(widget.getElement(), assertive);
-   }
-
-   /**
-    * Mark an element as an aria-live alert
-    *
+    * Make an element visible to screen readers.
     * @param el
-    * @param assertive
     */
-   public static void setAlertRole(Element el, boolean assertive)
+   public static void setARIAVisible(Element el)
    {
-      Roles.getAlertRole().set(el);
-      Roles.getAlertRole().setAriaLiveProperty(el, assertive ? LiveValue.ASSERTIVE : LiveValue.POLITE);
-      Roles.getAlertRole().setAriaAtomicProperty(el, true);
+      el.removeAttribute("aria-hidden");
    }
 
    public static void setVisuallyHidden(Widget widget)

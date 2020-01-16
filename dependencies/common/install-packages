@@ -80,8 +80,9 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # we often embed these packages but are not currently
 # install rmarkdown master rstudio
 # install rsconnect master rstudio
+# install renv master rstudio
 
-install renv master rstudio
+install rstudioapi master rstudio
 
 RHOME=$(Rscript -e 'Sys.getenv("R_HOME")')
 if [[ ! -w $RHOME ]]; then

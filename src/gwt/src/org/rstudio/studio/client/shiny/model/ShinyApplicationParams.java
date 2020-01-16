@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationParams.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.shiny.model;
 
+import org.rstudio.core.client.js.JsObject;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class ShinyApplicationParams extends JavaScriptObject
@@ -24,12 +26,16 @@ public class ShinyApplicationParams extends JavaScriptObject
    public final static String STATE_STOPPING = "stopping";
    public final static String STATE_STOPPED = "stopped";
    public final static String STATE_RELOADING = "reloading";
+
+   public final static String ID_FOREGROUND = "foreground";
    
-   public native static ShinyApplicationParams create(String path, 
-                                                      String url, 
+   public native static ShinyApplicationParams create(String path,
+                                                      String id,
+                                                      String url,
                                                       String state) /*-{
       return {
          path: path,
+         id: id,
          url: url,
          state: state, 
          viewer: 0
@@ -38,6 +44,10 @@ public class ShinyApplicationParams extends JavaScriptObject
    
    public final native String getPath() /*-{
       return this.path;
+   }-*/;
+
+   public final native String getId() /*-{
+      return this.id;
    }-*/;
 
    public final native String getUrl() /*-{
@@ -50,6 +60,10 @@ public class ShinyApplicationParams extends JavaScriptObject
 
    public final native String getState() /*-{
       return this.state;
+   }-*/;
+   
+   public final native JsObject getMeta() /*-{
+      return this.meta;
    }-*/;
 
    public final native int getViewerOptions() /*-{

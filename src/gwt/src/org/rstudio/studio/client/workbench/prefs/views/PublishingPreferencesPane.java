@@ -1,7 +1,7 @@
 /*
  * PublishingPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -227,7 +227,8 @@ public class PublishingPreferencesPane extends PreferencesPane
             val -> caBundlePath_.setVisible(val.getValue()));
       add(useCaBundle);
 
-      caBundlePath_ = new FileChooserTextBox("", "(none)", false, null, null);
+      caBundlePath_ = new FileChooserTextBox(
+         "", "(none)", ElementIds.TextBoxButtonId.CA_BUNDLE, false, null, null);
       caBundlePath_.setText(userPrefs_.publishCaBundle().getValue());
       caBundlePath_.setVisible(userPrefs_.usePublishCaBundle().getValue());
       add(caBundlePath_);

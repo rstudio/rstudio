@@ -184,14 +184,13 @@ FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 // that need to run after R is available use the implementation of the
 // initialize method (below)
 Error ProjectContext::startup(const FilePath& projectFile,
-                              std::string* pUserErrMsg,
-                              bool* pIsNewProject)
+                              std::string* pUserErrMsg)
 {
    // test for project file existence
    if (!projectFile.exists())
    {
       *pUserErrMsg = "the project file does not exist";
-      *pIsNewProject = true;
+      isNewProject_ = true;
       return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
@@ -208,10 +207,12 @@ Error ProjectContext::startup(const FilePath& projectFile,
    if (projectUserPath.exists())
    {
       FilePath contextPath = projectUserPath.completePath(prefs::userState().contextId());
-      *pIsNewProject = !contextPath.exists();
+      isNewProject_ = !contextPath.exists();
    }
    else
-      *pIsNewProject = true;
+   {
+      isNewProject_ = true;
+   }
 
    // calculate project scratch path
    FilePath scratchPath;
@@ -479,7 +480,8 @@ void ProjectContext::onDeferredInit(bool newSession)
    core::system::file_monitor::registerMonitor(
                                          directory(),
                                          true,
-                                         module_context::fileListingFilter,
+                                         boost::bind(module_context::fileListingFilter,
+                                            _1, prefs::userPrefs().hideObjectFiles()),
                                          cb);
 }
 

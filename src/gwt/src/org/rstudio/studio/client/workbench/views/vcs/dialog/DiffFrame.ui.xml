@@ -23,7 +23,7 @@
          <g:layer right='0px' width='175px'>
             <g:SimplePanel>
                <g:HorizontalPanel styleName="{res.styles.viewFilePanel}">
-                  <g:Image ui:field="separatorImage_"/>
+                  <rsw:DecorativeImage ui:field="separatorImage_"/>
                   <rsw:HyperlinkLabel ui:field="viewFileHyperlink_"/>
                </g:HorizontalPanel>
             </g:SimplePanel>

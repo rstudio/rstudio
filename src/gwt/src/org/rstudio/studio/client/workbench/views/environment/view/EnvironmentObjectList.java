@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectList.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,6 +185,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             {
                String imageUri = "";
                String imageStyle = style_.expandIcon();
+               String imageAlt = "";
                if (object.canExpand())
                {
                   imageStyle = imageStyle + " " + ThemeStyles.INSTANCE.handCursor();
@@ -196,17 +197,19 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                             new ImageResource2x(EnvironmentResources.INSTANCE.expandIcon2x());
 
                   imageUri = expandImage.getSafeUri().asString();
+                  imageAlt = object.expanded ? "Collapse Object" : "Expand Object";
                }
                else if (object.hasTraceInfo())
                {
                   imageUri = new ImageResource2x(EnvironmentResources.INSTANCE
                         .tracedFunction2x()).getSafeUri().asString();
                   imageStyle += (" " + style_.unclickableIcon());
+                  imageAlt = "Has Trace";
                }
                if (imageUri.length() > 0)
                {
                   return "<input type=\"image\" src=\"" + imageUri + "\" " +
-                         "class=\"" + imageStyle + "\" />";                        
+                         "class=\"" + imageStyle + "\" alt=\"" + imageAlt + "\" />";
                }
                return "";
             }

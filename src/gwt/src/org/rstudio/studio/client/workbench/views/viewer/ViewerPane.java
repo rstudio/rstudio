@@ -21,6 +21,7 @@ import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -154,7 +155,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       frame_ = new RStudioFrame("Viewer Pane");
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
-      navigate(ABOUT_BLANK, false);
+      navigate(URIConstants.ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
    
@@ -165,7 +166,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(url, false);
 
       rmdPreviewParams_ = null;
-      if (url == ABOUT_BLANK)
+      if (url == URIConstants.ABOUT_BLANK)
       {
          publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
       }
@@ -222,6 +223,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public String getTitle()
    {
       return frame_.getTitle();
+   }
+   
+   @Override
+   public String getName()
+   {
+      return frame_.getWindow().getName();
    }
    
    @Override
@@ -298,7 +305,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
       // append the viewer_pane query parameter
       if ((unmodifiedUrl_ != null) && 
-          !unmodifiedUrl_.equals(ABOUT_BLANK) &&
+          !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK) &&
           !useRawURL)
       {
          String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_, 
@@ -320,7 +327,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          frame_.setUrl(unmodifiedUrl_);
       }
       
-      if (unmodifiedUrl_ != null && !unmodifiedUrl_.equals(ABOUT_BLANK)) {
+      if (unmodifiedUrl_ != null && !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK)) {
          frame_.getElement().getStyle().setBackgroundColor("#FFF");
       }
       else {
@@ -349,8 +356,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    
    private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
-
-   public static final String ABOUT_BLANK = "about:blank";
 
    private HtmlMessageListener htmlMessageListener_;
 }

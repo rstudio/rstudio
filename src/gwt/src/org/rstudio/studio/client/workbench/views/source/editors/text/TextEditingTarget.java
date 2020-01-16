@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -116,6 +116,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -255,6 +256,8 @@ public class TextEditingTarget implements
       void toggleDocumentOutline();
       
       void setNotebookUIVisible(boolean visible);
+
+      void setAccessibleName(String name);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1401,6 +1404,7 @@ public class TextEditingTarget implements
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
+            view_.setAccessibleName(name_.getValue());
             FileSystemItem item = FileSystemItem.createFile(event.getValue());
             if (shouldEnforceHardTabs(item))
                docDisplay_.setUseSoftTabs(false);
@@ -5029,6 +5033,25 @@ public class TextEditingTarget implements
    {
       return null;
    }
+
+   @Override
+   public String getCurrentStatus()
+   {
+      Position pos = docDisplay_.getCursorPosition();
+      String scope = statusBar_.getScope().getValue();
+      if (StringUtil.isNullOrEmpty(scope))
+         scope = "None";
+      String name = getName().getValue();
+      if (StringUtil.isNullOrEmpty(name))
+         name = "No name";
+
+      StringBuilder status = new StringBuilder();
+      status.append("Row ").append(pos.getRow() + 1).append(" Column ").append(pos.getColumn() + 1);
+      status.append(" Scope ").append(scope);
+      status.append(" File type ").append(fileType_.getLabel());
+      status.append(" File name ").append(name);
+      return status.toString();
+   }
    
    private boolean isRChunk(Scope scope)
    {
@@ -5398,13 +5421,12 @@ public class TextEditingTarget implements
    
    private void runShinyApp()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
-                  getExtendedFileType()));
-         }
+      sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
+      {
+         events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
+               prefs_.shinyBackgroundJobs().getValue() ?
+                  ShinyApplication.BACKGROUND_APP :
+                  ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
       }, "Run Shiny Application");
    }
    

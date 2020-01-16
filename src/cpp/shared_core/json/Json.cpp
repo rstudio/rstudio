@@ -49,6 +49,12 @@ struct is_error_code_enum<rapidjson::ParseErrorCode>
    static const bool value = true;
 };
 
+template <>
+struct is_error_code_enum<rapidjson::PointerParseErrorCode>
+{
+   static const bool value = true;
+};
+
 } // namespace system
 } // namespace boost
 
@@ -56,6 +62,7 @@ namespace rstudio {
 namespace core {
 namespace json {
    const boost::system::error_category& jsonParseCategory();
+   const boost::system::error_category& jsonPointerParseCategory();
 }
 }
 }
@@ -67,6 +74,14 @@ inline boost::system::error_code make_error_code(ParseErrorCode e) {
 
 inline boost::system::error_condition make_error_condition(ParseErrorCode e) {
    return { e, rstudio::core::json::jsonParseCategory() };
+}
+
+inline boost::system::error_code make_error_code(PointerParseErrorCode e) {
+   return { e, rstudio::core::json::jsonPointerParseCategory() };
+}
+
+inline boost::system::error_condition make_error_condition(PointerParseErrorCode e) {
+   return { e, rstudio::core::json::jsonPointerParseCategory() };
 }
 }
 
@@ -82,10 +97,24 @@ public:
    std::string message(int ev) const override;
 };
 
+class JsonPointerParseErrorCategory : public boost::system::error_category
+{
+public:
+   const char* name() const BOOST_NOEXCEPT override;
+
+   std::string message(int ev) const override;
+};
+
 const boost::system::error_category& jsonParseCategory()
 {
    static JsonParseErrorCategory jsonParseErrorCategoryConst;
    return jsonParseErrorCategoryConst;
+}
+
+const boost::system::error_category& jsonPointerParseCategory()
+{
+   static JsonPointerParseErrorCategory jsonPointerParseErrorCategoryConst;
+   return jsonPointerParseErrorCategoryConst;
 }
 
 const char* JsonParseErrorCategory::name() const BOOST_NOEXCEPT
@@ -96,6 +125,17 @@ const char* JsonParseErrorCategory::name() const BOOST_NOEXCEPT
 std::string JsonParseErrorCategory::message(int ev) const
 {
    return rapidjson::GetParseError_En(static_cast<rapidjson::ParseErrorCode>(ev));
+}
+
+const char* JsonPointerParseErrorCategory::name() const BOOST_NOEXCEPT
+{
+   return "json-pointer-parse";
+}
+
+std::string JsonPointerParseErrorCategory::message(int ev) const
+{
+   // rapidjson provides no friendly mapping of pointer parse errors
+   return "Pointer parse failure - see error code";
 }
 
 typedef rapidjson::GenericDocument<rapidjson::UTF8<>, rapidjson::CrtAllocator> JsonDocument;
@@ -164,19 +204,13 @@ Object getSchemaDefaults(const Object& schema)
 struct Value::Impl
 {
    Impl() :
-      Document(new JsonDocument(&s_allocator)),
-      m_needDelete(true)
-   { };
-
-   explicit Impl(JsonDocument* in_jsonDocument) :
-      Document(in_jsonDocument),
-      m_needDelete(false)
+      Document(new JsonDocument(&s_allocator))
    {
    }
 
-   ~Impl()
+   explicit Impl(const std::shared_ptr<JsonDocument>& in_jsonDocument) :
+      Document(in_jsonDocument)
    {
-      free();
    }
 
    void copy(const Impl& in_other)
@@ -184,18 +218,7 @@ struct Value::Impl
       Document->CopyFrom(*in_other.Document, s_allocator);
    }
 
-   JsonDocument* Document;
-
-private:
-   void free()
-   {
-      if (m_needDelete)
-         delete Document;
-
-      m_needDelete = false;
-   }
-
-   bool m_needDelete;
+   std::shared_ptr<JsonDocument> Document;
 };
 
 Value::Value() :
@@ -659,6 +682,21 @@ Error Value::parseAndValidate(const std::string& in_jsonStr, const std::string& 
    return validate(in_schema);
 }
 
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath,
+                            const json::Value& in_value)
+{
+   JsonPointer pointer(in_pointerPath.c_str());
+   if (!pointer.IsValid())
+   {
+      Error error(pointer.GetParseErrorCode(), ERROR_LOCATION);
+      error.addProperty("offset", pointer.GetParseErrorOffset());
+      return error;
+   }
+
+   pointer.Set(*m_impl->Document, *in_value.clone().m_impl->Document);
+   return Success();
+}
+
 Error Value::validate(const std::string& in_schema) const
 {
    Error error;
@@ -731,13 +769,13 @@ void Value::move(Value&& in_other)
 // Object Member =======================================================================================================
 struct Object::Member::Impl
 {
-   Impl(const std::string& in_name, JsonDocument* in_document) :
+   Impl(const std::string& in_name, const std::shared_ptr<JsonDocument>& in_document) :
       Document(in_document),
       Name(in_name)
    {
    }
 
-   JsonDocument* Document;
+   std::shared_ptr<JsonDocument> Document;
    std::string Name;
 };
 
@@ -814,10 +852,14 @@ Object::Iterator::reference Object::Iterator::operator*() const
       return Object::Member();
 
    auto itr = m_parent->m_impl->Document->MemberBegin() + m_pos;
+
+   JsonDocument& docRef = static_cast<JsonDocument&>(itr->value);
+   std::shared_ptr<JsonDocument> docPtr(m_parent->m_impl->Document, &docRef);
+
    return Object::Member(
       std::make_shared<Member::Impl>(
       std::string(itr->name.GetString(), itr->name.GetStringLength()),
-      &static_cast<JsonDocument&>(itr->value)));
+      docPtr));
 }
 
 // Object ==============================================================================================================
@@ -924,7 +966,9 @@ Value Object::operator[](const char* in_name)
       doc.AddMember(JsonValue(in_name, s_allocator), JsonDocument(), s_allocator);
    }
 
-   return Value(ValueImplPtr(new Impl(&static_cast<JsonDocument&>(doc.FindMember(in_name)->value))));
+   JsonDocument& docRef = static_cast<JsonDocument&>(doc.FindMember(in_name)->value);
+   std::shared_ptr<JsonDocument> docPtr(m_impl->Document, &docRef);
+   return Value(ValueImplPtr(new Impl(docPtr)));
 }
 
 Value Object::operator[](const std::string& in_name)
@@ -1118,7 +1162,11 @@ Array::Iterator::reference Array::Iterator::operator*() const
       return Value();
 
    auto internalItr = m_parent->m_impl->Document->Begin() + m_pos;
-   return Value(ValueImplPtr(new Impl(&static_cast<JsonDocument&>(*internalItr))));
+
+   JsonDocument& docRef = static_cast<JsonDocument&>(*internalItr);
+   std::shared_ptr<JsonDocument> docPtr(m_parent->m_impl->Document, &docRef);
+
+   return Value(ValueImplPtr(new Impl(docPtr)));
 }
 
 // Array ===============================================================================================================
@@ -1173,7 +1221,10 @@ Array& Array::operator=(Array&& in_other) noexcept
 
 Value Array::operator[](size_t in_index) const
 {
-   return Value(ValueImplPtr(new Impl(&static_cast<JsonDocument&>((*m_impl->Document)[in_index]))));
+   JsonDocument& docRef = static_cast<JsonDocument&>((*m_impl->Document)[in_index]);
+   std::shared_ptr<JsonDocument> docPtr(m_impl->Document, &docRef);
+
+   return Value(ValueImplPtr(new Impl(docPtr)));
 }
 
 Array::Iterator Array::begin() const

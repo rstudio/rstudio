@@ -5,7 +5,7 @@
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1">
    <title>RStudio Server</title>
-   <script type="text/javascript">
+   <script>
       function getBaseUri()
       {
          var index = window.location.href.lastIndexOf("#!request_uri#");
@@ -28,9 +28,9 @@
       document.getElementsByTagName("head")[0].appendChild(cssLink);
       document.getElementsByTagName("head")[0].appendChild(iconLink);
    </script>
-   <style type="text/css">
+   <style>
       #banner {
-         margin-bottom: 0px;
+         margin-bottom: 0;
       }
       p {
          margin: 20px 20px 10px 20px;
@@ -43,7 +43,7 @@
    <div id="view" class="container">
 
    <div class="header-box">
-       <img class="logo-image" id="logo" src="/images/rstudio-logo.png" />
+       <img class="logo-image" alt id="logo" src="/images/rstudio-logo.png" />
        <h2>RStudio Server</h2>
    </div>
      
@@ -53,13 +53,10 @@
 
    </div>
 
-</body>
-
-<script type="text/javascript">
-   
+<script>
    document.getElementById("logo").src = getBaseUri() + "/images/rstudio-logo.png";
-
 </script>
 
+</body>
 </html>
 

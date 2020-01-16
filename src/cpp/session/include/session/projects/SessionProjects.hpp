@@ -84,20 +84,21 @@ class ProjectContext : boost::noncopyable
 {
 public:
    ProjectContext()
-      : hasFileMonitor_(false)
+      : isNewProject_(false),
+        hasFileMonitor_(false)
    {
    }
+   
    virtual ~ProjectContext() {}
 
    core::Error startup(const core::FilePath& projectFile,
-                       std::string* pUserErrMsg,
-                       bool* pIsNewProject);
+                       std::string* pUserErrMsg);
 
    core::Error initialize();
 
    // these functions can be called even when there is no project
    bool hasProject() const { return !file_.isEmpty(); }
-
+   
    // Path to the .RProj file representing the project
    const core::FilePath& file() const { return file_; }
 
@@ -162,7 +163,7 @@ public:
    core::json::Array openDocs() const;
 
    // current build options (note that these are not synchronized
-   // accross processes!)
+   // across processes!)
    const RProjectBuildOptions& buildOptions() const
    {
       return buildOptions_;
@@ -173,7 +174,11 @@ public:
       return packageInfo_;
    }
    
+   // is this an R package project?
    bool isPackageProject();
+   
+   // is this a new project? (ie: has not been opened or initialized before)
+   bool isNewProject() const { return isNewProject_; }
 
    // does this project context have a file monitor? (might not have one
    // if the user has disabled code indexing or if file monitoring failed
@@ -233,6 +238,7 @@ private:
    core::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
    core::r_util::RPackageInfo packageInfo_;
+   bool isNewProject_;
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;

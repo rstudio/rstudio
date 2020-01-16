@@ -30,4 +30,9 @@ public class Timers
          }
       }.schedule(delayMs);
    }
+   
+   public static final void singleShot(final Command command)
+   {
+      singleShot(0, command);
+   }
 }

@@ -4205,6 +4205,34 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void tutorialStarted(String tutorialName,
+                               String tutorialPackage,
+                               String tutorialUrl,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(tutorialName)
+            .add(tutorialPackage)
+            .add(tutorialUrl)
+            .get();
+      
+      sendRequest(RPC_SCOPE, TUTORIAL_STARTED, params, requestCallback);
+   }
+   
+   @Override
+   public void tutorialStop(String tutorialName,
+                            String tutorialPackage,
+                            ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(tutorialName)
+            .add(tutorialPackage)
+            .get();
+      
+      sendRequest(RPC_SCOPE, TUTORIAL_STOP, params, requestCallback);
+   }
+   
+   @Override
    public void getSlideNavigationForFile(
                      String filePath,
                      ServerRequestCallback<SlideNavigation> requestCallback)
@@ -4791,6 +4819,19 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void runShinyBackgroundApp(String shinyFile, String extendedType,
+                                     ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(shinyFile));
+      params.set(1, new JSONString(extendedType));
+      sendRequest(RPC_SCOPE,
+            "run_shiny_background_app",
+            params,
+            requestCallback);
+   }
+
    @Override
    public void getPlumberViewerType(ServerRequestCallback<String> requestCallback)
    {
@@ -5848,9 +5889,10 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void stopShinyApp(ServerRequestCallback<Void> callback)
+   public void stopShinyApp(String id, ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
       sendRequest(RPC_SCOPE, STOP_SHINY_APP, params, true, callback);
    }
   
@@ -6351,6 +6393,9 @@ public class RemoteServer implements Server
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    
    private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
+   
+   private static final String TUTORIAL_STARTED = "tutorial_started";
+   private static final String TUTORIAL_STOP = "tutorial_stop";
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
    private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";

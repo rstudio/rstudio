@@ -226,6 +226,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DocumentOutlineWidget widget);
    void injectMembers(SetupChunkOptionsPopupPanel panel);
    void injectMembers(SourceSatellite satellite);
+   void injectMembers(ShinyApplicationSatellite satellite);
    void injectMembers(ModifyKeyboardShortcutsWidget widget);
    void injectMembers(ShortcutManager manager);
    void injectMembers(UserCommandManager manager);
@@ -290,7 +291,6 @@ public interface RStudioGinjector extends Ginjector
    ApplicationInterrupt getApplicationInterrupt();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
-   ShinyApplicationSatellite getShinyApplicationSatellite();
    ShinyApplication getShinyApplication();
    ShinyViewerTypePopupMenu getShinyViewerTypePopupMenu();
    RmdOutputSatellite getRmdOutputSatellite();

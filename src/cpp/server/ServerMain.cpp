@@ -230,6 +230,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/connections", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/theme", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
@@ -560,6 +561,11 @@ int main(int argc, char * const argv[])
             // don't chown user sockets - they belong to the user
             if (depth == 3 &&
                 boost::ends_with(file.getParent().getParent().getFilename(), "-ds"))
+               return false;
+
+            if (depth == 1 &&
+                (boost::ends_with(file.getFilename(), "-d") ||
+                 boost::ends_with(file.getFilename(), "-d.pid")))
                return false;
 
             return true;

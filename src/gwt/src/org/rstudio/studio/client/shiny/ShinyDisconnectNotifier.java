@@ -22,6 +22,7 @@ public class ShinyDisconnectNotifier
    public interface ShinyDisconnectSource
    {
       public String getShinyUrl();
+      public String getWindowName();
       public void onShinyDisconnect();
    }
 
@@ -56,33 +57,47 @@ public class ShinyDisconnectNotifier
    }
 
    private native void initializeEvents() /*-{  
-      var thiz = this;   
-      $wnd.addEventListener(
-            "message",
-            $entry(function(e) {
-               if (typeof e.data != 'string')
-                  return;
-               thiz.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-            }),
-            true);
+      
+      var self = this;
+      var callback = $entry(function(event) {
+         
+         if (typeof event.data !== "string")
+            return;
+         
+         self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(
+            e.data,
+            e.origin,
+            e.target.name
+         );
+         
+      });
+      
+      $wnd.addEventListener("message", callback, true);
+      
    }-*/;
    
-   private void onMessage(String data, String origin)
-   {  
-      if ("disconnected".equals(data))
+   private void onMessage(String data, String origin, String name)
+   {
+      // check to see whether we should handle this message
+      boolean ok =
+            StringUtil.equals(data, "disconnected") &&
+            StringUtil.equals(name, source_.getWindowName()) &&
+            source_.getShinyUrl().startsWith(origin);
+      
+      if (!ok)
+         return;
+      
+      if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
       {
-         if (source_.getShinyUrl().startsWith(origin)) 
-         {
-            if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
-            {
-               // we were suppressing disconnect notifications from this URL;
-               // consume this disconnection and resume
-               unsuppress();
-               return;
-            }
-            source_.onShinyDisconnect();
-         }
+         // we were suppressing disconnect notifications from this URL;
+         // consume this disconnection and resume
+         unsuppress();
       }
+      else
+      {
+         source_.onShinyDisconnect();
+      }
+      
    }
 
    private final ShinyDisconnectSource source_;

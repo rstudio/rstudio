@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -153,6 +153,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionTerminalShell.cpp
    modules/SessionTests.cpp
    modules/SessionThemes.cpp
+   modules/SessionTutorial.cpp
    modules/SessionSVN.cpp
    modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
@@ -182,6 +183,7 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentMonitor.cpp
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
+   modules/jobs/AsyncRJobManager.cpp
    modules/jobs/SessionJobs.cpp
    modules/jobs/ScriptJob.cpp
    modules/jobs/Job.cpp
@@ -223,6 +225,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
    modules/shiny/SessionShiny.cpp
+   modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp
    modules/tex/SessionCompilePdf.cpp
@@ -547,6 +550,10 @@ if (NOT RSTUDIO_SESSION_WIN32)
 
    # install profiler
    install(DIRECTORY "resources/profiler"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # install tutorials
+   install(DIRECTORY "resources/tutorial_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install libclang

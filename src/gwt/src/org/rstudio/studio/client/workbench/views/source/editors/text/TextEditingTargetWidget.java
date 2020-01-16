@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,7 +75,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -122,8 +121,6 @@ public class TextEditingTargetWidget
       plumberViewerMenu_ = RStudioGinjector.INSTANCE.getPlumberViewerTypePopupMenu();
       handlerManager_ = new HandlerManager(this);
       
-      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
-
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
          {  
@@ -192,7 +189,7 @@ public class TextEditingTargetWidget
                      clamped = 0;
                   
                   editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
-                  toggleDocOutlineButton_.setLatched(clamped != 0);
+                  setDocOutlineLatchState(clamped != 0);
                   editor_.onResize();
                }
                
@@ -215,10 +212,12 @@ public class TextEditingTargetWidget
             editorPanel_,
             statusBar_);
       
+      Roles.getTabpanelRole().set(panel_.getElement());
+      setAccessibleName(null);
       adaptToFileType(fileType);
       
       editor.addFocusHandler(event ->
-            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0));
+            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0));
 
       editor_.setTextInputAriaLabel("Text editor");
 
@@ -246,7 +245,7 @@ public class TextEditingTargetWidget
          double widgetSize = target_.getPreferredOutlineWidgetSize();
          double size = Math.min(editorSize, widgetSize);
          editorPanel_.setWidgetSize(docOutlineWidget_, size);
-         toggleDocOutlineButton_.setLatched(true);
+         setDocOutlineLatchState(true);
       }
    }
    
@@ -507,6 +506,7 @@ public class TextEditingTargetWidget
       toggleDocOutlineButton_ = new LatchingToolbarButton(
             ToolbarButton.NoText,
             ToolbarButton.NoTitle,
+            true, /* textIndicatesState */
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             event -> {
                final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
@@ -526,7 +526,7 @@ public class TextEditingTargetWidget
                   title = title.replace("Hide ", "Show ");
                toggleDocOutlineButton_.setTitle(title);
 
-               toggleDocOutlineButton_.setLatched(destination != 0);
+               setDocOutlineLatchState(destination != 0);
 
                int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
                new Animation()
@@ -552,10 +552,6 @@ public class TextEditingTargetWidget
             });
       
       toggleDocOutlineButton_.addStyleName("rstudio-themes-inverts");
-      
-      ElementIds.assignElementId(
-            toggleDocOutlineButton_,
-            ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
 
       // Time-out setting the latch just to ensure the document outline
       // has actually been appropriately rendered.
@@ -569,7 +565,7 @@ public class TextEditingTargetWidget
                   ? title.replace("Show ", "Hide ")
                   : title.replace("Hide ", "Show ");
             toggleDocOutlineButton_.setTitle(title);
-            toggleDocOutlineButton_.setLatched(docOutlineWidget_.getOffsetWidth() > 0);
+            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
       
@@ -593,6 +589,12 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
+   }
+   
+   private void setDocOutlineLatchState(boolean latched)
+   {
+      toggleDocOutlineButton_.setLatched(latched);
+      docOutlineWidget_.setAriaVisible(latched);
    }
    
    private ToolbarButton createLatexFormatButton()
@@ -780,7 +782,7 @@ public class TextEditingTargetWidget
       if (!fileType.canShowScopeTree())
       {
          editorPanel_.setWidgetSize(docOutlineWidget_, 0);
-         toggleDocOutlineButton_.setLatched(false);
+         setDocOutlineLatchState(false);
       }
       
       toolbar_.invalidateSeparators();
@@ -821,6 +823,14 @@ public class TextEditingTargetWidget
       runSetupChunkOptionMenu_.setVisible(visible);
    }
 
+   @Override
+   public void setAccessibleName(String name)
+   {
+      if (StringUtil.isNullOrEmpty(name))
+         name = "Untitled Text editor";
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name);
+   }
+
    public HasValue<Boolean> getSourceOnSave()
    {
       return sourceOnSave_;
@@ -847,11 +857,11 @@ public class TextEditingTargetWidget
       if (width == 0)
          return;
       
-      texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
-      compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);
-      knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
+      texToolbarButton_.setText(width >= 520, "Format");
+      runButton_.setText(((width >= 480) && !isShinyFile()), "Run");
+      compilePdfButton_.setText(width >= 450, "Compile PDF");
+      previewHTMLButton_.setText(width >= 450, previewCommandText_);
+      knitDocumentButton_.setText(width >= 450, knitCommandText_);
       
       if (editor_.getFileType().isRd() || editor_.getFileType().isJS() || 
           editor_.getFileType().isSql() || editor_.getFileType().canPreviewFromR())
@@ -864,7 +874,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
       }
 
-      sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
+      sourceButton_.setText(width >= 400, sourceCommandText_);
    }
    
    
@@ -1485,6 +1495,8 @@ public class TextEditingTargetWidget
 
       ElementIds.assignElementId(sourceButton_, ElementIds.TEXT_SOURCE_BUTTON);
       ElementIds.assignElementId(sourceMenuButton_, ElementIds.TEXT_SOURCE_BUTTON_DROPDOWN);
+      ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
+      ElementIds.assignElementId(toggleDocOutlineButton_, ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
    }
 
    private final TextEditingTarget target_;

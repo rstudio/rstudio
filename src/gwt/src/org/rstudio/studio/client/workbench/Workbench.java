@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -76,6 +77,9 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -94,6 +98,7 @@ public class Workbench implements BusyHandler,
                                   AdminNotificationHandler,
                                   OpenFileDialogEvent.Handler,
                                   ShowPageViewerHandler,
+                                  TutorialLaunchEvent.Handler,
                                   DeferredInitCompletedEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
@@ -163,6 +168,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
       eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
       eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
+      eventBus.addHandler(TutorialLaunchEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
@@ -210,6 +216,22 @@ public class Workbench implements BusyHandler,
             }
          });
       }
+   }
+   
+   public void onTutorialLaunch(final TutorialLaunchEvent event)
+   {
+      commands_.activateTutorial().execute();
+      
+      Tutorial tutorial = event.getTutorial();
+      Scheduler.get().scheduleDeferred(() -> {
+         
+         TutorialCommandEvent commandEvent = new TutorialCommandEvent(
+               TutorialCommandEvent.TYPE_LAUNCH_DEFAULT_TUTORIAL,
+               tutorial.toJsObject());
+         
+         eventBus_.fireEvent(commandEvent);
+         
+      });
    }
 
    public void onDeferredInitCompleted(DeferredInitCompletedEvent ev)

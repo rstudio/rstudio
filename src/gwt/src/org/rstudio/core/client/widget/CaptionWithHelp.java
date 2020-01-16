@@ -1,7 +1,7 @@
 /*
  * CaptionWithHelp.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -74,14 +76,31 @@ public class CaptionWithHelp extends Composite
    }
 
    /**
-    * Associate caption with a widget for a11y
+    * Associate caption label with a widget for a11y. Per HTML standards, this only
+    * works if the widget has role of <button>, <input>, <meter>, <output>, <progress>,
+    * <select>, or <textarea>.
     * @param widget
     */
    public void setFor(Widget widget)
    {
       captionLabel_.setFor(widget);
    }
+
+   /**
+    * Give the label an elementId, so it can be referenced by a control not suitable for
+    * labelling with setFor().
+    * @param elementId
+    */
+   public void setLabelId(String elementId)
+   {
+      ElementIds.assignElementId(captionLabel_, elementId);
+   }
    
+   public Element getLabelElement()
+   {
+      return captionLabel_.getElement();
+   }
+
    public void setRStudioLinkName(String linkName)
    {
       rstudioLinkName_ = linkName;

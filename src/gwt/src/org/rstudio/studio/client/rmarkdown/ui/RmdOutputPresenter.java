@@ -55,6 +55,7 @@ public class RmdOutputPresenter implements
       int getScrollPosition();
       void refresh();
       String getTitle();
+      String getName();
       String getAnchor();
       void focusFind();
    }
@@ -119,6 +120,12 @@ public class RmdOutputPresenter implements
    public String getShinyUrl()
    {
       return DomUtils.makeAbsoluteUrl(params_.getOutputUrl());
+   }
+   
+   @Override
+   public String getWindowName()
+   {
+      return view_.getName();
    }
 
    @Override

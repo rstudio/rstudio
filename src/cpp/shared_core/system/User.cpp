@@ -84,6 +84,7 @@ struct User::Impl
          GroupId = pwd.pw_gid;
          Name = pwd.pw_name;
          HomeDirectory = FilePath(pwd.pw_dir);
+         Shell = pwd.pw_shell;
       }
 
       return Success();
@@ -93,6 +94,7 @@ struct User::Impl
    GidType GroupId;
    std::string Name;
    FilePath HomeDirectory;
+   std::string Shell;
 };
 
 PRIVATE_IMPL_DELETER_IMPL(User)
@@ -194,12 +196,18 @@ const std::string& User::getUsername() const
    return m_impl->Name;
 }
 
+const std::string& User::getShell() const
+{
+   return m_impl->Shell;
+}
+
 User& User::operator=(const User& in_other)
 {
    m_impl->Name = in_other.m_impl->Name;
    m_impl->UserId = in_other.m_impl->UserId;
    m_impl->GroupId = in_other.m_impl->GroupId;
    m_impl->HomeDirectory = in_other.m_impl->HomeDirectory;
+   m_impl->Shell = in_other.m_impl->Shell;
    return *this;
 }
 

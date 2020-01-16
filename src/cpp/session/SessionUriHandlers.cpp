@@ -45,7 +45,6 @@ Error registerAsyncUriHandler(
 Error registerUriHandler(const std::string& name,
                          const http::UriHandlerFunction& handlerFunction)
 {
-
    uri_handlers::handlers().add(http::UriHandler(name, handlerFunction));
    return Success();
 }

@@ -1,3 +1,5 @@
+@external gwt-Image;
+
 .warning, .error {
    
 }
@@ -37,6 +39,13 @@
 }
 
 .dismiss {
+   right: 0;
+   width: 9px;
+   height: 9px;
+}
+
+.dismiss .gwt-Image {
+   float: left;
    margin-right: 2px;
    background-size: 9px 9px;
    width: 9px;

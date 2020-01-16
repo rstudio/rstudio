@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -705,6 +705,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The maximum number of console actions to store and display in the console scrollback buffer.
+    */
+   public PrefValue<Integer> consoleMaxLines()
+   {
+      return integer("console_max_lines", 1000);
+   }
+
+   /**
     * How to treat ANSI escape codes in the console.
     */
    public PrefValue<String> ansiConsoleMode()
@@ -1007,6 +1015,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String SHINY_VIEWER_TYPE_PANE = "pane";
    public final static String SHINY_VIEWER_TYPE_WINDOW = "window";
    public final static String SHINY_VIEWER_TYPE_BROWSER = "browser";
+
+   /**
+    * Whether to run Shiny applications as background jobs.
+    */
+   public PrefValue<Boolean> shinyBackgroundJobs()
+   {
+      return bool("shiny_background_jobs", false);
+   }
 
    /**
     * Where to display Shiny applications when they are run.
@@ -1578,14 +1594,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   public PrefValue<Boolean> ariaApplicationRole()
-   {
-      return bool("aria_application_role", true);
-   }
-
-   /**
     * Reduce use of animations in the user interface.
     */
    public PrefValue<Boolean> reducedMotion()
@@ -1640,6 +1648,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String TERMINAL_INITIAL_DIRECTORY_PROJECT = "project";
    public final static String TERMINAL_INITIAL_DIRECTORY_CURRENT = "current";
    public final static String TERMINAL_INITIAL_DIRECTORY_HOME = "home";
+
+   /**
+    * Whether to show the full path to project in desktop window title.
+    */
+   public PrefValue<Boolean> fullProjectPathInWindowTitle()
+   {
+      return bool("full_project_path_in_window_title", false);
+   }
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -1783,6 +1799,8 @@ public class UserPrefsAccessor extends Prefs
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
+      if (source.hasKey("console_max_lines"))
+         consoleMaxLines().setValue(layer, source.getInteger("console_max_lines"));
       if (source.hasKey("ansi_console_mode"))
          ansiConsoleMode().setValue(layer, source.getString("ansi_console_mode"));
       if (source.hasKey("show_inline_toolbar_for_r_code_chunks"))
@@ -1855,6 +1873,8 @@ public class UserPrefsAccessor extends Prefs
          showInternalFunctions().setValue(layer, source.getBool("show_internal_functions"));
       if (source.hasKey("shiny_viewer_type"))
          shinyViewerType().setValue(layer, source.getString("shiny_viewer_type"));
+      if (source.hasKey("shiny_background_jobs"))
+         shinyBackgroundJobs().setValue(layer, source.getBool("shiny_background_jobs"));
       if (source.hasKey("plumber_viewer_type"))
          plumberViewerType().setValue(layer, source.getString("plumber_viewer_type"));
       if (source.hasKey("document_author"))
@@ -1979,8 +1999,6 @@ public class UserPrefsAccessor extends Prefs
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
          typingStatusDelayMs().setValue(layer, source.getInteger("typing_status_delay_ms"));
-      if (source.hasKey("aria_application_role"))
-         ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
@@ -1993,6 +2011,8 @@ public class UserPrefsAccessor extends Prefs
          autoSaveOnBlur().setValue(layer, source.getBool("auto_save_on_blur"));
       if (source.hasKey("terminal_initial_directory"))
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
+      if (source.hasKey("full_project_path_in_window_title"))
+         fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
    }
    
 

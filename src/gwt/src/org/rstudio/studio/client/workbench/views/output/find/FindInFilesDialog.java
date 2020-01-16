@@ -1,7 +1,7 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -169,7 +169,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    {
       super("Find in Files", Roles.getDialogRole(), operation);
 
-      dirChooser_ = new DirectoryChooserTextBox("Search in:", null);
+      dirChooser_ = new DirectoryChooserTextBox("Search in:",
+         ElementIds.TextBoxButtonId.FIND_IN,
+         null);
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       labelFilePatterns_.setFor(listPresetFilePatterns_);

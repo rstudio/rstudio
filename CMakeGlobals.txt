@@ -217,7 +217,7 @@ endif()
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 
 # embedded packages
-set(RSTUDIO_EMBEDDED_PACKAGES renv CACHE INTERNAL "Embedded R Packages")
+set(RSTUDIO_EMBEDDED_PACKAGES rstudioapi CACHE INTERNAL "Embedded R Packages")
 
 # include utilities
 include(RStudioCMakeUtils)

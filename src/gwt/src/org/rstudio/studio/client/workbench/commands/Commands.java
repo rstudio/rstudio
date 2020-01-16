@@ -277,9 +277,6 @@ public abstract class
    public abstract AppCommand layoutZoomVcs();
    public abstract AppCommand vcsResolve();
    
-   // Tutorial
-   public abstract AppCommand layoutZoomTutorial();
-   
    // PDF
    public abstract AppCommand showPdfExternal();
    
@@ -464,6 +461,18 @@ public abstract class
    public abstract AppCommand viewAllPrefs();
    public abstract AppCommand clearUserPrefs();
    
+   // Tutorial
+   public abstract AppCommand activateTutorial();
+   public abstract AppCommand layoutZoomTutorial();
+   public abstract AppCommand tutorialPopout();
+   public abstract AppCommand tutorialBack(); 
+   public abstract AppCommand tutorialForward();
+   public abstract AppCommand tutorialZoom();
+   public abstract AppCommand tutorialRefresh();
+   public abstract AppCommand tutorialStop();
+   public abstract AppCommand tutorialHome();
+   
+   
    // Viewer
    public abstract AppCommand activateViewer();
    public abstract AppCommand layoutZoomViewer();
@@ -496,6 +505,7 @@ public abstract class
    public abstract AppCommand rstudioAgreement();
    public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
+   public abstract AppCommand signOut();
  
    // Build
    public abstract AppCommand buildAll();
@@ -611,6 +621,10 @@ public abstract class
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();
+   public abstract AppCommand focusLeftSeparator();
+   public abstract AppCommand focusRightSeparator();
+   public abstract AppCommand focusCenterSeparator();
+   
 
    // Main menu (server)
    public abstract AppCommand showFileMenu();
@@ -630,6 +644,7 @@ public abstract class
    public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
    public abstract AppCommand focusMainToolbar();
+   public abstract AppCommand speakEditorLocation();
    
    // Internal
    public abstract AppCommand showDomElements();

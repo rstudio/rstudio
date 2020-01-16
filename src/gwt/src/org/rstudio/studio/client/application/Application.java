@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -173,9 +173,6 @@ public class Application implements ApplicationEventHandlers
       Widget w = view_.getWidget();
       rootPanel.add(w);
 
-      // wrapping in a role=main placates automated accessibility checks
-      rootPanel.getElement().setAttribute("role", "main");
-
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
 
@@ -291,6 +288,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onSignOut()
+   {
+      events_.fireEvent(new LogoutRequestedEvent());
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -348,7 +351,7 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      int delayMs = userPrefs_.get().typingStatusDelayMs().getValue();
+      int delayMs = event.getImmediate() ? 0 : userPrefs_.get().typingStatusDelayMs().getValue();
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
          view_.reportStatus(event.getMessage(), userPrefs_.get().typingStatusDelayMs().getValue());
    }
@@ -923,7 +926,12 @@ public class Application implements ApplicationEventHandlers
       {
          removeProjectCommands();
       }
-      
+
+      if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+         commands_.signOut().remove();
+      else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
+         commands_.signOut().remove();
+
       if (!sessionInfo.getLauncherJobsEnabled())
       {
          removeJobLauncherCommands();
@@ -1002,13 +1010,6 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();
          commands_.importDatasetFromXLS().remove();
-      }
-
-      if (userPrefs_.get().ariaApplicationRole().getValue())
-      {
-         // "application" role prioritizes application keyboard handling
-         // over screen-reader shortcuts
-         view_.getWidget().getElement().setAttribute("role", "application");
       }
 
       // If no project, ensure we show the product-edition title; if there is a project

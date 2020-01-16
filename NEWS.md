@@ -96,6 +96,15 @@
 * Zoom Left/Right Column commands for keyboard users (#5874)
 * Increase maximum plot size for large, high-DPI displays (#4968; thanks to Jan Gleixner)
 * RStudio Server now uses 2048 bit RSA keys, for secure communication of encrypted credentials between server / session and client
+* Add support for running Shiny applications as background jobs (#5190)
+* Install missing package dependencies in a background job (#5584)
+* Make maximum lines in R console configurable; was previously fixed at 1000 (#5919)
+* Option to only show project name instead of full path in desktop window title (#1817)
+* New `rstudio --version` command to return the version of RStudio Desktop (#3922)
+* Scan R Markdown YAML header for R packages required to render document (#4779)
+* Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
+* Support use of F13 - F24 for custom keyboard shortcuts (full Mac keyboard has F13-F19, for example)
+* Add ability to resize panes using keyboard arrow keys via View / Panes / Adjust Splitter
 
 ### Bugfixes
 
@@ -119,4 +128,8 @@
 * Logging improvements; log destinations and levels are more configurable and can be changed in real time
 * RStudio Desktop Pro can now function as a client for RStudio Server Pro
 * New tools for viewing and managing server users when using named user licensing
+* Floating licensing can now pass through an HTTPS proxy
 * The Launcher service now starts and runs automatically when the system starts
+* New Kubernetes Launcher plugin feature to modify the generated job/pod specs (#1353)
+* When containers are created when running RStudio Launcher sessions, user home directories are propagated to the container instead of requiring the home directories to be mounted at `/home`. This is a potentially breaking change, and will requiring updating the `/etc/rstudio/laucher-mounts` file to mount the home directory to the correct location (#1369)
+* New Kubernetes Launcher plugin feature to allow the specification of a `requests` limit to allow for oversubscription of Kubernetes resources (#1360)

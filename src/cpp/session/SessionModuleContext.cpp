@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -248,6 +248,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kAvailablePackagesReady;
       else if (name == "compute_theme_colors")
          type = session::client_events::kComputeThemeColors;
+      else if (name == "tutorial_command")
+         type = session::client_events::kTutorialCommand;
+      else if (name == "tutorial_launch")
+         type = session::client_events::kTutorialLaunch;
 
       if (type != -1)
       {
@@ -1842,7 +1846,7 @@ SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 
-bool fileListingFilter(const core::FileInfo& fileInfo)
+bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
 {
    // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
@@ -1875,7 +1879,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    {
       return true;
    }
-   else if (prefs::userPrefs().hideObjectFiles() &&
+   else if (hideObjectFiles &&
             (ext == ".o" || ext == ".so" || ext == ".dll") &&
             filePath.getParent().getFilename() == "src")
    {

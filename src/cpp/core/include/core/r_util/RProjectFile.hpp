@@ -88,7 +88,8 @@ struct RProjectConfig
         tutorialPath(),
         quitChildProcessesOnExit(DefaultValue),
         disableExecuteRprofile(false),
-        defaultOpenDocs()
+        defaultOpenDocs(),
+        defaultTutorial()
    {
    }
 
@@ -122,6 +123,7 @@ struct RProjectConfig
    int quitChildProcessesOnExit;
    bool disableExecuteRprofile;
    std::string defaultOpenDocs;
+   std::string defaultTutorial;
 };
 
 Error findProjectFile(FilePath filePath,

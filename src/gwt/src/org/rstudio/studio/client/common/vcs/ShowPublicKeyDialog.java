@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
@@ -25,8 +27,6 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HTML;
@@ -37,7 +37,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ShowPublicKeyDialog extends ModalDialogBase
 {
- 
    public ShowPublicKeyDialog(String caption, String publicKey)
    {
       super(Roles.getDialogRole());
@@ -47,13 +46,8 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
-      ThemedButton closeButton = new ThemedButton("Close",
-                                                  new ClickHandler() {
-         public void onClick(ClickEvent event) {
-            closeDialog();
-         }
-      });
-      addOkButton(closeButton); 
+      ThemedButton closeButton = new ThemedButton("Close", event -> closeDialog());
+      addOkButton(closeButton);
    }
    
    @Override
@@ -68,7 +62,9 @@ public class ShowPublicKeyDialog extends ModalDialogBase
                             " to copy the key to the clipboard");
       label.addStyleName(RES.styles().viewPublicKeyLabel());
       panel.add(label);
-      
+      ElementIds.assignElementId(label, ElementIds.PUBLIC_KEY_LABEL);
+      setARIADescribedBy(label.getElement());
+
       textArea_ = new TextArea();
       textArea_.setReadOnly(true);
       textArea_.setText(publicKey_);
@@ -76,7 +72,9 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       textArea_.setSize("400px", "250px");
       DomUtils.disableSpellcheck(textArea_);
       FontSizer.applyNormalFontSize(textArea_.getElement());
-      
+      ElementIds.assignElementId(textArea_, ElementIds.PUBLIC_KEY_TEXT);
+      Roles.getTextboxRole().setAriaLabelledbyProperty(textArea_.getElement(),
+         Id.of(label.getElement()));
       panel.add(textArea_);
       
       return panel;
@@ -88,9 +86,14 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       super.onLoad();
      
       textArea_.selectAll();
+   }
+
+   @Override
+   protected void focusInitialControl()
+   {
       FocusHelper.setFocusDeferred(textArea_);
    }
-   
+
    static interface Styles extends CssResource
    {
       String viewPublicKeyContent();
@@ -103,7 +106,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       Styles styles();
    }
    
-   static Resources RES = (Resources)GWT.create(Resources.class) ;
+   static Resources RES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();

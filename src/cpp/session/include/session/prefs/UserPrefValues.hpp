@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -143,6 +143,7 @@ namespace prefs {
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kConsoleLineLengthLimit "console_line_length_limit"
+#define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
 #define kAnsiConsoleModeOff "off"
 #define kAnsiConsoleModeOn "on"
@@ -192,6 +193,7 @@ namespace prefs {
 #define kShinyViewerTypePane "pane"
 #define kShinyViewerTypeWindow "window"
 #define kShinyViewerTypeBrowser "browser"
+#define kShinyBackgroundJobs "shiny_background_jobs"
 #define kPlumberViewerType "plumber_viewer_type"
 #define kPlumberViewerTypeUser "user"
 #define kPlumberViewerTypeNone "none"
@@ -298,7 +300,6 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
-#define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -311,6 +312,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryProject "project"
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
+#define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 
 class UserPrefValues: public Preferences
 {
@@ -737,6 +739,12 @@ public:
    core::Error setConsoleLineLengthLimit(int val);
 
    /**
+    * The maximum number of console actions to store and display in the console scrollback buffer.
+    */
+   int consoleMaxLines();
+   core::Error setConsoleMaxLines(int val);
+
+   /**
     * How to treat ANSI escape codes in the console.
     */
    std::string ansiConsoleMode();
@@ -951,6 +959,12 @@ public:
     */
    std::string shinyViewerType();
    core::Error setShinyViewerType(std::string val);
+
+   /**
+    * Whether to run Shiny applications as background jobs.
+    */
+   bool shinyBackgroundJobs();
+   core::Error setShinyBackgroundJobs(bool val);
 
    /**
     * Where to display Shiny applications when they are run.
@@ -1325,12 +1339,6 @@ public:
    core::Error setTypingStatusDelayMs(int val);
 
    /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   bool ariaApplicationRole();
-   core::Error setAriaApplicationRole(bool val);
-
-   /**
     * Reduce use of animations in the user interface.
     */
    bool reducedMotion();
@@ -1365,6 +1373,12 @@ public:
     */
    std::string terminalInitialDirectory();
    core::Error setTerminalInitialDirectory(std::string val);
+
+   /**
+    * Whether to show the full path to project in desktop window title.
+    */
+   bool fullProjectPathInWindowTitle();
+   core::Error setFullProjectPathInWindowTitle(bool val);
 
 };
 

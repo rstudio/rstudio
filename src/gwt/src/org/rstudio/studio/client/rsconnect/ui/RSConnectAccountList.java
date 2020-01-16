@@ -1,7 +1,7 @@
 /*
  * RSConnectAccountList.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,10 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Element;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -30,7 +34,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 
-public class RSConnectAccountList extends Composite
+public class RSConnectAccountList extends Composite implements CanSetControlId
 {
    public RSConnectAccountList(RSConnectServerOperations server, 
          GlobalDisplay display,
@@ -167,4 +171,15 @@ public class RSConnectAccountList extends Composite
    
    private ArrayList<RSConnectAccount> accounts_ = new ArrayList<>();
    private Operation onRefreshCompleted_ = null;
+
+   @Override
+   public void setElementId(String id)
+   {
+      accountList_.getElement().setId(id);
+   }
+   
+   public void setLabelledBy(Element describedBy)
+   {
+      Roles.getListboxRole().setAriaLabelledbyProperty(accountList_.getElement(), Id.of(describedBy));
+   }
 }

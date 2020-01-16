@@ -1,7 +1,7 @@
 /*
  * UrlContentEditingTarget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,7 @@ public class UrlContentEditingTarget implements EditingTarget
    public interface Display extends IsWidget
    {
       void print();
+      void setAccessibleName(String name);
    }
 
    interface MyBinder extends CommandBinder<Commands, UrlContentEditingTarget>
@@ -97,8 +98,8 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public HasValue<String> getName()
    {
-      String title = getContentTitle();
-      return new Value<String>(title);
+      name_.setValue(getContentTitle(), true);
+      return name_;
    }
    
    public String getTitle()
@@ -402,11 +403,13 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       doc_ = document;
       view_ = createDisplay();
+      name_.addValueChangeHandler(event -> view_.setAccessibleName(name_.getValue()));
+      name_.setValue(getContentTitle(), true);
    }
 
    protected Display createDisplay()
    {
-      return new UrlContentEditingTargetWidget("Url Content Editing",
+      return new UrlContentEditingTargetWidget("URL Browser",
             commands_,
             getContentUrl());
    }
@@ -462,6 +465,12 @@ public class UrlContentEditingTarget implements EditingTarget
       return null;
    }
 
+   @Override
+   public String getCurrentStatus()
+   {
+      return "URL Viewer displayed";
+   }
+
    private ContentItem getContentItem()
    {
       return (ContentItem)doc_.getProperties().cast();
@@ -476,6 +485,7 @@ public class UrlContentEditingTarget implements EditingTarget
    private final EventBus events_;
    private Display view_;
    private HandlerRegistration commandReg_;
+   private Value<String> name_ = new Value<>(null);
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
 }

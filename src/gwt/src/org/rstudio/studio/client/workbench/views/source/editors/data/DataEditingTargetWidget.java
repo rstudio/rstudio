@@ -1,7 +1,7 @@
 /*
  * DataEditingTargetWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -181,11 +181,18 @@ public class DataEditingTargetWidget extends Composite
       return frameEl.getContentWindow();
    }
 
+   @Override
    public void print()
    {
       getWindow().print();
    }
-   
+
+   @Override
+   public void setAccessibleName(String name)
+   {
+      // Accessible name is set on container of this widget
+   }
+
    public void setFilterUIVisible(boolean visible)
    {
       if (table_ != null)

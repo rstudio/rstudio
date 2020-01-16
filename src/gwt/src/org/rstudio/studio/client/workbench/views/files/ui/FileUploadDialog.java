@@ -1,7 +1,7 @@
 /*
  * FileUploadDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
@@ -140,7 +141,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       directoryPanel.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       
       // target directory chooser
-      directoryNameWidget_ = new DirectoryChooserTextBox("Target directory:");
+      directoryNameWidget_ = new DirectoryChooserTextBox("Target directory:",
+         ElementIds.TextBoxButtonId.UPLOAD_TARGET);
       directoryNameWidget_.setText(targetDirectory_.getPath());
       directoryNameWidget_.addValueChangeHandler((valueChangeEvent) ->
       {
