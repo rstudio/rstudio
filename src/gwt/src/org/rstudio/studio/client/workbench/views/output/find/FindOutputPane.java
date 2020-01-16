@@ -140,16 +140,6 @@ public class FindOutputPane extends WorkbenchPane
       replaceToolbar_.addLeftWidget(replaceLabel_);
       replaceToolbar_.addLeftWidget(replaceTextBox_);
 
-      useGitIgnore_ = new CheckBox();
-      useGitIgnoreLabel_ =
-                     new CheckboxLabel(useGitIgnore_, "Use .gitignore").getLabel();
-      useGitIgnore_.getElement().getStyle().setMarginRight(0, Unit.PX);
-      replaceToolbar_.addLeftWidget(useGitIgnore_);
-      useGitIgnoreLabel_.getElement().getStyle().setMarginRight(9, Unit.PX);
-      replaceToolbar_.addLeftWidget(useGitIgnoreLabel_);
-      useGitIgnore_.setVisible(false);
-      useGitIgnoreLabel_.setVisible(false);
-
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
             "Stop replace",
@@ -446,12 +436,6 @@ public class FindOutputPane extends WorkbenchPane
    }
 
    @Override
-   public boolean useGitIgnore()
-   {
-      return useGitIgnore_.getValue();
-   }
-
-   @Override
    public HasClickHandlers getStopReplaceButton()
    {
       return stopReplace_;
@@ -564,9 +548,6 @@ public class FindOutputPane extends WorkbenchPane
    private ProgressBar replaceProgress_;
 
    private DebouncedCommand displayPreview_;
-
-   private CheckBox useGitIgnore_;
-   private Label useGitIgnoreLabel_;
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;

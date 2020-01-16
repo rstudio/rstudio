@@ -64,6 +64,7 @@
 
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
+#include "SessionGit.hpp"
 
 using namespace rstudio::core ;
 
@@ -168,6 +169,20 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+core::Error isGitDirectory(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(path);
+
+   pResponse->setResult(git::isGitDirectory(targetPath));
+
+   return Success();
+}
 
 core::Error getFileContents(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
@@ -1284,6 +1299,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "stat", stat))
       (bind(registerRpcMethod, "is_text_file", isTextFile))
+      (bind(registerRpcMethod, "is_git_directory", isGitDirectory))
       (bind(registerRpcMethod, "get_file_contents", getFileContents))
       (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))
