@@ -1,7 +1,7 @@
 /*
  * config.h.in
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,5 @@
 
 
 #cmakedefine PANGO_CAIRO_FOUND
-
-// Important: These variables represent the version of R found during
-// compile/link time, NOT the version of R present at runtime.
-#define R_VERSION_MAJOR ${R_VERSION_MAJOR}
-#define R_VERSION_MINOR ${R_VERSION_MINOR}
-#define R_VERSION_PATCH ${R_VERSION_PATCH}
 
 

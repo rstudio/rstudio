@@ -15,18 +15,6 @@
 
 project (R)
 
-# find the version of R in play
-find_package(LibR REQUIRED)
-execute_process(
-    COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "--slave" "-e" "cat(as.character(getRversion()))"
-    OUTPUT_VARIABLE LIBR_VERSION)
-
-# parse and save the R version to a variable
-string(REPLACE "." ";" R_VERSION_LIST "${LIBR_VERSION}")
-list(GET R_VERSION_LIST 0 R_VERSION_MAJOR)
-list(GET R_VERSION_LIST 1 R_VERSION_MINOR)
-list(GET R_VERSION_LIST 2 R_VERSION_PATCH)
-
 # include files
 file(GLOB_RECURSE R_HEADER_FILES "*.h*")
 
