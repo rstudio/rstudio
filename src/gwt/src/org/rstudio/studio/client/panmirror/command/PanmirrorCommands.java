@@ -92,4 +92,5 @@ public class PanmirrorCommands
    public String Citation;
    public String DefinitionList;
    public String DefinitionTerm;
+   public String DefinitionDescription;
 }

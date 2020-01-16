@@ -57,11 +57,50 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.AttrEdit, "Edit Attributes...");
       
       // lists
+      add(Panmirror.EditorCommands.BulletList, "Bullet List", RES.properties());
+      add(Panmirror.EditorCommands.OrderedList, "Numbered List", RES.numbered_list());
+      add(Panmirror.EditorCommands.TightList, "Tight List");
+      add(Panmirror.EditorCommands.ListItemSink, "Sink Item");
+      add(Panmirror.EditorCommands.ListItemLift, "Lift Item");
+      add(Panmirror.EditorCommands.ListItemCheck, "Item Checkbox");
+      add(Panmirror.EditorCommands.ListItemCheckToggle, "Item Checked");
+      add(Panmirror.EditorCommands.OrderedListEdit, "List Attributes...");
       
-
-      
-      
-      
+      // tables
+      add(Panmirror.EditorCommands.TableInsertTable, "Insert Table...", RES.th());
+      add(Panmirror.EditorCommands.TableToggleHeader, "Table Header");
+      add(Panmirror.EditorCommands.TableToggleCaption, "Table Caption");
+      add(Panmirror.EditorCommands.TableAddColumnAfter, "Insert Column Right");
+      add(Panmirror.EditorCommands.TableAddColumnBefore, "Insert Column Left");
+      add(Panmirror.EditorCommands.TableDeleteColumn, "Delete Column");
+      add(Panmirror.EditorCommands.TableAddRowAfter, "Insert Row Below");
+      add(Panmirror.EditorCommands.TableAddRowBefore, "Insert Row Above");
+      add(Panmirror.EditorCommands.TableDeleteRow, "Delete Row");
+      add(Panmirror.EditorCommands.TableDeleteTable, "Delete Table");
+      add(Panmirror.EditorCommands.TableNextCell, "Next Cell");
+      add(Panmirror.EditorCommands.TablePreviousCell, "Previous Cell");
+      add(Panmirror.EditorCommands.TableAlignColumnLeft, "Left");
+      add(Panmirror.EditorCommands.TableAlignColumnRight, "Right");
+      add(Panmirror.EditorCommands.TableAlignColumnCenter, "Center");
+      add(Panmirror.EditorCommands.TableAlignColumnDefault, "Default");
+     
+      // insert
+      add(Panmirror.EditorCommands.Link, "Link...", RES.link());
+      add(Panmirror.EditorCommands.Image, "Image...", RES.media());
+      add(Panmirror.EditorCommands.Footnote, "Footnote");
+      add(Panmirror.EditorCommands.HorizontalRule, "Horizontal Rule");
+      add(Panmirror.EditorCommands.ParagraphInsert, "Paragraph");
+      add(Panmirror.EditorCommands.InlineMath, "Inline Math");
+      add(Panmirror.EditorCommands.DisplayMath, "Display Math");
+      add(Panmirror.EditorCommands.InlineLatex, "Inline LaTeX");
+      add(Panmirror.EditorCommands.RawInline, "Inline Raw...");
+      add(Panmirror.EditorCommands.RawBlock, "Raw Block...");
+      add(Panmirror.EditorCommands.YamlMetadata, "YAML Block...");
+      add(Panmirror.EditorCommands.RmdChunk, "Code Chunk");
+      add(Panmirror.EditorCommands.DefinitionList, "Definition List");
+      add(Panmirror.EditorCommands.DefinitionTerm, "Term");
+      add(Panmirror.EditorCommands.DefinitionDescription, "Description");
+      add(Panmirror.EditorCommands.Citation, "Citation...");  
    }
    
    public PanmirrorCommandUI get(String id)

@@ -57,6 +57,9 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("numbered-list.png")
    ImageResource numbered_list();
    
+   @Source("properties.png")
+   ImageResource properties();
+   
    @Source("th.png")
    ImageResource th();
    
