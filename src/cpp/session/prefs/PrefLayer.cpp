@@ -1,7 +1,7 @@
 /*
  * PrefLayer.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -138,8 +138,8 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
    error = val.parse(contents);
    if (error)
    {
-      // Couldn't parse prefs JSON
-      return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
+      // Couldn't parse prefs JSON; use empty cache
+      error = prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
    }
    else if (val.isObject())
    {
@@ -147,18 +147,14 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
       if (!schemaFile.isEmpty())
       {
          error = readStringFromFile(schemaFile, &contents);
-         if (error)
-         {
-            LOG_ERROR(error);
-         }
-         else
+         if (!error)
          {
             std::vector<std::string> violations;
             error = val.coerce(contents, violations);
             if (error)
             {
                // We could not coerce the prefs to fit the schema.
-               return prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
+               error = prefsError(PrefErrorCode::LOAD_ERROR, error, ERROR_LOCATION);
             }
             else if (violations.size() > 0)
             {
@@ -180,14 +176,27 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
    else
    {
       // We parsed but got a non-object JSON value (this is exceedingly unlikely)
-      return Error(
+      error = Error(
          static_cast<int>(PrefErrorCode::LOAD_ERROR),
          "pref_error",
          "Invalid value while parsing preferences: " + val.write(),
          ERROR_LOCATION);
    }
 
-   return Success();
+   // If there was an error and no cache yet, create an empty one as a convenience 
+   if (error)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         if (!cache_)
+         {
+            cache_ = boost::make_shared<json::Object>();
+         }
+      }
+      END_LOCK_MUTEX
+   }
+
+   return error;
 }
 
 Error PrefLayer::loadPrefsFromSchema(const core::FilePath &schemaFile)

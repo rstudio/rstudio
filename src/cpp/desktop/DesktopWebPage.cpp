@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -397,10 +397,12 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    if (url.toString() == QStringLiteral("chrome://gpu/"))
       return true;
 
+   if (url.scheme() == QStringLiteral("data"))
+      return true;
+
    if (url.scheme() != QStringLiteral("http") &&
        url.scheme() != QStringLiteral("https") &&
-       url.scheme() != QStringLiteral("mailto") &&
-       url.scheme() != QStringLiteral("data"))
+       url.scheme() != QStringLiteral("mailto"))
    {
       qDebug() << url.toString();
       return false;
@@ -408,8 +410,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
-   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1" ||
-                  url.scheme() == QStringLiteral("data");
+   bool isLocal = host == "localhost" || host == "127.0.0.1" || host == "::1";
    
    // accept Chrome Developer Tools navigation attempts
 #ifndef NDEBUG
