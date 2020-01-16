@@ -987,26 +987,93 @@ private:
 
 } // namespace
 
-struct GrepOptions
+class GrepOptions : public boost::noncopyable
 {
+public:
+
    GrepOptions(std::string search, std::string directory,
       json::Array includeFilePatterns, json::Array excludeFilePatterns,
       bool asRegex, bool ignoreCase) :
-      asRegex(asRegex),
-      ignoreCase(ignoreCase),
-      searchPattern(search),
-      directory(directory),
-      includeFilePatterns(includeFilePatterns),
-      excludeFilePatterns(excludeFilePatterns)
-   {}
+      asRegex_(asRegex),
+      ignoreCase_(ignoreCase),
+      searchPattern_(search),
+      directory_(directory),
+      includeFilePatterns_(includeFilePatterns),
+      excludeFilePatterns_(excludeFilePatterns)
+   {
+      processExcludeFilePatterns();
+   }
 
-   bool asRegex;
-   bool ignoreCase;
+   const bool asRegex() const
+   {
+      return asRegex_;
+   }
 
-   const std::string searchPattern;
-   const std::string directory;
-   const json::Array includeFilePatterns;
-   const json::Array excludeFilePatterns;
+   const bool ignoreCase() const
+   {
+      return ignoreCase_;
+   }
+
+   const std::string& searchPattern() const
+   {
+      return searchPattern_;
+   }
+
+   const std::string& directory() const
+   {
+      return directory_;
+   }
+
+   const json::Array& includeFilePatterns() const
+   {
+      return includeFilePatterns_;
+   }
+
+   const json::Array& excludeFilePatterns() const
+   {
+      return excludeFilePatterns_;
+   }
+
+   const bool gitFlag() const
+   {
+      return gitFlag_;
+   }
+
+   const std::vector<std::string>& excludeArgs() const
+   {
+      return excludeArgs_;
+   }
+
+private:
+
+   bool asRegex_;
+   bool ignoreCase_;
+
+   const std::string searchPattern_;
+   const std::string directory_;
+   const json::Array includeFilePatterns_;
+   const json::Array excludeFilePatterns_;
+
+   // derived from excludeFilePatterns
+   std::vector<std::string> excludeArgs_;
+   bool gitFlag_;
+
+   void processExcludeFilePatterns()
+   {
+      gitFlag_ = false;
+      for (json::Value filePattern : excludeFilePatterns_)
+      {
+         if (filePattern.getType() != json::Type::STRING)
+            LOG_WARNING_MESSAGE("Exclude files contain non-string value");
+         else
+         {
+            if (filePattern.getString().compare("gitExclusions") == 0)
+               gitFlag_ = true;
+            else
+               excludeArgs_.push_back("--exclude=" + filePattern.getString());
+         }
+      }
+   }
 };
 
 struct ReplaceOptions
@@ -1027,24 +1094,6 @@ struct ReplaceOptions
 
    const std::string replacePattern;
 };
-
-void processExcludeFilePatterns(
-   const json::Array& excludeFilePatterns, std::vector<std::string>* pCmdArgs, bool* pGitFlag)
-{
-   *pGitFlag = false;
-   for (json::Value filePattern : excludeFilePatterns)
-   {
-      if (filePattern.getType() != json::Type::STRING)
-         LOG_WARNING_MESSAGE("Exclude files contain non-string value");
-      else
-      {
-         if (filePattern.getString().compare("gitExclusions") == 0)
-            *pGitFlag = true;
-         else
-            pCmdArgs->push_back("--exclude=" + filePattern.getString());
-      }
-   }
-}
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
    LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
@@ -1073,7 +1122,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
                           projects::projectContext().defaultEncoding() :
                           prefs::userPrefs().defaultEncoding();
    std::string encodedString;
-   error = r::util::iconvstr(grepOptions.searchPattern,
+   error = r::util::iconvstr(grepOptions.searchPattern(),
                              "UTF-8",
                              encoding,
                              false,
@@ -1081,7 +1130,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    if (error)
    {
       LOG_ERROR(error);
-      encodedString = grepOptions.searchPattern;
+      encodedString = grepOptions.searchPattern();
    }
 
    *pStream << encodedString << std::endl;
@@ -1092,19 +1141,16 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
-   std::vector<std::string> excludeArgs;
-   bool gitFlag = false;
-   processExcludeFilePatterns(grepOptions.excludeFilePatterns, &excludeArgs, &gitFlag);
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory);
+   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
-   if (gitFlag)
+   if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
       cmd << "-C";
@@ -1115,15 +1161,15 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "--exclude-standard"; // but exclude gitignore
       cmd << "-rHn";
       cmd << "--color=always";
-      if (grepOptions.ignoreCase)
+      if (grepOptions.ignoreCase())
          cmd << "-i";
       // Use -f to pass pattern via file, so we don't have to worry about
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex)
+      if (!grepOptions.asRegex())
          cmd << "-F";
-      for (json::Value filePattern : grepOptions.includeFilePatterns)
+      for (json::Value filePattern : grepOptions.includeFilePatterns())
       {
          cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
          cmd << filePattern.getString();
@@ -1137,18 +1183,18 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 #ifndef _WIN32
       cmd << "--devices=skip";
 #endif
-      if (grepOptions.ignoreCase)
+      if (grepOptions.ignoreCase())
          cmd << "-i";
       // Use -f to pass pattern via file, so we don't have to worry about
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex)
+      if (!grepOptions.asRegex())
          cmd << "-F";
 
-      for (json::Value filePattern : grepOptions.includeFilePatterns)
+      for (json::Value filePattern : grepOptions.includeFilePatterns())
          cmd << "--include=" + filePattern.getString();
-      for (std::string arg : excludeArgs)
+      for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
 
       cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
@@ -1165,11 +1211,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       return error;
 
    findResults().onFindBegin(ptrGrepOp->handle(),
-                             grepOptions.searchPattern,
-                             grepOptions.directory,
-                             grepOptions.asRegex,
-                             grepOptions.ignoreCase,
-                             gitFlag);
+                             grepOptions.searchPattern(),
+                             grepOptions.directory(),
+                             grepOptions.asRegex(),
+                             grepOptions.ignoreCase(),
+                             grepOptions.gitFlag());
    if (!replaceOptions.empty)
       findResults().onReplaceBegin(ptrGrepOp->handle(),
                                    replaceOptions.preview,
