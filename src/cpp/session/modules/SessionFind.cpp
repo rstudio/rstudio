@@ -1001,6 +1001,7 @@ public:
       includeFilePatterns_(includeFilePatterns),
       excludeFilePatterns_(excludeFilePatterns)
    {
+      processIncludeFilePatterns();
       processExcludeFilePatterns();
    }
 
@@ -1034,6 +1035,16 @@ public:
       return excludeFilePatterns_;
    }
 
+   bool packageFlag() const
+   {
+      return packageFlag_;
+   }
+
+   const std::vector<std::string>& includeArgs() const
+   {
+      return includeArgs_;
+   }
+
    bool gitFlag() const
    {
       return gitFlag_;
@@ -1054,6 +1065,10 @@ private:
    const json::Array includeFilePatterns_;
    const json::Array excludeFilePatterns_;
 
+   // derived from includeFilePatterns
+   std::vector<std::string> includeArgs_;
+   bool packageFlag_;
+
    // derived from excludeFilePatterns
    std::vector<std::string> excludeArgs_;
    bool gitFlag_;
@@ -1071,6 +1086,23 @@ private:
                gitFlag_ = true;
             else
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
+         }
+      }
+   }
+
+   void processIncludeFilePatterns()
+   {
+      packageFlag_ = false;
+      for (json::Value filePattern : includeFilePatterns_)
+      {
+         if (filePattern.getType() != json::Type::STRING)
+            LOG_WARNING_MESSAGE("Include files contain non-string value");
+         else
+         {
+            if (filePattern.getString().compare("package") == 0)
+               packageFlag_ = true;
+            else
+               includeArgs_.push_back("--include=" + filePattern.getString());
          }
       }
    }
@@ -1095,25 +1127,6 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-<<<<<<< HEAD
-void processIncludeFilePatterns(
-   const json::Array& includeFilePatterns, std::vector<std::string>* pCmdArgs, bool* pPackageFlag)
-{
-   *pPackageFlag = false;
-   for (json::Value filePattern : includeFilePatterns)
-   {
-      if (filePattern.getType() != json::Type::STRING)
-         LOG_WARNING_MESSAGE("Include files contain non-string value");
-      else
-      {
-         if (filePattern.getString().compare("package") == 0)
-            *pPackageFlag = true;
-         else
-            pCmdArgs->push_back("--include=" + filePattern.getString());
-      }
-   }
-}
-
 void addPackageDirectoriesToCommand(const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
    FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
@@ -1128,11 +1141,9 @@ void addPackageDirectoriesToCommand(const FilePath& directoryPath, shell_utils::
    if (testsPath.exists())
       *pCmd << testsPath;
    else if (!rPath.exists() && !srcPath.exists())
-      LOG_ERROR_MESSAGE("Package directories not found"); //!!! need to return error
+      LOG_ERROR_MESSAGE("Package directories not found");
 }
 
-=======
->>>>>>> 46f6e09c13285b121062782e122f555b854a5a1f
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
    LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
 {
@@ -1179,9 +1190,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    core::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
-   std::vector<std::string> includeArgs;
-   bool packageFlag = false;
-   processIncludeFilePatterns(grepOptions.includeFilePatterns, &includeArgs, &packageFlag);
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
@@ -1210,10 +1218,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-      for (std::string arg : includeArgs)
-         cmd << arg;
-      if (packageFlag)
+      if (grepOptions.packageFlag())
          addPackageDirectoriesToCommand(dirPath, &cmd);
+      else
+         for (std::string arg : grepOptions.includeArgs())
+            cmd << arg;
    }
    else
    {
@@ -1231,12 +1240,12 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-      for (std::string arg : includeArgs)
+      for (std::string arg : grepOptions.includeArgs())
          cmd << arg;
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
 
-      if (packageFlag)
+      if (grepOptions.packageFlag())
          addPackageDirectoriesToCommand(dirPath, &cmd);
       else
       {

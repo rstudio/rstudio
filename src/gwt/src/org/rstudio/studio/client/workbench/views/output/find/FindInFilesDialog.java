@@ -46,7 +46,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
