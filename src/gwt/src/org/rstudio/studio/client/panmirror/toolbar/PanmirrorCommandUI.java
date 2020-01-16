@@ -17,20 +17,30 @@ package org.rstudio.studio.client.panmirror.toolbar;
 
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
+import com.google.gwt.aria.client.MenuitemRole;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.resources.client.ImageResource;
 
-public class PanmirrorCommandUI
+public class PanmirrorCommandUI implements ScheduledCommand
 {
-   public PanmirrorCommandUI(PanmirrorCommand command, String menuText, ImageResource image)
+   
+   
+   public PanmirrorCommandUI(PanmirrorCommand command, String menuText, MenuitemRole role, ImageResource image)
    {
       this.command_ = command;
       this.menuText_ = menuText;
+      this.menuRole_ = role;
       this.image_ = image;
    }
    
    public String getMenuText()
    {
       return menuText_;
+   }
+   
+   public MenuitemRole getMenuRole()
+   {
+      return menuRole_;
    }
    
    public ImageResource getImage()
@@ -69,6 +79,7 @@ public class PanmirrorCommandUI
    
    private final PanmirrorCommand command_;
    private final String menuText_;
+   private final MenuitemRole menuRole_;
    private final ImageResource image_;
    
      

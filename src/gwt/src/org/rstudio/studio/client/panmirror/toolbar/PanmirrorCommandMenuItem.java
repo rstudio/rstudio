@@ -1,6 +1,6 @@
 
 /*
- * PanmirrorCommandToolbarButton.java
+ * PanmirrorCommandMenuItem.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -18,34 +18,47 @@
 
 package org.rstudio.studio.client.panmirror.toolbar;
 
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.command.AppCommand;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.ui.MenuItem;
 
-
-
-public class PanmirrorCommandToolbarButton extends ToolbarButton implements PanmirrorCommandUIObject
+public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorCommandUIObject
 {
-   public PanmirrorCommandToolbarButton(PanmirrorCommandUI commandUI)
+   public PanmirrorCommandMenuItem(PanmirrorCommandUI commandUI)
    {
-      super("", commandUI.getMenuText(), commandUI.getImage(), new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            commandUI.execute();
-         }
-      });
+      super(
+        AppCommand.formatMenuLabel(null, commandUI.getMenuText(), null), 
+        true, 
+        commandUI.getMenuRole(),
+        commandUI.isActive(),
+        commandUI
+      );
       commandUI_ = commandUI;
       sync();
    }
    
+  
    @Override
    public void sync()
    {
       setEnabled(commandUI_.isEnabled());
+      if (isEnabled())
+         getElement().removeClassName("disabled");
+      else
+         getElement().addClassName("disabled");
+
+      
+      setChecked(commandUI_.isActive());
       setVisible(commandUI_.isVisible());
    }
    
+   @Override
+   public ScheduledCommand getScheduledCommand()
+   {
+      return commandUI_.isEnabled() ? commandUI_ : null;
+   }
+   
    private final PanmirrorCommandUI commandUI_;
+
 }

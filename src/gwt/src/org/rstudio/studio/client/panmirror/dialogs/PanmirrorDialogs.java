@@ -50,8 +50,8 @@ public class PanmirrorDialogs {
       this.globalDisplay_ = globalDisplay;
    }
    
-   public Promise<Boolean> alert(String message, String title, AlertType type) {
-      
+   public Promise<Boolean> alert(String message, String title, AlertType type) 
+   {   
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          
          int alertType = MessageDisplay.MSG_INFO;
@@ -77,6 +77,13 @@ public class PanmirrorDialogs {
       });
       
    }
+   
+   public Promise<PanmirrorInsertTableDialog.Result> insertTable()
+   {
+      return PanmirrorInsertTableDialog.show();
+   }
+  
+   
    
    private GlobalDisplay globalDisplay_;
 

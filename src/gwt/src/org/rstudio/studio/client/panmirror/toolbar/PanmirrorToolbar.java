@@ -13,23 +13,26 @@
  *
  */
 
-
 package org.rstudio.studio.client.panmirror.toolbar;
-
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.SecondaryToolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.MenuItem;
 
 public class PanmirrorToolbar extends SecondaryToolbar
 {
    public PanmirrorToolbar()
    {
       super(false, "Panmirror Editor Toolbar");
-      
-     
    }
    
    @Override
@@ -41,15 +44,52 @@ public class PanmirrorToolbar extends SecondaryToolbar
    public void init(PanmirrorCommand[] commands)
    { 
       commands_ = new PanmirrorToolbarCommands(commands);
-      commandButtons_.clear();
+      commandObjects_.clear();
       
       // populate toolbar buttons
       addLeftButton(Panmirror.EditorCommands.Strong);
       addLeftButton(Panmirror.EditorCommands.Em);
       addLeftButton(Panmirror.EditorCommands.Code);
+      
       addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.BulletList);
+      addLeftButton(Panmirror.EditorCommands.OrderedList);
       addLeftButton(Panmirror.EditorCommands.Blockquote);
+      
       addLeftSeparator();
+      
+      PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableInsertTable);
+      tableMenu.addSeparator();
+      tableMenu.addCommand(Panmirror.EditorCommands.TableToggleHeader);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableToggleCaption);
+      tableMenu.addSeparator();
+      PanmirrorToolbarMenu alignMenu = new PanmirrorToolbarMenu(tableMenu, commands_);
+      alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnLeft);
+      alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnCenter);
+      alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnRight);
+      alignMenu.addSeparator();
+      alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnDefault);
+      tableMenu.addItem(new MenuItem(menuText("Align Column")), alignMenu);
+      tableMenu.addSeparator();
+      tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowBefore);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowAfter);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableAddColumnBefore);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableAddColumnAfter);
+      tableMenu.addSeparator();
+      tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteRow);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteColumn);
+      tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteTable);
+      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, RES.th(), tableMenu));
+      
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.Link);
+      addLeftButton(Panmirror.EditorCommands.Image);
+      
+      addLeftSeparator();
+      
       addLeftButton(Panmirror.EditorCommands.CodeBlock);
       
       
@@ -58,7 +98,7 @@ public class PanmirrorToolbar extends SecondaryToolbar
    
    public void sync()
    {
-      commandButtons_.forEach((button) -> button.sync());
+      commandObjects_.forEach((object) -> object.sync());
    }
    
    private void addLeftButton(String id)
@@ -69,14 +109,20 @@ public class PanmirrorToolbar extends SecondaryToolbar
    private PanmirrorCommandToolbarButton addButton(String id)
    {
       PanmirrorCommandToolbarButton button = new PanmirrorCommandToolbarButton(commands_.get(id));
-      commandButtons_.add(button);
+      commandObjects_.add(button);
       return button;
    }
    
+   private static SafeHtml menuText(String text)
+   {
+      return SafeHtmlUtils.fromTrustedString(AppCommand.formatMenuLabel(null, text, null));
+   }
    
+   
+   private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
   
    private PanmirrorToolbarCommands commands_ = null;
   
-   private ArrayList<PanmirrorCommandToolbarButton> commandButtons_ = new ArrayList<PanmirrorCommandToolbarButton>();
+   private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<PanmirrorCommandUIObject>();
    
 }
