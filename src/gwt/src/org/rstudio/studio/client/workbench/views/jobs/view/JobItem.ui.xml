@@ -146,7 +146,7 @@
     
     .progress
     {
-        cursor: default;
+        cursor: pointer;
     }
     
     </ui:style>
