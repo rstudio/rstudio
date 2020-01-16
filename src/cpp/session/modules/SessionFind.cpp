@@ -1004,12 +1004,12 @@ public:
       processExcludeFilePatterns();
    }
 
-   const bool asRegex() const
+   bool asRegex() const
    {
       return asRegex_;
    }
 
-   const bool ignoreCase() const
+   bool ignoreCase() const
    {
       return ignoreCase_;
    }
@@ -1034,7 +1034,7 @@ public:
       return excludeFilePatterns_;
    }
 
-   const bool gitFlag() const
+   bool gitFlag() const
    {
       return gitFlag_;
    }
