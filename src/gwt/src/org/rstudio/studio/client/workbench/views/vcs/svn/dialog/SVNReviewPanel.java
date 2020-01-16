@@ -1,7 +1,7 @@
 /*
  * SVNReviewPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -265,6 +266,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
             "Discard All", ToolbarButton.NoTitle,  new ImageResource2x(RES.discard2x())));
 
+      lblContext_.setFor(contextLines_);
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
       new WidgetHandlerRegistration(this)
@@ -464,6 +466,8 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    ChangelistTable changelist_;
    @UiField(provided = true)
    LineTableView lines_;
+   @UiField
+   FormLabel lblContext_;
    @UiField
    ListBox contextLines_;
    @UiField(provided = true)
