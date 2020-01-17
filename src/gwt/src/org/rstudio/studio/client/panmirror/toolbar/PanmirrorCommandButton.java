@@ -25,9 +25,9 @@ import com.google.gwt.event.dom.client.ClickHandler;
 
 
 
-public class PanmirrorCommandToolbarButton extends ToolbarButton implements PanmirrorCommandUIObject
+public class PanmirrorCommandButton extends ToolbarButton implements PanmirrorCommandUIObject
 {
-   public PanmirrorCommandToolbarButton(PanmirrorCommandUI commandUI)
+   public PanmirrorCommandButton(PanmirrorCommandUI commandUI)
    {
       super("", commandUI.getMenuText(), commandUI.getImage(), new ClickHandler() {
          @Override

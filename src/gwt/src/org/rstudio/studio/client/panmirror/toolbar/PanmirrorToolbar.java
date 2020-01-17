@@ -41,10 +41,11 @@ public class PanmirrorToolbar extends SecondaryToolbar
    { 
       commands_ = new PanmirrorToolbarCommands(commands);
       commandObjects_.clear();
+      removeAllWidgets();
       
-      PanmirrorToolbarMenu blockMenu = new PanmirrorToolbarMenu(commands_);
-      addLeftWidget(new ToolbarMenuButton("Normal", "Block Format", null, blockMenu, false));
-       
+      PanmirrorToolbarRadioMenu blockMenu = createBlockMenu();
+      addLeftWidget(addRadioMenu(blockMenu));
+      
       addLeftSeparator();
       
       addLeftButton(Panmirror.EditorCommands.Strong);
@@ -86,6 +87,22 @@ public class PanmirrorToolbar extends SecondaryToolbar
    {
       commandObjects_.forEach((object) -> object.sync());
       invalidateSeparators();
+   }
+   
+   private PanmirrorToolbarRadioMenu createBlockMenu()
+   {
+      PanmirrorToolbarRadioMenu blockMenu = new PanmirrorToolbarRadioMenu("Normal", "Block Format", commands_);
+      blockMenu.addCommand(Panmirror.EditorCommands.Paragraph);
+      blockMenu.addSeparator();
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading1);
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading2);
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading3);
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading4);
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading5);
+      blockMenu.addCommand(Panmirror.EditorCommands.Heading6);
+      blockMenu.addSeparator();
+      blockMenu.addCommand(Panmirror.EditorCommands.CodeBlock);
+      return blockMenu;
    }
    
    private PanmirrorToolbarMenu createFormatMenu()
@@ -188,9 +205,15 @@ public class PanmirrorToolbar extends SecondaryToolbar
       addLeftWidget(addButton(id));
    }
    
-   private PanmirrorCommandToolbarButton addButton(String id)
+   private PanmirrorToolbarRadioMenu addRadioMenu(PanmirrorToolbarRadioMenu menu)
    {
-      PanmirrorCommandToolbarButton button = new PanmirrorCommandToolbarButton(commands_.get(id));
+      commandObjects_.add(menu);
+      return menu;
+   }
+   
+   private PanmirrorCommandButton addButton(String id)
+   {
+      PanmirrorCommandButton button = new PanmirrorCommandButton(commands_.get(id));
       commandObjects_.add(button);
       return button;
    }
@@ -199,7 +222,6 @@ public class PanmirrorToolbar extends SecondaryToolbar
    private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
   
    private PanmirrorToolbarCommands commands_ = null;
-  
    private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<PanmirrorCommandUIObject>();
    
 }
