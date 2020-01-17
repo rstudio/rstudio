@@ -42,6 +42,22 @@ namespace session {
 namespace modules {
 namespace find {
 
+namespace errc {
+
+enum errc_t
+{
+   Success = 0,
+   RegexError = 1
+};
+
+const std::string& findCategory()
+{
+   static const std::string findCategory = "find_error";
+   return findCategory;
+}
+
+}
+
 namespace {
 
 // This must be the same as MAX_COUNT in FindOutputPane.java
@@ -1430,7 +1446,14 @@ core::Error Replacer::completeReplace(const boost::regex& searchRegex,
    }
    catch (const boost::regex_error& e)
    {
-      return core::Error(e.position(), e.what(), ERROR_LOCATION);
+      core::Error error(
+         errc::findCategory(),
+         errc::RegexError,
+         "A regex error occurred during replace operation: " + std::string(e.what()),
+         ERROR_LOCATION);
+
+      error.addProperty("position", e.position());
+      return error;
    }
 
    temp.insert(0, pLine->substr(0, matchOn));
@@ -1461,7 +1484,14 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
    }
    catch (const boost::regex_error& e)
    {
-      return core::Error(e.position(), e.what(), ERROR_LOCATION);
+      core::Error error(
+         errc::findCategory(),
+         errc::RegexError,
+         "A regex error occurred during replace operation: " + std::string(e.what()),
+         ERROR_LOCATION);
+
+      error.addProperty("position", e.position());
+      return error;
    }
 }
 
@@ -1479,7 +1509,14 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
    }
    catch (const boost::regex_error& e)
    {
-      return core::Error(e.position(), e.what(), ERROR_LOCATION);
+      core::Error error(
+         errc::findCategory(),
+         errc::RegexError,
+         "A regex error occurred during replace operation: " + std::string(e.what()),
+         ERROR_LOCATION);
+
+      error.addProperty("position", e.position());
+      return error;
    }
 }
 

@@ -41,15 +41,15 @@ Error prefsError(PrefErrorCode code, const Error& cause, const ErrorLocation& lo
          return Success();
       case PrefErrorCode::LOAD_ERROR:
          return Error(
-            static_cast<int>(PrefErrorCode::LOAD_ERROR),
             "pref_error",
+            static_cast<int>(PrefErrorCode::LOAD_ERROR),
             "Error occurred while loading preferences.",
             cause,
             location);
       case PrefErrorCode::WRITE_ERROR:
          return Error(
-            static_cast<int>(PrefErrorCode::WRITE_ERROR),
             "pref_error",
+            static_cast<int>(PrefErrorCode::WRITE_ERROR),
             "Error occurred while writing preferences.",
             cause,
             location);
@@ -57,8 +57,8 @@ Error prefsError(PrefErrorCode code, const Error& cause, const ErrorLocation& lo
       {
          assert(false);
          return Error(
-            static_cast<int>(PrefErrorCode::UNKNOWN_ERROR),
             "pref_error",
+            static_cast<int>(PrefErrorCode::UNKNOWN_ERROR),
             "Unknown preferences error.",
             cause,
             location);
@@ -177,8 +177,8 @@ Error PrefLayer::loadPrefsFromFile(const core::FilePath& prefsFile,
    {
       // We parsed but got a non-object JSON value (this is exceedingly unlikely)
       error = Error(
-         static_cast<int>(PrefErrorCode::LOAD_ERROR),
          "pref_error",
+         static_cast<int>(PrefErrorCode::LOAD_ERROR),
          "Invalid value while parsing preferences: " + val.write(),
          ERROR_LOCATION);
    }

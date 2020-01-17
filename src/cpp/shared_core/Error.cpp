@@ -214,24 +214,24 @@ Error::Error(
 {
 }
 
-Error::Error(int in_code, std::string in_name, const ErrorLocation& in_location) :
+Error::Error(std::string in_name, int in_code, const ErrorLocation& in_location) :
    m_impl(new Impl(in_code, std::move(in_name), in_location))
 {
 }
 
-Error::Error(int in_code, std::string in_name, const Error& in_cause, const ErrorLocation& in_location) :
+Error::Error(std::string in_name, int in_code, const Error& in_cause, const ErrorLocation& in_location) :
    m_impl(new Impl(in_code, std::move(in_name), in_cause, in_location))
 {
 }
 
-Error::Error(int in_code, std::string in_name, std::string in_message, const ErrorLocation& in_location) :
+Error::Error(std::string in_name,int in_code,  std::string in_message, const ErrorLocation& in_location) :
    m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_location))
 {
 }
 
 Error::Error(
-   int in_code,
    std::string in_name,
+   int in_code,
    std::string in_message,
    const Error& in_cause,
    const ErrorLocation& in_location) :
@@ -461,8 +461,8 @@ Error systemError(int in_value,
 Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)
 {
    return Error(
-      1,
       "UnknownError",
+      1,
       in_message,
       in_location);
 }
@@ -470,8 +470,8 @@ Error unknownError(const std::string& in_message, const ErrorLocation&  in_locat
 Error unknownError(const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location)
 {
    return Error(
-      1,
       "UnknownError",
+      1,
       in_message,
       in_cause,
       in_location);
