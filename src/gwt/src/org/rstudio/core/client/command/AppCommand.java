@@ -420,22 +420,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    @Override
    public ImageResource getImageResource()
    {
-      if (isCheckable())
+      return menuImageResource(isCheckable(), isChecked(), imageResource_);
+   }
+   
+   public static ImageResource menuImageResource(boolean isCheckable, boolean isChecked, ImageResource defaultImage)
+   {
+      if (isCheckable)
       {
          if (RStudioThemes.isFlat() && RStudioThemes.isEditorDark()) {
-            return isChecked() ? 
+            return isChecked ? 
                new ImageResource2x(ThemeResources.INSTANCE.menuCheckInverted2x()) :
                null;
          }
          else {
-            return isChecked() ? 
+            return isChecked ? 
                new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
                null;
          }
       } 
       else
       {
-         return imageResource_;
+         return defaultImage;
       }
    }
    

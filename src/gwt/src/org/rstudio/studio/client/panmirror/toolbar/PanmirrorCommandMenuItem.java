@@ -18,8 +18,13 @@
 
 package org.rstudio.studio.client.panmirror.toolbar;
 
+import org.rstudio.core.client.AriaUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
+import com.google.gwt.aria.client.MenuitemcheckboxRole;
+import com.google.gwt.aria.client.MenuitemradioRole;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorCommandUIObject
@@ -41,17 +46,52 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
    @Override
    public void sync()
    {
-      setEnabled(commandUI_.isEnabled());
-      if (isEnabled())
-         getElement().removeClassName("disabled");
-      else
-         getElement().addClassName("disabled");
-
-      
-      setChecked(commandUI_.isActive());
       setVisible(commandUI_.isVisible());
+      
+      if (isVisible())
+      {
+         setEnabled(commandUI_.isEnabled());
+         if (isEnabled())
+            getElement().removeClassName("disabled");
+         else
+            getElement().addClassName("disabled");
+      }
+      
+      if (isCheckable())
+         setChecked(commandUI_.isActive());
+      
+      setHTML(menuHTML());
    }
    
+   
+   private String menuHTML()
+   {
+      return AppCommand.formatMenuLabelWithStyle(
+         menuImageResource(), 
+         commandUI_.getMenuText(), 
+         null, 
+         isCheckable() ? ThemeStyles.INSTANCE.menuCheckable() : null
+      );
+   }
+
+   private ImageResource menuImageResource()
+   {
+      return AppCommand.menuImageResource(isCheckable(), isChecked(), commandUI_.getImage());
+   }
+   
+   private boolean isChecked()
+   {
+      return AriaUtil.isMenuChecked(commandUI_.getMenuRole(), getElement());
+   }
+   
+   private boolean isCheckable()
+   {
+      return commandUI_.getMenuRole() instanceof MenuitemradioRole || 
+             commandUI_.getMenuRole() instanceof MenuitemcheckboxRole;
+   }
+   
+  
    private final PanmirrorCommandUI commandUI_;
+   
 
 }

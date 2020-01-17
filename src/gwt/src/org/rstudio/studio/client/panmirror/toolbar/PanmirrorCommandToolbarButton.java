@@ -43,8 +43,10 @@ public class PanmirrorCommandToolbarButton extends ToolbarButton implements Panm
    @Override
    public void sync()
    {
-      setEnabled(commandUI_.isEnabled());
       setVisible(commandUI_.isVisible());
+      
+      if (commandUI_.isVisible())
+         setEnabled(commandUI_.isEnabled());
    }
    
    private final PanmirrorCommandUI commandUI_;

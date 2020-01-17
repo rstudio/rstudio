@@ -42,6 +42,54 @@ public class PanmirrorToolbar extends SecondaryToolbar
       commands_ = new PanmirrorToolbarCommands(commands);
       commandObjects_.clear();
       
+      PanmirrorToolbarMenu blockMenu = new PanmirrorToolbarMenu(commands_);
+      addLeftWidget(new ToolbarMenuButton("Normal", "Block Format", null, blockMenu, false));
+       
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.Strong);
+      addLeftButton(Panmirror.EditorCommands.Em);
+      addLeftButton(Panmirror.EditorCommands.Code);
+      
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.BulletList);
+      addLeftButton(Panmirror.EditorCommands.OrderedList);
+      addLeftButton(Panmirror.EditorCommands.Blockquote);
+        
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.Link);
+      addLeftButton(Panmirror.EditorCommands.Image);
+      
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.CodeBlock);
+      
+      addLeftSeparator();
+      
+      PanmirrorToolbarMenu tableMenu = createTableMenu();
+      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, RES.th(), tableMenu));
+      
+      addLeftSeparator();
+      
+      PanmirrorToolbarMenu formatMenu = createFormatMenu();
+      addLeftWidget(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
+      
+      addLeftSeparator();
+      
+      PanmirrorToolbarMenu insertMenu = createInsertMenu();
+      addLeftWidget(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
+   }
+   
+   public void sync()
+   {
+      commandObjects_.forEach((object) -> object.sync());
+      invalidateSeparators();
+   }
+   
+   private PanmirrorToolbarMenu createFormatMenu()
+   {
       PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_);
       PanmirrorToolbarMenu textMenu = formatMenu.addSubmenu("Text");
       textMenu.addCommand(Panmirror.EditorCommands.Strong);
@@ -75,22 +123,11 @@ public class PanmirrorToolbar extends SecondaryToolbar
       formatMenu.addCommand(Panmirror.EditorCommands.RawBlock);
       formatMenu.addSeparator();
       formatMenu.addCommand(Panmirror.EditorCommands.AttrEdit);
-      addLeftWidget(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.Strong);
-      addLeftButton(Panmirror.EditorCommands.Em);
-      addLeftButton(Panmirror.EditorCommands.Code);
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.BulletList);
-      addLeftButton(Panmirror.EditorCommands.OrderedList);
-      addLeftButton(Panmirror.EditorCommands.Blockquote);
-      
-      addLeftSeparator();
-      
+      return formatMenu;
+   }
+   
+   private PanmirrorToolbarMenu createInsertMenu()
+   {
       PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_);
       insertMenu.addCommand(Panmirror.EditorCommands.Image);
       insertMenu.addCommand(Panmirror.EditorCommands.Link);
@@ -117,19 +154,11 @@ public class PanmirrorToolbar extends SecondaryToolbar
       insertMenu.addCommand(Panmirror.EditorCommands.RawInline);
       insertMenu.addSeparator();
       insertMenu.addCommand(Panmirror.EditorCommands.YamlMetadata);
-      addLeftWidget(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false));
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.Link);
-      addLeftButton(Panmirror.EditorCommands.Image);
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.CodeBlock);
-      
-      addLeftSeparator();
-      
+      return insertMenu;
+   }
+   
+   private PanmirrorToolbarMenu createTableMenu()
+   {
       PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_);
       tableMenu.addCommand(Panmirror.EditorCommands.TableInsertTable);
       tableMenu.addSeparator();
@@ -151,13 +180,7 @@ public class PanmirrorToolbar extends SecondaryToolbar
       tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteRow);
       tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteColumn);
       tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteTable);
-      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, RES.th(), tableMenu));
-      
-   }
-   
-   public void sync()
-   {
-      commandObjects_.forEach((object) -> object.sync());
+      return tableMenu;
    }
    
    private void addLeftButton(String id)
