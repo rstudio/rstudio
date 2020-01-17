@@ -76,6 +76,7 @@ import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarResources;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineResources;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
@@ -416,6 +417,7 @@ public class RStudio implements EntryPoint
       SourceMarkerListResources.INSTANCE.styles().ensureInjected();
       BuildPaneResources.INSTANCE.styles().ensureInjected();
       PanmirrorToolbarResources.INSTANCE.styles().ensureInjected();
+      PanmirrorOutlineResources.INSTANCE.styles().ensureInjected();
       
       ProgressDialog.ensureStylesInjected();
       SlideLabel.ensureStylesInjected();

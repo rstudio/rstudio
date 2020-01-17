@@ -22,9 +22,12 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
+import org.rstudio.core.client.theme.ThemeColors;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
 import com.google.gwt.dom.client.Document;
@@ -57,6 +60,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public static class Options 
    {
       public boolean toolbar = true;
+      public boolean outline = false;
+      public boolean border = true;
    }
    
    public static void create(PanmirrorConfig config,
@@ -80,13 +85,19 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private PanmirrorWidget(Options options)
    {
       super(Style.Unit.PX);
-      this.setSize("100%", "100%");   
+      setSize("100%", "100%");   
+      getElement().getStyle().setBackgroundColor(ThemeColors.defaultBackground);
+      
+      if (options.border)
+         this.addStyleName(ThemeResources.INSTANCE.themeStyles().borderedIFrame());
      
-      if (options.toolbar)
-      {
-         toolbar_ =  new PanmirrorToolbar();
-         addNorth(toolbar_, toolbar_.getHeight());
-      }
+      toolbar_ =  new PanmirrorToolbar();
+      addNorth(toolbar_, toolbar_.getHeight());
+      setWidgetHidden(toolbar_, !options.toolbar);
+      
+      outline_ = new PanmirrorOutlineWidget();
+      addEast(outline_, 190);
+      setWidgetHidden(outline_, !options.outline);
       
       editorParent_ = new HTML();
       add(editorParent_);
@@ -145,6 +156,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getTitle();
    }
    
+  
    
    public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) 
    {
@@ -162,6 +174,18 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          completed   
       );
    }
+   
+   public void showOutline(boolean show)
+   {
+      setWidgetHidden(outline_, !show);
+      animate(500);
+   }
+   
+   public void showToolbar(boolean show)
+   {
+      setWidgetHidden(toolbar_, !show);
+   }
+   
    
    public PanmirrorOutlineItem[] getOutline()
    {
@@ -260,6 +284,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
+   private PanmirrorOutlineWidget outline_ = null;
    private PanmirrorToolbar toolbar_ = null;
    private HTML editorParent_ = null;
    

@@ -17,6 +17,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 
 
+
 public class PanmirrorTestDialog extends ModalDialog<String>
 {
    public PanmirrorTestDialog()
@@ -24,7 +25,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       super("Panmirror", Roles.getDialogRole(), input -> {});
       
       mainWidget_ = new SimplePanel();
-      mainWidget_.setSize("500px", "400px");
+      mainWidget_.setSize("600px", "500px");
       
       PanmirrorConfig config = new PanmirrorConfig();
       config.options.rmdCodeChunks = true;
@@ -38,6 +39,8 @@ public class PanmirrorTestDialog extends ModalDialog<String>
          if (editorWidget != null) {
             
             this.editorWidget_ = editorWidget;
+            
+            
             mainWidget_.add(this.editorWidget_);
             
             PanmirrorKeybindings keys = new PanmirrorKeybindings();
@@ -82,6 +85,8 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   
                   
                   this.editorWidget_.enableDevTools();
+                  
+                  this.editorWidget_.showOutline(true);
                }
             });
          }
