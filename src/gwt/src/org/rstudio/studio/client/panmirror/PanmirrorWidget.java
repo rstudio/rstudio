@@ -23,9 +23,9 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
+import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
-import org.rstudio.studio.client.panmirror.toolbar.PanmirrorToolbar;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;

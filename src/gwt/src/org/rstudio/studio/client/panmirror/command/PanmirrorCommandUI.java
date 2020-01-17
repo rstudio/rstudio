@@ -13,11 +13,10 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.toolbar;
+package org.rstudio.studio.client.panmirror.command;
 
 
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;

@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.toolbar;
+package org.rstudio.studio.client.panmirror.command;
 
 import java.util.ArrayList;
 

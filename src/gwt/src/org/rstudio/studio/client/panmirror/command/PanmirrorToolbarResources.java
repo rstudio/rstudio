@@ -14,7 +14,7 @@
  */
 
 
-package org.rstudio.studio.client.panmirror.toolbar;
+package org.rstudio.studio.client.panmirror.command;
 
 
 import com.google.gwt.core.client.GWT;

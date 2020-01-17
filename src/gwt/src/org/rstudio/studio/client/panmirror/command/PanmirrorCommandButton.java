@@ -16,7 +16,7 @@
 
 
 
-package org.rstudio.studio.client.panmirror.toolbar;
+package org.rstudio.studio.client.panmirror.command;
 
 import org.rstudio.core.client.widget.ToolbarButton;
 

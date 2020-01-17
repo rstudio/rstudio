@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.toolbar;
+package org.rstudio.studio.client.panmirror.command;
 
 import java.util.ArrayList;
 
@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.studio.client.panmirror.Panmirror;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 
 public class PanmirrorToolbar extends SecondaryToolbar
