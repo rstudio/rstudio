@@ -1,7 +1,7 @@
 /*
  * ConsoleProgressWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -24,6 +25,8 @@ public class ConsoleProgressWidget extends ShellWidget implements ShellDisplay
    {
       super(new AceEditor(), null, null);
       getEditor().setInsertMatching(false);
+      getEditor().setTextInputAriaLabel("Progress details");
+      Roles.getLogRole().set(getOutputWidget().getElement());
    }
    
    private AceEditor getEditor()

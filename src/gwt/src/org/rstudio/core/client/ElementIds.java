@@ -448,4 +448,7 @@ public class ElementIds
    public final static String FRAME_MAX_BTN = "frame_max_btn";
    public final static String MIN_FRAME_MIN_BTN = "min_frame_min_btn";
    public final static String MIN_FRAME_MAX_BTN = "min_frame_max_btn";
+
+   // ProgressDialog
+   public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
 }
