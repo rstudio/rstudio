@@ -42,7 +42,43 @@ public class PanmirrorToolbar extends SecondaryToolbar
       commands_ = new PanmirrorToolbarCommands(commands);
       commandObjects_.clear();
       
-      // populate toolbar buttons
+      PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_);
+      PanmirrorToolbarMenu textMenu = formatMenu.addSubmenu("Text");
+      textMenu.addCommand(Panmirror.EditorCommands.Strong);
+      textMenu.addCommand(Panmirror.EditorCommands.Em);
+      textMenu.addCommand(Panmirror.EditorCommands.Code);
+      textMenu.addCommand(Panmirror.EditorCommands.Strikeout);
+      textMenu.addCommand(Panmirror.EditorCommands.Superscript);
+      textMenu.addCommand(Panmirror.EditorCommands.Subscript);
+      textMenu.addCommand(Panmirror.EditorCommands.Smallcaps);
+      textMenu.addSeparator();
+      textMenu.addCommand(Panmirror.EditorCommands.RawInline);
+      textMenu.addSeparator();
+      textMenu.addCommand(Panmirror.EditorCommands.Span);
+      PanmirrorToolbarMenu listMenu = formatMenu.addSubmenu("Bullets & Numbering");
+      listMenu.addCommand(Panmirror.EditorCommands.BulletList);
+      listMenu.addCommand(Panmirror.EditorCommands.OrderedList);
+      listMenu.addCommand(Panmirror.EditorCommands.TightList);
+      listMenu.addSeparator();
+      listMenu.addCommand(Panmirror.EditorCommands.ListItemCheck);
+      listMenu.addCommand(Panmirror.EditorCommands.ListItemCheckToggle);
+      listMenu.addSeparator();
+      listMenu.addCommand(Panmirror.EditorCommands.ListItemSink);
+      listMenu.addCommand(Panmirror.EditorCommands.ListItemLift);
+      listMenu.addSeparator();
+      listMenu.addCommand(Panmirror.EditorCommands.OrderedListEdit);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(Panmirror.EditorCommands.Blockquote);
+      formatMenu.addCommand(Panmirror.EditorCommands.LineBlock);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(Panmirror.EditorCommands.Div);
+      formatMenu.addCommand(Panmirror.EditorCommands.RawBlock);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(Panmirror.EditorCommands.AttrEdit);
+      addLeftWidget(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
+      
+      addLeftSeparator();
+      
       addLeftButton(Panmirror.EditorCommands.Strong);
       addLeftButton(Panmirror.EditorCommands.Em);
       addLeftButton(Panmirror.EditorCommands.Code);
@@ -55,19 +91,57 @@ public class PanmirrorToolbar extends SecondaryToolbar
       
       addLeftSeparator();
       
+      PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_);
+      insertMenu.addCommand(Panmirror.EditorCommands.Image);
+      insertMenu.addCommand(Panmirror.EditorCommands.Link);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.RmdChunk);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.ParagraphInsert);
+      insertMenu.addCommand(Panmirror.EditorCommands.HorizontalRule);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.Footnote);
+      insertMenu.addCommand(Panmirror.EditorCommands.Citation);
+      insertMenu.addSeparator();
+      PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
+      definitionMenu.addCommand(Panmirror.EditorCommands.DefinitionList);
+      definitionMenu.addSeparator();
+      definitionMenu.addCommand(Panmirror.EditorCommands.DefinitionTerm);
+      definitionMenu.addCommand(Panmirror.EditorCommands.DefinitionDescription);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.InlineMath);
+      insertMenu.addCommand(Panmirror.EditorCommands.DisplayMath);
+      insertMenu.addCommand(Panmirror.EditorCommands.InlineLatex);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.RawBlock);
+      insertMenu.addCommand(Panmirror.EditorCommands.RawInline);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(Panmirror.EditorCommands.YamlMetadata);
+      addLeftWidget(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false));
+      
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.Link);
+      addLeftButton(Panmirror.EditorCommands.Image);
+      
+      addLeftSeparator();
+      
+      addLeftButton(Panmirror.EditorCommands.CodeBlock);
+      
+      addLeftSeparator();
+      
       PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_);
       tableMenu.addCommand(Panmirror.EditorCommands.TableInsertTable);
       tableMenu.addSeparator();
       tableMenu.addCommand(Panmirror.EditorCommands.TableToggleHeader);
       tableMenu.addCommand(Panmirror.EditorCommands.TableToggleCaption);
       tableMenu.addSeparator();
-      PanmirrorToolbarMenu alignMenu = new PanmirrorToolbarMenu(tableMenu, commands_);
+      PanmirrorToolbarMenu alignMenu = tableMenu.addSubmenu("Align Column");
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnLeft);
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnCenter);
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnRight);
       alignMenu.addSeparator();
       alignMenu.addCommand(Panmirror.EditorCommands.TableAlignColumnDefault);
-      tableMenu.addSubmenu("Align Column", alignMenu);
       tableMenu.addSeparator();
       tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowBefore);
       tableMenu.addCommand(Panmirror.EditorCommands.TableAddRowAfter);
@@ -79,17 +153,6 @@ public class PanmirrorToolbar extends SecondaryToolbar
       tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteTable);
       addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, RES.th(), tableMenu));
       
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.Link);
-      addLeftButton(Panmirror.EditorCommands.Image);
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.CodeBlock);
-      
-      
-      // populate menu
    }
    
    public void sync()

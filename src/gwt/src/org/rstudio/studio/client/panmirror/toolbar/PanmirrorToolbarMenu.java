@@ -33,7 +33,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       getElement().getStyle().setZIndex(1000);
    }
    
-   public PanmirrorToolbarMenu(PanmirrorToolbarMenu parent, PanmirrorToolbarCommands commands)
+   private PanmirrorToolbarMenu(PanmirrorToolbarMenu parent, PanmirrorToolbarCommands commands)
    {
       super(parent);
       commands_ = commands;
@@ -54,10 +54,12 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       uiObjects_.add(item); 
    }
    
-   public void addSubmenu(String text, PanmirrorToolbarMenu menu)
+   public PanmirrorToolbarMenu addSubmenu(String text)
    { 
-      addItem(new MenuItem(menuText(text)), menu);
-      uiObjects_.add(menu);
+      PanmirrorToolbarMenu submenu = new PanmirrorToolbarMenu(this, commands_);
+      addItem(new MenuItem(menuText(text)), submenu);
+      uiObjects_.add(submenu);
+      return submenu;
    }
   
    @Override

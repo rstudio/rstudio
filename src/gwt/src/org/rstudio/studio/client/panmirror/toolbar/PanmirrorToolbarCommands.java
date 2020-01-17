@@ -95,7 +95,7 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.InlineMath, "Inline Math");
       add(Panmirror.EditorCommands.DisplayMath, "Display Math");
       add(Panmirror.EditorCommands.InlineLatex, "Inline LaTeX");
-      add(Panmirror.EditorCommands.RawInline, "Inline Raw...");
+      add(Panmirror.EditorCommands.RawInline, "Raw Inline...");
       add(Panmirror.EditorCommands.RawBlock, "Raw Block...");
       add(Panmirror.EditorCommands.YamlMetadata, "YAML Block...");
       add(Panmirror.EditorCommands.RmdChunk, "Code Chunk");
