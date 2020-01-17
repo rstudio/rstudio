@@ -224,7 +224,7 @@ Error::Error(std::string in_name, int in_code, const Error& in_cause, const Erro
 {
 }
 
-Error::Error(std::string in_name,int in_code,  std::string in_message, const ErrorLocation& in_location) :
+Error::Error(std::string in_name, int in_code, std::string in_message, const ErrorLocation& in_location) :
    m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_location))
 {
 }
