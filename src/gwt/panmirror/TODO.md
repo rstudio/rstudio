@@ -3,6 +3,12 @@
 
 ## TODO
 
+User prefs:
+https://github.com/rstudio/rstudio/blob/fd634b5acc22928c7c50b7a63917ffcac1e4cdef/src/gwt/tools/generate-prefs.R#L16-L25
+
+One page accessibility doc:
+https://docs.google.com/document/d/1QI6eBTbf5_Hf5sb4UxlYLlrE2bB918l4JXzUqoXv32Y/edit
+
 - Eliminate some toolbar buttons when toolbar gets more narrow
 
 - Cursor location for insert yaml in the middle of paragraph
