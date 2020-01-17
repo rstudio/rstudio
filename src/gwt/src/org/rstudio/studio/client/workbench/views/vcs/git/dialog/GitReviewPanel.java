@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;

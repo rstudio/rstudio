@@ -15,7 +15,6 @@
 package org.rstudio.core.client;
 
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
