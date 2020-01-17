@@ -1079,7 +1079,7 @@ private:
       for (json::Value filePattern : excludeFilePatterns_)
       {
          if (filePattern.getType() != json::Type::STRING)
-            LOG_WARNING_MESSAGE("Exclude files contain non-string value");
+            LOG_DEBUG_MESSAGE("Exclude files contain non-string value");
          else
          {
             if (filePattern.getString().compare("gitExclusions") == 0)
@@ -1096,7 +1096,7 @@ private:
       for (json::Value filePattern : includeFilePatterns_)
       {
          if (filePattern.getType() != json::Type::STRING)
-            LOG_WARNING_MESSAGE("Include files contain non-string value");
+            LOG_DEBUG_MESSAGE("Include files contain non-string value");
          else
          {
             if (filePattern.getString().compare("package") == 0)
@@ -1127,21 +1127,28 @@ struct ReplaceOptions
    const std::string replacePattern;
 };
 
-void addPackageDirectoriesToCommand(const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+void addDirectoriesToCommand(
+   bool packageFlag, const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
-   FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
-   FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
-   FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
-
+   // TODO: review if switching to EscapeFilesOnly is necessay
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-   if (rPath.exists())
-      *pCmd << rPath; 
-   if (srcPath.exists())
-      *pCmd << srcPath;
-   if (testsPath.exists())
-      *pCmd << testsPath;
-   else if (!rPath.exists() && !srcPath.exists())
-      LOG_ERROR_MESSAGE("Package directories not found");
+   if (!packageFlag)
+      *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
+   else
+   {
+      FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
+      FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+   
+      if (rPath.exists())
+         *pCmd << rPath; 
+      if (srcPath.exists())
+         *pCmd << srcPath;
+      if (testsPath.exists())
+         *pCmd << testsPath;
+      else if (!rPath.exists() && !srcPath.exists())
+         LOG_ERROR_MESSAGE("Package directories not found");
+   }
 }
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
@@ -1218,11 +1225,10 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-      if (grepOptions.packageFlag())
-         addPackageDirectoriesToCommand(dirPath, &cmd);
-      else
-         for (std::string arg : grepOptions.includeArgs())
-            cmd << arg;
+      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
+
+      if (grepOptions.packageFlag() && !grepOptions.includeArgs().empty())
+         LOG_DEBUG_MESSAGE("Unknown include argument(s)");
    }
    else
    {
@@ -1244,14 +1250,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          cmd << arg;
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
-
-      if (grepOptions.packageFlag())
-         addPackageDirectoriesToCommand(dirPath, &cmd);
-      else
-      {
-         cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-         cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
-      }
+      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
    }
 
    // Clear existing results
