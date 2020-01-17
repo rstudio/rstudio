@@ -1,7 +1,7 @@
 /*
  * ProgressDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,6 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.studio.client.application.Desktop;
 
 public abstract class ProgressDialog extends ModalDialogBase
 {
@@ -149,11 +148,8 @@ public abstract class ProgressDialog extends ModalDialogBase
    
    protected void setLabel(String text)
    {
-      if (BrowseCap.isChrome() || Desktop.hasDesktopFrame())
-      {
-         Size labelSize = DomMetrics.measureHTML(text);
-         labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);
-      }
+      Size labelSize = DomMetrics.measureHTML(text);
+      labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);
       label_.setText(text);
    }
    
