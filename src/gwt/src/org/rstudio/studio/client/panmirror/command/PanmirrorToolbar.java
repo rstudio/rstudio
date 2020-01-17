@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror.command;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -64,12 +65,12 @@ public class PanmirrorToolbar extends SecondaryToolbar
       
       addLeftSeparator();
       
-      addLeftButton(Panmirror.EditorCommands.CodeBlock);
+      addLeftButton(Panmirror.EditorCommands.RmdChunk);
       
       addLeftSeparator();
       
       PanmirrorToolbarMenu tableMenu = createTableMenu();
-      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, RES.th(), tableMenu));
+      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, new ImageResource2x(RES.table()), tableMenu));
       
       addLeftSeparator();
       

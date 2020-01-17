@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror.command;
 
 
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.resources.ImageResource2x;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -31,7 +32,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
       this.command_ = command;
       this.menuText_ = menuText;
       this.menuRole_ = role;
-      this.image_ = image;
+      this.image_ = image != null ? new ImageResource2x(image) : null;
       this.shortcut_ = getShortcut(command);
    }
    

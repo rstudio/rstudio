@@ -51,14 +51,14 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.Heading4, "Heading 4", Roles.getMenuitemradioRole());
       add(Panmirror.EditorCommands.Heading5, "Heading 5", Roles.getMenuitemradioRole());
       add(Panmirror.EditorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
-      add(Panmirror.EditorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole(), RES.code_block());
-      add(Panmirror.EditorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), RES.citation());
+      add(Panmirror.EditorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
+      add(Panmirror.EditorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), RES.blockquote());
       add(Panmirror.EditorCommands.LineBlock, "Line Block");
       add(Panmirror.EditorCommands.Div, "Section/Div...");
       add(Panmirror.EditorCommands.AttrEdit, "Edit Attributes...");
       
       // lists
-      add(Panmirror.EditorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), RES.properties());
+      add(Panmirror.EditorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), RES.bullet_list());
       add(Panmirror.EditorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), RES.numbered_list());
       add(Panmirror.EditorCommands.TightList, "Tight List", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.ListItemSink, "Sink Item");
@@ -68,7 +68,7 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.OrderedListEdit, "List Attributes...");
       
       // tables
-      add(Panmirror.EditorCommands.TableInsertTable, "Insert Table...", RES.th());
+      add(Panmirror.EditorCommands.TableInsertTable, "Insert Table...", RES.table());
       add(Panmirror.EditorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.TableAddColumnAfter, "Insert Column Right");
@@ -87,7 +87,7 @@ public class PanmirrorToolbarCommands
      
       // insert
       add(Panmirror.EditorCommands.Link, "Link...", RES.link());
-      add(Panmirror.EditorCommands.Image, "Image...", RES.media());
+      add(Panmirror.EditorCommands.Image, "Image...", RES.image());
       add(Panmirror.EditorCommands.Footnote, "Footnote");
       add(Panmirror.EditorCommands.HorizontalRule, "Horizontal Rule");
       add(Panmirror.EditorCommands.ParagraphInsert, "Paragraph");
@@ -97,7 +97,7 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.RawInline, "Raw Inline...");
       add(Panmirror.EditorCommands.RawBlock, "Raw Block...");
       add(Panmirror.EditorCommands.YamlMetadata, "YAML Block...");
-      add(Panmirror.EditorCommands.RmdChunk, "Code Chunk");
+      add(Panmirror.EditorCommands.RmdChunk, "Code Chunk", RES.rmd_chunk());
       add(Panmirror.EditorCommands.DefinitionList, "Definition List");
       add(Panmirror.EditorCommands.DefinitionTerm, "Term");
       add(Panmirror.EditorCommands.DefinitionDescription, "Description");

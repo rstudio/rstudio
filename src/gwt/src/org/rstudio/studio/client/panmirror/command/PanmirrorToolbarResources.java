@@ -35,35 +35,35 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("PanmirrorToolbar.css")
    Styles styles();
  
-   @Source("bold.png")
+   @Source("bold_2x.png")
    ImageResource bold();
    
-   @Source("citation.png")
-   ImageResource citation();
+   @Source("blockquote_2x.png")
+   ImageResource blockquote();
    
-   @Source("code-block.png")
-   ImageResource code_block();
-   
-   @Source("code.png")
+   @Source("code_2x.png")
    ImageResource code();
    
-   @Source("italic.png")
+   @Source("italic_2x.png")
    ImageResource italic();
    
-   @Source("link.png")
+   @Source("link_2x.png")
    ImageResource link();
    
-   @Source("media.png")
-   ImageResource media();
+   @Source("image_2x.png")
+   ImageResource image();
    
-   @Source("numbered-list.png")
+   @Source("numbered_list_2x.png")
    ImageResource numbered_list();
    
-   @Source("properties.png")
-   ImageResource properties();
+   @Source("bullet_list_2x.png")
+   ImageResource bullet_list();
    
-   @Source("th.png")
-   ImageResource th();
+   @Source("rmd_chunk_2x.png")
+   ImageResource rmd_chunk();
+   
+   @Source("table_2x.png")
+   ImageResource table();
    
    public static PanmirrorToolbarResources INSTANCE = 
       (PanmirrorToolbarResources)GWT.create(PanmirrorToolbarResources.class) ;
