@@ -36,13 +36,13 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.SelectAll, "Select All");
       
       // formatting
-      add(Panmirror.EditorCommands.Strong, "Bold", Roles.getMenuitemcheckboxRole(), RES.bold());
-      add(Panmirror.EditorCommands.Em, "Italic", Roles.getMenuitemcheckboxRole(), RES.italic());
-      add(Panmirror.EditorCommands.Code, "Code",  Roles.getMenuitemcheckboxRole(),RES.code());
-      add(Panmirror.EditorCommands.Strikeout, "Strikeout", Roles.getMenuitemcheckboxRole());
-      add(Panmirror.EditorCommands.Superscript, "Superscript", Roles.getMenuitemcheckboxRole());
-      add(Panmirror.EditorCommands.Subscript, "Subscript", Roles.getMenuitemcheckboxRole());
-      add(Panmirror.EditorCommands.Smallcaps, "Small Caps", Roles.getMenuitemcheckboxRole());
+      add(Panmirror.EditorCommands.Strong, "Bold", RES.bold());
+      add(Panmirror.EditorCommands.Em, "Italic", RES.italic());
+      add(Panmirror.EditorCommands.Code, "Code",RES.code());
+      add(Panmirror.EditorCommands.Strikeout, "Strikeout");
+      add(Panmirror.EditorCommands.Superscript, "Superscript");
+      add(Panmirror.EditorCommands.Subscript, "Subscript");
+      add(Panmirror.EditorCommands.Smallcaps, "Small Caps");
       add(Panmirror.EditorCommands.Span, "Span...");
       add(Panmirror.EditorCommands.Paragraph, "Normal", Roles.getMenuitemradioRole());
       add(Panmirror.EditorCommands.Heading1, "Heading 1", Roles.getMenuitemradioRole());
