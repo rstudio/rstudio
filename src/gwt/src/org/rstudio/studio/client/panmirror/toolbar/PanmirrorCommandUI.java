@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.panmirror.toolbar;
 
 
-
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
@@ -86,7 +85,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    }
   
    private static String getShortcut(PanmirrorCommand command)
-   {
+   {     
       if (command != null && command.keymap.length > 0) 
       {
          // normalize to RStudio shortcut string
@@ -102,6 +101,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
       {
          return null;
       }
+     
    }
    
    private final PanmirrorCommand command_;

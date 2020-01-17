@@ -27,6 +27,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       mainWidget_.setSize("500px", "400px");
       
       PanmirrorConfig config = new PanmirrorConfig();
+      config.options.rmdCodeChunks = true;
       config.hooks.isEditable = () -> true;
      
       
