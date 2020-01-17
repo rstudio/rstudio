@@ -59,15 +59,15 @@ const InsertMenu: React.FC = () => {
   return (
     <MenubarMenu>
       <CommandMenuItem id={CommandId.Image} />
-      <CommandMenuItem id={EditorCommandId.TableInsertTable} text={t('commands:table_insert_table_short')} />
+      <CommandMenuItem id={CommandId.Link} />
       <Menu.Divider />
       <CommandMenuItem id={CommandId.RmdChunk} />
       <Menu.Divider />
       <CommandMenuItem id={CommandId.ParagraphInsert} />
       <CommandMenuItem id={CommandId.HorizontalRule} />
       <Menu.Divider />
-      <CommandMenuItem id={CommandId.RawBlock} />
-      <CommandMenuItem id={CommandId.YamlMetadata} />
+      <CommandMenuItem id={CommandId.Footnote} />
+      <CommandMenuItem id={CommandId.Citation} />
       <Menu.Divider />
       <CommandSubMenu text={t('insert_definitions_menu')}>
         <CommandMenuItem id={CommandId.DefinitionList} />
@@ -79,12 +79,11 @@ const InsertMenu: React.FC = () => {
       <CommandMenuItem id={CommandId.InlineMath} />
       <CommandMenuItem id={CommandId.DisplayMath} />
       <CommandMenuItem id={CommandId.InlineLatex} />
+      <Menu.Divider />
+      <CommandMenuItem id={CommandId.RawBlock} />
       <CommandMenuItem id={CommandId.RawInline} />
       <Menu.Divider />
-      <CommandMenuItem id={CommandId.Footnote} />
-      <CommandMenuItem id={CommandId.Citation} />
-      <Menu.Divider />
-      <CommandMenuItem id={CommandId.Link} />
+      <CommandMenuItem id={CommandId.YamlMetadata} />
     </MenubarMenu>
   );
 };
