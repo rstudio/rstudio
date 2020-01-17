@@ -1443,6 +1443,13 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void isGitDirectory(String path,
+                          ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, IS_GIT_DIRECTORY, path, requestCallback);
+   }
+
+   @Override
    public void getFileContents(String path,
                                String encoding,
                                ServerRequestCallback<String> requestCallback)
@@ -4373,7 +4380,8 @@ public class RemoteServer implements Server
                          boolean regex,
                          boolean ignoreCase,
                          FileSystemItem directory,
-                         JsArrayString filePatterns,
+                         JsArrayString includeFilePatterns,
+                         JsArrayString excludeFilePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4382,7 +4390,8 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(ignoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
+      params.set(4, new JSONArray(includeFilePatterns));
+      params.set(5, new JSONArray(excludeFilePatterns));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4404,9 +4413,9 @@ public class RemoteServer implements Server
                               boolean regex,
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
-                              JsArrayString filePatterns,
+                              JsArrayString includeFilePatterns,
+                              JsArrayString excludeFilePatterns,
                               String replaceString,
-                              boolean gitIgnore,
                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4415,9 +4424,9 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
-      params.set(5, new JSONString(replaceString));
-      params.set(6, JSONBoolean.getInstance(gitIgnore));
+      params.set(4, new JSONArray(includeFilePatterns));
+      params.set(5, new JSONArray(excludeFilePatterns));
+      params.set(6, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
@@ -4427,10 +4436,10 @@ public class RemoteServer implements Server
                                boolean regex,
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
-                               JsArrayString filePatterns,
+                               JsArrayString includeFilePatterns,
+                               JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
-                               boolean gitIgnore,
                                ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4439,10 +4448,10 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(filePatterns));
-      params.set(5, new JSONNumber(searchResults));
-      params.set(6, new JSONString(replaceString));
-      params.set(7, JSONBoolean.getInstance(gitIgnore));
+      params.set(4, new JSONArray(includeFilePatterns));
+      params.set(5, new JSONArray(excludeFilePatterns));
+      params.set(6, new JSONNumber(searchResults));
+      params.set(7, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
@@ -6240,6 +6249,7 @@ public class RemoteServer implements Server
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
+   private static final String IS_GIT_DIRECTORY = "is_git_directory";
    private static final String LIST_FILES = "list_files";
    private static final String LIST_ALL_FILES = "list_all_files";
    private static final String CREATE_FOLDER = "create_folder";

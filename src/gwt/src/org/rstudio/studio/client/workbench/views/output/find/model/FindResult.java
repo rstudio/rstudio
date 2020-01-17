@@ -149,7 +149,7 @@ public class FindResult extends JavaScriptObject
          // combine the match on and match off lists into paired array lists for ease of use
          int difference = 0;
          int offset = 0;
-         int previousOnVal = 0; // we need this to adjust the matches is a replace is before it
+         int previousOnVal = 0; // we need this to adjust the matches if a replace is before it
          while (on.size() + off.size() > 0)
          {
             int onVal = on.size() == 0 ? Integer.MAX_VALUE : on.get(0);

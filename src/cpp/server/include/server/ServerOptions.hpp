@@ -20,6 +20,7 @@
 #include <map>
 #include <iosfwd>
 
+#include <boost/regex.hpp>
 #include <boost/utility.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -151,6 +152,11 @@ public:
    bool wwwDisableOriginCheck() const
    {
       return wwwDisableOriginCheck_;
+   }
+
+   std::vector<boost::regex> wwwAllowedOrigins()
+   {
+      return wwwAllowedOrigins_;
    }
 
    // auth
@@ -326,6 +332,7 @@ private:
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
    bool wwwDisableOriginCheck_;
+   std::vector<boost::regex> wwwAllowedOrigins_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

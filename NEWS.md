@@ -103,6 +103,8 @@
 * New `rstudio --version` command to return the version of RStudio Desktop (#3922)
 * Scan R Markdown YAML header for R packages required to render document (#4779)
 * Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
+* Support use of F13 - F24 for custom keyboard shortcuts (full Mac keyboard has F13-F19, for example)
+* Add ability to resize panes using keyboard arrow keys via View / Panes / Adjust Splitter
 
 ### Bugfixes
 

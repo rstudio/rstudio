@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTargetWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,6 +32,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -114,7 +116,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
                                      docDisplay_.asWidget(),
                                      null);
       panel_.setSize("100%", "100%");
-      
+      Roles.getTabpanelRole().set(panel_.getElement());
+      setAccessibleName(null);
       docDisplay_.setReadOnly(true);
       
       docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
@@ -285,7 +288,15 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          }
       }.schedule(100);
    }
-   
+
+   @Override
+   public void setAccessibleName(String name)
+   {
+      if (StringUtil.isNullOrEmpty(name))
+         name = "Untitled Source Viewer";
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name + " Source Viewer");
+   }
+
    private void showWarningImpl(final Command command)
    {
       if (warningBar_ == null)

@@ -513,6 +513,23 @@ public class PaneManager
       }
    }
    
+   @Handler
+   public void onFocusLeftSeparator()
+   {
+      left_.focusSplitter();
+   }
+   
+   @Handler
+   public void onFocusRightSeparator()
+   {
+      right_.focusSplitter();
+   }
+   
+   @Handler
+   public void onFocusCenterSeparator()
+   {
+      panel_.focusSplitter();
+   }
    
    private void swapConsolePane(PaneConfig paneConfig, int consoleTargetIndex)
    {

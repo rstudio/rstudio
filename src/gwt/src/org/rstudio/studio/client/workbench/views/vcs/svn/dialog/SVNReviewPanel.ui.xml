@@ -24,7 +24,7 @@
             <g:north size="28">
                <g:FlowPanel styleName="{res.styles.toolbarWrapper} {res.styles.diffToolbarWrapper}">
                   <g:FlowPanel styleName="{res.styles.diffViewOptions}">
-                     <g:Label text="Context" styleName="{res.styles.contextLabel}"/>
+                     <rs_widget:FormLabel ui:field="lblContext_" display="inline" text="Context" styleName="{res.styles.contextLabel}"/>
                      <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="0">
                         <g:item value="5">5 line</g:item>
                         <g:item value="10">10 line</g:item>

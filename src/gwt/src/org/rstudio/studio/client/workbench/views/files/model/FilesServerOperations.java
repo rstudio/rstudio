@@ -31,6 +31,9 @@ public interface FilesServerOperations
    void isTextFile(String path,
                    ServerRequestCallback<Boolean> requestCallback);
    
+   void isGitDirectory(String path,
+                       ServerRequestCallback<Boolean> requestCallback);
+
    void getFileContents(String path,
                         String encoding,
                         ServerRequestCallback<String> requestCallback);

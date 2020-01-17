@@ -1,7 +1,7 @@
 /*
  * KeyboardHelper.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -151,8 +151,8 @@ public class KeyboardHelper
       
       map[111] = "/";
       
-      // Function keys
-      for (var i = 112; i <= 123; i++)
+      // Function keys (full Mac keyboard supports up to F19, some keyboard go up to F24)
+      for (var i = 112; i <= 135; i++)
          map[i] = "F" + (i - 111);
       
       map[144] = "NumLock";

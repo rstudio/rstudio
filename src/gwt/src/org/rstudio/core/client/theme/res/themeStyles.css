@@ -20,6 +20,7 @@
 @external gwt-MenuItemSeparator, menuSeparatorInner, menuPopupMiddleCenter;
 @external gwt-MenuBar, gwt-MenuBar-vertical;
 @external gwt-SplitLayoutPanel-HDragger, gwt-SplitLayoutPanel-VDragger;
+@external gwt-SplitLayoutPanel-HDragger-focused, gwt-SplitLayoutPanel-VDragger-focused;
 @external gwt-SuggestBoxPopup, item-selected;
 @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
 @external gwt-TabLayoutPanelContentContainer, gwt-TabLayoutPanelTabs;
@@ -2500,6 +2501,10 @@ body.rstudio-themes-flat .rstudio-themes-default {
 .rstudio-themes-flat .rstudio-themes-default .gwt-SplitLayoutPanel-VDragger {
    background: THEME_DEFAULT_BODY_BACKGROUND !important;
 }
+.rstudio-themes-flat .rstudio-themes-default .gwt-SplitLayoutPanel-HDragger.gwt-SplitLayoutPanel-HDragger-focused,
+.rstudio-themes-flat .rstudio-themes-default .gwt-SplitLayoutPanel-VDragger.gwt-SplitLayoutPanel-VDragger-focused {
+   background: THEME_DARK_CONTROL_BACKGROUND !important;
+}
 
 .rstudio-themes-flat .rstudio-themes-default .rstudio-themes-border,
 .rstudio-themes-flat .rstudio-themes-default table.header > tbody > tr > td,
@@ -2556,6 +2561,11 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-HDragger,
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-VDragger {
    background: THEME_DARKGREY_BODY_BACKGROUND !important;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-HDragger.gwt-SplitLayoutPanel-HDragger-focused,
+.rstudio-themes-flat .rstudio-themes-dark-grey .gwt-SplitLayoutPanel-VDragger.gwt-SplitLayoutPanel-VDragger-focused {
+   background: THEME_LIGHT_CONTROL_BACKGROUND !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstudio-themes-border,
@@ -2616,6 +2626,11 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-HDragger,
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-VDragger {
    background: THEME_ALTERNATE_BODY_BACKGROUND !important;
+}
+
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-HDragger.gwt-SplitLayoutPanel-HDragger-focused,
+.rstudio-themes-flat .rstudio-themes-alternate .gwt-SplitLayoutPanel-VDragger.gwt-SplitLayoutPanel-VDragger-focused {
+   background: THEME_DARK_CONTROL_BACKGROUND !important;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .rstudio-themes-border,

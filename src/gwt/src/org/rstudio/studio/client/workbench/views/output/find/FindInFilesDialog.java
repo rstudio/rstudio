@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -42,6 +43,9 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,15 +62,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
                                              String path,
                                              boolean regex,
                                              boolean caseSensitive,
-                                             boolean gitIgnore,
-                                             JsArrayString filePatterns) /*-{
+                                             JsArrayString filePatterns,
+                                             JsArrayString excludeFilePatterns) /*-{
          return {
             query: query,
             path: path,
             regex: regex,
             caseSensitive: caseSensitive,
-            gitIgnore: gitIgnore,
             filePatterns: filePatterns,
+            excludeFilePatterns: excludeFilePatterns,
             resultsCount: 0,
             errorCount: 0,
             replaceErrors: ""
@@ -91,10 +95,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          return this.caseSensitive;
       }-*/;
 
-      public native final boolean gitIgnore() /*-{
-         return this.gitIgnore;
-      }-*/;
-
       public final String[] getFilePatterns()
       {
          return JsUtil.toStringArray(getFilePatternsNative());
@@ -102,6 +102,18 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       private native JsArrayString getFilePatternsNative() /*-{
          return this.filePatterns;
+      }-*/;
+
+      public final String[] getExcludeFilePatterns()
+      {
+         return JsUtil.toStringArray(getExcludeFilePatternsNative());
+      }
+
+      private native JsArrayString getExcludeFilePatternsNative() /*-{
+
+         if (!this.excludeFilePatterns)
+            this.excludeFilePatterns = [];
+         return this.excludeFilePatterns;
       }-*/;
 
       public native final void updateResultsCount(int count) /*-{
@@ -136,6 +148,21 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       }-*/;
    }
 
+   public enum IncludeFilePatterns
+   {
+      AllFiles,
+      CommonRSourceFiles,
+      RScripts,
+      CustomFilter
+   }
+
+   public enum ExcludeFilePatterns
+   {
+      None,
+      StandardGit,
+      CustomFilter
+   }
+
    public FindInFilesDialog(OperationWithInput<State> operation)
    {
       super("Find in Files", Roles.getDialogRole(), operation);
@@ -146,14 +173,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       labelFilePatterns_.setFor(listPresetFilePatterns_);
+      labelExcludeFilePatterns_.setFor(listPresetExcludeFilePatterns_);
       setOkButtonCaption("Find");
 
-      // give custom pattern textbox a label and extended description using the visible
-      // example shown below it
-      spanPatternExample_.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
-      Roles.getTextboxRole().setAriaLabelProperty(txtFilePattern_.getElement(), "Custom Filter Pattern");
-      Roles.getTextboxRole().setAriaDescribedbyProperty(txtFilePattern_.getElement(),
-            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
+      setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
 
       listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
       {
@@ -165,6 +189,15 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
       manageFilePattern();
 
+      listPresetExcludeFilePatterns_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageExcludeFilePattern();
+         }
+      });
+
       txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
       {
          @Override
@@ -175,42 +208,115 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       });
    }
 
+   public String getDirectory()
+   {
+      return dirChooser_.getText();
+   }
+
    public void setDirectory(FileSystemItem directory)
    {
       dirChooser_.setText(directory.getPath());
    }
 
+   public DirectoryChooserTextBox getDirectoryChooser()
+   {
+      return dirChooser_;
+   }
+
+   public void setGitStatus(boolean status)
+   {
+      gitStatus_ = status;
+      manageExcludeFilePattern();
+   }
+
    private void manageFilePattern()
    {
+      // disable custom filter text box when 'Custom Filter' is not selected
       divCustomFilter_.getStyle().setDisplay(
-            listPresetFilePatterns_.getSelectedIndex() == 3
+            (listPresetFilePatterns_.getSelectedIndex() ==
+             IncludeFilePatterns.CustomFilter.ordinal() &&
+             listPresetExcludeFilePatterns_.getSelectedIndex() != 
+             ExcludeFilePatterns.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
+   }
+
+   private void manageExcludeFilePattern()
+   {
+      // disable 'Standard Git exclusions' when directory is not a git repository
+      // or git is not installed
+      // this should come first as it may change the value of listPresetExcludeFilePatterns
+      if (!gitStatus_ ||
+          !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
+      {
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
+            .setAttribute("disabled", "disabled");
+         if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
+             ExcludeFilePatterns.StandardGit.ordinal())
+            listPresetExcludeFilePatterns_.setSelectedIndex(ExcludeFilePatterns.None.ordinal());
+      }
+      else
+         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
+            .removeAttribute("disabled");
+
+
+      // disable custom filter text box when 'Custom Filter' is not selected
+      divExcludeCustomFilter_.getStyle().setDisplay(
+            listPresetExcludeFilePatterns_.getSelectedIndex() == 
+            ExcludeFilePatterns.CustomFilter.ordinal()
+            ? Style.Display.BLOCK
+            : Style.Display.NONE);
+
+      // user cannot specify include patterns when using git grep
+      if (listPresetExcludeFilePatterns_.getSelectedIndex() != 
+          ExcludeFilePatterns.StandardGit.ordinal())
+         listPresetFilePatterns_.setEnabled(true);
+      else
+      {
+         listPresetFilePatterns_.setEnabled(false);
+         listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
+         manageFilePattern();
+      }
+
    }
 
    @Override
    protected State collectInput()
    {
-      String filePatterns =
+      String includeFilePatterns =
             listPresetFilePatterns_.getValue(
                   listPresetFilePatterns_.getSelectedIndex());
-      if (filePatterns == "custom")
-         filePatterns = txtFilePattern_.getText();
+      if (includeFilePatterns == "custom")
+         includeFilePatterns = txtFilePattern_.getText();
 
       ArrayList<String> list = new ArrayList<String>();
-      for (String pattern : filePatterns.split(","))
+      for (String pattern : includeFilePatterns.split(","))
       {
          String trimmedPattern = pattern.trim();
          if (trimmedPattern.length() > 0)
             list.add(trimmedPattern);
       }
 
+      String excludeFilePatterns =
+         listPresetExcludeFilePatterns_.getValue(
+               listPresetExcludeFilePatterns_.getSelectedIndex());
+      if (StringUtil.equals(excludeFilePatterns, "custom"))
+         excludeFilePatterns = txtExcludeFilePattern_.getText();
+
+      ArrayList<String> excludeList = new ArrayList<String>();
+      for (String pattern : excludeFilePatterns.split(","))
+      {
+         String trimmedPattern = pattern.trim();
+         if (trimmedPattern.length() > 0)
+            excludeList.add(trimmedPattern);
+      }
+
       return State.createState(txtSearchPattern_.getText(),
                                getEffectivePath().getPath(),
                                checkboxRegex_.getValue(),
                                checkboxCaseSensitive_.getValue(),
-                               checkboxIgnore_.getValue(),
-                               JsUtil.toJsArrayString(list));
+                               JsUtil.toJsArrayString(list),
+                               JsUtil.toJsArrayString(excludeList));
    }
 
    private FileSystemItem getEffectivePath()
@@ -266,21 +372,32 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxRegex_.setValue(dialogState.isRegex());
-      checkboxIgnore_.setValue(dialogState.gitIgnore());
       dirChooser_.setText(dialogState.getPath());
 
-      String filePatterns = StringUtil.join(
+      // indexes refer to corresponding enums, but left as ints for readability
+      String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (listPresetFilePatterns_.getValue(0) == filePatterns)
+      if (listPresetFilePatterns_.getValue(0) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(0);
-      else if (listPresetFilePatterns_.getValue(1) == filePatterns)
+      else if (listPresetFilePatterns_.getValue(1) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(1);
-      else if (listPresetFilePatterns_.getValue(2) == filePatterns)
+      else if (listPresetFilePatterns_.getValue(2) == includeFilePatterns)
          listPresetFilePatterns_.setSelectedIndex(2);
       else
          listPresetFilePatterns_.setSelectedIndex(3);
-      txtFilePattern_.setText(filePatterns);
+      txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
+
+      String excludeFilePatterns = StringUtil.join(
+         Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
+      if (listPresetExcludeFilePatterns_.getValue(0) == excludeFilePatterns)
+         listPresetExcludeFilePatterns_.setSelectedIndex(0);
+      else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
+         listPresetExcludeFilePatterns_.setSelectedIndex(1);
+      else
+         listPresetExcludeFilePatterns_.setSelectedIndex(2);
+      txtExcludeFilePattern_.setText(excludeFilePatterns);
+      manageExcludeFilePattern();
    }
    
    private void updateOkButtonEnabled()
@@ -288,12 +405,20 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
    }
 
+   private void setExampleIdAndAriaProperties(SpanElement span, TextBox textbox)
+   {
+      // give custom pattern textbox a label and extended description using the visible
+      // example shown below it
+      span.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+      Roles.getTextboxRole().setAriaLabelProperty(textbox.getElement(), "Custom Filter Pattern");
+      Roles.getTextboxRole().setAriaDescribedbyProperty(textbox.getElement(),
+            ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
+   }
+
    @UiField
    LabeledTextBox txtSearchPattern_;
    @UiField
    CheckBox checkboxRegex_;
-   @UiField
-   CheckBox checkboxIgnore_;
    @UiField
    CheckBox checkboxCaseSensitive_;
    @UiField(provided = true)
@@ -307,8 +432,20 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    DivElement divCustomFilter_;
    @UiField
+   TextBox txtExcludeFilePattern_;
+   @UiField
+   FormLabel labelExcludeFilePatterns_;
+   @UiField
+   ListBox listPresetExcludeFilePatterns_;
+   @UiField
+   DivElement divExcludeCustomFilter_;
+   @UiField
    SpanElement spanPatternExample_;
+   @UiField
+   SpanElement spanExcludePatternExample_;
 
+   private boolean gitStatus_;
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
+   private Session session_ = RStudioGinjector.INSTANCE.getSession();
 }

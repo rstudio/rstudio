@@ -1,7 +1,7 @@
 /*
  * MainSplitPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
@@ -199,6 +200,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       enforceBoundaries();
       deferredSaveWidthPercent();
+   }
+
+   public void focusSplitter()
+   {
+      Element splitter = getAssociatedSplitterElement(right_);
+      if (splitter != null)
+         splitter.focus();
    }
 
    private void enforceBoundaries()

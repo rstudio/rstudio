@@ -25,7 +25,8 @@ public interface FindInFilesServerOperations
                   boolean regex,
                   boolean ignoreCase,
                   FileSystemItem directory,
-                  JsArrayString filePatterns,
+                  JsArrayString includeFilePatterns,
+                  JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
@@ -37,19 +38,19 @@ public interface FindInFilesServerOperations
                        boolean regex,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
-                       JsArrayString filePatterns,
+                       JsArrayString includeFilePatterns,
+                       JsArrayString excludeFilePatterns,
                        String replaceString,
-                       boolean gitIgnore,
                        ServerRequestCallback<String> requestCallback);
 
    void completeReplace(String searchString,
                         boolean regex,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
-                        JsArrayString filePatterns,
+                        JsArrayString includeFilePatterns,
+                        JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,
-                        boolean gitIgnore,
                         ServerRequestCallback<String> requestCallback);
 
    void stopReplace(String findOperationHandle,

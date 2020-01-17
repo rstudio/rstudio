@@ -35,8 +35,9 @@ public:
                           const std::string& baseUri,
                           core::system::FileMode fileMode,
                           bool disableOriginCheck = true,
+                          const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                           const Headers& additionalHeaders = Headers())
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck, additionalHeaders),
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders),
         fileMode_(fileMode)
    {
    }

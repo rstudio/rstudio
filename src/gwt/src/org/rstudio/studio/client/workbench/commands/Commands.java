@@ -621,6 +621,10 @@ public abstract class
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();
+   public abstract AppCommand focusLeftSeparator();
+   public abstract AppCommand focusRightSeparator();
+   public abstract AppCommand focusCenterSeparator();
+   
 
    // Main menu (server)
    public abstract AppCommand showFileMenu();
@@ -640,6 +644,7 @@ public abstract class
    public abstract AppCommand toggleTabKeyMovesFocus();
    public abstract AppCommand showAccessibilityOptions();
    public abstract AppCommand focusMainToolbar();
+   public abstract AppCommand speakEditorLocation();
    
    // Internal
    public abstract AppCommand showDomElements();

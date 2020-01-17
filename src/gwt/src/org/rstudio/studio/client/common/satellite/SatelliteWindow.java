@@ -1,7 +1,7 @@
 /*
  * SatelliteWindow.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,7 +144,7 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      int delayMs = RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
+      int delayMs = event.getImmediate() ? 0 : RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
          ariaLiveStatusWidget_.announce(event.getMessage(), delayMs);
    }
