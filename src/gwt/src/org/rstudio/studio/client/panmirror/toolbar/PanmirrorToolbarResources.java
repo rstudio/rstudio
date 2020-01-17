@@ -23,13 +23,14 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
 
+
 public interface PanmirrorToolbarResources extends ClientBundle
 {
-   public static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
+      String toolbarTextMenuButton();
    }
 
-  
    @Source("PanmirrorToolbar.css")
    Styles styles();
  

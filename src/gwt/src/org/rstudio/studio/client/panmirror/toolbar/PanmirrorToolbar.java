@@ -44,7 +44,7 @@ public class PanmirrorToolbar extends SecondaryToolbar
       removeAllWidgets();
       
       PanmirrorToolbarRadioMenu blockMenu = createBlockMenu();
-      addLeftWidget(addRadioMenu(blockMenu));
+      addLeftTextMenu(addRadioMenu(blockMenu));
       
       addLeftSeparator();
       
@@ -75,12 +75,12 @@ public class PanmirrorToolbar extends SecondaryToolbar
       addLeftSeparator();
       
       PanmirrorToolbarMenu formatMenu = createFormatMenu();
-      addLeftWidget(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
+      addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
       
       addLeftSeparator();
       
       PanmirrorToolbarMenu insertMenu = createInsertMenu();
-      addLeftWidget(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
+      addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
    }
    
    public void sync()
@@ -203,6 +203,12 @@ public class PanmirrorToolbar extends SecondaryToolbar
    private void addLeftButton(String id)
    {
       addLeftWidget(addButton(id));
+   }
+   
+   private void addLeftTextMenu(ToolbarMenuButton menuButton)
+   {
+      addLeftWidget(menuButton);
+      menuButton.addStyleName(RES.styles().toolbarTextMenuButton());
    }
    
    private PanmirrorToolbarRadioMenu addRadioMenu(PanmirrorToolbarRadioMenu menu)
