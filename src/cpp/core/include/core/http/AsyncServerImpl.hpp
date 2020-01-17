@@ -74,11 +74,13 @@ public:
    AsyncServerImpl(const std::string& serverName,
                    const std::string& baseUri = std::string(),
                    bool disableOriginCheck = true,
+                   const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                    const Headers& additionalResponseHeaders = Headers())
       : abortOnResourceError_(false),
         serverName_(serverName),
         baseUri_(baseUri),
         originCheckDisabled_(disableOriginCheck),
+        allowedOrigins_(allowedOrigins),
         additionalResponseHeaders_(additionalResponseHeaders),
         acceptorService_(),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
@@ -437,10 +439,26 @@ private:
 
                if (!originator.empty() && originator != host)
                {
-                  LOG_ERROR_MESSAGE("Rejecting request with mismatched originator " + originator + " - "
-                                    "expected: " + host + " for URI " + pRequest->uri());
-                  pConnection->response().setStatusCode(http::status::BadRequest);
-                  return false;
+                  // origin does not match destination, but that might be okay
+                  // we will not reject the request if the originator matches an allowed origin
+                  bool originMatches = false;
+                  for (const boost::regex& re : allowedOrigins_)
+                  {
+                     boost::smatch match;
+                     if (boost::regex_match(originator, re))
+                     {
+                        originMatches = true;
+                        break;
+                     }
+                  }
+
+                  if (!originMatches)
+                  {
+                     LOG_ERROR_MESSAGE("Rejecting request with mismatched originator " + originator + " - "
+                                       "expected: " + host + " for URI " + pRequest->uri());
+                     pConnection->response().setStatusCode(http::status::BadRequest);
+                     return false;
+                  }
                }
             }
          }
@@ -670,6 +688,7 @@ private:
    std::string serverName_;
    std::string baseUri_;
    bool originCheckDisabled_;
+   std::vector<boost::regex> allowedOrigins_;
    Headers additionalResponseHeaders_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;

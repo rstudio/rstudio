@@ -197,6 +197,9 @@ ProgramStatus Options::read(int argc,
    // generate monitor shared secret
    monitorSharedSecret_ = core::system::generateUuid();
 
+   // temporary list of origins in string form - later converted to regex
+   std::vector<std::string> wwwAllowedOrigins;
+
    // program - name and execution
    options_description server("server");
    server.add_options()
@@ -262,7 +265,10 @@ ProgramStatus Options::read(int argc,
          "allowed origin for hosting frame")
       ("www-disable-origin-check",
          value<bool>(&wwwDisableOriginCheck_)->default_value(false),
-         "disable check that ensures request origin is from the host domain");
+         "disable check that ensures request origin is from the host domain")
+      ("www-allow-origin",
+         value<std::vector<std::string>>(&wwwAllowedOrigins)->default_value(std::vector<std::string>{})->multitoken(),
+         "allows requests from this origin, even if it does not match the host domain");
 
    // rsession
    Deprecated dep;
@@ -454,6 +460,27 @@ ProgramStatus Options::read(int argc,
       Error error = core::readStringFromFile(loginPageHtmlPath, &authLoginPageHtml_);
       if (error)
          LOG_ERROR(error);
+   }
+
+   // trim any whitespace in allowed origins
+   for (std::string& origin : wwwAllowedOrigins)
+   {
+      try
+      {
+         // escape domain part separators
+         boost::replace_all(origin, ".", "\\.");
+
+         // fix up wildcards
+         boost::replace_all(origin, "*", ".*");
+
+         boost::regex re(origin);
+         wwwAllowedOrigins_.push_back(re);
+      }
+      catch (boost::bad_expression&)
+      {
+         LOG_ERROR_MESSAGE("Specified origin " + origin + " is an invalid domain. "
+                           "It will not be available when performing origin safety checks.");
+      }
    }
 
    // return status
