@@ -15,6 +15,9 @@
 
 package org.rstudio.studio.client.panmirror.toolbar;
 
+
+
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 
 import com.google.gwt.aria.client.MenuitemRole;
@@ -31,11 +34,17 @@ public class PanmirrorCommandUI implements ScheduledCommand
       this.menuText_ = menuText;
       this.menuRole_ = role;
       this.image_ = image;
+      this.shortcut_ = getShortcut(command);
    }
    
    public String getMenuText()
    {
       return menuText_;
+   }
+     
+   public String getShortcut()
+   {
+      return shortcut_;
    }
    
    public MenuitemRole getMenuRole()
@@ -76,11 +85,30 @@ public class PanmirrorCommandUI implements ScheduledCommand
          command_.execute();
    }
   
+   private static String getShortcut(PanmirrorCommand command)
+   {
+      if (command != null && command.keymap.length > 0) 
+      {
+         // normalize to RStudio shortcut string
+         String key = command.keymap[0];
+         key = key.replace('-', '+');
+         key = key.replace("Mod", "Cmd");
+         
+         // capitalize the last 
+         KeySequence keySequence = KeySequence.fromShortcutString(key);
+         return keySequence.toString(true);
+      }
+      else
+      {
+         return null;
+      }
+   }
    
    private final PanmirrorCommand command_;
    private final String menuText_;
    private final MenuitemRole menuRole_;
    private final ImageResource image_;
+   private final String shortcut_;
    
      
 }

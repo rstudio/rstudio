@@ -69,7 +69,7 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
       return AppCommand.formatMenuLabelWithStyle(
          menuImageResource(), 
          commandUI_.getMenuText(), 
-         null, 
+         commandUI_.getShortcut(), 
          isCheckable() ? ThemeStyles.INSTANCE.menuCheckable() : null
       );
    }

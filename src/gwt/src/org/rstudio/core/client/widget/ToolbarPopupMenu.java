@@ -193,6 +193,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       callback.onPopupMenu(this);
    }
+   
+   public void addMenuBarStyle(String style)
+   {
+      menuBar_.addStyleName(style);
+   }
 
    private class ToolbarPopupMenuCommand implements ScheduledCommand
    {

@@ -26,17 +26,22 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorCommandUIObject
 {
-   
    public PanmirrorToolbarMenu(PanmirrorToolbarCommands commands)
    {
-      commands_ = commands;
-      getElement().getStyle().setZIndex(1000);
+      init(commands);
    }
    
    private PanmirrorToolbarMenu(PanmirrorToolbarMenu parent, PanmirrorToolbarCommands commands)
    {
       super(parent);
+      init(commands);
+   }
+   
+   private void init(PanmirrorToolbarCommands commands)
+   {
       commands_ = commands;
+      addStyleName(RES.styles().toolbarPopupMenu());
+      getElement().getStyle().setZIndex(1000);
    }
    
    @Override
@@ -57,6 +62,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    public PanmirrorToolbarMenu addSubmenu(String text)
    { 
       PanmirrorToolbarMenu submenu = new PanmirrorToolbarMenu(this, commands_);
+      submenu.addMenuBarStyle(RES.styles().toolbarPopupMenu());
       addItem(new MenuItem(menuText(text)), submenu);
       uiObjects_.add(submenu);
       return submenu;
@@ -73,7 +79,8 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       return SafeHtmlUtils.fromTrustedString(AppCommand.formatMenuLabel(null, text, null));
    }
    
+   private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
    private final ArrayList<PanmirrorCommandUIObject> uiObjects_ = new ArrayList<PanmirrorCommandUIObject>();
-   private final PanmirrorToolbarCommands commands_;
+   private PanmirrorToolbarCommands commands_;
    
 }

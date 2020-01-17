@@ -1,5 +1,11 @@
 @charset "UTF-8";
 
+@external gwt-MenuItem;
+
 .toolbarTextMenuButton {
-  margin-top: -4px
+   margin-top: -4px
+}
+
+.toolbarPopupMenu .gwt-MenuItem {
+   min-width: 200px;
 }
