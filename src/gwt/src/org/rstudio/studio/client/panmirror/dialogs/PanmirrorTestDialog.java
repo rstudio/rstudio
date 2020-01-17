@@ -33,7 +33,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
      
       
       PanmirrorWidget.Options options = new PanmirrorWidget.Options();
-      options.toolbar = true;
+   
       
       PanmirrorWidget.create(config, options, editorWidget -> {
          if (editorWidget != null) {
@@ -86,7 +86,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   
                   this.editorWidget_.enableDevTools();
                   
-                  this.editorWidget_.showOutline(true);
+                  // this.editorWidget_.showOutline(true);
                }
             });
          }
