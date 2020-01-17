@@ -1,7 +1,7 @@
 /*
  * ShellWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -593,7 +593,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   return;
                break;
             case KeyCodes.KEY_TAB:
-               if (prefs_.tabKeyMoveFocus().getValue())
+               if (prefs_ == null || prefs_.tabKeyMoveFocus().getValue())
                   return;
          }
          input_.setFocus(true);
