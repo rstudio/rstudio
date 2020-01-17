@@ -3,7 +3,9 @@
 
 ## TODO
 
-- Table header seems to not work (or in the IDE it doesn't show up?)
+- Eliminate some toolbar buttons when toolbar gets more narrow
+
+- Cursor location for insert yaml in the middle of paragraph
 
 
 ## Enhancements
