@@ -156,7 +156,7 @@ private:
    // The private implementation of ErrorLocation.
    PRIVATE_IMPL(m_impl);
 };
- 
+
 /**
  * @brief Convenience typedef for error properties.
  */
@@ -221,6 +221,47 @@ public:
     * @param in_location        The location of the error.
     */
    Error(const boost::system::error_code& in_ec,
+         std::string in_message,
+         const Error& in_cause,
+         const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error condition to convert from.
+    * @param in_location        The location of the error.
+    */
+   Error(const boost::system::error_condition& in_ec, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error condition to convert from.
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
+   Error(const boost::system::error_condition& in_ec, const Error& in_cause, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error condition to convert from.
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_location        The location of the error.
+    */
+   Error(const boost::system::error_condition& in_ec, std::string in_message, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_ec              The boost error condition to convert from.
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
+   Error(const boost::system::error_condition& in_ec,
          std::string in_message,
          const Error& in_cause,
          const ErrorLocation& in_location);

@@ -210,7 +210,31 @@ Error::Error(
    std::string in_message,
    const Error& in_cause,
    const ErrorLocation& in_location) :
-      m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_cause, in_location))
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_cause, in_location))
+{
+}
+
+Error::Error(const boost::system::error_condition& in_ec, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), in_ec.message(), in_location))
+{
+}
+
+Error::Error(const boost::system::error_condition& in_ec, const Error& in_cause, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), in_ec.message(), in_cause, in_location))
+{
+}
+
+Error::Error(const boost::system::error_condition& in_ec, std::string in_message, const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_location))
+{
+}
+
+Error::Error(
+   const boost::system::error_condition& in_ec,
+   std::string in_message,
+   const Error& in_cause,
+   const ErrorLocation& in_location) :
+   m_impl(new Impl(in_ec.value(), in_ec.category().name(), std::move(in_message), in_cause, in_location))
 {
 }
 
@@ -235,7 +259,7 @@ Error::Error(
    std::string in_message,
    const Error& in_cause,
    const ErrorLocation& in_location) :
-      m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_cause, in_location))
+   m_impl(new Impl(in_code, std::move(in_name), std::move(in_message), in_cause, in_location))
 {
 }
 
@@ -372,12 +396,12 @@ const std::string& Error::getName() const
 {
    return impl().Name;
 }
-   
+
 const ErrorProperties& Error::getProperties() const
 {
    return impl().Properties;
 }
-   
+
 std::string Error::getProperty(const std::string& in_name) const
 {
    for (const auto & it : getProperties())
@@ -385,7 +409,7 @@ std::string Error::getProperty(const std::string& in_name) const
       if (it.first == in_name)
          return it.second;
    }
-   
+
    return std::string();
 }
 
