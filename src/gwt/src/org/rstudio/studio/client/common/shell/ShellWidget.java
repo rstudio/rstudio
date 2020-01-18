@@ -773,7 +773,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       scrollPanel_.onContentSizeChanged();
    }
-   
+
+   public Widget getOutputWidget()
+   {
+      return output_.getWidget();
+   }
+
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
    private final PreWidget pendingInput_;
