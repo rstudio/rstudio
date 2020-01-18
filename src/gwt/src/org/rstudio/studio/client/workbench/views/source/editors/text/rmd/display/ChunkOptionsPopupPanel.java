@@ -202,8 +202,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       
       int row = includeChunkNameUI ? 1 : 0;
-      nameAndOutputGrid.setWidget(row, 0, new Label("Output:"));
+      FormLabel outputLabel = new FormLabel("Output:");
+      nameAndOutputGrid.setWidget(row, 0, outputLabel);
       nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
+      outputLabel.setFor(outputComboBox_);
       
       panel_.add(nameAndOutputGrid);
       
@@ -255,13 +257,13 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       figureDimensionsPanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
       
       figWidthBox_ = makeInputBox("fig.width", false);
-      Label widthLabel = new Label("Width (inches):");
+      FormLabel widthLabel = new FormLabel("Width (inches):", figWidthBox_);
       widthLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(0, 0, widthLabel);
       figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
       
       figHeightBox_ = makeInputBox("fig.height", false);
-      Label heightLabel = new Label("Height (inches):");
+      FormLabel heightLabel = new FormLabel("Height (inches):", figHeightBox_);
       heightLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(1, 0, heightLabel);
       figureDimensionsPanel_.setWidget(1, 1, figHeightBox_);
