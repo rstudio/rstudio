@@ -1,4 +1,4 @@
-import { IconName } from '@blueprintjs/core';
+import { IconName, MaybeElement } from '@blueprintjs/core';
 
 import { EditorCommandId } from 'editor/src/api/command';
 
@@ -30,7 +30,7 @@ export interface Command {
   readonly group: string;
 
   // optional blueprint icon for toolbar/menu
-  readonly icon?: IconName;
+  readonly icon?: IconName | MaybeElement;
 
   // keys to bind to
   readonly keymap: readonly string[];

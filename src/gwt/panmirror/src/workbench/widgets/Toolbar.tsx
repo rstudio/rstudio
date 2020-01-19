@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { IconNames } from '@blueprintjs/icons';
-import { IProps, ButtonGroup, Button, Text, IconName, Divider, Popover, Position, Menu } from '@blueprintjs/core';
+import { IProps, ButtonGroup, Button, Text, IconName, Divider, Popover, Position, Menu, MaybeElement } from '@blueprintjs/core';
 
 import styles from './Toolbar.module.scss';
 
@@ -14,7 +14,7 @@ export const Toolbar: React.FC<IProps> = props => {
 };
 
 export interface ToolbarButtonProps extends IProps {
-  icon?: IconName;
+  icon?: IconName | MaybeElement;
   title: string;
   enabled: boolean;
   active: boolean;
