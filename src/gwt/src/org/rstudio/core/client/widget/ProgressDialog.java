@@ -40,8 +40,6 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 
 public abstract class ProgressDialog extends ModalDialogBase
 {
@@ -177,10 +175,8 @@ public abstract class ProgressDialog extends ModalDialogBase
       if (operationStarted_)
       {
          operationStarted_ = false;
-         RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-               new AriaLiveStatusEvent(
-                     StringUtil.isNullOrEmpty(labelText_) ? 
-                           "Operation completed" : labelText_ + " completed", true));
+         announceCompletion(StringUtil.isNullOrEmpty(labelText_) ?
+            "Operation completed" : labelText_ + " completed");
       }
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
    }
@@ -189,7 +185,12 @@ public abstract class ProgressDialog extends ModalDialogBase
    {
       return false;
    }
-   
+
+   /**
+    * Invoked when action has completed with a message suitable for announcement via
+    * screen readers
+    */
+   protected abstract void announceCompletion(String message);
    
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
   
@@ -208,5 +209,5 @@ public abstract class ProgressDialog extends ModalDialogBase
    private boolean operationStarted_;
    private String labelText_;
 
-   private static final Resources resources_ = GWT.<Resources>create(Resources.class);
+   private static final Resources resources_ = GWT.create(Resources.class);
 }
