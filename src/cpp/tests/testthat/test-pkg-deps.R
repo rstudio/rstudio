@@ -92,3 +92,20 @@ test_that("package dependencies are discovered in R Markdown YAML headers", {
    expect_equal(packages, "shiny")
 })
 
+test_that("R scripts do not get treated like R Markdown docs", {
+   # ensures that the --- YAML delimiters don't cause us to try to parse YAML inside R scripts
+   contents <- paste(
+      "require(ggplot2)",
+      "require(yaml)",
+      "",
+      "# ---",
+      "# This is a comment header: a long one, too.",
+      "x <- 1",
+      "y <- 2",
+      "# ---",
+      "",
+      "", sep = "\n")
+   packages <- .rs.parsePackageDependencies(contents, ".R")
+   expect_equal(sort(packages), sort(c("ggplot2", "yaml")))
+})
+

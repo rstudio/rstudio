@@ -2119,13 +2119,20 @@
 
    # for R Markdown docs, scan the YAML header (requires the YAML package, a dependency of
    # rmarkdown)
-   if (requireNamespace("yaml", quietly = TRUE))
+   if (identical(extension, ".Rmd") && requireNamespace("yaml", quietly = TRUE))
    {
       # split document into sections based on the YAML header delimter
       sections <- unlist(strsplit(contents, "---", fixed = TRUE))
       if (length(sections) > 2)
       {
-         front <- yaml::read_yaml(text = sections[[2]])
+         front <- NULL
+
+         tryCatch({
+            front <- yaml::read_yaml(text = sections[[2]])
+         }, error = function(e) {
+            # ignore errors when reading YAML; it's very possible that the document's YAML will not
+            # be correct at all times (e.g. during editing) 
+         })
 
          # start with an empty output
          output <- NULL
