@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
@@ -827,7 +826,7 @@ public abstract class ModalDialogBase extends DialogBox
    @Override
    public void reportStatus(String status, int delayMs)
    {
-      ariaLiveStatusWidget_.announce(status, delayMs);
+      ariaLiveStatusWidget_.reportStatus(status, delayMs);
    }
 
    private static Resources RES = GWT.create(Resources.class);

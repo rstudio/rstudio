@@ -24,6 +24,7 @@ import org.rstudio.core.client.a11y.A11y;
  * A visually hidden widget for performing aria-live status announcements.
  */
 public class AriaLiveStatusWidget extends Widget
+                                  implements AriaLiveStatusReporter
 {
    public AriaLiveStatusWidget()
    {
@@ -32,7 +33,7 @@ public class AriaLiveStatusWidget extends Widget
       Roles.getStatusRole().set(getElement());
    }
 
-   public void announce(String message, int speakDelayMs)
+   public void reportStatus(String message, int speakDelayMs)
    {
       if (speakDelayMs < 0)
       {

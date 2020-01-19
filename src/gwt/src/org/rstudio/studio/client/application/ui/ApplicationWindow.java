@@ -282,7 +282,7 @@ public class ApplicationWindow extends Composite
    @Override
    public void reportStatus(String message, int delayMs)
    {
-      ariaLiveStatusWidget_.announce(message, delayMs);
+      ariaLiveStatusWidget_.reportStatus(message, delayMs);
    }
 
    @Override
