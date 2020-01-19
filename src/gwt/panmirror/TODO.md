@@ -13,6 +13,8 @@ https://docs.google.com/document/d/1QI6eBTbf5_Hf5sb4UxlYLlrE2bB918l4JXzUqoXv32Y/
 
 - Cursor location for insert yaml in the middle of paragraph
 
+- Issue w/ tons of pandoc processes stacking up (realtime edit of manual.md, IDE usage in background)
+  Maybe not getting reaped by node???. Also had just run TinyTex.  
 
 ## Enhancements
 
