@@ -33,8 +33,8 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -100,6 +100,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Inject
    public Shell(ConsoleServerOperations server, 
                 EventBus eventBus,
+                AriaLiveService ariaLive,
                 Display display,
                 Session session,
                 Commands commands,
@@ -115,6 +116,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       server_ = server;
       eventBus_ = eventBus;
+      ariaLive_ = ariaLive;
       view_ = display;
       commands_ = commands;
       errorManager_ = errorManager;
@@ -249,7 +251,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
       
-      eventBus_.fireEvent(new AriaLiveStatusEvent("Console cleared", true));
+      ariaLive_.reportStatus("Console cleared");
       
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
@@ -775,6 +777,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private final ConsoleServerOperations server_;
    private final EventBus eventBus_;
+   private final AriaLiveService ariaLive_;
    private final Display view_;
    private final Commands commands_;
    private final ErrorManager errorManager_;

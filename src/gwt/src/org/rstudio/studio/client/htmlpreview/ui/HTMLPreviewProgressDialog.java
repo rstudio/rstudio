@@ -18,7 +18,6 @@ package org.rstudio.studio.client.htmlpreview.ui;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.common.compile.CompileOutputBuffer;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -92,7 +91,7 @@ public class HTMLPreviewProgressDialog extends ProgressDialog
    @Override
    protected void announceCompletion(String message)
    {
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new AriaLiveStatusEvent(message, true));
+      RStudioGinjector.INSTANCE.getAriaLiveService().reportStatus(message);
    }
 
    private CompileOutputBuffer output_;

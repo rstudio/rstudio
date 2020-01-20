@@ -26,7 +26,7 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
 
    public AriaLiveStatusEvent(String message)
    {
-      this(message, false);
+      this(message, true);
    }
    
    public AriaLiveStatusEvent(String message, boolean immediate)
