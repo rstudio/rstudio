@@ -38,7 +38,7 @@ class Error;
 class ErrorLocation;
 
 } // namespace rstudio
-} // namesapce core
+} // namespace core
 
 
 namespace rstudio {
