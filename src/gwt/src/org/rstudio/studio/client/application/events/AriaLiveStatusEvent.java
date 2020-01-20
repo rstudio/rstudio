@@ -24,11 +24,6 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
       void onAriaLiveStatus(AriaLiveStatusEvent event);
    }
 
-   public AriaLiveStatusEvent(String message)
-   {
-      this(message, true);
-   }
-   
    public AriaLiveStatusEvent(String message, boolean immediate)
    {
       message_ = message;
