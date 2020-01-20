@@ -57,6 +57,7 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.theme.DocTabSelectionEvent;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -3746,7 +3747,18 @@ public class Source implements InsertSourceHandler,
             {
                public void execute()
                {
-                  if (activeEditor_ != null)
+                  // presume that we will give focus to the tab
+                  boolean focus = true;
+                  
+                  if (event instanceof DocTabSelectionEvent)
+                  {
+                     // however, if this event was generated from a doc tab
+                     // selection that did not have focus, don't steal focus
+                     DocTabSelectionEvent tabEvent = (DocTabSelectionEvent) event;
+                     focus = tabEvent.getFocus();
+                  }
+
+                  if (focus && activeEditor_ != null)
                      activeEditor_.focus();
                }
             });
