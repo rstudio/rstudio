@@ -64,8 +64,8 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ApplicationUtils;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -262,6 +262,7 @@ public class Source implements InsertSourceHandler,
                  FileDialogs fileDialogs,
                  RemoteFileSystemContext fileContext,
                  EventBus events,
+                 AriaLiveService ariaLive,
                  final Session session,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
@@ -284,6 +285,7 @@ public class Source implements InsertSourceHandler,
       fileContext_ = fileContext;
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       events_ = events;
+      ariaLive_ = ariaLive;
       session_ = session;
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
@@ -4195,7 +4197,7 @@ public class Source implements InsertSourceHandler,
       {
          announcement = activeEditor_.getCurrentStatus();
       }
-      events_.fireEvent(new AriaLiveStatusEvent(announcement, true));
+      ariaLive_.reportStatus(announcement);
    }
    
    @Handler
@@ -4975,6 +4977,7 @@ public class Source implements InsertSourceHandler,
    private final RemoteFileSystemContext fileContext_;
    private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EventBus events_;
+   private final AriaLiveService ariaLive_;
    private final Session session_;
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;

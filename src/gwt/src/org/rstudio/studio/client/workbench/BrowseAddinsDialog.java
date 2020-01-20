@@ -1,7 +1,7 @@
 /*
  * BrowseAddinsDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,8 +52,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
@@ -168,10 +167,10 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    }
    
    @Inject
-   private void initialize(AddinsCommandManager addinsCommandManager, EventBus events)
+   private void initialize(AddinsCommandManager addinsCommandManager, AriaLiveService ariaLive)
    {
       addinsCommandManager_ = addinsCommandManager;
-      events_ = events;
+      ariaLive_ = ariaLive;
    }
    
    private void addColumns()
@@ -290,8 +289,8 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       dataProvider_.setList(data);
-      events_.fireEvent(new AriaLiveStatusEvent(
-            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query)));
+      ariaLive_.reportStatusDebounced(
+            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query));
    }
    
    @Override
@@ -367,7 +366,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    
    // Injected ----
    private AddinsCommandManager addinsCommandManager_;
-   private EventBus events_;
+   private AriaLiveService ariaLive_;
 
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

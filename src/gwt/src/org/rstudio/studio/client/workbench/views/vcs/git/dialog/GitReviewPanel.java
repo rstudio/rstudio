@@ -1,7 +1,7 @@
 /*
  * GitReviewPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,8 +48,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -215,9 +214,11 @@ public class GitReviewPanel extends ResizeComposite implements Display
                          final Commands commands,
                          FileTypeRegistry fileTypeRegistry,
                          CheckoutBranchToolbarButton branchToolbarButton,
+                         AriaLiveService ariaLive,
                          Provider<UserPrefs> pPrefs)
    {
       fileTypeRegistry_ = fileTypeRegistry;
+      ariaLive_ = ariaLive;
       pPrefs_ = pPrefs;
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
@@ -710,7 +711,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       }
 
       // Debounce an update to the accessible character count
-      RStudioGinjector.INSTANCE.getEventBus().fireEvent(new AriaLiveStatusEvent(liveRegionMessage));
+      ariaLive_.reportStatusDebounced(liveRegionMessage);
    }
 
    @UiField(provided = true)
@@ -762,6 +763,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private ToolbarButton unstageAllButton_;
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
+   private final AriaLiveService ariaLive_;
    private final Provider<UserPrefs> pPrefs_;
    private LeftRightToggleButton switchViewButton_;
 
