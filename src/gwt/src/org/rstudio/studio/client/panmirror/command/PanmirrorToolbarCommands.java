@@ -21,12 +21,13 @@ import org.rstudio.studio.client.panmirror.Panmirror;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.resources.client.ImageResource;
 
 public class PanmirrorToolbarCommands
 {
    public PanmirrorToolbarCommands(PanmirrorCommand[] commands)
    {
+      PanmirrorCommandIcons icons = PanmirrorCommandIcons.INSTANCE;
+
       // init commands
       commands_ = commands;
       
@@ -36,9 +37,9 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.SelectAll, "Select All");
       
       // formatting
-      add(Panmirror.EditorCommands.Strong, "Bold", RES.bold());
-      add(Panmirror.EditorCommands.Em, "Italic", RES.italic());
-      add(Panmirror.EditorCommands.Code, "Code",RES.code());
+      add(Panmirror.EditorCommands.Strong, "Bold", icons.BOLD);
+      add(Panmirror.EditorCommands.Em, "Italic", icons.ITALIC);
+      add(Panmirror.EditorCommands.Code, "Code", icons.CODE);
       add(Panmirror.EditorCommands.Strikeout, "Strikeout");
       add(Panmirror.EditorCommands.Superscript, "Superscript");
       add(Panmirror.EditorCommands.Subscript, "Subscript");
@@ -52,14 +53,14 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.Heading5, "Heading 5", Roles.getMenuitemradioRole());
       add(Panmirror.EditorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
       add(Panmirror.EditorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
-      add(Panmirror.EditorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), RES.blockquote());
+      add(Panmirror.EditorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(Panmirror.EditorCommands.LineBlock, "Line Block");
       add(Panmirror.EditorCommands.Div, "Section/Div...");
       add(Panmirror.EditorCommands.AttrEdit, "Edit Attributes...");
       
       // lists
-      add(Panmirror.EditorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), RES.bullet_list());
-      add(Panmirror.EditorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), RES.numbered_list());
+      add(Panmirror.EditorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
+      add(Panmirror.EditorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
       add(Panmirror.EditorCommands.TightList, "Tight List", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.ListItemSink, "Sink Item");
       add(Panmirror.EditorCommands.ListItemLift, "Lift Item");
@@ -68,7 +69,7 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.OrderedListEdit, "List Attributes...");
       
       // tables
-      add(Panmirror.EditorCommands.TableInsertTable, "Insert Table...", RES.table());
+      add(Panmirror.EditorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
       add(Panmirror.EditorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
       add(Panmirror.EditorCommands.TableAddColumnAfter, "Insert Column Right");
@@ -86,8 +87,8 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.TableAlignColumnDefault, "Default");
      
       // insert
-      add(Panmirror.EditorCommands.Link, "Link...", RES.link());
-      add(Panmirror.EditorCommands.Image, "Image...", RES.image());
+      add(Panmirror.EditorCommands.Link, "Link...", icons.LINK);
+      add(Panmirror.EditorCommands.Image, "Image...", icons.IMAGE);
       add(Panmirror.EditorCommands.Footnote, "Footnote");
       add(Panmirror.EditorCommands.HorizontalRule, "Horizontal Rule");
       add(Panmirror.EditorCommands.ParagraphInsert, "Paragraph");
@@ -97,7 +98,7 @@ public class PanmirrorToolbarCommands
       add(Panmirror.EditorCommands.RawInline, "Raw Inline...");
       add(Panmirror.EditorCommands.RawBlock, "Raw Block...");
       add(Panmirror.EditorCommands.YamlMetadata, "YAML Block...");
-      add(Panmirror.EditorCommands.RmdChunk, "Code Chunk", RES.rmd_chunk());
+      add(Panmirror.EditorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
       add(Panmirror.EditorCommands.DefinitionList, "Definition List");
       add(Panmirror.EditorCommands.DefinitionTerm, "Term");
       add(Panmirror.EditorCommands.DefinitionDescription, "Description");
@@ -115,7 +116,7 @@ public class PanmirrorToolbarCommands
       add(id, menuText, Roles.getMenuitemRole());
    }
    
-   private void add(String id, String menuText, ImageResource image)
+   private void add(String id, String menuText, String image)
    {
       add(id, menuText, Roles.getMenuitemRole(), image);
    }
@@ -126,7 +127,7 @@ public class PanmirrorToolbarCommands
       add(id, menuText, role, null);
    }
    
-   private void add(String id, String menuText, MenuitemRole role, ImageResource image)
+   private void add(String id, String menuText, MenuitemRole role, String image)
    {
       // lookup the underlying command
       PanmirrorCommand command = null;
@@ -140,7 +141,6 @@ public class PanmirrorToolbarCommands
       commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, role, image));
    }
    
-   private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
    
    private PanmirrorCommand[] commands_ = null;
    private final HashMap<String,PanmirrorCommandUI> commandsUI_ = new HashMap<String,PanmirrorCommandUI>();

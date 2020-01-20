@@ -38,14 +38,27 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("bold_2x.png")
    ImageResource bold();
    
+   @Source("bold_dm_2x.png")
+   ImageResource bold_dm();
+   
    @Source("blockquote_2x.png")
    ImageResource blockquote();
    
+   @Source("blockquote_dm_2x.png")
+   ImageResource blockquote_dm();
+   
    @Source("code_2x.png")
    ImageResource code();
+
+   @Source("code_dm_2x.png")
+   ImageResource code_dm();
+ 
    
    @Source("italic_2x.png")
    ImageResource italic();
+   
+   @Source("italic_dm_2x.png")
+   ImageResource italic_dm();
    
    @Source("link_2x.png")
    ImageResource link();
@@ -56,8 +69,14 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("numbered_list_2x.png")
    ImageResource numbered_list();
    
+   @Source("numbered_list_dm_2x.png")
+   ImageResource numbered_list_dm();
+   
    @Source("bullet_list_2x.png")
    ImageResource bullet_list();
+   
+   @Source("bullet_list_dm_2x.png")
+   ImageResource bullet_list_dm();
    
    @Source("rmd_chunk_2x.png")
    ImageResource rmd_chunk();

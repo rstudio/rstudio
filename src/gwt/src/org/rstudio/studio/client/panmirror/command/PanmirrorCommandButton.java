@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
 
 
 
@@ -29,7 +30,7 @@ public class PanmirrorCommandButton extends ToolbarButton implements PanmirrorCo
 {
    public PanmirrorCommandButton(PanmirrorCommandUI commandUI)
    {
-      super("", commandUI.getMenuText(), commandUI.getImage(), new ClickHandler() {
+      super("", commandUI.getMenuText(), (ImageResource)null, new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
@@ -37,16 +38,22 @@ public class PanmirrorCommandButton extends ToolbarButton implements PanmirrorCo
          }
       });
       commandUI_ = commandUI;
-      sync();
+      sync(true);
    }
    
    @Override
-   public void sync()
+   public void sync(boolean images)
    {
       setVisible(commandUI_.isVisible());
       
       if (commandUI_.isVisible())
          setEnabled(commandUI_.isEnabled());
+      
+      setTitle(commandUI_.getTooltip());
+      
+      if (images)
+         setLeftImage(commandUI_.getImage());
+
    }
    
    private final PanmirrorCommandUI commandUI_;

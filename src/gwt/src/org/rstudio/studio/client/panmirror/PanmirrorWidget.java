@@ -117,7 +117,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.SelectionChange, () -> {
          // sync toolbar commands
          if (toolbar_ != null)
-            toolbar_.sync();
+            toolbar_.sync(false);
          // fire to clients
          SelectionChangeEvent.fire(this);
       }));

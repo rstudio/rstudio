@@ -56,7 +56,7 @@ public class PanmirrorToolbarRadioMenu extends ToolbarMenuButton implements Panm
    }
    
    @Override
-   public void sync()
+   public void sync(boolean images)
    {
       // set our text to whatever command is active
       String text = defaultText_;

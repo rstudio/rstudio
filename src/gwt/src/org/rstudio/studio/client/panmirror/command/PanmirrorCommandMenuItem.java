@@ -39,13 +39,13 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
         commandUI
       );
       commandUI_ = commandUI;
-      sync();
+      sync(true);
    }
    
   
-   @Override
-   public void sync()
-   {
+   @Override 
+   public void sync(boolean images)
+   {  
       setVisible(commandUI_.isVisible());
       
       if (isVisible())
@@ -59,6 +59,8 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
       
       if (isCheckable())
          setChecked(commandUI_.isActive());
+      
+      setTitle(commandUI_.getDesc());
       
       setHTML(menuHTML());
    }

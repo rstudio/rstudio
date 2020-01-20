@@ -17,5 +17,5 @@ package org.rstudio.studio.client.panmirror.command;
 
 public interface PanmirrorCommandUIObject
 {
-   void sync();
+   void sync(boolean images);
 }

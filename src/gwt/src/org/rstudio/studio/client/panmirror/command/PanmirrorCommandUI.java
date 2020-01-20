@@ -17,7 +17,7 @@ package org.rstudio.studio.client.panmirror.command;
 
 
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.dom.DomUtils;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -27,18 +27,34 @@ public class PanmirrorCommandUI implements ScheduledCommand
 {
    
    
-   public PanmirrorCommandUI(PanmirrorCommand command, String menuText, MenuitemRole role, ImageResource image)
+   public PanmirrorCommandUI(PanmirrorCommand command, String menuText, MenuitemRole role, String image)
    {
       this.command_ = command;
       this.menuText_ = menuText;
       this.menuRole_ = role;
-      this.image_ = image != null ? new ImageResource2x(image) : null;
+      this.image_ = image;
       this.shortcut_ = getShortcut(command);
    }
    
    public String getMenuText()
    {
       return menuText_;
+   }
+   
+   public String getDesc()
+   {
+      return menuText_;
+   }
+   
+   public String getTooltip()
+   {
+      String tooltip = getDesc();
+      String shortcut = getShortcut();
+      if (shortcut != null)
+      {
+         tooltip = tooltip + " (" + DomUtils.htmlToText(shortcut) + ")";
+      }
+      return tooltip;
    }
      
    public String getShortcut()
@@ -53,7 +69,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    
    public ImageResource getImage()
    {
-      return image_;
+      return icons_.get(this.image_);
    }
    
    public boolean isVisible()
@@ -107,8 +123,10 @@ public class PanmirrorCommandUI implements ScheduledCommand
    private final PanmirrorCommand command_;
    private final String menuText_;
    private final MenuitemRole menuRole_;
-   private final ImageResource image_;
+   private final String image_;
    private final String shortcut_;
+   
+   private final static PanmirrorCommandIcons icons_ = PanmirrorCommandIcons.INSTANCE;
    
      
 }

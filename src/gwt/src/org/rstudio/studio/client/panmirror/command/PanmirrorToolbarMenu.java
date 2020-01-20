@@ -48,7 +48,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    public void getDynamicPopupMenu 
       (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
    {
-      sync();
+      sync(true);
       callback.onPopupMenu(this);
    }
    
@@ -69,9 +69,9 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    }
   
    @Override
-   public void sync()
+   public void sync(boolean images)
    {
-      uiObjects_.forEach(object -> object.sync());
+      uiObjects_.forEach(object -> object.sync(images));
    }
    
    private static SafeHtml menuText(String text)
