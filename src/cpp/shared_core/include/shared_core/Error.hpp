@@ -156,7 +156,7 @@ private:
    // The private implementation of ErrorLocation.
    PRIVATE_IMPL(m_impl);
 };
- 
+
 /**
  * @brief Convenience typedef for error properties.
  */
@@ -228,46 +228,87 @@ public:
    /**
     * @brief Constructor.
     *
-    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
-    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_ec              The boost error condition to convert from.
     * @param in_location        The location of the error.
     */
-   Error(int in_code, std::string in_name, const ErrorLocation& in_location);
+   Error(const boost::system::error_condition& in_ec, const ErrorLocation& in_location);
 
    /**
     * @brief Constructor.
     *
-    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
-    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_ec              The boost error condition to convert from.
     * @param in_cause           The error which caused this error.
     * @param in_location        The location of the error.
     */
-   Error(int in_code, std::string in_name, const Error& in_cause, const ErrorLocation& in_location);
-
+   Error(const boost::system::error_condition& in_ec, const Error& in_cause, const ErrorLocation& in_location);
 
    /**
     * @brief Constructor.
     *
-    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
-    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_ec              The boost error condition to convert from.
     * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
     *                           plugin.")
     * @param in_location        The location of the error.
     */
-   Error(int in_code, std::string in_name, std::string in_message, const ErrorLocation& in_location);
+   Error(const boost::system::error_condition& in_ec, std::string in_message, const ErrorLocation& in_location);
 
    /**
     * @brief Constructor.
     *
-    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
-    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_ec              The boost error condition to convert from.
     * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
     *                           plugin.")
     * @param in_cause           The error which caused this error.
     * @param in_location        The location of the error.
     */
-   Error(int in_code,
-         std::string in_name,
+   Error(const boost::system::error_condition& in_ec,
+         std::string in_message,
+         const Error& in_cause,
+         const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_location        The location of the error.
+    */
+   Error(std::string in_name, int in_code, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
+   Error(std::string in_name, int in_code, const Error& in_cause, const ErrorLocation& in_location);
+
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_location        The location of the error.
+    */
+   Error(std::string in_name, int in_code, std::string in_message, const ErrorLocation& in_location);
+
+   /**
+    * @brief Constructor.
+    *
+    * @param in_name            A contextual or categorical name for the error. (e.g. "RequestNotSupported")
+    * @param in_code            The non-zero error code. Note that an error code of zero indicates success. (e.g. 1)
+    * @param in_message         The detailed error message. (e.g. "The JobNetworkRequest is not supported by this
+    *                           plugin.")
+    * @param in_cause           The error which caused this error.
+    * @param in_location        The location of the error.
+    */
+   Error(std::string in_name,
+         int in_code,
          std::string in_message,
          const Error& in_cause,
          const ErrorLocation& in_location);
