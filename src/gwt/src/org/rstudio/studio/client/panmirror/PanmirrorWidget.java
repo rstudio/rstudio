@@ -107,7 +107,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       addEast(outline_, 190);
       setWidgetSize(outline_, options.outline ? 190 : 0);
       MouseDragHandler.addHandler(
-         outline_.getLeftSeparator(),
+         outline_.getResizer(),
          new DockPanelSidebarDragHandler(this, outline_) {
             @Override
             public void onResized(boolean visible)

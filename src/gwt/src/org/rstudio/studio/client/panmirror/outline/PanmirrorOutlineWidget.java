@@ -25,16 +25,12 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 
-import com.google.gwt.aria.client.OrientationValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,9 +43,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 
-// do we need to expose the outline/selection outside of the widget?
 // prefs/listener callbacks
 // spacing (too much)
 // incremental updating
@@ -63,41 +57,20 @@ public class PanmirrorOutlineWidget extends Composite
    {
       void navigate(String navigationId);
    }
-   
-   public class VerticalSeparator extends Composite
-   {
-      public VerticalSeparator()
-      {
-         panel_ = new FlowPanel();
-         panel_.addStyleName(outlineStyles_.leftSeparator());
-         Roles.getSeparatorRole().set(panel_.getElement());
-         Roles.getSeparatorRole().setAriaOrientationProperty(panel_.getElement(),
-               OrientationValue.VERTICAL);
-         initWidget(panel_);
-      }
-      
-      private final FlowPanel panel_;
-   }
+  
    
    public PanmirrorOutlineWidget()
    {
     
-      emptyPlaceholder_ = new FlowPanel();
-      emptyPlaceholder_.add(new Label("No outline available"));
-      emptyPlaceholder_.addStyleName(outlineStyles_.emptyPlaceholder());
+      emptyPlaceholder_ = new DocumentOutlineWidget.EmptyPlaceholder();
       
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(outlineStyles_.container());
       
-      separator_ = new VerticalSeparator();
-      container_.addWest(separator_, 4);
-      
-      // This is a somewhat hacky way of allowing the separator to 'fit'
-      // to a size of 4px, but overflow an extra 4px (to provide extra
-      // space for a mouse cursor to drag or resize)
-      Element parent = separator_.getElement().getParentElement();
-      parent.getStyle().setPaddingRight(4, Unit.PX);
-      
+      resizer_ = new DocumentOutlineWidget.VerticalSeparator();
+      container_.addWest(resizer_, 4);
+      resizer_.pad();
+       
       tree_ = new Tree();
       tree_.addStyleName(outlineStyles_.tree());
       Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), "Document Outline");
@@ -110,24 +83,12 @@ public class PanmirrorOutlineWidget extends Composite
       handlers_ = new HandlerRegistrations();
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-     
          
       initWidget(container_);
-      addStyleName(RES.styles().outline());
       
-      
+      addStyleName("ace_editor_theme");
    }
-   
-   @Inject
-   private void initialize(EventBus eventBus)
-   {
-      handlers_.add(eventBus.addHandler(EditorThemeStyleChangedEvent.TYPE, event -> {
-         updateStyles(container_, event.getStyle());
-         updateStyles(emptyPlaceholder_, event.getStyle());
-         rebuildOutline();
-      }));
-   
-   }
+  
    
    @Override
    protected void onUnload()
@@ -153,9 +114,9 @@ public class PanmirrorOutlineWidget extends Composite
       updateActiveItem();
    }
    
-   public Widget getLeftSeparator()
+   public Widget getResizer()
    {
-      return separator_;
+      return resizer_;
    }
    
    public void setAriaVisible(boolean visible)
@@ -181,7 +142,9 @@ public class PanmirrorOutlineWidget extends Composite
    
    private void addToTree(PanmirrorOutlineItem item)
    {
-      OutlineTreeItem treeItem = createTreeItem(item);
+      OutlineTreeEntry entry = new OutlineTreeEntry(item);
+      OutlineTreeItem treeItem = new OutlineTreeItem(entry);
+      setTreeItemStyles(treeItem);
       tree_.addItem(treeItem);
       Arrays.stream(item.children).forEach(child -> addToTree(child));
    }
@@ -190,22 +153,6 @@ public class PanmirrorOutlineWidget extends Composite
    {
       panel_.clear();
       panel_.add(widget);
-   }
-   
-   
-   private void updateStyles(Widget widget, Style computed)
-   {
-      Style outlineStyles = widget.getElement().getStyle();
-      outlineStyles.setBackgroundColor(computed.getBackgroundColor());
-      outlineStyles.setColor(computed.getColor());
-   }
-   
-   private OutlineTreeItem createTreeItem(PanmirrorOutlineItem item)
-   {
-      OutlineTreeEntry entry = new OutlineTreeEntry(item);
-      OutlineTreeItem treeItem = new OutlineTreeItem(entry);
-      setTreeItemStyles(treeItem);
-      return treeItem;
    }
    
    private void resetTreeStyles()
@@ -252,7 +199,6 @@ public class PanmirrorOutlineWidget extends Composite
         
       resetTreeStyles();
    }
-   
    
    private class OutlineTreeItem extends TreeItem
    {
@@ -349,8 +295,8 @@ public class PanmirrorOutlineWidget extends Composite
       private HTML indent_;
       private Label label_;
    }
-   
-   private final static PanmirrorOutlineResources RES = PanmirrorOutlineResources.INSTANCE;
+  
+  
    private final static DocumentOutlineWidget.Styles outlineStyles_ = DocumentOutlineWidget.RES.styles();
    
    private PanmirrorOutlineItem[] outline_ = null;
@@ -361,8 +307,8 @@ public class PanmirrorOutlineWidget extends Composite
    private final Tree tree_;
    private final DockLayoutPanel container_;
    private final FlowPanel panel_;
-   private final VerticalSeparator separator_;
-   private final FlowPanel emptyPlaceholder_;
+   private final DocumentOutlineWidget.VerticalSeparator resizer_;
+   private final DocumentOutlineWidget.EmptyPlaceholder emptyPlaceholder_;
   
    
    private final HandlerRegistrations handlers_;
