@@ -224,13 +224,17 @@ std::string getUserIdentifier(const core::http::Request& request,
    if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
       return std::string();
 
+   std::string userIdentifier = s_handler.getUserIdentifier(request, pResponse);
+   if (userIdentifier.empty())
+      return std::string();
+
    if (requireUserListCookie)
    {
       if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie)))
          return std::string();
    }
 
-   return s_handler.getUserIdentifier(request, pResponse);
+   return userIdentifier;
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
