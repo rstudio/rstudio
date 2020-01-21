@@ -20,12 +20,16 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineChangeEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineChangeEvent.HasPanmirrorOutlineChangeHandlers;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
@@ -54,7 +58,8 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    RequiresResize, 
    HasChangeHandlers, 
-   HasSelectionChangedHandlers
+   HasSelectionChangedHandlers,
+   HasPanmirrorOutlineChangeHandlers
 {
    
    public static class Options 
@@ -86,19 +91,35 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       super(Style.Unit.PX);
       setSize("100%", "100%");   
+     
+      // styles
       getElement().getStyle().setBackgroundColor(ThemeColors.defaultBackground);
-      
       if (options.border)
          this.addStyleName(ThemeResources.INSTANCE.themeStyles().borderedIFrame());
      
+      // toolbar
       toolbar_ =  new PanmirrorToolbar();
       addNorth(toolbar_, toolbar_.getHeight());
       setWidgetHidden(toolbar_, !options.toolbar);
       
+      // outline
       outline_ = new PanmirrorOutlineWidget();
       addEast(outline_, 190);
-      setWidgetHidden(outline_, !options.outline);
-      
+      setWidgetSize(outline_, options.outline ? 190 : 0);
+      MouseDragHandler.addHandler(
+         outline_.getLeftSeparator(),
+         new DockPanelSidebarDragHandler(this, outline_) {
+            @Override
+            public void onResized(boolean visible)
+            {
+               if (!visible)
+                  showOutline(false);
+               PanmirrorWidget.this.onResize();
+            }
+         }
+      );
+     
+      // editor
       editorParent_ = new HTML();
       add(editorParent_);
    }
@@ -106,20 +127,44 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private void attachEditor(PanmirrorEditor editor) {
       
       editor_ = editor;
+      
       commands_ = editor.commands();
+      
       toolbar_.init(commands_);
       
+      outline_.setNavigator(id -> { 
+         editor_.navigate(id);
+         editor_.focus();
+      });
+      
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
+         
          // fire to clients
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
+      
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.SelectionChange, () -> {
+         
          // sync toolbar commands
          if (toolbar_ != null)
             toolbar_.sync(false);
+         
+         // sync outline
+         outline_.updateSelection(editor_.getSelection());
+         
          // fire to clients
          SelectionChangeEvent.fire(this);
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.OutlineChange, () -> {
+         
+         // sync outline
+         outline_.updateOutline(editor_.getOutline());
+         
+         // fire to clients
+         PanmirrorOutlineChangeEvent.fire(this);
+         
       }));
    }
    
@@ -177,7 +222,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public void showOutline(boolean show)
    {
-      setWidgetHidden(outline_, !show);
+      setWidgetSize(outline_, show ? 190 : 0);
+      outline_.setAriaVisible(show);
       animate(500);
    }
    
@@ -234,7 +280,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getPandocFormat();
    }
    
-   public JsObject getSelection()
+   public PanmirrorSelection getSelection()
    {
       return editor_.getSelection();
    }
@@ -268,6 +314,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return handlers_.addHandler(SelectionChangeEvent.getType(), handler);
    }
    
+   @Override
+   public HandlerRegistration addPanmirrorOutlineChangeHandler(PanmirrorOutlineChangeEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorOutlineChangeEvent.getType(), handler);
+   }
+   
    
    @Override
    public void fireEvent(GwtEvent<?> event)
@@ -293,6 +345,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
+  
 }
 
 

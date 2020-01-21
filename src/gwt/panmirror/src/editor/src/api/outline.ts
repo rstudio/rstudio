@@ -3,6 +3,7 @@ export interface EditorOutlineItem {
   type: EditorOutlineItemType;
   level: number;
   title: string;
+  pos: number;
   children: EditorOutlineItem[];
 }
 

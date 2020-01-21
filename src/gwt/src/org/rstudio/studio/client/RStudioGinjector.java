@@ -65,6 +65,7 @@ import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWi
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
@@ -288,6 +289,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
    void injectMembers(PanmirrorPandocEngine panmirrorPandocEngine);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
+   void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

@@ -47,7 +47,7 @@ public class PanmirrorEditor
    
    public native String getHTML();
    
-   public native JsObject getSelection();
+   public native PanmirrorSelection getSelection();
    
    public native PanmirrorOutlineItem[] getOutline();
    

@@ -103,6 +103,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
 
     // subscribe to events
     this.onEditorEvent(EditorEvents.Update, this.onEditorDocChanged);
+    this.onEditorEvent(EditorEvents.OutlineChange, this.onEditorOutlineChanged);
     this.onEditorEvent(EditorEvents.SelectionChange, this.onEditorSelectionChanged);
 
     // add commands
@@ -196,12 +197,14 @@ class EditorPane extends React.Component<EditorPaneProps> {
     // set title into reduce
     const title = this.editor!.getTitle();
     this.props.setTitle(title);
+  }
 
-    // set outline into redux
-    const outline = this.editor!.getOutline();
-    if (outline) {
-      this.props.setOutline(outline);
-    }
+  private onEditorOutlineChanged() {
+     // set outline into redux
+     const outline = this.editor!.getOutline();
+     if (outline) {
+       this.props.setOutline(outline);
+     }
   }
 
   private async saveMarkdown() {

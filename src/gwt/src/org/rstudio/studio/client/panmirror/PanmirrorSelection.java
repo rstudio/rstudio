@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvents.java
+ * PanmirrorSelection.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -15,11 +15,12 @@
 
 package org.rstudio.studio.client.panmirror;
 
+
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true)
-public class PanmirrorEvents
-{
-   public String Update;
-   public String SelectionChange;
+@JsType
+public class PanmirrorSelection
+{    
+   public int from;
+   public int to;
 }

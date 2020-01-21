@@ -24,6 +24,8 @@ public class PanmirrorTestDialog extends ModalDialog<String>
    {
       super("Panmirror", Roles.getDialogRole(), input -> {});
       
+      setEnterDisabled(true);
+      
       mainWidget_ = new SimplePanel();
       mainWidget_.setSize("600px", "500px");
       
@@ -86,7 +88,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   
                   this.editorWidget_.enableDevTools();
                   
-                  // this.editorWidget_.showOutline(true);
+                  this.editorWidget_.showOutline(true);
                }
             });
          }

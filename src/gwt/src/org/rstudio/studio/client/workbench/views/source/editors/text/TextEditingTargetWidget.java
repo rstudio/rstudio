@@ -22,7 +22,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -36,7 +35,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyCombination;
@@ -155,58 +153,32 @@ public class TextEditingTargetWidget
       editorPanel_.addEast(docOutlineWidget_, 0);
       editorPanel_.add(editor.asWidget());
       
+     
       MouseDragHandler.addHandler(
-            docOutlineWidget_.getLeftSeparator(),
-            new MouseDragHandler()
+         docOutlineWidget_.getLeftSeparator(),
+         new DockPanelSidebarDragHandler(editorPanel_, docOutlineWidget_) {
+            
+            @Override
+            public void onResized(boolean visible)
             {
-               double initialWidth_ = 0;
-               
-               @Override
-               public boolean beginDrag(MouseDownEvent event)
-               {
-                  initialWidth_ = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  return true;
-               }
-               
-               @Override
-               public void onDrag(MouseDragEvent event)
-               {
-                  double initialWidth = initialWidth_;
-                  double xDiff = event.getTotalDelta().getMouseX();
-                  double newSize = initialWidth - xDiff;
-                  
-                  // We allow an extra pixel here just to 'hide' the border
-                  // if the outline is maximized, since the 'separator'
-                  // lives as part of the outline instead of 'between' the
-                  // two widgets
-                  double maxSize = editorPanel_.getOffsetWidth() + 1;
-                  
-                  double clamped = MathUtil.clamp(newSize, 0, maxSize);
-                  
-                  // If the size is below '5px', interpret this as a request
-                  // to close the outline widget.
-                  if (clamped < 5)
-                     clamped = 0;
-                  
-                  editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
-                  setDocOutlineLatchState(clamped != 0);
-                  editor_.onResize();
-               }
-               
-               @Override
-               public void endDrag()
-               {
-                  double size = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  
-                  // We only update the preferred size if the user hasn't closed
-                  // the widget.
-                  if (size > 0)
-                     target_.setPreferredOutlineWidgetSize(size);
-                  
-                  target_.setPreferredOutlineWidgetVisibility(size > 0);
-               }
-            });
-      
+               setDocOutlineLatchState(visible);
+               editor_.onResize();
+            }
+            
+            @Override
+            public void onPreferredSize(double size)
+            {
+               target_.setPreferredOutlineWidgetSize(size);
+            }
+            
+            @Override
+            public void onPreferredVisibility(boolean visible)
+            {
+               target_.setPreferredOutlineWidgetVisibility(visible);
+            }
+         }
+      );
+            
       panel_ = new PanelWithToolbars(
             toolbar_ = createToolbar(fileType),
             editorPanel_,

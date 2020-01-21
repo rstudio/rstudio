@@ -58,7 +58,13 @@ export interface EditorKeybindings {
 
 export enum EditorEvents  {
   Update = 'update',
+  OutlineChange = 'outlineChange',
   SelectionChange = 'selectionChange'
+}
+
+export interface EditorSelection {
+  from: number;
+  to: number;
 }
 
 
@@ -203,6 +209,7 @@ export class Editor {
     // notify listeners if requested
     if (emitUpdate) {
       this.emitEvent(EditorEvents.Update);
+      this.emitEvent(EditorEvents.OutlineChange);
       this.emitEvent(EditorEvents.SelectionChange);
     }
 
@@ -220,12 +227,12 @@ export class Editor {
     return div.innerHTML;
   }
 
-  public getSelection(): {} {
-    return this.state.selection;
-  }
-
   public getTitle() {
     return getTitle(this.state);
+  }
+
+  public getSelection(): EditorSelection {
+    return this.state.selection;
   }
 
   public getOutline(): EditorOutline {
@@ -299,6 +306,10 @@ export class Editor {
   }
 
   private dispatchTransaction(tr: Transaction) {
+
+    // track previous outline
+    const previousOutline = getOutline(this.state);
+
     // apply the transaction
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
@@ -308,8 +319,13 @@ export class Editor {
 
     // notify listeners of updates
     if (tr.docChanged) {
-      // notify listeners
+      // fire updated
       this.emitEvent(EditorEvents.Update);
+
+      // fire outline changed if necessary
+      if (getOutline(this.state) !== previousOutline) {
+        this.emitEvent(EditorEvents.OutlineChange);
+      }
     }
   }
 
@@ -323,6 +339,7 @@ export class Editor {
   private initEvents(): ReadonlyMap<string, Event> {
     const events = new Map<string, Event>();
     events.set(EditorEvents.Update, new Event(EditorEvents.Update));
+    events.set(EditorEvents.OutlineChange, new Event(EditorEvents.OutlineChange));
     events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
     return events;
   }

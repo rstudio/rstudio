@@ -539,7 +539,7 @@ public class DocumentOutlineWidget extends Composite
       Styles styles();
    }
    
-   private static Resources RES = GWT.create(Resources.class);
+   public static Resources RES = GWT.create(Resources.class);
    static {
       RES.styles().ensureInjected();
    }

@@ -85,6 +85,7 @@ function editorOutline(state: EditorState): EditorOutline {
     type: nodeWithPos.node.type.name as EditorOutlineItemType,
     level: nodeWithPos.node.attrs.level || defaultLevel,
     title: nodeWithPos.node.type.spec.code ? nodeWithPos.node.type.name : nodeWithPos.node.textContent,
+    pos: nodeWithPos.pos,
     children: [],
   });
 
@@ -94,6 +95,7 @@ function editorOutline(state: EditorState): EditorOutline {
     type: '' as EditorOutlineItemType,
     level: 0,
     title: '',
+    pos: 0,
     children: [],
   };
   const containers: EditorOutlineItem[] = [];

@@ -1,5 +1,5 @@
 /*
- * PanmirrorOutlineItem.java
+ * PanmirrorEvents.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,17 +13,14 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.outline;
+package org.rstudio.studio.client.panmirror.events;
 
 import jsinterop.annotations.JsType;
 
-@JsType
-public class PanmirrorOutlineItem
+@JsType(isNative = true)
+public class PanmirrorEvents
 {
-   public String navigation_id;
-   public String type;
-   public int level;
-   public String title;
-   public int pos;
-   public PanmirrorOutlineItem[] children;
+   public String Update;
+   public String OutlineChange;
+   public String SelectionChange;
 }
