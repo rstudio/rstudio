@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.panmirror.outline;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.rstudio.core.client.HandlerRegistrations;
@@ -45,11 +46,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
 // prefs/listener callbacks
-// spacing (too much)
 // incremental updating
-// scroll position on rebuild
-// other opportunities to share code
-
 
 public class PanmirrorOutlineWidget extends Composite
 {
@@ -103,7 +100,7 @@ public class PanmirrorOutlineWidget extends Composite
    
    public void updateOutline(PanmirrorOutlineItem[] outline)
    {
-      outline_ = outline;
+      outline_ = flattenOutline(outline);
       rebuildOutline();
       updateActiveItem();
    }
@@ -129,15 +126,27 @@ public class PanmirrorOutlineWidget extends Composite
    
    private void rebuildOutline()
    {
-      if (outline_.length == 0)
+      // set empty placeholder if the outline is empty
+      if (outline_.size() == 0)
       {
          setActiveWidget(emptyPlaceholder_);
          return;
       }
       
+      // otherwise, set the tree as active and clear it
       setActiveWidget(tree_);
       tree_.clear();
-      Arrays.stream(outline_).forEach(item -> { addToTree(item); });
+        
+      // determine the minimum level
+      outlineMinLevel_ = Integer.MAX_VALUE;
+      outline_.forEach(item -> {
+         outlineMinLevel_ = Math.min(outlineMinLevel_, item.level);
+      });
+      if (outlineMinLevel_ == Integer.MAX_VALUE)
+         outlineMinLevel_ = 1;
+      
+      // add the items
+      outline_.forEach(item -> { addToTree(item); });
    }
    
    private void addToTree(PanmirrorOutlineItem item)
@@ -146,7 +155,21 @@ public class PanmirrorOutlineWidget extends Composite
       OutlineTreeItem treeItem = new OutlineTreeItem(entry);
       setTreeItemStyles(treeItem);
       tree_.addItem(treeItem);
-      Arrays.stream(item.children).forEach(child -> addToTree(child));
+   }
+   
+   private ArrayList<PanmirrorOutlineItem>  flattenOutline(PanmirrorOutlineItem[] items)
+   {
+      ArrayList<PanmirrorOutlineItem> flattenedItems = new ArrayList<PanmirrorOutlineItem>();
+      doFlattenOutline(items, flattenedItems);
+      return flattenedItems;
+   }
+   
+   private void doFlattenOutline(PanmirrorOutlineItem[] items,  ArrayList<PanmirrorOutlineItem> flattenedItems)
+   {
+      Arrays.stream(items).forEach(item -> {
+         flattenedItems.add(item);
+         doFlattenOutline(item.children, flattenedItems);
+      });
    }
    
    private void setActiveWidget(Widget widget)
@@ -177,13 +200,11 @@ public class PanmirrorOutlineWidget extends Composite
    { 
       activeItem_ = null; 
       
-      if (outline_ == null || outline_.length == 0)
+      if (outline_ == null || outline_.size() == 0)
          return;
       
       if (selection_ == null)
          return;
-      
-      activeItem_ = outline_[0];
       
       for (int i = 0; i < tree_.getItemCount(); i++) 
       {
@@ -191,7 +212,12 @@ public class PanmirrorOutlineWidget extends Composite
          PanmirrorOutlineItem item = treeItem.getEntry().getItem();
          
          if (item.pos >= selection_.from)
+         {
+            if (activeItem_ == null)
+               activeItem_ = item;
             break;
+         }
+         
          
          activeItem_ = item;
          
@@ -267,7 +293,7 @@ public class PanmirrorOutlineWidget extends Composite
       
       private void setIndent(int depth)
       {
-         depth = Math.max(0, depth - 1);
+         depth = depth - PanmirrorOutlineWidget.this.outlineMinLevel_;
          String text = StringUtil.repeat("&nbsp;", depth * 2);
          if (indent_ == null)
             indent_ = new HTML(text);
@@ -299,7 +325,8 @@ public class PanmirrorOutlineWidget extends Composite
   
    private final static DocumentOutlineWidget.Styles outlineStyles_ = DocumentOutlineWidget.RES.styles();
    
-   private PanmirrorOutlineItem[] outline_ = null;
+   private ArrayList<PanmirrorOutlineItem> outline_ = null;
+   private int outlineMinLevel_ = 1;
    private PanmirrorSelection selection_ = null;
    private PanmirrorOutlineItem activeItem_ = null;
    private Navigator navigator_ = null;
