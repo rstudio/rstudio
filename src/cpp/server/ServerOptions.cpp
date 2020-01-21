@@ -264,7 +264,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&wwwFrameOrigin_)->default_value("none"),
          "allowed origin for hosting frame")
       ("www-disable-origin-check",
-         value<bool>(&wwwDisableOriginCheck_)->default_value(false),
+         value<bool>(&wwwDisableOriginCheck_)->default_value(true),
          "disable check that ensures request origin is from the host domain")
       ("www-allow-origin",
          value<std::vector<std::string>>(&wwwAllowedOrigins)->default_value(std::vector<std::string>{})->multitoken(),
