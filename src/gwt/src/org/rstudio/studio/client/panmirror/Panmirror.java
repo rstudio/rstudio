@@ -16,7 +16,6 @@ package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
-import org.rstudio.studio.client.panmirror.events.PanmirrorEvents;
 
 import jsinterop.annotations.JsType;
 import jsinterop.annotations.JsOverlay;

@@ -1,5 +1,5 @@
 /*
- * PanmirrorNavigationEvent.java
+ * PanmirrorOutlineNavigationEvent.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.events;
+package org.rstudio.studio.client.panmirror.outline;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -23,40 +23,40 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * Represents a selection change event.
  */
-public class PanmirrorNavigationEvent extends
-    GwtEvent<PanmirrorNavigationEvent.Handler> {
+public class PanmirrorOutlineNavigationEvent extends
+    GwtEvent<PanmirrorOutlineNavigationEvent.Handler> {
 
   /**
-   * Handler interface for {@link PanmirrorNavigationEvent} events.
+   * Handler interface for {@link PanmirrorOutlineNavigationEvent} events.
    */
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when a {@link PanmirrorNavigationEvent} is fired.
+     * Called when a {@link PanmirrorOutlineNavigationEvent} is fired.
      *
-     * @param event the {@link PanmirrorNavigationEvent} that was fired
+     * @param event the {@link PanmirrorOutlineNavigationEvent} that was fired
      */
-    void onPanmirrorNavigation(PanmirrorNavigationEvent event);
+    void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event);
   }
 
   /**
    * Interface specifying that a class can add
-   * {@code PanmirrorNavigationEvent.Handler}s.
+   * {@code PanmirrorOutlineNavigationEvent.Handler}s.
    */
-  public interface HasPanmirrorNavigationHandlers extends HasHandlers {
+  public interface HasPanmirrorOutlineNavigationHandlers extends HasHandlers {
     /**
-     * Adds a {@link PanmirrorNavigationEvent} handler.
+     * Adds a {@link PanmirrorOutlineNavigationEvent} handler.
      * 
      * @param handler the handler
      * @return {@link HandlerRegistration} used to remove this handler
      */
-    HandlerRegistration addPanmirrorNavigationHandler(Handler handler);
+    HandlerRegistration addPanmirrorOutlineNavigationHandler(Handler handler);
   }
 
   /**
    * Handler type.
    */
-  private static Type<PanmirrorNavigationEvent.Handler> TYPE;
+  private static Type<PanmirrorOutlineNavigationEvent.Handler> TYPE;
 
   /**
    * Fires an navigation event on all registered handlers in the handler
@@ -64,9 +64,9 @@ public class PanmirrorNavigationEvent extends
    *
    * @param source the source of the handlers
    */
-  public static void fire(HasPanmirrorNavigationHandlers source, String id) {
+  public static void fire(HasPanmirrorOutlineNavigationHandlers source, String id) {
     if (TYPE != null) {
-      PanmirrorNavigationEvent event = new PanmirrorNavigationEvent(id);
+      PanmirrorOutlineNavigationEvent event = new PanmirrorOutlineNavigationEvent(id);
       source.fireEvent(event);
     }
   }
@@ -76,9 +76,9 @@ public class PanmirrorNavigationEvent extends
    *
    * @return returns the handler type
    */
-  public static Type<PanmirrorNavigationEvent.Handler> getType() {
+  public static Type<PanmirrorOutlineNavigationEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorNavigationEvent.Handler>();
+      TYPE = new Type<PanmirrorOutlineNavigationEvent.Handler>();
     }
     return TYPE;
   }
@@ -86,7 +86,7 @@ public class PanmirrorNavigationEvent extends
   /**
    * Creates an navigation event.
    */
-  PanmirrorNavigationEvent(String id) {
+  PanmirrorOutlineNavigationEvent(String id) {
      id_ = id;
   }
   
@@ -96,13 +96,13 @@ public class PanmirrorNavigationEvent extends
   }
 
   @Override
-  public final Type<PanmirrorNavigationEvent.Handler> getAssociatedType() {
+  public final Type<PanmirrorOutlineNavigationEvent.Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(PanmirrorNavigationEvent.Handler handler) {
-    handler.onPanmirrorNavigation(this);
+  protected void dispatch(PanmirrorOutlineNavigationEvent.Handler handler) {
+    handler.onPanmirrorOutlineNavigation(this);
   }
   
   private final String id_;

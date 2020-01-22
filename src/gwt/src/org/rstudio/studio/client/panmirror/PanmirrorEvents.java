@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.events;
+package org.rstudio.studio.client.panmirror;
 
 import jsinterop.annotations.JsType;
 

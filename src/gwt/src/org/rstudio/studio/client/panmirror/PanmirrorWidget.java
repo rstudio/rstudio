@@ -29,7 +29,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
-import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
@@ -110,9 +110,22 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             @Override
             public void onResized(boolean visible)
             {
+               // hide if we snapped to 0 width
                if (!visible)
                   showOutline(false);
+               
+               // notify editor for layout
                PanmirrorWidget.this.onResize();
+            }
+            @Override
+            public void onPreferredSize(double size) 
+            {
+               
+            }
+            @Override
+            public void onPreferredVisibility(boolean visible) 
+            {
+               
             }
          }
       );
@@ -130,9 +143,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       toolbar_.init(commands_);
       
-      registrations_.add(outline_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler() {
+      registrations_.add(outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
-         public void onPanmirrorNavigation(PanmirrorNavigationEvent event)
+         public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
             editor_.navigate(event.getId());
             editor_.focus();
@@ -225,9 +238,13 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public void showOutline(boolean show)
    {
-      setWidgetSize(outline_, show ? 190 : 0);
-      outline_.setAriaVisible(show);
-      animate(500);
+      boolean visible = getWidgetSize(outline_) > 0;
+      if (show != visible)
+      {
+         setWidgetSize(outline_, show ? 190 : 0);
+         outline_.setAriaVisible(show);
+         animate(500);
+      }
    }
    
    public void showToolbar(boolean show)
