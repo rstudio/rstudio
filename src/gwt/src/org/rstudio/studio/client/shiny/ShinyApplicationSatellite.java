@@ -24,7 +24,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
 
 public class ShinyApplicationSatellite extends SatelliteApplication
 {

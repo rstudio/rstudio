@@ -146,7 +146,7 @@ public abstract class SatelliteWindow extends Composite
    {
       int delayMs = event.getImmediate() ? 0 : RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
-         ariaLiveStatusWidget_.announce(event.getMessage(), delayMs);
+         ariaLiveStatusWidget_.reportStatus(event.getMessage(), delayMs);
    }
 
    abstract protected void onInitialize(LayoutPanel mainPanel, 

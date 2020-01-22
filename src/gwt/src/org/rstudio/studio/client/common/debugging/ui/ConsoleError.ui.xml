@@ -1,5 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:rw='urn:import:org.rstudio.core.client.widget'
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:style>
    @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
@@ -69,21 +70,21 @@
    <g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
      <g:HTMLPanel styleName="{style.consoleErrorCommands}">
         <g:HTMLPanel>
-           <g:Image resource="{traceback}"
+           <rw:DecorativeImage resource="{traceback}"
                   ui:field="showTracebackImage"
                   width="9"
                   height="9"
-                  styleName="{style.errorCommandImage}"></g:Image>
+                  styleName="{style.errorCommandImage}"/>
            <g:Anchor styleName="{style.errorCommandText}" ui:field="showTracebackText">
               Show Traceback
            </g:Anchor>
         </g:HTMLPanel>
         <g:HTMLPanel>
-           <g:Image resource="{rerun}"
+           <rw:DecorativeImage resource="{rerun}"
                     ui:field="rerunImage"
                     width="9"
                     height="9"
-                    styleName="{style.errorCommandImage}"></g:Image>
+                    styleName="{style.errorCommandImage}"/>
            <g:Anchor styleName="{style.errorCommandText}" ui:field="rerunText">
               Rerun with Debug
            </g:Anchor>

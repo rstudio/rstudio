@@ -567,6 +567,7 @@ public class TextEditingTargetWidget
    {
       toggleDocOutlineButton_.setLatched(latched);
       docOutlineWidget_.setAriaVisible(latched);
+      docOutlineWidget_.setTabIndex(latched ? 0 : -1);
    }
    
    private ToolbarButton createLatexFormatButton()

@@ -15,6 +15,8 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -32,8 +34,10 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
 
@@ -74,6 +78,8 @@ public abstract class ProgressDialog extends ModalDialogBase
       super(role);
       addStyleName(resources_.styles().progressDialog());
 
+      operationStarted_ = false;
+
       setText(title);
 
       display_ = createDisplayWidget(param);
@@ -88,6 +94,10 @@ public abstract class ProgressDialog extends ModalDialogBase
       stopButton_ = new ThemedButton("Stop");
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
+      ElementIds.assignElementId(label_, ElementIds.PROGRESS_TITLE_LABEL);
+      Roles.getProgressbarRole().set(progressAnim_.getElement());
+      Roles.getProgressbarRole().setAriaLabelledbyProperty(progressAnim_.getElement(),
+            Id.of(label_.getElement()));
       setLabel(title);
    } 
    
@@ -151,15 +161,23 @@ public abstract class ProgressDialog extends ModalDialogBase
       Size labelSize = DomMetrics.measureHTML(text);
       labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);
       label_.setText(text);
+      labelText_ = text;
    }
    
    protected void showProgress()
    {
+      operationStarted_ = true;
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.INITIAL);
    }
    
    protected void hideProgress()
    {
+      if (operationStarted_)
+      {
+         operationStarted_ = false;
+         announceCompletion(StringUtil.isNullOrEmpty(labelText_) ?
+            "Operation completed" : labelText_ + " completed");
+      }
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
    }
 
@@ -167,7 +185,12 @@ public abstract class ProgressDialog extends ModalDialogBase
    {
       return false;
    }
-   
+
+   /**
+    * Invoked when action has completed with a message suitable for announcement via
+    * screen readers
+    */
+   protected abstract void announceCompletion(String message);
    
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
   
@@ -183,7 +206,8 @@ public abstract class ProgressDialog extends ModalDialogBase
    @UiField(provided = true)
    ThemedButton stopButton_;
    private Widget centralWidget_;
-   
+   private boolean operationStarted_;
+   private String labelText_;
 
-   private static final Resources resources_ = GWT.<Resources>create(Resources.class);
+   private static final Resources resources_ = GWT.create(Resources.class);
 }

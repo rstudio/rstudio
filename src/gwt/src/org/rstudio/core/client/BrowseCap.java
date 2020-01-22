@@ -1,7 +1,7 @@
 /*
  * BrowseCap.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -147,6 +147,11 @@ public class BrowseCap
    public static boolean isFirefox()
    {
       return isUserAgent("firefox");
+   }
+   
+   public static boolean isSafariOrFirefox()
+   {
+      return isSafari() || isFirefox();
    }
    
    public static boolean isChromeFrame()

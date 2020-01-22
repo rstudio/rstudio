@@ -28,8 +28,7 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -45,12 +44,12 @@ public class ApplicationWindow extends Composite
    public ApplicationWindow(ApplicationHeader applicationHeader,
                             GlobalDisplay globalDisplay,
                             Provider<UserPrefs> pPrefs,
-                            Provider<EventBus> pEvents,
+                            AriaLiveService ariaLive,
                             CodeSearchLauncher launcher)
    {
       globalDisplay_ = globalDisplay;
       pPrefs_ = pPrefs;
-      pEvents_ = pEvents;
+      ariaLive_ = ariaLive;
 
       // occupy full client area of the window
       Window.enableScrolling(false);
@@ -85,8 +84,8 @@ public class ApplicationWindow extends Composite
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
       if (announce && showToolbar != currentVisibility)
-         pEvents_.get().fireEvent(new AriaLiveStatusEvent(
-               showToolbar ? "Main toolbar now visible." : "Main toolbar now hidden."));
+         ariaLive_.reportStatus(showToolbar ? "Main toolbar visible" :
+                                              "Main toolbar hidden");
    }
    
    @Override
@@ -100,7 +99,7 @@ public class ApplicationWindow extends Composite
    {
       if (!isToolbarShowing())
       {
-         pEvents_.get().fireEvent(new AriaLiveStatusEvent("Toolbar hidden, unable to focus."));
+         ariaLive_.reportStatus("Toolbar hidden, unable to focus.");
          return;
       }
       applicationHeader_.focusToolbar();
@@ -282,7 +281,7 @@ public class ApplicationWindow extends Composite
    @Override
    public void reportStatus(String message, int delayMs)
    {
-      ariaLiveStatusWidget_.announce(message, delayMs);
+      ariaLiveStatusWidget_.reportStatus(message, delayMs);
    }
 
    @Override
@@ -347,5 +346,5 @@ public class ApplicationWindow extends Composite
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
    private final Provider<UserPrefs> pPrefs_;
-   private final Provider<EventBus> pEvents_;
+   private final AriaLiveService ariaLive_;
 }

@@ -237,7 +237,16 @@ public class DocTabLayoutPanel
    @Override
    public void selectTab(int index)
    {
-      super.selectTab(index);
+      // select the tab, but don't fire events (we need to fire our own)
+      super.selectTab(index, false);
+      
+      // determine whether focus is currently inside the container
+      boolean focused = DomUtils.contains(getElement(), DomUtils.getActiveElement());
+     
+      // fire our own selection event
+      fireEvent(new DocTabSelectionEvent(index, focused));
+      
+      // ensure the newly selected tab is visible
       ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
    }
 

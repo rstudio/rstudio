@@ -55,11 +55,11 @@ Error configError(ConfigErrorCode code, const Error& cause, const ErrorLocation&
       case ConfigErrorCode::SUCCESS:
          return Success();
       case ConfigErrorCode::READ_ERROR:
-         return Error(static_cast<int>(code), errorName, "Error while reading config file.", cause, location);
+         return Error(errorName, static_cast<int>(code), "Error while reading config file.", cause, location);
       case ConfigErrorCode::WRITE_ERROR:
-         return Error(static_cast<int>(code), errorName, "Error while writing config file.", cause, location);
+         return Error(errorName, static_cast<int>(code), "Error while writing config file.", cause, location);
       default:
-         return Error(static_cast<int>(code), errorName, "Unknown config error.", cause, location);
+         return Error(errorName, static_cast<int>(code), "Unknown config error.", cause, location);
    }
 }
 

@@ -280,6 +280,11 @@ public class DocumentOutlineWidget extends Composite
          A11y.setARIAHidden(getElement());
    }
 
+   public void setTabIndex(int index)
+   {
+      tree_.setTabIndex(index);
+   }
+
    private void initHandlers()
    {
       handlers_.add(target_.getDocDisplay().addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
