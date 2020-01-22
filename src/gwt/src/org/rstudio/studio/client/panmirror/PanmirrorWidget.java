@@ -27,6 +27,7 @@ import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlinePrefsEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlinePrefsEvent.Handler;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
@@ -49,6 +51,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
+import com.google.inject.Inject;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsOverlay;
@@ -135,10 +138,18 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             }
          }
       );
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
      
       // editor
       editorParent_ = new HTML();
       add(editorParent_);
+   }
+   
+   @Inject
+   public void initialize(UserPrefs userPrefs)
+   {
+      userPrefs_ = userPrefs;
    }
    
    private void attachEditor(PanmirrorEditor editor) {
@@ -249,7 +260,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       {
          setWidgetSize(outline_, show ? width : 0);
          outline_.setAriaVisible(show);
-         animate(500);
+         int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+         animate(duration);
       }
    }
    
@@ -355,6 +367,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          editor_.resize();
       }
    }
+   
+   private UserPrefs userPrefs_ = null;
    
    private PanmirrorOutlineWidget outline_ = null;
    private PanmirrorToolbar toolbar_ = null;
