@@ -19,6 +19,7 @@ package org.rstudio.studio.client.panmirror.outline;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -46,7 +47,6 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
 // prefs/listener callbacks
-// incremental updating
 
 public class PanmirrorOutlineWidget extends Composite
 {
@@ -133,10 +133,9 @@ public class PanmirrorOutlineWidget extends Composite
          return;
       }
       
-      // otherwise, set the tree as active and clear it
+      // otherwise, set the tree as active 
       setActiveWidget(tree_);
-      tree_.clear();
-        
+      
       // determine the minimum level
       outlineMinLevel_ = Integer.MAX_VALUE;
       outline_.forEach(item -> {
@@ -144,9 +143,24 @@ public class PanmirrorOutlineWidget extends Composite
       });
       if (outlineMinLevel_ == Integer.MAX_VALUE)
          outlineMinLevel_ = 1;
-      
-      // add the items
-      outline_.forEach(item -> { addToTree(item); });
+     
+         
+      // if the outline and existing tree have diffent sizes then rebuild
+      if (outline_.size() != tree_.getItemCount())
+      {
+         tree_.clear();
+         outline_.forEach(item -> {
+            addToTree(item);
+         });
+      }
+      else // otherwise update items
+      {
+         Iterator<TreeItem> treeIter = tree_.treeItemIterator();
+         outline_.forEach(item -> {
+            OutlineTreeItem outlineTreeItem = (OutlineTreeItem)treeIter.next();
+            outlineTreeItem.getEntry().update(item);
+         });
+      }
    }
    
    private void addToTree(PanmirrorOutlineItem item)
@@ -304,7 +318,6 @@ public class PanmirrorOutlineWidget extends Composite
          indent_.getElement().getStyle().setFloat(Style.Float.LEFT);
       }
       
-      @SuppressWarnings("unused")
       public void update(PanmirrorOutlineItem item)
       {
          item_ = item;
