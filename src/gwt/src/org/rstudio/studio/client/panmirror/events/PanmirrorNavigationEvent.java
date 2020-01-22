@@ -1,5 +1,5 @@
 /*
- * PanmirrorOutlineChangeEvent.java
+ * PanmirrorNavigationEvent.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -23,50 +23,50 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * Represents a selection change event.
  */
-public class PanmirrorOutlineNavigationEvent extends
-    GwtEvent<PanmirrorOutlineNavigationEvent.Handler> {
+public class PanmirrorNavigationEvent extends
+    GwtEvent<PanmirrorNavigationEvent.Handler> {
 
   /**
-   * Handler interface for {@link PanmirrorOutlineNavigationEvent} events.
+   * Handler interface for {@link PanmirrorNavigationEvent} events.
    */
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when a {@link PanmirrorOutlineNavigationEvent} is fired.
+     * Called when a {@link PanmirrorNavigationEvent} is fired.
      *
-     * @param event the {@link PanmirrorOutlineNavigationEvent} that was fired
+     * @param event the {@link PanmirrorNavigationEvent} that was fired
      */
-    void onPanmirrorOutlineChange(PanmirrorOutlineNavigationEvent event);
+    void onPanmirrorNavigation(PanmirrorNavigationEvent event);
   }
 
   /**
    * Interface specifying that a class can add
-   * {@code PanmirrorOutlineChangeEvent.Handler}s.
+   * {@code PanmirrorNavigationEvent.Handler}s.
    */
-  public interface HasPanmirrorOutlineChangeHandlers extends HasHandlers {
+  public interface HasPanmirrorNavigationHandlers extends HasHandlers {
     /**
-     * Adds a {@link PanmirrorOutlineNavigationEvent} handler.
+     * Adds a {@link PanmirrorNavigationEvent} handler.
      * 
      * @param handler the handler
      * @return {@link HandlerRegistration} used to remove this handler
      */
-    HandlerRegistration addPanmirrorOutlineChangeHandler(Handler handler);
+    HandlerRegistration addPanmirrorNavigationHandler(Handler handler);
   }
 
   /**
    * Handler type.
    */
-  private static Type<PanmirrorOutlineNavigationEvent.Handler> TYPE;
+  private static Type<PanmirrorNavigationEvent.Handler> TYPE;
 
   /**
-   * Fires an outline change event on all registered handlers in the handler
+   * Fires an navigation event on all registered handlers in the handler
    * manager. If no such handlers exist, this method will do nothing.
    *
    * @param source the source of the handlers
    */
-  public static void fire(HasPanmirrorOutlineChangeHandlers source) {
+  public static void fire(HasPanmirrorNavigationHandlers source, String id) {
     if (TYPE != null) {
-      PanmirrorOutlineNavigationEvent event = new PanmirrorOutlineNavigationEvent();
+      PanmirrorNavigationEvent event = new PanmirrorNavigationEvent(id);
       source.fireEvent(event);
     }
   }
@@ -76,26 +76,34 @@ public class PanmirrorOutlineNavigationEvent extends
    *
    * @return returns the handler type
    */
-  public static Type<PanmirrorOutlineNavigationEvent.Handler> getType() {
+  public static Type<PanmirrorNavigationEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlineNavigationEvent.Handler>();
+      TYPE = new Type<PanmirrorNavigationEvent.Handler>();
     }
     return TYPE;
   }
 
   /**
-   * Creates an outline change event.
+   * Creates an navigation event.
    */
-  PanmirrorOutlineNavigationEvent() {
+  PanmirrorNavigationEvent(String id) {
+     id_ = id;
+  }
+  
+  public String getId()
+  {
+     return id_;
   }
 
   @Override
-  public final Type<PanmirrorOutlineNavigationEvent.Handler> getAssociatedType() {
+  public final Type<PanmirrorNavigationEvent.Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(PanmirrorOutlineNavigationEvent.Handler handler) {
-    handler.onPanmirrorOutlineChange(this);
+  protected void dispatch(PanmirrorNavigationEvent.Handler handler) {
+    handler.onPanmirrorNavigation(this);
   }
+  
+  private final String id_;
 }

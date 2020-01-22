@@ -21,13 +21,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
@@ -37,6 +38,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -49,13 +53,8 @@ import com.google.gwt.user.client.ui.Widget;
 // prefs/listener callbacks
 
 public class PanmirrorOutlineWidget extends Composite
+   implements PanmirrorNavigationEvent.HasPanmirrorNavigationHandlers
 {
-   public interface Navigator
-   {
-      void navigate(String navigationId);
-   }
-  
-   
    public PanmirrorOutlineWidget()
    {
     
@@ -77,7 +76,6 @@ public class PanmirrorOutlineWidget extends Composite
       panel_.add(tree_);
       
       container_.add(panel_);
-      handlers_ = new HandlerRegistrations();
       
       RStudioGinjector.INSTANCE.injectMembers(this);
          
@@ -86,16 +84,10 @@ public class PanmirrorOutlineWidget extends Composite
       addStyleName("ace_editor_theme");
    }
   
-   
    @Override
-   protected void onUnload()
+   public HandlerRegistration addPanmirrorNavigationHandler(Handler handler)
    {
-      handlers_.removeHandler();
-   }
-   
-   public void setNavigator(Navigator navigator)
-   {
-      navigator_ = navigator;
+      return handlers_.addHandler(PanmirrorNavigationEvent.getType(), handler);
    }
    
    public void updateOutline(PanmirrorOutlineItem[] outline)
@@ -283,7 +275,7 @@ public class PanmirrorOutlineWidget extends Composite
                   @Override
                   public void execute()
                   {
-                     navigator_.navigate(item.navigation_id);
+                     PanmirrorNavigationEvent.fire(PanmirrorOutlineWidget.this, item_.navigation_id);
                   }
                });
             }
@@ -334,6 +326,12 @@ public class PanmirrorOutlineWidget extends Composite
       private HTML indent_;
       private Label label_;
    }
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      handlers_.fireEvent(event);
+   }
   
   
    private final static DocumentOutlineWidget.Styles outlineStyles_ = DocumentOutlineWidget.RES.styles();
@@ -342,19 +340,13 @@ public class PanmirrorOutlineWidget extends Composite
    private int outlineMinLevel_ = 1;
    private PanmirrorSelection selection_ = null;
    private PanmirrorOutlineItem activeItem_ = null;
-   private Navigator navigator_ = null;
    
    private final Tree tree_;
    private final DockLayoutPanel container_;
    private final FlowPanel panel_;
    private final DocumentOutlineWidget.VerticalSeparator resizer_;
    private final DocumentOutlineWidget.EmptyPlaceholder emptyPlaceholder_;
+    
+   private final HandlerManager handlers_ = new HandlerManager(this);
   
-   
-   private final HandlerRegistrations handlers_;
-
-  
-  
-  
-   
 }

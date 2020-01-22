@@ -28,6 +28,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
+import org.rstudio.studio.client.panmirror.events.PanmirrorNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
@@ -128,10 +129,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       toolbar_.init(commands_);
       
-      outline_.setNavigator(id -> { 
-         editor_.navigate(id);
-         editor_.focus();
+      outline_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler() {
+         @Override
+         public void onPanmirrorNavigation(PanmirrorNavigationEvent event)
+         {
+            editor_.navigate(event.getId());
+            editor_.focus();
+         }
       });
+      
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
          
