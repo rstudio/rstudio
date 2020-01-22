@@ -2324,6 +2324,19 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
    return writePref("full_project_path_in_window_title", val);
 }
 
+/**
+ * List of aria-live announcements to disable.
+ */
+core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
+{
+   return readPref<core::json::Array>("disabled_aria_live_announcements");
+}
+
+core::Error UserPrefValues::setDisabledAriaLiveAnnouncements(core::json::Array val)
+{
+   return writePref("disabled_aria_live_announcements", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2504,6 +2517,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
+      kDisabledAriaLiveAnnouncements,
    });
 }
    

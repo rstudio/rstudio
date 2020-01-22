@@ -289,7 +289,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       dataProvider_.setList(data);
-      ariaLive_.reportStatusDebounced(
+      ariaLive_.reportStatusDebounced(AriaLiveService.FILTERED_LIST,
             "Found " + data.size() + " addins matching " + StringUtil.spacedString(query));
    }
    

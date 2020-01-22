@@ -251,7 +251,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
       
-      ariaLive_.reportStatus("Console cleared");
+      ariaLive_.reportStatus(AriaLiveService.CONSOLE_CLEARED, "Console cleared");
       
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
