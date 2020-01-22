@@ -88,7 +88,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   
                   this.editorWidget_.enableDevTools();
                   
-                  this.editorWidget_.showOutline(true);
+                  this.editorWidget_.showOutline(true, 150);
                }
             });
          }

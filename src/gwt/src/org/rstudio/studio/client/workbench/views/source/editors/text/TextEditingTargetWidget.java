@@ -166,9 +166,9 @@ public class TextEditingTargetWidget
             }
             
             @Override
-            public void onPreferredSize(double size)
+            public void onPreferredWidth(double width)
             {
-               target_.setPreferredOutlineWidgetSize(size);
+               target_.setPreferredOutlineWidgetSize(width);
             }
             
             @Override

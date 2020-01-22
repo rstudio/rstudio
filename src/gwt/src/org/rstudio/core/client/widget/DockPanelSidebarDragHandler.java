@@ -72,14 +72,14 @@ public abstract class DockPanelSidebarDragHandler extends MouseDragHandler
       // We only update the preferred size if the user hasn't closed
       // the widget.
       if (size > 0)
-         onPreferredSize(size);
+         onPreferredWidth(size);
       
       onPreferredVisibility(size > 0);
    }
    
 
    public abstract void onResized(boolean visible);
-   public void onPreferredSize(double size) {}
+   public void onPreferredWidth(double size) {}
    public void onPreferredVisibility(boolean visible) {}
    
    final Widget sidebar_;
