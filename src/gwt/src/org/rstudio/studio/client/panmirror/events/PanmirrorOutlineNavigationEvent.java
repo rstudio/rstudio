@@ -23,20 +23,20 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * Represents a selection change event.
  */
-public class PanmirrorOutlineChangeEvent extends
-    GwtEvent<PanmirrorOutlineChangeEvent.Handler> {
+public class PanmirrorOutlineNavigationEvent extends
+    GwtEvent<PanmirrorOutlineNavigationEvent.Handler> {
 
   /**
-   * Handler interface for {@link PanmirrorOutlineChangeEvent} events.
+   * Handler interface for {@link PanmirrorOutlineNavigationEvent} events.
    */
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when a {@link PanmirrorOutlineChangeEvent} is fired.
+     * Called when a {@link PanmirrorOutlineNavigationEvent} is fired.
      *
-     * @param event the {@link PanmirrorOutlineChangeEvent} that was fired
+     * @param event the {@link PanmirrorOutlineNavigationEvent} that was fired
      */
-    void onPanmirrorOutlineChange(PanmirrorOutlineChangeEvent event);
+    void onPanmirrorOutlineChange(PanmirrorOutlineNavigationEvent event);
   }
 
   /**
@@ -45,7 +45,7 @@ public class PanmirrorOutlineChangeEvent extends
    */
   public interface HasPanmirrorOutlineChangeHandlers extends HasHandlers {
     /**
-     * Adds a {@link PanmirrorOutlineChangeEvent} handler.
+     * Adds a {@link PanmirrorOutlineNavigationEvent} handler.
      * 
      * @param handler the handler
      * @return {@link HandlerRegistration} used to remove this handler
@@ -56,7 +56,7 @@ public class PanmirrorOutlineChangeEvent extends
   /**
    * Handler type.
    */
-  private static Type<PanmirrorOutlineChangeEvent.Handler> TYPE;
+  private static Type<PanmirrorOutlineNavigationEvent.Handler> TYPE;
 
   /**
    * Fires an outline change event on all registered handlers in the handler
@@ -66,7 +66,7 @@ public class PanmirrorOutlineChangeEvent extends
    */
   public static void fire(HasPanmirrorOutlineChangeHandlers source) {
     if (TYPE != null) {
-      PanmirrorOutlineChangeEvent event = new PanmirrorOutlineChangeEvent();
+      PanmirrorOutlineNavigationEvent event = new PanmirrorOutlineNavigationEvent();
       source.fireEvent(event);
     }
   }
@@ -76,9 +76,9 @@ public class PanmirrorOutlineChangeEvent extends
    *
    * @return returns the handler type
    */
-  public static Type<PanmirrorOutlineChangeEvent.Handler> getType() {
+  public static Type<PanmirrorOutlineNavigationEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlineChangeEvent.Handler>();
+      TYPE = new Type<PanmirrorOutlineNavigationEvent.Handler>();
     }
     return TYPE;
   }
@@ -86,16 +86,16 @@ public class PanmirrorOutlineChangeEvent extends
   /**
    * Creates an outline change event.
    */
-  PanmirrorOutlineChangeEvent() {
+  PanmirrorOutlineNavigationEvent() {
   }
 
   @Override
-  public final Type<PanmirrorOutlineChangeEvent.Handler> getAssociatedType() {
+  public final Type<PanmirrorOutlineNavigationEvent.Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(PanmirrorOutlineChangeEvent.Handler handler) {
+  protected void dispatch(PanmirrorOutlineNavigationEvent.Handler handler) {
     handler.onPanmirrorOutlineChange(this);
   }
 }

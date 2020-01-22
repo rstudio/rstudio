@@ -28,9 +28,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
-import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineChangeEvent;
-import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineChangeEvent.HasPanmirrorOutlineChangeHandlers;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 
@@ -58,8 +55,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    RequiresResize, 
    HasChangeHandlers, 
-   HasSelectionChangedHandlers,
-   HasPanmirrorOutlineChangeHandlers
+   HasSelectionChangedHandlers
 {
    
    public static class Options 
@@ -161,10 +157,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
          // sync outline
          outline_.updateOutline(editor_.getOutline());
-         
-         // fire to clients
-         PanmirrorOutlineChangeEvent.fire(this);
-         
+             
       }));
    }
    
@@ -231,12 +224,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       setWidgetHidden(toolbar_, !show);
    }
-   
-   
-   public PanmirrorOutlineItem[] getOutline()
-   {
-      return editor_.getOutline();
-   }
+  
    
    public PanmirrorCommand[] getCommands()
    {
@@ -313,13 +301,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       return handlers_.addHandler(SelectionChangeEvent.getType(), handler);
    }
-   
-   @Override
-   public HandlerRegistration addPanmirrorOutlineChangeHandler(PanmirrorOutlineChangeEvent.Handler handler)
-   {
-      return handlers_.addHandler(PanmirrorOutlineChangeEvent.getType(), handler);
-   }
-   
    
    @Override
    public void fireEvent(GwtEvent<?> event)
