@@ -711,7 +711,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       }
 
       // Debounce an update to the accessible character count
-      ariaLive_.reportStatusDebounced(liveRegionMessage);
+      ariaLive_.reportStatusDebounced(AriaLiveService.GIT_MESSAGE_LENGTH, liveRegionMessage);
    }
 
    @UiField(provided = true)

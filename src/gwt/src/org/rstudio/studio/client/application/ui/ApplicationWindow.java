@@ -84,8 +84,8 @@ public class ApplicationWindow extends Composite
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
       if (announce && showToolbar != currentVisibility)
-         ariaLive_.reportStatus(showToolbar ? "Main toolbar visible" :
-                                              "Main toolbar hidden");
+         ariaLive_.reportStatus(AriaLiveService.TOOLBAR_VISIBILITY,
+               showToolbar ? "Main toolbar visible" : "Main toolbar hidden");
    }
    
    @Override
@@ -99,7 +99,8 @@ public class ApplicationWindow extends Composite
    {
       if (!isToolbarShowing())
       {
-         ariaLive_.reportStatus("Toolbar hidden, unable to focus.");
+         ariaLive_.reportStatus(AriaLiveService.TOOLBAR_VISIBILITY,
+               "Toolbar hidden, unable to focus.");
          return;
       }
       applicationHeader_.focusToolbar();

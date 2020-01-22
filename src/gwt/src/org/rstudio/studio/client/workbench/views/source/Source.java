@@ -4209,7 +4209,7 @@ public class Source implements InsertSourceHandler,
       {
          announcement = activeEditor_.getCurrentStatus();
       }
-      ariaLive_.reportStatus(announcement);
+      ariaLive_.reportStatus(AriaLiveService.ON_DEMAND, announcement);
    }
    
    @Handler

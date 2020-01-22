@@ -14,24 +14,36 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
+import java.util.Map;
 
 public class AccessibilityPreferencesPane extends PreferencesPane
 {
    @Inject
    public AccessibilityPreferencesPane(UserPrefs prefs,
+                                       AriaLiveService ariaLive,
                                        PreferencesDialogResources res)
    {
       res_ = res;
+      ariaLive_ = ariaLive;
 
       add(headerLabel("Assistive Tools"));
       chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
@@ -41,6 +53,19 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             1, 9999, prefs.typingStatusDelayMs());
       add(indent(typingStatusDelay_));
 
+      Label announcementsLabel = headerLabel("Announcements");
+      announcements_ = new CheckBoxList(announcementsLabel);
+      add(announcementsLabel);
+      announcementsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      add(announcements_);
+      DomUtils.ensureHasId(announcementsLabel.getElement());
+      Roles.getListboxRole().setAriaLabelledbyProperty(announcements_.getElement(),
+            Id.of(announcementsLabel.getElement()));
+      announcements_.setHeight("150px");
+      announcements_.setWidth("300px");
+      announcements_.getElement().getStyle().setMarginBottom(15, Unit.PX);
+      announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
+      
       Label displayLabel = headerLabel("Other");
       add(displayLabel);
       displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
@@ -67,6 +92,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       initialScreenReaderEnabled_ = prefs.getScreenReaderEnabled();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
       chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
+      populateAnnouncementList();
    }
 
    @Override
@@ -87,6 +113,10 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
       prefs.syncToggleTabKeyMovesFocusState(chkTabMovesFocus_.getValue());
+
+      if (applyAnnouncementList(prefs))
+         restartRequirement.setUiReloadRequired(true);
+
       return restartRequirement;
    }
 
@@ -96,12 +126,55 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       return (!chkScreenReaderEnabled_.getValue() || typingStatusDelay_.validate("Speak results after typing delay"));
    }
 
+   private void populateAnnouncementList()
+   {
+      announcements_.clearItems();
+      for (Map.Entry<String,String> entry : ariaLive_.getAnnouncements().entrySet())
+      {
+         CheckBox checkBox = new CheckBox(entry.getValue());
+         checkBox.setFormValue(entry.getKey());
+         announcements_.addItem(checkBox);
+         
+         // The preference tracks disabled announcements, but the UI shows enabled announcements.
+         // Having the UI show disabled announcements is counter-intuitive, but tracking
+         // disabled items in the preferences causes newly added announcements to be enabled
+         // by default.
+         checkBox.setValue(!ariaLive_.isDisabled(entry.getKey()));
+      }
+   }
+
+   private boolean applyAnnouncementList(UserPrefs prefs)
+   {
+      boolean origConsoleLog = ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG);
+      boolean restartNeeded = false;
+
+      JsArrayString settings = prefs.disabledAriaLiveAnnouncements().getValue();
+      settings.setLength(0);
+      for (int i = 0; i < announcements_.getItemCount(); i++)
+      {
+         CheckBox chk = announcements_.getItemAtIdx(i);
+         if (!chk.getValue()) // preference tracks disabled, UI tracks enabled
+            settings.push(chk.getFormValue());
+         
+         if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_LOG) &&
+               origConsoleLog == chk.getValue())
+         {
+            restartNeeded = true;
+         }
+      }
+      
+      prefs.disabledAriaLiveAnnouncements().setGlobalValue(settings);
+      return restartNeeded;
+   }
+
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
    private final CheckBox chkTabMovesFocus_;
+   private final CheckBoxList announcements_;
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
 
    private final PreferencesDialogResources res_;
+   private final AriaLiveService ariaLive_;
 }

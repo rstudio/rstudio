@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -58,6 +59,7 @@ public class UserPrefs extends UserPrefsComputed
                     Commands commands,
                     Binder binder,
                     GlobalDisplay display,
+                    AriaLiveService ariaLive,
                     ApplicationQuit quit)
    {
       super(session.getSessionInfo(),
@@ -72,6 +74,7 @@ public class UserPrefs extends UserPrefsComputed
       display_ = display;
       commands_ = commands;
       reloadAfterInit_ = false;
+      ariaLive_ = ariaLive;
       quit_ = quit;
       
       binder.bind(commands_, this);
@@ -329,13 +332,16 @@ public class UserPrefs extends UserPrefsComputed
    @Handler
    void onToggleTabKeyMovesFocus()
    {
-      RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().setGlobalValue(
-            !RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue());
+      boolean newMode = !RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue();
+      RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().setGlobalValue(newMode);
       writeUserPrefs(succeeded ->
       {
          if (succeeded)
          {
             syncToggleTabKeyMovesFocusState();
+            ariaLive_.reportStatus(AriaLiveService.TAB_KEY_MODE,
+                  newMode ? "Tab key always moves focus on" : "Tab key always moves focus off");
+            
          }
          else
          {
@@ -359,6 +365,7 @@ public class UserPrefs extends UserPrefsComputed
    private final GlobalDisplay display_;
    private final Commands commands_;
    private final EventBus eventBus_;
+   private final AriaLiveService ariaLive_;
    private final ApplicationQuit quit_;
 
    private boolean reloadAfterInit_;
