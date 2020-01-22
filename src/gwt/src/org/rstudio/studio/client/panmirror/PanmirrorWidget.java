@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
@@ -129,14 +130,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       toolbar_.init(commands_);
       
-      outline_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler() {
+      registrations_.add(outline_.addPanmirrorNavigationHandler(new PanmirrorNavigationEvent.Handler() {
          @Override
          public void onPanmirrorNavigation(PanmirrorNavigationEvent event)
          {
             editor_.navigate(event.getId());
             editor_.focus();
          }
-      });
+      }));
       
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
@@ -172,13 +173,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       try 
       {
+         // detach registrations (outline events)
+         registrations_.removeHandler();
+         
          if (editor_ != null) 
          {
             // unsubscribe from editor events
             for (JsVoidFunction unsubscribe : editorEventUnsubscribe_) 
                unsubscribe.call();
             editorEventUnsubscribe_.clear();
-            
+              
             // destroy editor
             editor_.destroy();
             editor_ = null;
@@ -331,6 +335,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private PanmirrorCommand[] commands_ = null;
    
    private final HandlerManager handlers_ = new HandlerManager(this);
+   private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
   
 }
