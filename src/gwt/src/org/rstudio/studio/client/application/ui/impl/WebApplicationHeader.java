@@ -124,6 +124,7 @@ public class WebApplicationHeader extends Composite
 
       // link target for logo
       logoAnchor_ = new Anchor();
+      ElementIds.assignElementId(logoAnchor_, ElementIds.RSTUDIO_LOGO);
       Style style = logoAnchor_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
       style.setLeft(18, Unit.PX);
