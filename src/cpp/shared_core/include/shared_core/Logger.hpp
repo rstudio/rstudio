@@ -38,12 +38,17 @@ class Error;
 class ErrorLocation;
 
 } // namespace rstudio
-} // namesapce core
+} // namespace core
 
 
 namespace rstudio {
 namespace core {
 namespace log {
+
+/**
+ * @file
+ * Logging definitions and functions.
+ */
 
 class ILogDestination;
 
@@ -53,15 +58,7 @@ class ILogDestination;
 constexpr char s_delim = ';';
 
 /**
- * @brief Helper function which cleans the log delimiter character from a string.
- *
- * @param in_str    The string to be cleaned
- *
- * @return The cleaned string.
- */
- std::string cleanDelimiters(const std::string& in_str);
-
-/**
+ * @enum LogLevel
  * @brief Enum which represents the level of detail at which to log messages.
  */
 enum class LogLevel
@@ -72,6 +69,15 @@ enum class LogLevel
    INFO = 3,      // Info, warning, and error messages will be logged.
    DEBUG = 4      // All messages will be logged.
 };
+
+/**
+ * @brief Helper function which cleans the log delimiter character from a string.
+ *
+ * @param in_str    The string to be cleaned
+ *
+ * @return The cleaned string.
+ */
+std::string cleanDelimiters(const std::string& in_str);
 
 /**
  * @brief Sets the program ID for the logger.
