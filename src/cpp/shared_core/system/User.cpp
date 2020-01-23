@@ -99,10 +99,10 @@ struct User::Impl
 
 PRIVATE_IMPL_DELETER_IMPL(User)
 
-User::User() :
+User::User(bool in_isEmpty) :
    m_impl(new Impl())
 {
-   m_impl->Name = "*";
+   m_impl->Name = in_isEmtpy ? "" : "*";
 }
 
 User::User(const User& in_other) :
