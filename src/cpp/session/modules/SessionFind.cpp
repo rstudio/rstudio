@@ -1147,7 +1147,7 @@ void addDirectoriesToCommand(
       if (testsPath.exists())
          *pCmd << testsPath;
       else if (!rPath.exists() && !srcPath.exists())
-         LOG_ERROR_MESSAGE("Package directories not found");
+         LOG_WARNING_MESSAGE("Package directories not found in " + directoryPath.getAbsolutePath());
    }
 }
 

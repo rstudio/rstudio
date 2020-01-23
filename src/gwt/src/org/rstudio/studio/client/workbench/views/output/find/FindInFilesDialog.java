@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
@@ -265,16 +266,19 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (!gitStatus_ ||
           !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
-               Exclude.StandardGit.ordinal()))
-            .setAttribute("disabled", "disabled");
+         DomUtils.setOptionDisabled(
+            listPresetExcludeFilePatterns_.getElement(),
+            Exclude.StandardGit.ordinal(),
+            true);
          if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
              Exclude.StandardGit.ordinal())
             listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.None.ordinal());
       }
       else
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(
-            Exclude.StandardGit.ordinal())).removeAttribute("disabled");
+         DomUtils.setOptionDisabled(
+            listPresetExcludeFilePatterns_.getElement(),
+            Exclude.StandardGit.ordinal(),
+            false);
 
       // disable custom filter text box when 'Custom Filter' is not selected
       divExcludeCustomFilter_.getStyle().setDisplay(
@@ -284,42 +288,33 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             : Style.Display.NONE);
 
       // user cannot specify include patterns when using git grep
-      if (listPresetExcludeFilePatterns_.getSelectedIndex() != 
-          Exclude.StandardGit.ordinal())
-      {
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-            Include.CommonRSourceFiles.ordinal())).removeAttribute("disabled");
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-            Include.RScripts.ordinal())).removeAttribute("disabled");
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-            Include.CustomFilter.ordinal())).removeAttribute("disabled");
-      }
-      else
-      {
-         // when using standard git exclusions we don't have the option to search recursively and
-         // specify file types
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-               Include.CommonRSourceFiles.ordinal()))
-            .setAttribute("disabled", "disabled");
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-               Include.RScripts.ordinal()))
-            .setAttribute("disabled", "disabled");
-         ((Element) listPresetFilePatterns_.getElement().getChild(
-               Include.CustomFilter.ordinal()))
-            .setAttribute("disabled", "disabled");
+      boolean disableIncludes =
+         listPresetExcludeFilePatterns_.getSelectedIndex() == Exclude.StandardGit.ordinal();
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.CommonRSourceFiles.ordinal(),
+         disableIncludes);
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.RScripts.ordinal(),
+         disableIncludes);
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.CustomFilter.ordinal(),
+         disableIncludes);
 
-         // if a disabled index is selected, change selection to All Files
-         if (listPresetFilePatterns_.getSelectedIndex() ==
-                Include.CommonRSourceFiles.ordinal() || 
-             listPresetFilePatterns_.getSelectedIndex() ==
-                Include.RScripts.ordinal() || 
-             listPresetFilePatterns_.getSelectedIndex() ==
-                Include.CustomFilter.ordinal())
-            listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
-
+      // if a disabled index is selected, change selection to All Files
+      if (disableIncludes &&
+          (listPresetFilePatterns_.getSelectedIndex() ==
+              Include.CommonRSourceFiles.ordinal() || 
+           listPresetFilePatterns_.getSelectedIndex() ==
+              Include.RScripts.ordinal() || 
+           listPresetFilePatterns_.getSelectedIndex() ==
+             Include.CustomFilter.ordinal()))
+      {
+         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
          manageFilePattern();
       }
-
    }
 
    @Override
@@ -408,6 +403,19 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       txtSearchPattern_.setText(searchPattern);
    }
 
+
+   public int getIndexFromValue(ListBox listBox, String value)
+   {
+      int index = 0;
+      while (index < listBox.getItemCount())
+      {
+         if (value == listBox.getValue(index))
+            return index;
+         index++;
+      }
+      return -1;
+   }
+
    public void setState(State dialogState)
    {
       if (txtSearchPattern_.getText().isEmpty())
@@ -418,39 +426,25 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (includeFilePatterns == 
-          listPresetFilePatterns_.getValue(Include.AllFiles.ordinal()))
-         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
-      else if (includeFilePatterns ==
-               listPresetFilePatterns_.getValue(Include.CommonRSourceFiles.ordinal()))
-         listPresetFilePatterns_.setSelectedIndex(Include.CommonRSourceFiles.ordinal());
-      else if (includeFilePatterns ==
-               listPresetFilePatterns_.getValue(Include.RScripts.ordinal()))
-         listPresetFilePatterns_.setSelectedIndex(Include.RScripts.ordinal());
-      else if (includeFilePatterns ==
-               listPresetFilePatterns_.getValue(Include.Package.ordinal()))
-      {
-         listPresetFilePatterns_.setSelectedIndex(Include.Package.ordinal());
-         packageStatus_ = true;
-      }
+      int index = getIndexFromValue(listPresetFilePatterns_, includeFilePatterns);
+      if (index >= 0)
+         listPresetFilePatterns_.setSelectedIndex(index);
       else
          listPresetFilePatterns_.setSelectedIndex(Include.CustomFilter.ordinal());
+      if (index == Include.Package.ordinal())
+         packageStatus_ = true;
       txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(
          Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
-      if (excludeFilePatterns ==
-          listPresetExcludeFilePatterns_.getValue(Exclude.None.ordinal()))
-         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.None.ordinal());
-      else if (excludeFilePatterns ==
-               listPresetExcludeFilePatterns_.getValue(Exclude.StandardGit.ordinal()))
-      {
-         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.StandardGit.ordinal());
-         gitStatus_ = true;
-      }
+      index = getIndexFromValue(listPresetExcludeFilePatterns_, excludeFilePatterns);
+      if (index >= 0)
+         listPresetExcludeFilePatterns_.setSelectedIndex(index);
       else
          listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.CustomFilter.ordinal());
+      if (index == Exclude.StandardGit.ordinal())
+         gitStatus_ = true;
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
    }
