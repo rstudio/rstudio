@@ -37,10 +37,13 @@ public class AriaLiveService
    public static final String CONSOLE_LOG = "console_log";
    public static final String FILTERED_LIST = "filtered_list";
    public static final String GIT_MESSAGE_LENGTH = "git_message_length";
+   public static final String INFO_BAR = "info_bar";
    public static final String PROGRESS_COMPLETION = "progress_completion";
    public static final String PROGRESS_LOG = "progress_log";
+   public static final String SESSION_STATE = "session_state";
    public static final String TAB_KEY_MODE = "tab_key_mode";
    public static final String TOOLBAR_VISIBILITY = "toolbar_visibility";
+   public static final String WARNING_BAR = "warning_bar";
    
    // Announcement requested by a user, not controlled by a preference since it is on-demand.
    // Do not include in the announcements_ map.
@@ -57,10 +60,13 @@ public class AriaLiveService
       announcements_.put(CONSOLE_LOG, "Announce console output (requires restart)");
       announcements_.put(FILTERED_LIST, "Announce filtered result count");
       announcements_.put(GIT_MESSAGE_LENGTH, "Announce commit message length");
+      announcements_.put(INFO_BAR, "Announce info bars");
       announcements_.put(PROGRESS_COMPLETION, "Announce task completion");
       announcements_.put(PROGRESS_LOG, "Announce task progress details");
+      announcements_.put(SESSION_STATE, "Announce changes in session state");
       announcements_.put(TAB_KEY_MODE, "Announce tab key focus mode change");
       announcements_.put(TOOLBAR_VISIBILITY, "Announce toolbar visibility change");
+      announcements_.put(WARNING_BAR, "Announce warning bars");
    }
 
    /**
