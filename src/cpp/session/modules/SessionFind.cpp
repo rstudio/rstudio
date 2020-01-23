@@ -1228,7 +1228,10 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
 
       if (grepOptions.packageFlag() && !grepOptions.includeArgs().empty())
-         LOG_DEBUG_MESSAGE("Unknown include argument(s)");
+      {
+         for (std::string arg : grepOptions.includeArgs())
+            LOG_DEBUG_MESSAGE("Unknown include argument: " + arg);
+      }
    }
    else
    {
