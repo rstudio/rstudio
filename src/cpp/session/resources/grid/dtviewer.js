@@ -903,7 +903,7 @@ var createHeader = function(idx, col) {
   var title = document.createElement("div");
   title.textContent = col.col_name;
   interior.appendChild(title);
-  th.title = "column " + idx + ": " + col.col_type;
+  th.title = "column " + (idx - columnOffset) + ": " + col.col_type;
   if (col.col_type === "numeric") {
     th.title += " with range " + col.col_breaks[0] + " - " + 
                 col.col_breaks[col.col_breaks.length - 1];
@@ -1441,7 +1441,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       dismissActivePopup(true);
   }
   for (var i = 0; i < thead.children.length; i++) {
-    var colIdx = i + (rowNumbers ? 0 : 1);
+    var colIdx = i + (rowNumbers ? 0 : 1) + columnOffset;
     var col = cols[colIdx];
     var th = thead.children[i];
     if (visible) {
