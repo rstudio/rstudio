@@ -37,8 +37,8 @@ namespace core {
 
 namespace {
 
-const std::string s_errorExpected = "expected";
-const std::string s_errorExpectedValue = "yes";
+constexpr const char* s_errorExpected = "expected";
+constexpr const char* s_errorExpectedValue = "yes";
 
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
