@@ -245,7 +245,7 @@ public class UserPrefs extends UserPrefsComputed
 
    /**
     * Screen-reader enabled setting is stored differently on desktop vs server.
-    * On desktop is must be available earlier in startup so the RStudio.app/exe native
+    * On desktop it must be available earlier in startup so the RStudio.app/exe native
     * code can configure Chromium. Fetching that is async and we want interested parties
     * to be able to check it synchronously. So we cache it. Changing this setting
     * requires a reload of the UI to fully take effect.
