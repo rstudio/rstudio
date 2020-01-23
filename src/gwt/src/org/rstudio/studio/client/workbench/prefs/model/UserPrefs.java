@@ -29,9 +29,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
@@ -266,6 +269,18 @@ public class UserPrefs extends UserPrefsComputed
       else
       {
          screenReaderEnabled_ = RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().getValue();
+         
+         // on Server, we can announce if screen reader is not enabled; most things work without
+         // enabling it, but for best experience user should turn it on
+         if (!screenReaderEnabled_)
+         {
+            Timers.singleShot(AriaLiveService.STARTUP_ANNOUNCEMENT_DELAY, () ->
+            {
+               ariaLive_.announce(AriaLiveService.SCREEN_READER_NOT_ENABLED,
+                     "Warning: screen reader mode not enabled. Turn on using shortcut Ctrl+Shift+Forward Slash.",
+                     Timing.IMMEDIATE, Severity.ALERT);
+            });
+         }
          onCompleted.execute();
       }
    }
@@ -339,9 +354,9 @@ public class UserPrefs extends UserPrefsComputed
          if (succeeded)
          {
             syncToggleTabKeyMovesFocusState();
-            ariaLive_.reportStatus(AriaLiveService.TAB_KEY_MODE,
-                  newMode ? "Tab key always moves focus on" : "Tab key always moves focus off");
-            
+            ariaLive_.announce(AriaLiveService.TAB_KEY_MODE,
+                  newMode ? "Tab key always moves focus on" : "Tab key always moves focus off",
+                  Timing.IMMEDIATE, Severity.STATUS);
          }
          else
          {

@@ -53,6 +53,8 @@ import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
@@ -289,8 +291,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       });
       dataProvider_.setList(data);
-      ariaLive_.reportStatusDebounced(AriaLiveService.FILTERED_LIST,
-            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query));
+      ariaLive_.announce(AriaLiveService.FILTERED_LIST,
+            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query),
+            Timing.DEBOUNCE, Severity.STATUS);
    }
    
    @Override

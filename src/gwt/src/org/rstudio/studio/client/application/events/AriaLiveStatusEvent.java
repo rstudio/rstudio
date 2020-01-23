@@ -19,15 +19,28 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
 {
+   public enum Timing
+   {
+      IMMEDIATE,
+      DEBOUNCE // wait for UserPrefs::typingStatusDelayMs before updating
+   }
+
+   public enum Severity
+   {
+      STATUS, // polite announcements, won't interrupt other speech
+      ALERT // assertive announcements, may interrupt other speech
+   }
+
    public interface Handler extends EventHandler
    {
       void onAriaLiveStatus(AriaLiveStatusEvent event);
    }
 
-   public AriaLiveStatusEvent(String message, boolean immediate)
+   public AriaLiveStatusEvent(String message, Timing timing, Severity severity)
    {
       message_ = message;
-      immediate_ = immediate;
+      timing_ = timing;
+      severity_ = severity;
    }
 
    public String getMessage()
@@ -35,9 +48,14 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
       return message_;
    }
    
-   public boolean getImmediate()
+   public Timing getTiming()
    {
-      return immediate_;
+      return timing_;
+   }
+
+   public Severity getSeverity()
+   {
+      return severity_;
    }
 
    @Override
@@ -53,7 +71,8 @@ public class AriaLiveStatusEvent extends GwtEvent<AriaLiveStatusEvent.Handler>
    }
 
    private final String message_;
-   private final boolean immediate_;
+   private final Timing timing_;
+   private final Severity severity_;
 
    public static final Type<AriaLiveStatusEvent.Handler> TYPE = new Type<>();
 }
