@@ -143,8 +143,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPanmirrorHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetVisualMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
@@ -294,7 +294,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
-   void injectMembers(TextEditingTargetPanmirrorHelper textEditingTargetPanmirrorHelper);
+   void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -340,6 +340,7 @@ public interface RStudioGinjector extends Ginjector
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
    AriaLiveService getAriaLiveService();
+   
 
    // Pro-only below here
 }

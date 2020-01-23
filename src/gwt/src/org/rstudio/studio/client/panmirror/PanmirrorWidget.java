@@ -27,6 +27,7 @@ import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
+import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
@@ -60,6 +61,7 @@ import jsinterop.annotations.JsType;
 
 
 public class PanmirrorWidget extends DockLayoutPanel implements 
+   IsHideableWidget,
    RequiresResize, 
    HasChangeHandlers, 
    HasSelectionChangedHandlers,

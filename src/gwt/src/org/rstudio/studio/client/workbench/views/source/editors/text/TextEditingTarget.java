@@ -258,6 +258,10 @@ public class TextEditingTarget implements
       void setNotebookUIVisible(boolean visible);
 
       void setAccessibleName(String name);
+      
+      TextEditorContainer editorContainer();
+ 
+      void manageCommandUI();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1728,6 +1732,9 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
+            // initialize visual mode
+            visualMode_ = new TextEditingTargetVisualMode(view_, docUpdateSentinel_);
+            
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
                return;
             
@@ -2262,7 +2269,7 @@ public class TextEditingTarget implements
 
    public void focus()
    {
-      docDisplay_.focus();
+      view_.editorContainer().focus();
    }
    
    public String getSelectedText()
@@ -7477,6 +7484,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private final TextEditingTargetRHelper rHelper_;
+   private TextEditingTargetVisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
@@ -7604,4 +7612,5 @@ public class TextEditingTarget implements
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
    private static final String PROPERTY_SCROLL_LINE = "scrollLine";
+   public static final String PROPERTY_RMD_VISUAL_MODE = "rmdVisualMode";
 }
