@@ -296,7 +296,8 @@ public class ApplicationWindow extends Composite
       
       // create and show progress
       activeSerializationProgress_ = 
-                    new ApplicationSerializationProgress(msg, modal, delayMs);
+                    new ApplicationSerializationProgress(msg, modal, delayMs,
+                          !ariaLive_.isDisabled(AriaLiveService.SESSION_STATE));
       
       // implement timeout for *this* serialization progress instance if 
       // requested (check to ensure the same instance because another 

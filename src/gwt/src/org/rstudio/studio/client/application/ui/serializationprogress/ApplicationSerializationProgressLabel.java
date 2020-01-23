@@ -1,7 +1,7 @@
 /*
  * ApplicationSerializationProgressLabel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,10 +29,11 @@ public class ApplicationSerializationProgressLabel extends Composite
    {}
    private static MyBinder binder = GWT.create(MyBinder.class);
 
-   public ApplicationSerializationProgressLabel()
+   public ApplicationSerializationProgressLabel(boolean announce)
    {
       initWidget(binder.createAndBindUi(this));
-      Roles.getStatusRole().set(label_.getElement());
+      if (announce)
+         Roles.getStatusRole().set(label_.getElement());
    }
 
    public void setText(String text)
