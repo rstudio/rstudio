@@ -56,12 +56,14 @@ else()
 
    set(SHARED_INCLUDE_DIRS
       ${SHARED_INCLUDE_DIRS}
-      ${EXT_SOURCE_DIR})
+      ${EXT_SOURCE_DIR}
+   )
 
    set(SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
       system/Win32StringUtils.cpp
-      system/Win32User.cpp)
+      system/Win32User.cpp
+   )
 
 endif()
 
@@ -72,3 +74,22 @@ define_source_file_names(rstudio-shared-core)
 
 target_link_libraries(rstudio-shared-core
    ${Boost_LIBRARIES})
+
+
+
+# define executable for running unit tests
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+   file(GLOB_RECURSE SHARED_CORE_TEST_FILES "*Tests.cpp")
+
+   add_executable(rstudio-core-tests
+      TestMain.cpp
+      ${SHARED_CORE_TEST_FILES}
+      ${SHARED_CORE_HEADER_FILES}
+   )
+
+   target_link_libraries(rstudio-shared-core-tests
+      rstudio-shared-core
+      ${Boost_LIBRARIES}
+   )
+endif()
