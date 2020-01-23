@@ -374,7 +374,14 @@ bool Value::operator==(const Value& in_other) const
    if (this == &in_other)
       return true;
 
-   return m_impl->Document == in_other.m_impl->Document;
+   if (m_impl->Document == in_other.m_impl->Document)
+      return true;
+
+   // Exactly one is null (they're not equal) - return false.
+   if ((m_impl->Document == nullptr) || (in_other.m_impl->Document == nullptr))
+      return false;
+
+   return *m_impl->Document == *in_other.m_impl->Document;
 }
 
 Value Value::clone() const
