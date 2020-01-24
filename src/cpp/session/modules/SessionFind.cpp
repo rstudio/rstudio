@@ -470,6 +470,12 @@ private:
       }
    }
 
+   Error testWritePermissions(const FilePath& filePath)
+   {
+      std::shared_ptr<std::ostream> testStream;
+      return filePath.openForWrite(testStream, /*in_truncate*/ false);
+   }
+
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -509,6 +515,9 @@ private:
              !tempReplaceFile_.getAbsolutePath().empty() &&
              outputStream_->good())
          {
+            Error error = testWritePermissions(FilePath(currentFile_));
+            if (error)
+               return error;
             std::string line;
             while (std::getline(*inputStream_, line))
             {
@@ -518,7 +527,7 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
-            Error error = tempReplaceFile_.move(FilePath(currentFile_));
+            error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
             return error;
          }
@@ -577,15 +586,18 @@ private:
 
    Error initializeFileForReplace(FilePath file)
    {
-      Error error;
       fileSuccess_ = false;
+      Error error = testWritePermissions(file);
+      if (error)
+         return error;
       if (!findResults().preview())
       {
          tempReplaceFile_ =  module_context::tempFile("replace", "txt");
          error = tempReplaceFile_.openForWrite(outputStream_);
+         if (error)
+            return error;
       }
-      if (!error)
-         error = file.openForRead(inputStream_);
+      error = file.openForRead(inputStream_);
       if (!error)
       {
          fileSuccess_ = true;
@@ -1082,9 +1094,10 @@ private:
             LOG_DEBUG_MESSAGE("Exclude files contain non-string value");
          else
          {
-            if (filePattern.getString().compare("gitExclusions") == 0)
+            std::string excludeText = boost::algorithm::trim_copy(filePattern.getString());
+            if (excludeText.compare("gitExclusions") == 0)
                gitFlag_ = true;
-            else
+            else if (!excludeText.empty())
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
          }
       }
@@ -1099,9 +1112,10 @@ private:
             LOG_DEBUG_MESSAGE("Include files contain non-string value");
          else
          {
-            if (filePattern.getString().compare("package") == 0)
+            std::string includeText = boost::algorithm::trim_copy(filePattern.getString());
+            if (includeText.compare("package") == 0)
                packageFlag_ = true;
-            else
+            else if (!includeText.empty())
                includeArgs_.push_back("--include=" + filePattern.getString());
          }
       }
