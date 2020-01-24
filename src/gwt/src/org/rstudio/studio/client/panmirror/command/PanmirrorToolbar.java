@@ -33,7 +33,7 @@ public class PanmirrorToolbar extends SecondaryToolbar
    @Override
    public int getHeight()
    {
-      return 22;
+      return 23;
    }
  
    public void init(PanmirrorCommand[] commands)
