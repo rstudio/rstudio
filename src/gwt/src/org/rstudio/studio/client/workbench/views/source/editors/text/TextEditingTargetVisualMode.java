@@ -33,8 +33,9 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 
+// TODO: test out focus on find in files
 // TODO: shortcut overlap / routing / remapping
-// TOOD: command / keyboard shortcut for entering visual mode
+// TODO: command / keyboard shortcut for entering visual mode
 // TODO: panmirror outline visibility and width
 // TODO: introduce global pref to toggle availabilty of visual mode
 // TODO: wire up find and replace actions to panmirror stubs
@@ -93,11 +94,13 @@ public class TextEditingTargetVisualMode
       // it to the editor, then clear the dirty flag
       if (isPanmirrorActive())
       {
-         panmirror_.getMarkdown(markdown -> { 
-            getSourceEditor().setCode(markdown); 
-            isDirty_ = false;
-            if (ready != null)
-               ready.execute();
+         withPanmirror(() -> {
+            panmirror_.getMarkdown(markdown -> { 
+               getSourceEditor().setCode(markdown); 
+               isDirty_ = false;
+               if (ready != null)
+                  ready.execute();
+            });
          });
       }
       // otherwise just return (no-op)
@@ -177,12 +180,11 @@ public class TextEditingTargetVisualMode
       // get references to the editing container and it's source editor
       TextEditorContainer editorContainer = display_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
-      
-      withPanmirror(() -> {
-         
-         // visual mode enabled (panmirror editor)
-         if (isEnabled())
-         {
+        
+      // visual mode enabled (panmirror editor)
+      if (isEnabled())
+      {
+         withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
@@ -195,18 +197,22 @@ public class TextEditingTargetVisualMode
             // activate panmirror and begin sync-on-idle behavior
             editorContainer.activateWidget(panmirror_);
             syncOnIdle_.resume();
-         }
-         
-         // visual mode not enabled (source editor)
-         else 
-         {
-            // sync any pending edits, then activate the editor
-            sync(() -> {
-               editorContainer.activateEditor(); 
+         });
+        
+      }
+      
+      // visual mode not enabled (source editor)
+      else 
+      {
+         // sync any pending edits, then activate the editor
+         sync(() -> {
+            
+            editorContainer.activateEditor(); 
+            
+            if (syncOnIdle_ != null)
                syncOnIdle_.suspend();
-            });  
-         }
-      });
+         });  
+      }
    }
   
    
