@@ -74,7 +74,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       public boolean toolbar = true;
       public boolean outline = false;
       public double outlineWidth = 190;
-      public boolean border = true;
+      public boolean border = false;
    }
    
    public static void create(PanmirrorConfig config,

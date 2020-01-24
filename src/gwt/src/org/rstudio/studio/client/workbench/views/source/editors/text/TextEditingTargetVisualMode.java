@@ -25,10 +25,12 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 // TODO: propogate edits as they happen (w/ 1 second delay)
+// TODO: shortcut overlap / routing / remapping
 // TOOD: command / keyboard shortcut for entering visual mode
 // TODO: panmirror outline visibility and width
 // TODO: introduce global pref to toggle availabilty of visual mode
 // TODO: disable additional source-editing commands in visual mode
+// TODO: wire up find and replace actions to panmirror stubs
 // TODO: bump toolbar icons down 1 pixel
 // TODO: standard editor dialog boxes
 
@@ -92,7 +94,6 @@ public class TextEditingTargetVisualMode
          PanmirrorConfig config = new PanmirrorConfig();
          config.options.rmdCodeChunks = true;
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
-         options.border = false;
          
          PanmirrorWidget.create(config, options, (panmirror) -> {
             panmirror_ = panmirror;
