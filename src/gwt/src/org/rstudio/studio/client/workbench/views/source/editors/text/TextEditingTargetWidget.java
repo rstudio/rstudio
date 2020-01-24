@@ -179,9 +179,10 @@ public class TextEditingTargetWidget
          }
       );
          
-      // setup container and add source editor
+      // setup editign container (only activate editor if we are not in visual mode)
       editorContainer_ = new TextEditorContainer(sourceEditor_);
-   
+      if (!isVisualMode())
+        editorContainer_.activateEditor();
             
       panel_ = new PanelWithToolbars(
             toolbar_ = createToolbar(fileType),
