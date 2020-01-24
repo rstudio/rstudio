@@ -174,35 +174,6 @@ try {
         ]
         containers = limit_builds(containers)
 
-        // build each container image
-        parallel_images = [:]
-        for (int i = 0; i < containers.size(); i++) {
-            // derive the tag for this image
-            def current_image = containers[i]
-            def image_tag = "{current_image.os}-{current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
-
-            // ensure that this image tag has not already been built (since we
-            // recycle tags for many platforms to e.g. build desktop and server
-            // on the same image)
-            if (!parallel_images.keySet().contains(image_tag)) {
-                parallel_images[image_tag] = {
-                    node('docker') {
-                        stage('prepare container') {
-                            prepareWorkspace()
-                            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
-                              def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                              pullBuildPush(image_name: 'jenkins/ide', 
-                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}", 
-                                image_tag: image_tag, 
-                                build_args: github_args + " " + jenkins_user_build_args())
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        parallel parallel_images
-
         // create the version we're about to build
         node('docker') {
             stage('set up versioning') {
@@ -236,6 +207,35 @@ try {
                 }
             }
         }
+
+        // build each container image
+        parallel_images = [:]
+        for (int i = 0; i < containers.size(); i++) {
+            // derive the tag for this image
+            def current_image = containers[i]
+            def image_tag = "${current_image.os}-${current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+
+            // ensure that this image tag has not already been built (since we
+            // recycle tags for many platforms to e.g. build desktop and server
+            // on the same image)
+            if (!parallel_images.keySet().contains(image_tag)) {
+                parallel_images[image_tag] = {
+                    node('docker') {
+                        stage('prepare container') {
+                            prepareWorkspace()
+                            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                              def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                              pullBuildPush(image_name: 'jenkins/ide', 
+                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}", 
+                                image_tag: image_tag, 
+                                build_args: github_args + " " + jenkins_user_build_args())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        parallel parallel_images
 
         // build each variant in parallel
         def parallel_containers = [:]
@@ -306,3 +306,4 @@ try {
    slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'bad', message: "${messagePrefix} failed: ${err}"
    error("failed: ${err}")
 }
+
