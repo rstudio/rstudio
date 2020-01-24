@@ -173,10 +173,41 @@ try {
           [os: 'centos8',   arch: 'x86_64', flavor: 'desktop', variant: '',     package_os: 'CentOS 8']
         ]
         containers = limit_builds(containers)
+
+        // build each container image
+        parallel_images = [:]
+        for (int i = 0; i < containers.size(); i++) {
+            // derive the tag for this image
+            def current_image = containers[i]
+            def image_tag = "{current_image.os}-{current_image.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+
+            // ensure that this image tag has not already been built (since we
+            // recycle tags for many platforms to e.g. build desktop and server
+            // on the same image)
+            if (!parallel_images.keySet().contains(image_tag)) {
+                parallel_images[image_tag] = {
+                    node('docker') {
+                        stage('prepare container') {
+                            prepareWorkspace()
+                            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                              def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                              pullBuildPush(image_name: 'jenkins/ide', 
+                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}", 
+                                image_tag: image_tag, 
+                                build_args: github_args + " " + jenkins_user_build_args())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        parallel parallel_images
+
         // create the version we're about to build
         node('docker') {
             stage('set up versioning') {
                 prepareWorkspace()
+
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
                 container.inside() {
                     stage('bump version') {
@@ -213,24 +244,23 @@ try {
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
                 node('ide') {
-                    def container
-                    stage('prepare ws/container'){
-                      prepareWorkspace()
-                      def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
-                      withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
-                          def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                          container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.${current_container.os}-${current_container.arch}", image_tag: image_tag, build_args: github_args + " " + jenkins_user_build_args())
-                      }
-                    }
-                    container.inside() {
-                        stage('compile package') {
-                            compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                    def current_image
+                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                        stage('prepare ws/container') {
+                          prepareWorkspace()
+                          def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
+                          current_image = docker.image("jenkins/ide:" + image_tag)
                         }
-                        stage('run tests') {
-                            run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
-                        }
-                        stage('sentry upload') {
-                            sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                        current_image.inside() {
+                            stage('compile package') {
+                                compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                            }
+                            stage('run tests') {
+                                run_tests(get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
+                            }
+                            stage('sentry upload') {
+                                sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                            }
                         }
                     }
                     stage('upload artifacts') {
