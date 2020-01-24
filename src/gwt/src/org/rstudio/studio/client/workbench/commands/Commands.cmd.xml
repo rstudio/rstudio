@@ -835,6 +835,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showOptions" value="Meta+Alt+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+/"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Shift+B"/>
       </shortcutgroup>

@@ -19,6 +19,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.PopupPanel;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 import java.util.ArrayList;
 
@@ -56,15 +57,16 @@ public class ModalDialogTracker
     * 
     * @param message message to announce
     * @param delayMs delay before announcing
+    * @param severity polite or assertive announcement
     * @return true if message was dispatched, false if no popups support status messages
     */
-   public static boolean dispatchAriaLiveStatus(String message, int delayMs)
+   public static boolean dispatchAriaLiveStatus(String message, int delayMs, Severity severity)
    {
       for (int i = dialogStack_.size() - 1; i >= 0; i--)
       {
          if (dialogStack_.get(i) instanceof AriaLiveStatusReporter)
          {
-            ((AriaLiveStatusReporter) dialogStack_.get(i)).reportStatus(message, delayMs);
+            ((AriaLiveStatusReporter) dialogStack_.get(i)).reportStatus(message, delayMs, severity);
             return true;
          }
       }

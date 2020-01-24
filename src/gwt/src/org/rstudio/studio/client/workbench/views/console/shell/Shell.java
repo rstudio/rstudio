@@ -35,6 +35,8 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -251,8 +253,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
       
-      ariaLive_.reportStatus(AriaLiveService.CONSOLE_CLEARED, "Console cleared");
-      
+      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, "Console cleared",
+            Timing.IMMEDIATE, Severity.STATUS);
+
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
       
