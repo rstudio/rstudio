@@ -33,7 +33,8 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 
-// TODO: test out focus on find in files
+// TODO: currently, scroll to the line doesn't happen for find source nav
+
 // TODO: shortcut overlap / routing / remapping
 // TODO: command / keyboard shortcut for entering visual mode
 // TODO: panmirror outline visibility and width
@@ -90,9 +91,9 @@ public class TextEditingTargetVisualMode
    
    public void sync(Command ready)
    {
-      // if panmirror is active then generate markdown, sync 
-      // it to the editor, then clear the dirty flag
-      if (isPanmirrorActive())
+      // if panmirror is active and has a dirty state, then generate markdown, 
+      // sync it to the editor, then clear the dirty flag
+      if (isPanmirrorActive() && isDirty_)
       {
          withPanmirror(() -> {
             panmirror_.getMarkdown(markdown -> { 
