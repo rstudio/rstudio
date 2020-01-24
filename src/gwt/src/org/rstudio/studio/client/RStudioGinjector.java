@@ -339,7 +339,7 @@ public interface RStudioGinjector extends Ginjector
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
-   AriaLiveService getAriaLiveService(); 
+   AriaLiveService getAriaLiveService();
 
    // Pro-only below here
 }
