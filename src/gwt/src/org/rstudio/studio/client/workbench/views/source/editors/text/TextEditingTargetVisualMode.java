@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
@@ -32,14 +33,10 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 
-// TODO: should we be tied to the idle pref or use a different value?
-
-// TODO: command enablement: more + move to inside adaptToFileType 
 // TODO: shortcut overlap / routing / remapping
 // TOOD: command / keyboard shortcut for entering visual mode
 // TODO: panmirror outline visibility and width
 // TODO: introduce global pref to toggle availabilty of visual mode
-// TODO: disable additional source-editing commands in visual mode
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: apply themeing
 // TODO: accessibility pass
@@ -75,6 +72,16 @@ public class TextEditingTargetVisualMode
       source_ = source;
    }
    
+   public boolean isEnabled()
+   {
+      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
+   }
+   
+   public void setEnabled(boolean enable)
+   {
+      docUpdateSentinel_.setBoolProperty(PROPERTY_RMD_VISUAL_MODE, enable);
+   }
+   
    public void sync()
    {
       sync(null);
@@ -101,10 +108,71 @@ public class TextEditingTargetVisualMode
       }
    }
  
+   public void manageCommands()
+   {
+      disableForVisualMode(
+        commands_.insertChunk(),
+        commands_.jumpTo(),
+        commands_.jumpToMatching(),
+        commands_.showDiagnosticsActiveDocument(),
+        commands_.goToHelp(),
+        commands_.goToDefinition(),
+        commands_.extractFunction(),
+        commands_.extractLocalVariable(),
+        commands_.renameInScope(),
+        commands_.reflowComment(),
+        commands_.commentUncomment(),
+        commands_.insertRoxygenSkeleton(),
+        commands_.reindent(),
+        commands_.reformatCode(),
+        commands_.executeSetupChunk(),
+        commands_.executeAllCode(),
+        commands_.executeCode(),
+        commands_.executeCodeWithoutFocus(),
+        commands_.executeCodeWithoutMovingCursor(),
+        commands_.executeCurrentChunk(),
+        commands_.executeCurrentFunction(),
+        commands_.executeCurrentLine(),
+        commands_.executeCurrentParagraph(),
+        commands_.executeCurrentSection(),
+        commands_.executeCurrentStatement(),
+        commands_.executeFromCurrentLine(),
+        commands_.executeLastCode(),
+        commands_.executeNextChunk(),
+        commands_.executePreviousChunks(),
+        commands_.executeSubsequentChunks(),
+        commands_.executeToCurrentLine(),
+        commands_.sendToTerminal(),
+        commands_.runSelectionAsJob(),
+        commands_.runSelectionAsLauncherJob(),
+        commands_.sourceActiveDocument(),
+        commands_.sourceActiveDocumentWithEcho(),
+        commands_.pasteWithIndentDummy(),
+        commands_.fold(),
+        commands_.foldAll(),
+        commands_.unfold(),
+        commands_.unfoldAll(),
+        commands_.notebookExpandAllOutput(),
+        commands_.notebookCollapseAllOutput(),
+        commands_.notebookClearAllOutput(),
+        commands_.notebookClearOutput(),
+        commands_.goToLine(),
+        commands_.wordCount(),
+        commands_.checkSpelling(),
+        commands_.restartRClearOutput(),
+        commands_.restartRRunAllChunks(),
+        commands_.profileCode()
+      );
+   } 
+   
+  
    private void manageUI()
    {
-      // always manage commands
+      // manage commands
       manageCommands();
+      
+      // manage toolbar buttons / menus in display
+      display_.manageCommandUI();
       
       // get references to the editing container and it's source editor
       TextEditorContainer editorContainer = display_.editorContainer();
@@ -112,8 +180,8 @@ public class TextEditingTargetVisualMode
       
       withPanmirror(() -> {
          
-         // visual mode active
-         if (isVisualMode())
+         // visual mode enabled (panmirror editor)
+         if (isEnabled())
          {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
@@ -129,7 +197,7 @@ public class TextEditingTargetVisualMode
             syncOnIdle_.resume();
          }
          
-         // source mode active
+         // visual mode not enabled (source editor)
          else 
          {
             // sync any pending edits, then activate the editor
@@ -146,10 +214,10 @@ public class TextEditingTargetVisualMode
    {
       if (panmirror_ == null)
       {
+         // create panmirror
          PanmirrorConfig config = new PanmirrorConfig();
          config.options.rmdCodeChunks = true;
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
-         
          PanmirrorWidget.create(config, options, (panmirror) -> {
             
             // save reference to panmirror
@@ -166,7 +234,7 @@ public class TextEditingTargetVisualMode
                }
             };
             
-            // set dirty flag on change
+            // set dirty flag + nudge idle sync on change
             panmirror_.addChangeHandler(new ChangeHandler() {
                @Override
                public void onChange(ChangeEvent event)
@@ -196,12 +264,7 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    }
-    
-   // has the user requested visual mode?
-   private boolean isVisualMode()
-   {
-      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
-   }
+   
    
    // is our widget active in the editor container
    private boolean isPanmirrorActive()
@@ -214,21 +277,17 @@ public class TextEditingTargetVisualMode
       return display_.editorContainer().getEditor();
    }
    
-   private void manageCommands()
+  
+   
+   private void disableForVisualMode(AppCommand... commands)
    {
-      boolean visualMode = isVisualMode();
-      commands_.goToNextChunk().setEnabled(!visualMode);
-      commands_.goToPrevChunk().setEnabled(!visualMode);
-      commands_.goToNextSection().setEnabled(!visualMode);
-      commands_.goToPrevSection().setEnabled(!visualMode);
-      commands_.insertChunk().setEnabled(!visualMode);
-      commands_.executePreviousChunks().setEnabled(!visualMode);
-      commands_.executeSubsequentChunks().setEnabled(!visualMode);
-      commands_.executeCurrentChunk().setEnabled(!visualMode);
-      commands_.executeNextChunk().setEnabled(!visualMode);
-      commands_.checkSpelling().setEnabled(!visualMode);
-      display_.manageCommandUI();
-   } 
+      for (AppCommand command : commands)
+      {
+         if (command.isVisible())
+            command.setEnabled(!isEnabled());
+      }
+   }
+   
    
    private Commands commands_;
    private UserPrefs prefs_;

@@ -1091,6 +1091,7 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
    {
+      visualMode_.setEnabled(false);
       docDisplay_.navigateToPosition(position, recordCurrent);
    }
    
@@ -1099,6 +1100,7 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
+      visualMode_.setEnabled(false);
       docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
    }
 
@@ -2204,6 +2206,9 @@ public class TextEditingTarget implements
    {
       if (fileType_.isRmd())
          notebook_.manageCommands();
+      
+      if (fileType_.isMarkdown() && (visualMode_ != null))
+         visualMode_.manageCommands();
    }
    
    @Override
