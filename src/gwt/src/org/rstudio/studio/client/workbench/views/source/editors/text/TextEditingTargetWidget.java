@@ -1130,9 +1130,8 @@ public class TextEditingTargetWidget
       
       addClearKnitrCacheMenu(rmdFormatButton_);
           
-      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
-            RmdOutput.TYPE_STATIC);
-     
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false); 
+           
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
    }
@@ -1155,9 +1154,8 @@ public class TextEditingTargetWidget
    {
       setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, 
-            RmdOutput.TYPE_SHINY);
-   
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true); 
+           
       String docType = isPresentation ? "Presentation" : "Document";
 
       if (!isPresentation && !isShinyPrerendered) {
@@ -1196,7 +1194,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setLeftImage(
             commands_.newRNotebook().getImageResource());
       setRmdFormatButtonVisible(true);
-      showRmdViewerMenuItems(true, true, true, RmdOutput.TYPE_NOTEBOOK);
+      showRmdViewerMenuItems(true, true, true, false);
    }
    
    @Override 
@@ -1209,7 +1207,7 @@ public class TextEditingTargetWidget
    public void manageCommandUI()
    {
       adaptToFileType(editor_.getFileType());
-      showRmdViewerMenuItems(true, true, true,  RmdOutput.TYPE_STATIC);
+      showRmdViewerMenuItems(true, true, true,  isShinyFile());
    }
    
    private void setRmdFormatButtonVisible(boolean visible)
@@ -1407,7 +1405,7 @@ public class TextEditingTargetWidget
    }
    
    private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, 
-         boolean isRmd, int type)
+         boolean isRmd, boolean isShinyFile)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UserPrefMenuItem<>(
@@ -1470,7 +1468,7 @@ public class TextEditingTargetWidget
                DocUpdateSentinel.PROPERTY_TRUE));
          menu.addSeparator();
          
-         if (type != RmdOutput.TYPE_SHINY)
+         if (!isShinyFile)
          {
            boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
            menu.addItem(new DocPropMenuItem(
