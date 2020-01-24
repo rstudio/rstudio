@@ -15,33 +15,52 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-// TODO: propogate edits as they happen (w/ 1 second delay)
+
+// TODO: should we be tied to the idle pref or use a different value?
+
+// TODO: command enablement: more + move to inside adaptToFileType 
 // TODO: shortcut overlap / routing / remapping
 // TOOD: command / keyboard shortcut for entering visual mode
 // TODO: panmirror outline visibility and width
 // TODO: introduce global pref to toggle availabilty of visual mode
 // TODO: disable additional source-editing commands in visual mode
 // TODO: wire up find and replace actions to panmirror stubs
-// TODO: bump toolbar icons down 1 pixel
+// TODO: apply themeing
+// TODO: accessibility pass
+
+// TODO: move into workbench (has deps there)
+// TODO: copyright headers
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
 {
    public TextEditingTargetVisualMode(TextEditingTarget.Display display,
+                                      DirtyState dirtyState,
                                       DocUpdateSentinel docUpdateSentinel)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
       display_ = display;
+      dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
+      
+      // manage ui based on current pref + changes over time
       manageUI();
       docUpdateSentinel_.addPropertyValueChangeHandler(PROPERTY_RMD_VISUAL_MODE, (value) -> {
          manageUI();
@@ -49,9 +68,37 @@ public class TextEditingTargetVisualMode
    } 
    
    @Inject
-   public void initialize(Commands commands)
+   public void initialize(UserPrefs prefs, Commands commands, SourceServerOperations source)
    {
       commands_ = commands;
+      prefs_ = prefs;
+      source_ = source;
+   }
+   
+   public void sync()
+   {
+      sync(null);
+   }
+   
+   public void sync(Command ready)
+   {
+      // if panmirror is active then generate markdown, sync 
+      // it to the editor, then clear the dirty flag
+      if (isPanmirrorActive())
+      {
+         panmirror_.getMarkdown(markdown -> { 
+            getSourceEditor().setCode(markdown); 
+            isDirty_ = false;
+            if (ready != null)
+               ready.execute();
+         });
+      }
+      // otherwise just return (no-op)
+      else
+      {
+         if (ready != null)
+            ready.execute();
+      }
    }
  
    private void manageUI()
@@ -62,30 +109,38 @@ public class TextEditingTargetVisualMode
       // get references to the editing container and it's source editor
       TextEditorContainer editorContainer = display_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
-      boolean visualEditorActive = editorContainer.isWidgetActive(panmirror_);
       
       withPanmirror(() -> {
-         // activate visual mode
-         if (isActive())
+         
+         // visual mode active
+         if (isVisualMode())
          {
-            if (!visualEditorActive)
-               panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {});
+            // if we aren't currently active then set our markdown based
+            // on what's currently in the source ditor
+            if (!isPanmirrorActive()) 
+            {
+               panmirror_.setMarkdown(editor.getCode(), false, (completed) -> {
+                  isDirty_ = false;
+               });
+            }
+            
+            // activate panmirror and begin sync-on-idle behavior
             editorContainer.activateWidget(panmirror_);
+            syncOnIdle_.resume();
          }
-         // activate source mode
+         
+         // source mode active
          else 
          {
-            if (visualEditorActive)
-               panmirror_.getMarkdown(markdown -> { editor.setCode(markdown); });
-            editorContainer.activateEditor(); 
+            // sync any pending edits, then activate the editor
+            sync(() -> {
+               editorContainer.activateEditor(); 
+               syncOnIdle_.suspend();
+            });  
          }
       });
    }
-   
-   private boolean isActive()
-   {
-      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
-   }
+  
    
    private void withPanmirror(Command ready)
    {
@@ -96,19 +151,72 @@ public class TextEditingTargetVisualMode
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
          
          PanmirrorWidget.create(config, options, (panmirror) -> {
+            
+            // save reference to panmirror
             panmirror_ = panmirror;
+            
+            // periodically sync edits back to main editor
+            syncOnIdle_ = new DebouncedCommand(prefs_.autoSaveMs())
+            {
+               @Override
+               protected void execute()
+               {
+                  if (isDirty_)
+                     sync();
+               }
+            };
+            
+            // set dirty flag on change
+            panmirror_.addChangeHandler(new ChangeHandler() {
+               @Override
+               public void onChange(ChangeEvent event)
+               {
+                  // set flag and nudge sync on idle
+                  isDirty_ = true;
+                  syncOnIdle_.nudge();
+                  
+                  // update editor dirty state if necessary
+                  if (!dirtyState_.getValue())
+                  {
+                     dirtyState_.markDirty(false);
+                     source_.setSourceDocumentDirty(
+                           docUpdateSentinel_.getId(), true, 
+                           new VoidServerRequestCallback());
+                  }
+               }  
+            });
+            
+            // good to go!
             ready.execute();
          });
       }
       else
       {
+         // panmirror already created
          ready.execute();
       }
+   }
+    
+   // has the user requested visual mode?
+   private boolean isVisualMode()
+   {
+      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
+   }
+   
+   // is our widget active in the editor container
+   private boolean isPanmirrorActive()
+   {
+      return display_.editorContainer().isWidgetActive(panmirror_);
+   }
+   
+   private TextEditorContainer.Editor getSourceEditor()
+   {
+      return display_.editorContainer().getEditor();
    }
    
    private void manageCommands()
    {
-      boolean visualMode = isActive();
+      boolean visualMode = isVisualMode();
       commands_.goToNextChunk().setEnabled(!visualMode);
       commands_.goToPrevChunk().setEnabled(!visualMode);
       commands_.goToNextSection().setEnabled(!visualMode);
@@ -123,8 +231,15 @@ public class TextEditingTargetVisualMode
    } 
    
    private Commands commands_;
+   private UserPrefs prefs_;
+   private SourceServerOperations source_;
+   
    private final TextEditingTarget.Display display_;
-   private DocUpdateSentinel docUpdateSentinel_;
+   private final DirtyState dirtyState_;
+   private final DocUpdateSentinel docUpdateSentinel_;
+   
+   private DebouncedCommand syncOnIdle_; 
+   private boolean isDirty_ = false;
    
    private PanmirrorWidget panmirror_;
    

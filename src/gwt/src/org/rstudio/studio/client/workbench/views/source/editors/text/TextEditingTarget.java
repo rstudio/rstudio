@@ -1733,7 +1733,11 @@ public class TextEditingTarget implements
          public void execute()
          {
             // initialize visual mode
-            visualMode_ = new TextEditingTargetVisualMode(view_, docUpdateSentinel_);
+            visualMode_ = new TextEditingTargetVisualMode(
+               view_, 
+               dirtyState_, 
+               docUpdateSentinel_
+            );
             
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
                return;
@@ -2506,16 +2510,16 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
-                  fixupCodeBeforeSaving();
-                  
-                  docUpdateSentinel_.save(path,
-                                          null,
-                                          encoding,
-                                          new SaveProgressIndicator(
-                                                FileSystemItem.createFile(path),
-                                                null,
-                                                command
-                                          ));
+                  fixupCodeBeforeSaving(() -> {
+                     docUpdateSentinel_.save(path,
+                           null,
+                           encoding,
+                           new SaveProgressIndicator(
+                                 FileSystemItem.createFile(path),
+                                 null,
+                                 command
+                           ));
+                  });
                }
             });
    }
@@ -2668,19 +2672,21 @@ public class TextEditingTarget implements
                               syncPublishPath(saveItem.getPath());
                            }
                            
-                           fixupCodeBeforeSaving();
-                                 
-                           docUpdateSentinel_.save(
-                                 saveItem.getPath(),
-                                 fileType.getTypeId(),
-                                 encoding,
-                                 new SaveProgressIndicator(saveItem,
-                                                           fileType,
-                                                           executeOnSuccess));
+                           fixupCodeBeforeSaving(() -> {
+                              docUpdateSentinel_.save(
+                                    saveItem.getPath(),
+                                    fileType.getTypeId(),
+                                    encoding,
+                                    new SaveProgressIndicator(saveItem,
+                                                              fileType,
+                                                              executeOnSuccess));
 
-                           events_.fireEvent(
-                                 new SourceFileSavedEvent(getId(),
-                                       saveItem.getPath()));
+                              events_.fireEvent(
+                                    new SourceFileSavedEvent(getId(),
+                                          saveItem.getPath()));
+                           });
+                                 
+                         
                         }
  
                      };
@@ -2725,69 +2731,74 @@ public class TextEditingTarget implements
    }
    
    
-   private void fixupCodeBeforeSaving()
+   private void fixupCodeBeforeSaving(Command ready)
    { 
-      int lineCount = docDisplay_.getRowCount();
-      if (lineCount < 1)
-         return;
-      
-      if (docDisplay_.hasActiveCollabSession())
-      {
-         // mutating the code (especially as below where the entire document 
-         // contents are changed) during a save operation inside a collaborative
-         // editing session would require some nuanced orchestration so for now
-         // these preferences don't apply to shared editing sessions
-         return;
-      }
-      
-      boolean stripTrailingWhitespace = (projConfig_ == null)
-            ? prefs_.stripTrailingWhitespace().getValue()
-            : projConfig_.stripTrailingWhitespace();
-            
-      // override preference for certain files
-      boolean dontStripWhitespace =
-            fileType_.isMarkdown() ||
-            fileType_.isPython() ||
-            name_.getValue().equals("DESCRIPTION");
-      
-      if (dontStripWhitespace)
-         stripTrailingWhitespace = false;
-      
-      if (stripTrailingWhitespace)
-      {
-         String code = docDisplay_.getCode();
-         Pattern pattern = Pattern.create("[ \t]+$");
-         String strippedCode = pattern.replaceAll(code, "");
-         if (!strippedCode.equals(code))
+      // sync edits from visual mode if it's active
+      visualMode_.sync(() -> {
+         
+         int lineCount = docDisplay_.getRowCount();
+         if (lineCount < 1)
+            return;
+         
+         if (docDisplay_.hasActiveCollabSession())
          {
-            // Calling 'setCode' can remove folds in the document; cache the folds
-            // and reapply them after document mutation.
-            JsArray<AceFold> folds = docDisplay_.getFolds();
-            docDisplay_.setCode(strippedCode, true);
-            for (AceFold fold : JsUtil.asIterable(folds))
-               docDisplay_.addFold(fold.getRange());
+            // mutating the code (especially as below where the entire document 
+            // contents are changed) during a save operation inside a collaborative
+            // editing session would require some nuanced orchestration so for now
+            // these preferences don't apply to shared editing sessions
+            return;
          }
-      }
-      
-      boolean autoAppendNewline = (projConfig_ == null)
-            ? prefs_.autoAppendNewline().getValue()
-            : projConfig_.ensureTrailingNewline();
-            
-      // auto-append newlines for commonly-used R startup files
-      String path = StringUtil.notNull(docUpdateSentinel_.getPath());
-      boolean isStartupFile =
-            path.endsWith("/.Rprofile") ||
-            path.endsWith("/.Rprofile.site") ||
-            path.endsWith("/.Renviron") ||
-            path.endsWith("/.Renviron.site");
-      
-      if (autoAppendNewline || isStartupFile || fileType_.isPython())
-      {
-         String lastLine = docDisplay_.getLine(lineCount - 1);
-         if (lastLine.length() != 0)
-            docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
-      }
-      
+         
+         boolean stripTrailingWhitespace = (projConfig_ == null)
+               ? prefs_.stripTrailingWhitespace().getValue()
+               : projConfig_.stripTrailingWhitespace();
+               
+         // override preference for certain files
+         boolean dontStripWhitespace =
+               fileType_.isMarkdown() ||
+               fileType_.isPython() ||
+               name_.getValue().equals("DESCRIPTION");
+         
+         if (dontStripWhitespace)
+            stripTrailingWhitespace = false;
+         
+         if (stripTrailingWhitespace)
+         {
+            String code = docDisplay_.getCode();
+            Pattern pattern = Pattern.create("[ \t]+$");
+            String strippedCode = pattern.replaceAll(code, "");
+            if (!strippedCode.equals(code))
+            {
+               // Calling 'setCode' can remove folds in the document; cache the folds
+               // and reapply them after document mutation.
+               JsArray<AceFold> folds = docDisplay_.getFolds();
+               docDisplay_.setCode(strippedCode, true);
+               for (AceFold fold : JsUtil.asIterable(folds))
+                  docDisplay_.addFold(fold.getRange());
+            }
+         }
+         
+         boolean autoAppendNewline = (projConfig_ == null)
+               ? prefs_.autoAppendNewline().getValue()
+               : projConfig_.ensureTrailingNewline();
+               
+         // auto-append newlines for commonly-used R startup files
+         String path = StringUtil.notNull(docUpdateSentinel_.getPath());
+         boolean isStartupFile =
+               path.endsWith("/.Rprofile") ||
+               path.endsWith("/.Rprofile.site") ||
+               path.endsWith("/.Renviron") ||
+               path.endsWith("/.Renviron.site");
+         
+         if (autoAppendNewline || isStartupFile || fileType_.isPython())
+         {
+            String lastLine = docDisplay_.getLine(lineCount - 1);
+            if (lastLine.length() != 0)
+               docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
+         }
+         
+         ready.execute();
+      });
    }
    
    private FileSystemItem getSaveFileDefaultDir()
