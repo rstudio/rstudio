@@ -44,16 +44,12 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("blockquote_2x.png")
    ImageResource blockquote();
    
-   @Source("blockquote_dm_2x.png")
-   ImageResource blockquote_dm();
-   
    @Source("code_2x.png")
    ImageResource code();
 
    @Source("code_dm_2x.png")
    ImageResource code_dm();
- 
-   
+
    @Source("italic_2x.png")
    ImageResource italic();
    

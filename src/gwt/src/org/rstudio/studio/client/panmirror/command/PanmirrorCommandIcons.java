@@ -24,7 +24,6 @@ public class PanmirrorCommandIcons
    {
       PanmirrorToolbarResources res = PanmirrorToolbarResources.INSTANCE;
       icons_.put(BLOCKQUOTE, res.blockquote());
-      icons_.put(dm(BLOCKQUOTE), res.blockquote_dm());
       icons_.put(BOLD, res.bold());
       icons_.put(dm(BOLD), res.bold_dm());
       icons_.put(BULLET_LIST, res.bullet_list());
