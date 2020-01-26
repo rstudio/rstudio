@@ -89,11 +89,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingInput_.setStyleName(styles_.output());
       pendingInput_.addClickHandler(secondaryInputHandler);
 
-      prompt_ = new HTML() ;
-      prompt_.setStylePrimaryName(styles_.prompt()) ;
+      prompt_ = new HTML();
+      prompt_.setStylePrimaryName(styles_.prompt());
       prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
-      input_ = editor ;
+      input_ = editor;
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       if (!Desktop.isDesktop())
@@ -104,7 +104,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       final Widget inputWidget = input_.asWidget();
       ElementIds.assignElementId(inputWidget.getElement(),
                                  ElementIds.CONSOLE_INPUT);
-      input_.addClickHandler(secondaryInputHandler) ;
+      input_.addClickHandler(secondaryInputHandler);
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
       {
@@ -208,7 +208,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
 
-      initWidget(scrollPanel_) ;
+      initWidget(scrollPanel_);
 
       addCopyHook(getElement());
    }
@@ -370,7 +370,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
-      //input_.clear() ;
+      //input_.clear();
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
@@ -528,7 +528,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void focus()
    {
-      input_.setFocus(true) ;
+      input_.setFocus(true);
    }
    
    /**
@@ -663,7 +663,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    public InputEditorDisplay getInputEditorDisplay()
    {
-      return input_ ;
+      return input_;
    }
 
    public String processCommandEntry()
@@ -695,17 +695,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       ensureInputVisible();
 
-      return commandText ;
+      return commandText;
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
-      return input_.addCapturingKeyDownHandler(handler) ;
+      return input_.addCapturingKeyDownHandler(handler);
    }
 
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
-      return input_.addKeyPressHandler(handler) ;
+      return input_.addKeyPressHandler(handler);
    }
    
    @Override

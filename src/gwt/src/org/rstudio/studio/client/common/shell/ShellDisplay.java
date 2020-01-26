@@ -33,12 +33,12 @@ public interface ShellDisplay extends ShellOutputWriter,
 {
    void consoleWriteInput(String input, String console);
    void consoleWritePrompt(String prompt);
-   void consolePrompt(String prompt, boolean showInput) ;
-   void ensureInputVisible() ;
-   InputEditorDisplay getInputEditorDisplay() ;
-   void clearOutput() ;
-   String processCommandEntry() ;
-   int getCharacterWidth() ;
+   void consolePrompt(String prompt, boolean showInput);
+   void ensureInputVisible();
+   InputEditorDisplay getInputEditorDisplay();
+   void clearOutput();
+   String processCommandEntry();
+   int getCharacterWidth();
    boolean isPromptEmpty();
    String getPromptText();
    
