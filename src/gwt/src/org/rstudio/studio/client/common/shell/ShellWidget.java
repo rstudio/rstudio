@@ -108,6 +108,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
       {
+         @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
             Scheduler.get().scheduleDeferred(() -> input_.scrollToCursor(scrollPanel_, 8, 60));
@@ -257,6 +258,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_.forceCursorChange();
    }
 
+   @Override
    public void setSuppressPendingInput(boolean suppressPendingInput)
    {
       suppressPendingInput_ = suppressPendingInput;
@@ -325,12 +327,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       events_.fireEvent(new RunCommandWithDebugEvent(command));
    }
 
+   @Override
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
       output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/);
    }
 
+   @Override
    public void consoleWriteInput(final String input, String console)
    {
       // if coming from another console id (i.e. notebook chunk), clear the
@@ -350,6 +354,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingInput_.setVisible(false);
    }
 
+   @Override
    public void consoleWritePrompt(final String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
@@ -364,6 +369,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return console.toString();
    }
 
+   @Override
    public void consolePrompt(String prompt, boolean showInput)
    {
       if (prompt != null)
@@ -383,6 +389,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.ensureStartingOnNewLine();
    }
 
+   @Override
    public void ensureInputVisible()
    {
       scrollPanel_.scrollToBottom();
@@ -463,6 +470,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          private int i = startIndex;
          private int chunksize = 1000;
 
+         @Override
          public boolean execute()
          {
             boolean canContinue = false;
@@ -526,6 +534,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       });
    }
 
+   @Override
    public void focus()
    {
       input_.setFocus(true);
@@ -539,6 +548,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                     KeyDownHandler,
                                                     PasteEvent.Handler
    {
+      @Override
       public void onClick(ClickEvent event)
       {
          // If clicking on the input panel already, stop propagation.
@@ -566,6 +576,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       }
 
+      @Override
       public void onKeyDown(KeyDownEvent event)
       {
          if (event.getSource() == input_)
@@ -600,6 +611,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          delegateEvent(input_.asWidget(), event);
       }
       
+      @Override
       public void onPaste(PasteEvent event)
       {
          // When pasting, focus the input so it'll receive the pasted text
@@ -655,17 +667,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }
 
+   @Override
    public void clearOutput()
    {
       output_.clearConsoleOutput();
       cleared_ = true;
    }
    
+   @Override
    public InputEditorDisplay getInputEditorDisplay()
    {
       return input_;
    }
 
+   @Override
    public String processCommandEntry()
    {
       // parse out the command text
@@ -698,11 +713,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return commandText;
    }
 
+   @Override
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return input_.addCapturingKeyDownHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
       return input_.addKeyPressHandler(handler);
@@ -720,31 +737,37 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return input_.addKeyUpHandler(handler);
    }
 
+   @Override
    public int getCharacterWidth()
    {
       return DomUtils.getCharacterWidth(getElement(), styles_.console());
    }
    
+   @Override
    public boolean isPromptEmpty()
    {
       return StringUtil.isNullOrEmpty(prompt_.getText());
    }
    
+   @Override
    public String getPromptText()
    {
       return StringUtil.notNull(prompt_.getText());
    }
    
+   @Override
    public void setReadOnly(boolean readOnly)
    {
       input_.setReadOnly(readOnly);
    }
 
+   @Override
    public int getMaxOutputLines()
    {
       return output_.getMaxOutputLines();
    }
    
+   @Override
    public void setMaxOutputLines(int maxLines)
    {
       output_.setMaxOutputLines(maxLines);
@@ -762,6 +785,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return this;
    }
 
+   @Override
    public void onResize()
    {
       if (getWidget() instanceof RequiresResize)
