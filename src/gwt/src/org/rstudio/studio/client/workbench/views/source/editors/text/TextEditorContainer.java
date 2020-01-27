@@ -82,9 +82,19 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    {
       activateWidget(editor_);
    }
+   
+   public void activateEditor(boolean focus)
+   {
+      activateWidget(editor_, focus);
+   }
+   
+   public void activateWidget(IsHideableWidget widget)
+   {
+      activateWidget(widget, false);
+   }
   
    // activate a widget
-   public void activateWidget(IsHideableWidget widget)
+   public void activateWidget(IsHideableWidget widget, boolean focus)
    {
       // add the editor if don't already have it
       if (!widgets_.contains(widget))
@@ -92,7 +102,17 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       
       // set it visible (and others invisible)
       widgets_.forEach(w -> {
-         setWidgetVisible(w.asWidget(), w == widget);
+         if (w == widget) 
+         {
+            setWidgetVisible(w.asWidget(), true);
+            if (focus)
+               w.focus();
+         }
+         else
+         {
+            setWidgetVisible(w.asWidget(), false);
+         }
+        
       });
    }
    

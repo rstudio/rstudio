@@ -23,7 +23,6 @@ import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -62,17 +61,16 @@ public class TextEditingTargetVisualMode
       docUpdateSentinel_ = docUpdateSentinel;
       
       // manage ui based on current pref + changes over time
-      manageUI();
+      manageUI(false);
       docUpdateSentinel_.addPropertyValueChangeHandler(PROPERTY_RMD_VISUAL_MODE, (value) -> {
-         manageUI();
+         manageUI(true);
       });
    } 
    
    @Inject
-   public void initialize(UserPrefs prefs, Commands commands, SourceServerOperations source)
+   public void initialize(Commands commands, SourceServerOperations source)
    {
       commands_ = commands;
-      prefs_ = prefs;
       source_ = source;
    }
    
@@ -172,7 +170,7 @@ public class TextEditingTargetVisualMode
    } 
    
   
-   private void manageUI()
+   private void manageUI(boolean focus)
    {
       // manage commands
       manageCommands();
@@ -198,7 +196,7 @@ public class TextEditingTargetVisualMode
             }
             
             // activate panmirror and begin sync-on-idle behavior
-            editorContainer.activateWidget(panmirror_);
+            editorContainer.activateWidget(panmirror_, focus);
             syncOnIdle_.resume();
          });
         
@@ -210,7 +208,7 @@ public class TextEditingTargetVisualMode
          // sync any pending edits, then activate the editor
          sync(() -> {
             
-            editorContainer.activateEditor(); 
+            editorContainer.activateEditor(focus); 
             
             if (syncOnIdle_ != null)
                syncOnIdle_.suspend();
@@ -233,7 +231,7 @@ public class TextEditingTargetVisualMode
             panmirror_ = panmirror;
             
             // periodically sync edits back to main editor
-            syncOnIdle_ = new DebouncedCommand(prefs_.autoSaveMs())
+            syncOnIdle_ = new DebouncedCommand(1000)
             {
                @Override
                protected void execute()
@@ -262,7 +260,7 @@ public class TextEditingTargetVisualMode
                   }
                }  
             });
-            
+    
             // good to go!
             ready.execute();
          });
@@ -307,7 +305,6 @@ public class TextEditingTargetVisualMode
   
    
    private Commands commands_;
-   private UserPrefs prefs_;
    private SourceServerOperations source_;
    
    private final TextEditingTarget.Display display_;

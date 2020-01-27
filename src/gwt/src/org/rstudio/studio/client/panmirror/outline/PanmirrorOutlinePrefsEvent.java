@@ -96,7 +96,7 @@ public class PanmirrorOutlinePrefsEvent extends
      return visible_;
   }
   
-  public double geWidth()
+  public double getWidth()
   {
      return width_;
   }
