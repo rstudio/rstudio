@@ -67,7 +67,10 @@ else()
 
 endif()
 
-include_directories(${SHARED_INCLUDE_DIRS})
+include_directories(
+   ${SHARED_INCLUDE_DIRS}
+   ${TESTS_INCLUDE_DIR}
+)
 
 add_library(rstudio-shared-core STATIC ${SHARED_CORE_HEADER_FILES} ${SHARED_CORE_SOURCE_FILES})
 define_source_file_names(rstudio-shared-core)
@@ -75,18 +78,18 @@ define_source_file_names(rstudio-shared-core)
 target_link_libraries(rstudio-shared-core
    ${Boost_LIBRARIES})
 
-
-
-# define executable for running unit tests
+# Define executable for running unit tests
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    file(GLOB_RECURSE SHARED_CORE_TEST_FILES "*Tests.cpp")
 
-   add_executable(rstudio-core-tests
-      TestMain.cpp
+   add_executable(rstudio-shared-core-tests
+      ${TESTS_INCLUDE_DIR}/tests/TestMain.cpp
       ${SHARED_CORE_TEST_FILES}
       ${SHARED_CORE_HEADER_FILES}
    )
+
+   message("Shared Core Boost: ${Boost_LIBRARIES}")
 
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
