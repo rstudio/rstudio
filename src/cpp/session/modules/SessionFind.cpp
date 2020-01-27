@@ -1230,7 +1230,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       if (grepOptions.packageFlag() && !grepOptions.includeArgs().empty())
       {
          for (std::string arg : grepOptions.includeArgs())
-            LOG_DEBUG_MESSAGE("Unknown include argument: " + arg);
+            LOG_DEBUG_MESSAGE(
+               "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
       }
    }
    else
