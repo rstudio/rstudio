@@ -1130,7 +1130,7 @@ struct ReplaceOptions
 void addDirectoriesToCommand(
    bool packageFlag, const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
-   // TODO: review if switching to EscapeFilesOnly is necessay
+   // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
    if (!packageFlag)
       *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
