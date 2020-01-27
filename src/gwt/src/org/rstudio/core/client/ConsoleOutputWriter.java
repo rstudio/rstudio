@@ -70,12 +70,14 @@ public class ConsoleOutputWriter
     * @param className Text style
     * @param isError Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
+    * @param ariaLiveAnnounce Include in arialive output announcement
     * @return was this output below the maximum buffer line count?
     */
    public boolean outputToConsole(String text,
                                   String className,
                                   boolean isError,
-                                  boolean ignoreLineCount)
+                                  boolean ignoreLineCount,
+                                  boolean ariaLiveAnnounce)
    {
       if (text.indexOf('\f') >= 0)
          clearConsoleOutput();
@@ -91,7 +93,7 @@ public class ConsoleOutputWriter
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      virtualConsole_.submit(text, className, isError);
+      virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
 

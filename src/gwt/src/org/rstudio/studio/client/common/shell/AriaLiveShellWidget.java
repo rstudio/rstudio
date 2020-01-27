@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.shell;
 import com.google.gwt.aria.client.LiveValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Text;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
 
@@ -37,10 +36,36 @@ public class AriaLiveShellWidget extends Widget
    
    public void announce(String text)
    {
-      // TODO (gary) line counting
-      Text textNode = Document.get().createTextNode(text);
-      getElement().appendChild(textNode);
-      lineCount_++;
+      if (lineCount_ > LINE_REPORTING_LIMIT)
+         return;
+
+      StringBuilder line = new StringBuilder();
+      for (int i = 0; i < text.length(); i++)
+      {
+         char ch = text.charAt(i);
+         if (ch == '\n')
+         {
+            line.append(ch);
+            lineCount_++;
+            append(line.toString());
+            line.setLength(0);
+            
+            if (lineCount_ == LINE_REPORTING_LIMIT)
+            {
+               append("Too much output to announce in console.");
+               lineCount_++;
+               return;
+            }
+         }
+         else
+         {
+            line.append(ch);
+         }
+      }
+      if (line.length() > 0)
+      {
+         append(line.toString());
+      }
    }
 
    public void clearLiveRegion()
@@ -48,6 +73,11 @@ public class AriaLiveShellWidget extends Widget
       getElement().setInnerText("");
       lineCount_ = 0;
    }
-   
+
+   private void append(String text)
+   {
+      getElement().appendChild(Document.get().createTextNode(text));
+   }
+
    private int lineCount_;
 }

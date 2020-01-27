@@ -420,7 +420,7 @@ public class VirtualConsole
 
    public void submit(String data, String clazz)
    {
-      submit(data, clazz, false/*forceNewRange*/);
+      submit(data, clazz, false/*forceNewRange*/, false/*ariaLiveAnnounce*/);
    }
 
    /**
@@ -428,9 +428,10 @@ public class VirtualConsole
     * @param data text to output
     * @param clazz text style
     * @param forceNewRange force any output from this call to be in a new
+    * @param ariaLiveAnnounce include in aria-live output announcement
     * output range (span) even if style matches previous output
     */
-   public void submit(String data, String clazz, boolean forceNewRange)
+   public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // Only capture new elements when dealing with error output, which
       // is only place that sets forceNewRange to true. This is just an 
@@ -439,7 +440,7 @@ public class VirtualConsole
       captureNewElements_ = forceNewRange;
       newElements_.clear();
 
-      newText_ = prefs_.screenReaderEnabled() ? new StringBuilder() : null;
+      newText_ = ariaLiveAnnounce && prefs_.screenReaderEnabled() ? new StringBuilder() : null;
 
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
@@ -609,7 +610,7 @@ public class VirtualConsole
    // for use in reporting output to screen readers.
    public String getNewText()
    {
-      return newText_ == null ? null : newText_.toString();
+      return newText_ == null ? "" : newText_.toString();
    }
 
    private class ClassRange

@@ -99,7 +99,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onBeforeUnselected();
       void onBeforeSelected();
       void onSelected();
-      void enableLiveReporting();
    }
    
    @Inject
@@ -285,6 +284,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    public void onConsoleInput(final ConsoleInputEvent event)
    {
+      view_.clearLiveRegion();
       server_.consoleInput(event.getInput(), 
                            event.getConsole(),
                            new ServerRequestCallback<Void>() {
