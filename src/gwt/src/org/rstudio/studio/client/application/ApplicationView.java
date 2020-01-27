@@ -18,6 +18,7 @@ package org.rstudio.studio.client.application;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.AriaLiveStatusReporter;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 public interface ApplicationView extends AriaLiveStatusReporter
 {       
@@ -46,10 +47,9 @@ public interface ApplicationView extends AriaLiveStatusReporter
    // error messages
    void showSessionAbendWarning();
    
-   // informative status message for screen reader users,
-   // announced at next graceful opportunity after given delay
+   // status or alert message for screen reader users,
    @Override
-   void reportStatus(String message, int delayMs);
+   void reportStatus(String message, int delayMs, Severity severity);
 
    // progress
    void showSerializationProgress(String message, 

@@ -490,7 +490,7 @@ void handleRpcError(
       clJson["project"] = context.scope.project();
       clJson["id"] = context.scope.id();
       json::JsonRpcResponse jsonRpcResponse ;
-      jsonRpcResponse.setError(Error(json::errc::InvalidSession, ERROR_LOCATION), clJson);
+      jsonRpcResponse.setError(json::errc::InvalidSession, clJson);
       json::setJsonRpcResponse(jsonRpcResponse, &(ptrConnection->response()));
       ptrConnection->writeResponse();
       return;

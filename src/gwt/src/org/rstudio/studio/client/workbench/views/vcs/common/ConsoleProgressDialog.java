@@ -27,6 +27,9 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsolePromptEvent;
@@ -204,7 +207,8 @@ public class ConsoleProgressDialog extends ProgressDialog
    @Override
    protected void announceCompletion(String message)
    {
-      RStudioGinjector.INSTANCE.getAriaLiveService().reportStatus(message);
+      RStudioGinjector.INSTANCE.getAriaLiveService().announce(
+            AriaLiveService.PROGRESS_COMPLETION, message, Timing.IMMEDIATE, Severity.STATUS);
    }
 
    public void writeOutput(String output)

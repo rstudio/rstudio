@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -144,9 +145,10 @@ public abstract class SatelliteWindow extends Composite
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      int delayMs = event.getImmediate() ? 0 : RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
-      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
-         ariaLiveStatusWidget_.reportStatus(event.getMessage(), delayMs);
+      int delayMs = (event.getTiming() == Timing.IMMEDIATE) ?
+            0 : RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
+         ariaLiveStatusWidget_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
 
    abstract protected void onInitialize(LayoutPanel mainPanel, 

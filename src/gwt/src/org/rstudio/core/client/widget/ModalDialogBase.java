@@ -52,6 +52,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.Timers;
 
@@ -824,9 +825,9 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    @Override
-   public void reportStatus(String status, int delayMs)
+   public void reportStatus(String status, int delayMs, Severity severity)
    {
-      ariaLiveStatusWidget_.reportStatus(status, delayMs);
+      ariaLiveStatusWidget_.reportStatus(status, delayMs, severity);
    }
 
    private static Resources RES = GWT.create(Resources.class);

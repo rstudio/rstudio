@@ -22,6 +22,6 @@ public interface ShellOutputWriter
    void consoleWriteExtendedError(
          String string, UnhandledError traceInfo, 
          boolean expand, String command);
-   void consoleWriteOutput(String output) ;
+   void consoleWriteOutput(String output);
    void consoleWritePrompt(String prompt);
 }

@@ -37,6 +37,8 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.ImageButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 
 public class WarningBar extends Composite
@@ -82,7 +84,8 @@ public class WarningBar extends Composite
       moreButton_.setText("Manage License...");
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
-      Roles.getAlertRole().set(live_);
+      if (!RStudioGinjector.INSTANCE.getAriaLiveService().isDisabled(AriaLiveService.WARNING_BAR))
+         Roles.getAlertRole().set(live_);
    }
 
    public void setText(String value)

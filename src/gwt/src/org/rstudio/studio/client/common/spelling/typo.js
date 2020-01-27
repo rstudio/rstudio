@@ -69,7 +69,7 @@ Typo = function (dictionary, affData, wordsData, settings) {
 	
 	// Loop-control variables.
 	var i, j, _len, _jlen;
-	
+
 	if (dictionary) {
 		self.dictionary = dictionary;
 		
@@ -262,15 +262,7 @@ Typo.prototype = {
 			
 			try {
 				if (fs.existsSync(path)) {
-					var stats = fs.statSync(path);
-					
-					var fileDescriptor = fs.openSync(path, 'r');
-					
-					var buffer = new Buffer(stats.size);
-					
-					fs.readSync(fileDescriptor, buffer, 0, buffer.length, null);
-					
-					return buffer.toString(charset, 0, buffer.length);
+                    return fs.readFileSync(path, charset);
 				}
 				else {
 					console.log("Path " + path + " does not exist.");
@@ -429,16 +421,16 @@ Typo.prototype = {
 	
 	_parseDIC : function (data) {
 		data = this._removeDicComments(data);
-		
+
 		var lines = data.split("\n");
 		var dictionaryTable = {};
-		
+
 		function addWord(word, rules) {
 			// Some dictionaries will list the same word multiple times with different rule sets.
 			if (!dictionaryTable.hasOwnProperty(word)) {
-				dictionaryTable[word] = null;
+                dictionaryTable[word] = null;
 			}
-			
+
 			if (rules.length > 0) {
 				if (dictionaryTable[word] === null) {
 					dictionaryTable[word] = [];
@@ -447,48 +439,48 @@ Typo.prototype = {
 				dictionaryTable[word].push(rules);
 			}
 		}
-		
+
 		// The first line is the number of words in the dictionary.
 		for (var i = 1, _len = lines.length; i < _len; i++) {
 			var line = lines[i];
-			
+
 			if (!line) {
 				// Ignore empty lines.
 				continue;
 			}
 
 			var parts = line.split("/", 2);
-			
+
 			var word = parts[0];
 
 			// Now for each affix rule, generate that form of the word.
 			if (parts.length > 1) {
 				var ruleCodesArray = this.parseRuleCodes(parts[1]);
-				
+
 				// Save the ruleCodes for compound word situations.
 				if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) == -1) {
 					addWord(word, ruleCodesArray);
 				}
-				
+
 				for (var j = 0, _jlen = ruleCodesArray.length; j < _jlen; j++) {
 					var code = ruleCodesArray[j];
 					
 					var rule = this.rules[code];
-					
+
 					if (rule) {
 						var newWords = this._applyRule(word, rule);
-						
+
 						for (var ii = 0, _iilen = newWords.length; ii < _iilen; ii++) {
 							var newWord = newWords[ii];
-							
+
 							addWord(newWord, []);
-							
+
 							if (rule.combineable) {
 								for (var k = j + 1; k < _jlen; k++) {
 									var combineCode = ruleCodesArray[k];
 									
 									var combineRule = this.rules[combineCode];
-									
+
 									if (combineRule) {
 										if (combineRule.combineable && (rule.type != combineRule.type)) {
 											var otherNewWords = this._applyRule(newWord, combineRule);
@@ -503,7 +495,7 @@ Typo.prototype = {
 							}
 						}
 					}
-					
+
 					if (code in this.compoundRuleCodes) {
 						this.compoundRuleCodes[code].push(word);
 					}
@@ -513,7 +505,6 @@ Typo.prototype = {
 				addWord(word.trim(), []);
 			}
 		}
-		
 		return dictionaryTable;
 	},
 	
