@@ -29,7 +29,9 @@ import { EditorCommand, EditorCommandId } from 'editor/src/api/command';
 import { Command, WorkbenchCommandId } from 'workbench/commands/commands';
 
 interface CommandDefs {
-  [group: string]: { [name in EditorCommandId]?: { icon?: IconName | MaybeElement; menuText: string; keysHidden?: boolean } };
+  [group: string]: {
+    [name in EditorCommandId]?: { icon?: IconName | MaybeElement; menuText: string; keysHidden?: boolean };
+  };
 }
 
 function editorCommandDefs(): CommandDefs {

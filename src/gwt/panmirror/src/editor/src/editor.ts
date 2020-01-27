@@ -53,7 +53,6 @@ import './styles/theme.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
-
 export interface EditorConfig {
   readonly pandoc: PandocEngine;
   readonly format: string;
@@ -71,10 +70,10 @@ export interface EditorKeybindings {
   [id: string]: string[];
 }
 
-export enum EditorEvents  {
+export enum EditorEvents {
   Update = 'update',
   OutlineChange = 'outlineChange',
-  SelectionChange = 'selectionChange'
+  SelectionChange = 'selectionChange',
 }
 
 export interface EditorSelection {
@@ -82,9 +81,7 @@ export interface EditorSelection {
   to: number;
 }
 
-
 export { EditorCommandId as EditorCommands } from './api/command';
-
 
 export class Editor {
   private static readonly keybindingsPlugin = new PluginKey('keybindings');
@@ -321,7 +318,6 @@ export class Editor {
   }
 
   private dispatchTransaction(tr: Transaction) {
-
     // track previous outline
     const previousOutline = getOutline(this.state);
 

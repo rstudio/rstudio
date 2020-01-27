@@ -13,7 +13,6 @@
  *
  */
 
-
 import { Slice, Fragment, MarkType, Node as ProsemirrorNode } from 'prosemirror-model';
 
 // add marks to plain text pasted into the editor (e.g. urls become links)
