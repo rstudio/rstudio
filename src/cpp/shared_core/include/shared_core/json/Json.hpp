@@ -601,7 +601,7 @@ public:
        *
        * @param in_impl The private implementation of the member.
        */
-      Member(const std::shared_ptr<Impl>& in_impl);
+      explicit Member(const std::shared_ptr<Impl>& in_impl);
 
       /**
        * @brief Gets the name of the member.
@@ -746,7 +746,7 @@ public:
     *
     * @param in_other   The JSON object to move to this Object.
     */
-   Object(Object&& in_other);
+   Object(Object&& in_other) noexcept;
 
    /**
     * @brief Creates a JSON object from the given name and JSON value.
@@ -1134,7 +1134,7 @@ public:
     *
     * @param in_other   The JSON array to move to this Object.
     */
-   Array(Array&& in_other);
+   Array(Array&& in_other) noexcept;
 
    /**
     * @brief Assignment operator.

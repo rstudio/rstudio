@@ -894,7 +894,7 @@ Object::Object(const Object& in_other) :
 {
 }
 
-Object::Object(Object&& in_other) :
+Object::Object(Object&& in_other) noexcept :
    Value(in_other)
 {
 }
@@ -1228,7 +1228,7 @@ Array::Array(const Array& in_other) :
 {
 }
 
-Array::Array(Array&& in_other) :
+Array::Array(Array&& in_other) noexcept :
    Value(in_other)
 {
 }
