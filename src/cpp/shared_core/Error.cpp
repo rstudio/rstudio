@@ -482,6 +482,16 @@ Error systemError(int in_value,
    return error;
 }
 
+Error systemError(int in_value,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_value, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
 Error unknownError(const std::string& in_message, const ErrorLocation&  in_location)
 {
    return Error(
