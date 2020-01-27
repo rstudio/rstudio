@@ -42,13 +42,14 @@
       </p>
 
       <p><rw:FormLabel ui:field="labelFilePatterns_" text="Search these files:"/>
-         <g:ListBox ui:field="listPresetFilePatterns_"
+         <rw:FormListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">All Files</g:item>
             <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.rhtml, *.Rhtml, *.rd, *.Rd, *.h, *.hpp, *.c, *.cpp">Common R source files (R, C/C++, Rnw, Rmd, Rhtml, Rd)</g:item>
             <g:item value="*.r, *.R">R Scripts</g:item>
+            <g:item value="package">Package Source (R/ , src/, tests/)</g:item>
             <g:item value="custom">Custom Filter</g:item>
-         </g:ListBox>
+         </rw:FormListBox>
          <div ui:field="divCustomFilter_">
             <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
             <br/>
@@ -57,12 +58,12 @@
       </p>
 
       <p><rw:FormLabel ui:field="labelExcludeFilePatterns_" text="Exclude these files:"/>
-         <g:ListBox ui:field="listPresetExcludeFilePatterns_"
+         <rw:FormListBox ui:field="listPresetExcludeFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value="">None</g:item>
             <g:item value="gitExclusions">Standard Git exclusions</g:item>
             <g:item value="custom">Custom Filter</g:item>
-         </g:ListBox>
+         </rw:FormListBox>
          <div ui:field="divExcludeCustomFilter_">
             <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
             <br/>

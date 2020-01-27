@@ -526,32 +526,50 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
-      if (session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
-      {
-         dialog.getDirectoryChooser().addValueChangeHandler(new ValueChangeHandler<String>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<String> event)
+      dialog.getDirectoryChooser().addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if (session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
             {
                fileServer_.isGitDirectory(dialog.getDirectory(),
-                                      new ServerRequestCallback<Boolean>() {
+                                          new ServerRequestCallback<Boolean>() {
                   @Override
                   public void onResponseReceived(Boolean isGitDirectory)
                   {
                      dialog.setGitStatus(isGitDirectory);
                   }
-   
+
                   @Override
                   public void onError(ServerError error)
                   {
                      // assume true if we are not sure
-                     // if the user enters invalid data it will be handled later
+                     // if the user enters invalid data it will be handled by the backend
                      dialog.setGitStatus(true);
                      Debug.logError(error);
                   }
                });
             }
-         });
-      }
+
+            fileServer_.isPackageDirectory(dialog.getDirectory(),
+                                           new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(final Boolean isPackageDirectory)
+               {
+                  dialog.setPackageStatus(isPackageDirectory);
+               }
+               @Override
+               public void onError(ServerError error)
+               {
+                  // assume true if we are not sure
+                  // if the user enters invalid data it will be handled by the backend
+                  dialog.setPackageStatus(true);
+                  Debug.logError(error);
+               }
+            });
+         }
+      });
 
       if (!StringUtil.isNullOrEmpty(event.getSearchPattern()))
          dialog.setSearchPattern(event.getSearchPattern());
