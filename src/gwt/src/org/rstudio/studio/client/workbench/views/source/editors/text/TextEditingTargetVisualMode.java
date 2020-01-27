@@ -35,7 +35,7 @@ import com.google.inject.Inject;
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
 
-// TODO: display of images in the editor
+// TODO: display of images in the editor (see ImagePreviewer.imgSrcPathFromHref)
 
 // TODO: shortcut overlap / routing / remapping
 // TODO: command / keyboard shortcut for entering visual mode
