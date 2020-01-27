@@ -29,7 +29,6 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
@@ -39,6 +38,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -250,9 +250,12 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       // disable 'Package' option when chosen directory is not a package
       if (!packageStatus_)
+      {
          ((Element) listPresetFilePatterns_.getElement().getChild(
                Include.Package.ordinal()))
             .setAttribute("disabled", "disabled");
+         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
+      }
       else
          ((Element) listPresetFilePatterns_.getElement().getChild(
             Include.Package.ordinal())).removeAttribute("disabled");
@@ -403,19 +406,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       txtSearchPattern_.setText(searchPattern);
    }
 
-
-   public int getIndexFromValue(ListBox listBox, String value)
-   {
-      int index = 0;
-      while (index < listBox.getItemCount())
-      {
-         if (value == listBox.getValue(index))
-            return index;
-         index++;
-      }
-      return -1;
-   }
-
    public void setState(State dialogState)
    {
       if (txtSearchPattern_.getText().isEmpty())
@@ -426,7 +416,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      int index = getIndexFromValue(listPresetFilePatterns_, includeFilePatterns);
+      int index = listPresetFilePatterns_.getIndexFromValue(includeFilePatterns);
       if (index >= 0)
          listPresetFilePatterns_.setSelectedIndex(index);
       else
@@ -438,7 +428,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       String excludeFilePatterns = StringUtil.join(
          Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
-      index = getIndexFromValue(listPresetExcludeFilePatterns_, excludeFilePatterns);
+      index = listPresetExcludeFilePatterns_.getIndexFromValue(excludeFilePatterns);
       if (index >= 0)
          listPresetExcludeFilePatterns_.setSelectedIndex(index);
       else
@@ -477,7 +467,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    FormLabel labelFilePatterns_;
    @UiField
-   ListBox listPresetFilePatterns_;
+   FormListBox listPresetFilePatterns_;
    @UiField
    DivElement divCustomFilter_;
    @UiField
@@ -485,7 +475,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    FormLabel labelExcludeFilePatterns_;
    @UiField
-   ListBox listPresetExcludeFilePatterns_;
+   FormListBox listPresetExcludeFilePatterns_;
    @UiField
    DivElement divExcludeCustomFilter_;
    @UiField
