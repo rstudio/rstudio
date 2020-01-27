@@ -266,10 +266,12 @@ TEST_CASE("Json")
       arr2.push_back(json::Value(5));
       arr2.push_back(json::Value(6));
 
-      std::transform(arr2.begin(),
-                     arr2.end(),
-                     std::back_inserter(arr),
-                     [=](json::Value val) { return json::Value(val.getInt() * 2); });
+      std::transform(
+         arr2.begin(),
+         arr2.end(),
+         std::back_inserter(arr),
+         [=](json::Value val)
+         { return json::Value(val.getInt() * 2); });
 
       json::Array::Iterator iter = arr.begin();
       REQUIRE((*iter++).getInt() == 1);
@@ -400,11 +402,13 @@ TEST_CASE("Json")
          arr.push_back(json::Value(i));
       }
 
-      arr.erase(std::remove_if(arr.begin(),
-                               arr.end(),
-                               [=](const json::Value& val) { return val.getInt() % 2 == 0; }),
-                arr.end());
-
+      arr.erase(
+         std::remove_if(
+            arr.begin(),
+            arr.end(),
+            [=](const json::Value& val)
+            { return val.getInt() % 2 == 0; }),
+         arr.end());
 
       REQUIRE(arr.getSize() == 5);
       REQUIRE(arr[0].getInt() == 1);
@@ -422,11 +426,13 @@ TEST_CASE("Json")
          arr.push_back(json::Value(i));
       }
 
-      arr.erase(std::remove_if(arr.begin(),
-                               arr.end(),
-                               [=](const json::Value& val) { return val.getInt() > 32; }),
-                arr.end());
-
+      arr.erase(
+         std::remove_if(
+            arr.begin(),
+            arr.end(),
+            [=](const json::Value& val)
+            { return val.getInt() > 32; }),
+         arr.end());
 
       REQUIRE(arr.getSize() == 10);
    }
@@ -435,11 +441,13 @@ TEST_CASE("Json")
    {
       json::Array arr;
 
-      arr.erase(std::remove_if(arr.begin(),
-                               arr.end(),
-                               [=](const json::Value& val) { return val.getInt() % 2 == 0; }),
-                arr.end());
-
+      arr.erase(
+         std::remove_if(
+            arr.begin(),
+            arr.end(),
+            [=](const json::Value& val)
+            { return val.getInt() % 2 == 0; }),
+         arr.end());
 
       REQUIRE(arr.getSize() == 0);
    }
@@ -475,7 +483,8 @@ TEST_CASE("Json")
       REQUIRE(err);
    }
 
-   SECTION("Schema default parse") {
+   SECTION("Schema default parse")
+   {
       std::string schema = R"(
       {
          "$id": "https://rstudio.com/rstudio.preferences.json",
@@ -506,13 +515,14 @@ TEST_CASE("Json")
       Error err = json::Object::getSchemaDefaults(schema, defaults);
       INFO(err.asString());
       REQUIRE(!err);
-      
+
       REQUIRE(defaults["first"].getInt() == 5);
       json::Object second = defaults["second"].getObject();
       REQUIRE(second["foo"].getInt() == 10);
    }
 
-   SECTION("Object merge") {
+   SECTION("Object merge")
+   {
       json::Object base;
       json::Object overlay;
 
@@ -529,7 +539,7 @@ TEST_CASE("Json")
       p3overlay["p3-b"] = "overlay";
       base["p3"] = p3base;
       overlay["p3"] = p3overlay;
-      
+
       // Regular properties should pick up values from the overlay (ensure they are copied, not
       // moved)
       auto result = json::Object::mergeObjects(base, overlay);
@@ -569,7 +579,7 @@ TEST_CASE("Json")
              }
            }
         })";
-         
+
       // do valid documents pass validation?
       std::string valid = R"(
          { "first": true, "second": "a" }
@@ -644,16 +654,17 @@ TEST_CASE("Json")
             REQUIRE((*itr).getName() == "first");
             REQUIRE((*itr).getValue().getInt() == 1);
          }
-         else if (i == 1)
-         {
-            REQUIRE((*itr).getName() == "second");
-            REQUIRE((*itr).getValue().getInt() == 2);
-         }
          else
-         {
-            REQUIRE((*itr).getName() == "third");
-            REQUIRE((*itr).getValue().getInt() == 3);
-         }
+            if (i == 1)
+            {
+               REQUIRE((*itr).getName() == "second");
+               REQUIRE((*itr).getValue().getInt() == 2);
+            }
+            else
+            {
+               REQUIRE((*itr).getName() == "third");
+               REQUIRE((*itr).getValue().getInt() == 3);
+            }
       }
 
       // Check that we iterated the correct number of times.
@@ -752,6 +763,139 @@ TEST_CASE("Json")
    {
       json::Object obj;
       REQUIRE(obj.setValueAtPointerPath("path must begin with a /", json::Value(1)));
+   }
+
+   SECTION("Object deep comparison")
+   {
+      json::Object obj1;
+      obj1.insert("member1", json::Value(1));
+      obj1.insert("member2", json::Value(2));
+
+      json::Object obj2;
+      obj2.insert("member1", json::Value(1));
+      obj2.insert("member2", json::Value(2));
+
+      CHECK(obj1 == obj2);
+   }
+
+   SECTION("Object deep comparsion - insertion order doesn't matter")
+   {
+      json::Object obj1;
+      obj1.insert("member1", json::Value(1));
+      obj1.insert("member2", json::Value(2));
+
+      json::Object obj2;
+      obj2.insert("member2", json::Value(2));
+      obj2.insert("member1", json::Value(1));
+
+      CHECK(obj1 == obj2);
+   }
+
+   SECTION("Object deep comparison - not equal")
+   {
+      json::Object obj1;
+      obj1.insert("member1", json::Value(1));
+      obj1.insert("member2", json::Value(2));
+
+      json::Object obj2;
+      obj2.insert("member1", json::Value(1));
+      obj2.insert("member2", json::Value(3));
+
+      CHECK(obj1 != obj2);
+   }
+
+   SECTION("Array deep comparison")
+   {
+      json::Array arr1;
+      arr1.push_back(json::Value("value1"));
+      arr1.push_back(json::Value("value2"));
+      arr1.push_back(json::Value(3.5));
+
+      json::Array arr2;
+      arr2.push_back(json::Value("value1"));
+      arr2.push_back(json::Value("value2"));
+      arr2.push_back(json::Value(3.5));
+
+      CHECK(arr1 == arr2);
+   }
+
+   SECTION("Array deep comparison - different order")
+   {
+      json::Array arr1;
+      arr1.push_back(json::Value("value1"));
+      arr1.push_back(json::Value("value2"));
+      arr1.push_back(json::Value(3.5));
+
+      json::Array arr2;
+      arr2.push_back(json::Value(3.5));
+      arr2.push_back(json::Value("value1"));
+      arr2.push_back(json::Value("value2"));
+
+      CHECK(arr1 != arr2);
+   }
+
+   SECTION("Array deep comparison - different length")
+   {
+      json::Array arr1;
+      arr1.push_back(json::Value("value1"));
+      arr1.push_back(json::Value("value2"));
+      arr1.push_back(json::Value(3.5));
+
+      json::Array arr2;
+      arr2.push_back(json::Value("value1"));
+      arr2.push_back(json::Value("value2"));
+
+      CHECK(arr1 != arr2);
+   }
+
+   SECTION("Array deep comparison - not equal")
+   {
+      json::Array arr1;
+      arr1.push_back(json::Value("value1"));
+      arr1.push_back(json::Value("value2"));
+      arr1.push_back(json::Value(3.5));
+
+      json::Array arr2;
+      arr2.push_back(json::Value("value3"));
+      arr2.push_back(json::Value("value2"));
+      arr1.push_back(json::Value(5));
+
+      CHECK(arr1 != arr2);
+   }
+
+   SECTION("Complex object deep comparison")
+   {
+      json::Array simpleArr;
+      simpleArr.push_back(json::Value(1));
+      simpleArr.push_back(json::Value(2));
+      simpleArr.push_back(json::Value(3));
+      simpleArr.push_back(json::Value(4));
+
+      json::Object nestedObj;
+      nestedObj.insert("simpleArr", simpleArr.clone());
+      nestedObj.insert("boolVal", json::Value(true));
+      nestedObj.insert("doubleVal", json::Value(2.13));
+
+      json::Array complexArr;
+      complexArr.push_back(nestedObj.clone());
+      complexArr.push_back(json::Value(false));
+      complexArr.push_back(json::Value(-5));
+
+      json::Object obj1;
+      obj1.insert("simpleArr", simpleArr.clone());
+      obj1.insert("nestedObj", nestedObj.clone());
+      obj1.insert("complexArr", complexArr.clone());
+      obj1.insert("strValue", json::Value("hello"));
+      obj1.insert("strValue2", json::Value("goodbye"));
+
+      json::Object obj2;
+      obj2.insert("simpleArr", simpleArr.clone());
+      obj2.insert("nestedObj", nestedObj.clone());
+      obj2.insert("complexArr", complexArr.clone());
+      obj2.insert("strValue", json::Value("hello"));
+      obj2.insert("strValue2", json::Value("goodbye"));
+
+      CHECK(obj1 == obj2);
    }
 }
 
