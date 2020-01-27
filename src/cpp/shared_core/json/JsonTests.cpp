@@ -897,6 +897,64 @@ TEST_CASE("Json")
 
       CHECK(obj1 == obj2);
    }
+
+   SECTION("Parse json object")
+   {
+      json::Array arr;
+      arr.push_back(json::Value("a"));
+      arr.push_back(json::Value("b"));
+      arr.push_back(json::Value("c"));
+
+      json::Object expected;
+      expected.insert("1", json::Value(1));
+      expected.insert("2", json::Value("hello"));
+      expected.insert("3", expected.clone());
+      expected.insert("4", json::Value(false));
+      expected.insert("5", arr);
+
+      json::Object actual;
+      Error error = actual.parse(R"(
+      {
+          "1": 1,
+          "2": "hello",
+          "4": false,
+          "3": {"1" : 1, "2": "hello"},
+          "5": ["a", "b", "c"]
+      })");
+
+      REQUIRE_FALSE(error);
+      CHECK(actual == expected);
+   }
+
+   SECTION("Parse json array into object")
+   {
+      json::Object result;
+      Error error = result.parse(R"([ "a", "b", "c" ])");
+
+      REQUIRE(error);
+   }
+
+   SECTION("Parse json array")
+   {
+      json::Array expected;
+      expected.push_back(json::Value("a"));
+      expected.push_back(json::Value("b"));
+      expected.push_back(json::Value("c"));
+
+      json::Array actual;
+      Error error = actual.parse(R"([ "a", "b", "c" ])");
+
+      REQUIRE_FALSE(error);
+      CHECK(actual == expected);
+   }
+
+   SECTION("Parse object into json array")
+   {
+      json::Array result;
+      Error error = result.parse(R"({ "first": 1, "second": true })");
+
+      REQUIRE(error);
+   }
 }
 
 } // end namespace tests
