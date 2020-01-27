@@ -432,7 +432,7 @@ Error Value::coerce(const std::string& in_schema,
 
       // Accumulate the error for the caller
       invalid.Stringify(sb);
-      out_propViolations.push_back(sb.GetString());
+      out_propViolations.emplace_back(sb.GetString());
 
       // Remove the invalid part of the document
       JsonPointer pointer(sb.GetString(), &s_allocator);
@@ -689,8 +689,7 @@ Error Value::parseAndValidate(const std::string& in_jsonStr, const std::string& 
    return validate(in_schema);
 }
 
-Error Value::setValueAtPointerPath(const std::string& in_pointerPath,
-                            const json::Value& in_value)
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const json::Value& in_value)
 {
    JsonPointer pointer(in_pointerPath.c_str());
    if (!pointer.IsValid())
@@ -787,7 +786,7 @@ struct Object::Member::Impl
 };
 
 Object::Member::Member(const std::shared_ptr<Object::Member::Impl>& in_impl) :
-   m_impl(std::move(in_impl))
+   m_impl(in_impl)
 {
 }
 
