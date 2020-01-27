@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -143,7 +143,15 @@ public class ConsoleOutputWriter
    {
       return lines_;
    }
-   
+
+   public String getNewText()
+   {
+      if (virtualConsole_ == null)
+         return "";
+      else
+         return virtualConsole_.getNewText();
+   }
+
    private int maxLines_ = -1;
    private int lines_ = 0;
    private final PreWidget output_;

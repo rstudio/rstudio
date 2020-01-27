@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriterTests.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
-import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -64,8 +63,15 @@ public class ConsoleOutputWriterTests extends GWTTestCase
          return ansiMode_;
       }
       
+      @Override
+      public boolean screenReaderEnabled()
+      {
+         return screenReaderEnabled_;
+      }
+      
       public int truncateLines_ = 1000;
       public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
+      public boolean screenReaderEnabled_ = false;
    }
    
    private class VCFactory implements VirtualConsoleFactory

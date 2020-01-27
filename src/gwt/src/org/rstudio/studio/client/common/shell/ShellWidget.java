@@ -181,7 +181,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       inputLine_.setCellWidth(input_.asWidget(), "100%");
       inputLine_.setWidth("100%");
 
-      VerticalPanel verticalPanel_ = new VerticalPanel();
+      verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
       verticalPanel_.add(output_.getWidget());
@@ -423,6 +423,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (scrollPanel_.isScrolledToBottom())
          resizeCommand_.nudge();
       
+      if (liveRegion_ != null)
+         liveRegion_.announce(output_.getNewText());
+
       return canContinue;
    }
 
@@ -803,10 +806,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return output_.getWidget();
    }
 
+   public void enableLiveReporting()
+   {
+      liveRegion_ = new AriaLiveShellWidget();
+      verticalPanel_.add(liveRegion_);
+   }
+
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
    private final PreWidget pendingInput_;
    private final HTML prompt_;
+   private AriaLiveShellWidget liveRegion_ = null;
    protected final AceEditor input_;
    private final DockPanel inputLine_;
    protected final ClickableScrollPanel scrollPanel_;
@@ -815,7 +825,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean suppressPendingInput_;
    private final EventBus events_;
    private final UserPrefs prefs_;
-   
+   private VerticalPanel verticalPanel_;
+
    // A list of errors that have occurred between console prompts. 
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;

@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,19 +42,11 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
  */
 public class VirtualConsole
 {
-   // don't do any processing of ANSI escape codes
-   public final static int ANSI_COLOR_OFF = 0;
-   
-   // convert ANSI color escape codes into css styles
-   public final static int ANSI_COLOR_ON = 1;
-   
-   // strip out ANSI escape sequences but don't apply styles
-   public final static int ANSI_COLOR_STRIP = 2;
-   
    public interface Preferences
    {
       int truncateLongLinesInConsoleHistory();
       String consoleAnsiMode();
+      boolean screenReaderEnabled();
    }
 
    public static class PreferencesImpl extends UserPrefsSubset
@@ -76,6 +68,12 @@ public class VirtualConsole
       public String consoleAnsiMode()
       {
          return getUserPrefs().ansiConsoleMode().getValue();
+      }
+
+      @Override
+      public boolean screenReaderEnabled()
+      {
+         return getUserPrefs().getScreenReaderEnabled();
       }
    }
 
@@ -395,6 +393,9 @@ public class VirtualConsole
     */
    private void text(String text, String clazz, boolean forceNewRange)
    {
+      if (newText_ != null)
+         newText_.append(text);
+
       int start = cursor_;
       int end = cursor_ + text.length();
       
@@ -437,7 +438,9 @@ public class VirtualConsole
       // output.
       captureNewElements_ = forceNewRange;
       newElements_.clear();
-      
+
+      newText_ = prefs_.screenReaderEnabled() ? new StringBuilder() : null;
+
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
@@ -600,7 +603,15 @@ public class VirtualConsole
    {
       return newElements_;
    }
- 
+
+   // Text added by last submit() call (all ANSI codes and control characters except newlines
+   // stripped), only captured if screen reader is enabled when submit() is invoked. Intended
+   // for use in reporting output to screen readers.
+   public String getNewText()
+   {
+      return newText_ == null ? null : newText_.toString();
+   }
+
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text)
@@ -694,6 +705,8 @@ public class VirtualConsole
    private boolean captureNewElements_ = false;
    private List<Element> newElements_ = new ArrayList<Element>();
    
+   private StringBuilder newText_;
+
    // Injected ----
    private Preferences prefs_;
 }

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.events.ScreenReaderStateReadyEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -258,7 +259,11 @@ public class UserPrefs extends UserPrefsComputed
       if (screenReaderEnabled_ != null)
          return;
 
-      Command onCompleted = () -> setScreenReaderMenuState(screenReaderEnabled_);
+      Command onCompleted = () ->
+      {
+         setScreenReaderMenuState(screenReaderEnabled_);
+         eventBus_.fireEvent(new ScreenReaderStateReadyEvent());
+      };
 
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().getEnableAccessibility(enabled ->
