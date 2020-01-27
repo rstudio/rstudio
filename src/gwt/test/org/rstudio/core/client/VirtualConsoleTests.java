@@ -1,7 +1,7 @@
 /*
  * VirtualConsoleTests.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,8 +50,15 @@ public class VirtualConsoleTests extends GWTTestCase
          return ansiMode_;
       }
       
+      @Override
+      public boolean screenReaderEnabled()
+      {
+         return screenReaderEnabled_;
+      }
+      
       public int truncateLines_ = 1000;
       public String ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_ON;
+      public boolean screenReaderEnabled_ = false;
    }
    
    private static String consolify(String text)
@@ -1012,4 +1019,24 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("cc 33 ", vc.toString());
    }
- }
+
+   public void testScreenReaderOffNoTextNotCaptured()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World", "someclass");
+      Assert.assertNull(vc.getNewText());
+   }
+
+   public void testScreenReaderOnTextCaptured()
+   {
+      PreElement ele = Document.get().createPreElement();
+      FakePrefs prefs = new FakePrefs();
+      prefs.screenReaderEnabled_ = true;
+      VirtualConsole vc = new VirtualConsole(ele, prefs);
+      String text = "Hello World\nHow are you?";
+      vc.submit(text, "someclass");
+      String newText = vc.getNewText();
+      Assert.assertEquals(newText, text);
+   }
+}

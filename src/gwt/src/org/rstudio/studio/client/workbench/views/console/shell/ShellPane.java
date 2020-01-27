@@ -14,13 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
@@ -30,7 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 public class ShellPane extends ShellWidget implements Shell.Display
 {
    @Inject
-   public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events, AriaLiveService ariaLive)
+   public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events)
    {
       super(editor, uiPrefs, events);
 
@@ -40,9 +38,6 @@ public class ShellPane extends ShellWidget implements Shell.Display
       // Setting file type to R changes the wrap mode to false. We want it to
       // be true so that the console input can wrap.
       editor.setUseWrapMode(true);
-
-      if (!ariaLive.isDisabled(AriaLiveService.CONSOLE_LOG))
-         Roles.getLogRole().set(getOutputWidget().getElement());
 
       uiPrefs.syntaxColorConsole().bind(new CommandWithArg<Boolean>()
       {
