@@ -257,13 +257,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public void showOutline(boolean show, double width)
    {
+      showOutline(show, width, false);
+   }
+   
+   public void showOutline(boolean show, double width, boolean animate)
+   {
       boolean visible = getWidgetSize(outline_) > 0;
       if (show != visible)
       {
          setWidgetSize(outline_, show ? width : 0);
          outline_.setAriaVisible(show);
-         int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
-         animate(duration);
+         if (animate)
+         {
+            int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+            animate(duration);
+         }
       }
    }
    
