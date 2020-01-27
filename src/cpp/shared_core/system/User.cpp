@@ -102,7 +102,7 @@ PRIVATE_IMPL_DELETER_IMPL(User)
 User::User(bool in_isEmpty) :
    m_impl(new Impl())
 {
-   m_impl->Name = in_isEmtpy ? "" : "*";
+   m_impl->Name = in_isEmpty ? "" : "*";
 }
 
 User::User(const User& in_other) :
