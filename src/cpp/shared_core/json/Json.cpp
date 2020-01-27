@@ -384,6 +384,11 @@ bool Value::operator==(const Value& in_other) const
    return *m_impl->Document == *in_other.m_impl->Document;
 }
 
+bool Value::operator!=(const Value& in_other) const
+{
+   return !(*this == in_other);
+}
+
 Value Value::clone() const
 {
    return Value(*this);
@@ -889,7 +894,7 @@ Object::Object(const Object& in_other) :
 {
 }
 
-Object::Object(Object&& in_other) :
+Object::Object(Object&& in_other) noexcept :
    Value(in_other)
 {
 }
@@ -1223,7 +1228,7 @@ Array::Array(const Array& in_other) :
 {
 }
 
-Array::Array(Array&& in_other) :
+Array::Array(Array&& in_other) noexcept :
    Value(in_other)
 {
 }

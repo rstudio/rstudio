@@ -27,7 +27,6 @@ endif()
 
 # source files
 set (CORE_SOURCE_FILES
-   Assert.cpp
    Backtrace.cpp
    Base64.cpp
    BoostErrors.cpp
@@ -355,6 +354,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${CORE_HEADER_FILES}
    )
 
+   message("Core Boost: ${Boost_LIBRARIES}")
    target_link_libraries(rstudio-core-tests
       rstudio-core
       rstudio-core-synctex

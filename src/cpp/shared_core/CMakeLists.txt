@@ -29,6 +29,7 @@ file(GLOB_RECURSE SHARED_CORE_HEADER_FILES "*.h*")
 
 # source files
 set (SHARED_CORE_SOURCE_FILES
+   Assert.cpp
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
@@ -88,8 +89,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${SHARED_CORE_TEST_FILES}
       ${SHARED_CORE_HEADER_FILES}
    )
-
-   message("Shared Core Boost: ${Boost_LIBRARIES}")
 
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
