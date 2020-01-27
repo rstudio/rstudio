@@ -384,6 +384,11 @@ bool Value::operator==(const Value& in_other) const
    return *m_impl->Document == *in_other.m_impl->Document;
 }
 
+bool Value::operator!=(const Value& in_other) const
+{
+   return !(*this == in_other);
+}
+
 Value Value::clone() const
 {
    return Value(*this);

@@ -291,6 +291,15 @@ public:
    bool operator==(const Value& in_other) const;
 
    /**
+    * @brief Inequality operator.
+    *
+    * @param in_other   The value to compare this value to.
+    *
+    * @return True if the two values are not the same; false if they are the same.
+    */
+   bool operator!=(const Value& in_other) const;
+
+   /**
     * @brief Makes a copy of this JSON value.
     *
     * @return A copy of this JSON value.
