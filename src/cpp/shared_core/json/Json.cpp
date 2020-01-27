@@ -1069,6 +1069,21 @@ bool Object::isEmpty() const
    return m_impl->Document->ObjectEmpty();
 }
 
+Error Object::parse(const char* in_jsonStr)
+{
+   static const std::string kObjectSchema = "{ \"type\": \"object\" }";
+   Error error = Value::parse(in_jsonStr);
+   if (error)
+      return error;
+
+   return validate(kObjectSchema);
+}
+
+Error Object::parse(const std::string& in_jsonStr)
+{
+   return parse(in_jsonStr.c_str());
+}
+
 bool Object::toStringMap(StringListMap& out_map) const
 {
    for (const Member member: *this)
@@ -1303,6 +1318,21 @@ size_t Array::getSize() const
 bool Array::isEmpty() const
 {
    return m_impl->Document->Empty();
+}
+
+Error Array::parse(const char* in_jsonStr)
+{
+   static const std::string kObjectSchema = "{ \"type\": \"array\" }";
+   Error error = Value::parse(in_jsonStr);
+   if (error)
+      return error;
+
+   return validate(kObjectSchema);
+}
+
+Error Array::parse(const std::string& in_jsonStr)
+{
+   return parse(in_jsonStr.c_str());
 }
 
 void Array::push_back(const Value& in_value)

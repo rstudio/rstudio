@@ -485,7 +485,7 @@ public:
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
     */
-   Error parse(const char* in_jsonStr);
+   virtual Error parse(const char* in_jsonStr);
 
    /**
     * @brief Parses the JSON string into this value.
@@ -494,7 +494,7 @@ public:
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
     */
-   Error parse(const std::string& in_jsonStr);
+   virtual Error parse(const std::string& in_jsonStr);
 
    /**
     * @brief Parses the JSON string and validates it against the schema.
@@ -937,6 +937,26 @@ public:
    bool isEmpty() const;
 
    /**
+    * @brief Parses the JSON string into this object.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Object; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const char* in_jsonStr) override;
+
+   /**
+    * @brief Parses the JSON string into this object.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Object; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const std::string& in_jsonStr) override;
+
+   /**
     * @brief Converts this JSON object to a map with string keys and a list of string values.
     *
     * @param out_map    The converted map, on success.
@@ -1225,6 +1245,26 @@ public:
     * @return True if the JSON array has no members; false otherwise.
     */
    bool isEmpty() const;
+
+   /**
+    * @brief Parses the JSON string into this array.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Array; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const char* in_jsonStr) override;
+
+   /**
+    * @brief Parses the JSON string into this array.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Array; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const std::string& in_jsonStr) override;
 
    /**
     * @brief Pushes the value onto the end of the JSON array.
