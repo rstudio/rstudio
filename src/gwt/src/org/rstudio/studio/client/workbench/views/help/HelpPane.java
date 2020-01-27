@@ -1,7 +1,7 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,9 +91,9 @@ public class HelpPane extends WorkbenchPane
                    EventBus events,
                    UserPrefs prefs)
    {
-      super("Help") ;
+      super("Help");
       
-      searchProvider_ = searchProvider ;
+      searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       events_ = events;
@@ -108,7 +108,7 @@ public class HelpPane extends WorkbenchPane
       });
     
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
-      history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear }) ;
+      history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear });
 
       Window.addResizeHandler(new ResizeHandler()
       {
@@ -221,13 +221,13 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected void onLoad()
    {
-      super.onLoad() ;
+      super.onLoad();
 
       if (!initialized_)
       {
          initialized_ = true;
 
-         initHelpCallbacks() ;
+         initHelpCallbacks();
 
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
@@ -249,21 +249,21 @@ public class HelpPane extends WorkbenchPane
          }
       }
 
-      var thiz = this ;
+      var thiz = this;
       $wnd.helpNavigated = function(document, win) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::helpNavigated(Lcom/google/gwt/dom/client/Document;)(document);
          addEventHandler(win, "unload", function () {
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::unload()();
          });
-      } ;
+      };
       $wnd.helpNavigate = function(url) {
          if (url.length)
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
-      } ;
+      };
       
       $wnd.helpKeydown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
-      } ;
+      };
    }-*/;
    
    
@@ -323,19 +323,19 @@ public class HelpPane extends WorkbenchPane
    
    private void helpNavigated(Document doc)
    {
-      NodeList<Element> elements = doc.getElementsByTagName("a") ;
+      NodeList<Element> elements = doc.getElementsByTagName("a");
       for (int i = 0; i < elements.getLength(); i++)
       {
-         ElementEx a = (ElementEx) elements.getItem(i) ;
-         String href = a.getAttribute("href", 2) ;
+         ElementEx a = (ElementEx) elements.getItem(i);
+         String href = a.getAttribute("href", 2);
          if (href == null)
-            continue ;
+            continue;
 
          if (href.contains(":") || href.endsWith(".pdf"))
          {
             // external links
             AnchorElement aElement = a.cast();
-            aElement.setTarget("_blank") ;
+            aElement.setTarget("_blank");
          }
          else
          {
@@ -350,8 +350,8 @@ public class HelpPane extends WorkbenchPane
       }
       
       String effectiveTitle = getDocTitle(doc);
-      title_.setText(effectiveTitle) ;
-      this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle)) ;
+      title_.setText(effectiveTitle);
+      this.fireEvent(new HelpNavigateEvent(doc.getURL(), effectiveTitle));
    }
    
    private String getDocTitle(Document doc)
@@ -382,7 +382,7 @@ public class HelpPane extends WorkbenchPane
 
    private void unload()
    {
-      title_.setText("") ;
+      title_.setText("");
    }
 
    @Override
@@ -582,7 +582,7 @@ public class HelpPane extends WorkbenchPane
        
       }
 
-      return toolbar ;
+      return toolbar;
    }
    
    private String getTerm()
@@ -652,7 +652,7 @@ public class HelpPane extends WorkbenchPane
    
    public String getDocTitle()
    {
-      return getIFrameEx().getContentDocument().getTitle() ;
+      return getIFrameEx().getContentDocument().getTitle();
    }
 
    public void showHelp(String url)
@@ -728,7 +728,7 @@ public class HelpPane extends WorkbenchPane
 
    private WindowEx getContentWindow()
    {
-      return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null ;
+      return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null;
    }
    
    public void back()
@@ -747,13 +747,13 @@ public class HelpPane extends WorkbenchPane
 
    public void print()
    {
-      getContentWindow().focus() ;
-      getContentWindow().print() ;
+      getContentWindow().focus();
+      getContentWindow().print();
    }
    
    public void popout()
    {
-      String href = getContentWindow().getLocationHref() ;     
+      String href = getContentWindow().getLocationHref();
       NewWindowOptions options = new NewWindowOptions();
       options.setName("helppanepopout_" + popoutCount_++);
       globalDisplay_.openWebMinimalWindow(href, false, 0, 0, options);
@@ -769,13 +769,13 @@ public class HelpPane extends WorkbenchPane
    
    public HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler)
    {
-      return addHandler(handler, HelpNavigateEvent.TYPE) ;
+      return addHandler(handler, HelpNavigateEvent.TYPE);
    }
    
  
    public LinkMenu getHistory()
    {
-      return history_ ;
+      return history_;
    }
 
    public boolean navigated()
@@ -848,12 +848,12 @@ public class HelpPane extends WorkbenchPane
 
    private UserPrefs prefs_;
 
-   private final VirtualHistory navStack_ ;
-   private final ToolbarLinkMenu history_ ;
-   private Label title_ ;
-   private RStudioThemedFrame frame_ ;
+   private final VirtualHistory navStack_;
+   private final ToolbarLinkMenu history_;
+   private Label title_;
+   private RStudioThemedFrame frame_;
    private FindTextBox findTextBox_;
-   private final Provider<HelpSearch> searchProvider_ ;
+   private final Provider<HelpSearch> searchProvider_;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private final EventBus events_;

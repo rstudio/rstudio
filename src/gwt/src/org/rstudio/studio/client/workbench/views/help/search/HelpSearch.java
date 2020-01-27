@@ -33,7 +33,7 @@ public class HelpSearch
 {
    public interface Display 
    {
-      SearchDisplay getSearchDisplay();  
+      SearchDisplay getSearchDisplay();
    }
    
    @Inject
@@ -41,9 +41,9 @@ public class HelpSearch
                      HelpServerOperations server,
                      EventBus eventBus)
    {
-      display_ = display ;
-      eventBus_ = eventBus ;
-      server_ = server ;
+      display_ = display;
+      eventBus_ = eventBus;
+      server_ = server;
       
       display_.getSearchDisplay().addSelectionHandler(
                                        new SelectionHandler<Suggestion>() {
@@ -61,7 +61,7 @@ public class HelpSearch
          {       
             fireShowHelpEvent(event.getSelectedItem());
          }
-      }) ;
+      });
    }
 
    public Widget getSearchWidget()
@@ -75,12 +75,12 @@ public class HelpSearch
          public void onResponseReceived(JsArrayString url)
          {
             if (url != null && url.length() > 0)
-               eventBus_.fireEvent(new ShowHelpEvent(url.get(0))) ;
+               eventBus_.fireEvent(new ShowHelpEvent(url.get(0)));
          }
-         }) ;
+         });
    }
    
-   private final HelpServerOperations server_ ;
-   private final EventBus eventBus_ ;
-   private final Display display_ ;
+   private final HelpServerOperations server_;
+   private final EventBus eventBus_;
+   private final Display display_;
 }

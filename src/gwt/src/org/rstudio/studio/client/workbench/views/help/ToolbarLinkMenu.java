@@ -1,7 +1,7 @@
 /*
  * ToolbarLinkMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,48 +37,48 @@ public class ToolbarLinkMenu implements LinkMenu
    {
       maxLinks_ = maxLinks;
       top_ = addFromTop;
-      pre_ = pre != null ? pre : new MenuItem[0] ;
-      post_ = post != null ? post : new MenuItem[0] ;
-      menu_ = new ToolbarPopupMenu() ;
-      clearLinks() ;
+      pre_ = pre != null ? pre : new MenuItem[0];
+      post_ = post != null ? post : new MenuItem[0];
+      menu_ = new ToolbarPopupMenu();
+      clearLinks();
    }
    
    public ToolbarPopupMenu getMenu()
    {
-      return menu_ ;
+      return menu_;
    }
 
    public void addLink(Link link)
    {
-      LinkMenuItem menuItem = new LinkMenuItem(link, this) ;
-      int beforeIndex ;
+      LinkMenuItem menuItem = new LinkMenuItem(link, this);
+      int beforeIndex;
       if (top_)
       {
-         beforeIndex = pre_.length == 0 ? 0 : pre_.length + 1 ;
+         beforeIndex = pre_.length == 0 ? 0 : pre_.length + 1;
       }
       else
       {
-         beforeIndex = menu_.getItemCount() ;
+         beforeIndex = menu_.getItemCount();
          if (pre_.length > 0)
-            beforeIndex++ ; // initial separator isn't counted in getItemCount()
+            beforeIndex++; // initial separator isn't counted in getItemCount()
          if (post_.length > 0)
-            beforeIndex -= post_.length + 1 ;
+            beforeIndex -= post_.length + 1;
          
          // some weird race condition causes beforeIndex to go negative
-         beforeIndex = Math.max(0, beforeIndex) ;
+         beforeIndex = Math.max(0, beforeIndex);
       }
 
       try
       {
-         menu_.insertItem(menuItem, beforeIndex) ;
+         menu_.insertItem(menuItem, beforeIndex);
       }
       catch (RuntimeException e)
       {
-         Debug.log("beforeIndex: " + beforeIndex + ", length: " + menu_.getItemCount()) ;
-         throw e ;
+         Debug.log("beforeIndex: " + beforeIndex + ", length: " + menu_.getItemCount());
+         throw e;
       }
       
-      links_.add(top_ ? 0 : links_.size(), link) ;
+      links_.add(top_ ? 0 : links_.size(), link);
 
       while (links_.size() > maxLinks_)
          removeLink(links_.get(top_ ? links_.size() - 1 : 0));
@@ -86,39 +86,39 @@ public class ToolbarLinkMenu implements LinkMenu
 
    public void removeLink(Link link)
    {
-      menu_.removeItem(new LinkMenuItem(link, this)) ;
-      links_.remove(link) ;
+      menu_.removeItem(new LinkMenuItem(link, this));
+      links_.remove(link);
    }
    
    public boolean containsLink(Link link)
    {
-      return menu_.containsItem(new LinkMenuItem(link, this)) ;
+      return menu_.containsItem(new LinkMenuItem(link, this));
    }
    
    public void clearLinks()
    {
-      menu_.clearItems() ;
+      menu_.clearItems();
       for (MenuItem mi : pre_)
-         menu_.addItem(mi) ;
+         menu_.addItem(mi);
       if (pre_.length > 0)
-         menu_.addSeparator() ;
+         menu_.addSeparator();
       if (post_.length > 0)
-         menu_.addSeparator() ;
+         menu_.addSeparator();
       for (MenuItem mi : post_)
-         menu_.addItem(mi) ;
+         menu_.addItem(mi);
       
-      links_.clear() ;
+      links_.clear();
    }
    
    public ArrayList<Link> getLinks()
    {
-      return new ArrayList<Link>(links_) ;
+      return new ArrayList<Link>(links_);
    }
 
    public HandlerRegistration addSelectionHandler(
                                             SelectionHandler<String> handler)
    {
-      return handlers_.addHandler(SelectionEvent.getType(), handler) ;
+      return handlers_.addHandler(SelectionEvent.getType(), handler);
    }
    
    private class LinkMenuItem extends MenuItem
@@ -129,51 +129,51 @@ public class ToolbarLinkMenu implements LinkMenu
          super(link.getTitle(), new Command() {
             public void execute()
             {
-               SelectionEvent.fire(thiz, link.getUrl()) ;
+               SelectionEvent.fire(thiz, link.getUrl());
             }
-         }) ;
+         });
          
-         link_ = link ;
+         link_ = link;
       }
       
       @Override
       public int hashCode()
       {
-         return link_.hashCode() ;
+         return link_.hashCode();
       }
 
       @Override
       public boolean equals(Object obj)
       {
          if (this == obj)
-            return true ;
+            return true;
          if (obj == null)
-            return false ;
+            return false;
          if (getClass() != obj.getClass())
-            return false ;
-         LinkMenuItem other = (LinkMenuItem) obj ;
+            return false;
+         LinkMenuItem other = (LinkMenuItem) obj;
          if (link_ == null)
          {
             if (other.link_ != null)
-               return false ;
+               return false;
          } else if (!link_.equals(other.link_))
-            return false ;
-         return true ;
+            return false;
+         return true;
       }
 
-      private final Link link_ ;
+      private final Link link_;
    }
 
    public void fireEvent(GwtEvent<?> event)
    {
-      handlers_.fireEvent(event) ;
+      handlers_.fireEvent(event);
    }
 
    private final HandlerManager handlers_ = new HandlerManager(null);
-   private final ToolbarPopupMenu menu_ ;
-   private final MenuItem[] pre_ ;
-   private final MenuItem[] post_ ;
-   private final ArrayList<Link> links_ = new ArrayList<Link>() ;
+   private final ToolbarPopupMenu menu_;
+   private final MenuItem[] pre_;
+   private final MenuItem[] post_;
+   private final ArrayList<Link> links_ = new ArrayList<Link>();
    private final int maxLinks_;
    private boolean top_;
 }

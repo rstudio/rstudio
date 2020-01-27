@@ -48,17 +48,17 @@ public class Help extends BasePresenter implements ShowHelpHandler
    public interface Display extends WorkbenchView, 
                                     HasHelpNavigateHandlers
    {
-      String getUrl() ;
-      String getDocTitle() ;
+      String getUrl();
+      String getDocTitle();
       void showHelp(String helpURL);
-      void back() ;
-      void forward() ;
-      void print() ;
-      void popout() ;
-      void refresh() ;
+      void back();
+      void forward();
+      void print();
+      void popout();
+      void refresh();
       void focus();
       
-      LinkMenu getHistory() ;
+      LinkMenu getHistory();
 
       /**
        * Returns true if this Help pane has ever been navigated. 
@@ -68,11 +68,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
    
    public interface LinkMenu extends HasSelectionHandlers<String>
    {
-      void addLink(Link link) ;
-      void removeLink(Link link) ;
-      boolean containsLink(Link link) ;
-      void clearLinks() ;
-      ArrayList<Link> getLinks() ;
+      void addLink(Link link);
+      void removeLink(Link link);
+      boolean containsLink(Link link);
+      void clearLinks();
+      ArrayList<Link> getLinks();
    }
    
    @Inject
@@ -86,7 +86,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
                final EventBus events)
    {
       super(view);
-      server_ = server ;
+      server_ = server;
       helpHistoryList_ = listManager.getHelpHistoryList();
       view_ = view;
       globalDisplay_ = globalDisplay;
@@ -106,14 +106,14 @@ public class Help extends BasePresenter implements ShowHelpHandler
             helpHistoryList_.append(csvWriter.getValue());
 
          }
-      }) ;
+      });
       SelectionHandler<String> navigator = new SelectionHandler<String>() {
          public void onSelection(SelectionEvent<String> event)
          {
-            showHelp(event.getSelectedItem()) ;
+            showHelp(event.getSelectedItem());
          }
-      } ;
-      view_.getHistory().addSelectionHandler(navigator) ;
+      };
+      view_.getHistory().addSelectionHandler(navigator);
 
       // initialize help history
       helpHistoryList_.addListChangedHandler(new ListChangedHandler() {
@@ -121,7 +121,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
          public void onListChanged(ListChangedEvent event)
          {
             // clear existing
-            final LinkMenu history = view_.getHistory() ;
+            final LinkMenu history = view_.getHistory();
             history.clearLinks();
             
             // initialize from the list
@@ -146,7 +146,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
             if (!historyInitialized_)
             {
                // mark us initialized
-               historyInitialized_ = true ;
+               historyInitialized_ = true;
                
                if (session.getSessionInfo().getShowHelpHome())
                {
@@ -207,7 +207,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    
    public Display getDisplay()
    {
-      return view_ ;
+      return view_;
    }
    
    private void showHelp(String topicUrl)
@@ -301,7 +301,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
    
    void onMarkdownHelp()
    {
-      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
+      events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html"));
    }
 
    void onProfileHelp()
@@ -309,10 +309,10 @@ public class Help extends BasePresenter implements ShowHelpHandler
       globalDisplay_.openRStudioLink("profiling_help", false);
    }
 
-   private Display view_ ;
-   private HelpServerOperations server_ ;
+   private Display view_;
+   private HelpServerOperations server_;
    private WorkbenchList helpHistoryList_;
-   private boolean historyInitialized_ ;
+   private boolean historyInitialized_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
 }
