@@ -62,18 +62,18 @@ public class AriaLiveService
       pUserPrefs_ = pUserPrefs;
 
       announcements_ = new HashMap<>();
-      announcements_.put(CONSOLE_CLEARED, "Announce console cleared");
-      announcements_.put(CONSOLE_LOG, "Announce console output (requires restart)");
-      announcements_.put(FILTERED_LIST, "Announce filtered result count");
-      announcements_.put(GIT_MESSAGE_LENGTH, "Announce commit message length");
-      announcements_.put(INFO_BAR, "Announce info bars");
-      announcements_.put(PROGRESS_COMPLETION, "Announce task completion");
-      announcements_.put(PROGRESS_LOG, "Announce task progress details");
-      announcements_.put(SCREEN_READER_NOT_ENABLED, "Announce screen reader not enabled");
-      announcements_.put(SESSION_STATE, "Announce changes in session state");
-      announcements_.put(TAB_KEY_MODE, "Announce tab key focus mode change");
-      announcements_.put(TOOLBAR_VISIBILITY, "Announce toolbar visibility change");
-      announcements_.put(WARNING_BAR, "Announce warning bars");
+      announcements_.put(CONSOLE_CLEARED, "Console cleared");
+      announcements_.put(CONSOLE_LOG, "Console output (requires restart)");
+      announcements_.put(FILTERED_LIST, "Filtered result count");
+      announcements_.put(GIT_MESSAGE_LENGTH, "Commit message length");
+      announcements_.put(INFO_BAR, "Info bars");
+      announcements_.put(PROGRESS_COMPLETION, "Task completion");
+      announcements_.put(PROGRESS_LOG, "Task progress details");
+      announcements_.put(SCREEN_READER_NOT_ENABLED, "Screen reader not enabled");
+      announcements_.put(SESSION_STATE, "Changes in session state");
+      announcements_.put(TAB_KEY_MODE, "Tab key focus mode change");
+      announcements_.put(TOOLBAR_VISIBILITY, "Toolbar visibility change");
+      announcements_.put(WARNING_BAR, "Warning bars");
    }
 
    /**
