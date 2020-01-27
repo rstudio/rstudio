@@ -1154,9 +1154,9 @@ public class DomUtils
 
    /**
     * Set disabled attribute on an element's child
-    * @param element
-    * @param ordinal
-    * @param disable
+    * @param element The parent element
+    * @param ordinal The index representing the child to disable
+    * @param disable Whether we are adding or removing the disable attribute
     */
    public static void setOptionDisabled(Element element, int ordinal, boolean disable)
    {
