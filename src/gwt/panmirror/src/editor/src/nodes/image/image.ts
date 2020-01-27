@@ -32,7 +32,8 @@ import {
 import { EditorUI, ImageEditorFn } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
-import { imageDoubleClickOn, imageDrop } from './image-events';
+import { imageDrop } from './image-events';
+import { ImageNodeView } from './image-view';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -90,7 +91,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         new Plugin({
           key: plugin,
           props: {
-            handleDoubleClickOn: imageDoubleClickOn(schema.nodes.image, ui.dialogs.editImage, imageAttr),
+            nodeViews: {
+              image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
+                return new ImageNodeView(node, view, getPos as () => number, ui, imageAttr);
+              },
+            },
             handleDOMEvents: {
               drop: imageDrop(schema.nodes.image),
             },

@@ -500,7 +500,7 @@ public class ImagePreviewer
           href.endsWith(".svg");
    }
 
-   private static String imgSrcPathFromHref(DocUpdateSentinel sentinel, 
+   public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, 
                                             String href)
    {
       // return paths that have a custom / external protocol as-is

@@ -23,5 +23,11 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUI
 {    
+   public PanmirrorUI(PanmirrorUIContext context)
+   {
+      this.context = context;
+   }
+   
    public PanmirrorDialogs dialogs = new PanmirrorDialogs();
+   public PanmirrorUIContext context;
 }

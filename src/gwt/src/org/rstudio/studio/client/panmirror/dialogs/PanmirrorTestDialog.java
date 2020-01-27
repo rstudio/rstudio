@@ -4,6 +4,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
@@ -29,7 +30,7 @@ public class PanmirrorTestDialog extends ModalDialog<String>
       mainWidget_ = new SimplePanel();
       mainWidget_.setSize("600px", "500px");
       
-      PanmirrorConfig config = new PanmirrorConfig();
+      PanmirrorConfig config = new PanmirrorConfig(uiContext());
       config.options.rmdCodeChunks = true;
       config.hooks.isEditable = () -> true;
      
@@ -94,6 +95,15 @@ public class PanmirrorTestDialog extends ModalDialog<String>
          }
       });
      
+   }
+   
+   private PanmirrorUIContext uiContext()
+   {
+      PanmirrorUIContext uiContext = new PanmirrorUIContext();
+      uiContext.translateResourcePath = path -> {
+         return path;
+      };
+      return uiContext;
    }
 
    @Override

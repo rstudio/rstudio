@@ -30,7 +30,7 @@ import {
   imagePandocOutputWriter,
   pandocImageHandler,
 } from './image';
-import { FigureNodeView } from './figure-view';
+import { ImageNodeView } from './image-view';
 
 import './figure-styles.css';
 
@@ -104,7 +104,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           props: {
             nodeViews: {
               figure(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new FigureNodeView(node, view, getPos as () => number, ui.dialogs.editImage, imageAttr);
+                return new ImageNodeView(node, view, getPos as () => number, ui, imageAttr);
               },
             },
           },

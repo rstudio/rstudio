@@ -1,5 +1,5 @@
 /*
- * figure-view.ts
+ * image-view.ts
  *
  * Copyright (C) 2019-20 by RStudio, Inc.
  *
@@ -17,31 +17,38 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
-import { ImageEditorFn } from '../../api/ui';
+import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 
-export class FigureNodeView implements NodeView {
+export class ImageNodeView implements NodeView {
+  private readonly type: ImageType;
+  
   public readonly dom: HTMLElement;
   private readonly img: HTMLImageElement;
-
+ 
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
   private node: ProsemirrorNode;
   private readonly view: EditorView;
-  private readonly getPos: () => number;
+  
+  private readonly translateResourcePath: (path: string) => string;
 
   constructor(
     node: ProsemirrorNode,
     view: EditorView,
     getPos: () => number,
-    onEditImage: ImageEditorFn,
+    editorUI: EditorUI,
     imageAttributes: boolean,
   ) {
+    // determine type
+    const schema = node.type.schema;
+    this.type = node.type === schema.nodes.image ? ImageType.Image : ImageType.Figure;
+   
     this.node = node;
     this.view = view;
-    this.getPos = getPos;
+    this.translateResourcePath = editorUI.context.translateResourcePath;
 
     const selectOnClick = () => {
       const tr = view.state.tr;
@@ -57,33 +64,45 @@ export class FigureNodeView implements NodeView {
         this.view.state,
         this.view.dispatch,
         this.view,
-        onEditImage,
+        editorUI.dialogs.editImage,
         imageAttributes,
       );
     };
 
     const noPropagateClick = (ev: MouseEvent) => {
       ev.stopPropagation();
-    };
-
-    this.dom = document.createElement('figure');
-    this.dom.onclick = selectOnClick;
-    this.dom.ondblclick = editOnDblClick;
-    const container = document.createElement('div');
+    };  
+    
+    // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
     this.img.onclick = selectOnClick;
     this.img.ondblclick = editOnDblClick;
-    this.updateImg(node);
-    container.append(this.img);
-    container.contentEditable = 'false';
-    this.dom.append(container);
-    this.figcaption = document.createElement('figcaption');
-    this.figcaption.classList.add('pm-figcaption');
-    this.figcaption.classList.add('pm-node-caption');
-    this.figcaption.onclick = noPropagateClick;
-    this.figcaption.ondblclick = noPropagateClick;
-    this.contentDOM = this.figcaption;
-    this.dom.append(this.figcaption);
+   
+    // wrap in figure if appropriate
+    if (this.type === ImageType.Figure) {
+      this.dom = document.createElement('figure');
+      this.dom.onclick = selectOnClick;
+      this.dom.ondblclick = editOnDblClick;
+      const container = document.createElement('div');
+      this.updateImg(node);
+      container.append(this.img);
+      container.contentEditable = 'false';
+      this.dom.append(container);
+      this.figcaption = document.createElement('figcaption');
+      this.figcaption.classList.add('pm-figcaption');
+      this.figcaption.classList.add('pm-node-caption');
+      this.figcaption.onclick = noPropagateClick;
+      this.figcaption.ondblclick = noPropagateClick;
+      this.contentDOM = this.figcaption;
+      this.dom.append(this.figcaption);
+    } else {
+      this.dom = this.img;
+      this.contentDOM = null;
+      this.figcaption = null;
+      this.updateImg(node);
+    }
+
+    
   }
 
   public update(node: ProsemirrorNode) {
@@ -100,11 +119,13 @@ export class FigureNodeView implements NodeView {
   private updateImg(node: ProsemirrorNode) {
     // update img attributes
     this.img.alt = node.textContent;
-    this.img.src = node.attrs.src;
+    this.img.src = this.translateResourcePath(node.attrs.src);
     this.img.title = node.attrs.title;
 
     // update figure container with width/alignment related keyvalue props
-    this.updateFigure(node);
+    if (this.type === ImageType.Figure) {
+      this.updateFigure(node);
+    }
   }
 
   private updateFigure(node: ProsemirrorNode) {

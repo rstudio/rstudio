@@ -19,6 +19,7 @@ import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -35,7 +36,7 @@ import com.google.inject.Inject;
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
 
-// TODO: display of images in the editor (see ImagePreviewer.imgSrcPathFromHref)
+// TODO: images currently display too large (2x)
 
 // TODO: shortcut overlap / routing / remapping
 // TODO: command / keyboard shortcut for entering visual mode
@@ -46,8 +47,6 @@ import com.google.inject.Inject;
 // TODO: apply themeing
 // TODO: accessibility pass
 
-// TODO: move into workbench (has deps there)
-// TODO: copyright headers
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
@@ -218,14 +217,14 @@ public class TextEditingTargetVisualMode
          });  
       }
    }
-  
+   
    
    private void withPanmirror(Command ready)
    {
       if (panmirror_ == null)
       {
          // create panmirror
-         PanmirrorConfig config = new PanmirrorConfig();
+         PanmirrorConfig config = new PanmirrorConfig(uiContext());
          config.options.rmdCodeChunks = true;
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
          PanmirrorWidget.create(config, options, (panmirror) -> {
@@ -286,7 +285,6 @@ public class TextEditingTargetVisualMode
    {
       return display_.editorContainer().getEditor();
    }
-   
   
    
    private void disableForVisualMode(AppCommand... commands)
@@ -298,6 +296,15 @@ public class TextEditingTargetVisualMode
       }
    }
    
+   private PanmirrorUIContext uiContext()
+   {
+      PanmirrorUIContext uiContext = new PanmirrorUIContext();
+      uiContext.translateResourcePath = path -> {
+         return ImagePreviewer.imgSrcPathFromHref(docUpdateSentinel_, path);
+      };
+      return uiContext;
+   }
+  
    
    private Commands commands_;
    private UserPrefs prefs_;
@@ -314,3 +321,6 @@ public class TextEditingTargetVisualMode
    
    private static final String PROPERTY_RMD_VISUAL_MODE = "rmdVisualMode";
 }
+
+
+

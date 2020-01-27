@@ -18,6 +18,7 @@ import { LinkTargets, LinkCapabilities, LinkType } from './link';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
+  context: EditorUIContext;
 }
 
 export interface EditorDialogs {
@@ -32,6 +33,11 @@ export interface EditorDialogs {
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
   insertCitation: InsertCitationFn;
+}
+
+export interface EditorUIContext
+{
+  translateResourcePath: (path: string) => string;
 }
 
 export enum AlertType {

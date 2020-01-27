@@ -17,9 +17,9 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 
-import { Editor, EditorEvents} from 'editor/src/editor';
+import { Editor, EditorEvents } from 'editor/src/editor';
 import { EditorOutline } from 'editor/src/api/outline';
-import { EditorDialogs as IEditorDialogs } from 'editor/src/api/ui';
+import { EditorDialogs as IEditorDialogs, EditorUIContext } from 'editor/src/api/ui';
 
 import { CommandManager, withCommandManager } from 'workbench/commands/CommandManager';
 import { WorkbenchState } from 'workbench/store/store';
@@ -102,6 +102,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
       format: 'markdown',
       ui: {
         dialogs: this.editorDialogs,
+        context: this.editorUIContext
       },
       options: {
         autoFocus: true,
@@ -193,6 +194,12 @@ class EditorPane extends React.Component<EditorPaneProps> {
     };
   }
 
+  private get editorUIContext(): EditorUIContext {
+    return {
+      translateResourcePath: (href: string) => href
+    }
+  }
+
   private async setEditorContent(markdown: string) {
     if (markdown !== this.editorMarkdown) {
       this.editorMarkdown = markdown;
@@ -215,11 +222,11 @@ class EditorPane extends React.Component<EditorPaneProps> {
   }
 
   private onEditorOutlineChanged() {
-     // set outline into redux
-     const outline = this.editor!.getOutline();
-     if (outline) {
-       this.props.setOutline(outline);
-     }
+    // set outline into redux
+    const outline = this.editor!.getOutline();
+    if (outline) {
+      this.props.setOutline(outline);
+    }
   }
 
   private async saveMarkdown() {
