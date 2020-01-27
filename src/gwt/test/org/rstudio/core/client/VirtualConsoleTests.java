@@ -1024,8 +1024,8 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit("Hello World", "someclass");
-      Assert.assertNull(vc.getNewText());
+      vc.submit("Hello World", "someclass", false, true);
+      Assert.assertEquals(vc.getNewText(), "");
    }
 
    public void testScreenReaderOnTextCaptured()
@@ -1035,7 +1035,7 @@ public class VirtualConsoleTests extends GWTTestCase
       prefs.screenReaderEnabled_ = true;
       VirtualConsole vc = new VirtualConsole(ele, prefs);
       String text = "Hello World\nHow are you?";
-      vc.submit(text, "someclass");
+      vc.submit(text, "someclass", false, true);
       String newText = vc.getNewText();
       Assert.assertEquals(newText, text);
    }
