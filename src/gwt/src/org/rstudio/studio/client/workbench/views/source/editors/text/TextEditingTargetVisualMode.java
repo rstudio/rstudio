@@ -276,7 +276,7 @@ public class TextEditingTargetVisualMode
                }  
             });
             
-            // track changes in outline sidebar and propagate back to editor
+            // track changes in outline sidebar and save as prefs
             panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
                setOutlineVisible(event.getVisible());
             });
