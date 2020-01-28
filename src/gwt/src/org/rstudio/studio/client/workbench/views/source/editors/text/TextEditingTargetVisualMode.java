@@ -35,8 +35,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 // TODO: outline mode:
-//   - Saw a wierd state where resizing caused it to always bounce back to closed
-//   - The actual outline contents don't seem tob e propagating
+//   - Some integration between the outline latched states
 
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
