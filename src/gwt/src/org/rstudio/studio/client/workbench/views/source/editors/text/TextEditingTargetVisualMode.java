@@ -50,7 +50,7 @@ import com.google.inject.Inject;
 // TODO: apply themeing
 // TODO: accessibility pass
 
-//TODO: wire up find and replace actions to panmirror stubs
+// TODO: wire up find and replace actions to panmirror stubs
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
