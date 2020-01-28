@@ -605,8 +605,7 @@ public class TextEditingTargetWidget
    
    private void syncVisualModeOutlineLatchState()
    {
-      boolean visible = docUpdateSentinel_.getBoolProperty(
-            TextEditingTarget.DOC_OUTLINE_VISIBLE, false);
+      boolean visible = target_.getPreferredOutlineWidgetVisibility();
       toggleVisualModeOutlineButton_.setLatched(visible);
       String title = commands_.toggleDocumentOutline().getTooltip();
       title = visible ? title.replace("Show ", "Hide ") : title.replace("Hide ", "Show ");
