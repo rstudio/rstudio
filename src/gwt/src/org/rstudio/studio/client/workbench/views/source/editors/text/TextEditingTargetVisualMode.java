@@ -41,7 +41,7 @@ import com.google.inject.Inject;
 // TODO: test image handling when there is no path (use cwd?)
 
 // TODO: shortcut overlap / routing / remapping
-// TODO: command / keyboard shortcut for entering visual mode
+// TODO: command / keyboard / latch shortcut for entering visual mode
 // TODO: save cursor and scroll position
 // TODO: introduce global pref to toggle availabilty of visual mode
 
