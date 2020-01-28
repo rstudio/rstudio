@@ -1,7 +1,7 @@
 /*
  * ThemeStyles.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,6 +70,7 @@ public interface ThemeStyles extends CssResource
    String webHeaderBarCommandsProjectMenu();
    String toolbarButton();
    String noLabel();
+   String popupButton();
    String toolbarButtonPushed();
    String emptyProjectMenu();
    String menuSubheader();
