@@ -498,6 +498,8 @@ well as menu structures (for main menu and popup menus).
 
       <menu label="_Help">
          <cmd refid="helpHome"/>
+         <cmd refid="helpSearch"/>
+         <separator/>
          <cmd refid="showAboutDialog"/>
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
@@ -838,6 +840,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+/"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Shift+B"/>
+         <shortcut refid="helpSearch" value="Ctrl+Alt+F1"/>
+         <shortcut refid="helpBack" value="Shift+Alt+F2"/>
+         <shortcut refid="helpForward" value="Shift+Alt+F3"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
@@ -2854,21 +2859,23 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="helpBack"
         buttonLabel=""
-        desc="Previous topic"
-        rebindable="false"/>
-        
+        desc="Previous topic"/>
+
    <cmd id="helpForward"
         buttonLabel=""
-        desc="Next topic"
-        rebindable="false"/>
-        
+        desc="Next topic"/>
+
    <cmd id="helpHome"
         label="Show R Help"
         menuLabel="R _Help"
         buttonLabel=""
         desc="Show R Help"
         windowMode="main"/>
-        
+
+   <cmd id="helpSearch"
+        menuLabel="Search R Hel_p"
+        windowMode="main"/>
+
    <cmd id="printHelp"
         buttonLabel=""
         desc="Print topic"
@@ -3065,7 +3072,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showLicenseDialog"
         label="Manage License..."
-        menuLabel="Manage License"
+        menuLabel="Ma_nage License..."
         rebindable="false"
         windowMode="main"/>
 
