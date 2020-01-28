@@ -193,8 +193,7 @@ public class TextEditingTargetWidget
       setAccessibleName(null);
       adaptToFileType(fileType);
       
-      editor.addFocusHandler(event ->
-            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0));
+      editor.addFocusHandler(event -> initWidgetSize());
 
       editor_.setTextInputAriaLabel("Text editor");
 
@@ -223,6 +222,11 @@ public class TextEditingTargetWidget
          double size = Math.min(editorSize, widgetSize);
          editorPanel_.setWidgetSize(docOutlineWidget_, size);
          setDocOutlineLatchState(true);
+      }
+      else
+      {
+         editorPanel_.setWidgetSize(docOutlineWidget_, 0);
+         setDocOutlineLatchState(false);
       }
    }
    
@@ -562,16 +566,15 @@ public class TextEditingTargetWidget
          true, /* textIndicatesState */
          new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
          event -> {
-            boolean visible = !docUpdateSentinel_.getBoolProperty(
-                  TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
-            docUpdateSentinel_.setBoolProperty(
-                  TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, visible);
+            target_.setPreferredOutlineWidgetVisibility(
+               !target_.getPreferredOutlineWidgetVisibility()
+            );
          }
       );
       
       // stay in sync w/ doc property
       syncVisualModeOutlineLatchState();
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE,
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
         (event) -> {
            syncVisualModeOutlineLatchState();
         });
@@ -603,7 +606,7 @@ public class TextEditingTargetWidget
    private void syncVisualModeOutlineLatchState()
    {
       boolean visible = docUpdateSentinel_.getBoolProperty(
-            TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
+            TextEditingTarget.DOC_OUTLINE_VISIBLE, false);
       toggleVisualModeOutlineButton_.setLatched(visible);
       String title = commands_.toggleDocumentOutline().getTooltip();
       title = visible ? title.replace("Show ", "Hide ") : title.replace("Hide ", "Show ");

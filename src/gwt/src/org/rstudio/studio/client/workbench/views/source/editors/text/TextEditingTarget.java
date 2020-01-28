@@ -205,9 +205,7 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
    
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
-   public static final String RMD_VISUAL_MODE_OUTLINE_VISIBLE = "rmdVisualModeOutlineVisible";
-   public static final String RMD_VISUAL_MODE_OUTLINE_SIZE = "rmdVisualModeOutlineSize";
-
+  
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
@@ -1740,6 +1738,7 @@ public class TextEditingTarget implements
          {
             // initialize visual mode
             visualMode_ = new TextEditingTargetVisualMode(
+               TextEditingTarget.this,
                view_, 
                dirtyState_, 
                docUpdateSentinel_

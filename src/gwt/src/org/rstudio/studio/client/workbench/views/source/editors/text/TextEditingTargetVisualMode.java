@@ -55,12 +55,14 @@ import com.google.inject.Inject;
 
 public class TextEditingTargetVisualMode 
 {
-   public TextEditingTargetVisualMode(TextEditingTarget.Display display,
+   public TextEditingTargetVisualMode(TextEditingTarget target,
+                                      TextEditingTarget.Display display,
                                       DirtyState dirtyState,
                                       DocUpdateSentinel docUpdateSentinel)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      target_ = target;
       display_ = display;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
@@ -72,7 +74,7 @@ public class TextEditingTargetVisualMode
       });
       
       // sync to outline visible prop
-      onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, (value) -> {
+      onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
          panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
       });
    } 
@@ -310,34 +312,22 @@ public class TextEditingTargetVisualMode
   
    private boolean getOutlineVisible()
    {
-      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
+      return target_.getPreferredOutlineWidgetVisibility();
    }
    
    private void setOutlineVisible(boolean visible)
    {
-      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, visible);
+      target_.setPreferredOutlineWidgetVisibility(visible);
    }
    
    private double getOutlineWidth()
    {
-      final double kDefaultWidth = 180;
-      String property = docUpdateSentinel_.getProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_SIZE);
-      if (StringUtil.isNullOrEmpty(property))
-         return kDefaultWidth;
-      try {
-         double value = Double.parseDouble(property);
-         if (value < 30)
-            return 30;
-         else
-            return value;
-      } catch (Exception e) {
-         return kDefaultWidth;
-      }
+      return target_.getPreferredOutlineWidgetSize();
    }
    
    private void setOutlineWidth(double width)
    {
-      docUpdateSentinel_.setProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_SIZE, width + "");
+      target_.setPreferredOutlineWidgetSize(width);
    }
    
    private void disableForVisualMode(AppCommand... commands)
@@ -367,6 +357,7 @@ public class TextEditingTargetVisualMode
    private Commands commands_;
    private SourceServerOperations source_;
    
+   private final TextEditingTarget target_;
    private final TextEditingTarget.Display display_;
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
