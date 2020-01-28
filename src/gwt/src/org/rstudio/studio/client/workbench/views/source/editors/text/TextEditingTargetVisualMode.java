@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.DebouncedCommand;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
@@ -34,13 +33,12 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-// TODO: outline mode:
-//   - Some integration between the outline latched states
 
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
 
 // TODO: images currently display too large (2x)
+// TODO: test image handling when there is no path (use cwd?)
 
 // TODO: shortcut overlap / routing / remapping
 // TODO: command / keyboard shortcut for entering visual mode
