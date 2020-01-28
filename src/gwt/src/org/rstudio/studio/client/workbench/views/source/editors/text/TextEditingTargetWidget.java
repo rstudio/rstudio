@@ -228,7 +228,10 @@ public class TextEditingTargetWidget
    
    public void toggleDocumentOutline()
    {
-      toggleDocOutlineButton_.click();
+      if (isVisualMode())
+         toggleVisualModeOutlineButton_.click();
+      else
+         toggleDocOutlineButton_.click();
    }
    
    private StatusBarWidget statusBar_;
@@ -549,6 +552,35 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
       
+      // we add a separate outilne button for the visual mode outline b/c the
+      // logic for the standard one is tied up in DOM visibility, and we didn't
+      // want to refactor that code in a conservative release (v1.4). it's 
+      // expected that the whole 'visual mode' concept will go away in v1.5
+      toggleVisualModeOutlineButton_ = new LatchingToolbarButton(
+         ToolbarButton.NoText,
+         ToolbarButton.NoTitle,
+         true, /* textIndicatesState */
+         new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
+         event -> {
+            boolean visible = !docUpdateSentinel_.getBoolProperty(
+                  TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
+            docUpdateSentinel_.setBoolProperty(
+                  TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, visible);
+         }
+      );
+      
+      // stay in sync w/ doc property
+      syncVisualModeOutlineLatchState();
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE,
+        (event) -> {
+           syncVisualModeOutlineLatchState();
+        });
+      
+      // add to toolbar
+      toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
+      toolbar.addRightWidget(toggleVisualModeOutlineButton_);
+           
+      
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
@@ -566,6 +598,16 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
+   }
+   
+   private void syncVisualModeOutlineLatchState()
+   {
+      boolean visible = docUpdateSentinel_.getBoolProperty(
+            TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
+      toggleVisualModeOutlineButton_.setLatched(visible);
+      String title = commands_.toggleDocumentOutline().getTooltip();
+      title = visible ? title.replace("Show ", "Hide ") : title.replace("Hide ", "Show ");
+      toggleVisualModeOutlineButton_.setTitle(title);
    }
    
    private void setDocOutlineLatchState(boolean latched)
@@ -757,12 +799,14 @@ public class TextEditingTargetWidget
       setPublishPath(extendedType_, publishPath_);
       
       // make toggle outline visible if we have a scope tree
-      toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree());
+      toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree() && !visualRmdMode);
       if (!fileType.canShowScopeTree())
       {
          editorPanel_.setWidgetSize(docOutlineWidget_, 0);
          setDocOutlineLatchState(false);
       }
+      
+      toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
       toolbar_.invalidateSeparators();
    }
@@ -1595,6 +1639,7 @@ public class TextEditingTargetWidget
    private ToolbarMenuButton plumberLaunchButton_;
    private ToolbarMenuButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
+   private LatchingToolbarButton toggleVisualModeOutlineButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private ToolbarPopupMenuButton runDocumentMenuButton_;

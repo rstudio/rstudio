@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
@@ -29,8 +30,13 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
+// TODO: outline mode:
+//   - Saw a wierd state where resizing caused it to always bounce back to closed
+//   - The actual outline contents don't seem tob e propagating
 
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
@@ -40,12 +46,12 @@ import com.google.inject.Inject;
 // TODO: shortcut overlap / routing / remapping
 // TODO: command / keyboard shortcut for entering visual mode
 // TODO: save cursor and scroll position
-// TODO: panmirror outline visibility and width
 // TODO: introduce global pref to toggle availabilty of visual mode
-// TODO: wire up find and replace actions to panmirror stubs
+
 // TODO: apply themeing
 // TODO: accessibility pass
 
+//TODO: wire up find and replace actions to panmirror stubs
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
@@ -62,8 +68,13 @@ public class TextEditingTargetVisualMode
       
       // manage ui based on current pref + changes over time
       manageUI(false);
-      docUpdateSentinel_.addPropertyValueChangeHandler(PROPERTY_RMD_VISUAL_MODE, (value) -> {
+      onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(true);
+      });
+      
+      // sync to outline visible prop
+      onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, (value) -> {
+         panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
       });
    } 
    
@@ -76,12 +87,12 @@ public class TextEditingTargetVisualMode
    
    public boolean isEnabled()
    {
-      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
    public void setEnabled(boolean enable)
    {
-      docUpdateSentinel_.setBoolProperty(PROPERTY_RMD_VISUAL_MODE, enable);
+      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, enable);
    }
    
    public void sync()
@@ -195,8 +206,13 @@ public class TextEditingTargetVisualMode
                });
             }
             
-            // activate panmirror and begin sync-on-idle behavior
+            // sync to editor outline prefs
+            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
+         
+            // activate panmirror 
             editorContainer.activateWidget(panmirror_, focus);
+            
+            // begin sync-on-idle behavior
             syncOnIdle_.resume();
          });
         
@@ -260,6 +276,12 @@ public class TextEditingTargetVisualMode
                   }
                }  
             });
+            
+            // track changes in outline sidebar and propagate back to editor
+            panmirror_.addPanmirrorOutlinePrefsHandler((event) -> {
+               setOutlineVisible(event.getVisible());
+               setOutlineWidth(event.getWidth());
+            });
     
             // good to go!
             ready.execute();
@@ -284,6 +306,37 @@ public class TextEditingTargetVisualMode
       return display_.editorContainer().getEditor();
    }
   
+   private boolean getOutlineVisible()
+   {
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, false);
+   }
+   
+   private void setOutlineVisible(boolean visible)
+   {
+      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_VISIBLE, visible);
+   }
+   
+   private double getOutlineWidth()
+   {
+      final double kDefaultWidth = 180;
+      String property = docUpdateSentinel_.getProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_SIZE);
+      if (StringUtil.isNullOrEmpty(property))
+         return kDefaultWidth;
+      try {
+         double value = Double.parseDouble(property);
+         if (value < 30)
+            return 30;
+         else
+            return value;
+      } catch (Exception e) {
+         return kDefaultWidth;
+      }
+   }
+   
+   private void setOutlineWidth(double width)
+   {
+      docUpdateSentinel_.setProperty(TextEditingTarget.RMD_VISUAL_MODE_OUTLINE_SIZE, width + "");
+   }
    
    private void disableForVisualMode(AppCommand... commands)
    {
@@ -292,6 +345,11 @@ public class TextEditingTargetVisualMode
          if (command.isVisible())
             command.setEnabled(!isEnabled());
       }
+   }
+   
+   private void onDocPropChanged(String prop, ValueChangeHandler<String> handler)
+   {
+      docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
    }
    
    private PanmirrorUIContext uiContext()
@@ -316,7 +374,7 @@ public class TextEditingTargetVisualMode
    
    private PanmirrorWidget panmirror_;
    
-   private static final String PROPERTY_RMD_VISUAL_MODE = "rmdVisualMode";
+   
 }
 
 
