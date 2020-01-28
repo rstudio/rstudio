@@ -35,6 +35,8 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -53,6 +55,7 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.prefs.events.ScreenReaderStateReadyEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -84,7 +87,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               SendToConsoleHandler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
-                              UnhandledErrorEvent.Handler
+                              UnhandledErrorEvent.Handler,
+                              ScreenReaderStateReadyEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -129,7 +133,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       editorProvider.setConsoleEditor(input_);
       
-      
+      eventBus_.addHandler(ScreenReaderStateReadyEvent.TYPE, this);
+     
       prefs_.surroundSelection().bind(new CommandWithArg<String>()
       {
          @Override
@@ -251,8 +256,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
       
-      ariaLive_.reportStatus(AriaLiveService.CONSOLE_CLEARED, "Console cleared");
-      
+      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, "Console cleared",
+            Timing.IMMEDIATE, Severity.STATUS);
+
       // notify server
       server_.resetConsoleActions(new VoidServerRequestCallback());
       
@@ -278,6 +284,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    public void onConsoleInput(final ConsoleInputEvent event)
    {
+      view_.clearLiveRegion();
       server_.consoleInput(event.getInput(), 
                            event.getConsole(),
                            new ServerRequestCallback<Void>() {
@@ -773,6 +780,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onSelected()
    {
       view_.onSelected();
+   }
+   
+   @Override
+   public void onScreenReaderStateReady(ScreenReaderStateReadyEvent e)
+   {
+      if (prefs_.getScreenReaderEnabled() && !ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG))
+         view_.enableLiveReporting();
    }
 
    private final ConsoleServerOperations server_;

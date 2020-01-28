@@ -20,6 +20,8 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -40,6 +42,7 @@ public class AriaLiveService
    public static final String INFO_BAR = "info_bar";
    public static final String PROGRESS_COMPLETION = "progress_completion";
    public static final String PROGRESS_LOG = "progress_log";
+   public static final String SCREEN_READER_NOT_ENABLED = "screen_reader_not_enabled";
    public static final String SESSION_STATE = "session_state";
    public static final String TAB_KEY_MODE = "tab_key_mode";
    public static final String TOOLBAR_VISIBILITY = "toolbar_visibility";
@@ -49,6 +52,9 @@ public class AriaLiveService
    // Do not include in the announcements_ map.
    public static final String ON_DEMAND = "on_demand";
 
+   // Milliseconds to wait before making an announcement at session load
+   public static final int STARTUP_ANNOUNCEMENT_DELAY = 3000;
+
    @Inject
    public AriaLiveService(EventBus eventBus, Provider<UserPrefs> pUserPrefs)
    {
@@ -56,37 +62,39 @@ public class AriaLiveService
       pUserPrefs_ = pUserPrefs;
 
       announcements_ = new HashMap<>();
-      announcements_.put(CONSOLE_CLEARED, "Announce console cleared");
-      announcements_.put(CONSOLE_LOG, "Announce console output (requires restart)");
-      announcements_.put(FILTERED_LIST, "Announce filtered result count");
-      announcements_.put(GIT_MESSAGE_LENGTH, "Announce commit message length");
-      announcements_.put(INFO_BAR, "Announce info bars");
-      announcements_.put(PROGRESS_COMPLETION, "Announce task completion");
-      announcements_.put(PROGRESS_LOG, "Announce task progress details");
-      announcements_.put(SESSION_STATE, "Announce changes in session state");
-      announcements_.put(TAB_KEY_MODE, "Announce tab key focus mode change");
-      announcements_.put(TOOLBAR_VISIBILITY, "Announce toolbar visibility change");
-      announcements_.put(WARNING_BAR, "Announce warning bars");
+      announcements_.put(CONSOLE_CLEARED, "Console cleared");
+      announcements_.put(CONSOLE_LOG, "Console output (requires restart)");
+      announcements_.put(FILTERED_LIST, "Filtered result count");
+      announcements_.put(GIT_MESSAGE_LENGTH, "Commit message length");
+      announcements_.put(INFO_BAR, "Info bars");
+      announcements_.put(PROGRESS_COMPLETION, "Task completion");
+      announcements_.put(PROGRESS_LOG, "Task progress details");
+      announcements_.put(SCREEN_READER_NOT_ENABLED, "Screen reader not enabled");
+      announcements_.put(SESSION_STATE, "Changes in session state");
+      announcements_.put(TAB_KEY_MODE, "Tab key focus mode change");
+      announcements_.put(TOOLBAR_VISIBILITY, "Toolbar visibility change");
+      announcements_.put(WARNING_BAR, "Warning bars");
    }
 
    /**
-    * Report a message to screen reader after a debounce delay
-    * @param announcementId unique identifier of this announcement
+    * Update live region so screen reader will announce.
+    * @param announcementId unique identifier of this alert
     * @param message string to announce
+    * @param timing IMMEDIATE or DEBOUNCED
+    * @param severity STATUS (polite) or ALERT (assertive, use sparingly)
     */
-   public void reportStatusDebounced(String announcementId, String message)
+   public void announce(String announcementId,
+                        String message,
+                        Timing timing,
+                        Severity severity)
    {
-      reportStatus(announcementId, message, false);
-   }
+      if (!announcements_.containsKey(announcementId))
+         Debug.logWarning("Unregistered live announcement: " + announcementId);
 
-   /**
-    * Report a message to screen reader.
-    * @param announcementId unique identifier of this announcement
-    * @param message string to announce
-    */
-   public void reportStatus(String announcementId, String message)
-   {
-      reportStatus(announcementId, message, true);
+      if (isDisabled(announcementId))
+         return;
+
+      eventBus_.fireEvent(new AriaLiveStatusEvent(message, timing, severity));
    }
 
    public Map<String, String> getAnnouncements()
@@ -105,16 +113,6 @@ public class AriaLiveService
       return false;
    }
 
-   private void reportStatus(String announcementId, String message, boolean immediate)
-   {
-      if (!announcements_.containsKey(announcementId))
-         Debug.logWarning("Unregistered live announcement: " + announcementId);
-
-      if (isDisabled(announcementId))
-         return;
-
-      eventBus_.fireEvent(new AriaLiveStatusEvent(message, immediate));
-   }
 
    private final Map<String, String> announcements_;
 

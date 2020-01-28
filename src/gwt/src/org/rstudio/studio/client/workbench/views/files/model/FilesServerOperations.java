@@ -34,6 +34,9 @@ public interface FilesServerOperations
    void isGitDirectory(String path,
                        ServerRequestCallback<Boolean> requestCallback);
 
+   void isPackageDirectory(String path,
+                           ServerRequestCallback<Boolean> requestCallback);
+
    void getFileContents(String path,
                         String encoding,
                         ServerRequestCallback<String> requestCallback);

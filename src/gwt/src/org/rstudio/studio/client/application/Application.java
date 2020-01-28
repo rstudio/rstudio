@@ -53,6 +53,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -351,9 +352,10 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onAriaLiveStatus(AriaLiveStatusEvent event)
    {
-      int delayMs = event.getImmediate() ? 0 : userPrefs_.get().typingStatusDelayMs().getValue();
-      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs))
-         view_.reportStatus(event.getMessage(), userPrefs_.get().typingStatusDelayMs().getValue());
+      int delayMs = (event.getTiming() == Timing.IMMEDIATE) ?
+            0 : userPrefs_.get().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
+         view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
 
    @Override

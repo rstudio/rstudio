@@ -36,7 +36,7 @@
 ### Server Security
 
 * New `auth-timeout-minutes` option signs users out after a defined period of inactivity (Pro #667)
-* CSRF hardening improvements including validation of the HTTP `Origin` header, on by default (Pro #1214)
+* CSRF hardening improvements including optional validation of the HTTP `Origin` header (Pro #1214)
 * Add option `auth-cookies-force-secure` to always mark auth cookies as secure when SSL is terminated upstream (Pro #995)
 * Set HTTP header `X-Content-Type-Options` to discourage MIME type sniffing (Pro #1219)
 * Authentication cookies are now revoked after signout (Pro #606)
