@@ -53,6 +53,10 @@ if (UNIX)
       system/User.cpp
    )
 
+   find_library(PTHREAD_LIBRARIES pthread)
+   set (SHARED_CORE_SYSTEM_LIBS
+      ${PTHREAD_LIBRARIES})
+
 else()
 
    set(SHARED_INCLUDE_DIRS
@@ -77,7 +81,8 @@ add_library(rstudio-shared-core STATIC ${SHARED_CORE_HEADER_FILES} ${SHARED_CORE
 define_source_file_names(rstudio-shared-core)
 
 target_link_libraries(rstudio-shared-core
-   ${Boost_LIBRARIES})
+   ${Boost_LIBRARIES}
+   ${SHARED_CORE_SYSTEM_LIBS})
 
 # Define executable for running unit tests
 if (RSTUDIO_UNIT_TESTS_ENABLED)
