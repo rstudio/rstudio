@@ -170,8 +170,11 @@ public class PanmirrorOutlineWidget extends Composite
    private void doFlattenOutline(PanmirrorOutlineItem[] items,  ArrayList<PanmirrorOutlineItem> flattenedItems)
    {
       Arrays.stream(items).forEach(item -> {
-         flattenedItems.add(item);
-         doFlattenOutline(item.children, flattenedItems);
+         if (item.type == PanmirrorOutlineItemType.Heading)
+         {
+            flattenedItems.add(item);
+            doFlattenOutline(item.children, flattenedItems);
+         }
       });
    }
    

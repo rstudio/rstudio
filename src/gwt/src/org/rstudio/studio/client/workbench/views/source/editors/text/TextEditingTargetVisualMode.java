@@ -201,7 +201,7 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               panmirror_.setMarkdown(editor.getCode(), false, (completed) -> {
+               panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {
                   isDirty_ = false;
                });
             }
