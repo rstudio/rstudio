@@ -32,8 +32,9 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlinePrefsEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlinePrefsEvent.Handler;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent.Handler;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -65,7 +66,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    RequiresResize, 
    HasChangeHandlers, 
    HasSelectionChangedHandlers,
-   PanmirrorOutlinePrefsEvent.HasPanmirrorOutlinePrefsHandlers
+   PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
+   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers
    
 {
    
@@ -130,13 +132,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             @Override
             public void onPreferredWidth(double width) 
             {
-               PanmirrorOutlinePrefsEvent.fire(PanmirrorWidget.this, width > 0, width);
+               PanmirrorOutlineWidthEvent.fire(PanmirrorWidget.this, width);
             }
             @Override
             public void onPreferredVisibility(boolean visible) 
             {
-               double width = getWidgetSize(outline_);
-               PanmirrorOutlinePrefsEvent.fire(PanmirrorWidget.this, visible, width);
+               PanmirrorOutlineVisibleEvent.fire(PanmirrorWidget.this, visible);
             }
          }
       );
@@ -358,9 +359,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
-   public HandlerRegistration addPanmirrorOutlinePrefsHandler(Handler handler)
+   public HandlerRegistration addPanmirrorOutlineWidthHandler(PanmirrorOutlineWidthEvent.Handler handler)
    {
-      return handlers_.addHandler(PanmirrorOutlinePrefsEvent.getType(), handler);
+      return handlers_.addHandler(PanmirrorOutlineWidthEvent.getType(), handler);
+   }
+
+   @Override
+   public HandlerRegistration addPanmirrorOutlineVisibleHandler(PanmirrorOutlineVisibleEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorOutlineVisibleEvent.getType(), handler);
    }
    
    @Override
@@ -390,6 +397,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
+   
   
   
 }

@@ -1,5 +1,5 @@
 /*
- * PanmirrorOutlinePrefsEvent.java
+ * PanmirrorOutlineWidthEvent.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -23,40 +23,40 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * Represents a selection change event.
  */
-public class PanmirrorOutlinePrefsEvent extends
-    GwtEvent<PanmirrorOutlinePrefsEvent.Handler> {
+public class PanmirrorOutlineWidthEvent extends
+    GwtEvent<PanmirrorOutlineWidthEvent.Handler> {
 
   /**
-   * Handler interface for {@link PanmirrorOutlinePrefsEvent} events.
+   * Handler interface for {@link PanmirrorOutlineWidthEvent} events.
    */
   public static interface Handler extends EventHandler {
 
     /**
-     * Called when a {@link PanmirrorOutlinePrefsEvent} is fired.
+     * Called when a {@link PanmirrorOutlineWidthEvent} is fired.
      *
-     * @param event the {@link PanmirrorOutlinePrefsEvent} that was fired
+     * @param event the {@link PanmirrorOutlineWidthEvent} that was fired
      */
-    void onPanmirrorOutlinePrefs(PanmirrorOutlinePrefsEvent event);
+    void onPanmirrorOutlineWidth(PanmirrorOutlineWidthEvent event);
   }
 
   /**
    * Interface specifying that a class can add
-   * {@code PanmirrorOutlinePrefsEvent.Handler}s.
+   * {@code PanmirrorOutlineWidthEvent.Handler}s.
    */
-  public interface HasPanmirrorOutlinePrefsHandlers extends HasHandlers {
+  public interface HasPanmirrorOutlineWidthHandlers extends HasHandlers {
     /**
-     * Adds a {@link PanmirrorOutlinePrefsEvent} handler.
+     * Adds a {@link PanmirrorOutlineWidthEvent} handler.
      * 
      * @param handler the handler
      * @return {@link HandlerRegistration} used to remove this handler
      */
-    HandlerRegistration addPanmirrorOutlinePrefsHandler(Handler handler);
+    HandlerRegistration addPanmirrorOutlineWidthHandler(Handler handler);
   }
 
   /**
    * Handler type.
    */
-  private static Type<PanmirrorOutlinePrefsEvent.Handler> TYPE;
+  private static Type<PanmirrorOutlineWidthEvent.Handler> TYPE;
 
   /**
    * Fires an navigation event on all registered handlers in the handler
@@ -64,9 +64,9 @@ public class PanmirrorOutlinePrefsEvent extends
    *
    * @param source the source of the handlers
    */
-  public static void fire(HasPanmirrorOutlinePrefsHandlers source, boolean visible, double width) {
+  public static void fire(HasPanmirrorOutlineWidthHandlers source, double width) {
     if (TYPE != null) {
-      PanmirrorOutlinePrefsEvent event = new PanmirrorOutlinePrefsEvent(visible, width);
+      PanmirrorOutlineWidthEvent event = new PanmirrorOutlineWidthEvent(width);
       source.fireEvent(event);
     }
   }
@@ -76,9 +76,9 @@ public class PanmirrorOutlinePrefsEvent extends
    *
    * @return returns the handler type
    */
-  public static Type<PanmirrorOutlinePrefsEvent.Handler> getType() {
+  public static Type<PanmirrorOutlineWidthEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorOutlinePrefsEvent.Handler>();
+      TYPE = new Type<PanmirrorOutlineWidthEvent.Handler>();
     }
     return TYPE;
   }
@@ -86,15 +86,12 @@ public class PanmirrorOutlinePrefsEvent extends
   /**
    * Creates an navigation event.
    */
-  PanmirrorOutlinePrefsEvent(boolean visible, double width) {
-     visible_ = visible;
+  PanmirrorOutlineWidthEvent(double width) {
+     
      width_ = width;
   }
   
-  public boolean getVisible()
-  {
-     return visible_;
-  }
+  
   
   public double getWidth()
   {
@@ -102,15 +99,14 @@ public class PanmirrorOutlinePrefsEvent extends
   }
 
   @Override
-  public final Type<PanmirrorOutlinePrefsEvent.Handler> getAssociatedType() {
+  public final Type<PanmirrorOutlineWidthEvent.Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(PanmirrorOutlinePrefsEvent.Handler handler) {
-    handler.onPanmirrorOutlinePrefs(this);
+  protected void dispatch(PanmirrorOutlineWidthEvent.Handler handler) {
+    handler.onPanmirrorOutlineWidth(this);
   }
   
-  private final boolean visible_;
   private final double width_;
 }

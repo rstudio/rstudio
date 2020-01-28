@@ -277,10 +277,13 @@ public class TextEditingTargetVisualMode
             });
             
             // track changes in outline sidebar and propagate back to editor
-            panmirror_.addPanmirrorOutlinePrefsHandler((event) -> {
+            panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
                setOutlineVisible(event.getVisible());
+            });
+            panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
                setOutlineWidth(event.getWidth());
             });
+            
     
             // good to go!
             ready.execute();
