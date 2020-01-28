@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -117,8 +118,7 @@ public class Toolbar extends Composite
       private void addMenuHandlers()
       {
          Roles.getButtonRole().setAriaHaspopupProperty(getElement(), true);
-         Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
-         menuShowing_ = false;
+         setMenuShowing(false);
 
          addMouseDownHandler(event ->
          {
@@ -131,8 +131,7 @@ public class Toolbar extends Composite
             removeStyleName(styles_.toolbarButtonPushed());
             Scheduler.get().scheduleDeferred(() ->
             {
-               menuShowing_ = false;
-               Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
+               setMenuShowing(false);
                setFocus(true);
             });
          });
@@ -155,19 +154,28 @@ public class Toolbar extends Composite
          {
             removeStyleName(styles_.toolbarButtonPushed());
             menuSource_.getMenu().hide();
-            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
+            setMenuShowing(false);
             setFocus(true);
          }
          else
          {
             menuSource_.getMenu().showRelativeTo(label_);
             menuSource_.getMenu().getElement().getStyle().setPaddingTop(3, Unit.PX);
-            menuShowing_ = true;
+            setMenuShowing(true);
             menuSource_.getMenu().focus();
-            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
          }
       }
-      
+
+      private void setMenuShowing(boolean showing)
+      {
+         if (showing)
+            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
+         else
+            A11y.setARIANotExpanded(getElement());
+
+         menuShowing_ = showing;
+      }
+
       private boolean menuShowing_;
       private final MenuSource menuSource_;
       private final Widget label_;
