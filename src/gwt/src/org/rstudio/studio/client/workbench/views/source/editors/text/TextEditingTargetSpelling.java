@@ -222,8 +222,9 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    {
       docDisplay_.addContextMenuHandler((event) ->
       {
+         // If real time checking is off or
          // If we have a selection, just return as the user likely wants to cut/copy/paste
-         if (docDisplay_.hasSelection())
+         if (!prefs_.realTimeSpellchecking().getValue() || docDisplay_.hasSelection())
             return;
 
          // Get the word under the cursor

@@ -63,7 +63,7 @@ public class SpellingPreferencesPane extends PreferencesPane
 
       boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
       realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking());
-      realtimeSpellcheckingCheckbox_.getElement().getStyle().setColor(canRealtime ? "black" : "darkgrey");
+      realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
       add(realtimeSpellcheckingCheckbox_);
 
       blacklistWarning_ = new Label("Real time spellchecking currently unavailable for this dictionary");
@@ -77,7 +77,7 @@ public class SpellingPreferencesPane extends PreferencesPane
          blacklistWarning_.setVisible(!canRealtimeCheck);
          realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue() && canRealtimeCheck);
          realtimeSpellcheckingCheckbox_.setEnabled(canRealtimeCheck);
-         realtimeSpellcheckingCheckbox_.getElement().getStyle().setColor(canRealtimeCheck ? "black" : "darkgrey");
+         realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtimeCheck ? 1.0 : 0.6);
       });
    }
 

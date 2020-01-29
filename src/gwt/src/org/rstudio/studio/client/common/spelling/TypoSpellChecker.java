@@ -342,14 +342,11 @@ public class TypoSpellChecker
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap
-      // Disable real time spellchecking if this dictionary is incompatible
+      // Return early if this dictionary is incompatible
       // with Typo.js. Final invariant check to ensure that we never try to
       // load a blacklisted dictionary.
       if (!canRealtimeSpellcheckDict(language))
-      {
-         userPrefs_.realTimeSpellchecking().setGlobalValue(false);
          return;
-      }
 
       // check for an active request
       if (activeRequest_ != null && activeRequest_.isAlive())
