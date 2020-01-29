@@ -837,9 +837,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showOptions" value="Meta+Alt+," if="org.rstudio.core.client.BrowseCap.isMacintosh() &amp;&amp; org.rstudio.core.client.BrowseCap.isSafariOrFirefox()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim,sublime"/>
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+/"/>
-         <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
-         <shortcut refid="speakEditorLocation" value="Ctrl+Shift+B"/>
          <shortcut refid="helpSearch" value="Ctrl+Alt+F1"/>
          <shortcut refid="helpBack" value="Shift+Alt+F2"/>
          <shortcut refid="helpForward" value="Shift+Alt+F3"/>
@@ -853,7 +850,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="previousTerminal" value="Shift+Alt+F11"/>
          <shortcut refid="nextTerminal" value="Shift+Alt+F12"/>
       </shortcutgroup>
-
       <shortcutgroup name="Main Menu (Server)">
          <shortcut refid="showFileMenu" value="Ctrl+Alt+F"/>
          <shortcut refid="showEditMenu" value="Ctrl+Alt+I"/>
@@ -866,9 +862,13 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
          <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
+      </shortcutgroup>
+      <shortcutgroup name="Accessibility">
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
+         <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
+         <shortcut refid="speakEditorLocation" value="Ctrl+Alt+Shift+B"/>
          <shortcut refid="focusMainToolbar" value="Ctrl+Alt+L"/>
       </shortcutgroup>
-
       <!-- 
       Shortcuts in this group won't be shown in the quick reference card. 
        -->
