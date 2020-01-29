@@ -1049,4 +1049,34 @@ public class VirtualConsoleTests extends GWTTestCase
       String newText = vc.getNewText();
       Assert.assertEquals(newText, text);
    }
+
+   public void testBackground255Carryover6092()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput = 
+            setForegroundIndex(232) + setBackgroundIndex(255) + "one" +
+            setCsiCode(AnsiCode.RESET_BACKGROUND) + setCsiCode(AnsiCode.RESET_FOREGROUND) + " two";
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermColor232 xtermBgColor255\">one</span><span> two</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("one two", vc.toString());
+   }
+
+   public void testForeground255Carryover6092()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput =
+            setForegroundIndex(255) + setBackgroundIndex(232) + "one" +
+                  setCsiCode(AnsiCode.RESET_BACKGROUND) + setCsiCode(AnsiCode.RESET_FOREGROUND) + " two";
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermColor255 xtermBgColor232\">one</span><span> two</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("one two", vc.toString());
+   }
 }
