@@ -171,12 +171,4 @@ e) Create /var directories required for RStudio to run. This can be done with:
    mkdir -p /var/log/rstudio-server
    mkdir -p /var/lib/rstudio-server
 
-f) If your system supports AppArmor you may wish to add an AppArmor profile
-   for RStudio Server. You can find one which is compatible with the
-   Ubuntu implementation of AppArmor here:
-
-   extras
-      /apparmor
-         rstudio-server
-
 
