@@ -1,7 +1,7 @@
 /*
  * HelpSearch.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -64,9 +63,9 @@ public class HelpSearch
       });
    }
 
-   public Widget getSearchWidget()
+   public SearchDisplay getSearchWidget()
    {
-      return (Widget) display_.getSearchDisplay();
+      return display_.getSearchDisplay();
    }
    
    private void fireShowHelpEvent(String topic)

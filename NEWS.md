@@ -105,6 +105,7 @@
 * Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
 * Support use of F13 - F24 for custom keyboard shortcuts (full Mac keyboard has F13-F19, for example)
 * Add ability to resize panes using keyboard arrow keys via View / Panes / Adjust Splitter
+* Keyboard shortcuts for searching R help in Help pane, and next/previous help page (#5149)
 
 ### Bugfixes
 

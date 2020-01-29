@@ -59,8 +59,10 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
+import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
@@ -402,8 +404,9 @@ public class HelpPane extends WorkbenchPane
          toolbar.addLeftSeparator();
       }
       toolbar.addLeftWidget(commands_.helpPopout().createToolbarButton());
-        
-      toolbar.addRightWidget(searchProvider_.get().getSearchWidget());
+
+      searchWidget_ = searchProvider_.get().getSearchWidget();
+      toolbar.addRightWidget((Widget)searchWidget_);
 
       toolbar.addRightSeparator();
 
@@ -633,6 +636,7 @@ public class HelpPane extends WorkbenchPane
       return isFindSupported() && !BrowseCap.isFirefox();
    }
 
+   @Override
    public String getUrl()
    {
       String url = null;
@@ -650,11 +654,20 @@ public class HelpPane extends WorkbenchPane
       return url;
    }
    
+   @Override
    public String getDocTitle()
    {
       return getIFrameEx().getContentDocument().getTitle();
    }
 
+   @Override
+   public void focusSearchHelp()
+   {
+      if (searchWidget_ != null)
+         FocusHelper.setFocusDeferred(searchWidget_);
+   }
+
+   @Override
    public void showHelp(String url)
    {
       ensureWidget();
@@ -719,6 +732,7 @@ public class HelpPane extends WorkbenchPane
       }
    }
    
+   @Override
    public void refresh()
    {
       String url = getUrl();
@@ -731,6 +745,7 @@ public class HelpPane extends WorkbenchPane
       return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null;
    }
    
+   @Override
    public void back()
    {
       VirtualHistory.Data back = navStack_.back();
@@ -738,6 +753,7 @@ public class HelpPane extends WorkbenchPane
          setLocation(back.getUrl(), back.getScrollPosition());
    }
 
+   @Override
    public void forward()
    {
       VirtualHistory.Data fwd = navStack_.forward();
@@ -745,12 +761,14 @@ public class HelpPane extends WorkbenchPane
          setLocation(fwd.getUrl(), fwd.getScrollPosition());
    }
 
+   @Override
    public void print()
    {
       getContentWindow().focus();
       getContentWindow().print();
    }
    
+   @Override
    public void popout()
    {
       String href = getContentWindow().getLocationHref();
@@ -767,17 +785,20 @@ public class HelpPane extends WorkbenchPane
          contentWindow.focus();
    }
    
+   @Override
    public HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler)
    {
       return addHandler(handler, HelpNavigateEvent.TYPE);
    }
    
  
+   @Override
    public LinkMenu getHistory()
    {
       return history_;
    }
 
+   @Override
    public boolean navigated()
    {
       return navigated_;
@@ -864,4 +885,5 @@ public class HelpPane extends WorkbenchPane
    private Timer scrollTimer_;
    private boolean selected_;
    private static int popoutCount_ = 0;
+   private SearchDisplay searchWidget_;
 }

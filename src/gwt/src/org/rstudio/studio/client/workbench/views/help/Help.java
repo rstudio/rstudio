@@ -1,7 +1,7 @@
 /*
  * Help.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,6 +57,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
       void popout();
       void refresh();
       void focus();
+      void focusSearchHelp();
       
       LinkMenu getHistory();
 
@@ -166,11 +167,12 @@ public class Help extends BasePresenter implements ShowHelpHandler
       
    }
 
-   // Home handled by Shim for activation from main menu context
+   // Commands handled by Shim for activation from main menu context
    public void onHelpHome() { bringToFront(); home(); }
-   
-   @Handler public void onHelpBack() { view_.back(); }
-   @Handler public void onHelpForward() { view_.forward(); }
+   public void onHelpSearch() { bringToFront(); view_.focusSearchHelp(); }
+   public void onHelpBack() { bringToFront(); view_.back(); }
+   public void onHelpForward() { bringToFront(); view_.forward(); }
+
    @Handler public void onPrintHelp() { view_.print(); }
    @Handler public void onHelpPopout() { view_.popout(); }
    @Handler public void onRefreshHelp() { view_.refresh(); }
