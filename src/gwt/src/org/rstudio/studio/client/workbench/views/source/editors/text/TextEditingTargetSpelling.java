@@ -71,6 +71,20 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    public JsArray<LintItem> getLint()
    {
+      JsArray<LintItem> lint = JsArray.createArray().cast();
+
+      /*
+         There are certain dictionaries blacklisted from realtime spellchecking, it's
+         possible due to external preference funny business to get into a state where
+         this function was incorrectly called. Detect that state, clean it up, and return.
+       */
+      final String language = prefs_.spellingDictionaryLanguage().getValue();
+      if (!TypoSpellChecker.canRealtimeSpellcheckDict(language))
+      {
+         prefs_.realTimeSpellchecking().setGlobalValue(false);
+         return lint;
+      }
+
       TextFileType fileType = docDisplay_.getFileType();
 
       // only spell check comments in code files
@@ -84,7 +98,6 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow())));
 
       final ArrayList<Range> wordRanges = new ArrayList<>();
-      JsArray<LintItem> lint = JsArray.createArray().cast();
       ArrayList<String> prefetchWords = new ArrayList<>();
 
       for (Range r : wordSource)
