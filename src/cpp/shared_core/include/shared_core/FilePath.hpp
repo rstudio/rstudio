@@ -84,7 +84,7 @@ public:
     */
    explicit FilePath(const std::string& in_absolutePath);
 
-#if _WIN32
+#ifdef _WIN32
    explicit FilePath(const std::wstring& in_absolutePath);
 #endif
 
