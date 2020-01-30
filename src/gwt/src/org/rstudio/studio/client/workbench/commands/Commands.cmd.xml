@@ -1993,6 +1993,11 @@ well as menu structures (for main menu and popup menus).
         label="Toggle Document Outline"
         menuLabel="_Show Document Outline"
         desc="Show document outline"/>
+        
+   <cmd id="toggleRmdVisualMode"
+        label="Toggle Visual Markdown Editor"
+        menuLabel="_Use Visual Editor"
+        desc="Toggle visual markdown editor"/>
 
    <cmd id="usingRMarkdownHelp"
         menuLabel="_Using R Markdown"

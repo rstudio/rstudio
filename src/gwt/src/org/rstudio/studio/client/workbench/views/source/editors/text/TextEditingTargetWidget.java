@@ -238,6 +238,13 @@ public class TextEditingTargetWidget
          toggleDocOutlineButton_.click();
    }
    
+
+   @Override
+   public void toggleRmdVisualMode()
+   {
+      toggleRmdVisualModeButton_.click();
+   }
+   
    private StatusBarWidget statusBar_;
 
    private void createTestToolbarButtons(Toolbar toolbar)
@@ -347,6 +354,8 @@ public class TextEditingTargetWidget
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
+      
+      addVisualModeToggleButton(toolbar);
 
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
@@ -556,34 +565,8 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
       
-      // we add a separate outilne button for the visual mode outline b/c the
-      // logic for the standard one is tied up in DOM visibility, and we didn't
-      // want to refactor that code in a conservative release (v1.4). it's 
-      // expected that the whole 'visual mode' concept will go away in v1.5
-      toggleVisualModeOutlineButton_ = new LatchingToolbarButton(
-         ToolbarButton.NoText,
-         ToolbarButton.NoTitle,
-         true, /* textIndicatesState */
-         new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
-         event -> {
-            target_.setPreferredOutlineWidgetVisibility(
-               !target_.getPreferredOutlineWidgetVisibility()
-            );
-         }
-      );
-      
-      // stay in sync w/ doc property
-      syncVisualModeOutlineLatchState();
-      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
-        (event) -> {
-           syncVisualModeOutlineLatchState();
-        });
-      
-      // add to toolbar
-      toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
-      toolbar.addRightWidget(toggleVisualModeOutlineButton_);
-           
-      
+      addVisualModeOutlineButton(toolbar);
+       
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
@@ -601,6 +584,50 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
+   }
+   
+   private void addVisualModeToggleButton(Toolbar toolbar)
+   {
+      toggleRmdVisualModeButton_ = new LatchingToolbarButton(
+         ToolbarButton.NoText,
+         commands_.toggleRmdVisualMode().getDesc(), 
+         false, /* textIndicatesState */
+         new ImageResource2x(StandardIcons.INSTANCE.visual_mode2x()), event -> {
+            boolean visible = !isVisualMode();
+            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, visible);
+            toggleRmdVisualModeButton_.setLatched(visible);
+         });
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+         toggleRmdVisualModeButton_.setLatched(isVisualMode());
+      });
+      toggleRmdVisualModeButton_.setLatched(isVisualMode());
+      toggleRmdVisualModeButton_.addStyleName("rstudio-themes-inverts");
+      toolbar.addLeftWidget(toggleRmdVisualModeButton_);
+   }
+   
+   private void addVisualModeOutlineButton(Toolbar toolbar)
+   {
+      // we add a separate outilne button for the visual mode outline b/c the
+      // logic for the standard one is tied up in DOM visibility, and we didn't
+      // want to refactor that code in a conservative release (v1.4). it's
+      // expected that the whole 'visual mode' concept will go away in v1.5
+      toggleVisualModeOutlineButton_ = new LatchingToolbarButton(ToolbarButton.NoText,
+            ToolbarButton.NoTitle, true, /* textIndicatesState */
+            new ImageResource2x(StandardIcons.INSTANCE.outline2x()), event -> {
+               target_.setPreferredOutlineWidgetVisibility(
+                     !target_.getPreferredOutlineWidgetVisibility());
+            });
+
+      // stay in sync w/ doc property
+      syncVisualModeOutlineLatchState();
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
+            (event) -> {
+               syncVisualModeOutlineLatchState();
+            });
+
+      // add to toolbar
+      toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
+      toolbar.addRightWidget(toggleVisualModeOutlineButton_);
    }
    
    private void syncVisualModeOutlineLatchState()
@@ -1640,6 +1667,7 @@ public class TextEditingTargetWidget
    private ToolbarMenuButton shinyLaunchButton_;
    private ToolbarMenuButton plumberLaunchButton_;
    private ToolbarMenuButton rmdOptionsButton_;
+   private LatchingToolbarButton toggleRmdVisualModeButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private LatchingToolbarButton toggleVisualModeOutlineButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
@@ -1662,4 +1690,5 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
+
 }

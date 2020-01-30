@@ -256,6 +256,7 @@ public class TextEditingTarget implements
       void initWidgetSize();
       
       void toggleDocumentOutline();
+      void toggleRmdVisualMode();
       
       void setNotebookUIVisible(boolean visible);
 
@@ -2968,6 +2969,12 @@ public class TextEditingTarget implements
    void onToggleDocumentOutline()
    {
      view_.toggleDocumentOutline();
+   }
+   
+   @Handler
+   void onToggleRmdVisualMode()
+   {
+      view_.toggleRmdVisualMode();
    }
    
    @Handler
