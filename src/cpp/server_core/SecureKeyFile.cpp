@@ -68,7 +68,7 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
          return error;
 
       // change mode it so it is only readable and writeable by this user
-      error = changeFileMode(secureKeyPath, core::system::UserReadWriteMode);
+      error = secureKeyPath.changeFileMode(core::FileMode::UserReadWriteMode);
       if (error)
          return error;
 

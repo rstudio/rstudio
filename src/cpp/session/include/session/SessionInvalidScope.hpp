@@ -54,8 +54,7 @@ inline void writeInvalidScope(const core::r_util::SessionContext& context,
    if (!error)
    {
       // chmod on the file so the server can read it
-      core::Error error = changeFileMode(filePath,
-                                         core::system::EveryoneReadWriteMode);
+      core::Error error = filePath.changeFileMode(core::FileMode::EveryoneReadWriteMode);
       if (error)
          LOG_ERROR(error);
    }

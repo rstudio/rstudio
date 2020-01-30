@@ -23,6 +23,9 @@ typedef DWORD PidType;
 #else  // UNIX
 #include <sys/types.h>
 #include <sys/resource.h>
+
+#include <shared_core/system/PosixSystem.hpp>
+
 typedef pid_t PidType;
 typedef uid_t UidType;
 #endif
@@ -89,50 +92,6 @@ void closeStdFileDescriptors();
 void attachStdFileDescriptorsToDevNull();
 void setStandardStreamsToDevNull();
 
-// Handles EINTR retrying. Only for use with functions that return -1 on
-// error and set errno.
-template <typename T>
-T posixCall(const boost::function<T()>& func)
-{
-   const T ERR = -1;
-
-   T result;
-   while (true)
-   {
-      result = func();
-
-      if (result == ERR && errno == EINTR)
-         continue;
-      else
-         break;
-   }
-
-   return result;
-}
-
-// Handles EINTR retrying and error construction (also optionally returns
-// the result as an out parameter). Only for use with functions that return
-// -1 on error and set errno.
-template <typename T>
-Error posixCall(const boost::function<T()>& func,
-                       const ErrorLocation& location,
-                       T *pResult = nullptr)
-{
-   const T ERR = -1;
-
-   // make the call
-   T result = posixCall<T>(func);
-
-   // set out param (if requested)
-   if (pResult)
-      *pResult = result;
-
-   // return status
-   if (result == ERR)
-      return systemError(errno, location);
-   else
-      return Success();
-}
 
 // Handles EINTR retrying and error logging. Only for use with functions
 // that return -1 on error and set errno.
@@ -140,7 +99,7 @@ template <typename T>
 void safePosixCall(const boost::function<T()>& func,
                           const ErrorLocation& location)
 {
-   Error error = posixCall<T>(func, location, nullptr);
+   Error error = posix::posixCall<T>(func, location, nullptr);
    if (error)
       LOG_ERROR(error);
 }

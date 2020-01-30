@@ -363,8 +363,7 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
 
    // ensure the file has restrictive permissions
 #ifndef _WIN32
-   error = core::system::changeFileMode(projectIdsPath,
-                                        core::system::UserReadWriteMode);
+   error = projectIdsPath.changeFileMode(core::FileMode::UserReadWriteMode);
    if (error)
       LOG_ERROR(error);
 #endif

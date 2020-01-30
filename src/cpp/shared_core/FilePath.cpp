@@ -34,6 +34,11 @@
 #include <boost/system/windows_error.hpp>
 
 #include <shared_core/system/Win32StringUtils.hpp>
+#else
+#include <sys/stat.h>
+#include <sys/unistd.h>
+
+#include <shared_core/system/PosixSystem.hpp>
 #endif
 
 #define BOOST_NO_CXX11_SCOPED_ENUMS
@@ -47,6 +52,7 @@
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
 
 typedef boost::filesystem::path path_t;
@@ -65,131 +71,131 @@ struct MimeType
 
 // NOTE: should be synced with mime type database in FileSystemItem.java
 MimeType s_mimeTypes[] =
-{
-   // most common web types
-   { "htm",   "text/html" },
-   { "html",  "text/html" },
-   { "css",   "text/css" },
-   { "sass",  "text/sass" },
-   { "scss",  "text/scss" },
-   { "gif",   "image/gif" },
-   { "jpg",   "image/jpeg" },
-   { "jpeg",  "image/jpeg" },
-   { "jpe",   "image/jpeg" },
-   { "png",   "image/png" },
-   { "js",    "text/javascript" },
-   { "pdf",   "application/pdf" },
-   { "svg",   "image/svg+xml" },
-   { "swf",   "application/x-shockwave-flash" },
-   { "ttf",   "application/x-font-ttf" },
-   { "woff",  "application/font-woff" },
+   {
+      // most common web types
+      { "htm",          "text/html" },
+      { "html",         "text/html" },
+      { "css",          "text/css" },
+      { "sass",         "text/sass" },
+      { "scss",         "text/scss" },
+      { "gif",          "image/gif" },
+      { "jpg",          "image/jpeg" },
+      { "jpeg",         "image/jpeg" },
+      { "jpe",          "image/jpeg" },
+      { "png",          "image/png" },
+      { "js",           "text/javascript" },
+      { "pdf",          "application/pdf" },
+      { "svg",          "image/svg+xml" },
+      { "swf",          "application/x-shockwave-flash" },
+      { "ttf",          "application/x-font-ttf" },
+      { "woff",         "application/font-woff" },
 
-   // markdown types
-   { "md",       "text/x-markdown" },
-   { "mdtxt",    "text/x-markdown" },
-   { "markdown", "text/x-markdown" },
-   { "yaml",     "text/x-yaml" },
-   { "yml",      "text/x-yaml" },
+      // markdown types
+      { "md",           "text/x-markdown" },
+      { "mdtxt",        "text/x-markdown" },
+      { "markdown",     "text/x-markdown" },
+      { "yaml",         "text/x-yaml" },
+      { "yml",          "text/x-yaml" },
 
-   // programming language types
-   { "f",        "text/x-fortran" },
-   { "py",       "text/x-python" },
-   { "sh",       "text/x-shell" },
-   { "sql",      "text/x-sql" },
-   { "stan",     "text/x-stan" },
-   { "clj",      "text/x-clojure" },
+      // programming language types
+      { "f",            "text/x-fortran" },
+      { "py",           "text/x-python" },
+      { "sh",           "text/x-shell" },
+      { "sql",          "text/x-sql" },
+      { "stan",         "text/x-stan" },
+      { "clj",          "text/x-clojure" },
 
-   // other types we are likely to serve
-   { "xml",   "text/xml" },
-   { "csv",   "text/csv" },
-   { "ico",   "image/x-icon" },
-   { "zip",   "application/zip" },
-   { "bz",    "application/x-bzip" },
-   { "bz2",   "application/x-bzip2" },
-   { "gz",    "application/x-gzip" },
-   { "tar",   "application/x-tar" },
-   { "json",  "application/json" },
-   { "rstheme", "text/css" },
+      // other types we are likely to serve
+      { "xml",          "text/xml" },
+      { "csv",          "text/csv" },
+      { "ico",          "image/x-icon" },
+      { "zip",          "application/zip" },
+      { "bz",           "application/x-bzip" },
+      { "bz2",          "application/x-bzip2" },
+      { "gz",           "application/x-gzip" },
+      { "tar",          "application/x-tar" },
+      { "json",         "application/json" },
+      { "rstheme",      "text/css" },
 
-   // yet more types...
+      // yet more types...
 
-   { "shtml", "text/html" },
-   { "tsv",   "text/tab-separated-values" },
-   { "tab",   "text/tab-separated-values" },
-   { "dcf",   "text/debian-control-file" },
-   { "ini",   "text/plain" },
-   { "txt",   "text/plain" },
-   { "mml",   "text/mathml" },
-   { "log",   "text/plain" },
-   { "out",   "text/plain" },
-   { "csl",   "text/x-csl" },
-   { "R",     "text/x-r-source"},
-   { "S",     "text/x-r-source"},
-   { "q",     "text/x-r-source"},
-   { "Rd",    "text/x-r-doc"},
-   { "Rnw",   "text/x-r-sweave"},
-   { "Rmd",   "text/x-r-markdown"},
-   { "Rhtml", "text/x-r-html"},
-   { "Rpres", "text/x-r-presentation"},
-   { "Rout",  "text/plain" },
-   { "po",    "text/plain" },
-   { "pot",   "text/plain"},
-   { "rst",   "text/plain"},
-   { "gitignore", "text/plain"},
-   { "Rbuildignore", "text/plain"},
-   { "Rprofile", "text/x-r-source"},
-   { "Renviron", "text/x-shell" },
-   { "rprofvis",   "text/x-r-profile" },
+      { "shtml",        "text/html" },
+      { "tsv",          "text/tab-separated-values" },
+      { "tab",          "text/tab-separated-values" },
+      { "dcf",          "text/debian-control-file" },
+      { "ini",          "text/plain" },
+      { "txt",          "text/plain" },
+      { "mml",          "text/mathml" },
+      { "log",          "text/plain" },
+      { "out",          "text/plain" },
+      { "csl",          "text/x-csl" },
+      { "R",            "text/x-r-source" },
+      { "S",            "text/x-r-source" },
+      { "q",            "text/x-r-source" },
+      { "Rd",           "text/x-r-doc" },
+      { "Rnw",          "text/x-r-sweave" },
+      { "Rmd",          "text/x-r-markdown" },
+      { "Rhtml",        "text/x-r-html" },
+      { "Rpres",        "text/x-r-presentation" },
+      { "Rout",         "text/plain" },
+      { "po",           "text/plain" },
+      { "pot",          "text/plain" },
+      { "rst",          "text/plain" },
+      { "gitignore",    "text/plain" },
+      { "Rbuildignore", "text/plain" },
+      { "Rprofile",     "text/x-r-source" },
+      { "Renviron",     "text/x-shell" },
+      { "rprofvis",     "text/x-r-profile" },
 
-   { "tif",   "image/tiff" },
-   { "tiff",  "image/tiff" },
-   { "bmp",   "image/bmp"  },
-   { "ps",    "application/postscript" },
-   { "eps",   "application/postscript" },
-   { "dvi",    "application/x-dvi" },
+      { "tif",          "image/tiff" },
+      { "tiff",         "image/tiff" },
+      { "bmp",          "image/bmp" },
+      { "ps",           "application/postscript" },
+      { "eps",          "application/postscript" },
+      { "dvi",          "application/x-dvi" },
 
-   { "atom",  "application/atom+xml" },
-   { "rss",   "application/rss+xml" },
+      { "atom",         "application/atom+xml" },
+      { "rss",          "application/rss+xml" },
 
-   { "doc",   "application/msword" },
-   { "docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-   { "odt",   "application/vnd.oasis.opendocument.text" },
-   { "rtf",   "application/rtf" },
-   { "xls",   "application/vnd.ms-excel" },
-   { "xlsx",  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
-   { "ods",   "application/x-vnd.oasis.opendocument.spreadsheet" },
-   { "ppt",   "application/vnd.ms-powerpoint" },
-   { "pps",   "application/vnd.ms-powerpoint" },
-   { "pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
+      { "doc",          "application/msword" },
+      { "docx",         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+      { "odt",          "application/vnd.oasis.opendocument.text" },
+      { "rtf",          "application/rtf" },
+      { "xls",          "application/vnd.ms-excel" },
+      { "xlsx",         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+      { "ods",          "application/x-vnd.oasis.opendocument.spreadsheet" },
+      { "ppt",          "application/vnd.ms-powerpoint" },
+      { "pps",          "application/vnd.ms-powerpoint" },
+      { "pptx",         "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
 
-   { "sit",   "application/x-stuffit" },
-   { "sxw",   "application/vnd.sun.xml.writer" },
+      { "sit",          "application/x-stuffit" },
+      { "sxw",          "application/vnd.sun.xml.writer" },
 
-   { "iso",   "application/octet-stream" },
-   { "dmg",   "application/octet-stream" },
-   { "exe",   "application/octet-stream" },
-   { "dll",   "application/octet-stream" },
-   { "deb",   "application/octet-stream" },
-   { "otf",   "application/octet-stream" },
-   { "xpi",   "application/x-xpinstall" },
+      { "iso",          "application/octet-stream" },
+      { "dmg",          "application/octet-stream" },
+      { "exe",          "application/octet-stream" },
+      { "dll",          "application/octet-stream" },
+      { "deb",          "application/octet-stream" },
+      { "otf",          "application/octet-stream" },
+      { "xpi",          "application/x-xpinstall" },
 
-   { "mp2",   "audio/mpeg" },
+      { "mp2",          "audio/mpeg" },
 
-   { "mpg",   "video/mpeg" },
-   { "mpeg",  "video/mpeg" },
-   { "flv",   "video/x-flv" },
+      { "mpg",          "video/mpeg" },
+      { "mpeg",         "video/mpeg" },
+      { "flv",          "video/x-flv" },
 
-   { "mp4",   "video/mp4" },
-   { "webm",  "video/webm" },
-   { "ogv",   "video/ogg" },
+      { "mp4",          "video/mp4" },
+      { "webm",         "video/webm" },
+      { "ogv",          "video/ogg" },
 
-   { "mp3",   "audio/mp3" },
-   { "wav",   "audio/wav" },
-   { "oga",   "audio/ogg" },
-   { "ogg",   "audio/ogg" },
+      { "mp3",          "audio/mp3" },
+      { "wav",          "audio/wav" },
+      { "oga",          "audio/ogg" },
+      { "ogg",          "audio/ogg" },
 
-   { nullptr, nullptr }
-};
+      { nullptr,        nullptr }
+   };
 
 const std::string s_homePathAlias = "~/";
 const std::string s_homePathLeafAlias = "~";
@@ -222,6 +228,7 @@ typedef boost::filesystem::recursive_directory_iterator recursive_dir_iterator;
 #endif
 
 #ifdef _WIN32
+
 
 // For Windows only, we need to use the wide character versions of the file
 // APIs in order to deal properly with characters that cannot be represented
@@ -269,6 +276,29 @@ bool addItemSize(const FilePath& item, boost::shared_ptr<uintmax_t> pTotal)
    return true;
 }
 
+#ifndef _WIN32
+
+int octalStrToFileMode(const std::string& fileModeStr)
+{
+   return safe_convert::stringTo<int>(fileModeStr, 0666, std::oct);
+}
+
+inline Error changeFileModeImpl(const std::string& filePath, mode_t mode)
+{
+   // change the mode
+   errno = 0;
+   if (::chmod(filePath.c_str(), mode) < 0)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
+   else
+      return Success();
+}
+
+#endif
+
 bool copySingleItem(const FilePath& from, const FilePath& to,
                     const FilePath& path)
 {
@@ -302,15 +332,27 @@ Error notFoundError(const FilePath& filePath,
    return error;
 }
 
-}
+} // anonymous namespace
 
 // FilePath ============================================================================================================
 struct FilePath::Impl
 {
+   /**
+    * @brief Default constructor.
+    */
    Impl() = default;
 
-   explicit Impl(path_t in_path) : Path(std::move(in_path)) { }
+   /**
+    * @brief Constructor.
+    *
+    * @param in_path    The underlying path of this FilePath.
+    */
+   explicit Impl(path_t in_path) :
+      Path(std::move(in_path))
+   {
+   }
 
+   /** The underlying path of this FilePath. */
    path_t Path;
 };
 
@@ -375,7 +417,7 @@ bool FilePath::exists(const std::string& in_filePath)
    {
       return boost::filesystem::exists(p);
    }
-   catch(const boost::filesystem::filesystem_error& e)
+   catch (const boost::filesystem::filesystem_error& e)
    {
       logError(p, e, ERROR_LOCATION);
       return false;
@@ -399,7 +441,7 @@ bool FilePath::isRootPath(const std::string& in_filePath)
    {
       return p.has_root_path();
    }
-   catch(const boost::filesystem::filesystem_error& e)
+   catch (const boost::filesystem::filesystem_error& e)
    {
       logError(p, e, ERROR_LOCATION);
       return false;
@@ -441,7 +483,7 @@ FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
       return FilePath(boost::filesystem::current_path().string());
 #endif
    }
-   catch(const boost::filesystem::filesystem_error& e)
+   catch (const boost::filesystem::filesystem_error& e)
    {
       if (e.code() != boost::system::errc::no_such_file_or_directory)
          log::logError(Error(e.code(), ERROR_LOCATION));
@@ -460,7 +502,6 @@ FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
 
    return safePath;
 }
-
 
 Error FilePath::tempFilePath(FilePath& out_filePath)
 {
@@ -501,7 +542,7 @@ Error FilePath::uniqueFilePath(const std::string& in_basePath, const std::string
       out_filePath = FilePath(pathStr);
       return Success();
    }
-   catch(const filesystem_error& e)
+   catch (const filesystem_error& e)
    {
       return Error(e.code(), ERROR_LOCATION);
    }
@@ -509,6 +550,156 @@ Error FilePath::uniqueFilePath(const std::string& in_basePath, const std::string
    // keep compiler happy
    return pathNotFoundError(ERROR_LOCATION);
 }
+
+#ifndef _WIN32
+
+Error FilePath::changeFileMode(const std::string& fileModeStr) const
+{
+   return changeFileModeImpl(getAbsolutePath(), octalStrToFileMode(fileModeStr));
+}
+
+Error FilePath::changeFileMode(FileMode in_fileMode, bool in_setStickyBit) const
+{
+   mode_t mode;
+   switch (in_fileMode)
+   {
+      case FileMode::UserReadWriteMode:
+         mode = S_IRUSR | S_IWUSR;
+         break;
+
+      case FileMode::UserReadWriteExecuteMode:
+         mode = S_IRUSR | S_IWUSR | S_IXUSR;
+         break;
+
+      case FileMode::UserReadWriteGroupReadMode:
+         mode = S_IRUSR | S_IWUSR | S_IRGRP;
+         break;
+
+      case FileMode::UserReadWriteGroupEveryoneReadMode:
+         mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+         break;
+
+      case FileMode::UserReadWriteExecuteGroupEveryoneReadExecuteMode:
+         mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+         break;
+
+      case FileMode::EveryoneReadMode:
+         mode = S_IRUSR | S_IRGRP | S_IROTH;
+         break;
+
+      case FileMode::EveryoneReadWriteMode:
+         mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+         break;
+
+      case FileMode::EveryoneReadWriteExecuteMode:
+         mode = S_IRWXU | S_IRWXG | S_IRWXO;
+         break;
+
+      default:
+         return systemError(ENOTSUP, ERROR_LOCATION);
+   }
+
+   // check for sticky bit
+   if (in_setStickyBit)
+      mode |= S_ISVTX;
+
+   return changeFileModeImpl(getAbsolutePath(), mode);
+}
+
+Error FilePath::changeOwnership(
+   const system::User& in_newUser,
+   bool in_recursive,
+   const RecursiveIterationFunction& in_shouldChown) const
+{
+   // changes ownership of file to the server user
+   auto chown = [&](const std::string& in_absolutePath)
+   {
+      return core::system::posix::posixCall<int>(
+         boost::bind(::chown,
+                     in_absolutePath.c_str(),
+                     in_newUser.getUserId(),
+                     in_newUser.getGroupId()),
+         ERROR_LOCATION);
+   };
+
+   Error error = chown(getAbsolutePath());
+   if (error)
+   {
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   if (!in_recursive)
+      return Success();
+
+   // recurse into subdirectories
+   if (isDirectory())
+   {
+      getChildrenRecursive([&](int depth, const FilePath& child)
+                                {
+                                   if (in_shouldChown && !in_shouldChown(depth, child))
+                                      return true;
+
+                                   error = chown(child.getAbsolutePath());
+                                   if (error)
+                                      error.addProperty("path", child.getAbsolutePath());
+
+                                   // if there was an error, stop iterating
+                                   return !error;
+                                });
+   }
+
+   return error;
+
+}
+
+Error FilePath::getFileMode(FileMode& out_fileMode) const
+{
+   struct stat st;
+   if (::stat(getAbsolutePath().c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   // extract the bits
+   std::string mode(9, '-');
+   if ( st.st_mode & S_IRUSR ) mode[0] = 'r';
+   if ( st.st_mode & S_IWUSR ) mode[1] = 'w';
+   if ( st.st_mode & S_IXUSR ) mode[2] = 'x';
+
+   if ( st.st_mode & S_IRGRP ) mode[3] = 'r';
+   if ( st.st_mode & S_IWGRP ) mode[4] = 'w';
+   if ( st.st_mode & S_IXGRP ) mode[5] = 'x';
+
+   if ( st.st_mode & S_IROTH ) mode[6] = 'r';
+   if ( st.st_mode & S_IWOTH ) mode[7] = 'w';
+   if ( st.st_mode & S_IXOTH ) mode[8] = 'x';
+
+   if (mode ==      "rw-------")
+      out_fileMode = FileMode::UserReadWriteMode;
+   else if (mode == "rwx------")
+      out_fileMode = FileMode::UserReadWriteExecuteMode;
+   else if (mode == "rw-r-----")
+      out_fileMode = FileMode::UserReadWriteGroupReadMode;
+   else if (mode == "rw-r--r--")
+      out_fileMode = FileMode::UserReadWriteGroupEveryoneReadMode;
+   else if (mode == "r--r--r--")
+      out_fileMode = FileMode::EveryoneReadMode;
+   else if (mode == "rw-rw-rw-")
+      out_fileMode = FileMode::EveryoneReadWriteMode;
+   else if (mode == "rwxrwxrwx")
+      out_fileMode = FileMode::EveryoneReadWriteExecuteMode;
+   else if (mode == "rwxr-xr-x")
+      out_fileMode = FileMode::UserReadWriteExecuteGroupEveryoneReadExecuteMode;
+   else
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   return Success();
+}
+#endif
+
 
 // note: this differs from complete in the following ways:
 //    - the passed path can be an empty string (returns self)

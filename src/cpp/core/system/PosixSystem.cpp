@@ -651,12 +651,14 @@ Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart
    {
       for (uint32_t fd : fds)
       {
-         error = posixCall<std::size_t>(boost::bind(::write,
-                                                    pipeFd,
-                                                    &fd,
-                                                    4),
-                                        ERROR_LOCATION,
-                                        &written);
+         error = posix::posixCall<std::size_t>(
+            boost::bind(
+               ::write,
+               pipeFd,
+               &fd,
+               4),
+            ERROR_LOCATION,
+            &written);
 
          if (error)
          {
@@ -671,12 +673,14 @@ Error closeChildFileDescriptorsFrom(pid_t childPid, int pipeFd, uint32_t fdStart
    // this prevents the child from being stuck in limbo or interpreting its
    // actual stdin as fds
    int close = -1;
-   Error closeError = posixCall<std::size_t>(boost::bind(::write,
-                                                         pipeFd,
-                                                         &close,
-                                                         4),
-                                             ERROR_LOCATION,
-                                             &written);
+   Error closeError = posix::posixCall<std::size_t>(
+      boost::bind(
+         ::write,
+         pipeFd,
+         &close,
+         4),
+      ERROR_LOCATION,
+      &written);
 
    if (closeError)
    {

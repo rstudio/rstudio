@@ -37,9 +37,7 @@ inline Error initializeStreamDir(const FilePath& streamDir)
       if (error)
          return error;
       
-      return changeFileMode(streamDir,
-                            system::EveryoneReadWriteExecuteMode,
-                            true);
+      return streamDir.changeFileMode(FileMode::EveryoneReadWriteExecuteMode, true);
    }
    else
    {
@@ -50,7 +48,7 @@ inline Error initializeStreamDir(const FilePath& streamDir)
 inline Error initLocalStreamAcceptor(
    SocketAcceptorService<boost::asio::local::stream_protocol>& acceptorService,
    const core::FilePath& localStreamPath,
-   core::system::FileMode fileMode)
+   core::FileMode fileMode)
 {
    // initialize endpoint
    using boost::asio::local::stream_protocol;
@@ -79,7 +77,7 @@ inline Error initLocalStreamAcceptor(
    }
    
    // chmod on the stream file
-   Error error = changeFileMode(localStreamPath, fileMode);
+   Error error = localStreamPath.changeFileMode(fileMode);
    if (error)
       return error;
    

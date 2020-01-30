@@ -38,14 +38,6 @@ Error copyDirectory(const FilePath& sourceDirectory,
 
 bool isDirectoryWriteable(const FilePath& directory);
 
-#ifndef _WIN32
-Error changeOwnership(const FilePath& file,
-                      const std::string& owner,
-                      bool recursive = false,
-                      const FilePath::RecursiveIterationFunction& shouldChown =
-                         FilePath::RecursiveIterationFunction());
-#endif
-
 } // namespace file_utils
 } // namespace core
 } // namespace rstudio

@@ -454,9 +454,17 @@ Error initialize()
       return error;
    }
 
+   core::system::User serverUser;
+   error = core::system::User::getUserFromIdentifier(options().serverUser(), serverUser);
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Could not get server user details");
+      return error;
+   }
+
    if (core::system::effectiveUserIsRoot())
    {
-      error = file_utils::changeOwnership(rootDir, options().serverUser());
+      error = rootDir.changeOwnership(serverUser);
       if (error)
       {
          LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
@@ -497,14 +505,14 @@ Error initialize()
       {
          // ensure revocation file is owned by the server user
          // this ensures that it can be written to even when we drop privilege
-         error = file_utils::changeOwnership(s_revocationList, options().serverUser());
+         error = s_revocationList.changeOwnership(serverUser);
          if (error)
             return error;
       }
 
       // ensure that only the server user can read/write to it, so other users of the system
       // cannot muck with the contents!
-      error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
+      error = s_revocationList.changeFileMode(core::FileMode::UserReadWriteMode);
       if (error)
       {
          LOG_ERROR_MESSAGE("Could not set revocation file permissions");

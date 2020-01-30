@@ -917,8 +917,7 @@ void onClientInit()
 
 #ifndef _WIN32
    // tighten permissions on viewer cache directory
-   error = core::system::changeFileMode(
-            cacheDir,  core::system::UserReadWriteExecuteMode);
+   error = cacheDir.changeFileMode(core::FileMode::UserReadWriteExecuteMode);
    if (error)
    {
       // not fatal, log and continue
