@@ -512,7 +512,7 @@ Error initialize()
 
       // ensure that only the server user can read/write to it, so other users of the system
       // cannot muck with the contents!
-      error = s_revocationList.changeFileMode(core::FileMode::UserReadWriteMode);
+      error = s_revocationList.changeFileMode(core::FileMode::USER_READ_WRITE);
       if (error)
       {
          LOG_ERROR_MESSAGE("Could not set revocation file permissions");

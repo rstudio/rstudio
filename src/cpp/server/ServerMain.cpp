@@ -599,7 +599,7 @@ int main(int argc, char * const argv[])
       if ((st.st_mode & desiredMode) != desiredMode)
       {
          // permissions aren't correct - attempt to fix them
-         Error error = serverDataDir.changeFileMode(core::FileMode::EveryoneReadWriteExecuteMode, true);
+         Error error = serverDataDir.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE, true);
          if (error)
          {
             LOG_ERROR_MESSAGE("Could not change permissions for specified 'server-data-dir' - "

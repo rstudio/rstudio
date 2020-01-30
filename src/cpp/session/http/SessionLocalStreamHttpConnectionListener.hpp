@@ -142,7 +142,7 @@ private:
          return error;
 
       // chmod to ensure other users can read the file
-      return pidFile.changeFileMode(core::FileMode::UserReadWriteGroupEveryoneReadMode);
+      return pidFile.changeFileMode(core::FileMode::USER_READ_WRITE_ALL_READ);
    }
 
    Error cleanupPidFile()

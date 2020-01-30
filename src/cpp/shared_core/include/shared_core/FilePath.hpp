@@ -60,14 +60,14 @@ namespace core {
  */
 enum class FileMode
 {
-   UserReadWriteMode,
-   UserReadWriteExecuteMode,
-   UserReadWriteGroupReadMode,
-   UserReadWriteGroupEveryoneReadMode,
-   UserReadWriteExecuteGroupEveryoneReadExecuteMode,
-   EveryoneReadMode,
-   EveryoneReadWriteMode,
-   EveryoneReadWriteExecuteMode
+   USER_READ_WRITE,
+   USER_READ_WRITE_EXECUTE,
+   USER_READ_WRITE_GROUP_READ,
+   USER_READ_WRITE_ALL_READ,
+   USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE,
+   ALL_READ,
+   ALL_READ_WRITE,
+   ALL_READ_WRITE_EXECUTE
 };
 
 #endif

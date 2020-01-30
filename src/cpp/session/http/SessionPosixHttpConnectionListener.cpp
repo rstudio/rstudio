@@ -54,7 +54,7 @@ void initializeHttpConnectionListener()
          FilePath streamPath(localPeer);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
-                                           core::FileMode::UserReadWriteMode,
+                                           core::FileMode::USER_READ_WRITE,
                                            options.sharedSecret(),
                                            -1);
       }
@@ -122,7 +122,7 @@ void initializeHttpConnectionListener()
          FilePath localStreamPath = local_streams::streamPath(streamFile);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
-                                          core::FileMode::EveryoneReadWriteMode,
+                                          core::FileMode::ALL_READ_WRITE,
                                           "", // no shared secret
                                           options.limitRpcClientUid());
       }

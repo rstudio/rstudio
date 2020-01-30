@@ -231,7 +231,7 @@ Error initialize(ProgramMode programMode)
          // ensure that it is writeable by all users
          // this is best case and we swallow the error because it is legitimately possible we
          // lack the permissions to perform this (such as if we are an unprivileged rsession user)
-         databasePath.changeFileMode(core::FileMode::EveryoneReadWriteExecuteMode);
+         databasePath.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE);
 
          databasePathStr = databasePath.getAbsolutePath();
       }
@@ -301,7 +301,7 @@ Error initialize(ProgramMode programMode)
       std::vector<FilePath> dbFolders;
       FilePath(databasePathStr).getChildren(dbFolders);
       for (const FilePath& subPath : dbFolders)
-         subPath.changeFileMode(core::FileMode::EveryoneReadWriteExecuteMode);
+         subPath.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE);
    }
 #endif
 

@@ -37,7 +37,7 @@ inline Error initializeStreamDir(const FilePath& streamDir)
       if (error)
          return error;
       
-      return streamDir.changeFileMode(FileMode::EveryoneReadWriteExecuteMode, true);
+      return streamDir.changeFileMode(FileMode::ALL_READ_WRITE_EXECUTE, true);
    }
    else
    {

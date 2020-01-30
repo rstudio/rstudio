@@ -563,35 +563,35 @@ Error FilePath::changeFileMode(FileMode in_fileMode, bool in_setStickyBit) const
    mode_t mode;
    switch (in_fileMode)
    {
-      case FileMode::UserReadWriteMode:
+      case FileMode::USER_READ_WRITE:
          mode = S_IRUSR | S_IWUSR;
          break;
 
-      case FileMode::UserReadWriteExecuteMode:
+      case FileMode::USER_READ_WRITE_EXECUTE:
          mode = S_IRUSR | S_IWUSR | S_IXUSR;
          break;
 
-      case FileMode::UserReadWriteGroupReadMode:
+      case FileMode::USER_READ_WRITE_GROUP_READ:
          mode = S_IRUSR | S_IWUSR | S_IRGRP;
          break;
 
-      case FileMode::UserReadWriteGroupEveryoneReadMode:
+      case FileMode::USER_READ_WRITE_ALL_READ:
          mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
          break;
 
-      case FileMode::UserReadWriteExecuteGroupEveryoneReadExecuteMode:
+      case FileMode::USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE:
          mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
          break;
 
-      case FileMode::EveryoneReadMode:
+      case FileMode::ALL_READ:
          mode = S_IRUSR | S_IRGRP | S_IROTH;
          break;
 
-      case FileMode::EveryoneReadWriteMode:
+      case FileMode::ALL_READ_WRITE:
          mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
          break;
 
-      case FileMode::EveryoneReadWriteExecuteMode:
+      case FileMode::ALL_READ_WRITE_EXECUTE:
          mode = S_IRWXU | S_IRWXG | S_IRWXO;
          break;
 
@@ -678,21 +678,21 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
    if ( st.st_mode & S_IXOTH ) mode[8] = 'x';
 
    if (mode ==      "rw-------")
-      out_fileMode = FileMode::UserReadWriteMode;
+      out_fileMode = FileMode::USER_READ_WRITE;
    else if (mode == "rwx------")
-      out_fileMode = FileMode::UserReadWriteExecuteMode;
+      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE;
    else if (mode == "rw-r-----")
-      out_fileMode = FileMode::UserReadWriteGroupReadMode;
+      out_fileMode = FileMode::USER_READ_WRITE_GROUP_READ;
    else if (mode == "rw-r--r--")
-      out_fileMode = FileMode::UserReadWriteGroupEveryoneReadMode;
+      out_fileMode = FileMode::USER_READ_WRITE_ALL_READ;
    else if (mode == "r--r--r--")
-      out_fileMode = FileMode::EveryoneReadMode;
+      out_fileMode = FileMode::ALL_READ;
    else if (mode == "rw-rw-rw-")
-      out_fileMode = FileMode::EveryoneReadWriteMode;
+      out_fileMode = FileMode::ALL_READ_WRITE;
    else if (mode == "rwxrwxrwx")
-      out_fileMode = FileMode::EveryoneReadWriteExecuteMode;
+      out_fileMode = FileMode::ALL_READ_WRITE_EXECUTE;
    else if (mode == "rwxr-xr-x")
-      out_fileMode = FileMode::UserReadWriteExecuteGroupEveryoneReadExecuteMode;
+      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE;
    else
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
