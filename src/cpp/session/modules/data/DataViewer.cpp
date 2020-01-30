@@ -654,12 +654,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          }
          else
          {
-            rowData.push_back(json::Value(row + start));
+            rowData.push_back(row + start);
          }
       }
       else
       {
-         rowData.push_back(json::Value(row + start));
+         rowData.push_back(row + start);
       }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
@@ -678,16 +678,16 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
             }
             else if (stringSEXP == NA_STRING)
             {
-               rowData.push_back(json::Value(SPECIAL_CELL_NA));
+               rowData.push_back(SPECIAL_CELL_NA);
             }
             else
             {
-               rowData.push_back(json::Value(""));
+               rowData.push_back("");
             }
          }
          else
          {
-            rowData.push_back(json::Value(""));
+            rowData.push_back("");
          }
       }
       data.push_back(rowData);

@@ -35,9 +35,9 @@ json::Object createObject()
    object["f"] = std::string("Hello world");
 
    json::Array simpleArray;
-   simpleArray.push_back(json::Value(100));
-   simpleArray.push_back(json::Value(200));
-   simpleArray.push_back(json::Value(300));
+   simpleArray.push_back(100);
+   simpleArray.push_back(200);
+   simpleArray.push_back(300);
    object["g"] = simpleArray;
 
    json::Array objectArray;
@@ -50,8 +50,8 @@ json::Object createObject()
    obj2["b1"] = "b1";
    obj2["b2"] = 2;
 
-   objectArray.push_back(json::Value(obj1));
-   objectArray.push_back(json::Value(obj2));
+   objectArray.push_back(obj1);
+   objectArray.push_back(obj2);
 
    object["h"] = objectArray;
 
@@ -60,9 +60,9 @@ json::Object createObject()
    json::Object obj4;
    obj4["a"] = "Inner object a";
    json::Array innerArray;
-   innerArray.push_back(json::Value(1));
-   innerArray.push_back(json::Value(5));
-   innerArray.push_back(json::Value(6));
+   innerArray.push_back(1);
+   innerArray.push_back(5);
+   innerArray.push_back(6);
    obj4["b"] = innerArray;
    obj4["c"] = json::Value();
    obj3["inner"] = obj4;
@@ -188,9 +188,9 @@ TEST_CASE("Json")
       REQUIRE(obj["c"].getInt() == 25);
 
       json::Array array;
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(2));
-      array.push_back(json::Value(3));
+      array.push_back(1);
+      array.push_back(2);
+      array.push_back(3);
 
       obj["d"] = array;
 
@@ -263,8 +263,8 @@ TEST_CASE("Json")
       obj2["1"] = "obj2";
       obj2["2"] = 2;
 
-      array.push_back(json::Value(obj1));
-      array.push_back(json::Value(obj2));
+      array.push_back(obj1);
+      array.push_back(obj2);
 
       REQUIRE(array[0].getObject()["1"].getString() == "obj1");
       REQUIRE(array[0].getObject()["2"].getInt() == 1);
@@ -275,14 +275,14 @@ TEST_CASE("Json")
    SECTION("Can iterate arrays")
    {
       json::Array arr;
-      arr.push_back(json::Value(1));
-      arr.push_back(json::Value(2));
-      arr.push_back(json::Value(3));
+      arr.push_back(1);
+      arr.push_back(2);
+      arr.push_back(3);
 
       json::Array arr2;
-      arr2.push_back(json::Value(4));
-      arr2.push_back(json::Value(5));
-      arr2.push_back(json::Value(6));
+      arr2.push_back(4);
+      arr2.push_back(5);
+      arr2.push_back(6);
 
       std::transform(arr2.begin(),
                      arr2.end(),
@@ -413,9 +413,9 @@ TEST_CASE("Json")
    SECTION("readParams tests")
    {
       json::Array array;
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(false));
-      array.push_back(json::Value("Hello there"));
+      array.push_back(1);
+      array.push_back(false);
+      array.push_back("Hello there");
 
       int a;
       bool b;
@@ -451,10 +451,10 @@ TEST_CASE("Json")
       obj["b"] = true;
       obj["c"] = "Hello there";
 
-      array.push_back(json::Value(obj));
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(false));
-      array.push_back(json::Value(obj));
+      array.push_back(obj);
+      array.push_back(1);
+      array.push_back(false);
+      array.push_back(obj);
 
       int a;
       bool b;
@@ -498,9 +498,9 @@ TEST_CASE("Json")
       object["f"] = std::string("Hello world");
 
       json::Array simpleArray;
-      simpleArray.push_back(json::Value(100));
-      simpleArray.push_back(json::Value(200));
-      simpleArray.push_back(json::Value(300));
+      simpleArray.push_back(100);
+      simpleArray.push_back(200);
+      simpleArray.push_back(300);
       object["g"] = simpleArray;
 
       json::Array objectArray;
@@ -513,8 +513,8 @@ TEST_CASE("Json")
       obj2["b1"] = "b1";
       obj2["b2"] = 2;
 
-      objectArray.push_back(json::Value(obj1));
-      objectArray.push_back(json::Value(obj2));
+      objectArray.push_back(obj1);
+      objectArray.push_back(obj2);
 
       object["h"] = objectArray;
 
@@ -523,9 +523,9 @@ TEST_CASE("Json")
       json::Object obj4;
       obj4["a"] = "Inner object a";
       json::Array innerArray;
-      innerArray.push_back(json::Value(1));
-      innerArray.push_back(json::Value(5));
-      innerArray.push_back(json::Value(6));
+      innerArray.push_back(1);
+      innerArray.push_back(5);
+      innerArray.push_back(6);
       obj4["b"] = innerArray;
       obj4["c"] = 3;
       obj3["inner"] = obj4;
@@ -645,7 +645,7 @@ TEST_CASE("Json")
       REQUIRE(val.getType() == json::Type::OBJECT);
 
       json::Object object = val.getObject();
-      object.insert("a", json::Value(1));
+      object.insert("a", 1);
 
       REQUIRE(object["a"].getInt() == 1);
    }
@@ -692,7 +692,7 @@ TEST_CASE("Json")
       json::Array arr;
       for (int i = 0; i < 10; ++i)
       {
-         arr.push_back(json::Value(i));
+         arr.push_back(i);
       }
 
       arr.erase(std::remove_if(arr.begin(),
@@ -714,7 +714,7 @@ TEST_CASE("Json")
       json::Array arr;
       for (int i = 0; i < 10; ++i)
       {
-         arr.push_back(json::Value(i));
+         arr.push_back(i);
       }
 
       arr.erase(std::remove_if(arr.begin(),
@@ -985,13 +985,13 @@ TEST_CASE("Json")
    SECTION("Can compare array iterators")
    {
       json::Array arr1, arr2;
-      arr1.push_back(json::Value("first"));
-      arr1.push_back(json::Value("second"));
-      arr1.push_back(json::Value("third"));
+      arr1.push_back("first");
+      arr1.push_back("second");
+      arr1.push_back("third");
 
-      arr2.push_back(json::Value("first"));
-      arr2.push_back(json::Value("second"));
-      arr2.push_back(json::Value("third"));
+      arr2.push_back("first");
+      arr2.push_back("second");
+      arr2.push_back("third");
 
       // Comparing iterators pointing to the same object.
       auto itr1 = arr1.begin(), itr2 = arr1.begin();
@@ -1016,13 +1016,13 @@ TEST_CASE("Json")
       obj["b"] = 2;
 
       json::Array cArray;
-      cArray.push_back(json::Value("1"));
-      cArray.push_back(json::Value("2"));
-      cArray.push_back(json::Value("3"));
+      cArray.push_back("1");
+      cArray.push_back("2");
+      cArray.push_back("3");
 
       obj["c"] = cArray;
 
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/d", json::Value(4)));
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/d", 4));
 
       json::Object eObj;
       eObj["param1"] = "param1";
@@ -1033,8 +1033,8 @@ TEST_CASE("Json")
       eObj["param3"] = param3Obj;
 
       REQUIRE_FALSE(obj.setValueAtPointerPath("/e", eObj));
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/c/3", json::Value("4")));
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/e/param3/nested2", json::Value("nestedValue2")));
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/c/3", "4"));
+      REQUIRE_FALSE(obj.setValueAtPointerPath("/e/param3/nested2", "nestedValue2"));
 
       REQUIRE(obj["c"].getArray().getSize() == 4);
       REQUIRE(obj["c"].getArray()[3].getString() == "4");
@@ -1046,7 +1046,7 @@ TEST_CASE("Json")
    SECTION("Invalid pointer path returns error on set")
    {
       json::Object obj;
-      REQUIRE(obj.setValueAtPointerPath("path must begin with a /", json::Value(1)));
+      REQUIRE(obj.setValueAtPointerPath("path must begin with a /", 1));
    }
 }
 

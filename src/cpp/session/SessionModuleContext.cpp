@@ -1962,8 +1962,8 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 {
    // construct our JSON RPC
    json::Array jsonParams;
-   jsonParams.push_back(json::Value(consoleInput));
-   jsonParams.push_back(json::Value(""));
+   jsonParams.push_back(consoleInput);
+   jsonParams.push_back("");
    
    json::Object jsonRpc;
    jsonRpc["method"] = "console_input";

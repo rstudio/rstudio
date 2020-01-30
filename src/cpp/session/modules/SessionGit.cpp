@@ -2327,7 +2327,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
       subjects.push_back(json::Value(string_utils::filterControlChars(it->subject)));
       descriptions.push_back(json::Value(string_utils::filterControlChars(it->description)));
       dates.push_back(json::Value(static_cast<double>(it->date)));
-      graphs.push_back(json::Value(it->graph));
+      graphs.push_back(it->graph);
 
       json::Array theseRefs;
       std::transform(

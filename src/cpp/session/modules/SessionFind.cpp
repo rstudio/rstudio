@@ -911,15 +911,15 @@ private:
                }
             }
 
-            files.push_back(json::Value(file));
-            lineNums.push_back(json::Value(lineNum));
-            contents.push_back(json::Value(lineInfo.decodedPreview));
+            files.push_back(file);
+            lineNums.push_back(lineNum);
+            contents.push_back(lineInfo.decodedPreview);
             matchOns.push_back(matchOn);
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
             for (std::string newError : errorMessage)
-               errors.push_back(json::Value(newError));
+               errors.push_back(newError);
             recordsToProcess--;
          }
       }
