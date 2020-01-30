@@ -1657,6 +1657,14 @@ public class UserPrefsAccessor extends Prefs
       return bool("full_project_path_in_window_title", false);
    }
 
+   /**
+    * Whether to enable experimental visual markdown editing
+    */
+   public PrefValue<Boolean> enableVisualMarkdownEditingMode()
+   {
+      return bool("enable_visual_markdown_editing_mode", false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2013,6 +2021,8 @@ public class UserPrefsAccessor extends Prefs
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
+      if (source.hasKey("enable_visual_markdown_editing_mode"))
+         enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
    }
    
 

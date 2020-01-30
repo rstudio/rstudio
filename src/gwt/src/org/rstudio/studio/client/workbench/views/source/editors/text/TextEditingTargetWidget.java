@@ -776,6 +776,8 @@ public class TextEditingTargetWidget
       setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
+      
+      toggleRmdVisualModeButton_.setVisible(isVisualModeEnabled());
      
       if (isShinyFile() || isTestFile() || isPlumberFile())
       {
@@ -844,6 +846,12 @@ public class TextEditingTargetWidget
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
+   }
+   
+   private boolean isVisualModeEnabled()
+   {
+      return editor_.getFileType().isMarkdown() && 
+             (isVisualMode() || userPrefs_.enableVisualMarkdownEditingMode().getValue());
    }
 
    private boolean isVisualMode()
@@ -1501,15 +1509,18 @@ public class TextEditingTargetWidget
       menu.clearItems();
       
       boolean visualMode = isVisualMode();
-      DocPropMenuItem visualModeMenu = new DocPropMenuItem(
-         "Use Visual Editor", docUpdateSentinel_, 
-         visualMode,
-         TextEditingTarget.PROPERTY_RMD_VISUAL_MODE, 
-         DocUpdateSentinel.PROPERTY_TRUE
-      );
-      
-      menu.addItem(visualModeMenu);
-      menu.addSeparator();
+      if (isVisualModeEnabled())
+      {
+         DocPropMenuItem visualModeMenu = new DocPropMenuItem(
+            "Use Visual Editor", docUpdateSentinel_, 
+            visualMode,
+            TextEditingTarget.PROPERTY_RMD_VISUAL_MODE, 
+            DocUpdateSentinel.PROPERTY_TRUE
+         );
+         
+         menu.addItem(visualModeMenu);
+         menu.addSeparator();
+      }
       
       
       if (show)

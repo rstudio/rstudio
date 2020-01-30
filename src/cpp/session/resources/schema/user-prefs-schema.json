@@ -1004,6 +1004,11 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to show the full path to project in desktop window title."
+        },
+        "enable_visual_markdown_editing_mode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable experimental visual markdown editing"
         }
     }
 }

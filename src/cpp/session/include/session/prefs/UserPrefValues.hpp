@@ -313,6 +313,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
+#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
 
 class UserPrefValues: public Preferences
 {
@@ -1379,6 +1380,12 @@ public:
     */
    bool fullProjectPathInWindowTitle();
    core::Error setFullProjectPathInWindowTitle(bool val);
+
+   /**
+    * Whether to enable experimental visual markdown editing
+    */
+   bool enableVisualMarkdownEditingMode();
+   core::Error setEnableVisualMarkdownEditingMode(bool val);
 
 };
 

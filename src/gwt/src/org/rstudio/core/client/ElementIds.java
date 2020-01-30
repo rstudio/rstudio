@@ -157,6 +157,9 @@ public class ElementIds
 
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
+   
+   public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
+   public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";

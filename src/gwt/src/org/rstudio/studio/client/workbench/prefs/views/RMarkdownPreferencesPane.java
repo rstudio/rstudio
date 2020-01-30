@@ -18,8 +18,11 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -35,11 +38,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       res_ = res;
     
-      add(headerLabel("R Markdown"));
       
-      add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
-      add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
+      VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
+      
+      basic.add(headerLabel("R Markdown"));
+      
+      basic.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
+      basic.add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
+      basic.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       
       docOutlineDisplay_ = new SelectWidget(
             "Show in document outline: ",
@@ -56,7 +62,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false,
             true,
             false);
-      add(docOutlineDisplay_);
+      basic.add(docOutlineDisplay_);
       
       rmdViewerMode_ = new SelectWidget(
             "Show output preview in: ",
@@ -73,14 +79,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false,
             true,
             false);
-      add(rmdViewerMode_);
+      basic.add(rmdViewerMode_);
 
        
       // show output inline for all Rmds
       final CheckBox rmdInlineOutput = checkboxPref(
             "Show output inline for all R Markdown documents",
             prefs_.rmdChunkOutputInline());
-      add(rmdInlineOutput);
+      basic.add(rmdInlineOutput);
       
       // behavior for latex and image preview popups
       latexPreviewWidget_ = new SelectWidget(
@@ -98,7 +104,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false,
             true,
             false);
-      add(latexPreviewWidget_);
+      basic.add(latexPreviewWidget_);
       
       if (session.getSessionInfo().getKnitWorkingDirAvailable())
       {
@@ -117,7 +123,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                false,
                true,
                false);
-         add(knitWorkingDir_);
+         basic.add(knitWorkingDir_);
       }
       else
       {
@@ -127,24 +133,40 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       final CheckBox showRmdRenderCommand = checkboxPref(
             "Display render command in R Markdown tab",
             prefs_.showRmdRenderCommand());
-      add(showRmdRenderCommand);
+      basic.add(showRmdRenderCommand);
       
-      add(spacedBefore(headerLabel("R Notebooks")));
+      basic.add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk
       final CheckBox autoExecuteSetupChunk = checkboxPref(
             "Execute setup chunk automatically in notebooks", 
             prefs_.autoRunSetupChunk());
-      add(autoExecuteSetupChunk);
+      basic.add(autoExecuteSetupChunk);
       
       // hide console when executing notebook chunks
       final CheckBox notebookHideConsole = checkboxPref(
             "Hide console automatically when executing " +
             "notebook chunks",
             prefs_.hideConsoleOnChunkExecute());
-      add(notebookHideConsole);
+      basic.add(notebookHideConsole);
       
-      add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
+      basic.add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
+      
+      VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
+      advanced.add(headerLabel("Visual Markdown Editor"));
+      final CheckBox enableVisualMarkdownEditor = checkboxPref(
+            "Enable visual markdown editing mode",
+            prefs_.enableVisualMarkdownEditingMode());
+      advanced.add(enableVisualMarkdownEditor);
+      
+      
+      
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(basic, "Basic", basic.getBasePanelId());
+      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
 
    @Override

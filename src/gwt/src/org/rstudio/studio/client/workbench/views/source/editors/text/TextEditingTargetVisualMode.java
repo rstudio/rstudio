@@ -23,6 +23,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -41,9 +42,8 @@ import com.google.inject.Inject;
 // TODO: test image handling when there is no path (use cwd?)
 
 // TODO: shortcut overlap / routing / remapping
-// TODO: command / keyboard / latch shortcut for entering visual mode
+
 // TODO: save cursor and scroll position
-// TODO: introduce global pref to toggle availabilty of visual mode
 
 // TODO: apply themeing
 // TODO: accessibility pass
@@ -75,12 +75,18 @@ public class TextEditingTargetVisualMode
       onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
          panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
       });
+      
+      // sync to user pref changed
+      prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
+         display_.manageCommandUI();
+      });
    } 
    
    @Inject
-   public void initialize(Commands commands, SourceServerOperations source)
+   public void initialize(Commands commands, UserPrefs prefs, SourceServerOperations source)
    {
       commands_ = commands;
+      prefs_ = prefs;
       source_ = source;
    }
    
@@ -353,6 +359,7 @@ public class TextEditingTargetVisualMode
   
    
    private Commands commands_;
+   private UserPrefs prefs_;
    private SourceServerOperations source_;
    
    private final TextEditingTarget target_;

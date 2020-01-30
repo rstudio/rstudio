@@ -2324,6 +2324,19 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
    return writePref("full_project_path_in_window_title", val);
 }
 
+/**
+ * Whether to enable experimental visual markdown editing
+ */
+bool UserPrefValues::enableVisualMarkdownEditingMode()
+{
+   return readPref<bool>("enable_visual_markdown_editing_mode");
+}
+
+core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+{
+   return writePref("enable_visual_markdown_editing_mode", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2504,6 +2517,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
+      kEnableVisualMarkdownEditingMode,
    });
 }
    
