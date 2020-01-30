@@ -39,6 +39,7 @@ public class AriaLiveService
    public static final String CONSOLE_LOG = "console_log";
    public static final String FILTERED_LIST = "filtered_list";
    public static final String GIT_MESSAGE_LENGTH = "git_message_length";
+   public static final String INACCESSIBLE_FEATURE = "inaccessible_feature";
    public static final String INFO_BAR = "info_bar";
    public static final String PROGRESS_COMPLETION = "progress_completion";
    public static final String PROGRESS_LOG = "progress_log";
@@ -66,6 +67,7 @@ public class AriaLiveService
       announcements_.put(CONSOLE_LOG, "Console output (requires restart)");
       announcements_.put(FILTERED_LIST, "Filtered result count");
       announcements_.put(GIT_MESSAGE_LENGTH, "Commit message length");
+      announcements_.put(INACCESSIBLE_FEATURE, "Inaccessible feature warning");
       announcements_.put(INFO_BAR, "Info bars");
       announcements_.put(PROGRESS_COMPLETION, "Task completion");
       announcements_.put(PROGRESS_LOG, "Task progress details");
