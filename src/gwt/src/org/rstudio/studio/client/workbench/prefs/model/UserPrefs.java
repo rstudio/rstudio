@@ -27,10 +27,14 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.server.ServerError;
@@ -39,6 +43,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.events.ScreenReaderStateReadyEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -58,6 +63,7 @@ public class UserPrefs extends UserPrefsComputed
                     Commands commands,
                     Binder binder,
                     GlobalDisplay display,
+                    AriaLiveService ariaLive,
                     ApplicationQuit quit)
    {
       super(session.getSessionInfo(),
@@ -72,6 +78,7 @@ public class UserPrefs extends UserPrefsComputed
       display_ = display;
       commands_ = commands;
       reloadAfterInit_ = false;
+      ariaLive_ = ariaLive;
       quit_ = quit;
       
       binder.bind(commands_, this);
@@ -242,7 +249,7 @@ public class UserPrefs extends UserPrefsComputed
 
    /**
     * Screen-reader enabled setting is stored differently on desktop vs server.
-    * On desktop is must be available earlier in startup so the RStudio.app/exe native
+    * On desktop it must be available earlier in startup so the RStudio.app/exe native
     * code can configure Chromium. Fetching that is async and we want interested parties
     * to be able to check it synchronously. So we cache it. Changing this setting
     * requires a reload of the UI to fully take effect.
@@ -252,7 +259,11 @@ public class UserPrefs extends UserPrefsComputed
       if (screenReaderEnabled_ != null)
          return;
 
-      Command onCompleted = () -> setScreenReaderMenuState(screenReaderEnabled_);
+      Command onCompleted = () ->
+      {
+         setScreenReaderMenuState(screenReaderEnabled_);
+         eventBus_.fireEvent(new ScreenReaderStateReadyEvent());
+      };
 
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().getEnableAccessibility(enabled ->
@@ -263,6 +274,18 @@ public class UserPrefs extends UserPrefsComputed
       else
       {
          screenReaderEnabled_ = RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().getValue();
+         
+         // on Server, we can announce if screen reader is not enabled; most things work without
+         // enabling it, but for best experience user should turn it on
+         if (!screenReaderEnabled_)
+         {
+            Timers.singleShot(AriaLiveService.STARTUP_ANNOUNCEMENT_DELAY, () ->
+            {
+               ariaLive_.announce(AriaLiveService.SCREEN_READER_NOT_ENABLED,
+                     "Warning: screen reader mode not enabled. Turn on using shortcut Ctrl+Shift+Forward Slash.",
+                     Timing.IMMEDIATE, Severity.ALERT);
+            });
+         }
          onCompleted.execute();
       }
    }
@@ -329,13 +352,16 @@ public class UserPrefs extends UserPrefsComputed
    @Handler
    void onToggleTabKeyMovesFocus()
    {
-      RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().setGlobalValue(
-            !RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue());
+      boolean newMode = !RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().getValue();
+      RStudioGinjector.INSTANCE.getUserPrefs().tabKeyMoveFocus().setGlobalValue(newMode);
       writeUserPrefs(succeeded ->
       {
          if (succeeded)
          {
             syncToggleTabKeyMovesFocusState();
+            ariaLive_.announce(AriaLiveService.TAB_KEY_MODE,
+                  newMode ? "Tab key always moves focus on" : "Tab key always moves focus off",
+                  Timing.IMMEDIATE, Severity.STATUS);
          }
          else
          {
@@ -359,6 +385,7 @@ public class UserPrefs extends UserPrefsComputed
    private final GlobalDisplay display_;
    private final Commands commands_;
    private final EventBus eventBus_;
+   private final AriaLiveService ariaLive_;
    private final ApplicationQuit quit_;
 
    private boolean reloadAfterInit_;

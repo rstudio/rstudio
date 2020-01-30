@@ -111,6 +111,7 @@ public class ElementIds
 
    // global list of specific IDs we assign -- we keep this list centralized in this class as a
    // so that we can be sure an ID is not used elsewhere in the product
+   public final static String RSTUDIO_LOGO = "rstudio_logo";
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
    public final static String DEPLOY_CONTENT = "deploy_content";

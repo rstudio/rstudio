@@ -20,6 +20,7 @@
 #define kEventsPending                    "ep"
 
 #define kRStudioUserIdentity              "RSTUDIO_USER_IDENTITY"
+#define kRStudioSystemUserIdentity        "X-RStudioSystemUserIdentity"
 #define kRStudioUserIdentityDisplay       "X-RStudioUserIdentity"
 #define kRStudioLimitRpcClientUid         "RSTUDIO_LIMIT_RPC_CLIENT_UID"
 #define kRSessionPortNumber               "RSTUDIO_SESSION_PORT"

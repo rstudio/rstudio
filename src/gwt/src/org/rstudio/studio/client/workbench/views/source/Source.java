@@ -67,6 +67,8 @@ import org.rstudio.studio.client.application.ApplicationAction;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -4210,7 +4212,7 @@ public class Source implements InsertSourceHandler,
       {
          announcement = activeEditor_.getCurrentStatus();
       }
-      ariaLive_.reportStatus(announcement);
+      ariaLive_.announce(AriaLiveService.ON_DEMAND, announcement, Timing.IMMEDIATE, Severity.STATUS);
    }
    
    @Handler

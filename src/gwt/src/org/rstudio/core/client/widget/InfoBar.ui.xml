@@ -6,7 +6,7 @@
 
 
    <ui:style>
-      @external rstudio-themes-flat, rstudio-themes-dark-grey;
+      @external rstudio-themes-flat, rstudio-themes-dark-grey, gwt-Image;
       @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
       @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
@@ -35,6 +35,12 @@
       .dismiss {
          margin-top: 4px;
          margin-right: 4px;
+         right: 0;
+         width: 9px;
+         height: 9px;
+      }
+      .dismiss .gwt-Image {
+         float: left;
          width: 9px;
          height: 9px;
       }
@@ -60,10 +66,10 @@
          </g:HorizontalPanel>
       </g:center>
       <g:east size="13">
-          <g:Image ui:field="dismiss_"
+          <f:ImageButton ui:field="dismiss_"
                    resource="{themeRes.closeTab2x}"
-                   styleName="{style.dismiss}"
-                   title="Dismiss"/>
+                   addStyleNames="{style.dismiss}"
+                   title="Dismiss infobar"/>
       </g:east>
    </g:DockLayoutPanel>
    </g:FlowPanel>

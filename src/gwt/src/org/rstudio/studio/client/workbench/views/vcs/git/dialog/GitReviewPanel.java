@@ -49,6 +49,8 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
@@ -711,7 +713,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       }
 
       // Debounce an update to the accessible character count
-      ariaLive_.reportStatusDebounced(liveRegionMessage);
+      ariaLive_.announce(AriaLiveService.GIT_MESSAGE_LENGTH, liveRegionMessage,
+            Timing.DEBOUNCE, Severity.STATUS);
    }
 
    @UiField(provided = true)

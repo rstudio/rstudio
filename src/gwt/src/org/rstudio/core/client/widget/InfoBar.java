@@ -1,7 +1,7 @@
 /*
  * InfoBar.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,6 +39,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.model.Session;
 
@@ -74,10 +74,13 @@ public class InfoBar extends Composite
       initWidget(binder.createAndBindUi(this));
 
       A11y.setARIAHidden(label_);
-      if (mode == ERROR)
-         Roles.getAlertRole().set(live_.getElement());
-      else
-         Roles.getStatusRole().set(live_.getElement());
+      if (!RStudioGinjector.INSTANCE.getAriaLiveService().isDisabled(AriaLiveService.INFO_BAR))
+      {
+         if (mode == ERROR)
+            Roles.getAlertRole().set(live_.getElement());
+         else
+            Roles.getStatusRole().set(live_.getElement());
+      }
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       
       if (dismissHandler != null)
@@ -195,7 +198,7 @@ public class InfoBar extends Composite
    @UiField(provided = true)
    protected HorizontalPanel labelRight_;
    @UiField
-   Image dismiss_;
+   ImageButton dismiss_;
 
    interface MyBinder extends UiBinder<Widget, InfoBar>{}
    private static MyBinder binder = GWT.create(MyBinder.class);

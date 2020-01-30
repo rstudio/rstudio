@@ -1009,6 +1009,12 @@
             "type": "boolean",
             "default": false,
             "description": "Whether to enable experimental visual markdown editing"
+        },
+        "disabled_aria_live_announcements": {
+            "type": "array",
+            "default": [],
+            "description": "List of aria-live announcements to disable."
         }
     }
 }
+

@@ -62,6 +62,10 @@ public class SessionInfo extends JavaScriptObject
    public final native String getUserIdentity() /*-{
       return this.userIdentity;
    }-*/;
+
+   public final native String getSystemUsername() /*-{
+      return this.systemUsername;
+   }-*/;
    
    public final native String getSessionId() /*-{
       return this.session_id;

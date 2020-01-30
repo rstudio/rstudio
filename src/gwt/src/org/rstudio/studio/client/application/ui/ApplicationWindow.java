@@ -29,6 +29,8 @@ import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -84,8 +86,9 @@ public class ApplicationWindow extends Composite
       updateWorkbenchTopBottom();
       applicationPanel_.forceLayout();  
       if (announce && showToolbar != currentVisibility)
-         ariaLive_.reportStatus(showToolbar ? "Main toolbar visible" :
-                                              "Main toolbar hidden");
+         ariaLive_.announce(AriaLiveService.TOOLBAR_VISIBILITY,
+               showToolbar ? "Main toolbar visible" : "Main toolbar hidden",
+               Timing.IMMEDIATE, Severity.STATUS);
    }
    
    @Override
@@ -99,7 +102,9 @@ public class ApplicationWindow extends Composite
    {
       if (!isToolbarShowing())
       {
-         ariaLive_.reportStatus("Toolbar hidden, unable to focus.");
+         ariaLive_.announce(AriaLiveService.TOOLBAR_VISIBILITY,
+               "Toolbar hidden, unable to focus.",
+               Timing.IMMEDIATE, Severity.STATUS);
          return;
       }
       applicationHeader_.focusToolbar();
@@ -279,9 +284,9 @@ public class ApplicationWindow extends Composite
    }
    
    @Override
-   public void reportStatus(String message, int delayMs)
+   public void reportStatus(String message, int delayMs, Severity severity)
    {
-      ariaLiveStatusWidget_.reportStatus(message, delayMs);
+      ariaLiveStatusWidget_.reportStatus(message, delayMs, severity);
    }
 
    @Override
@@ -295,7 +300,8 @@ public class ApplicationWindow extends Composite
       
       // create and show progress
       activeSerializationProgress_ = 
-                    new ApplicationSerializationProgress(msg, modal, delayMs);
+                    new ApplicationSerializationProgress(msg, modal, delayMs,
+                          !ariaLive_.isDisabled(AriaLiveService.SESSION_STATE));
       
       // implement timeout for *this* serialization progress instance if 
       // requested (check to ensure the same instance because another 

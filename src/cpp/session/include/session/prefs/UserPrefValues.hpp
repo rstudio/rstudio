@@ -314,6 +314,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 
 class UserPrefValues: public Preferences
 {
@@ -1387,6 +1388,11 @@ public:
    bool enableVisualMarkdownEditingMode();
    core::Error setEnableVisualMarkdownEditingMode(bool val);
 
+   /**
+    * List of aria-live announcements to disable.
+    */
+   core::json::Array disabledAriaLiveAnnouncements();
+   core::Error setDisabledAriaLiveAnnouncements(core::json::Array val);
 };
 
         

@@ -2337,6 +2337,19 @@ core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
    return writePref("enable_visual_markdown_editing_mode", val);
 }
 
+/**
+ * List of aria-live announcements to disable.
+ */
+core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
+{
+   return readPref<core::json::Array>("disabled_aria_live_announcements");
+}
+
+core::Error UserPrefValues::setDisabledAriaLiveAnnouncements(core::json::Array val)
+{
+   return writePref("disabled_aria_live_announcements", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2518,6 +2531,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kEnableVisualMarkdownEditingMode,
+      kDisabledAriaLiveAnnouncements
    });
 }
    

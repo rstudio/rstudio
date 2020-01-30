@@ -1665,6 +1665,14 @@ public class UserPrefsAccessor extends Prefs
       return bool("enable_visual_markdown_editing_mode", false);
    }
 
+   /**
+    * List of aria-live announcements to disable.
+    */
+   public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
+   {
+      return object("disabled_aria_live_announcements", JsArrayUtil.createStringArray());
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2023,6 +2031,8 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("enable_visual_markdown_editing_mode"))
          enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
+      if (source.hasKey("disabled_aria_live_announcements"))
+         disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
    }
    
 

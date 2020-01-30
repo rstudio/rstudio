@@ -1,7 +1,7 @@
 /*
  * ShellDisplay.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,12 +33,12 @@ public interface ShellDisplay extends ShellOutputWriter,
 {
    void consoleWriteInput(String input, String console);
    void consoleWritePrompt(String prompt);
-   void consolePrompt(String prompt, boolean showInput) ;
-   void ensureInputVisible() ;
-   InputEditorDisplay getInputEditorDisplay() ;
-   void clearOutput() ;
-   String processCommandEntry() ;
-   int getCharacterWidth() ;
+   void consolePrompt(String prompt, boolean showInput);
+   void ensureInputVisible();
+   InputEditorDisplay getInputEditorDisplay();
+   void clearOutput();
+   String processCommandEntry();
+   int getCharacterWidth();
    boolean isPromptEmpty();
    String getPromptText();
    
@@ -55,4 +55,7 @@ public interface ShellDisplay extends ShellOutputWriter,
    HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler);
    
    Widget getShellWidget();
+   
+   void enableLiveReporting();
+   void clearLiveRegion();
 }

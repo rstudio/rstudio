@@ -16,12 +16,16 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 /**
- * A visually hidden widget for performing aria-live status announcements.
+ * A visually hidden widget for performing aria-live status announcements. Can also
+ * perform alerts, but those should be very rare; most alerts should be visible to both
+ * sighted users and those using screen readers.
  */
 public class AriaLiveStatusWidget extends Widget
                                   implements AriaLiveStatusReporter
@@ -30,32 +34,44 @@ public class AriaLiveStatusWidget extends Widget
    {
       setElement(Document.get().createDivElement());
       A11y.setVisuallyHidden(getElement());
-      Roles.getStatusRole().set(getElement());
+
+      statusElement_ = Document.get().createDivElement();
+      Roles.getStatusRole().set(statusElement_);
+
+      alertElement_ = Document.get().createDivElement();
+      Roles.getAlertRole().set(alertElement_);
+      
+      getElement().appendChild(statusElement_);
+      getElement().appendChild(alertElement_);
    }
 
-   public void reportStatus(String message, int speakDelayMs)
+   public void reportStatus(String message, int speakDelayMs, Severity severity)
    {
       if (speakDelayMs < 0)
       {
+         clearTimers();
          clearMessage();
          return;
       }
 
       resultsMessage_ = message;
-      if (updateReaderTimer_.isRunning())
-         updateReaderTimer_.cancel();
-      if (clearReaderTimer_.isRunning())
-         clearReaderTimer_.cancel();
+      severity_ = severity;
+      clearTimers();
       updateReaderTimer_.schedule(speakDelayMs);
    }
 
-   public void clearMessage()
+   public void clearTimers()
    {
       if (updateReaderTimer_.isRunning())
          updateReaderTimer_.cancel();
       if (clearReaderTimer_.isRunning())
          clearReaderTimer_.cancel();
-      getElement().setInnerText("");
+   }
+   
+   public void clearMessage()
+   {
+      statusElement_.setInnerText("");
+      alertElement_.setInnerText("");
    }
 
    /**
@@ -66,10 +82,13 @@ public class AriaLiveStatusWidget extends Widget
       @Override
       public void run()
       {
-         getElement().setInnerText(resultsMessage_);
+         if (severity_ == Severity.STATUS)
+            statusElement_.setInnerText(resultsMessage_);
+         else
+            alertElement_.setInnerText(resultsMessage_);
          if (clearReaderTimer_.isRunning())
             clearReaderTimer_.cancel();
-         clearReaderTimer_.schedule(4000);
+         clearReaderTimer_.schedule(CLEAR_PRIOR_MESSAGE_DELAY);
       }
    };
 
@@ -81,9 +100,14 @@ public class AriaLiveStatusWidget extends Widget
      @Override
      public void run()
      {
-        getElement().setInnerText("");
+        clearMessage();
      }
    };
 
+   private static final int CLEAR_PRIOR_MESSAGE_DELAY = 4000;
    private String resultsMessage_;
+   private Element statusElement_;
+   private Element alertElement_;
+   private Severity severity_;
+   
 }
