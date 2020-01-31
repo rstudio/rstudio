@@ -11,6 +11,8 @@ https://docs.google.com/document/d/1QI6eBTbf5_Hf5sb4UxlYLlrE2bB918l4JXzUqoXv32Y/
 
 - Eliminate some toolbar buttons when toolbar gets more narrow
 
+- Improved treatment for relative image paths that don't resolve
+
 - Cursor location for insert yaml in the middle of paragraph
 
 - Issue w/ tons of pandoc processes stacking up (realtime edit of manual.md, IDE usage in background)
