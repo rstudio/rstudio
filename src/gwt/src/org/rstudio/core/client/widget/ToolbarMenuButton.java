@@ -1,7 +1,7 @@
 /*
  * ToolbarMenuButton.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -86,11 +87,22 @@ public class ToolbarMenuButton extends ToolbarButton
       addStyleName(styles_.toolbarButtonMenu());
    }
 
+   private void setMenuShowing(boolean showing)
+   {
+      if (showing)
+         Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
+      else
+         A11y.setARIANotExpanded(getElement());
+         
+      menuShowing_ = showing;
+   }
+
    private void addMenuHandlers(final ToolbarPopupMenu popupMenu,
                                 final boolean rightAlignMenu)
    {
       Roles.getButtonRole().setAriaHaspopupProperty(getElement(), true);
-      
+      setMenuShowing(false);
+
       menu_ = popupMenu;
       rightAlignMenu_ = rightAlignMenu;
 
@@ -113,7 +125,7 @@ public class ToolbarMenuButton extends ToolbarButton
       popupMenu.addCloseHandler(popupPanelCloseEvent ->
       {
          removeStyleName(styles_.toolbarButtonPushed());
-         Scheduler.get().scheduleDeferred(() -> menuShowing_ = false);
+         Scheduler.get().scheduleDeferred(() -> setMenuShowing(false));
       });
       addKeyPressHandler(event ->
       {
@@ -138,7 +150,7 @@ public class ToolbarMenuButton extends ToolbarButton
          {
             removeStyleName(styles_.toolbarButtonPushed());
             menu.hide();
-            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.FALSE);
+            setMenuShowing(false);
             setFocus(true);
          }
          else
@@ -165,9 +177,8 @@ public class ToolbarMenuButton extends ToolbarButton
             {
                menu.showRelativeTo(ToolbarMenuButton.this);
             }
-            menuShowing_ = true;
+            setMenuShowing(true);
             menu_.focus();
-            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
          }
       });
    }

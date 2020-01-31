@@ -1318,6 +1318,10 @@ body.windows .toolbar {
    overflow: hidden;
 }
 
+.toolbarButton.popupButton {
+   margin: 0;
+}
+
 .toolbarButton:focus {
    outline: none;
 }

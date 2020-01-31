@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -438,6 +438,7 @@ public abstract class
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();
    public abstract AppCommand helpHome();
+   public abstract AppCommand helpSearch();
    public abstract AppCommand printHelp();
    public abstract AppCommand clearHelpHistory();
    public abstract AppCommand helpPopout();

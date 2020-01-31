@@ -1153,6 +1153,21 @@ public class DomUtils
    }
 
    /**
+    * Set disabled attribute on an element's child
+    * @param element The parent element
+    * @param ordinal The index representing the child to disable
+    * @param disable Whether we are adding or removing the disable attribute
+    */
+   public static void setOptionDisabled(Element element, int ordinal, boolean disable)
+   {
+      if (disable)
+         ((Element) element.getChild(ordinal))
+            .setAttribute("disabled", "disabled");
+      else
+         ((Element) element.getChild(ordinal)).removeAttribute("disabled");
+   }
+
+   /**
     * If an element doesn't already have an id, assign one
     * @param ele element to operate on
     * @return id of the element

@@ -23,18 +23,18 @@ public class HelpNavigateEvent extends GwtEvent<HelpNavigateHandler>
    
    public HelpNavigateEvent(String url, String title)
    {
-      url_ = url ;
-      title_ = title ;
+      url_ = url;
+      title_ = title;
    }
    
    public String getUrl()
    {
-      return url_ ;
+      return url_;
    }
 
    public String getTitle()
    {
-      return title_ ;
+      return title_;
    }
 
    @Override
@@ -49,6 +49,6 @@ public class HelpNavigateEvent extends GwtEvent<HelpNavigateHandler>
       return TYPE;
    }
    
-   private final String url_ ;
-   private final String title_ ;
+   private final String url_;
+   private final String title_;
 }

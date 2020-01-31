@@ -32,7 +32,7 @@ public interface HelpServerOperations
    void showHelpTopic(String topic, String pkgName, int type);
 
    void search(String query, 
-               ServerRequestCallback<JsArrayString> requestCallback) ;
+               ServerRequestCallback<JsArrayString> requestCallback);
    
    void getCustomHelp(String helpHandler,
                       String topic,

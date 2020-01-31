@@ -1,7 +1,7 @@
 /*
  * HelpSearch.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -33,7 +32,7 @@ public class HelpSearch
 {
    public interface Display 
    {
-      SearchDisplay getSearchDisplay();  
+      SearchDisplay getSearchDisplay();
    }
    
    @Inject
@@ -41,9 +40,9 @@ public class HelpSearch
                      HelpServerOperations server,
                      EventBus eventBus)
    {
-      display_ = display ;
-      eventBus_ = eventBus ;
-      server_ = server ;
+      display_ = display;
+      eventBus_ = eventBus;
+      server_ = server;
       
       display_.getSearchDisplay().addSelectionHandler(
                                        new SelectionHandler<Suggestion>() {
@@ -61,12 +60,12 @@ public class HelpSearch
          {       
             fireShowHelpEvent(event.getSelectedItem());
          }
-      }) ;
+      });
    }
 
-   public Widget getSearchWidget()
+   public SearchDisplay getSearchWidget()
    {
-      return (Widget) display_.getSearchDisplay();
+      return display_.getSearchDisplay();
    }
    
    private void fireShowHelpEvent(String topic)
@@ -75,12 +74,12 @@ public class HelpSearch
          public void onResponseReceived(JsArrayString url)
          {
             if (url != null && url.length() > 0)
-               eventBus_.fireEvent(new ShowHelpEvent(url.get(0))) ;
+               eventBus_.fireEvent(new ShowHelpEvent(url.get(0)));
          }
-         }) ;
+         });
    }
    
-   private final HelpServerOperations server_ ;
-   private final EventBus eventBus_ ;
-   private final Display display_ ;
+   private final HelpServerOperations server_;
+   private final EventBus eventBus_;
+   private final Display display_;
 }

@@ -59,7 +59,7 @@ SDK be sure to specify the --exclude-qt-sdk flag as described above).
    ./install-dependencies-yum
    ./install-dependencies-zypper
    
-Note that this script will install Boost 1.63 in the /opt/rstudio-tools/boost
+Note that this script will install Boost 1.69 in the /opt/rstudio-tools/boost
 directory (the /opt/rstudio-tools directory is used to insure that this 
 installation of boost doesn't conflict with other versions of boost installed
 on the system). This part of the installation will take a few minutes since

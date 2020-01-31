@@ -27,4 +27,16 @@ public class FormListBox extends ListBox
    {
       getElement().setId(id);
    }
+
+   public int getIndexFromValue(String value)
+   {
+      int index = 0;
+      while (index < getItemCount())
+      {
+         if (value == getValue(index))
+            return index;
+         index++;
+      }
+      return -1;
+   }
 }

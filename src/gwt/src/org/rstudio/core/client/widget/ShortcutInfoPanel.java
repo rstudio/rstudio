@@ -1,7 +1,7 @@
 /*
  * ShortcutInfoPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,7 +82,7 @@ public class ShortcutInfoPanel extends Composite
       String[][] groupNames = { 
             new String[] { "Tabs", "Panes", "Files", "Main Menu (Server)" },
             new String[] { "Source Navigation", "Execute" },
-            new String[] { "Source Editor", "Debug" }, 
+            new String[] { "Source Editor", "Debug", "Accessibility" }, 
             new String[] { "Source Control", "Build", "Console", "Terminal", "Other" }
       };
       int pctWidth = 100 / groupNames.length;

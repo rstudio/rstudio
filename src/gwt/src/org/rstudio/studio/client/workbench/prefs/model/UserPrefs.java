@@ -281,8 +281,9 @@ public class UserPrefs extends UserPrefsComputed
          {
             Timers.singleShot(AriaLiveService.STARTUP_ANNOUNCEMENT_DELAY, () ->
             {
+               String shortcut = commands_.toggleScreenReaderSupport().getShortcutRaw();
                ariaLive_.announce(AriaLiveService.SCREEN_READER_NOT_ENABLED,
-                     "Warning: screen reader mode not enabled. Turn on using shortcut Ctrl+Shift+Forward Slash.",
+                     "Warning: screen reader mode not enabled. Turn on using shortcut " + shortcut + ".",
                      Timing.IMMEDIATE, Severity.ALERT);
             });
          }
