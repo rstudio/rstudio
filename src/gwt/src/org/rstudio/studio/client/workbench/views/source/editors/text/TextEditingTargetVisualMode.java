@@ -39,7 +39,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
 
@@ -47,6 +46,7 @@ import com.google.inject.Inject;
 // TODO: test image handling when there is no path (use cwd?)
 
 // TODO: save cursor and scroll position
+//       (codemirror may be interfering with this as things stand now)
 
 // TODO: apply themeing
 // TODO: accessibility pass
@@ -209,9 +209,10 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
+               loadingFromSource_ = true;
                panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {  
-                  // mark clean
                   isDirty_ = false;
+                  loadingFromSource_ = false;
                });
             }
             
@@ -305,7 +306,7 @@ public class TextEditingTargetVisualMode
                   syncOnIdle_.nudge();
                   
                   // update editor dirty state if necessary
-                  if (!dirtyState_.getValue())
+                  if (!loadingFromSource_ && !dirtyState_.getValue())
                   {
                      dirtyState_.markDirty(false);
                      source_.setSourceDocumentDirty(
@@ -425,6 +426,7 @@ public class TextEditingTargetVisualMode
    
    private DebouncedCommand syncOnIdle_; 
    private boolean isDirty_ = false;
+   private boolean loadingFromSource_ = false;
    
    private DebouncedCommand saveSelectionOnIdle_;
    
