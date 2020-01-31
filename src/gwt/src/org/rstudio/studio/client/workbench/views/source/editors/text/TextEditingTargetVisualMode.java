@@ -21,6 +21,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
+import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
@@ -35,6 +36,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
@@ -207,7 +209,8 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {
+               panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {  
+                  // mark clean
                   isDirty_ = false;
                });
             }
@@ -218,8 +221,9 @@ public class TextEditingTargetVisualMode
             // activate panmirror 
             editorContainer.activateWidget(panmirror_, focus);
             
-            // begin sync-on-idle behavior
+            // begin save-on-idle behavior
             syncOnIdle_.resume();
+            saveSelectionOnIdle_.resume();
          });
         
       }
@@ -234,6 +238,9 @@ public class TextEditingTargetVisualMode
             
             if (syncOnIdle_ != null)
                syncOnIdle_.suspend();
+            
+            if (saveSelectionOnIdle_ != null)
+               saveSelectionOnIdle_.suspend();
          });  
       }
    }
@@ -275,8 +282,21 @@ public class TextEditingTargetVisualMode
                }
             };
             
+            // periodically save selection
+            saveSelectionOnIdle_ = new DebouncedCommand(1000)
+            {
+               @Override
+               protected void execute()
+               {
+                  PanmirrorSelection selection = panmirror_.getSelection();
+                  String selectionProp = selection.from + ":" + selection.to; 
+                  docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_SELECTION, selectionProp);
+               }
+            };
+            
             // set dirty flag + nudge idle sync on change
-            panmirror_.addChangeHandler(new ChangeHandler() {
+            panmirror_.addChangeHandler(new ChangeHandler() 
+            {
                @Override
                public void onChange(ChangeEvent event)
                {
@@ -295,6 +315,16 @@ public class TextEditingTargetVisualMode
                }  
             });
             
+            // save selection
+            panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+            {
+               @Override
+               public void onSelectionChange(SelectionChangeEvent event)
+               {
+                  saveSelectionOnIdle_.nudge();
+               }
+            });
+            
             // track changes in outline sidebar and save as prefs
             panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
                setOutlineVisible(event.getVisible());
@@ -302,7 +332,6 @@ public class TextEditingTargetVisualMode
             panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
                setOutlineWidth(event.getWidth());
             });
-            
     
             // good to go!
             ready.execute();
@@ -313,8 +342,7 @@ public class TextEditingTargetVisualMode
          // panmirror already created
          ready.execute();
       }
-   }
-   
+   } 
    
    // is our widget active in the editor container
    private boolean isPanmirrorActive()
@@ -398,9 +426,11 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand syncOnIdle_; 
    private boolean isDirty_ = false;
    
+   private DebouncedCommand saveSelectionOnIdle_;
+   
    private PanmirrorWidget panmirror_;
    
-   
+   private static final String RMD_VISUAL_MODE_SELECTION = "rmdVisualModeSelection";   
 }
 
 
