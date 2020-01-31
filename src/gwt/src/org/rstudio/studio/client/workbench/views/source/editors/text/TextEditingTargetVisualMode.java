@@ -42,9 +42,6 @@ import com.google.inject.Inject;
 // TODO: currently, scroll to the line doesn't happen for find source nav
 //       when switching from visual to source mode
 
-// TODO: images currently display too large (2x)
-// TODO: test image handling when there is no path (use cwd?)
-
 // TODO: save cursor and scroll position
 //       (codemirror may be interfering with this as things stand now)
 
@@ -409,7 +406,10 @@ public class TextEditingTargetVisualMode
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
       uiContext.translateResourcePath = path -> {
-         return ImagePreviewer.imgSrcPathFromHref(docUpdateSentinel_, path);
+         if (docUpdateSentinel_.getPath() != null)
+            return ImagePreviewer.imgSrcPathFromHref(docUpdateSentinel_, path);
+         else
+            return path;
       };
       return uiContext;
    }
