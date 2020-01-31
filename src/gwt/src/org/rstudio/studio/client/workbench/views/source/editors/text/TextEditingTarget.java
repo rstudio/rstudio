@@ -7637,6 +7637,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
-   public static final String PROPERTY_RMD_VISUAL_MODE = "rmdVisualMode";
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
 }

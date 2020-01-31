@@ -34,7 +34,6 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent.Handler;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
