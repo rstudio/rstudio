@@ -312,6 +312,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void setKeybindings(PanmirrorKeybindings keybindings) 
    {
       editor_.setKeybindings(keybindings);
+      commands_ = editor_.commands();
+      toolbar_.init(commands_);
    }
    
    public String getHTML()

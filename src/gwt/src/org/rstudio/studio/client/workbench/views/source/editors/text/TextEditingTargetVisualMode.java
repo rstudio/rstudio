@@ -18,9 +18,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -40,8 +43,6 @@ import com.google.inject.Inject;
 
 // TODO: images currently display too large (2x)
 // TODO: test image handling when there is no path (use cwd?)
-
-// TODO: shortcut overlap / routing / remapping
 
 // TODO: save cursor and scroll position
 
@@ -244,13 +245,25 @@ public class TextEditingTargetVisualMode
       {
          // create panmirror
          PanmirrorConfig config = new PanmirrorConfig(uiContext());
+         
+         // options
          config.options.rmdCodeChunks = true;
+           
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
          PanmirrorWidget.create(config, options, (panmirror) -> {
             
             // save reference to panmirror
             panmirror_ = panmirror;
             
+            // remove some keybindings that conflict with the ide
+            PanmirrorCommands commands = Panmirror.EditorCommands;
+            disableKeys(
+               commands.Paragraph, 
+               commands.Heading1, commands.Heading2, commands.Heading3,
+               commands.Heading4, commands.Heading5, commands.Heading6,
+               commands.BulletList, commands.OrderedList, commands.TightList
+            );
+           
             // periodically sync edits back to main editor
             syncOnIdle_ = new DebouncedCommand(1000)
             {
@@ -332,6 +345,21 @@ public class TextEditingTargetVisualMode
    private void setOutlineWidth(double width)
    {
       target_.setPreferredOutlineWidgetSize(width);
+   }
+   
+   private void disableKeys(String... commands)
+   {
+      PanmirrorKeybindings keybindings = disabledKeybindings(commands);
+      panmirror_.setKeybindings(keybindings);
+   }
+   
+   private PanmirrorKeybindings disabledKeybindings(String... commands)
+   {
+      PanmirrorKeybindings keybindings = new PanmirrorKeybindings();
+      for (String command : commands)
+         keybindings.add(command,  new String[0]);
+      
+      return keybindings;
    }
    
    private void disableForVisualMode(AppCommand... commands)
