@@ -23,10 +23,13 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -45,33 +48,43 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       res_ = res;
       ariaLive_ = ariaLive;
 
-      add(headerLabel("Assistive Tools"));
+      VerticalTabPanel generalPanel = new VerticalTabPanel(ElementIds.A11Y_GENERAL_PREFS);
+      VerticalTabPanel announcementsPanel = new VerticalTabPanel(ElementIds.A11Y_ANNOUNCEMENTS_PREFS);
+
+      generalPanel.add(headerLabel("Assistive Tools"));
       chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
-      add(chkScreenReaderEnabled_);
+      generalPanel.add(chkScreenReaderEnabled_);
 
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
             1, 9999, prefs.typingStatusDelayMs());
-      add(indent(typingStatusDelay_));
+      generalPanel.add(indent(typingStatusDelay_));
 
-      Label announcementsLabel = headerLabel("Announcements");
+      Label displayLabel = headerLabel("Other");
+      generalPanel.add(displayLabel);
+      displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
+      generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
+      chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
+      generalPanel.add(chkTabMovesFocus_);
+
+      Label announcementsLabel = headerLabel("Enable / Disable Announcements");
       announcements_ = new CheckBoxList(announcementsLabel);
-      add(announcementsLabel);
+      announcementsPanel.add(announcementsLabel);
       announcementsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      add(announcements_);
+      announcementsPanel.add(announcements_);
       DomUtils.ensureHasId(announcementsLabel.getElement());
       Roles.getListboxRole().setAriaLabelledbyProperty(announcements_.getElement(),
             Id.of(announcementsLabel.getElement()));
-      announcements_.setHeight("150px");
-      announcements_.setWidth("300px");
+      announcements_.setHeight("380px");
+      announcements_.setWidth("390px");
       announcements_.getElement().getStyle().setMarginBottom(15, Unit.PX);
       announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
-      
-      Label displayLabel = headerLabel("Other");
-      add(displayLabel);
-      displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
-      add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
-      chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
-      add(chkTabMovesFocus_);
+
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Accessibility");
+      tabPanel.setSize("435px", "498px");
+      tabPanel.add(generalPanel, "General", generalPanel.getBasePanelId());
+      tabPanel.add(announcementsPanel, "Announcements", announcementsPanel.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
    }
 
    @Override

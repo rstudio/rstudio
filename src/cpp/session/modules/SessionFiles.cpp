@@ -170,7 +170,7 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
 }
 
 core::Error isGitDirectory(const json::JsonRpcRequest& request,
-                            json::JsonRpcResponse* pResponse)
+                           json::JsonRpcResponse* pResponse)
 {
    std::string path;
    Error error = json::readParams(request.params, &path);
@@ -184,6 +184,21 @@ core::Error isGitDirectory(const json::JsonRpcRequest& request,
    return Success();
 }
 
+core::Error isPackageDirectory(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error;
+
+   FilePath targetPath = module_context::resolveAliasedPath(path);
+
+   pResponse->setResult(r_util::isPackageDirectory(targetPath));
+
+   return Success();
+}
+                         
 core::Error getFileContents(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
@@ -1300,6 +1315,7 @@ Error initialize()
       (bind(registerRpcMethod, "stat", stat))
       (bind(registerRpcMethod, "is_text_file", isTextFile))
       (bind(registerRpcMethod, "is_git_directory", isGitDirectory))
+      (bind(registerRpcMethod, "is_package_directory", isPackageDirectory))
       (bind(registerRpcMethod, "get_file_contents", getFileContents))
       (bind(registerRpcMethod, "list_files", listFiles))
       (bind(registerRpcMethod, "create_folder", createFolder))

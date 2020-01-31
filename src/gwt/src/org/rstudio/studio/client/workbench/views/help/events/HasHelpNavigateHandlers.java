@@ -19,5 +19,5 @@ import com.google.gwt.event.shared.HasHandlers;
 
 public interface HasHelpNavigateHandlers extends HasHandlers
 {
-   HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler) ;
+   HandlerRegistration addHelpNavigateHandler(HelpNavigateHandler handler);
 }

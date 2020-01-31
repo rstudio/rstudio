@@ -1,7 +1,7 @@
 /*
  * HelpTab.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,9 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
                                                 ActivateHelpHandler
    {
       @Handler public abstract void onHelpHome();
+      @Handler public abstract void onHelpSearch();
+      @Handler public abstract void onHelpBack();
+      @Handler public abstract void onHelpForward();
       @Handler public abstract void onDebugHelp();
       @Handler public abstract void onMarkdownHelp();
       @Handler public abstract void onOpenRStudioIDECheatSheet();

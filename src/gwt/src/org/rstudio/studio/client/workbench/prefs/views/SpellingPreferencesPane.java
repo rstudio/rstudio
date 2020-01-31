@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -26,6 +28,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
@@ -54,12 +57,28 @@ public class SpellingPreferencesPane extends PreferencesPane
       spaced(customDictsWidget_);
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
-            
+
       add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreUppercaseWords()));
-      
       add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers()));
 
-      add(checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking()));
+      boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
+      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking());
+      realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
+      add(realtimeSpellcheckingCheckbox_);
+
+      blacklistWarning_ = new Label("Real time spellchecking currently unavailable for this dictionary");
+      blacklistWarning_.getElement().getStyle().setColor("red");
+      blacklistWarning_.setVisible(!canRealtime);
+
+      add(blacklistWarning_);
+
+      languageWidget_.addChangeHandler((event) -> {
+         boolean canRealtimeCheck = TypoSpellChecker.canRealtimeSpellcheckDict(languageWidget_.getSelectedLanguage());
+         blacklistWarning_.setVisible(!canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue() && canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.setEnabled(canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtimeCheck ? 1.0 : 0.6);
+      });
    }
 
    
@@ -161,4 +180,6 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
    private final SpellingCustomDictionariesWidget customDictsWidget_;
+   private final Label blacklistWarning_;
+   private final CheckBox realtimeSpellcheckingCheckbox_;
 }

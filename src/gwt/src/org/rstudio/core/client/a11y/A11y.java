@@ -125,4 +125,11 @@ public class A11y
    {
       el.removeClassName(ThemeStyles.INSTANCE.visuallyHidden());
    }
+   
+   public static void setARIANotExpanded(Element el)
+   {
+      // aria best-practices recommends not including aria-expanded property at all instead 
+      // of setting it to false
+      el.removeAttribute("aria-expanded");
+   }
 }
