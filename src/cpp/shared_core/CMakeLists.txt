@@ -29,6 +29,7 @@ file(GLOB_RECURSE SHARED_CORE_HEADER_FILES "*.h*")
 
 # source files
 set (SHARED_CORE_SOURCE_FILES
+   Assert.cpp
    Error.cpp
    FileLogDestination.cpp
    FilePath.cpp
@@ -52,23 +53,50 @@ if (UNIX)
       system/User.cpp
    )
 
+   find_library(PTHREAD_LIBRARIES pthread)
+   set (SHARED_CORE_SYSTEM_LIBS
+      ${PTHREAD_LIBRARIES})
+
 else()
 
    set(SHARED_INCLUDE_DIRS
       ${SHARED_INCLUDE_DIRS}
-      ${EXT_SOURCE_DIR})
+      ${EXT_SOURCE_DIR}
+   )
 
    set(SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
       system/Win32StringUtils.cpp
-      system/Win32User.cpp)
+      system/Win32User.cpp
+   )
 
 endif()
 
-include_directories(${SHARED_INCLUDE_DIRS})
+include_directories(
+   ${SHARED_INCLUDE_DIRS}
+   ${TESTS_INCLUDE_DIR}
+)
 
 add_library(rstudio-shared-core STATIC ${SHARED_CORE_HEADER_FILES} ${SHARED_CORE_SOURCE_FILES})
 define_source_file_names(rstudio-shared-core)
 
 target_link_libraries(rstudio-shared-core
-   ${Boost_LIBRARIES})
+   ${Boost_LIBRARIES}
+   ${SHARED_CORE_SYSTEM_LIBS})
+
+# Define executable for running unit tests
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+   file(GLOB_RECURSE SHARED_CORE_TEST_FILES "*Tests.cpp")
+
+   add_executable(rstudio-shared-core-tests
+      ${TESTS_INCLUDE_DIR}/tests/TestMain.cpp
+      ${SHARED_CORE_TEST_FILES}
+      ${SHARED_CORE_HEADER_FILES}
+   )
+
+   target_link_libraries(rstudio-shared-core-tests
+      rstudio-shared-core
+      ${Boost_LIBRARIES}
+   )
+endif()

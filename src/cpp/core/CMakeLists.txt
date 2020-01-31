@@ -27,7 +27,6 @@ endif()
 
 # source files
 set (CORE_SOURCE_FILES
-   Assert.cpp
    Backtrace.cpp
    Base64.cpp
    BoostErrors.cpp

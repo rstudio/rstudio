@@ -578,26 +578,26 @@ Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_lo
  * @brief Function which creates a system error.
  *
  * @param in_code            The error code. (e.g. 1)
- * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
- *                           Kubernetes.")
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
  * @param in_location        The location of the error.
  *
  * @return A system error.
  */
-Error systemError(int in_code, const std::string& in_message, const ErrorLocation& in_location);
+Error systemError(int in_code, const std::string& in_description, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
  *
  * @param in_code            The error code. (e.g. 1)
- * @param in_message         The detailed error message. (e.g. "Failed to open socket while attempting to connect to
- *                           Kubernetes.")
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
  * @param in_cause           The error which caused this error.
  * @param in_location        The location of the error.
  *
  * @return A system error.
  */
-Error systemError(int in_code, const std::string& in_message, const Error& in_cause, const ErrorLocation& in_location);
+Error systemError(int in_code, const std::string& in_description, const Error& in_cause, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates an unknown error. This should be used only when a specific error code cannot be

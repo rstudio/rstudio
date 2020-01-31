@@ -291,6 +291,15 @@ public:
    bool operator==(const Value& in_other) const;
 
    /**
+    * @brief Inequality operator.
+    *
+    * @param in_other   The value to compare this value to.
+    *
+    * @return True if the two values are not the same; false if they are the same.
+    */
+   bool operator!=(const Value& in_other) const;
+
+   /**
     * @brief Makes a copy of this JSON value.
     *
     * @return A copy of this JSON value.
@@ -485,7 +494,7 @@ public:
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
     */
-   Error parse(const char* in_jsonStr);
+   virtual Error parse(const char* in_jsonStr);
 
    /**
     * @brief Parses the JSON string into this value.
@@ -494,7 +503,7 @@ public:
     *
     * @return Success on successful parse; error otherwise (e.g. ParseError)
     */
-   Error parse(const std::string& in_jsonStr);
+   virtual Error parse(const std::string& in_jsonStr);
 
    /**
     * @brief Parses the JSON string and validates it against the schema.
@@ -592,7 +601,7 @@ public:
        *
        * @param in_impl The private implementation of the member.
        */
-      Member(const std::shared_ptr<Impl>& in_impl);
+      explicit Member(const std::shared_ptr<Impl>& in_impl);
 
       /**
        * @brief Gets the name of the member.
@@ -737,7 +746,7 @@ public:
     *
     * @param in_other   The JSON object to move to this Object.
     */
-   Object(Object&& in_other);
+   Object(Object&& in_other) noexcept;
 
    /**
     * @brief Creates a JSON object from the given name and JSON value.
@@ -937,6 +946,26 @@ public:
    bool isEmpty() const;
 
    /**
+    * @brief Parses the JSON string into this object.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Object; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const char* in_jsonStr) override;
+
+   /**
+    * @brief Parses the JSON string into this object.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Object; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const std::string& in_jsonStr) override;
+
+   /**
     * @brief Converts this JSON object to a map with string keys and a list of string values.
     *
     * @param out_map    The converted map, on success.
@@ -1105,7 +1134,7 @@ public:
     *
     * @param in_other   The JSON array to move to this Object.
     */
-   Array(Array&& in_other);
+   Array(Array&& in_other) noexcept;
 
    /**
     * @brief Assignment operator.
@@ -1225,6 +1254,26 @@ public:
     * @return True if the JSON array has no members; false otherwise.
     */
    bool isEmpty() const;
+
+   /**
+    * @brief Parses the JSON string into this array.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Array; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const char* in_jsonStr) override;
+
+   /**
+    * @brief Parses the JSON string into this array.
+    *
+    * @param in_jsonStr     The JSON string to parse.
+    *
+    * @return Success on successful parse when the resulting JSON value is a JSON Array; error otherwise
+    *         (e.g. ParseError).
+    */
+   Error parse(const std::string& in_jsonStr) override;
 
    /**
     * @brief Pushes the value onto the end of the JSON array.
