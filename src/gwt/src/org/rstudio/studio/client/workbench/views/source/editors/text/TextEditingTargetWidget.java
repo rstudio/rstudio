@@ -856,7 +856,7 @@ public class TextEditingTargetWidget
 
    private boolean isVisualMode()
    {
-      return docUpdateSentinel_.getBoolProperty(PROPERTY_RMD_VISUAL_MODE, false);
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
    
    private boolean isPlumberFile()
@@ -1514,7 +1514,7 @@ public class TextEditingTargetWidget
          DocPropMenuItem visualModeMenu = new DocPropMenuItem(
             "Use Visual Editor", docUpdateSentinel_, 
             visualMode,
-            PROPERTY_RMD_VISUAL_MODE, 
+            TextEditingTarget.RMD_VISUAL_MODE, 
             DocUpdateSentinel.PROPERTY_TRUE
          );
          
@@ -1701,7 +1701,4 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
-   
-   private static final String PROPERTY_RMD_VISUAL_MODE = "rmdVisualMode";
-
 }
