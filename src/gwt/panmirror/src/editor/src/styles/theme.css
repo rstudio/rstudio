@@ -13,9 +13,6 @@
  *
  */
 
-.pm-background-color {
-  background-color: white !important;
-}
 
 .pm-metadata-background-color {
   background-color: rgb(251,251,251) !important;
@@ -31,10 +28,6 @@
 
 .pm-div-background-color {
   background-color: rgb(236, 249, 250) !important;
-}
-
-.pm-text-color {
-  color: black !important;
 }
 
 .pm-light-text-color {

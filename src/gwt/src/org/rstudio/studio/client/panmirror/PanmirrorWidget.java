@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
@@ -29,6 +30,8 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
@@ -47,6 +50,7 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -149,14 +153,28 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Inject
-   public void initialize(UserPrefs userPrefs)
+   public void initialize(UserPrefs userPrefs, EventBus events)
    {
       userPrefs_ = userPrefs;
+      events.addHandler(ThemeChangedEvent.TYPE, (event) -> {
+         // need a lag to ensure the new css has been applied
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               toolbar_.sync(true);
+               syncTheme();
+            }
+         }.schedule(250);
+      });
    }
    
    private void attachEditor(PanmirrorEditor editor) {
       
       editor_ = editor;
+      
+      syncTheme();
       
       commands_ = editor.commands();
       
@@ -385,6 +403,18 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          editor_.resize();
       }
    }
+   
+   private void syncTheme()
+   {
+      // create theme from current app theme
+      PanmirrorTheme theme = new PanmirrorTheme(); 
+      theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
+      theme.textColor =  DomUtils.extractCssValue("ace_editor", "color");
+      
+      // apply theme
+      editor_.applyTheme(theme);;
+   }
+  
    
    private UserPrefs userPrefs_ = null;
    

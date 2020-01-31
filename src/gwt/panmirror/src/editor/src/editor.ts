@@ -47,6 +47,8 @@ import { getOutline } from './behaviors/outline';
 
 import { PandocConverter } from './pandoc/converter';
 
+import { applyTheme, defaultTheme, EditorTheme } from './theme';
+
 import './styles/frame.css';
 import './styles/styles.css';
 import './styles/theme.css';
@@ -147,6 +149,9 @@ export class Editor {
       dispatchTransaction: this.dispatchTransaction.bind(this),
       domParser: new EditorDOMParser(this.schema),
     });
+
+    // apply default theme
+    applyTheme(defaultTheme());
 
     // apply fixups when the window size changes
     this.applyLayoutFixups = this.applyLayoutFixups.bind(this);
@@ -303,6 +308,10 @@ export class Editor {
     });
   }
 
+  public applyTheme(theme: EditorTheme) {
+    applyTheme(theme);
+  }
+
   public setKeybindings(keyBindings: EditorKeybindings) {
     // validate that all of these keys can be rebound
 
@@ -367,7 +376,7 @@ export class Editor {
         isolating: true,
         parseDOM: [{ tag: 'div[class*="body"]' }],
         toDOM() {
-          return ['div', { class: 'body pm-background-color' }, 0];
+          return ['div', { class: 'body pm-text-color pm-background-color' }, 0];
         },
       },
 
@@ -375,7 +384,7 @@ export class Editor {
         content: 'note*',
         parseDOM: [{ tag: 'div[class*="notes"]' }],
         toDOM() {
-          return ['div', { class: 'notes pm-background-color' }, 0];
+          return ['div', { class: 'notes pm-text-color pm-background-color' }, 0];
         },
       },
 

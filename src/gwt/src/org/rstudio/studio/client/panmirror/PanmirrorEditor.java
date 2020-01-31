@@ -58,6 +58,8 @@ public class PanmirrorEditor
    
    public native void navigate(String id);
    
+   public native void applyTheme(PanmirrorTheme theme);
+   
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
    public native PanmirrorPandocFormat getPandocFormat();
