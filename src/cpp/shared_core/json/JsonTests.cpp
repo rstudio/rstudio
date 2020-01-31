@@ -37,9 +37,9 @@ json::Object createObject()
    object["f"] = std::string("Hello world");
 
    json::Array simpleArray;
-   simpleArray.push_back(json::Value(100));
-   simpleArray.push_back(json::Value(200));
-   simpleArray.push_back(json::Value(300));
+   simpleArray.push_back(100);
+   simpleArray.push_back(200);
+   simpleArray.push_back(300);
    object["g"] = simpleArray;
 
    json::Array objectArray;
@@ -62,9 +62,9 @@ json::Object createObject()
    json::Object obj4;
    obj4["a"] = "Inner object a";
    json::Array innerArray;
-   innerArray.push_back(json::Value(1));
-   innerArray.push_back(json::Value(5));
-   innerArray.push_back(json::Value(6));
+   innerArray.push_back(1);
+   innerArray.push_back(5);
+   innerArray.push_back(6);
    obj4["b"] = innerArray;
    obj4["c"] = json::Value();
    obj3["inner"] = obj4;
@@ -170,8 +170,8 @@ TEST_CASE("Json")
       REQUIRE(obj["c"].getInt() == 25);
 
       json::Array array;
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(2));
+      array.push_back(1);
+      array.push_back(2);
       array.push_back(json::Value(3));
 
       obj["d"] = array;

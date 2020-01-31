@@ -672,7 +672,7 @@ json::Array ProjectContext::openDocs() const
    for (const std::string& doc : docs)
    {
       FilePath docPath = directory().completeChildPath(doc);
-      openDocsJson.push_back(json::Value(module_context::createAliasedPath(docPath)));
+      openDocsJson.push_back(module_context::createAliasedPath(docPath));
    }
    return openDocsJson;
 }
