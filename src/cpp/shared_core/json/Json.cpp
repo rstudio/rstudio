@@ -374,7 +374,19 @@ bool Value::operator==(const Value& in_other) const
    if (this == &in_other)
       return true;
 
-   return m_impl->Document == in_other.m_impl->Document;
+   if (m_impl->Document == in_other.m_impl->Document)
+      return true;
+
+   // Exactly one is null (they're not equal) - return false.
+   if ((m_impl->Document == nullptr) || (in_other.m_impl->Document == nullptr))
+      return false;
+
+   return *m_impl->Document == *in_other.m_impl->Document;
+}
+
+bool Value::operator!=(const Value& in_other) const
+{
+   return !(*this == in_other);
 }
 
 Value Value::clone() const
@@ -425,7 +437,7 @@ Error Value::coerce(const std::string& in_schema,
 
       // Accumulate the error for the caller
       invalid.Stringify(sb);
-      out_propViolations.push_back(sb.GetString());
+      out_propViolations.emplace_back(sb.GetString());
 
       // Remove the invalid part of the document
       JsonPointer pointer(sb.GetString(), &s_allocator);
@@ -834,7 +846,7 @@ struct Object::Member::Impl
 };
 
 Object::Member::Member(const std::shared_ptr<Object::Member::Impl>& in_impl) :
-   m_impl(std::move(in_impl))
+   m_impl(in_impl)
 {
 }
 
@@ -937,7 +949,7 @@ Object::Object(const Object& in_other) :
 {
 }
 
-Object::Object(Object&& in_other) :
+Object::Object(Object&& in_other) noexcept :
    Value(in_other)
 {
 }
@@ -1172,6 +1184,21 @@ bool Object::isEmpty() const
    return m_impl->Document->ObjectEmpty();
 }
 
+Error Object::parse(const char* in_jsonStr)
+{
+   static const std::string kObjectSchema = "{ \"type\": \"object\" }";
+   Error error = Value::parse(in_jsonStr);
+   if (error)
+      return error;
+
+   return validate(kObjectSchema);
+}
+
+Error Object::parse(const std::string& in_jsonStr)
+{
+   return parse(in_jsonStr.c_str());
+}
+
 bool Object::toStringMap(StringListMap& out_map) const
 {
    for (const Member member: *this)
@@ -1311,7 +1338,7 @@ Array::Array(const Array& in_other) :
 {
 }
 
-Array::Array(Array&& in_other) :
+Array::Array(Array&& in_other) noexcept :
    Value(in_other)
 {
 }
@@ -1406,6 +1433,21 @@ size_t Array::getSize() const
 bool Array::isEmpty() const
 {
    return m_impl->Document->Empty();
+}
+
+Error Array::parse(const char* in_jsonStr)
+{
+   static const std::string kObjectSchema = "{ \"type\": \"array\" }";
+   Error error = Value::parse(in_jsonStr);
+   if (error)
+      return error;
+
+   return validate(kObjectSchema);
+}
+
+Error Array::parse(const std::string& in_jsonStr)
+{
+   return parse(in_jsonStr.c_str());
 }
 
 void Array::push_back(const Value& in_value)

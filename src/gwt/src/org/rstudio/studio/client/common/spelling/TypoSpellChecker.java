@@ -183,11 +183,12 @@ public class TypoSpellChecker
 
       // subscribe to spelling prefs changes (invalidateAll on changes)
       ValueChangeHandler<Boolean> prefChangedHandler = (event) -> context_.invalidateAllWords();
+      ValueChangeHandler<Boolean> realtimeChangedHandler = (event) -> loadDictionary();
       ValueChangeHandler<String> dictChangedHandler = (event) -> loadDictionary();
-      userPrefs_.realTimeSpellchecking().addValueChangeHandler(prefChangedHandler);
       userPrefs_.ignoreUppercaseWords().addValueChangeHandler(prefChangedHandler);
       userPrefs_.ignoreWordsWithNumbers().addValueChangeHandler(prefChangedHandler);
       userPrefs_.spellingDictionaryLanguage().addValueChangeHandler(dictChangedHandler);
+      userPrefs_.realTimeSpellchecking().addValueChangeHandler(realtimeChangedHandler);
 
       // subscribe to user dictionary changes
       context_.releaseOnDismiss(userDictionary_.addListChangedHandler((ListChangedEvent event) ->
@@ -335,18 +336,25 @@ public class TypoSpellChecker
 
    private void loadDictionary()
    {
-      // don't load the same dictionary again
       final String language = userPrefs_.spellingDictionaryLanguage().getValue();
-      if (typoLoaded_ && loadedDict_ == language)
+
+      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
          return;
-      
+
+      // See canRealtimeSpellcheckDict comment, temporary stop gap
+      // Return early if this dictionary is incompatible
+      // with Typo.js. Final invariant check to ensure that we never try to
+      // load a blacklisted dictionary.
+      if (!canRealtimeSpellcheckDict(language))
+         return;
+
       // check for an active request
       if (activeRequest_ != null && activeRequest_.isAlive())
       {
          // if we're already requesting this language's dictionary, bail
          if (StringUtil.equals(activeRequest_.getLanguage(), language))
             return;
-         
+
          // otherwise, cancel that request and start a new one
          activeRequest_.cancel();
          activeRequest_ = null;
@@ -396,6 +404,26 @@ public class TypoSpellChecker
       }
 
       return true;
+   }
+
+   /*
+      Stop gap function to prevent loading dictionaries that Typo.js has
+      severe issues with. This is being tracked to be fixed in issue #6041 as
+      soon as possible so this can then be removed.
+    */
+   private static String[] realtimeDictBlacklist = {"cs_CZ", "de_DE_neu", "lt_LT", "pt_BR"};
+   public static boolean canRealtimeSpellcheckDict(String dict)
+   {
+      boolean exists = false;
+      for (int i = 0; i < realtimeDictBlacklist.length; i++)
+      {
+         if (realtimeDictBlacklist[i].equals(dict))
+         {
+            exists = true;
+            break;
+         }
+      }
+      return !exists;
    }
 
    public static boolean isLoaded() { return typoLoaded_; }

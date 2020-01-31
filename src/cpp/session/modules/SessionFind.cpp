@@ -1017,6 +1017,7 @@ public:
       includeFilePatterns_(includeFilePatterns),
       excludeFilePatterns_(excludeFilePatterns)
    {
+      processIncludeFilePatterns();
       processExcludeFilePatterns();
    }
 
@@ -1050,6 +1051,16 @@ public:
       return excludeFilePatterns_;
    }
 
+   bool packageFlag() const
+   {
+      return packageFlag_;
+   }
+
+   const std::vector<std::string>& includeArgs() const
+   {
+      return includeArgs_;
+   }
+
    bool gitFlag() const
    {
       return gitFlag_;
@@ -1070,6 +1081,10 @@ private:
    const json::Array includeFilePatterns_;
    const json::Array excludeFilePatterns_;
 
+   // derived from includeFilePatterns
+   std::vector<std::string> includeArgs_;
+   bool packageFlag_;
+
    // derived from excludeFilePatterns
    std::vector<std::string> excludeArgs_;
    bool gitFlag_;
@@ -1080,13 +1095,30 @@ private:
       for (json::Value filePattern : excludeFilePatterns_)
       {
          if (filePattern.getType() != json::Type::STRING)
-            LOG_WARNING_MESSAGE("Exclude files contain non-string value");
+            LOG_DEBUG_MESSAGE("Exclude files contain non-string value");
          else
          {
             if (filePattern.getString().compare("gitExclusions") == 0)
                gitFlag_ = true;
             else
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
+         }
+      }
+   }
+
+   void processIncludeFilePatterns()
+   {
+      packageFlag_ = false;
+      for (json::Value filePattern : includeFilePatterns_)
+      {
+         if (filePattern.getType() != json::Type::STRING)
+            LOG_DEBUG_MESSAGE("Include files contain non-string value");
+         else
+         {
+            if (filePattern.getString().compare("package") == 0)
+               packageFlag_ = true;
+            else
+               includeArgs_.push_back("--include=" + filePattern.getString());
          }
       }
    }
@@ -1110,6 +1142,30 @@ struct ReplaceOptions
 
    const std::string replacePattern;
 };
+
+void addDirectoriesToCommand(
+   bool packageFlag, const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+{
+   // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
+   *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+   if (!packageFlag)
+      *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
+   else
+   {
+      FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
+      FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+   
+      if (rPath.exists())
+         *pCmd << rPath; 
+      if (srcPath.exists())
+         *pCmd << srcPath;
+      if (testsPath.exists())
+         *pCmd << testsPath;
+      else if (!rPath.exists() && !srcPath.exists())
+         LOG_WARNING_MESSAGE("Package directories not found in " + directoryPath.getAbsolutePath());
+   }
+}
 
 core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
    LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
@@ -1185,10 +1241,13 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-      for (json::Value filePattern : grepOptions.includeFilePatterns())
+      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
+
+      if (grepOptions.packageFlag() && !grepOptions.includeArgs().empty())
       {
-         cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-         cmd << filePattern.getString();
+         for (std::string arg : grepOptions.includeArgs())
+            LOG_DEBUG_MESSAGE(
+               "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
       }
    }
    else
@@ -1207,14 +1266,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-
-      for (json::Value filePattern : grepOptions.includeFilePatterns())
-         cmd << "--include=" + filePattern.getString();
+      for (std::string arg : grepOptions.includeArgs())
+         cmd << arg;
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
-
-      cmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-      cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
    }
 
    // Clear existing results

@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface HelpNavigateHandler extends EventHandler
 {
-   public void onNavigate(HelpNavigateEvent event) ;
+   public void onNavigate(HelpNavigateEvent event);
 }
