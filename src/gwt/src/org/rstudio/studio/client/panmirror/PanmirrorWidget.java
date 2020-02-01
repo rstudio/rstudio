@@ -408,6 +408,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       PanmirrorTheme theme = new PanmirrorTheme(); 
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.textColor =  DomUtils.extractCssValue("ace_editor", "color");
+      theme.lightTextColor = DomUtils.extractCssValue("ace_support ace_function", "color");
+      theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
+      theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
       
       // apply theme
       editor_.applyTheme(theme);;

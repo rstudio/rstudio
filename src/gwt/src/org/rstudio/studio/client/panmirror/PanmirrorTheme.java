@@ -22,4 +22,7 @@ public class PanmirrorTheme
 {
    public String backgroundColor;
    public String textColor;
+   public String lightTextColor;
+   public String linkTextColor;
+   public String markupTextColor;
 }

@@ -16,12 +16,18 @@
 export interface EditorTheme {
   backgroundColor: string;
   textColor: string;
+  lightTextColor: string;
+  linkTextColor: string;
+  markupTextColor: string;
 }
 
 export function defaultTheme() : EditorTheme {
   return {
     backgroundColor: "white",
-    textColor: "black"
+    textColor: "black",
+    lightTextColor: "rgb(60, 76, 114)",
+    linkTextColor: " #106ba3",
+    markupTextColor: "rgb(185, 6, 144)"
   }
 }
 
@@ -34,6 +40,15 @@ export function applyTheme(theme: EditorTheme)
     }
     .pm-text-color {
       color: ${theme.textColor} !important;
+    }
+    .pm-light-text-color {
+      color: ${theme.lightTextColor} !important;
+    }
+    .pm-link-text-color {
+      color: ${theme.linkTextColor} !important;
+    }
+    .pm-markup-text-color {
+      color: ${theme.markupTextColor} !important;
     }
   `;
   
