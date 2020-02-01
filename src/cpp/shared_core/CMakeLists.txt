@@ -49,6 +49,7 @@ if (UNIX)
 
    set (SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
+      system/PosixSystem.cpp
       system/SyslogDestination.cpp
       system/User.cpp
    )

@@ -1,5 +1,5 @@
 /*
- * PosixSystem.cpp
+ * PosixSystem.hpp
  *
  * Copyright (C) 2009-19 by RStudio, Inc.
  *
@@ -29,6 +29,16 @@
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
+namespace core  {
+namespace system {
+
+class User;
+
+} // namespace system
+} // namespace core
+} // namespace rstudio
+
+namespace rstudio {
 namespace core {
 namespace system {
 namespace posix {
@@ -37,6 +47,22 @@ namespace posix {
  * @file
  * Posix System Utilities.
  */
+
+/**
+ * @brief Enables core dumps for this process.
+ *
+ * @return Success if core dumps could be enabled; Error otherwise.
+ */
+Error enableCoreDumps();
+
+/**
+ * @brief Ignores a particular signal for this process.
+ *
+ * @param in_signal     The signal to ignore.
+ *
+ * @return Success if the specified signal could be ignored; Error otherwise.
+ */
+Error ignoreSignal(int in_signal);
 
 /**
  * @brief Makes a posix call and handles EINTR retries.
@@ -67,7 +93,6 @@ T posixCall(const std::function<T()>& in_posixFunction)
 
    return result;
 }
-
 
 /**
  * @brief Makes a posix call and handles EINTR retries.
@@ -103,6 +128,28 @@ Error posixCall(const std::function<T()>& in_posixFunction,
       return Success();
 }
 
+/**
+ * @brief Checks whether the real user (not the effective user) running this process is root.
+ *
+ * @return True if the real user is root; false otherwise.
+ */
+bool realUserIsRoot();
+
+/**
+ * @briefs Restores root privileges.
+ *
+ * @return Success if root privileges could be restored; Error otherwise.
+ */
+Error restoreRoot();
+
+/**
+ * @brief Temporarily drops privileges from root to the requested user.
+ *
+ * @param in_user   The user to which to drop privileges.
+ *
+ * @return Success if privileges could be dropped to the requested user; Error otherwise.
+ */
+Error temporarilyDropPriv(const User& in_user);
 
 } // namespace posix
 } // namespace system
