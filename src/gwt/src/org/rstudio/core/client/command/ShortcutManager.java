@@ -1,7 +1,7 @@
 /*
  * ShortcutManager.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -483,7 +484,7 @@ public class ShortcutManager implements NativePreviewHandler,
       for (Map.Entry<KeyMapType, KeyMap> entry : keyMaps_.entrySet())
       {
          KeyMap map = entry.getValue();
-         CommandBinding binding = map.getActiveBinding(keyBuffer_);
+         CommandBinding binding = map.getActiveBinding(keyBuffer_, reportShortcutBinding_);
          if (binding != null)
          {
             keyBuffer_.clear();
@@ -528,10 +529,11 @@ public class ShortcutManager implements NativePreviewHandler,
             }
             
             event.stopPropagation();
-            binding.execute();
+            if (!reportShortcutBinding(binding.getId()))
+               binding.execute();
             return true;
          }
-         
+         reportShortcutBinding("Shortcut not bound"); 
          if (map.isPrefix(keyBuffer_))
             pending = true;
       }
@@ -718,6 +720,18 @@ public class ShortcutManager implements NativePreviewHandler,
       return ignoredKeys_.isIgnoredKeyCombination(keys);
    }
    
+   public void setReportShortcutBinding(boolean report)
+   {
+      reportShortcutBinding_ = report;
+   }
+
+   private boolean reportShortcutBinding(String message)
+   {
+      if (reportShortcutBinding_)
+         events_.fireEvent(new ReportShortcutBindingEvent(message));
+      return reportShortcutBinding_;
+   }
+
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
@@ -729,6 +743,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private final Map<KeyMapType, KeyMap> keyMaps_;
    private final List<ShortcutInfo> shortcutInfo_;
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
+   private boolean reportShortcutBinding_ = false;
    
    // Injected ----
    private UserCommandManager userCommands_;

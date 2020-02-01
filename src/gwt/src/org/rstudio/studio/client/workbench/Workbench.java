@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -69,6 +70,7 @@ import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.model.*;
@@ -99,7 +101,8 @@ public class Workbench implements BusyHandler,
                                   OpenFileDialogEvent.Handler,
                                   ShowPageViewerHandler,
                                   TutorialLaunchEvent.Handler,
-                                  DeferredInitCompletedEvent.Handler
+                                  DeferredInitCompletedEvent.Handler,
+                                  ReportShortcutBindingEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -170,6 +173,7 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
       eventBus.addHandler(TutorialLaunchEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+      eventBus.addHandler(ReportShortcutBindingEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(500)
@@ -767,7 +771,17 @@ public class Workbench implements BusyHandler,
    {
       server_.executeUserCommand(event.getCommandName(), new VoidServerRequestCallback());
    }
-   
+
+   @Override
+   public void onReportShortcutBinding(ReportShortcutBindingEvent event)
+   {
+      AppCommand command = commands_.getCommandById(event.getCommand());
+      if (command == null)
+         globalDisplay_.showWarningBar(false, event.getCommand());
+      else
+         globalDisplay_.showWarningBar(false, event.getCommand() + " : " + command.summarize());
+   }
+
    private final Server server_;
    private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;
