@@ -82,7 +82,7 @@ void ShinyAsyncJob::onStdout(const std::string& output)
    if (pos != std::string::npos)
    {
       // extract the URL, which is the portion of the output string following the start token
-      url_ = output.substr(pos);
+      url_ = output.substr(pos + std::string(kShinyAppStarted).size() + 1);
 
       // create an event to let the client know to start viewing the running application
       enqueueStateEvent("started");

@@ -455,4 +455,8 @@ public class ElementIds
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
+
+   // AccessibilityPreferencesPane
+   public final static String A11Y_GENERAL_PREFS = "a11y_general_prefs";
+   public final static String A11Y_ANNOUNCEMENTS_PREFS = "a11y_announcements_prefs";
 }

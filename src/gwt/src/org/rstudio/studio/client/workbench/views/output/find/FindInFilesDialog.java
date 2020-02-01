@@ -29,15 +29,16 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -148,15 +149,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       }-*/;
    }
 
-   public enum IncludeFilePatterns
+   public enum Include
    {
       AllFiles,
       CommonRSourceFiles,
       RScripts,
+      Package,
       CustomFilter
    }
 
-   public enum ExcludeFilePatterns
+   public enum Exclude
    {
       None,
       StandardGit,
@@ -229,16 +231,34 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       manageExcludeFilePattern();
    }
 
+   public void setPackageStatus(boolean status)
+   {
+      packageStatus_ = status;
+      manageFilePattern();
+   }
+
    private void manageFilePattern()
    {
       // disable custom filter text box when 'Custom Filter' is not selected
       divCustomFilter_.getStyle().setDisplay(
             (listPresetFilePatterns_.getSelectedIndex() ==
-             IncludeFilePatterns.CustomFilter.ordinal() &&
+             Include.CustomFilter.ordinal() &&
              listPresetExcludeFilePatterns_.getSelectedIndex() != 
-             ExcludeFilePatterns.StandardGit.ordinal())
+             Exclude.StandardGit.ordinal())
             ? Style.Display.BLOCK
             : Style.Display.NONE);
+
+      // disable 'Package' option when chosen directory is not a package
+      if (!packageStatus_)
+      {
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               Include.Package.ordinal()))
+            .setAttribute("disabled", "disabled");
+         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
+      }
+      else
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            Include.Package.ordinal())).removeAttribute("disabled");
    }
 
    private void manageExcludeFilePattern()
@@ -249,35 +269,55 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (!gitStatus_ ||
           !session_.getSessionInfo().isVcsAvailable(VCSConstants.GIT_ID))
       {
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
-            .setAttribute("disabled", "disabled");
+         DomUtils.setOptionDisabled(
+            listPresetExcludeFilePatterns_.getElement(),
+            Exclude.StandardGit.ordinal(),
+            true);
          if (listPresetExcludeFilePatterns_.getSelectedIndex() ==
-             ExcludeFilePatterns.StandardGit.ordinal())
-            listPresetExcludeFilePatterns_.setSelectedIndex(ExcludeFilePatterns.None.ordinal());
+             Exclude.StandardGit.ordinal())
+            listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.None.ordinal());
       }
       else
-         ((Element) listPresetExcludeFilePatterns_.getElement().getChild(1))
-            .removeAttribute("disabled");
-
+         DomUtils.setOptionDisabled(
+            listPresetExcludeFilePatterns_.getElement(),
+            Exclude.StandardGit.ordinal(),
+            false);
 
       // disable custom filter text box when 'Custom Filter' is not selected
       divExcludeCustomFilter_.getStyle().setDisplay(
             listPresetExcludeFilePatterns_.getSelectedIndex() == 
-            ExcludeFilePatterns.CustomFilter.ordinal()
+            Exclude.CustomFilter.ordinal()
             ? Style.Display.BLOCK
             : Style.Display.NONE);
 
       // user cannot specify include patterns when using git grep
-      if (listPresetExcludeFilePatterns_.getSelectedIndex() != 
-          ExcludeFilePatterns.StandardGit.ordinal())
-         listPresetFilePatterns_.setEnabled(true);
-      else
+      boolean disableIncludes =
+         listPresetExcludeFilePatterns_.getSelectedIndex() == Exclude.StandardGit.ordinal();
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.CommonRSourceFiles.ordinal(),
+         disableIncludes);
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.RScripts.ordinal(),
+         disableIncludes);
+      DomUtils.setOptionDisabled(
+         listPresetFilePatterns_.getElement(),
+         Include.CustomFilter.ordinal(),
+         disableIncludes);
+
+      // if a disabled index is selected, change selection to All Files
+      if (disableIncludes &&
+          (listPresetFilePatterns_.getSelectedIndex() ==
+              Include.CommonRSourceFiles.ordinal() || 
+           listPresetFilePatterns_.getSelectedIndex() ==
+              Include.RScripts.ordinal() || 
+           listPresetFilePatterns_.getSelectedIndex() ==
+             Include.CustomFilter.ordinal()))
       {
-         listPresetFilePatterns_.setEnabled(false);
-         listPresetFilePatterns_.setSelectedIndex(IncludeFilePatterns.AllFiles.ordinal());
+         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
          manageFilePattern();
       }
-
    }
 
    @Override
@@ -374,28 +414,27 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       checkboxRegex_.setValue(dialogState.isRegex());
       dirChooser_.setText(dialogState.getPath());
 
-      // indexes refer to corresponding enums, but left as ints for readability
       String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
-      if (listPresetFilePatterns_.getValue(0) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(0);
-      else if (listPresetFilePatterns_.getValue(1) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(1);
-      else if (listPresetFilePatterns_.getValue(2) == includeFilePatterns)
-         listPresetFilePatterns_.setSelectedIndex(2);
+      int index = listPresetFilePatterns_.getIndexFromValue(includeFilePatterns);
+      if (index >= 0)
+         listPresetFilePatterns_.setSelectedIndex(index);
       else
-         listPresetFilePatterns_.setSelectedIndex(3);
+         listPresetFilePatterns_.setSelectedIndex(Include.CustomFilter.ordinal());
+      if (index == Include.Package.ordinal())
+         packageStatus_ = true;
       txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
 
       String excludeFilePatterns = StringUtil.join(
          Arrays.asList(dialogState.getExcludeFilePatterns()), ",");
-      if (listPresetExcludeFilePatterns_.getValue(0) == excludeFilePatterns)
-         listPresetExcludeFilePatterns_.setSelectedIndex(0);
-      else if (listPresetExcludeFilePatterns_.getValue(1) == excludeFilePatterns)
-         listPresetExcludeFilePatterns_.setSelectedIndex(1);
+      index = listPresetExcludeFilePatterns_.getIndexFromValue(excludeFilePatterns);
+      if (index >= 0)
+         listPresetExcludeFilePatterns_.setSelectedIndex(index);
       else
-         listPresetExcludeFilePatterns_.setSelectedIndex(2);
+         listPresetExcludeFilePatterns_.setSelectedIndex(Exclude.CustomFilter.ordinal());
+      if (index == Exclude.StandardGit.ordinal())
+         gitStatus_ = true;
       txtExcludeFilePattern_.setText(excludeFilePatterns);
       manageExcludeFilePattern();
    }
@@ -428,7 +467,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    FormLabel labelFilePatterns_;
    @UiField
-   ListBox listPresetFilePatterns_;
+   FormListBox listPresetFilePatterns_;
    @UiField
    DivElement divCustomFilter_;
    @UiField
@@ -436,7 +475,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    @UiField
    FormLabel labelExcludeFilePatterns_;
    @UiField
-   ListBox listPresetExcludeFilePatterns_;
+   FormListBox listPresetExcludeFilePatterns_;
    @UiField
    DivElement divExcludeCustomFilter_;
    @UiField
@@ -445,6 +484,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    SpanElement spanExcludePatternExample_;
 
    private boolean gitStatus_;
+   private boolean packageStatus_;
    private Widget mainWidget_;
    private GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
    private Session session_ = RStudioGinjector.INSTANCE.getSession();

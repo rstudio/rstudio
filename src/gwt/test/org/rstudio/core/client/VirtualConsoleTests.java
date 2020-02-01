@@ -72,7 +72,27 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       return new VirtualConsole(ele, new FakePrefs());
    }
-   
+
+   private static String setCsiCode(int code)
+   {
+      return setCsiCode(String.valueOf(code));
+   }
+
+   private static String setCsiCode(String code)
+   {
+      return AnsiCode.CSI + code + AnsiCode.SGR;
+   }
+
+   private static String setForegroundIndex(int color)
+   {
+      return setCsiCode(AnsiCode.FOREGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + color);
+   }
+
+   private static String setBackgroundIndex(int color)
+   {
+      return setCsiCode(AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + color);
+   }
+
    // ---- tests start here ----
  
    public void testSimpleText()
@@ -257,7 +277,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.FOREGROUND_MIN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello");
+      vc.submit(setCsiCode(color) + "Hello");
       String expected ="<span class=\"xtermColor0\">Hello</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
@@ -267,7 +287,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.FOREGROUND_MAX;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello World");
+      vc.submit(setCsiCode(color) + "Hello World");
       String expected ="<span class=\"xtermColor7\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
@@ -277,7 +297,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.BACKGROUND_MIN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "pretty");
+      vc.submit(setCsiCode(color) + "pretty");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForBgColor(color) + "\">pretty</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -288,7 +308,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.BACKGROUND_MAX;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "colors");
+      vc.submit(setCsiCode(color) + "colors");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForBgColor(color) + "\">colors</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -300,8 +320,8 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit(
-            AnsiCode.CSI + color + AnsiCode.SGR + "Hello " +
-            AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR + "World");
+            setCsiCode(color) + "Hello " +
+            setCsiCode(AnsiCode.RESET_FOREGROUND) + "World");
       String expected =
             "<span class=\"" + 
             AnsiCode.clazzForColor(color) + "\">Hello </span>" + 
@@ -315,8 +335,8 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit(
-            AnsiCode.CSI + color + AnsiCode.SGR + "Sunny " +
-            AnsiCode.CSI + AnsiCode.RESET_BACKGROUND + AnsiCode.SGR + "Days");
+            setCsiCode(color) + "Sunny " +
+            setCsiCode(AnsiCode.RESET_BACKGROUND) + "Days");
       String expected = "<span class=\"" + AnsiCode.clazzForBgColor(color) + 
             "\">Sunny </span><span>Days</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -328,9 +348,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(
-            AnsiCode.CSI + color + AnsiCode.SGR + 
-            AnsiCode.CSI + bgColor + AnsiCode.SGR + "Hello");
+      vc.submit(setCsiCode(color) + setCsiCode(bgColor) + "Hello");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForColor(color) + " " + 
             AnsiCode.clazzForBgColor(bgColor) + "\">Hello</span>"; 
@@ -344,9 +362,9 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit(
-            AnsiCode.CSI + color + AnsiCode.SGR + 
-            AnsiCode.CSI + bgColor + AnsiCode.SGR + "Colorful " +
-            AnsiCode.CSI + AnsiCode.RESET + AnsiCode.SGR + "Bland");
+            setCsiCode(color) +
+            setCsiCode(bgColor) + "Colorful " +
+            setCsiCode(AnsiCode.RESET) + "Bland");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForColor(color) + " " + 
             AnsiCode.clazzForBgColor(bgColor) +
@@ -359,7 +377,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.FOREGROUND_INTENSE_MIN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello");
+      vc.submit(setCsiCode(color) + "Hello");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForColor(color) + 
             "\">Hello</span>"; 
@@ -371,7 +389,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.FOREGROUND_INTENSE_MAX;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "Hello World");
+      vc.submit(setCsiCode(color) + "Hello World");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForColor(color) + "\">Hello World</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -382,7 +400,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.BACKGROUND_INTENSE_MIN;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + color + AnsiCode.SGR + "pretty");
+      vc.submit(setCsiCode(color) + "pretty");
       String expected ="<span class=\"" + 
             AnsiCode.clazzForBgColor(color) + "\">pretty</span>"; 
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -480,8 +498,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = 120;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
-            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR + "Hello World");
+      vc.submit(setForegroundIndex(color) + "Hello World");
       String expected ="<span class=\"xtermColor120\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
@@ -491,8 +508,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = 213;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + 
-            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR + "Hello World");
+      vc.submit(setBackgroundIndex(color) + "Hello World");
       String expected ="<span class=\"xtermBgColor213\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
@@ -503,10 +519,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 252;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
-            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR +
-            AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" +
-            bgColor + AnsiCode.SGR + "Hello World");
+      vc.submit(setForegroundIndex(color) + setBackgroundIndex(bgColor) + "Hello World");
       String expected ="<span class=\"xtermColor65 xtermBgColor252\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
@@ -517,10 +530,7 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 129;
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
-      vc.submit(AnsiCode.CSI + AnsiCode.FOREGROUND_EXT + ";" + 
-            AnsiCode.EXT_BY_INDEX + ";" + color + AnsiCode.SGR +
-            AnsiCode.CSI + AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" +
-            bgColor + AnsiCode.SGR + 
+      vc.submit(setForegroundIndex(color) + setBackgroundIndex(bgColor) +
             AnsiCode.CSI + AnsiCode.INVERSE + AnsiCode.SGR + "Hello World");
       String expected ="<span class=\"xtermColor129 xtermBgColor61\">Hello World</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
@@ -1038,5 +1048,35 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit(text, "someclass", false, true);
       String newText = vc.getNewText();
       Assert.assertEquals(newText, text);
+   }
+
+   public void testBackground255Carryover6092()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput = 
+            setForegroundIndex(232) + setBackgroundIndex(255) + "one" +
+            setCsiCode(AnsiCode.RESET_BACKGROUND) + setCsiCode(AnsiCode.RESET_FOREGROUND) + " two";
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermColor232 xtermBgColor255\">one</span><span> two</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("one two", vc.toString());
+   }
+
+   public void testForeground255Carryover6092()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+
+      String testInput =
+            setForegroundIndex(255) + setBackgroundIndex(232) + "one" +
+                  setCsiCode(AnsiCode.RESET_BACKGROUND) + setCsiCode(AnsiCode.RESET_FOREGROUND) + " two";
+
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermColor255 xtermBgColor232\">one</span><span> two</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+      Assert.assertEquals("one two", vc.toString());
    }
 }

@@ -12,7 +12,7 @@ stop on runlevel [!2345]
 
 expect fork
 
-respawn
+respawn limit 5 5
 
 # run the server
 exec ${CMAKE_INSTALL_PREFIX}/bin/rserver

@@ -37,8 +37,8 @@ namespace core {
 
 namespace {
 
-const std::string s_errorExpected = "expected";
-const std::string s_errorExpectedValue = "yes";
+constexpr const char* s_errorExpected = "expected";
+constexpr const char* s_errorExpectedValue = "yes";
 
 constexpr const char* s_occurredAt = "OCCURRED AT";
 constexpr const char* s_causedBy = "CAUSED BY";
@@ -478,6 +478,16 @@ Error systemError(int in_value,
                   const ErrorLocation& in_location)
 {
    Error error = systemError(in_value, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(int in_value,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_value, in_cause, in_location);
    error.addProperty("description", in_description);
    return error;
 }
