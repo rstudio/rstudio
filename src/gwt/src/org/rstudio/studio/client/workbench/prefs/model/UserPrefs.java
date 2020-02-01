@@ -379,7 +379,7 @@ public class UserPrefs extends UserPrefsComputed
       commands_.showShortcutCommand().setChecked(!commands_.showShortcutCommand().isChecked());
       ShortcutManager.INSTANCE.setReportShortcutBinding(commands_.showShortcutCommand().isChecked());
       if (commands_.showShortcutCommand().isChecked())
-         display_.showWarningBar(false, "Type a shortcut to see if it bound to a command.");
+         display_.showWarningBar(false, "Type a shortcut to see if it is bound to a command.");
       else
          display_.hideWarningBar();
    }
