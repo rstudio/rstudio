@@ -22,12 +22,15 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.studio.client.panmirror.Panmirror;
 
+import com.google.gwt.dom.client.Style.Unit;
+
 
 public class PanmirrorToolbar extends SecondaryToolbar
 {
    public PanmirrorToolbar()
    {
       super(false, "Panmirror Editor Toolbar");
+      getElement().getStyle().setHeight(getHeight(), Unit.PX);
    }
    
    @Override

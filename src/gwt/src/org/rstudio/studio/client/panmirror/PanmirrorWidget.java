@@ -25,7 +25,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
-import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.IsHideableWidget;
@@ -106,7 +105,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       setSize("100%", "100%");   
      
       // styles
-      getElement().getStyle().setBackgroundColor(ThemeColors.defaultBackground);
       if (options.border)
          this.addStyleName(ThemeResources.INSTANCE.themeStyles().borderedIFrame());
      
