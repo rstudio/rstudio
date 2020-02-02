@@ -162,6 +162,14 @@ export function applyTheme(theme: EditorTheme)
     .pm-background-color *::-moz-selection {
       background-color: ${theme.selectionColor} !important;
     }
+    .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
+      background: none !important;
+    }
+    .CodeMirror-selected { background: none  ; }
+    .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }
+    .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: ${theme.selectionColor}  ; }
+    .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: ${theme.selectionColor}  ; }
+
     .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
     .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
