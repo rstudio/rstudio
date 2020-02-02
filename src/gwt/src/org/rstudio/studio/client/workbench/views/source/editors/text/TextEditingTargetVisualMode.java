@@ -45,8 +45,8 @@ import com.google.inject.Inject;
 // TODO: save cursor and scroll position
 //       (codemirror may be interfering with this as things stand now)
 
-// TODO: theming for selection color
 // TODO: sync font info (typeface, size) into prosemirror
+// TODO: clear codemirror selection on blur
 
 // TODO: accessibility pass
 
