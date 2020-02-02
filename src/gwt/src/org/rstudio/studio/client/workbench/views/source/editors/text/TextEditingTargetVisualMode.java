@@ -46,7 +46,6 @@ import com.google.inject.Inject;
 //       (codemirror may be interfering with this as things stand now)
 
 // TODO: sync font info (typeface, size) into prosemirror
-// TODO: clear codemirror selection on blur
 
 // TODO: accessibility pass
 
