@@ -156,6 +156,12 @@ export function applyTheme(theme: EditorTheme)
     .ProseMirror-selectednode {
       outline-color: ${theme.selectionColor} !important;
     }
+    .pm-background-color *::selection {
+      background-color: ${theme.selectionColor} !important;
+    }
+    .pm-background-color *::-moz-selection {
+      background-color: ${theme.selectionColor} !important;
+    }
     .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
     .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
