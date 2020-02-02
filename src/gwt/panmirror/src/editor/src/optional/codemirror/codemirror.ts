@@ -15,7 +15,7 @@
 
 import { Plugin, PluginKey, TextSelection, EditorState, Transaction, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorView, NodeView } from 'prosemirror-view';
+import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
 import { exitCode } from 'prosemirror-commands';
 import { keymap } from 'prosemirror-keymap';
@@ -121,7 +121,7 @@ class CodeBlockNodeView implements NodeView {
     }
     if (options.firstLineMeta) {
       this.dom.classList.add('CodeMirror-firstLineMeta');
-      this.cm.addLineClass(0, 'text', 'pm-chunk-header-background-color pm-light-text-color pm-block-border-color');
+      this.cm.addLineClass(0, 'text', 'pm-light-text-color');
     }
 
     // CodeMirror needs to be in the DOM to properly initialize, so
@@ -152,7 +152,7 @@ class CodeBlockNodeView implements NodeView {
     this.cm.on('focus', () => this.forwardSelection());
   }
 
-  public update(node: ProsemirrorNode) {
+  public update(node: ProsemirrorNode, _decos: Decoration[]) {
     if (node.type !== this.node.type) {
       return false;
     }

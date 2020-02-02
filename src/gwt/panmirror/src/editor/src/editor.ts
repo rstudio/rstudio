@@ -376,7 +376,7 @@ export class Editor {
         isolating: true,
         parseDOM: [{ tag: 'div[class*="body"]' }],
         toDOM() {
-          return ['div', { class: 'body pm-text-color pm-background-color' }, 0];
+          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color' }, 0];
         },
       },
 
@@ -384,7 +384,7 @@ export class Editor {
         content: 'note*',
         parseDOM: [{ tag: 'div[class*="notes"]' }],
         toDOM() {
-          return ['div', { class: 'notes pm-text-color pm-background-color' }, 0];
+          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color' }, 0];
         },
       },
 

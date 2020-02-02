@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
@@ -38,6 +37,8 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
+import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
@@ -154,25 +155,25 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void initialize(UserPrefs userPrefs, EventBus events)
    {
       userPrefs_ = userPrefs;
-      events.addHandler(ThemeChangedEvent.TYPE, (event) -> {
-         // need a lag to ensure the new css has been applied
+      registrations_.add(events.addHandler(ThemeChangedEvent.TYPE, (event) -> {
          new Timer()
          {
             @Override
             public void run()
             {
                toolbar_.sync(true);
-               syncTheme();
+               syncEditorTheme();
             }
          }.schedule(250);
-      });
+        
+      }));
    }
    
    private void attachEditor(PanmirrorEditor editor) {
       
       editor_ = editor;
       
-      syncTheme();
+      syncEditorTheme();
       
       commands_ = editor.commands();
       
@@ -402,17 +403,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
-   private void syncTheme()
+   private void syncEditorTheme()
    {
-      // create theme from current app theme
-      PanmirrorTheme theme = new PanmirrorTheme(); 
-      theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
-      theme.textColor =  DomUtils.extractCssValue("ace_editor", "color");
-      theme.lightTextColor = DomUtils.extractCssValue("ace_support ace_function", "color");
-      theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
-      theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
-      
-      // apply theme
+      PanmirrorTheme theme = PanmirrorThemeCreator.themeFromEditorTheme();
       editor_.applyTheme(theme);;
    }
   

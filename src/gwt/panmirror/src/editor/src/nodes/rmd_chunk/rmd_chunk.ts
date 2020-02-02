@@ -53,6 +53,7 @@ const extension: Extension = {
 
       code_view: {
         firstLineMeta: true,
+        classes: ['pm-chunk-background-color'],
         lang: (_node: ProsemirrorNode, content: string) => {
           const match = content.match(/^[a-zA-Z0-9_]+/);
           if (match) {

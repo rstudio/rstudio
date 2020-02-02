@@ -13,16 +13,28 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.theme;
 
 import jsinterop.annotations.JsType;
 
 @JsType
 public class PanmirrorTheme
 {
+   public String cursorColor;
+   public String selectionColor;
    public String backgroundColor;
+   public String metadataBackgroundColor;
+   public String chunkBackgroundColor;
+   public String chunkHeaderBackgroundColor;
+   public String spanBackgroundColor;
+   public String divBackgroundColor;
    public String textColor;
    public String lightTextColor;
    public String linkTextColor;
    public String markupTextColor;
+   public String borderBackgroundColor;
+   public String blockBorderColor;
+   public String focusOutlineColor;
+   public String paneBorderColor;
+   public PanmirrorThemeCode code;
 }

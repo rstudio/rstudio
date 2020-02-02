@@ -45,8 +45,12 @@ import com.google.inject.Inject;
 // TODO: save cursor and scroll position
 //       (codemirror may be interfering with this as things stand now)
 
-// TODO: apply themeing
+// TODO: theming for selection color
+// TODO: sync font info (typeface, size) into prosemirror
+
 // TODO: accessibility pass
+
+// TODO: line block doesn't use correct paragraph spacing
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: standard editor dialog boxes

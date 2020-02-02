@@ -13,8 +13,19 @@
  *
  */
 
+.pm-cursor-color {
+  caret-color: black;
+}
+
+.pm-background-color {
+  background-color: white;
+}
 
 .pm-metadata-background-color {
+  background-color: rgb(251,251,251) !important;
+}
+
+.pm-chunk-background-color {
   background-color: rgb(251,251,251) !important;
 }
 
@@ -28,6 +39,10 @@
 
 .pm-div-background-color {
   background-color: rgb(236, 249, 250) !important;
+}
+
+.pm-text-color {
+  color: black;
 }
 
 .pm-light-text-color {
@@ -64,7 +79,7 @@
 }
 
 .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
-  background: #d7d4f0;
+  background: #8cf !important;
 }
 
 
