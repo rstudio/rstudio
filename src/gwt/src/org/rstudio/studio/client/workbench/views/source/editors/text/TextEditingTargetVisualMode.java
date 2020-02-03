@@ -254,7 +254,9 @@ public class TextEditingTargetVisualMode
                      PanmirrorSelection selection = savedSelection();
                      if (selection != null)
                         panmirror_.setSelection(selection);
-                  });
+                     if (focus)
+                       panmirror_.focus();
+                  });                
                });
             }
             else
