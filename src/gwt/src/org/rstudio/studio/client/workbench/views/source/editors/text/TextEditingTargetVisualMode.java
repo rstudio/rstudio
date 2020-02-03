@@ -32,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -45,7 +47,6 @@ import com.google.inject.Inject;
 // TODO: save cursor and scroll position
 //       (codemirror may be interfering with this as things stand now)
 
-// TODO: accessibility pass
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
@@ -68,9 +69,9 @@ public class TextEditingTargetVisualMode
       docUpdateSentinel_ = docUpdateSentinel;
       
       // manage ui based on current pref + changes over time
-      manageUI(false);
+      manageUI(isEnabled(), false);
       onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
-         manageUI(true);
+         manageUI(isEnabled(), true);
       });
       
       // sync to outline visible prop
@@ -92,14 +93,14 @@ public class TextEditingTargetVisualMode
       source_ = source;
    }
    
-   public boolean isEnabled()
+  
+   public void deactivate(ScheduledCommand completed)
    {
-      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
-   }
-   
-   public void setEnabled(boolean enable)
-   {
-      docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, enable);
+      if (isEnabled())
+      {
+         docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+         manageUI(false, true, completed);
+      }
    }
    
    public void sync()
@@ -187,8 +188,18 @@ public class TextEditingTargetVisualMode
       );
    } 
    
+   private boolean isEnabled()
+   {
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+   }
+   
   
-   private void manageUI(boolean focus)
+   private void manageUI(boolean enable, boolean focus)
+   {
+      manageUI(enable, focus, () -> {});
+   }
+   
+   private void manageUI(boolean enable, boolean focus, ScheduledCommand completed)
    {
       // manage commands
       manageCommands();
@@ -201,7 +212,7 @@ public class TextEditingTargetVisualMode
       TextEditorContainer.Editor editor = editorContainer.getEditor();
         
       // visual mode enabled (panmirror editor)
-      if (isEnabled())
+      if (enable)
       {
          withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
@@ -209,7 +220,7 @@ public class TextEditingTargetVisualMode
             if (!isPanmirrorActive()) 
             {
                loadingFromSource_ = true;
-               panmirror_.setMarkdown(editor.getCode(), true, (completed) -> {  
+               panmirror_.setMarkdown(editor.getCode(), true, (done) -> {  
                   isDirty_ = false;
                   loadingFromSource_ = false;
                });
@@ -224,6 +235,10 @@ public class TextEditingTargetVisualMode
             // begin save-on-idle behavior
             syncOnIdle_.resume();
             saveSelectionOnIdle_.resume();
+            
+         
+            // execute completed hook
+            Scheduler.get().scheduleDeferred(completed);
          });
         
       }
@@ -241,6 +256,9 @@ public class TextEditingTargetVisualMode
             
             if (saveSelectionOnIdle_ != null)
                saveSelectionOnIdle_.suspend();
+            
+            // execute completed hook
+            Scheduler.get().scheduleDeferred(completed);
          });  
       }
    }

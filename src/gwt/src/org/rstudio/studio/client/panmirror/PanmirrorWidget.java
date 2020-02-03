@@ -300,6 +300,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
             animate(duration);
          }
+         else
+         {
+            forceLayout();
+         }
       }
    }
    

@@ -1094,8 +1094,9 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
    {
-      visualMode_.setEnabled(false);
-      docDisplay_.navigateToPosition(position, recordCurrent);
+      visualMode_.deactivate(() -> {
+         docDisplay_.navigateToPosition(position, recordCurrent);
+      });
    }
    
    @Override
@@ -1103,8 +1104,9 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
-      visualMode_.setEnabled(false);
-      docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+      visualMode_.deactivate(() -> {
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+      });  
    }
 
    @Override

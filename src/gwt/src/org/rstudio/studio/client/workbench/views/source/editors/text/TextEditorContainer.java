@@ -114,6 +114,8 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
          }
         
       });
+      // layout immediately
+      forceLayout();
    }
    
    // add a widget (not activated by default)
@@ -126,6 +128,9 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       setWidgetVisible(widget.asWidget(), false);
       setWidgetLeftRight(widget.asWidget(), 0, Unit.PX, 0, Unit.PX);
       setWidgetTopBottom(widget.asWidget(), 0, Unit.PX, 0, Unit.PX);
+      
+      // force layout
+      forceLayout();
       
       // add to list of editors we are managimg
       widgets_.add(widget);
