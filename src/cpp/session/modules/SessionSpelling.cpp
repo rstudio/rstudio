@@ -213,7 +213,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       }
       else if (!isCorrect) 
       {
-         misspelledIndexes.push_back(json::Value(gsl::narrow_cast<int>(i)));
+         misspelledIndexes.push_back(gsl::narrow_cast<int>(i));
       }
    }
 

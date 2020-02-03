@@ -310,7 +310,7 @@ private:
       json::Array arr;
       ExecRange range(0, 0);
       arr.push_back(input);
-      arr.push_back(json::Value(chunkId));
+      arr.push_back(chunkId);
 
       // formulate request body
       json::Object rpc;

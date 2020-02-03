@@ -379,9 +379,9 @@ void Job::addOutput(const std::string& output, bool asError)
    if (listening_)
    {
       json::Array data;
-      data.push_back(json::Value(id_));
-      data.push_back(json::Value(type));
-      data.push_back(json::Value(output));
+      data.push_back(id_);
+      data.push_back(type);
+      data.push_back(output);
       module_context::enqueClientEvent(
             ClientEvent(client_events::kJobOutput, data));
    }
@@ -415,8 +415,8 @@ void Job::addOutput(const std::string& output, bool asError)
 
    // create json array with output and write it to the file
    json::Array contents;
-   contents.push_back(json::Value(type));
-   contents.push_back(json::Value(output));
+   contents.push_back(type);
+   contents.push_back(output);
    contents.write(*file);
 
    // append a newline (the file is newline-delimited JSON)

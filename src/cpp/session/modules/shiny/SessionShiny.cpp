@@ -321,7 +321,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
       
-      result.push_back(json::Value(aliasedPath));
+      result.push_back(aliasedPath);
    }
    
    if (!existingFiles.empty())

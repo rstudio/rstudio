@@ -145,7 +145,7 @@ Error createPlumberAPI(const json::JsonRpcRequest& request, json::JsonRpcRespons
    // if file already exists, report that as an error
    FilePath target = plumberDir.completePath(templateFile);
    std::string aliasedPath = module_context::createAliasedPath(plumberDir.completePath(templateFile));
-   result.push_back(json::Value(aliasedPath));
+   result.push_back(aliasedPath);
    if (target.exists())
    {
       std::string message = "The file '" + aliasedPath + "' already exists";

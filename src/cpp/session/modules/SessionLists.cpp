@@ -93,7 +93,7 @@ json::Array listToJson(const std::list<std::string>& list)
    json::Array jsonArray;
    for (const std::string& val : list)
    {
-      jsonArray.push_back(json::Value(val));
+      jsonArray.push_back(val);
    }
    return jsonArray;
 }

@@ -218,7 +218,7 @@ public:
          json::Array namesJson;
          for (const module_context::SourceMarkerSet& set : markerSets_)
          {
-            namesJson.push_back(json::Value(set.name));
+            namesJson.push_back(set.name);
          }
 
          // markers for active set
