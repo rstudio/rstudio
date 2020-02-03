@@ -49,6 +49,8 @@ import com.google.inject.Inject;
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
+// TOOD: link to docs
+// TODO: fix the way list indending is done
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
