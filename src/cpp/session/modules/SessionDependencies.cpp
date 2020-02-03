@@ -368,6 +368,13 @@ Error installDependencies(const json::JsonRpcRequest& request,
       {
          if (isRenv)
          {
+            // renv used the 'pkgType' option to decide whether to install a package
+            // from sources or not; set it to source explicitly to force source installs
+            if (dep.source)
+            {
+               script += "options(pkgType = 'source'); ";
+            }
+            
             // NOTE: renv will use the repositories as set in the lockfile here;
             // should we override this based on the current repositories set in
             // the session?
