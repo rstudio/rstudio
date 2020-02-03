@@ -248,7 +248,8 @@ public class FindOutputPresenter extends BasePresenter
                                       {
                                          view_.clearMatches();
                                          currentFindHandle_ = handle;
-                                         dialogState_.clearResultsCount();
+                                         if (dialogState_ != null)
+                                            dialogState_.clearResultsCount();
                                       }
                                    });
          }
