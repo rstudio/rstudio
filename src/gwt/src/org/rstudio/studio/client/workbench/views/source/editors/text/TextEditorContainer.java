@@ -105,17 +105,17 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
          if (w == widget) 
          {
             setWidgetVisible(w.asWidget(), true);
+            forceLayout();
             if (focus)
                w.focus();
          }
          else
          {
             setWidgetVisible(w.asWidget(), false);
+            forceLayout();
          }
         
       });
-      // layout immediately
-      forceLayout();
    }
    
    // add a widget (not activated by default)

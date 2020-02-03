@@ -50,6 +50,8 @@ public class PanmirrorEditor
    
    public native PanmirrorSelection getSelection();
    
+   public native void setSelection(PanmirrorSelection selection);
+   
    public native PanmirrorOutlineItem[] getOutline();
    
    public native void focus();

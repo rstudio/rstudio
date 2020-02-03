@@ -21,6 +21,7 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorSelection
 {    
+   public String type;
    public int from;
    public int to;
 }

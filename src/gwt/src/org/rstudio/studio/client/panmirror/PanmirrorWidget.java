@@ -362,6 +362,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getSelection();
    }
    
+   public void setSelection(PanmirrorSelection selection)
+   {
+      editor_.setSelection(selection);
+   }
+   
    public void focus()
    {
       editor_.focus();

@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.Panmirror;
@@ -43,7 +44,12 @@ import com.google.inject.Inject;
 
 
 // TODO: save cursor and scroll position
-//       (codemirror may be interfering with this as things stand now)
+//        - consider table or other selecton types
+//        - look into bookmark
+//        - verify nodeselection on restore
+//        - codemirror stealing focus
+
+
 
 // TODO: consider attempting to navigate to same position
 
@@ -214,6 +220,21 @@ public class TextEditingTargetVisualMode
       // visual mode enabled (panmirror editor)
       if (enable)
       {
+         Command activate = () -> {
+            // sync to editor outline prefs
+            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
+            
+            // activate widget
+            editorContainer.activateWidget(panmirror_, focus);
+            
+            // begin save-on-idle behavior
+            syncOnIdle_.resume();
+            saveSelectionOnIdle_.resume();
+         
+            // execute completed hook
+            Scheduler.get().scheduleDeferred(completed);    
+         };
+         
          withPanmirror(() -> {
             // if we aren't currently active then set our markdown based
             // on what's currently in the source ditor
@@ -221,26 +242,26 @@ public class TextEditingTargetVisualMode
             {
                loadingFromSource_ = true;
                panmirror_.setMarkdown(editor.getCode(), true, (done) -> {  
+                  
                   isDirty_ = false;
                   loadingFromSource_ = false;
+                  
+                  // activate editor
+                  activate.execute();
+                  
+                  // restore selection if we have one
+                  Scheduler.get().scheduleDeferred(() -> {
+                     PanmirrorSelection selection = savedSelection();
+                     if (selection != null)
+                        panmirror_.setSelection(selection);
+                  });
                });
             }
-            
-            // sync to editor outline prefs
-            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
-         
-            // activate panmirror 
-            editorContainer.activateWidget(panmirror_, focus);
-            
-            // begin save-on-idle behavior
-            syncOnIdle_.resume();
-            saveSelectionOnIdle_.resume();
-            
-         
-            // execute completed hook
-            Scheduler.get().scheduleDeferred(completed);
+            else
+            {
+               activate.execute();
+            }  
          });
-        
       }
       
       // visual mode not enabled (source editor)
@@ -307,7 +328,7 @@ public class TextEditingTargetVisualMode
                protected void execute()
                {
                   PanmirrorSelection selection = panmirror_.getSelection();
-                  String selectionProp = selection.from + ":" + selection.to; 
+                  String selectionProp = selection.type + ":" + selection.from + ":" + selection.to; 
                   docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_SELECTION, selectionProp);
                }
             };
@@ -393,6 +414,32 @@ public class TextEditingTargetVisualMode
       target_.setPreferredOutlineWidgetSize(width);
    }
    
+   
+   private PanmirrorSelection savedSelection()
+   {
+      String selection = docUpdateSentinel_.getProperty(RMD_VISUAL_MODE_SELECTION, null);
+      if (StringUtil.isNullOrEmpty(selection))
+         return null;
+      
+      String[] parts = selection.split(":");
+      if (parts.length != 3)
+         return null;
+      
+      try
+      {
+         PanmirrorSelection editorSelection = new PanmirrorSelection();
+         editorSelection.type = parts[0];
+         editorSelection.from = Integer.parseInt(parts[1]);
+         editorSelection.to = Integer.parseInt(parts[2]);
+         return editorSelection;
+      }
+      catch(Exception ex)
+      {
+         return null;
+      }
+      
+   }
+   
    private void disableKeys(String... commands)
    {
       PanmirrorKeybindings keybindings = disabledKeybindings(commands);
@@ -452,7 +499,7 @@ public class TextEditingTargetVisualMode
    
    private PanmirrorWidget panmirror_;
    
-   private static final String RMD_VISUAL_MODE_SELECTION = "rmdVisualModeSelection";   
+   private static final String RMD_VISUAL_MODE_SELECTION = "rmdVisualModeSel";   
 }
 
 
