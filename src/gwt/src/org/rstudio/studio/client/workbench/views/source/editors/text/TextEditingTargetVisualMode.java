@@ -41,11 +41,11 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-// TODO: currently, scroll to the line doesn't happen for find source nav
-//       when switching from visual to source mode
 
 // TODO: save cursor and scroll position
 //       (codemirror may be interfering with this as things stand now)
+
+// TODO: consider attempting to navigate to same position
 
 
 // TODO: wire up find and replace actions to panmirror stubs
