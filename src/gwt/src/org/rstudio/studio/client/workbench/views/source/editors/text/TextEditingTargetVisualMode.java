@@ -44,11 +44,11 @@ import com.google.inject.Inject;
 
 
 // TODO: save cursor and scroll position
+//        - invalidation after edit
 //        - consider table or other selecton types
 //        - look into bookmark
 //        - verify nodeselection on restore
 //        - codemirror stealing focus
-
 
 
 // TODO: consider attempting to navigate to same position
