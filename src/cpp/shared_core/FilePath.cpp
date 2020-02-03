@@ -1222,12 +1222,6 @@ Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_
    return Success();
 }
 
-Error FilePath::testWritePermissions() const
-{
-   std::shared_ptr<std::ostream> testStream;
-   return openForWrite(testStream, false);
-}
-
 Error FilePath::remove() const
 {
    try
@@ -1293,6 +1287,12 @@ void FilePath::setLastWriteTime(std::time_t in_time) const
       logError(m_impl->Path, e, ERROR_LOCATION);
       return;
    }
+}
+
+Error FilePath::testWritePermissions() const
+{
+   std::shared_ptr<std::ostream> testStream;
+   return openForWrite(testStream, false);
 }
 
 // PathScope Classes ===================================================================================================
