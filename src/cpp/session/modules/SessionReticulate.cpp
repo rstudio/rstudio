@@ -23,6 +23,7 @@
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -34,6 +35,18 @@ namespace modules {
 namespace reticulate {
 
 namespace {
+
+SEXP rs_reticulateInitialized()
+{
+   // Python will register its own console control handler,
+   // which also blocks signals from reaching any previously
+   // defined handlers (including RStudio's own). re-initialize
+   // RStudio's console control handler here to ensure that
+   // interrupts are still handled by R as expected
+   module_context::initializeConsoleCtrlHandler();
+
+   return R_NilValue;
+}
 
 void onDeferredInit(bool)
 {
@@ -57,7 +70,9 @@ Error initialize()
    using namespace module_context;
    
    events().onDeferredInit.connect(onDeferredInit);
-   
+
+   RS_REGISTER_CALL_METHOD(rs_reticulateInitialized);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionReticulate.R"));
