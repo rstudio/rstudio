@@ -486,12 +486,6 @@ private:
       }
    }
 
-   Error testWritePermissions(const FilePath& filePath)
-   {
-      std::shared_ptr<std::ostream> testStream;
-      return filePath.openForWrite(testStream, /*in_truncate*/ false);
-   }
-
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -531,7 +525,7 @@ private:
              !tempReplaceFile_.getAbsolutePath().empty() &&
              outputStream_->good())
          {
-            Error error = testWritePermissions(FilePath(currentFile_));
+            Error error = FilePath(currentFile_).testWritePermissions();
             if (error)
                return error;
             std::string line;
@@ -603,7 +597,7 @@ private:
    Error initializeFileForReplace(FilePath file)
    {
       fileSuccess_ = false;
-      Error error = testWritePermissions(file);
+      Error error = file.testWritePermissions();
       if (error)
          return error;
       if (!findResults().preview())
@@ -884,6 +878,7 @@ private:
                   findResults().replacePattern().empty()))
             {
                FilePath fullPath(module_context::resolveAliasedPath(file));
+               // check if we are looking at a new file
                if (currentFile_.empty() || currentFile_ != fullPath.getAbsolutePath())
                {
                   if (!currentFile_.empty())
@@ -893,18 +888,19 @@ private:
                      addReplaceErrorMessage(error.asString(), &errorMessage,
                         &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                }
+               else if (!fileSuccess_)
+               {
+                  // the first time a file is processed it gets a more detailed initialization error
+                  addReplaceErrorMessage("Cannot perform replace", &errorMessage,
+                     &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
+               }
                if (!fileSuccess_ || lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
                {
+                  // if we failed for any reason, update the progress
                   if (!findResults().preview())
                      findResults().replaceProgress()->
                         addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
-                  if (!fileSuccess_ && inputLineNum_ != 0)
-                  {
-                     // the first time a file is processed it gets a more detailed initialization error
-                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
-                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
-                  }
-                  else if (fileSuccess_)
+                  if (fileSuccess_)
                   {
                      bool lineSuccess;
                      addReplaceErrorMessage("Line exceeds maximum character length for replace",
