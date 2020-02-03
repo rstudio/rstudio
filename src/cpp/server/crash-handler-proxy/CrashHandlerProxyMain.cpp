@@ -52,7 +52,10 @@ int main(int argc, const char* argv[])
    {
       error = restoreRoot();
       if (error)
+      {
          LOG_ERROR(error);
+         return EXIT_FAILURE;
+      }
    }
 
    runCrashHandler(argv);
