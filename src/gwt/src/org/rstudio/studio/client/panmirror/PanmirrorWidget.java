@@ -29,7 +29,6 @@ import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
@@ -40,6 +39,9 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
@@ -152,20 +154,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Inject
-   public void initialize(UserPrefs userPrefs, EventBus events)
+   public void initialize(UserPrefs userPrefs, UserState userState, EventBus events)
    {
       userPrefs_ = userPrefs;
-      registrations_.add(events.addHandler(ThemeChangedEvent.TYPE, (event) -> {
-         new Timer()
-         {
-            @Override
-            public void run()
+      userState_ = userState;
+      registrations_.add(events.addHandler(EditorThemeChangedEvent.TYPE, 
+         (EditorThemeChangedEvent event) -> {
+            new Timer()
             {
-               toolbar_.sync(true);
-               syncEditorTheme();
-            }
-         }.schedule(250);
-        
+               @Override
+               public void run()
+               {
+                  toolbar_.sync(true);
+                  syncEditorTheme(event.getTheme());
+               }
+            }.schedule(150);
       }));
    }
    
@@ -173,7 +176,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       editor_ = editor;
       
-      syncEditorTheme();
+      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
+      syncEditorTheme(currentTheme);
       
       commands_ = editor.commands();
       
@@ -403,14 +407,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
-   private void syncEditorTheme()
+   private void syncEditorTheme(AceTheme theme)
    {
-      PanmirrorTheme theme = PanmirrorThemeCreator.themeFromEditorTheme();
-      editor_.applyTheme(theme);;
+      PanmirrorTheme panmirrorTheme = PanmirrorThemeCreator.themeFromEditorTheme(theme);
+      editor_.applyTheme(panmirrorTheme);;
    }
   
    
    private UserPrefs userPrefs_ = null;
+   private UserState userState_ = null;
    
    private PanmirrorOutlineWidget outline_ = null;
    private PanmirrorToolbar toolbar_ = null;

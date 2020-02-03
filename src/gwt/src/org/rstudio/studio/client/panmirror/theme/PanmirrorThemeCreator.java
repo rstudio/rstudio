@@ -16,12 +16,13 @@
 package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.JsArrayString;
 
 public class PanmirrorThemeCreator
 {
-   public static PanmirrorTheme themeFromEditorTheme()
+   public static PanmirrorTheme themeFromEditorTheme(AceTheme aceTheme)
    {
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
@@ -76,7 +77,7 @@ public class PanmirrorThemeCreator
       code.attributeColor = theme.textColor;
       code.hrColor = theme.textColor;
       code.linkColor = theme.linkTextColor;
-      code.errorColor = DomUtils.extractCssValue("ace_constant", "color"); 
+      code.errorColor = DomUtils.extractCssValue(AceTheme.getThemeErrorClass(aceTheme), "color"); 
       theme.code = code;
       
       return theme;
