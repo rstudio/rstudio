@@ -117,9 +117,9 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
          if (outputType != kChunkConsoleInput)
          {
             json::Array output;
-            output.push_back(json::Value(outputType));
-            output.push_back(json::Value(line.first[1]));
-            pArray->push_back(json::Value(output));
+            output.push_back(outputType);
+            output.push_back(line.first[1]);
+            pArray->push_back(output);
          }
       }
       // read next line

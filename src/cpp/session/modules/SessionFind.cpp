@@ -464,8 +464,8 @@ private:
                                bool* pSuccessFlag)
    {
       pErrorSet->insert(contents);
-      pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(-1)));
-      pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(-1)));
+      pReplaceMatchOn->push_back(gsl::narrow_cast<int>(-1));
+      pReplaceMatchOff->push_back(gsl::narrow_cast<int>(-1));
       *pSuccessFlag = false;
    }
 
@@ -501,13 +501,11 @@ private:
             json::Array newMatchOffArray;
             for (size_t i = 0; i < pMatchOn->getSize(); i++)
             {
-               newMatchOnArray.push_back(
-                  json::Value(pMatchOn->getValueAt(i).getInt() - leadingCharactersErased));
+               newMatchOnArray.push_back(pMatchOn->getValueAt(i).getInt() - leadingCharactersErased);
                if (i >= pMatchOff->getSize())
                   LOG_WARNING_MESSAGE("pMatchOn and pMatchOff should be the same length");
                else
-                  newMatchOffArray.push_back(
-                     json::Value(pMatchOff->getValueAt(i).getInt() - leadingCharactersErased));
+                  newMatchOffArray.push_back(pMatchOff->getValueAt(i).getInt() - leadingCharactersErased);
             }
             *pMatchOn = newMatchOnArray;
             *pMatchOff = newMatchOffArray;
@@ -577,9 +575,9 @@ private:
          // update the match state
          if ((match.size() > 2 && match[2] == "1" && findResults().gitFlag()) ||
              (match[1] == "01" && !findResults().gitFlag()))
-            pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
+            pMatchOn->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
          else
-            pMatchOff->push_back(json::Value(gsl::narrow_cast<int>(nUtf8CharactersProcessed)));
+            pMatchOff->push_back(gsl::narrow_cast<int>(nUtf8CharactersProcessed));
       }
 
       if (inputPos != end)
@@ -617,8 +615,7 @@ private:
       // make sure negative values (errors) don't become positve
       if (newValue.getInt() < 0)
          newValue = json::Value(newValue.getInt() - offset);
-      pJsonArray->push_back(json::Value(
-                            gsl::narrow_cast<int>(newValue.getInt() + offset)));
+      pJsonArray->push_back(gsl::narrow_cast<int>(newValue.getInt() + offset));
    }
 
    void subtractOffsetIntegersToJsonArray(
@@ -757,15 +754,15 @@ private:
                      pReplaceMatchOff->clear();
 
                      int offset(gsl::narrow_cast<int>(replaceSize - matchSize));
-                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                     pReplaceMatchOn->push_back(gsl::narrow_cast<int>(matchOn));
+                     pReplaceMatchOff->push_back(gsl::narrow_cast<int>(replaceMatchOff));
                      subtractOffsetIntegersToJsonArray(tempMatchOn, offset, pReplaceMatchOn);
                      subtractOffsetIntegersToJsonArray(tempMatchOff, offset, pReplaceMatchOff);
                   }
                   else
                   {
-                     pReplaceMatchOn->push_back(json::Value(gsl::narrow_cast<int>(matchOn)));
-                     pReplaceMatchOff->push_back(json::Value(gsl::narrow_cast<int>(replaceMatchOff)));
+                     pReplaceMatchOn->push_back(gsl::narrow_cast<int>(matchOn));
+                     pReplaceMatchOff->push_back(gsl::narrow_cast<int>(replaceMatchOff));
                   }
                }
                pos--;
@@ -911,15 +908,15 @@ private:
                }
             }
 
-            files.push_back(json::Value(file));
-            lineNums.push_back(json::Value(lineNum));
-            contents.push_back(json::Value(lineInfo.decodedPreview));
+            files.push_back(file);
+            lineNums.push_back(lineNum);
+            contents.push_back(lineInfo.decodedPreview);
             matchOns.push_back(matchOn);
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
             for (std::string newError : errorMessage)
-               errors.push_back(json::Value(newError));
+               errors.push_back(newError);
             recordsToProcess--;
          }
       }

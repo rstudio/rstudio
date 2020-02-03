@@ -1412,11 +1412,11 @@ Error svnHistoryEnd_CommitCallback(json::Array *pIds,
                                    json::Array *pDates,
                                    const CommitInfo& commit)
 {
-   pIds->push_back(json::Value(commit.id));
-   pAuthors->push_back(json::Value(commit.author));
-   pSubjects->push_back(json::Value(commit.subject));
-   pDescriptions->push_back(json::Value(commit.description));
-   pDates->push_back(json::Value(commit.date));
+   pIds->push_back(commit.id);
+   pAuthors->push_back(commit.author);
+   pSubjects->push_back(commit.subject);
+   pDescriptions->push_back(commit.description);
+   pDates->push_back(commit.date);
    return Success();
 }
 
