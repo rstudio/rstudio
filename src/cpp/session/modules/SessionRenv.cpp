@@ -36,6 +36,11 @@ bool isRequiredRenvInstalled()
    return isPackageVersionInstalled("renv", "0.9.2");
 }
 
+bool isRenvActive()
+{
+   return !core::system::getenv("RENV_PROJECT").empty();
+}
+
 namespace {
 
 core::json::Value renvStateAsJson(const std::string method)
