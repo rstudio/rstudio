@@ -18,13 +18,8 @@
 }
 
 .pm-code-block {
-  font-family: monospace, monospace;
   white-space: pre-wrap;
   margin-block-end: 1em;
-}
-
-.pm-code-inline {
-  font-family: monospace, monospace;
 }
 
 .pm-blockquote {
@@ -80,6 +75,7 @@
 }
 
 .pm-line-block > p {
+  margin-top: 0;
   margin-bottom: 2px;
 }
 

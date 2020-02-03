@@ -15,14 +15,17 @@
 
 package org.rstudio.studio.client.panmirror.theme;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.JsArrayString;
 
 public class PanmirrorThemeCreator
 {
-   public static PanmirrorTheme themeFromEditorTheme(AceTheme aceTheme)
+   public static PanmirrorTheme themeFromEditorTheme(AceTheme aceTheme, UserPrefs prefs)
    {
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
@@ -60,6 +63,13 @@ public class PanmirrorThemeCreator
       
       theme.paneBorderColor = DomUtils.extractCssValue("ace_print-margin", "backgroundColor");
       
+      // calculate standard font size in pts
+      double fontSize = prefs.fontSizePoints().getValue();
+      fontSize = fontSize + BrowseCap.getFontSkew();
+      theme.fixedWidthFont = ThemeFonts.getFixedWidthFont();
+      theme.fixedWidthFontSizePt = fontSize;
+      theme.proportionalFont = ThemeFonts.getProportionalFont();
+      theme.proportionalFontSizePt = fontSize + 1;
       
       PanmirrorThemeCode code = new PanmirrorThemeCode();
       code.keywordColor = DomUtils.extractCssValue("ace_keyword", "color");

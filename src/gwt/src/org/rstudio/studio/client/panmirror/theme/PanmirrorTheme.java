@@ -36,5 +36,9 @@ public class PanmirrorTheme
    public String blockBorderColor;
    public String focusOutlineColor;
    public String paneBorderColor;
+   public String fixedWidthFont;
+   public double fixedWidthFontSizePt;
+   public String proportionalFont;
+   public double proportionalFontSizePt;
    public PanmirrorThemeCode code;
 }

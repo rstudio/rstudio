@@ -51,7 +51,6 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
-import './styles/theme.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -149,6 +148,9 @@ export class Editor {
       dispatchTransaction: this.dispatchTransaction.bind(this),
       domParser: new EditorDOMParser(this.schema),
     });
+
+    // add proportinal font class to parent
+    this.parent.classList.add('pm-proportional-font');
 
     // apply default theme
     applyTheme(defaultTheme());

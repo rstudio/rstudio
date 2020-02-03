@@ -71,7 +71,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           toDOM(mark: Mark) {
             return [
               'span',
-              { class: 'raw-inline pm-code-inline pm-markup-text-color', 'data-format': mark.attrs.format },
+              { class: 'raw-inline pm-fixedwidth-font pm-markup-text-color', 'data-format': mark.attrs.format },
             ];
           },
         },

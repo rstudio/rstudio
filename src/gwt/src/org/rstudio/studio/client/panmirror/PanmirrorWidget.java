@@ -28,6 +28,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
@@ -154,7 +155,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Inject
-   public void initialize(UserPrefs userPrefs, UserState userState, EventBus events)
+   public void initialize(UserPrefs userPrefs, 
+                          UserState userState, 
+                          EventBus events)
    {
       userPrefs_ = userPrefs;
       userState_ = userState;
@@ -170,14 +173,18 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                }
             }.schedule(150);
       }));
+      registrations_.add(events.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {
+         syncEditorTheme();
+      }));
    }
    
    private void attachEditor(PanmirrorEditor editor) {
       
       editor_ = editor;
+       
+      // sync theme
+      syncEditorTheme();
       
-      AceTheme currentTheme = userState_.theme().getGlobalValue().cast();
-      syncEditorTheme(currentTheme);
       
       commands_ = editor.commands();
       
@@ -407,12 +414,17 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
    }
    
+   private void syncEditorTheme()
+   {
+      syncEditorTheme(userState_.theme().getGlobalValue().cast());
+   }
+   
    private void syncEditorTheme(AceTheme theme)
    {
-      PanmirrorTheme panmirrorTheme = PanmirrorThemeCreator.themeFromEditorTheme(theme);
+      PanmirrorTheme panmirrorTheme = PanmirrorThemeCreator.themeFromEditorTheme(theme, userPrefs_);
       editor_.applyTheme(panmirrorTheme);;
    }
-  
+   
    
    private UserPrefs userPrefs_ = null;
    private UserState userState_ = null;

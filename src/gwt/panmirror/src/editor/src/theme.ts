@@ -30,6 +30,10 @@ export interface EditorTheme {
   blockBorderColor: string;
   focusOutlineColor: string;
   paneBorderColor: string;
+  fixedWidthFont: string;
+  fixedWidthFontSizePt: number;
+  proportionalFont: string;
+  proportionalFontSizePt: number;
   code: CodeTheme;
 }
 
@@ -71,23 +75,27 @@ export function defaultTheme() : EditorTheme {
     blockBorderColor: "#ddd",
     focusOutlineColor: "#ddd",
     paneBorderColor: "silver",
+    fixedWidthFont: "monospace, monospace",
+    fixedWidthFontSizePt: 9,
+    proportionalFont: '"Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif',
+    proportionalFontSizePt: 10,
     code: {
-      keywordColor: "black",
-      atomColor: "black",
-      numberColor: "black",
-      variableColor: "black",
-      defColor: "black",
-      operatorColor: "black",
-      commentColor: "black",
-      stringColor: "black",
-      metaColor: "black",
-      builtinColor: "black",
-      bracketColor: "black",
-      tagColor: "black",
-      attributeColor: "black",
-      hrColor: "black",
-      linkColor: "black",
-      errorColor: "black"
+      keywordColor: "rgb(0, 0, 255)",
+      atomColor: "rgb(88, 92, 246)",
+      numberColor: "rgb(0, 0, 205)",
+      variableColor: "rgb(0, 0, 0)",
+      defColor: "rgb(0, 0, 0)",
+      operatorColor: "rgb(104, 118, 135)",
+      commentColor: "rgb(76, 136, 107)",
+      stringColor: "rgb(3, 106, 7)",
+      metaColor: "rgb(0, 0, 0)",
+      builtinColor: "rgb(0, 0, 0)",
+      bracketColor: "rgb(104, 118, 135)",
+      tagColor: "rgb(0, 22, 142)",
+      attributeColor: "rgb(0, 0, 0)",
+      hrColor: "rgb(0, 0, 0)",
+      linkColor: "rgb(0, 0, 255)",
+      errorColor: "rgb(197, 6, 11)"
     }
   }
 }
@@ -118,9 +126,6 @@ export function applyTheme(theme: EditorTheme)
     }
     .pm-chunk-background-color {
       background-color: ${theme.chunkBackgroundColor} !important;
-    }
-    .pm-chunk-header-background-color {
-      background-color: ${theme.chunkHeaderBackgroundColor} !important;
     }
     .pm-span-background-color {
       background-color: ${theme.spanBackgroundColor} !important;
@@ -164,6 +169,19 @@ export function applyTheme(theme: EditorTheme)
     }
     .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
       background: none !important;
+    }
+    .pm-fixedwidth-font {
+      font-family: ${theme.fixedWidthFont} !important;
+      font-size: ${theme.fixedWidthFontSizePt}pt !important;
+    }
+    .pm-proportional-font {
+      font-family: ${theme.proportionalFont} !important;
+      font-size: ${theme.proportionalFontSizePt}pt !important;
+    }
+    .CodeMirror,
+    .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
+      font-family: ${theme.fixedWidthFont};
+      font-size: ${theme.fixedWidthFontSizePt}pt !important;
     }
     .CodeMirror-selected { background: none  ; }
     .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }

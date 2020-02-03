@@ -48,7 +48,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           toDOM(node: ProsemirrorNode) {
-            return ['pre', pandocExtensions.fenced_code_attributes ? pandocAttrToDomAttr(node.attrs) : {}, ['code', 0]];
+            const fontClass = 'pm-fixedwidth-font';
+            const attrs = pandocExtensions.fenced_code_attributes ?
+              pandocAttrToDomAttr({
+                ...node.attrs,
+                classes: [...node.attrs.classes, fontClass],
+              }) :
+              {
+                class: fontClass
+              };
+            return ['pre', attrs, ['code', 0]];
           },
         },
 

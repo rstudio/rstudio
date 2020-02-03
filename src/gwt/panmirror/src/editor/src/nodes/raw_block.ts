@@ -65,7 +65,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           toDOM(node: ProsemirrorNode) {
             return [
               'div',
-              { class: 'raw-block pm-code-block pm-markup-text-color', 'data-format': node.attrs.format },
+              { class: 'raw-block pm-fixedwidth-font pm-code-block pm-markup-text-color', 'data-format': node.attrs.format },
               0,
             ];
           },

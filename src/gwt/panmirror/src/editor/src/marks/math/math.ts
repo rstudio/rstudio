@@ -63,7 +63,7 @@ const extension: Extension = {
         toDOM(mark: Mark) {
           return [
             'span',
-            { class: 'math pm-code-inline pm-light-text-color', 'data-type': mark.attrs.type, spellcheck: 'false' },
+            { class: 'math pm-fixedwidth-font pm-light-text-color', 'data-type': mark.attrs.type, spellcheck: 'false' },
           ];
         },
       },
