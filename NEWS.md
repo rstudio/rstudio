@@ -123,6 +123,7 @@
 * Support use of F13 - F24 for custom keyboard shortcuts (full Mac keyboard has F13-F19, for example)
 * Keyboard shortcuts for searching R help in Help pane, and next/previous help page (#5149)
 * Keep keyboard focus in the console during debugging (#6039)
+* Enable wrap-around for previous/next source tab by default (#6139)
 
 ### Bugfixes
 
