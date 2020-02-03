@@ -1938,7 +1938,7 @@ Error restrictCoreDumps()
 
 Error enableCoreDumps()
 {
-   posix::enableCoreDumps();
+   return posix::enableCoreDumps();
 }
 
 void printCoreDumpable(const std::string& context)
