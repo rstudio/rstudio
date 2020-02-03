@@ -43,15 +43,14 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
+// TODO: insert 3 rows/cols then round trips to 2
+
 // TODO: save cursor and scroll position
 //        - invalidation after edit
-//        - consider table or other selecton types
-//        - look into bookmark
+//        - consider table or other selecton types   
 //        - verify nodeselection on restore
-//        - codemirror stealing focus
 
-
-// TODO: consider attempting to navigate to same position
+// TODO: consider attempting to navigate to same position when switching
 
 
 // TODO: wire up find and replace actions to panmirror stubs
