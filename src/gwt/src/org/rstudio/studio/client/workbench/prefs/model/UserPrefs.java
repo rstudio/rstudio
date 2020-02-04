@@ -372,7 +372,6 @@ public class UserPrefs extends UserPrefsComputed
       });
    }
 
-
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
    public static final int LAYER_COMPUTED = 2;
