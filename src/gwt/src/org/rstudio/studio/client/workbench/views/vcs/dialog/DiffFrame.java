@@ -93,7 +93,7 @@ public class DiffFrame extends Composite
          
          viewFileHyperlink_.setClickHandler(viewFileClickHandler);
          viewFileHyperlink_.setAlwaysUnderline(false);
-         viewFileHyperlink_.setText("View file @ " + commitId);
+         viewFileHyperlink_.setText("View file @ " + commitId.substring(0, 8));
          viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
       }
       
