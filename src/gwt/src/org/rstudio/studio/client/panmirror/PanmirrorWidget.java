@@ -190,14 +190,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       toolbar_.init(commands_);
       
-      registrations_.add(outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
+      outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
          public void onPanmirrorOutlineNavigation(PanmirrorOutlineNavigationEvent event)
          {
             editor_.navigate(event.getId());
             editor_.focus();
          }
-      }));
+      });
       
       
       editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {

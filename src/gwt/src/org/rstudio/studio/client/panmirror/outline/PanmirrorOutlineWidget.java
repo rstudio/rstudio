@@ -27,7 +27,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent.Handler;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
@@ -82,7 +82,7 @@ public class PanmirrorOutlineWidget extends Composite
    }
   
    @Override
-   public HandlerRegistration addPanmirrorOutlineNavigationHandler(Handler handler)
+   public HandlerRegistration addPanmirrorOutlineNavigationHandler(PanmirrorOutlineNavigationEvent.Handler handler)
    {
       return handlers_.addHandler(PanmirrorOutlineNavigationEvent.getType(), handler);
    }
