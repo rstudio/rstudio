@@ -1117,9 +1117,9 @@ Error FilePath::moveIndirect(const FilePath& in_targetPath) const
 
 Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
 {
+   std::istream* pResult = nullptr;
    try
    {
-      std::istream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
@@ -1155,6 +1155,8 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
    }
    catch(const std::exception& e)
    {
+      delete pResult;
+
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
@@ -1168,9 +1170,9 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
 
 Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_truncate) const
 {
+   std::ostream* pResult = nullptr;
    try
    {
-      std::ostream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
@@ -1212,6 +1214,7 @@ Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_
    }
    catch(const std::exception& e)
    {
+      delete pResult;
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
@@ -1291,9 +1294,9 @@ void FilePath::setLastWriteTime(std::time_t in_time) const
 
 Error FilePath::testWritePermissions() const
 {
+   std::ostream* pStream = nullptr;
    try
    {
-      std::ostream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
@@ -1311,16 +1314,16 @@ Error FilePath::testWritePermissions() const
       }
       file_descriptor_sink fd;
       fd.open(hFile, close_handle);
-      pResult = new boost::iostreams::stream<file_descriptor_sink>(fd);
+      pStream = new boost::iostreams::stream<file_descriptor_sink>(fd);
 #else
       using std::ios_base;
       ios_base::openmode flags = ios_base::in | ios_base::out | ios_base::binary;
-      pResult = new std::ofstream(getAbsolutePath().c_str(), flags);
+      pStream = new std::ofstream(getAbsolutePath().c_str(), flags);
 #endif
 
-      if (!(*pResult))
+      if (!(*pStream))
       {
-         delete pResult;
+         delete pStream;
 
          Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
          error.addProperty("path", getAbsolutePath());
@@ -1329,6 +1332,8 @@ Error FilePath::testWritePermissions() const
    }
    catch(const std::exception& e)
    {
+      delete pStream;
+
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
@@ -1336,6 +1341,7 @@ Error FilePath::testWritePermissions() const
       return error;
    }
 
+   delete pStream;
    return Success();
 }
 
