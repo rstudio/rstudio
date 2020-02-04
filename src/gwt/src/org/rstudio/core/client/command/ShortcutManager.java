@@ -35,11 +35,13 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
+import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
@@ -58,8 +60,11 @@ import com.google.inject.Inject;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler,
-                                        EditEvent.Handler
+                                        EditEvent.Handler,
+                                        WarningBarClosedEvent.Handler
 {
+   public interface Binder extends CommandBinder<Commands, ShortcutManager> {}
+
    public interface Handle
    {
       void close();
@@ -110,6 +115,7 @@ public class ShortcutManager implements NativePreviewHandler,
                      }
                   });
             events_.addHandler(EditEvent.TYPE, ShortcutManager.this);
+            events_.addHandler(WarningBarClosedEvent.TYPE, ShortcutManager.this);
          }
       });
       
@@ -149,6 +155,7 @@ public class ShortcutManager implements NativePreviewHandler,
                            UserCommandManager userCommands,
                            AddinsCommandManager addins,
                            EventBus events,
+                           Binder binder,
                            Commands commands)
    {
       appCommands_ = appCommands;
@@ -157,6 +164,7 @@ public class ShortcutManager implements NativePreviewHandler,
       addins_ = addins;
       events_ = events;
       commands_ = commands;
+      binder.bind(commands_, this);
    }
 
    public boolean isEnabled()
@@ -533,9 +541,9 @@ public class ShortcutManager implements NativePreviewHandler,
                binding.execute();
             return true;
          }
-         reportShortcutBinding("Shortcut not bound"); 
          if (map.isPrefix(keyBuffer_))
             pending = true;
+         reportShortcutBinding(pending ? "Multi-gesture shortcut pending" : "Shortcut not bound");
       }
       
       if (!(pending || isPrefixForEditor(keyCombination, event)))
@@ -723,6 +731,20 @@ public class ShortcutManager implements NativePreviewHandler,
    public void setReportShortcutBinding(boolean report)
    {
       reportShortcutBinding_ = report;
+   }
+
+   @Handler
+   void onShowShortcutCommand()
+   {
+      setReportShortcutBinding(true);
+      events_.fireEvent(new ShowWarningBarEvent(false /*severe*/, 
+         "Type shortcuts to see if they are bound to a command. Close this message bar when done."));
+   }
+
+   @Override
+   public void onWarningBarClosed(WarningBarClosedEvent event)
+   {
+      setReportShortcutBinding(false);
    }
 
    private boolean reportShortcutBinding(String message)

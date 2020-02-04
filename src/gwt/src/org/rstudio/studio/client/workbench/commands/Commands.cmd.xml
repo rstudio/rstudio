@@ -3658,6 +3658,5 @@ well as menu structures (for main menu and popup menus).
    
    <cmd id="showShortcutCommand"
         menuLabel="Show Keyboard Shortcut Commands"
-        checkable="true"
         rebindable="false"/>
 </commands>

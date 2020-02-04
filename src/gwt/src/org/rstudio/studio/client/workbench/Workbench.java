@@ -89,7 +89,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
                                   UserPromptHandler,
-                                  ShowWarningBarHandler,
+                                  ShowWarningBarEvent.Handler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
@@ -258,8 +258,7 @@ public class Workbench implements BusyHandler,
    @Override
    public void onShowWarningBar(ShowWarningBarEvent event)
    {
-      WarningBarMessage message = event.getMessage();
-      globalDisplay_.showWarningBar(message.isSevere(), message.getMessage());
+      globalDisplay_.showWarningBar(event.isSevere(), event.getMessage());
    } 
    
    public void onBrowseUrl(BrowseUrlEvent event)

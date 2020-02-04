@@ -24,7 +24,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
@@ -373,16 +372,6 @@ public class UserPrefs extends UserPrefsComputed
       });
    }
 
-   @Handler
-   void onShowShortcutCommand()
-   {
-      commands_.showShortcutCommand().setChecked(!commands_.showShortcutCommand().isChecked());
-      ShortcutManager.INSTANCE.setReportShortcutBinding(commands_.showShortcutCommand().isChecked());
-      if (commands_.showShortcutCommand().isChecked())
-         display_.showWarningBar(false, "Type a shortcut to see if it is bound to a command.");
-      else
-         display_.hideWarningBar();
-   }
 
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_SYSTEM   = 1;
