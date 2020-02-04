@@ -314,6 +314,8 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
+#define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 
 class UserPrefValues: public Preferences
@@ -1389,10 +1391,23 @@ public:
    core::Error setEnableVisualMarkdownEditingMode(bool val);
 
    /**
+    * Whether to automatically wrap text when writing markdown
+    */
+   bool visualMarkdownEditingWrapAuto();
+   core::Error setVisualMarkdownEditingWrapAuto(bool val);
+
+   /**
+    * The column to wrap text at when writing markdown
+    */
+   int visualMarkdownEditingWrapColumn();
+   core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
     * List of aria-live announcements to disable.
     */
    core::json::Array disabledAriaLiveAnnouncements();
    core::Error setDisabledAriaLiveAnnouncements(core::json::Array val);
+
 };
 
         

@@ -1010,6 +1010,16 @@
             "default": false,
             "description": "Whether to enable experimental visual markdown editing"
         },
+        "visual_markdown_editing_wrap_auto": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to automatically wrap text when writing markdown"
+        },
+        "visual_markdown_editing_wrap_column": {
+            "type": "integer",
+            "default": 72,
+            "description": "The column to wrap text at when writing markdown"
+        },
         "disabled_aria_live_announcements": {
             "type": "array",
             "default": [],
