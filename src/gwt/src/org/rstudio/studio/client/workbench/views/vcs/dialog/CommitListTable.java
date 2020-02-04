@@ -227,7 +227,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          @Override
          public String getValue(CommitInfo object)
          {
-            return object.getId();
+            return object.getId().substring(0, 8);
          }
       };
       addColumn(idCol, idColName);

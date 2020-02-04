@@ -1370,7 +1370,7 @@ public:
             {
                if (!currentCommit.parent.empty())
                   currentCommit.parent.push_back(' ');
-               currentCommit.parent.append(value, 0, 8);
+               currentCommit.parent.append(value);
             }
             else if (key == "gpgsig")
             {
@@ -2321,7 +2321,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it != commits.end();
         it++)
    {
-      ids.push_back(json::Value(it->id.substr(0, 8)));
+      ids.push_back(json::Value(it->id));
       authors.push_back(json::Value(string_utils::filterControlChars(it->author)));
       parents.push_back(json::Value(string_utils::filterControlChars(it->parent)));
       subjects.push_back(json::Value(string_utils::filterControlChars(it->subject)));
