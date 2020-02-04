@@ -2601,7 +2601,13 @@
   
     if ( features.bSort ) {
       $.each( sort, function ( i, val ) {
-        d.order.push( { column: val.col, dir: val.dir } );
+        // if the visible frame is shifted ensure that
+        // we're not accidentally sorting on an unshifted row names col
+        if (val.col === 0) {
+          d.order.push( { column: val.col, dir: val.dir } );
+        } else {
+          d.order.push( { column: val.col + window.dataTableColumnOffset, dir: val.dir } );
+        }
   
         param( 'iSortCol_'+i, val.col );
         param( 'sSortDir_'+i, val.dir );
