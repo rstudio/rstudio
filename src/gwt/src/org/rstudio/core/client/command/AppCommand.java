@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -680,6 +680,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public static void disableNoHandlerAssertions()
    {
       enableNoHandlerAssertions_ = false;
+   }
+
+   public String summarize()
+   {
+      if (!StringUtil.isNullOrEmpty(getMenuLabel(false)))
+         return getMenuLabel(false);
+      else if (!StringUtil.isNullOrEmpty(getButtonLabel()))
+         return getButtonLabel();
+      else if (!StringUtil.isNullOrEmpty(getDesc()))
+         return getDesc();
+      else
+         return "(no description)";
    }
    
    private static SafeHtml createRightImageHtml(ImageResource image, 
