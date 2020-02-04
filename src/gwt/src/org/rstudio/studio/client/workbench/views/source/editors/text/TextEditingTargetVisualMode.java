@@ -45,11 +45,6 @@ import com.google.inject.Inject;
 
 // TODO: insert 3 rows/cols then round trips to 2
 
-// TODO: when visual mode is initially hidden coemirror instances have no height
-
-
-// TODO: table css has cells too high
-
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
 // TOOD: link to docs
