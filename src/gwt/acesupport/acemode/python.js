@@ -1,7 +1,7 @@
 /*
  * python.js
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
