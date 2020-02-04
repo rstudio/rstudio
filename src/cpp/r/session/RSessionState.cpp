@@ -168,6 +168,29 @@ void setEnvVar(const std::string& name, const std::string& value)
    if (name == "RSTUDIO_VERSION" && !core::system::getenv(name).empty())
       return;
 
+   // don't restore socket path environment variables (should be set by main session initialization)
+   if (name == "RS_SERVER_RPC_SOCKET_PATH" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RS_SERVER_TMP_DIR" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RS_SERVER_LOCAL_SOCKET_PATH" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RS_MONITOR_SOCKET_PATH" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RS_SESSION_TMP_DIR" && !core::system::getenv(name).empty())
+      return;
+
+   // don't restore misc launcher environment that is set when the session is launched
+   if (name == "RSTUDIO_STANDALONE_PORT" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RSTUDIO_SESSION_RSA_PRIVATE_KEY" && !core::system::getenv(name).empty())
+      return;
+
    core::system::setenv(name, value);
 }
 
