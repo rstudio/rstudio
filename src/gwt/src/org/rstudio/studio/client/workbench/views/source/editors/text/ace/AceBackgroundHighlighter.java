@@ -107,13 +107,6 @@ public class AceBackgroundHighlighter
          for (int row = startRow; row < endRow; row++)
          {
             int state = rowStates_.get(row);
-            
-            // don't show background highlighting if this
-            // chunk lies within a fold
-            AceFold fold = session_.getFoldAt(row, 0);
-            if (fold != null)
-               continue;
-            
             int marker = markerIds_.get(row, 0);
             
             // bail early if no action is necessary
