@@ -775,7 +775,7 @@ var createFilterUI = function(idx, col) {
 
   // the index coming into this function is for absolute data purposes
   // since this is a visual-centric function we operate based on the visible index
-  var visualIndex = idx -= columnOffset;
+  var visualIndex = idx - columnOffset;
 
   // don't filter rownames column
   if (visualIndex < 1) {
