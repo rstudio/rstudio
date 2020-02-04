@@ -341,6 +341,6 @@ public class TutorialPresenter
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
-   public static final String URLS_HOME = "./tutorial/home";
+   public static final String URLS_HOME = "/tutorial/home";
    
 }

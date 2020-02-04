@@ -303,18 +303,16 @@ void onDeferredInit(bool newSession)
    if (!projectContext().hasProject())
       return;
    
-   if (!projectContext().isNewProject())
-      return;
-   
    std::string defaultTutorial = projectContext().config().defaultTutorial;
    if (defaultTutorial.empty())
       return;
    
-   std::vector<std::string> parts =
-         core::algorithm::split(defaultTutorial, "::");
-   
+   std::vector<std::string> parts = core::algorithm::split(defaultTutorial, "::");
    if (parts.size() != 2)
+   {
+      LOG_WARNING_MESSAGE("Unexpected DefaultTutorial field: " + defaultTutorial);
       return;
+   }
    
    json::Object data;
    data["package"] = parts[0];
