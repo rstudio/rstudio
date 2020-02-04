@@ -17,13 +17,20 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.Date;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
+import com.google.inject.Inject;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -40,12 +47,19 @@ public class JobProgress extends Composite
    {
    }
 
-   public JobProgress()
+   @Inject
+   public JobProgress(EventBus eventBus)
    {
+      // stop must be defined before calling createAndBindUi
+      stop_ = new ToolbarButton(ToolbarButton.NoText,
+                                "Stop job",
+                                new ImageResource2x(RESOURCES.jobCancel()));
       initWidget(uiBinder.createAndBindUi(this));
+      eventBus_ = eventBus;
       complete_ = false;
       
       progress_.setHeight("10px");
+      stop_.setVisible(false);
    }
    
    @Override
@@ -63,6 +77,15 @@ public class JobProgress extends Composite
       name_.setText(job.name);
       progress_.setLabel(job.name);
       String status = JobConstants.stateDescription(job.state);
+      stop_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
+         }
+      });
+
       if (job.completed > 0)
       {
          // Job is not running; show its completion status and time
@@ -70,19 +93,23 @@ public class JobProgress extends Composite
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
          status_.setVisible(true);
+         stop_.setVisible(false);
       }
       else if (job.max > 0)
       {
-         // Job is running and has a progress bar; show it and hide the status indicator
+         // Job is running and has a progress bar;
+         // show it with stop button and hide the status indicator
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
          status_.setVisible(false);
+         stop_.setVisible(true);
       }
       else
       {
-         // Job is running but does not have progress; show the status field
+         // Job is running but does not have progress; show the status field and stop button
          progress_.setVisible(false);
          status_.setVisible(true);
+         stop_.setVisible(true);
          if (!StringUtil.isNullOrEmpty(job.status))
          {
             // Still running; show its status
@@ -104,11 +131,15 @@ public class JobProgress extends Composite
       elapsed_.setText(StringUtil.conciseElaspedTime(jobProgress_.elapsed() + delta));
    }
 
+   private static final JobResources RESOURCES = GWT.create(JobResources.class);
+
    @UiField Label name_;
    @UiField ProgressBar progress_;
    @UiField Label elapsed_;
+   @UiField(provided=true) ToolbarButton stop_;
    @UiField Label status_;
    
+   private final EventBus eventBus_;
    private LocalJobProgress jobProgress_;
    private boolean complete_;
 }

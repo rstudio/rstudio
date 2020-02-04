@@ -38,9 +38,14 @@
             <rw:ProgressBar ui:field="progress_"></rw:ProgressBar>
          </g:HTMLPanel>
       </g:cell>
+      <g:cell horizontalAlignment="ALIGN_CENTER" 
+              verticalAlignment="ALIGN_MIDDLE"
+              width="5%" >
+         <rw:ToolbarButton ui:field="stop_"></rw:ToolbarButton>
+      </g:cell>
       <g:cell horizontalAlignment="ALIGN_RIGHT" 
               verticalAlignment="ALIGN_MIDDLE"
-              width="10%">
+              width="5%">
          <g:Label styleName="{style.elapsed}" ui:field="elapsed_"></g:Label>
       </g:cell>
    </g:HorizontalPanel>
