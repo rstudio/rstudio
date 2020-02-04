@@ -81,7 +81,7 @@ public class ShortcutManager implements NativePreviewHandler,
          @Override
          public void run()
          {
-            keyBuffer_.clear();
+            clearKeyBuffer();
          }
       };
       
@@ -111,7 +111,7 @@ public class ShortcutManager implements NativePreviewHandler,
                      public void onAceKeyboardActivity(AceKeyboardActivityEvent event)
                      {
                         if (!event.isChainEvent())
-                           keyBuffer_.clear();
+                           clearKeyBuffer();
                      }
                   });
             events_.addHandler(EditEvent.TYPE, ShortcutManager.this);
@@ -146,7 +146,7 @@ public class ShortcutManager implements NativePreviewHandler,
    
    private void onNativeEditEvent(Object object)
    {
-      keyBuffer_.clear();
+      clearKeyBuffer();
    }
    
    @Inject
@@ -398,7 +398,7 @@ public class ShortcutManager implements NativePreviewHandler,
          });
          
          activeEditEventType_ = EditEvent.TYPE_NONE;
-         keyBuffer_.clear();
+         clearKeyBuffer();
          return false;
       }
       
@@ -427,7 +427,7 @@ public class ShortcutManager implements NativePreviewHandler,
          AceEditorNative editor = AceEditorNative.getEditor(target);
          if (editor == null)
          {
-            keyBuffer_.clear();
+            clearKeyBuffer();
             return false;
          }
       }
@@ -435,7 +435,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // Escape key should always clear the keybuffer.
       if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
       {
-         keyBuffer_.clear();
+         clearKeyBuffer();
          return false;
       }
       
@@ -450,7 +450,7 @@ public class ShortcutManager implements NativePreviewHandler,
          AceEditorNative editor = AceEditorNative.getEditor(target);
          if (editor != null && editor.isVimModeOn())
          {
-            keyBuffer_.clear();
+            clearKeyBuffer();
             return false;
          }
       }
@@ -458,7 +458,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // Bail if this is an ignored key combination.
       if (isIgnoredKeyCombination(keyCombination))
       {
-         keyBuffer_.clear();
+         clearKeyBuffer();
          return false;
       }
       
@@ -478,7 +478,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   nativeEditor == editor.getWidget().getEditor() &&
                   ElementIds.isInstanceOf(editor.getWidget(), ElementIds.SOURCE_TEXT_EDITOR))
             {
-               keyBuffer_.clear();
+               clearKeyBuffer();
                commands_.expandToLine().execute();
                return true;
             }
@@ -495,7 +495,7 @@ public class ShortcutManager implements NativePreviewHandler,
          CommandBinding binding = map.getActiveBinding(keyBuffer_, reportShortcutBinding_);
          if (binding != null)
          {
-            keyBuffer_.clear();
+            clearKeyBuffer();
 
             XTermWidget xterm = XTermWidget.tryGetXTerm(Element.as(event.getEventTarget()));
             if (xterm != null)
@@ -542,12 +542,16 @@ public class ShortcutManager implements NativePreviewHandler,
             return true;
          }
          if (map.isPrefix(keyBuffer_))
+         {
             pending = true;
-         reportShortcutBinding(pending ? "Multi-gesture shortcut pending" : "Shortcut not bound");
+            reportShortcutPending();
+         }
+         else
+            reportShortcutUnbound();
       }
       
       if (!(pending || isPrefixForEditor(keyCombination, event)))
-         keyBuffer_.clear();
+         clearKeyBuffer();
       
       // Assume that a keypress without a modifier key clears the keybuffer.
       // This disallows binding of commands in a way like '<SPC> a a', which
@@ -560,7 +564,7 @@ public class ShortcutManager implements NativePreviewHandler,
       {
          KeyCombination keys = keyBuffer_.get(keyBuffer_.size() - 1);
          if (keys.getModifier() == KeyboardShortcut.NONE)
-            keyBuffer_.clear();
+            clearKeyBuffer();
       }
       
       return false;
@@ -733,12 +737,14 @@ public class ShortcutManager implements NativePreviewHandler,
       reportShortcutBinding_ = report;
    }
 
+   private static final String REPORT_SHORTCUTS_MESSAGE = 
+         "Type shortcuts to see if they are bound to a command. Close this message bar when done.";
+
    @Handler
    void onShowShortcutCommand()
    {
       setReportShortcutBinding(true);
-      events_.fireEvent(new ShowWarningBarEvent(false /*severe*/, 
-         "Type shortcuts to see if they are bound to a command. Close this message bar when done."));
+      events_.fireEvent(new ShowWarningBarEvent(false /*severe*/, REPORT_SHORTCUTS_MESSAGE));
    }
 
    @Override
@@ -747,11 +753,42 @@ public class ShortcutManager implements NativePreviewHandler,
       setReportShortcutBinding(false);
    }
 
+   private void clearKeyBuffer()
+   {
+      keyBuffer_.clear();
+      if (reportedPending_)
+      {
+         reportShortcutBinding(REPORT_SHORTCUTS_MESSAGE);
+         reportedPending_ = false;
+      }
+   }
+
    private boolean reportShortcutBinding(String message)
    {
       if (reportShortcutBinding_)
+      {
          events_.fireEvent(new ReportShortcutBindingEvent(message));
+         reportedPending_ = false;
+      }
       return reportShortcutBinding_;
+   }
+
+   private void reportShortcutPending()
+   {
+      if (reportShortcutBinding_)
+      {
+         reportedPending_ = true;
+         events_.fireEvent(new ReportShortcutBindingEvent("Multi-gesture shortcut pending"));
+      }
+   }
+   
+   private void reportShortcutUnbound()
+   {
+      if (reportShortcutBinding_)
+      {
+         reportedPending_ = false;
+         events_.fireEvent(new ReportShortcutBindingEvent("Shortcut not bound"));
+      }
    }
 
    private int disableCount_ = 0;
@@ -766,6 +803,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private final List<ShortcutInfo> shortcutInfo_;
    private final List<Pair<KeySequence, AppCommandBinding>> defaultBindings_;
    private boolean reportShortcutBinding_ = false;
+   private boolean reportedPending_ = false;
    
    // Injected ----
    private UserCommandManager userCommands_;
