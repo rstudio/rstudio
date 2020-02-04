@@ -42,13 +42,13 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-
-// TODO: insert 3 rows/cols then round trips to 2
+// TODO: navigation from outline no longer works
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
 // TOOD: link to docs
 // TODO: fix the way list indending is done
+// TODO: windows deps/build
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
