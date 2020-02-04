@@ -1,7 +1,7 @@
 /*
  * AceBackgroundHighlighter.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,13 +107,6 @@ public class AceBackgroundHighlighter
          for (int row = startRow; row < endRow; row++)
          {
             int state = rowStates_.get(row);
-            
-            // don't show background highlighting if this
-            // chunk lies within a fold
-            AceFold fold = session_.getFoldAt(row, 0);
-            if (fold != null)
-               continue;
-            
             int marker = markerIds_.get(row, 0);
             
             // bail early if no action is necessary

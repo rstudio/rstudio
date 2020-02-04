@@ -1,6 +1,6 @@
 /* UserStateAccessor.java
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then

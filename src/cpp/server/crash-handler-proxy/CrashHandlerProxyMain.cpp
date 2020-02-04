@@ -1,7 +1,7 @@
 /*
  * CrashHandlerProxyMain.cpp
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, PBC
  *
  */
 

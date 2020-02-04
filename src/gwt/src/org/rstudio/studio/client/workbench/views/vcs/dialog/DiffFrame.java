@@ -1,7 +1,7 @@
 /*
  * DiffFrame.java
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ public class DiffFrame extends Composite
          
          viewFileHyperlink_.setClickHandler(viewFileClickHandler);
          viewFileHyperlink_.setAlwaysUnderline(false);
-         viewFileHyperlink_.setText("View file @ " + commitId);
+         viewFileHyperlink_.setText("View file @ " + commitId.substring(0, 8));
          viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
       }
       
