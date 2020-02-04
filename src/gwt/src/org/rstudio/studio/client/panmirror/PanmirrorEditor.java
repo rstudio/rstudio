@@ -50,9 +50,10 @@ public class PanmirrorEditor
    
    public native PanmirrorSelection getSelection();
    
-   public native void setSelection(PanmirrorSelection selection);
-   
    public native PanmirrorOutlineItem[] getOutline();
+   
+   public native PanmirrorEditingLocation getEditingLocation();
+   public native void restoreEditingLocation(PanmirrorEditingLocation location);
    
    public native void focus();
    public native void blur();

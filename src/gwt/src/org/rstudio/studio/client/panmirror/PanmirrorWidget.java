@@ -362,9 +362,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getSelection();
    }
    
-   public void setSelection(PanmirrorSelection selection)
+   public PanmirrorEditingLocation getEditingLocation()
    {
-      editor_.setSelection(selection);
+      return editor_.getEditingLocation();
+   }
+   
+   public void restoreEditingLocation(PanmirrorEditingLocation location)
+   {
+      editor_.restoreEditingLocation(location);
    }
    
    public void focus()
@@ -448,9 +453,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
-   
-  
-  
 }
 
 

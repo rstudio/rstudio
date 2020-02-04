@@ -21,8 +21,8 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
-import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
@@ -45,13 +45,10 @@ import com.google.inject.Inject;
 
 // TODO: insert 3 rows/cols then round trips to 2
 
-// TODO: save cursor and scroll position
-//        - invalidation after edit
-//        - consider table or other selecton types   
-//        - verify nodeselection on restore
 
-// TODO: consider attempting to navigate to same position when switching
+// TODO: restore selection when switching to editor
 
+// TODO: table css has cells too hight
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
@@ -228,7 +225,7 @@ public class TextEditingTargetVisualMode
             
             // begin save-on-idle behavior
             syncOnIdle_.resume();
-            saveSelectionOnIdle_.resume();
+            saveLocationOnIdle_.resume();
          
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);    
@@ -250,9 +247,9 @@ public class TextEditingTargetVisualMode
                   
                   // restore selection if we have one
                   Scheduler.get().scheduleDeferred(() -> {
-                     PanmirrorSelection selection = savedSelection();
-                     if (selection != null)
-                        panmirror_.setSelection(selection);
+                     PanmirrorEditingLocation location = savedEditingLocation();
+                     if (location != null)
+                        panmirror_.restoreEditingLocation(location);
                      if (focus)
                        panmirror_.focus();
                   });                
@@ -276,8 +273,8 @@ public class TextEditingTargetVisualMode
             if (syncOnIdle_ != null)
                syncOnIdle_.suspend();
             
-            if (saveSelectionOnIdle_ != null)
-               saveSelectionOnIdle_.suspend();
+            if (saveLocationOnIdle_ != null)
+               saveLocationOnIdle_.suspend();
             
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
@@ -323,14 +320,14 @@ public class TextEditingTargetVisualMode
             };
             
             // periodically save selection
-            saveSelectionOnIdle_ = new DebouncedCommand(1000)
+            saveLocationOnIdle_ = new DebouncedCommand(1000)
             {
                @Override
                protected void execute()
                {
-                  PanmirrorSelection selection = panmirror_.getSelection();
-                  String selectionProp = selection.type + ":" + selection.from + ":" + selection.to; 
-                  docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_SELECTION, selectionProp);
+                  PanmirrorEditingLocation location = panmirror_.getEditingLocation();
+                  String locationProp = + location.pos + ":" + location.scrollTop; 
+                  docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_LOCATION, locationProp);
                }
             };
             
@@ -361,10 +358,10 @@ public class TextEditingTargetVisualMode
                @Override
                public void onSelectionChange(SelectionChangeEvent event)
                {
-                  saveSelectionOnIdle_.nudge();
+                  saveLocationOnIdle_.nudge();
                }
             });
-            
+             
             // track changes in outline sidebar and save as prefs
             panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
                setOutlineVisible(event.getVisible());
@@ -416,23 +413,22 @@ public class TextEditingTargetVisualMode
    }
    
    
-   private PanmirrorSelection savedSelection()
+   private PanmirrorEditingLocation savedEditingLocation()
    {
-      String selection = docUpdateSentinel_.getProperty(RMD_VISUAL_MODE_SELECTION, null);
-      if (StringUtil.isNullOrEmpty(selection))
+      String location = docUpdateSentinel_.getProperty(RMD_VISUAL_MODE_LOCATION, null);
+      if (StringUtil.isNullOrEmpty(location))
          return null;
       
-      String[] parts = selection.split(":");
-      if (parts.length != 3)
+      String[] parts = location.split(":");
+      if (parts.length != 2)
          return null;
       
       try
       {
-         PanmirrorSelection editorSelection = new PanmirrorSelection();
-         editorSelection.type = parts[0];
-         editorSelection.from = Integer.parseInt(parts[1]);
-         editorSelection.to = Integer.parseInt(parts[2]);
-         return editorSelection;
+         PanmirrorEditingLocation editingLocation = new PanmirrorEditingLocation();
+         editingLocation.pos = Integer.parseInt(parts[0]);
+         editingLocation.scrollTop = Integer.parseInt(parts[1]);
+         return editingLocation;
       }
       catch(Exception ex)
       {
@@ -496,11 +492,11 @@ public class TextEditingTargetVisualMode
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
    
-   private DebouncedCommand saveSelectionOnIdle_;
+   private DebouncedCommand saveLocationOnIdle_;
    
    private PanmirrorWidget panmirror_;
    
-   private static final String RMD_VISUAL_MODE_SELECTION = "rmdVisualModeSel";   
+   private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
 }
 
 

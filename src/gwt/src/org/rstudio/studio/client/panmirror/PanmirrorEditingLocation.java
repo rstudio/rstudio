@@ -1,5 +1,5 @@
 /*
- * PanmirrorSelection.java
+ * PanmirrorEditingLocation.java
  *
  * Copyright (C) 2009-20 by RStudio, Inc.
  *
@@ -19,8 +19,8 @@ package org.rstudio.studio.client.panmirror;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorSelection
+public class PanmirrorEditingLocation
 {    
-   public int from;
-   public int to;
+   public int pos;
+   public int scrollTop;
 }

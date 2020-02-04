@@ -24,7 +24,7 @@ import {
   DOMParser,
   ParseOptions,
 } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction, TextSelection, NodeSelection } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findChildren, setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
@@ -40,6 +40,7 @@ import { PandocEngine, pandocFormat, PandocFormat } from './api/pandoc';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
 import { EditorOutline } from './api/outline';
+import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -78,7 +79,6 @@ export enum EditorEvents {
 }
 
 export interface EditorSelection {
-  type: "text" | "node";
   from: number;
   to: number;
 }
@@ -252,25 +252,16 @@ export class Editor {
   }
 
   public getSelection(): EditorSelection {
-    const type = this.state.selection instanceof NodeSelection ? "node" : "text";
     const { from, to } = this.state.selection;
-    return { type, from, to };
+    return { from, to };
   }
 
-  public setSelection(selection: EditorSelection) {
-    const tr = this.state.tr;
-    const $from = tr.doc.resolve(selection.from);
-    const $to = tr.doc.resolve(selection.to);
+  public getEditingLocation(): EditingLocation {
+    return getEditingLocation(this.view);
+  }
 
-    const sel = selection.type === 'node' ? new NodeSelection($from) : new TextSelection($from, $to);
-    tr.setSelection(sel);    
-    this.view.dispatch(tr);
-
-    // scroll to selection
-    const node = this.view.nodeDOM(selection.type === 'node' ? $from.pos : $from.before());
-    if (node && node instanceof HTMLElement) {
-      node.scrollIntoView({ behavior: 'auto' });
-    }
+  public restoreEditingLocation(location: EditingLocation) {
+    restoreEditingLocation(this.view, location);
   }
 
   public getOutline(): EditorOutline {
