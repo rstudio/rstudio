@@ -666,6 +666,7 @@ core::json::Object packratOptionsAsJson();
 
 // implemented in SessionRenv.cpp
 bool isRequiredRenvInstalled();
+bool isRenvActive();
 core::json::Value renvContextAsJson();
 core::json::Value renvOptionsAsJson();
 

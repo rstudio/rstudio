@@ -33,7 +33,12 @@ namespace module_context {
 
 bool isRequiredRenvInstalled()
 {
-   return isPackageVersionInstalled("renv", "0.5.0");
+   return isPackageVersionInstalled("renv", "0.9.2");
+}
+
+bool isRenvActive()
+{
+   return !core::system::getenv("RENV_PROJECT").empty();
 }
 
 namespace {
