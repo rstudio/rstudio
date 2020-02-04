@@ -1622,9 +1622,9 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(String code)
+      public void setCode(String code, boolean preserveCursorPosition)
       {
-         editor_.setCode(code, false);
+         editor_.setCode(code, preserveCursorPosition);
       }
       
       @Override

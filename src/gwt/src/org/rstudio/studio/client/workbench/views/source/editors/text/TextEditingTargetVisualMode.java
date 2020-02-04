@@ -45,10 +45,10 @@ import com.google.inject.Inject;
 
 // TODO: insert 3 rows/cols then round trips to 2
 
+// TODO: when visual mode is initially hidden coemirror instances have no height
 
-// TODO: restore selection when switching to editor
 
-// TODO: table css has cells too hight
+// TODO: table css has cells too high
 
 // TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
@@ -118,7 +118,7 @@ public class TextEditingTargetVisualMode
       {
          withPanmirror(() -> {
             panmirror_.getMarkdown(markdown -> { 
-               getSourceEditor().setCode(markdown); 
+               getSourceEditor().setCode(markdown, true); 
                isDirty_ = false;
                if (ready != null)
                   ready.execute();
