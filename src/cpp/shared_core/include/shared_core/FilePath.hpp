@@ -609,6 +609,16 @@ public:
     */
    void setLastWriteTime(std::time_t in_time = ::time(nullptr)) const;
 
+   /**
+    * @brief Checks if a file can be written to by opening the file.
+    *
+    * To be successful, the file must already exist on the system.
+    * If write access is not absolutely necessary, use isFileWriteable from FileMode.hpp.
+    *
+    * @return Success if file can be written to; system error otherwise (e.g. EPERM, ENOENT, etc.)
+    */
+   Error testWritePermissions() const;
+
 private:
    // The private implementation of FilePath.
    PRIVATE_IMPL_SHARED(m_impl);

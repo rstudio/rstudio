@@ -525,6 +525,9 @@ private:
              !tempReplaceFile_.getAbsolutePath().empty() &&
              outputStream_->good())
          {
+            Error error = FilePath(currentFile_).testWritePermissions();
+            if (error)
+               return error;
             std::string line;
             while (std::getline(*inputStream_, line))
             {
@@ -534,7 +537,7 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
-            Error error = tempReplaceFile_.move(FilePath(currentFile_));
+            error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
             return error;
          }
@@ -593,15 +596,18 @@ private:
 
    Error initializeFileForReplace(FilePath file)
    {
-      Error error;
       fileSuccess_ = false;
+      Error error = file.testWritePermissions();
+      if (error)
+         return error;
       if (!findResults().preview())
       {
          tempReplaceFile_ =  module_context::tempFile("replace", "txt");
          error = tempReplaceFile_.openForWrite(outputStream_);
+         if (error)
+            return error;
       }
-      if (!error)
-         error = file.openForRead(inputStream_);
+      error = file.openForRead(inputStream_);
       if (!error)
       {
          fileSuccess_ = true;
@@ -872,6 +878,7 @@ private:
                   findResults().replacePattern().empty()))
             {
                FilePath fullPath(module_context::resolveAliasedPath(file));
+               // check if we are looking at a new file
                if (currentFile_.empty() || currentFile_ != fullPath.getAbsolutePath())
                {
                   if (!currentFile_.empty())
@@ -881,18 +888,19 @@ private:
                      addReplaceErrorMessage(error.asString(), &errorMessage,
                         &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
                }
+               else if (!fileSuccess_)
+               {
+                  // the first time a file is processed it gets a more detailed initialization error
+                  addReplaceErrorMessage("Cannot perform replace", &errorMessage,
+                     &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
+               }
                if (!fileSuccess_ || lineInfo.decodedPreview.length() > MAX_LINE_LENGTH)
                {
+                  // if we failed for any reason, update the progress
                   if (!findResults().preview())
                      findResults().replaceProgress()->
                         addUnits(gsl::narrow_cast<int>(matchOn.getSize()));
-                  if (!fileSuccess_ && inputLineNum_ != 0)
-                  {
-                     // the first time a file is processed it gets a more detailed initialization error
-                     addReplaceErrorMessage("Cannot perform replace", &errorMessage,
-                        &replaceMatchOn, &replaceMatchOff, &fileSuccess_);
-                  }
-                  else if (fileSuccess_)
+                  if (fileSuccess_)
                   {
                      bool lineSuccess;
                      addReplaceErrorMessage("Line exceeds maximum character length for replace",
@@ -1098,9 +1106,10 @@ private:
             LOG_DEBUG_MESSAGE("Exclude files contain non-string value");
          else
          {
-            if (filePattern.getString().compare("gitExclusions") == 0)
+            std::string excludeText = boost::algorithm::trim_copy(filePattern.getString());
+            if (excludeText.compare("gitExclusions") == 0)
                gitFlag_ = true;
-            else
+            else if (!excludeText.empty())
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
          }
       }
@@ -1115,9 +1124,10 @@ private:
             LOG_DEBUG_MESSAGE("Include files contain non-string value");
          else
          {
-            if (filePattern.getString().compare("package") == 0)
+            std::string includeText = boost::algorithm::trim_copy(filePattern.getString());
+            if (includeText.compare("package") == 0)
                packageFlag_ = true;
-            else
+            else if (!includeText.empty())
                includeArgs_.push_back("--include=" + filePattern.getString());
          }
       }

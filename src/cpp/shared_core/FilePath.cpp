@@ -1117,9 +1117,9 @@ Error FilePath::moveIndirect(const FilePath& in_targetPath) const
 
 Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
 {
+   std::istream* pResult = nullptr;
    try
    {
-      std::istream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
@@ -1155,6 +1155,8 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
    }
    catch(const std::exception& e)
    {
+      delete pResult;
+
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
@@ -1168,9 +1170,9 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
 
 Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_truncate) const
 {
+   std::ostream* pResult = nullptr;
    try
    {
-      std::ostream* pResult = nullptr;
 #ifdef _WIN32
       using namespace boost::iostreams;
       HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
@@ -1212,6 +1214,7 @@ Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_
    }
    catch(const std::exception& e)
    {
+      delete pResult;
       Error error = systemError(boost::system::errc::io_error,
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
@@ -1287,6 +1290,59 @@ void FilePath::setLastWriteTime(std::time_t in_time) const
       logError(m_impl->Path, e, ERROR_LOCATION);
       return;
    }
+}
+
+Error FilePath::testWritePermissions() const
+{
+   std::ostream* pStream = nullptr;
+   try
+   {
+#ifdef _WIN32
+      using namespace boost::iostreams;
+      HANDLE hFile = ::CreateFileW(m_impl->Path.wstring().c_str(),
+                                   FILE_APPEND_DATA,
+                                   0, // exclusive access
+                                   nullptr,
+                                   OPEN_EXISTING,
+                                   0,
+                                   nullptr);
+      if (hFile == INVALID_HANDLE_VALUE)
+      {
+         Error error = LAST_SYSTEM_ERROR();
+         error.addProperty("path", getAbsolutePath());
+         return error;
+      }
+      file_descriptor_sink fd;
+      fd.open(hFile, close_handle);
+      pStream = new boost::iostreams::stream<file_descriptor_sink>(fd);
+#else
+      using std::ios_base;
+      ios_base::openmode flags = ios_base::in | ios_base::out | ios_base::binary;
+      pStream = new std::ofstream(getAbsolutePath().c_str(), flags);
+#endif
+
+      if (!(*pStream))
+      {
+         delete pStream;
+
+         Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+         error.addProperty("path", getAbsolutePath());
+         return error;
+      }
+   }
+   catch(const std::exception& e)
+   {
+      delete pStream;
+
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   delete pStream;
+   return Success();
 }
 
 // PathScope Classes ===================================================================================================
