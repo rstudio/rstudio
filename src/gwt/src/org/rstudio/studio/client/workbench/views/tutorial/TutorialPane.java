@@ -193,7 +193,7 @@ public class TutorialPane
    @Override
    public void home()
    {
-      frame_.setUrl(TutorialPresenter.URLS_HOME);
+      frame_.setUrl("." + TutorialPresenter.URLS_HOME);
    }
    
    @Override
