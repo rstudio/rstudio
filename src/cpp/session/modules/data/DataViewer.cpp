@@ -508,12 +508,22 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
+
+   // fill the initial filters outside of the visible frame
+   // unfortunately the code that consumes these filters assumes
+   // it's purely index based and needs to be padded out
+   for (int i = 0; i < columnOffset; i++)
+   {
+      std::string emptyStr = "";
+      filters.push_back(emptyStr);
+   }
    for (int i = 1; i <= ncol; i++)
    {
       std::string filterVal = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]"
                   "[search][value]", ""));
+
       if (!filterVal.empty())
       {
          hasFilter = true;
