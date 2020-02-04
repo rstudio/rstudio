@@ -45,11 +45,11 @@
   VIProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductVersion "@CPACK_PACKAGE_VERSION_MAJOR@.@CPACK_PACKAGE_VERSION_MINOR@.@CPACK_PACKAGE_VERSION_PATCH@.0"
   VIAddVersionKey ProductName "RStudio"
-  VIAddVersionKey CompanyName "RStudio, Inc."
+  VIAddVersionKey CompanyName "RStudio, PBC"
   VIAddVersionKey FileDescription "RStudio"
   VIAddVersionKey InternalName "RStudio"
-  VIAddVersionKey LegalCopyright "Copyright (C) 2009-20 by RStudio, Inc."
-  VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, Inc."
+  VIAddVersionKey LegalCopyright "Copyright (C) 2009-20 by RStudio, PBC"
+  VIAddVersionKey LegalTrademarks "RStudio (TM) is a trademark of RStudio, PBC"
 
   ;
   ; RSTUDIO CHANGE - Don't require admin privs to install

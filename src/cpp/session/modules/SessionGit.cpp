@@ -1,7 +1,7 @@
 /*
  * SessionGit.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1370,7 +1370,7 @@ public:
             {
                if (!currentCommit.parent.empty())
                   currentCommit.parent.push_back(' ');
-               currentCommit.parent.append(value, 0, 8);
+               currentCommit.parent.append(value);
             }
             else if (key == "gpgsig")
             {
@@ -2321,7 +2321,7 @@ Error vcsHistory(const json::JsonRpcRequest& request,
         it != commits.end();
         it++)
    {
-      ids.push_back(it->id.substr(0, 8));
+      ids.push_back(it->id);
       authors.push_back(string_utils::filterControlChars(it->author));
       parents.push_back(string_utils::filterControlChars(it->parent));
       subjects.push_back(string_utils::filterControlChars(it->subject));
