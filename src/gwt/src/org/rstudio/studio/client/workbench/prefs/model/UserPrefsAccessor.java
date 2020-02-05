@@ -1678,7 +1678,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Integer> visualMarkdownEditingWrapColumn()
    {
-      return integer("visual_markdown_editing_wrap_column", 72);
+      return integer("visual_markdown_editing_wrap_column", 80);
    }
 
    /**

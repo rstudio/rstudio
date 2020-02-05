@@ -109,8 +109,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
         spellCheck: false,
         autoLink: true,
         rmdCodeChunks: true,
-        codemirror: true,
-        wrapColumn: 72,
+        codemirror: true
       },
     });
 
@@ -232,7 +231,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
   private async saveMarkdown() {
     try {
       // generate markdown (save a copy so we can ignore resulting update)
-      const markdown = await this.editor!.getMarkdown();
+      const markdown = await this.editor!.getMarkdown({});
       this.editorMarkdown = markdown;
 
       // set markdown into redux

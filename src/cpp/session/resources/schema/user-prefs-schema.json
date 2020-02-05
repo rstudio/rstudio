@@ -1017,7 +1017,7 @@
         },
         "visual_markdown_editing_wrap_column": {
             "type": "integer",
-            "default": 72,
+            "default": 80,
             "description": "The column to wrap text at when writing markdown"
         },
         "disabled_aria_live_announcements": {

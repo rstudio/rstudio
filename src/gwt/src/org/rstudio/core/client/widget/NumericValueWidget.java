@@ -78,6 +78,11 @@ public class NumericValueWidget extends Composite
    {
       textBox_.setWidth(width);
    }
+   
+   public void setEnabled(boolean enabled)
+   {
+      textBox_.setEnabled(enabled);
+   }
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
    {

@@ -7,6 +7,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorConfig;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocExtensions;
 
 import com.google.gwt.aria.client.Roles;
@@ -79,7 +80,8 @@ public class PanmirrorTestDialog extends ModalDialog<String>
                   
                   this.editorWidget_.execCommand(Panmirror.EditorCommands.SelectAll);
                   
-                  this.editorWidget_.getMarkdown(markdown -> {
+                  PanmirrorWriterOptions writerOptions = new PanmirrorWriterOptions();
+                  this.editorWidget_.getMarkdown(writerOptions, markdown -> {
                      Debug.logToConsole(markdown);
                   });
                   

@@ -35,12 +35,9 @@ import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
 import { ExtensionManager } from '../extensions';
 
-export interface PandocConverterOptions {
-  reader: {};
-  writer: {
-    atxHeaders?: boolean;
-    wrapColumn?: boolean | number;
-  };
+export interface PandocWriterOptions {
+  atxHeaders?: boolean;
+  wrapColumn?: boolean | number;
 }
 
 export class PandocConverter {
@@ -56,7 +53,6 @@ export class PandocConverter {
   private readonly markdownOutputFilters: readonly PandocMarkdownOutputFilter[];
   private readonly pandoc: PandocEngine;
   private readonly format: string;
-  private readonly options: PandocConverterOptions;
 
   private apiVersion: PandocApiVersion | null;
 
@@ -65,7 +61,6 @@ export class PandocConverter {
     extensions: ExtensionManager,
     pandoc: PandocEngine,
     format: string,
-    options: PandocConverterOptions,
   ) {
     this.schema = schema;
 
@@ -84,7 +79,6 @@ export class PandocConverter {
     this.format = pandocFormatWith(format, '', kDisabledFormatOptions);
 
     this.pandoc = pandoc;
-    this.options = options;
     this.apiVersion = null;
   }
 
@@ -107,7 +101,7 @@ export class PandocConverter {
     return doc;
   }
 
-  public async fromProsemirror(doc: ProsemirrorNode): Promise<string> {
+  public async fromProsemirror(doc: ProsemirrorNode, options: PandocWriterOptions): Promise<string> {
     if (!this.apiVersion) {
       throw new Error('API version not available (did you call toProsemirror first?)');
     }
@@ -116,14 +110,14 @@ export class PandocConverter {
     const output = pandocFromProsemirror(doc, this.apiVersion, this.nodeWriters, this.markWriters);
 
     // run ast filters
-    let ast = await this.applyAstOutputFilters(output.ast);
+    let ast = await this.applyAstOutputFilters(output.ast, options);
 
     // prepare options
-    let options: string[] = [];
-    if (this.options.writer.atxHeaders) {
-      options.push('--atx-headers');
+    let pandocOptions: string[] = [];
+    if (options.atxHeaders) {
+      pandocOptions.push('--atx-headers');
     }
-    options = options.concat(this.wrapColumnOptions());
+    pandocOptions = pandocOptions.concat(this.wrapColumnOptions(options));
 
     // format (prefer pipe and grid tables). users can still force the
     // availability of these by adding those format flags but all
@@ -134,7 +128,7 @@ export class PandocConverter {
     let format = pandocFormatWith(this.format, disable, '');
 
     // render to markdown
-    let markdown = await this.pandoc.astToMarkdown(ast, format, options);
+    let markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
 
     // apply markdown filters
     markdown = this.applyMarkdownOutputFilters(markdown);
@@ -148,7 +142,7 @@ export class PandocConverter {
     return markdown;
   }
 
-  private async applyAstOutputFilters(ast: PandocAst) {
+  private async applyAstOutputFilters(ast: PandocAst, options: PandocWriterOptions) {
     let filteredAst = ast;
 
     for (let i = 0; i < this.astOutputFilters.length; i++) {
@@ -158,7 +152,7 @@ export class PandocConverter {
           return this.pandoc.astToMarkdown(ast, this.format + format_options, []);
         },
         markdownToAst: (markdown: string) => {
-          return this.pandoc.markdownToAst(markdown, this.format, this.wrapColumnOptions());
+          return this.pandoc.markdownToAst(markdown, this.format, this.wrapColumnOptions(options));
         },
       });
     }
@@ -173,14 +167,14 @@ export class PandocConverter {
     return markdown;
   }
 
-  private wrapColumnOptions() {
-    const options: string[] = [];
-    if (this.options.writer.wrapColumn) {
-      options.push('--wrap=auto');
-      options.push(`--columns=${this.options.writer.wrapColumn}`);
+  private wrapColumnOptions(options: PandocWriterOptions) {
+    const pandocOptions: string[] = [];
+    if (options.wrapColumn) {
+      pandocOptions.push('--wrap=auto');
+      pandocOptions.push(`--columns=${options.wrapColumn}`);
     } else {
-      options.push('--wrap=none');
+      pandocOptions.push('--wrap=none');
     }
-    return options;
+    return pandocOptions;
   }
 }

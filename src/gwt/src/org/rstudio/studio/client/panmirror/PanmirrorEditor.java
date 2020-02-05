@@ -40,7 +40,7 @@ public class PanmirrorEditor
    public native String getTitle();
    
    public native Promise<Boolean> setMarkdown(String markdown, boolean emitUpdate);
-   public native Promise<String> getMarkdown();
+   public native Promise<String> getMarkdown(PanmirrorWriterOptions options);
    
    public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
    

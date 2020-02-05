@@ -275,9 +275,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );
    }
    
-   public void getMarkdown(CommandWithArg<String> completed) {
+   public void getMarkdown(PanmirrorWriterOptions options, CommandWithArg<String> completed) {
       new PromiseWithProgress<String>(
-         editor_.getMarkdown(),
+         editor_.getMarkdown(options),
          null,
          completed   
       );

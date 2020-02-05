@@ -23,6 +23,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -157,9 +158,25 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       final CheckBox enableVisualMarkdownEditor = checkboxPref(
             "Enable visual markdown editing mode",
             prefs_.enableVisualMarkdownEditingMode());
+      spaced(enableVisualMarkdownEditor);
       advanced.add(enableVisualMarkdownEditor);
       
-      
+      CheckBox checkBoxAutoWrap = checkboxPref(
+         "Auto-wrap lines (insert linebreaks at specified column)", 
+         prefs.visualMarkdownEditingWrapAuto(),
+         false
+      );
+      advanced.add(checkBoxAutoWrap);
+      advanced.add(indent(visualModeWrapColumn_ = numericPref(
+          "Linebreak at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          prefs.visualMarkdownEditingWrapColumn()
+      )));
+      visualModeWrapColumn_.setWidth("36px");
+      visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
+      checkBoxAutoWrap.addValueChangeHandler((value) -> {
+         visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
+      });
+     
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "498px");
@@ -178,7 +195,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return true;
+      return visualModeWrapColumn_.validate("Linebreak at column");
    }
 
    @Override
@@ -228,4 +245,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget docOutlineDisplay_;
    private final SelectWidget latexPreviewWidget_;
    private final SelectWidget knitWorkingDir_;
+   
+   private final NumericValueWidget visualModeWrapColumn_;
+   
+   
 }

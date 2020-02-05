@@ -27,6 +27,4 @@ public class PanmirrorOptions
    public boolean autoLink;
    public boolean braceMatching;
    public boolean rmdCodeChunks;
-   public boolean atxHeaders;
-   public int wrapColumn;
 }

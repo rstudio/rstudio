@@ -25,6 +25,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -42,13 +43,14 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-// TODO: navigation from outline no longer works
 
-// TODO: wire up find and replace actions to panmirror stubs
 // TODO: make line endings configurable
-// TOOD: link to docs
+// TODO: link to docs
 // TODO: fix the way list indending is done
 // TODO: windows deps/build
+
+// TODO: wire up find and replace actions to panmirror stubs
+
 // TODO: standard editor dialog boxes
 
 public class TextEditingTargetVisualMode 
@@ -80,6 +82,14 @@ public class TextEditingTargetVisualMode
       prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
          display_.manageCommandUI();
       });
+      
+      // changes to line wrapping prefs make us dirty
+      prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
+         isDirty_ = true;
+      });
+      prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
+         isDirty_ = true;
+      });
    } 
    
    @Inject
@@ -107,12 +117,14 @@ public class TextEditingTargetVisualMode
    
    public void sync(Command ready)
    {
-      // if panmirror is active and has a dirty state, then generate markdown, 
-      // sync it to the editor, then clear the dirty flag
+      // if panmirror is active then generate markdown & sync it to the editor
       if (isPanmirrorActive() && isDirty_)
       {
          withPanmirror(() -> {
-            panmirror_.getMarkdown(markdown -> { 
+            PanmirrorWriterOptions options = new PanmirrorWriterOptions();
+            if (prefs_.visualMarkdownEditingWrapAuto().getValue())
+               options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+            panmirror_.getMarkdown(options, markdown -> { 
                getSourceEditor().setCode(markdown, true); 
                isDirty_ = false;
                if (ready != null)

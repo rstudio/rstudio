@@ -46,7 +46,7 @@ import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
 import { getOutline } from './behaviors/outline';
 
-import { PandocConverter } from './pandoc/converter';
+import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
 import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
@@ -123,7 +123,6 @@ export class Editor {
       autoLink: false,
       braceMatching: true,
       rmdCodeChunks: false,
-      atxHeaders: true,
       ...config.options,
     };
 
@@ -165,14 +164,7 @@ export class Editor {
       this.schema,
       this.extensions,
       config.pandoc,
-      this.pandocFormat.fullName,
-      {
-        reader: {},
-        writer: {
-          atxHeaders: this.options.atxHeaders,
-          wrapColumn: this.options.wrapColumn,
-        },
-      },
+      this.pandocFormat.fullName
     );
 
     // focus editor immediately if requested
@@ -236,8 +228,8 @@ export class Editor {
     return true;
   }
 
-  public getMarkdown(): Promise<string> {
-    return this.pandocConverter.fromProsemirror(this.state.doc);
+  public getMarkdown(options: PandocWriterOptions): Promise<string> {
+    return this.pandocConverter.fromProsemirror(this.state.doc, options);
   }
 
   public getHTML(): string {
