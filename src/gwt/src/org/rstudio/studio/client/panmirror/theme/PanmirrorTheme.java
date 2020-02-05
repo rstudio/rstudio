@@ -25,13 +25,14 @@ public class PanmirrorTheme
    public String backgroundColor;
    public String metadataBackgroundColor;
    public String chunkBackgroundColor;
-   public String chunkHeaderBackgroundColor;
    public String spanBackgroundColor;
    public String divBackgroundColor;
    public String textColor;
    public String lightTextColor;
    public String linkTextColor;
    public String markupTextColor;
+   public String findTextBackgroundColor;
+   public String findTextBorderColor;
    public String borderBackgroundColor;
    public String blockBorderColor;
    public String focusOutlineColor;

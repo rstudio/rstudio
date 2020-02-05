@@ -19,13 +19,14 @@ export interface EditorTheme {
   backgroundColor: string;
   metadataBackgroundColor: string;
   chunkBackgroundColor: string;
-  chunkHeaderBackgroundColor: string;
   spanBackgroundColor: string;
   divBackgroundColor: string;
   textColor: string;
   lightTextColor: string;
   linkTextColor: string;
   markupTextColor: string;
+  findTextBackgroundColor: string;
+  findTextBorderColor: string;
   borderBackgroundColor: string;
   blockBorderColor: string;
   focusOutlineColor: string;
@@ -64,13 +65,14 @@ export function defaultTheme() : EditorTheme {
     backgroundColor: "white",
     metadataBackgroundColor: "rgb(251,251,251)", 
     chunkBackgroundColor: "rgb(251,251,251)",
-    chunkHeaderBackgroundColor: "rgb(242,242,242)", // TODO
     spanBackgroundColor: "#fff8dc",
     divBackgroundColor: "rgb(236, 249, 250)",
     textColor: "black",
     lightTextColor: "rgb(60, 76, 114)",
     linkTextColor: " #106ba3",
     markupTextColor: "rgb(185, 6, 144)",
+    findTextBackgroundColor: "rgb(250, 250, 255)",
+    findTextBorderColor: "rgb(200, 200, 250)",
     borderBackgroundColor: "#ddd",
     blockBorderColor: "#ddd",
     focusOutlineColor: "#ddd",
@@ -144,6 +146,13 @@ export function applyTheme(theme: EditorTheme)
     }
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
+    }
+    .pm-find-text {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+    }
+    .pm-find-text-active {
+      background-color: ${theme.selectionColor} !important;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;

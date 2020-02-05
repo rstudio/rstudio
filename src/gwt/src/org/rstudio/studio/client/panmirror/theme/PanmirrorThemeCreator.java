@@ -53,6 +53,12 @@ public class PanmirrorThemeCreator
       theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
       
+      JsArrayString findTextClasses = JsArrayString.createArray().cast();
+      findTextClasses.push("ace_marker-layer");
+      findTextClasses.push("ace_selected-word");
+      theme.findTextBackgroundColor = DomUtils.extractCssValue(findTextClasses, "backgroundColor");
+      theme.findTextBorderColor = DomUtils.extractCssValue(findTextClasses, "borderColor");
+      
       JsArrayString borderBkgdClasses = JsArrayString.createArray().cast();
       borderBkgdClasses.push("ace_marker-layer");
       borderBkgdClasses.push("ace_find_line");

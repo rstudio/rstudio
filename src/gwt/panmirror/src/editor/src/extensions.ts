@@ -49,7 +49,6 @@ import nodeLists from './nodes/list/list';
 import nodeImage from './nodes/image/image';
 import nodeHr from './nodes/hr';
 import nodeHardBreak from './nodes/hard_break';
-import nodeSoftBreak from './nodes/soft_break';
 import nodeNull from './nodes/null';
 import markEm from './marks/em';
 import markStrong from './marks/strong';
@@ -58,6 +57,7 @@ import markLink from './marks/link/link';
 import behaviorHistory from './behaviors/history';
 import behaviorSelectAll from './behaviors/select_all';
 import behaviorCursor from './behaviors/cursor';
+import behaviorFind from './behaviors/find';
 
 // behaviors
 
@@ -113,7 +113,6 @@ export function initExtensions(
     nodeImage,
     nodeHr,
     nodeHardBreak,
-    nodeSoftBreak,
     nodeNull,
     markEm,
     markStrong,
@@ -122,6 +121,7 @@ export function initExtensions(
     behaviorHistory,
     behaviorSelectAll,
     behaviorCursor,
+    behaviorFind
   ]);
 
   // optional extensions
