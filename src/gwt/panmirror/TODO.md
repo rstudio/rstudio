@@ -4,6 +4,16 @@
 ## TODO
 
 
+- windows deps/build
+
+- initial article on using
+
+- wire up find and replace actions to panmirror stubs
+
+- padding/margin for navigation to headers
+
+- standard editor dialog boxes
+
 - Eliminate some toolbar buttons when toolbar gets more narrow
 
 - Improved treatment for relative image paths that don't resolve

@@ -44,15 +44,6 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
-// TODO: make line endings configurable
-// TODO: link to docs
-// TODO: fix the way list indending is done
-// TODO: windows deps/build
-
-// TODO: wire up find and replace actions to panmirror stubs
-
-// TODO: standard editor dialog boxes
-
 public class TextEditingTargetVisualMode 
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
