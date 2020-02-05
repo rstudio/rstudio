@@ -423,6 +423,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    @Override
    public void onResize()
    {
+      if (toolbar_ != null) {
+         toolbar_.onResize();
+      }
       if (editor_ != null) {
          editor_.resize();
       }

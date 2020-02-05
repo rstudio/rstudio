@@ -23,9 +23,11 @@ import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.studio.client.panmirror.Panmirror;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.Widget;
 
 
-public class PanmirrorToolbar extends SecondaryToolbar
+public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
 {
    public PanmirrorToolbar()
    {
@@ -52,26 +54,27 @@ public class PanmirrorToolbar extends SecondaryToolbar
       
       addLeftSeparator();
       
-      addLeftButton(Panmirror.EditorCommands.Strong);
-      addLeftButton(Panmirror.EditorCommands.Em);
-      addLeftButton(Panmirror.EditorCommands.Code);
+      formatWidgets_ = addWidgetGroup(
+         addLeftButton(Panmirror.EditorCommands.Strong),
+         addLeftButton(Panmirror.EditorCommands.Em),
+         addLeftButton(Panmirror.EditorCommands.Code),
+         addLeftSeparator()
+      );
       
-      addLeftSeparator();
+      blockWidgets_ = addWidgetGroup(
+         addLeftButton(Panmirror.EditorCommands.BulletList),
+         addLeftButton(Panmirror.EditorCommands.OrderedList),
+         addLeftButton(Panmirror.EditorCommands.Blockquote),     
+         addLeftSeparator() 
+      );
       
-      addLeftButton(Panmirror.EditorCommands.BulletList);
-      addLeftButton(Panmirror.EditorCommands.OrderedList);
-      addLeftButton(Panmirror.EditorCommands.Blockquote);
-        
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.Link);
-      addLeftButton(Panmirror.EditorCommands.Image);
-      
-      addLeftSeparator();
-      
-      addLeftButton(Panmirror.EditorCommands.RmdChunk);
-      
-      addLeftSeparator();
+      insertWidgets_ = addWidgetGroup(
+         addLeftButton(Panmirror.EditorCommands.Link),
+         addLeftButton(Panmirror.EditorCommands.Image),
+         addLeftSeparator(),
+         addLeftButton(Panmirror.EditorCommands.RmdChunk),
+         addLeftSeparator()
+      );
       
       PanmirrorToolbarMenu tableMenu = createTableMenu();
       addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, icons.get(icons.TABLE), tableMenu));
@@ -91,7 +94,21 @@ public class PanmirrorToolbar extends SecondaryToolbar
    {
       commandObjects_.forEach((object) -> object.sync(images));
       invalidateSeparators();
+      onResize();
    }
+   
+   @Override
+   public void onResize()
+   {
+      int width = getOffsetWidth();
+      if (width == 0)
+         return;
+           
+      showGroup(formatWidgets_, width > 350);
+      showGroup(blockWidgets_, width > 450);
+      showGroup(insertWidgets_, width > 550);
+   }
+   
    
    private PanmirrorToolbarRadioMenu createBlockMenu()
    {
@@ -203,10 +220,11 @@ public class PanmirrorToolbar extends SecondaryToolbar
       tableMenu.addCommand(Panmirror.EditorCommands.TableDeleteTable);
       return tableMenu;
    }
+  
    
-   private void addLeftButton(String id)
+   private Widget addLeftButton(String id)
    {
-      addLeftWidget(addButton(id));
+      return addLeftWidget(addButton(id));
    }
    
    private void addLeftTextMenu(ToolbarMenuButton menuButton)
@@ -228,10 +246,32 @@ public class PanmirrorToolbar extends SecondaryToolbar
       return button;
    }
    
+   private ArrayList<Widget> addWidgetGroup(Widget...widgets)
+   {
+      ArrayList<Widget> group = new ArrayList<Widget>();
+      for (Widget widget : widgets)
+         group.add(widget);
+      return group;
+   }
+   
+   private void showGroup(ArrayList<Widget> group, boolean show)
+   {
+      if (group !=  null) 
+      {
+         group.forEach((widget) -> {
+           widget.setVisible(show);
+         });
+      }
+   }
+   
    
    private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
+   
+   private ArrayList<Widget> formatWidgets_ = null;
+   private ArrayList<Widget> insertWidgets_ = null;
+   private ArrayList<Widget> blockWidgets_ = null;
+  
   
    private PanmirrorToolbarCommands commands_ = null;
    private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<PanmirrorCommandUIObject>();
-   
 }
