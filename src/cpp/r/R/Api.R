@@ -819,6 +819,16 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
 })
 
+# return display username (user identity)
+.rs.addApiFunction("userIdentity", function() {
+   .Call("rs_userIdentity", PACKAGE = "(embedding)")
+})
+
+# return system username 
+.rs.addApiFunction("systemUser", function() {
+   .Call("rs_systemUser", PACKAGE = "(embedding)")
+})
+
 # Tutorial ----
 
 # invoked by rstudioapi to instruct RStudio to open a particular

@@ -213,6 +213,18 @@ SEXP rs_highlightUi(SEXP queriesSEXP)
    return queriesSEXP;
 }
 
+SEXP rs_userIdentity()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(session::options().userIdentity(), &protect);
+}
+
+SEXP rs_systemUser()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(core::system::username(), &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -226,6 +238,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
+   RS_REGISTER_CALL_METHOD(rs_userIdentity);
+   RS_REGISTER_CALL_METHOD(rs_systemUser);
    
    using boost::bind;
    ExecBlock initBlock;
