@@ -10,20 +10,14 @@
 
 - wire up find and replace actions to panmirror stubs
 
-- padding/margin for navigation to headers
-
 - standard editor dialog boxes
 
-- Eliminate some toolbar buttons when toolbar gets more narrow
-
-- Improved treatment for relative image paths that don't resolve
-
-- Cursor location for insert yaml in the middle of paragraph
-
-- Issue w/ tons of pandoc processes stacking up (realtime edit of manual.md, IDE usage in background)
-  Maybe not getting reaped by node???. Also had just run TinyTex.  
 
 ## Enhancements
+
+Improved treatment for relative image paths that don't resolve
+
+Cursor location for insert yaml in the middle of paragraph
 
 Provide some extra vertical space at the bottom when typing at the bottom
 
@@ -61,6 +55,7 @@ internal links / external links via cmd+click
 
 find/replace
   https://tiptap.scrumpy.io/search-and-replace 
+  https://github.com/scrumpy/tiptap/blob/master/packages/tiptap-extensions/src/extensions/Search.js
   https://github.com/mattberkowitz/prosemirror-find-replace
 
 Direct parsing of citations (get rid of special post-processing + supported nested)
