@@ -16,9 +16,12 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -38,7 +41,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       res_ = res;
-    
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
       
@@ -154,20 +157,45 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       basic.add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
       
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
-      advanced.add(headerLabel("Visual Markdown Editor"));
-      final CheckBox enableVisualMarkdownEditor = checkboxPref(
-            "Enable visual markdown editing mode",
+      
+     
+      advanced.add(headerLabel("Visual Markdown Editing"));
+          
+      Label visualMarkdownLabel = new Label(
+            "Visual markdown editing is an experimental feature of " +
+            "RStudio v1.4. Please click the link below to learn more about " +
+            "what to expect before enabling this feature.");
+           
+      visualMarkdownLabel.addStyleName(baseRes.styles().infoLabel());
+      nudgeRight(visualMarkdownLabel);
+      spaced(visualMarkdownLabel);
+      advanced.add(visualMarkdownLabel);
+      
+      HelpLink visualModeHelpLink = new HelpLink(
+            "Learn more about visual markdown editing",
+            "https://github.com/rstudio/rstudio/wiki/Visual-Markdown-Editing",
+            false,
+            false
+         );
+      nudgeRight(visualModeHelpLink); 
+      mediumSpaced(visualModeHelpLink);
+      advanced.add(visualModeHelpLink);
+      
+      CheckBox enableVisualMarkdownEditor = checkboxPref(
+            "Enable visual markdown editing",
             prefs_.enableVisualMarkdownEditingMode());
-      spaced(enableVisualMarkdownEditor);
+      mediumSpaced(enableVisualMarkdownEditor);
       advanced.add(enableVisualMarkdownEditor);
       
+      VerticalPanel visualModeOptions = new VerticalPanel();
       CheckBox checkBoxAutoWrap = checkboxPref(
          "Auto-wrap lines (insert linebreaks at specified column)", 
          prefs.visualMarkdownEditingWrapAuto(),
          false
       );
-      advanced.add(checkBoxAutoWrap);
-      advanced.add(indent(visualModeWrapColumn_ = numericPref(
+     
+      visualModeOptions.add(checkBoxAutoWrap);
+      visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
           "Linebreak at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
           prefs.visualMarkdownEditingWrapColumn()
       )));
@@ -176,7 +204,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       checkBoxAutoWrap.addValueChangeHandler((value) -> {
          visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
       });
-     
+      advanced.add(visualModeOptions);
+      visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
+      enableVisualMarkdownEditor.addValueChangeHandler((value) -> {
+         visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
+      });
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "498px");
