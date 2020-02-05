@@ -62,24 +62,6 @@
   }
 }
 
-/* Pseudo-element so that outline navigation leaves some 
-   space above headings */
-.editorParent {
-  :global {
-    .ProseMirror h1::before,
-    .ProseMirror h2::before,
-    .ProseMirror h3::before,
-    .ProseMirror h4::before,
-    .ProseMirror h5::before,
-    .ProseMirror h6::before {
-      content: "";
-      display: block;
-      height: 20px;
-      margin: -20px 0 0;
-    }
-  }
-}
-
 .toolbar {
   padding-left: 10px;
 }
