@@ -800,7 +800,7 @@
         },
         "wrap_tab_navigation": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "Whether to wrap around when going to the previous or next editor tab."
         },
         "global_theme": {

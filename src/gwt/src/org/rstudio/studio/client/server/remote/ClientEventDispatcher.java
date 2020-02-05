@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -369,8 +369,7 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ShowWarningBar)
          {
-            WarningBarMessage message = event.getData();
-            eventBus_.dispatchEvent(new ShowWarningBarEvent(message));
+            eventBus_.dispatchEvent(new ShowWarningBarEvent(event.getData()));
          }
          else if (type == ClientEvent.OpenProjectError)
          {

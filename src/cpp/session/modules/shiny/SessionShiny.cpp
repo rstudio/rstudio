@@ -1,7 +1,7 @@
 /*
  * SessionShiny.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -321,7 +321,7 @@ Error createShinyApp(const json::JsonRpcRequest& request,
       if (filePath.exists())
          existingFiles.push_back(aliasedPath);
       
-      result.push_back(json::Value(aliasedPath));
+      result.push_back(aliasedPath);
    }
    
    if (!existingFiles.empty())

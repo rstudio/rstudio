@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -218,7 +218,7 @@ public:
          json::Array namesJson;
          for (const module_context::SourceMarkerSet& set : markerSets_)
          {
-            namesJson.push_back(json::Value(set.name));
+            namesJson.push_back(set.name);
          }
 
          // markers for active set

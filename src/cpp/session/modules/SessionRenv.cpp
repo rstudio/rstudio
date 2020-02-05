@@ -1,7 +1,7 @@
 /*
  * SessionRenv.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,12 @@ namespace module_context {
 
 bool isRequiredRenvInstalled()
 {
-   return isPackageVersionInstalled("renv", "0.5.0");
+   return isPackageVersionInstalled("renv", "0.9.2");
+}
+
+bool isRenvActive()
+{
+   return !core::system::getenv("RENV_PROJECT").empty();
 }
 
 namespace {

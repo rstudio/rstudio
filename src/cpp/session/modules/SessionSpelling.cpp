@@ -1,7 +1,7 @@
 /*
  * SessionSpelling.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,7 +213,7 @@ Error checkSpelling(const json::JsonRpcRequest& request,
       }
       else if (!isCorrect) 
       {
-         misspelledIndexes.push_back(json::Value(gsl::narrow_cast<int>(i)));
+         misspelledIndexes.push_back(gsl::narrow_cast<int>(i));
       }
    }
 

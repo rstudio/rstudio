@@ -1,7 +1,7 @@
 /*
  * SessionHistory.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,9 +64,9 @@ void historyEntriesAsJson(const std::vector<HistoryEntry>& entries,
    json::Array indexArray, timestampArray, commandArray;
    for (std::size_t i=0; i<entries.size(); i++)
    {
-      indexArray.push_back(json::Value(entries[i].index));
-      timestampArray.push_back(json::Value(entries[i].timestamp));
-      commandArray.push_back(json::Value(entries[i].command));
+      indexArray.push_back(entries[i].index);
+      timestampArray.push_back(entries[i].timestamp);
+      commandArray.push_back(entries[i].command);
    }
    
    // set arrays into result object

@@ -1,7 +1,7 @@
 /*
  * Json.cpp
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -708,6 +708,61 @@ Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const json
    return Success();
 }
 
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, bool in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, double in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, float in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, int in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, int64_t in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const char* in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const std::string& in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, unsigned int in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, uint64_t in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const Array& in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
+Error Value::setValueAtPointerPath(const std::string& in_pointerPath, const Object& in_value)
+{
+   return setValueAtPointerPath(in_pointerPath, json::Value(in_value));
+}
+
 Error Value::validate(const std::string& in_schema) const
 {
    Error error;
@@ -1063,6 +1118,61 @@ void Object::insert(const std::string& in_name, const Value& in_value)
    (*this)[in_name] = in_value;
 }
 
+void Object::insert(const std::string& in_name, bool in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, double in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, float in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, int in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, int64_t in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, const char* in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, const std::string& in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, unsigned int in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, uint64_t in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, const Array& in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
+void Object::insert(const std::string& in_name, const Object& in_value)
+{
+   insert(in_name, json::Value(in_value));
+}
+
 void Object::insert(const Member& in_member)
 {
    insert(in_member.getName(), in_member.getValue());
@@ -1345,6 +1455,61 @@ void Array::push_back(const Value& in_value)
    JsonDocument doc;
    doc.CopyFrom(*in_value.m_impl->Document, s_allocator);
    m_impl->Document->PushBack(doc, s_allocator);
+}
+
+void Array::push_back(bool in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(double in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(float in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(int in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(int64_t in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(const char* in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(const std::string& in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(unsigned int in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(uint64_t in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(const json::Array& in_value)
+{
+   push_back(json::Value(in_value));
+}
+
+void Array::push_back(const json::Object& in_value)
+{
+   push_back(json::Value(in_value));
 }
 
 bool Array::toSetString(std::set<std::string>& out_set) const

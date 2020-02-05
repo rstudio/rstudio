@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -168,6 +168,13 @@ void WebView::keyPressEvent(QKeyEvent* pEvent)
       return;
    }
 #endif
+ 
+   // allow Ctrl+Shift+V to act as a 'paste with indent' action
+   if (pEvent->key() == Qt::Key_V && pEvent->modifiers() == Qt::CTRL + Qt::SHIFT)
+   {
+      triggerPageAction(QWebEnginePage::PasteAndMatchStyle);
+      return;
+   }
    
    // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);

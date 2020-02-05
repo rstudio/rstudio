@@ -1,7 +1,7 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -310,7 +310,7 @@ private:
       json::Array arr;
       ExecRange range(0, 0);
       arr.push_back(input);
-      arr.push_back(json::Value(chunkId));
+      arr.push_back(chunkId);
 
       // formulate request body
       json::Object rpc;

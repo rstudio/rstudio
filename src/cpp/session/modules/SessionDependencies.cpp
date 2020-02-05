@@ -1,7 +1,7 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -315,6 +315,11 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // Start script with all the CRAN download settings
    std::string script = module_context::CRANDownloadOptions() + "\n\n";
 
+   bool isPackrat = module_context::packratContext().modeOn;
+   bool isRenv = module_context::isRenvActive();
+   bool isProjectLocal = isPackrat || isRenv;
+   
+   
    // Emit a message to the user at the beginning of the script declaring what we're about to do
    if (deps.size() > 1)
    {
@@ -361,20 +366,37 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
       if (dep.location == kCRANPackageDependency)
       {
-         // Build install command for CRAN. We specify lock = TRUE (here and elsewhere) to ensure
-         // that the package directory is locked during installation; since this will run in the
-         // background we want reduce the odds of corruption via a competing package install attempt
-         // in another process.
-         script += "utils::install.packages('" + dep.name + "', " +
-                "repos = '"+ module_context::CRANReposURL() + "'";
-
-         if (dep.source) 
+         if (isRenv)
          {
-            // Install from source if requested
-            script += ", type = 'source'";
+            // renv used the 'pkgType' option to decide whether to install a package
+            // from sources or not; set it to source explicitly to force source installs
+            if (dep.source)
+            {
+               script += "options(pkgType = 'source'); ";
+            }
+            
+            // NOTE: renv will use the repositories as set in the lockfile here;
+            // should we override this based on the current repositories set in
+            // the session?
+            script += "renv::install('" + dep.name + "')";
          }
+         else
+         {
+            // Build install command for CRAN. We specify lock = TRUE (here and elsewhere) to ensure
+            // that the package directory is locked during installation; since this will run in the
+            // background we want reduce the odds of corruption via a competing package install attempt
+            // in another process.
+            script += "utils::install.packages('" + dep.name + "', " +
+                  "repos = '"+ module_context::CRANReposURL() + "'";
 
-         script += ", lock = TRUE)";
+            if (dep.source) 
+            {
+               // Install from source if requested
+               script += ", type = 'source'";
+            }
+
+            script += ", lock = TRUE)";
+         }
       }
       else if (dep.location == kEmbeddedPackageDependency)
       {
@@ -397,7 +419,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
       script += safe_convert::numberToString(deps.size()) + " packages installed.";
    script += "')\n\n";
 
-   bool packrat = module_context::packratContext().modeOn;
    jobs::ScriptLaunchSpec installJob(
          // Supply job name; use context if we have one, otherwise auto-generate from dependency list
          context.empty() ?
@@ -410,7 +431,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
          script,
 
          // Directory in which to run job
-         packrat ?
+         isProjectLocal ?
             projects::projectContext().directory() :
             FilePath(),
 
@@ -419,7 +440,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
    // Run in a vanilla session if Packrat mode isn't on (prevents problematic startup scripts/etc
    // from causing install trouble)
-   if (!packrat)
+   if (!isProjectLocal)
       installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
 
    std::string jobId;

@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -46,11 +47,15 @@ public class ApplicationWindow extends Composite
    public ApplicationWindow(ApplicationHeader applicationHeader,
                             GlobalDisplay globalDisplay,
                             Provider<UserPrefs> pPrefs,
+                            EventBus events,
+                            Provider<WarningBar> pWarningBar,
                             AriaLiveService ariaLive,
                             CodeSearchLauncher launcher)
    {
       globalDisplay_ = globalDisplay;
+      events_ = events;
       pPrefs_ = pPrefs;
+      pWarningBar_ = pWarningBar;
       ariaLive_ = ariaLive;
 
       // occupy full client area of the window
@@ -194,7 +199,7 @@ public class ApplicationWindow extends Composite
    {
       if (warningBar_ == null)
       {
-         warningBar_ = new WarningBar();
+         warningBar_ = pWarningBar_.get();
          Roles.getContentinfoRole().set(warningBar_.getElement());
          Roles.getContentinfoRole().setAriaLabelProperty(warningBar_.getElement(), "Warning bar");
          warningBar_.addCloseHandler(warningBarCloseEvent -> hideWarning());
@@ -351,6 +356,8 @@ public class ApplicationWindow extends Composite
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
    private final Provider<UserPrefs> pPrefs_;
    private final AriaLiveService ariaLive_;
+   private final Provider<WarningBar> pWarningBar_;
 }

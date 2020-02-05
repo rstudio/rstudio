@@ -10,12 +10,7 @@
       overflow: hidden;
       word-wrap: nowrap;
    }
-   
-   .status
-   {
-      color: #717171;
-   }
-   
+
    .host
    {
       width: 100%;
