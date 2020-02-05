@@ -122,6 +122,7 @@ public class TextEditingTargetVisualMode
       {
          withPanmirror(() -> {
             PanmirrorWriterOptions options = new PanmirrorWriterOptions();
+            options.atxHeaders = true;
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
             panmirror_.getMarkdown(options, markdown -> { 
