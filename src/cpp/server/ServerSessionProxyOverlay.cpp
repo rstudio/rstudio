@@ -56,6 +56,12 @@ void proxyJupyterRequest(const r_util::SessionContext& context,
 {
 }
 
+void proxyVSCodeRequest(const r_util::SessionContext& context,
+                        boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                        const http::ErrorHandler& errorHandler)
+{
+}
+
 Error runVerifyInstallationSession(core::system::User& user,
                                    bool* pHandled)
 {
