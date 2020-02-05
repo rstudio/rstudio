@@ -173,10 +173,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       HelpLink visualModeHelpLink = new HelpLink(
             "Learn more about visual markdown editing",
-            "https://github.com/rstudio/rstudio/wiki/Visual-Markdown-Editing",
-            false,
-            false
-         );
+            "visual_markdown_editing"
+      );
       nudgeRight(visualModeHelpLink); 
       mediumSpaced(visualModeHelpLink);
       advanced.add(visualModeHelpLink);
