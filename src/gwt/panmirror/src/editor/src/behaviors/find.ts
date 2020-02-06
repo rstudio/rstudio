@@ -323,54 +323,42 @@ const extension: Extension = {
 
 };
 
-
 export interface FindOptions {
   regex?: boolean;
   caseSensitive?: boolean;
   wrap?: boolean;
 }
 
-
 export function find(view: EditorView, term: string, options: FindOptions) : boolean {
-  const plugin = findPlugin(view);
-  return plugin.find(term, options)(view.state, view.dispatch);
+  return findPlugin(view).find(term, options)(view.state, view.dispatch);
 }
 
 export function matchCount(view: EditorView) : number {
-  const plugin = findPlugin(view);
-  return plugin.matchCount(view.state);
+  return findPlugin(view).matchCount(view.state);
 }
 
 export function selectFirst(view: EditorView) : boolean {
-  const plugin = findPlugin(view);
-  return plugin.selectFirst()(view.state, view.dispatch);
+  return findPlugin(view).selectFirst()(view.state, view.dispatch);
 }
 
 export function selectNext(view: EditorView) : boolean {
-  const plugin = findPlugin(view);
-  return plugin.selectNext()(view.state, view.dispatch);
+  return findPlugin(view).selectNext()(view.state, view.dispatch);
 }
 
 export function selectPrevious(view: EditorView) : boolean {
-  const plugin = findPlugin(view);
-  return plugin.selectPrevious()(view.state, view.dispatch);
+  return findPlugin(view).selectPrevious()(view.state, view.dispatch);
 }
 
 export function replace(view: EditorView, text: string) : boolean {
-  const plugin = findPlugin(view);
-  return plugin.replace(text)(view.state, view.dispatch);
+  return findPlugin(view).replace(text)(view.state, view.dispatch);
 }
 
 export function replaceAll(view: EditorView, text: string) {
-  const plugin = findPlugin(view);
-  return plugin.replaceAll(text)(view.state, view.dispatch);
+  return findPlugin(view).replaceAll(text)(view.state, view.dispatch);
 }
-
 
 function findPlugin(view: EditorView) : FindPlugin {
   return key.get(view.state) as FindPlugin;
 }
-
-
 
 export default extension;

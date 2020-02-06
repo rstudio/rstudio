@@ -45,6 +45,17 @@ import { EditingLocation, getEditingLocation, restoreEditingLocation } from './a
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
 import { getOutline } from './behaviors/outline';
+import { 
+  FindOptions, 
+  find, 
+  matchCount, 
+  selectFirst, 
+  selectNext, 
+  selectPrevious, 
+  replace, 
+  replaceAll 
+} from './behaviors/find';
+
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
@@ -52,6 +63,7 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
+
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -81,6 +93,16 @@ export enum EditorEvents {
 export interface EditorSelection {
   from: number;
   to: number;
+}
+
+export interface EditorFind {
+  find: (term: string, options: FindOptions) => boolean;
+  matches: () => number;
+  selectFirst: () => boolean;
+  selectNext: () => boolean;
+  selectPrevious: () => boolean;
+  replace: (text: string) => boolean;
+  replaceAll: (text: string) => boolean;
 }
 
 export { EditorCommandId as EditorCommands } from './api/command';
@@ -258,6 +280,18 @@ export class Editor {
 
   public getOutline(): EditorOutline {
     return getOutline(this.state);
+  }
+
+  public getFind(): EditorFind {
+    return {
+      find: (term: string, options: FindOptions) => find(this.view, term, options),
+      matches: () => matchCount(this.view),
+      selectFirst: () => selectFirst(this.view),
+      selectNext: () => selectNext(this.view),
+      selectPrevious: () => selectPrevious(this.view),
+      replace: (text: string) => replace(this.view, text),
+      replaceAll: (text: string) => replaceAll(this.view, text)
+    };
   }
 
   public focus() {
