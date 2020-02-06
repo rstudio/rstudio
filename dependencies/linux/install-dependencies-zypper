@@ -30,6 +30,8 @@ sudo zypper --non-interactive in libbz2-devel
 sudo zypper --non-interactive in zlib-devel
 sudo zypper --non-interactive in libuuid-devel
 sudo zypper --non-interactive in libopenssl-devel
+sudo zypper --non-interactive in libpq-devel
+sudo zypper --non-interactive in libsqlite-devel
 sudo zypper --non-interactive in pam-devel
 
 # boost

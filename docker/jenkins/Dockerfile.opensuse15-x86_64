@@ -20,6 +20,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libattr-devel \
     libcap-devel \
     libcurl-devel \
+    libpq-devel \
+    libsqlite-devel \
     libuser-devel \
     libuuid-devel \
     libXcursor-devel \
