@@ -3,6 +3,14 @@
 
 ## TODO
 
+- hightlighted search not shown w/ no focus (need a mark or other decorator?)
+- invalid regex causes js exception
+- clear document indicators when not active
+- confirm that footnotes work
+- wire up replace and replace all
+- test out keyboard shortcuts
+
+- margin above footnote
 
 - windows deps/build
 
