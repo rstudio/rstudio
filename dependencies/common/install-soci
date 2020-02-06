@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+#
+# install-soci
+#
+# Copyright (C) 2020 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir 
+INSTALL_DIR=`pwd`
+
+# vars
+BOOST_VERSION="1_69_0"
+RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
+SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
+SOCI_BIN_DIR=$SOCI_DIR/build
+SOCI_BRANCH=release/4.0
+BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
+
+# install SOCI if it isn't already installed
+if ! test -e $SOCI_BIN_DIR/lib/libsoci_core.so.4.0.0
+then
+   cd $RSTUDIO_TOOLS_DIR
+
+   # download SOCI from source
+   if ! test -n $SOCI_DIR
+   then
+      git clone git://github.com/SOCI/soci.git
+   fi
+   cd $SOCI_DIR
+
+   # checkout desired soci branch (version pinned)
+   git checkout "$SOCI_BRANCH"  
+
+   # make build directory
+   mkdir -p $SOCI_BIN_DIR
+   cd $SOCI_BIN_DIR
+
+   # create symlink to our boost datetime library so it is properly discovered by the SOCI build
+   ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
+ 
+   # build SOCI
+   cmake -G "Unix Makefiles" -DSOCI_CXX11=ON -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
+   make
+   
+   # fix up permissions (if run as root, bin dir will be unreadable by others)
+   chmod -R 777 "$SOCI_BIN_DIR" 
+else
+   echo "SOCI already installed in $SOCI_BIN_DIR"
+fi
+
+# back to install dir
+cd $INSTALL_DIR

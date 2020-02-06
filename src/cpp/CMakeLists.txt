@@ -355,6 +355,40 @@ else()
    endif()
 endif()
 
+# SOCI
+if(UNIX)
+   set(RSTUDIO_TOOLS_SOCI "/opt/rstudio-tools/soci")
+else()
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/soci")
+endif()
+
+set(SOCI_INCLUDE_DIR "${RSTUDIO_TOOLS_SOCI}/include")
+set(SOCI_INCLUDE_BUILD_DIR "${RSTUDIO_TOOLS_SOCI}/build/include")
+include_directories(SYSTEM ${SOCI_INCLUDE_DIR})
+include_directories(SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
+set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+
+# find SOCI libraries
+if(UNIX)
+   file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/*.so")
+else()
+   file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/*.dll")
+endif()
+list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
+
+if (SOCI_LIB_COUNT EQUAL 0)
+   message(FATAL_ERROR "No SOCI libraries found under ${SOCI_LIBRARY_DIR}. Ensure the SOCI dependency is installed and try again.")
+else()
+   message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}.")
+
+   # ensure the soci libraries are installed with the installation package
+   if(UNIX)
+      install(PROGRAMS "${SOCI_LIBRARY_DIR}/*.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+   else()
+      install(PROGRAMS "${SOCI_LIBRARY_DIR}/*.dll" DESTINATION ${RSTUDIO_INSTALL_BIN})
+   endif()
+endif()
+
 if(WIN32)
      # winpty - pseudoterminal support on Windows
      if(RSTUDIO_SESSION_WIN32)

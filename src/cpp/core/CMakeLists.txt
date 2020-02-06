@@ -340,6 +340,7 @@ target_link_libraries(
    rstudio-shared-core
    ${Boost_LIBRARIES}
    ${CRASHPAD_LIBRARIES}
+   ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
 
@@ -360,6 +361,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core-hunspell
       rstudio-shared-core
       ${Boost_LIBRARIES}
+      ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )
 

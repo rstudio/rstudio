@@ -28,6 +28,10 @@
 
 #include <core/system/Types.hpp>
 
+#include <soci/boost-tuple.h>
+#include <soci/session.h>
+#include <soci/sqlite3/soci-sqlite3.h>
+
 namespace rstudio {
 namespace unit_tests {
 
@@ -273,6 +277,25 @@ test_context("Options")
          expect_true(options[i].first == options2[i].first);
          expect_true(options[i].second == options2[i].second);
       }
+   }
+}
+
+test_context("SOCI")
+{
+   test_that("Can create SQLite database")
+   {
+      soci::session sql(soci::sqlite3, "dbname=/tmp/testdb");
+      sql.once << "create table Test(id int, text varchar(255))";
+
+      int id = 10;
+      std::string text = "Hello, database!";
+      sql << "insert into Test(id, text) values(:id, :text)", soci::use(id), soci::use(text);
+
+      boost::tuple<int, std::string> row;
+      sql << "select id, text from Test where id = (:id)", soci::use(id), soci::into(row);
+
+      CHECK(row.get<0>() == id);
+      CHECK(row.get<1>() == text);
    }
 }
 
