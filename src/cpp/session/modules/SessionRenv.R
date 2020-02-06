@@ -121,8 +121,8 @@
    df
 })
 
-.rs.addFunction("renv.listPackages", function(project) {
-   
+.rs.addFunction("renv.listPackages", function(project)
+{
    # get list of packages
    installedPackages <- .rs.listInstalledPackages()
    
@@ -135,16 +135,23 @@
    names(lockfilePackages) <- c("name", "packrat.version", "packrat.source")
 
    # note which packages are in project library
-   installedPackages[["in.project.library"]] <-
-      installedPackages$library_absolute == renv:::renv_paths_library(project = project)
-
+   lib <- path.expand(installedPackages$library_absolute)
+   projlib <- path.expand(renv:::renv_paths_library(project = project))
+   
+   lib <- gsub("\\", "/", lib, fixed = TRUE)
+   projlib <- gsub("\\", "/", projlib, fixed = TRUE)
+   
+   installedPackages[["in.project.library"]] <- lib == projlib
+   
    # merge together
-   merge.data.frame(
+   merged <- merge.data.frame(
       x = installedPackages,
       y = lockfilePackages,
       by = "name",
       all.x = TRUE,
       all.y = TRUE
    )
+   
+   merged
    
 })

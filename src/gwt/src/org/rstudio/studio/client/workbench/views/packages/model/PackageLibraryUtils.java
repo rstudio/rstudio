@@ -29,9 +29,13 @@ public class PackageLibraryUtils
       System
    }
 
-   public static PackageLibraryType typeOfLibrary(Session session, 
-                                                  String library)
+   public static PackageLibraryType typeOfLibrary(PackageInfo info,
+                                                  Session session)
    {
+      // if we know it's in the project library, use that directly
+      if (info.isInProjectLibrary())
+         return PackageLibraryType.Project;
+      
       FileSystemItem projectDir = null;
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo != null)
@@ -43,6 +47,7 @@ public class PackageLibraryUtils
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
       // belongs in the project library
+      String library = info.getLibrary();
       if (StringUtil.isNullOrEmpty(library) ||
           (projectDir != null && library.startsWith(projectDir.getPath())))
       {
@@ -70,8 +75,8 @@ public class PackageLibraryUtils
       return "Library";
    }
    
-   public static String getLibraryDescription (Session session, String library)
+   public static String getLibraryDescription (PackageInfo info, Session session)
    {
-      return nameOfLibraryType(typeOfLibrary(session, library));
+      return nameOfLibraryType(typeOfLibrary(info, session));
    }
 }

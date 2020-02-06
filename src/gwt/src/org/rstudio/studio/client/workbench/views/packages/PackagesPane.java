@@ -656,7 +656,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                  .libraryHeader());
            cell.title(library);
            cell.startH1().text(
-                 PackageLibraryUtils.getLibraryDescription(session_, library))
+                 PackageLibraryUtils.getLibraryDescription(pkg, session_))
                  .endH1();
            row.endTD();
            

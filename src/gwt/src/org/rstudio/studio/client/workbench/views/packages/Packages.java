@@ -88,7 +88,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.CleanUnusedDialog;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -870,17 +869,12 @@ public class Packages
          }
 
          // sort results by library (to preserve grouping)
-         Collections.sort(packages, new Comparator<PackageInfo>()
-               {
-                  @Override
-                  public int compare(PackageInfo o1, PackageInfo o2)
-                  {
-                     return PackageLibraryUtils.typeOfLibrary(
-                                   session_, o1.getLibrary()).compareTo(
-                             PackageLibraryUtils.typeOfLibrary(
-                                   session_, o2.getLibrary()));
-                  }
-               });
+         Collections.sort(packages, (PackageInfo o1, PackageInfo o2) ->
+         {
+            PackageLibraryType t1 = PackageLibraryUtils.typeOfLibrary(o1, session_);
+            PackageLibraryType t2 = PackageLibraryUtils.typeOfLibrary(o2, session_);
+            return t1.compareTo(t2);
+         });
       }
       else
       {
@@ -1222,24 +1216,24 @@ public class Packages
 
    private void setPackageState(PackageState newState)
    {
-      // sort the packages
+      // collect packages in array list
       allPackages_ = new ArrayList<PackageInfo>();
       JsArray<PackageInfo> serverPackages = newState.getPackageList();
       for (int i = 0; i < serverPackages.length(); i++)
          allPackages_.add(serverPackages.get(i));
-      Collections.sort(allPackages_, new Comparator<PackageInfo>() {
-         public int compare(PackageInfo o1, PackageInfo o2)
-         {
-            // sort first by library, then by name
-            int library = 
-                  PackageLibraryUtils.typeOfLibrary(
-                        session_, o1.getLibrary()).compareTo(
-                  PackageLibraryUtils.typeOfLibrary(
-                        session_, o2.getLibrary()));
-            return library == 0 ? 
-                  o1.getName().compareToIgnoreCase(o2.getName()) :
-                  library;
-         }
+      
+      // sort the packages
+      Collections.sort(allPackages_, (PackageInfo o1, PackageInfo o2) ->
+      {
+         // sort first by library, then by name
+         PackageLibraryType t1 = PackageLibraryUtils.typeOfLibrary(o1, session_);
+         PackageLibraryType t2 = PackageLibraryUtils.typeOfLibrary(o2, session_);
+
+         int compare = t1.compareTo(t2);
+         if (compare != 0)
+            return compare;
+
+         return o1.getName().compareToIgnoreCase(o2.getName());
       });
       
       // Mark  which packages are first in their respective libraries (used
@@ -1247,8 +1241,7 @@ public class Packages
       PackageLibraryType libraryType = PackageLibraryType.None;
       for (PackageInfo pkgInfo: allPackages_)
       {
-         PackageLibraryType pkgLibraryType = PackageLibraryUtils.typeOfLibrary(
-               session_, pkgInfo.getLibrary());
+         PackageLibraryType pkgLibraryType = PackageLibraryUtils.typeOfLibrary(pkgInfo, session_);
          if (pkgLibraryType != libraryType)
          {
             pkgInfo.setFirstInLibrary(true);
