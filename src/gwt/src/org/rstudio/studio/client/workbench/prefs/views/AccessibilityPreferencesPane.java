@@ -58,6 +58,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
             1, 9999, prefs.typingStatusDelayMs());
       generalPanel.add(indent(typingStatusDelay_));
+      generalPanel.add(indent(maxOutput_ = numericPref("Maximum number of console output lines to read",
+            0, UserPrefs.MAX_SCREEN_READER_CONSOLE_OUTPUT, prefs.screenreaderConsoleAnnounceLimit())));
 
       Label displayLabel = headerLabel("Other");
       generalPanel.add(displayLabel);
@@ -136,7 +138,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!chkScreenReaderEnabled_.getValue() || typingStatusDelay_.validate("Speak results after typing delay"));
+      return (!chkScreenReaderEnabled_.getValue() ||
+            (typingStatusDelay_.validate() && maxOutput_.validate()));
    }
 
    private void populateAnnouncementList()
@@ -182,6 +185,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
+   private final NumericValueWidget maxOutput_;
    private final CheckBox chkTabMovesFocus_;
    private final CheckBoxList announcements_;
 

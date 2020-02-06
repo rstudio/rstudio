@@ -1009,6 +1009,11 @@
             "type": "array",
             "default": [],
             "description": "List of aria-live announcements to disable."
+        },
+        "screenreader_console_announce_limit": {
+            "type": "integer",
+            "default": 25,
+            "description": "Maximum number of lines of console output announced after a command."
         }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * NumericValueWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ public class NumericValueWidget extends Composite
     */
    public NumericValueWidget(String label, Integer minValue, Integer maxValue)
    {
+      label_ = label;
       FlowPanel flowPanel = new FlowPanel();
 
       textBox_ = new NumericTextBox();
@@ -53,7 +54,7 @@ public class NumericValueWidget extends Composite
          textBox_.setMax(maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
 
-      flowPanel.add(new SpanLabel(label, textBox_, true));
+      flowPanel.add(new SpanLabel(label_, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
@@ -88,7 +89,7 @@ public class NumericValueWidget extends Composite
     * Make sure field is a valid integer in the range [min, max]. If min or max
     * are null, then 0 and infinity are assumed, respectively.
     */
-   public boolean validate(String fieldName)
+   public boolean validate()
    {
       String value = textBox_.getValue().trim();
       if (!value.matches("^\\d+$"))
@@ -97,7 +98,7 @@ public class NumericValueWidget extends Composite
          textBox_.getElement().focus();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                "Error",
-               fieldName + " must be a valid number.",
+               label_ + " must be a valid number.",
                textBox_);
          return false;
       }
@@ -108,7 +109,7 @@ public class NumericValueWidget extends Composite
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   "Error",
-                  fieldName + " must be greater than or equal to " + minValue_ + ".",
+                  label_ + " must be greater than or equal to " + minValue_ + ".",
                   textBox_);
             return false;
          }
@@ -116,7 +117,7 @@ public class NumericValueWidget extends Composite
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   "Error",
-                  fieldName + " must be less than or equal to " + maxValue_ + ".",
+                  label_ + " must be less than or equal to " + maxValue_ + ".",
                   textBox_);
             return false;
          }
@@ -132,4 +133,5 @@ public class NumericValueWidget extends Composite
    private final NumericTextBox textBox_;
    private final Integer minValue_;
    private final Integer maxValue_;
+   private final String label_;
 }

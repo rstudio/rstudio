@@ -1665,6 +1665,14 @@ public class UserPrefsAccessor extends Prefs
       return object("disabled_aria_live_announcements", JsArrayUtil.createStringArray());
    }
 
+   /**
+    * Maximum number of lines of console output announced after a command.
+    */
+   public PrefValue<Integer> screenreaderConsoleAnnounceLimit()
+   {
+      return integer("screenreader_console_announce_limit", 25);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2023,6 +2031,8 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
+      if (source.hasKey("screenreader_console_announce_limit"))
+         screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
    }
    
 

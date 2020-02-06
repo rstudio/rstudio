@@ -2337,6 +2337,19 @@ core::Error UserPrefValues::setDisabledAriaLiveAnnouncements(core::json::Array v
    return writePref("disabled_aria_live_announcements", val);
 }
 
+/**
+ * Maximum number of lines of console output announced after a command.
+ */
+int UserPrefValues::screenreaderConsoleAnnounceLimit()
+{
+   return readPref<int>("screenreader_console_announce_limit");
+}
+
+core::Error UserPrefValues::setScreenreaderConsoleAnnounceLimit(int val)
+{
+   return writePref("screenreader_console_announce_limit", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2518,6 +2531,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kDisabledAriaLiveAnnouncements,
+      kScreenreaderConsoleAnnounceLimit,
    });
 }
    
