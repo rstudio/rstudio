@@ -57,7 +57,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   public find(term: string, options: FindOptions) {
     return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
       if (dispatch) {
-        this.term = options.regex ? term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') : term;
+        this.term = !options.regex ? term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') : term;
         this.options = options;
         this.updateResults(state, dispatch);
       }
