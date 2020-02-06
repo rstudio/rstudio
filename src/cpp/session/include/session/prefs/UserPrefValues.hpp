@@ -314,6 +314,7 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
+#define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 
 class UserPrefValues: public Preferences
 {
@@ -1386,6 +1387,12 @@ public:
     */
    core::json::Array disabledAriaLiveAnnouncements();
    core::Error setDisabledAriaLiveAnnouncements(core::json::Array val);
+
+   /**
+    * Maximum number of lines of console output announced after a command.
+    */
+   int screenreaderConsoleAnnounceLimit();
+   core::Error setScreenreaderConsoleAnnounceLimit(int val);
 
 };
 

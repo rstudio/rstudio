@@ -817,7 +817,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void enableLiveReporting()
    {
-      liveRegion_ = new AriaLiveShellWidget();
+      liveRegion_ = new AriaLiveShellWidget(prefs_);
       verticalPanel_.add(liveRegion_);
    }
 
