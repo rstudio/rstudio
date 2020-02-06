@@ -22,6 +22,9 @@ then
   ./install-overlay
 fi
 
+# install postgres, needed by SOCI
+brew install postgres
+
 cd ../common
 ./install-common --install-crashpad-sudo
 cd ../osx
