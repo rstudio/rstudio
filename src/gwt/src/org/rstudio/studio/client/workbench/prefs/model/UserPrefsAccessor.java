@@ -1324,7 +1324,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> wrapTabNavigation()
    {
-      return bool("wrap_tab_navigation", false);
+      return bool("wrap_tab_navigation", true);
    }
 
    /**
