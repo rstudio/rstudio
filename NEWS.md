@@ -124,6 +124,7 @@
 * Keyboard shortcuts for searching R help in Help pane, and next/previous help page (#5149)
 * Keep keyboard focus in the console during debugging (#6039)
 * Enable wrap-around for previous/next source tab by default (#6139)
+* Provide full SHA in detail of Git commits (#6155)
 
 ### Bugfixes
 
@@ -141,6 +142,12 @@
 * Fix issue where session restore could fail when using multiple user libraries
 * Fix issue where library paths were not forwarded when building package documentation
 * Restore ability to select and copy text in version control diffs (#4734)
+* Fix incorrect column names when non-dataframes with a column named `x` were viewed (#3304)
+* Fix inconsistent shading in R Markdown chunk backgrounds with folding (#2992)
+* Fix list column display in columns past 50 with data viewer (#5851)
+* Fix incorrect column type display when paging columns (#5479)
+* Fix incorrect sorting in data viewer when paging columns (#4682)
+* Fix carryover of light ANSI background colors (#6092)
 
 ### RStudio Professional
 
