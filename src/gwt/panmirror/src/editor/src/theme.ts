@@ -151,9 +151,6 @@ export function applyTheme(theme: EditorTheme)
       background-color: ${theme.findTextBackgroundColor} !important;
       border: 1px solid ${theme.findTextBorderColor} !important;
     }
-    .pm-find-text-active {
-      background-color: ${theme.selectionColor} !important;
-    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }
