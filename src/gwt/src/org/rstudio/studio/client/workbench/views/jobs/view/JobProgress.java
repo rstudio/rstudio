@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 
 import com.google.inject.Inject;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -77,14 +76,8 @@ public class JobProgress extends Composite
       name_.setText(job.name);
       progress_.setLabel(job.name);
       String status = JobConstants.stateDescription(job.state);
-      stop_.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
-         }
-      });
+      stop_.addClickHandler(clickEvent ->
+         eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP)));
 
       if (job.completed > 0)
       {
