@@ -109,9 +109,7 @@ public class JobProgress extends Composite
 
       // show stop button if job has a "stop" action, and is not completed
       if (job.completed == 0)
-         stop_.setVisible(
-               JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_STOP) &&
-               job.completed == 0);
+         stop_.setVisible(JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_STOP));
       else
          stop_.setVisible(false);
 
