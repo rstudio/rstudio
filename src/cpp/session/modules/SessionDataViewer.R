@@ -251,12 +251,13 @@
       # "x" is a function argument and therefore a promise whose value won't
       # be bound via substitute() below. we use a random-looking name so we 
       # can spot it later when relabeling columns.
-      ioHe4iej <- x
+      `__RSTUDIO_VIEWER_COLUMN__` <- x
 
       # perform the actual coercion in the global environment; this is 
       # necessary because we want to honor as.data.frame overrides of packages
       # which are loaded after tools:rstudio in the search path
-      frame <- eval(substitute(as.data.frame(ioHe4iej, optional = TRUE)), 
+      frame <- eval(substitute(as.data.frame(`__RSTUDIO_VIEWER_COLUMN__`, 
+                                             optional = TRUE)), 
                     envir = globalenv())
     },
     error = function(e)
@@ -266,7 +267,7 @@
     # as.data.frame uses the name of its argument to label unlabeled columns,
     # so label these back to the original name
     if (!is.null(frame) && !is.null(names(frame)))
-      names(frame)[names(frame) == "ioHe4iej"] <- name
+      names(frame)[names(frame) == "__RSTUDIO_VIEWER_COLUMN__"] <- name
     x <- frame 
   }
 
