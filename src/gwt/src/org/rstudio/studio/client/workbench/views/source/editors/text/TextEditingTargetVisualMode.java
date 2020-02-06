@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.Panmirror;
 import org.rstudio.studio.client.panmirror.PanmirrorConfig;
@@ -59,14 +60,16 @@ public class TextEditingTargetVisualMode
       docUpdateSentinel_ = docUpdateSentinel;
       
       // manage ui based on current pref + changes over time
-      manageUI(isEnabled(), false);
+      manageUI(isActivated(), false);
       onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
-         manageUI(isEnabled(), true);
+         manageUI(isActivated(), true);
       });
       
       // sync to outline visible prop
       onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
-         panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
+         withPanmirror(() -> {
+            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
+         });
       });
       
       // sync to user pref changed
@@ -91,10 +94,15 @@ public class TextEditingTargetVisualMode
       source_ = source;
    }
    
+   public boolean isActivated()
+   {
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+   }
+   
   
    public void deactivate(ScheduledCommand completed)
    {
-      if (isEnabled())
+      if (isActivated())
       {
          docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
          manageUI(false, true, completed);
@@ -149,6 +157,8 @@ public class TextEditingTargetVisualMode
         commands_.insertRoxygenSkeleton(),
         commands_.reindent(),
         commands_.reformatCode(),
+        commands_.findSelectAll(),
+        commands_.findFromSelection(),
         commands_.executeSetupChunk(),
         commands_.executeAllCode(),
         commands_.executeCode(),
@@ -187,20 +197,32 @@ public class TextEditingTargetVisualMode
         commands_.restartRRunAllChunks(),
         commands_.profileCode()
       );
-   } 
-   
-   private boolean isEnabled()
-   {
-      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
    }
+   
+   public HasFindReplace getFindReplace()
+   {
+      if (panmirror_ != null) {
+         return panmirror_.getFindReplace();
+      } else {
+         return new HasFindReplace() {
+            public boolean isFindReplaceShowing() { return false; }
+            public void showFindReplace(boolean defaultForward) {}
+            public void findNext() {}
+            public void findPrevious() {}
+            public void replaceAndFind() {}
+            
+         };
+      }  
+   }
+   
    
   
-   private void manageUI(boolean enable, boolean focus)
+   private void manageUI(boolean activate, boolean focus)
    {
-      manageUI(enable, focus, () -> {});
+      manageUI(activate, focus, () -> {});
    }
    
-   private void manageUI(boolean enable, boolean focus, ScheduledCommand completed)
+   private void manageUI(boolean activate, boolean focus, ScheduledCommand completed)
    {
       // manage commands
       manageCommands();
@@ -213,9 +235,9 @@ public class TextEditingTargetVisualMode
       TextEditorContainer.Editor editor = editorContainer.getEditor();
         
       // visual mode enabled (panmirror editor)
-      if (enable)
+      if (activate)
       {
-         Command activate = () -> {
+         Command activator = () -> {
             // sync to editor outline prefs
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
             
@@ -242,7 +264,7 @@ public class TextEditingTargetVisualMode
                   loadingFromSource_ = false;
                   
                   // activate editor
-                  activate.execute();
+                  activator.execute();
                   
                   // restore selection if we have one
                   Scheduler.get().scheduleDeferred(() -> {
@@ -256,7 +278,7 @@ public class TextEditingTargetVisualMode
             }
             else
             {
-               activate.execute();
+               activator.execute();
             }  
          });
       }
@@ -456,7 +478,7 @@ public class TextEditingTargetVisualMode
       for (AppCommand command : commands)
       {
          if (command.isVisible())
-            command.setEnabled(!isEnabled());
+            command.setEnabled(!isActivated());
       }
    }
    

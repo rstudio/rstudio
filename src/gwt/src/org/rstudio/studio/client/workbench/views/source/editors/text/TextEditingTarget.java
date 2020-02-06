@@ -211,18 +211,16 @@ public class TextEditingTarget implements
 
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
+                                    HasFindReplace,
                                     HasEnsureVisibleHandlers,
                                     HasEnsureHeightHandlers,
                                     HasResizeHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
-      void showFindReplace(boolean defaultForward);
-      void findNext();
-      void findPrevious();
+      
       void findSelectAll();
       void findFromSelection();
-      void replaceAndFind();
       
       StatusBar getStatusBar();
 
@@ -6172,23 +6170,31 @@ public class TextEditingTarget implements
    {
       docDisplay_.quickAddNext();
    }
+   
+   private HasFindReplace getFindReplace()
+   {
+      if (visualMode_.isActivated())
+         return visualMode_.getFindReplace();
+      else
+         return view_;
+   }
 
    @Handler
    void onFindReplace()
    {
-      view_.showFindReplace(true);
+      getFindReplace().showFindReplace(true);
    }
    
    @Handler
    void onFindNext()
    {
-      view_.findNext();
+      getFindReplace().findNext();
    }
    
    @Handler
    void onFindPrevious()
    {
-      view_.findPrevious();
+      getFindReplace().findPrevious();
    }
    
    @Handler
@@ -6207,7 +6213,7 @@ public class TextEditingTarget implements
    @Handler
    void onReplaceAndFind()
    {
-      view_.replaceAndFind();
+      getFindReplace().replaceAndFind();
    }
    
    @Override

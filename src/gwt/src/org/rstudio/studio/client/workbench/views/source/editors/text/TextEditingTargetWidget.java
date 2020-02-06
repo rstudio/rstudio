@@ -291,9 +291,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
+      toolbar.addLeftWidget(checkSpellingButton_ = commands_.checkSpelling().createToolbarButton());
       
-      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
+      toolbar.addLeftWidget(findReplaceButton_ = findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       
       notebookSeparatorWidget_ = toolbar.addLeftSeparator();
@@ -599,6 +599,8 @@ public class TextEditingTargetWidget
          });
       docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          toggleRmdVisualModeButton_.setLatched(isVisualMode());
+         if (isVisualMode())
+            findReplace_.hideFindReplace();
       });
       toggleRmdVisualModeButton_.setLatched(isVisualMode());
       toggleRmdVisualModeButton_.addStyleName("rstudio-themes-inverts");
@@ -770,6 +772,10 @@ public class TextEditingTargetWidget
                          
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
+      
+      checkSpellingButton_.setVisible(!visualRmdMode);
+      findReplaceButton_.setVisible(!visualRmdMode);
+      
       
       knitDocumentButton_.setVisible(canKnitToHTML);
       
@@ -1020,6 +1026,11 @@ public class TextEditingTargetWidget
       {
          panel_.remove(warningBar_);
       }
+   }
+   
+   public boolean isFindReplaceShowing()
+   {
+      return findReplace_.isShowing();
    }
 
    public void showFindReplace(boolean defaultForward)
@@ -1656,6 +1667,8 @@ public class TextEditingTargetWidget
    private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
+   private Widget findReplaceButton_;
+   private Widget checkSpellingButton_;
    private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
@@ -1701,4 +1714,5 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
+
 }

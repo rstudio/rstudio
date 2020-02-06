@@ -26,12 +26,15 @@ import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.promise.PromiseWithProgress;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
+import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
+import org.rstudio.studio.client.panmirror.find.PanmirrorFind;
+import org.rstudio.studio.client.panmirror.find.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
@@ -117,6 +120,31 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       addNorth(toolbar_, toolbar_.getHeight());
       setWidgetHidden(toolbar_, !options.toolbar);
       
+      
+      // find replace
+      findReplace_ = new PanmirrorFindReplaceWidget(new PanmirrorFindReplaceWidget.Container()
+      {
+         @Override
+         public boolean isFindReplaceShowing()
+         {
+            return findReplaceShowing_;
+         }
+         @Override
+         public void showFindReplace(boolean show)
+         {
+            findReplaceShowing_ = show;
+            setWidgetHidden(findReplace_, !findReplaceShowing_);
+            toolbar_.setFindReplaceLatched(findReplaceShowing_);
+         }
+         @Override
+         public PanmirrorFind getPanmirrorFind()
+         {
+            return editor_.getFind();
+         } 
+      });
+      addNorth(findReplace_, findReplace_.getHeight());
+      setWidgetHidden(findReplace_, true);
+      
       // outline
       outline_ = new PanmirrorOutlineWidget();
       addEast(outline_, options.outlineWidth);
@@ -188,7 +216,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       commands_ = editor.commands();
       
-      toolbar_.init(commands_);
+      toolbar_.init(commands_, findReplace_);
       
       outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
@@ -283,6 +311,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );
    }
    
+   public HasFindReplace getFindReplace()
+   {
+      return findReplace_;
+   }
+   
    public void showOutline(boolean show, double width)
    {
       showOutline(show, width, false);
@@ -344,7 +377,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       editor_.setKeybindings(keybindings);
       commands_ = editor_.commands();
-      toolbar_.init(commands_);
+      toolbar_.init(commands_, findReplace_);
    }
    
    public String getHTML()
@@ -426,6 +459,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       if (toolbar_ != null) {
          toolbar_.onResize();
       }
+      if (findReplace_ != null) {
+         findReplace_.onResize();
+      }
       if (editor_ != null) {
          editor_.resize();
       }
@@ -446,8 +482,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private UserPrefs userPrefs_ = null;
    private UserState userState_ = null;
    
-   private PanmirrorOutlineWidget outline_ = null;
    private PanmirrorToolbar toolbar_ = null;
+   private boolean findReplaceShowing_ = false;
+   private PanmirrorFindReplaceWidget findReplace_ = null;
+   private PanmirrorOutlineWidget outline_ = null;
    private HTML editorParent_ = null;
    
    private PanmirrorEditor editor_ = null;
