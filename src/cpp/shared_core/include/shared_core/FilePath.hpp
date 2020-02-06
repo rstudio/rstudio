@@ -392,7 +392,7 @@ public:
     */
    std::string getAbsolutePathNative() const;
 
-#if _WIN32
+#ifdef _WIN32
    std::wstring getAbsolutePathW() const;
 #endif
 
