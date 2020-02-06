@@ -653,53 +653,7 @@ Error FilePath::changeOwnership(
 
 }
 
-Error FilePath::getFileMode(FileMode& out_fileMode) const
-{
-   struct stat st;
-   if (::stat(getAbsolutePath().c_str(), &st) == -1)
-   {
-      Error error = systemError(errno, ERROR_LOCATION);
-      error.addProperty("path", getAbsolutePath());
-      return error;
-   }
-
-   // extract the bits
-   std::string mode(9, '-');
-   if ( st.st_mode & S_IRUSR ) mode[0] = 'r';
-   if ( st.st_mode & S_IWUSR ) mode[1] = 'w';
-   if ( st.st_mode & S_IXUSR ) mode[2] = 'x';
-
-   if ( st.st_mode & S_IRGRP ) mode[3] = 'r';
-   if ( st.st_mode & S_IWGRP ) mode[4] = 'w';
-   if ( st.st_mode & S_IXGRP ) mode[5] = 'x';
-
-   if ( st.st_mode & S_IROTH ) mode[6] = 'r';
-   if ( st.st_mode & S_IWOTH ) mode[7] = 'w';
-   if ( st.st_mode & S_IXOTH ) mode[8] = 'x';
-
-   if (mode ==      "rw-------")
-      out_fileMode = FileMode::USER_READ_WRITE;
-   else if (mode == "rwx------")
-      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE;
-   else if (mode == "rw-r-----")
-      out_fileMode = FileMode::USER_READ_WRITE_GROUP_READ;
-   else if (mode == "rw-r--r--")
-      out_fileMode = FileMode::USER_READ_WRITE_ALL_READ;
-   else if (mode == "r--r--r--")
-      out_fileMode = FileMode::ALL_READ;
-   else if (mode == "rw-rw-rw-")
-      out_fileMode = FileMode::ALL_READ_WRITE;
-   else if (mode == "rwxrwxrwx")
-      out_fileMode = FileMode::ALL_READ_WRITE_EXECUTE;
-   else if (mode == "rwxr-xr-x")
-      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE;
-   else
-      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-
-   return Success();
-}
 #endif
-
 
 // note: this differs from complete in the following ways:
 //    - the passed path can be an empty string (returns self)
@@ -969,6 +923,56 @@ std::string FilePath::getExtensionLowerCase() const
 {
    return boost::algorithm::to_lower_copy(getExtension());
 }
+
+#ifndef _WIN32
+
+Error FilePath::getFileMode(FileMode& out_fileMode) const
+{
+   struct stat st;
+   if (::stat(getAbsolutePath().c_str(), &st) == -1)
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", getAbsolutePath());
+      return error;
+   }
+
+   // extract the bits
+   std::string mode(9, '-');
+   if ( st.st_mode & S_IRUSR ) mode[0] = 'r';
+   if ( st.st_mode & S_IWUSR ) mode[1] = 'w';
+   if ( st.st_mode & S_IXUSR ) mode[2] = 'x';
+
+   if ( st.st_mode & S_IRGRP ) mode[3] = 'r';
+   if ( st.st_mode & S_IWGRP ) mode[4] = 'w';
+   if ( st.st_mode & S_IXGRP ) mode[5] = 'x';
+
+   if ( st.st_mode & S_IROTH ) mode[6] = 'r';
+   if ( st.st_mode & S_IWOTH ) mode[7] = 'w';
+   if ( st.st_mode & S_IXOTH ) mode[8] = 'x';
+
+   if (mode ==      "rw-------")
+      out_fileMode = FileMode::USER_READ_WRITE;
+   else if (mode == "rwx------")
+      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE;
+   else if (mode == "rw-r-----")
+      out_fileMode = FileMode::USER_READ_WRITE_GROUP_READ;
+   else if (mode == "rw-r--r--")
+      out_fileMode = FileMode::USER_READ_WRITE_ALL_READ;
+   else if (mode == "r--r--r--")
+      out_fileMode = FileMode::ALL_READ;
+   else if (mode == "rw-rw-rw-")
+      out_fileMode = FileMode::ALL_READ_WRITE;
+   else if (mode == "rwxrwxrwx")
+      out_fileMode = FileMode::ALL_READ_WRITE_EXECUTE;
+   else if (mode == "rwxr-xr-x")
+      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE;
+   else
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   return Success();
+}
+
+#endif
 
 std::string FilePath::getFilename() const
 {

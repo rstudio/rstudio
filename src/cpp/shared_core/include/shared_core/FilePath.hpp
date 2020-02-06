@@ -297,16 +297,8 @@ public:
       const system::User& in_newUser,
       bool in_recursive = false,
       const RecursiveIterationFunction& in_shouldChown = RecursiveIterationFunction()) const;
-
-   /**
-    * @brief Gets the posix file mode of this file or directory.
-    *
-    * @param out_fileMode   The file mode of this file or directory. Invalid if an error is returned.
-    *
-    * @return Success if the file mode could be retrieved; Error otherwise.
-    */
-   Error getFileMode(FileMode& out_fileMode) const;
 #endif
+
    /**
     * @brief Gets the provided relative path as a child of this path.
     *
@@ -443,6 +435,17 @@ public:
     * @return The extension of the file in lower case.
     */
    std::string getExtensionLowerCase() const;
+
+#ifndef _WIN32
+   /**
+    * @brief Gets the posix file mode of this file or directory.
+    *
+    * @param out_fileMode   The file mode of this file or directory. Invalid if an error is returned.
+    *
+    * @return Success if the file mode could be retrieved; Error otherwise.
+    */
+   Error getFileMode(FileMode& out_fileMode) const;
+#endif
 
    /**
     * @brief Gets only the name of the file, including the extension.
