@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.Date;
 
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressBar;
@@ -86,29 +87,34 @@ public class JobProgress extends Composite
          status += " " + StringUtil.friendlyDateTime(new Date(job.completed * 1000));
          elapsed_.setText(StringUtil.conciseElaspedTime(job.completed - job.started));
          status_.setVisible(true);
-         stop_.setVisible(false);
       }
       else if (job.max > 0)
       {
-         // Job is running and has a progress bar;
-         // show it with stop button and hide the status indicator
+         // Job is running and has a progress bar; show it and hide the status indicator
          progress_.setVisible(true);
          progress_.setProgress(job.progress, job.max);
          status_.setVisible(false);
-         stop_.setVisible(true);
       }
       else
       {
-         // Job is running but does not have progress; show the status field and stop button
+         // Job is running but does not have progress; show the status field
          progress_.setVisible(false);
          status_.setVisible(true);
-         stop_.setVisible(true);
          if (!StringUtil.isNullOrEmpty(job.status))
          {
             // Still running; show its status
             status = job.status;
          }
       }
+
+      // show stop button if job has a "stop" action, and is not completed
+      if (job.completed == 0)
+         stop_.setVisible(
+               JsArrayUtil.jsArrayStringContains(job.actions, JobConstants.ACTION_STOP) &&
+               job.completed == 0);
+      else
+         stop_.setVisible(false);
+
       status_.setText(status);
       jobProgress_ = new LocalJobProgress(job);
       complete_ = job.completed > 0;
