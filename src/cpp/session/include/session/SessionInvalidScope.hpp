@@ -22,10 +22,6 @@
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionLocalStreams.hpp>

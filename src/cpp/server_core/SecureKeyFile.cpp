@@ -17,7 +17,6 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/system/PosixSystem.hpp>
-#include <core/system/FileMode.hpp>
 
 #include <server_core/SecureKeyFile.hpp>
 

@@ -23,7 +23,6 @@
 #include <core/FileLock.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/system/FileMode.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/Thread.hpp>
 

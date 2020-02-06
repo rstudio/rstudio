@@ -21,7 +21,6 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
-#include <core/system/FileMode.hpp>
 
 #include <core/http/SocketAcceptorService.hpp>
 

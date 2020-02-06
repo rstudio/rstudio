@@ -25,7 +25,6 @@
 
 #include <core/text/TemplateFilter.hpp>
 
-#include <core/system/FileMode.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 

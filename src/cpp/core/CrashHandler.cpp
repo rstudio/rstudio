@@ -23,10 +23,6 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include "config.h"
 
 #ifndef RSTUDIO_CRASHPAD_ENABLED

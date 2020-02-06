@@ -1180,6 +1180,32 @@ bool FilePath::isJunction() const
 #endif
 }
 
+#ifndef _WIN32
+
+Error FilePath::isReadable(bool &out_readable)
+{
+   int result = ::access(getAbsolutePath().c_str(), R_OK);
+   if (result == 0)
+   {
+      // user has access
+      out_readable = true;
+   }
+   else if (errno == EACCES)
+   {
+      // this error is expected when the user doesn't have access to the path
+      out_readable = false;
+   }
+   else
+   {
+      // some other error (unexpected)
+      return systemError(errno, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+#endif
+
 bool FilePath::isRegularFile() const
 {
    try
@@ -1242,6 +1268,26 @@ bool FilePath::isWithin(const FilePath& in_scopePath) const
    // No differing path element found
    return true;
 }
+
+#ifndef _WIN32
+
+Error FilePath::isWriteable(bool &out_writeable)
+{
+   int result = ::access(getAbsolutePath().c_str(), W_OK);
+   if (result == 0)
+   {
+      // user has access
+      out_writeable = true;
+   }
+   else if (errno == EACCES)
+      out_writeable = false;
+   else
+      return systemError(errno, ERROR_LOCATION);
+
+   return Success();
+}
+
+#endif
 
 Error FilePath::makeCurrentPath(bool in_autoCreate) const
 {

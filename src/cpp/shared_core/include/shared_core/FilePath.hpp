@@ -580,6 +580,20 @@ public:
     */
    bool isJunction() const;
 
+#ifndef _WIN32
+
+   /**
+    * @brief Checks whether this file path is readable.
+    *
+    * @param out_readable       True if this file path is readable by the current effective user; false if it is not.
+    *                           Invalid if this method returns an error.
+    *
+    * @return Success if the readability of this file could be checked; Error otherwise. (e.g. EACCES).
+    */
+   Error isReadable(bool& out_readable);
+
+#endif
+
    /**
     * @brief Checks whether this file path is a regular file.
     *
@@ -602,6 +616,20 @@ public:
     * @return True if this file path is within the specified path, or if the two paths are equal; false otherwise.
     */
    bool isWithin(const FilePath& in_scopePath) const;
+
+#ifndef _WIN32
+
+   /**
+    * @brief Checks whether this file path is writeable.
+    *
+    * @param out_writeable      True if this file path is writeable by the current effective user; false if it is not.
+    *                           Invalid if this method returns an error.
+    *
+    * @return Success if the writeability of this file could be checked; Error otherwise. (e.g. EACCES).
+    */
+   Error isWriteable(bool& out_writeable);
+
+#endif
 
    /**
     * @brief Changes the current working directory to location represented by this file path.
@@ -692,7 +720,7 @@ public:
     * @brief Checks if a file can be written to by opening the file.
     *
     * To be successful, the file must already exist on the system.
-    * If write access is not absolutely necessary, use isFileWriteable from FileMode.hpp.
+    * If write access is not absolutely necessary, use isWriteable instead.
     *
     * @return Success if file can be written to; system error otherwise (e.g. EPERM, ENOENT, etc.)
     */

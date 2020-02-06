@@ -27,10 +27,6 @@
 
 #include <core/system/FileMonitor.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -850,7 +846,7 @@ bool ProjectContext::parentBrowseable()
    return true;
 #else
    bool browse = true;
-   Error error = core::system::isFileReadable(directory().getParent(), &browse);
+   Error error = directory().getParent().isReadable(browse);
    if (error)
    {
       // if we can't figure it out, presume it to be browseable (this preserves

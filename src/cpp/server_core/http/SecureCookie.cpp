@@ -35,7 +35,6 @@
 
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
-#include <core/system/FileMode.hpp>
 
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>

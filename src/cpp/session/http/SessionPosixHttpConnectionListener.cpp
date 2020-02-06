@@ -16,7 +16,6 @@
 #include <session/SessionHttpConnectionListener.hpp>
 
 #include <core/system/Environment.hpp>
-#include <core/system/FileMode.hpp>
 #include <core/system/PosixSystem.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
