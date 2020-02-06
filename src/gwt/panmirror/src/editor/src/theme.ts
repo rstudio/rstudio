@@ -149,7 +149,7 @@ export function applyTheme(theme: EditorTheme)
     }
     .pm-find-text {
       background-color: ${theme.findTextBackgroundColor} !important;
-      border: 1px solid ${theme.findTextBorderColor} !important;
+      outline: 1px solid ${theme.findTextBorderColor} !important;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
