@@ -1,7 +1,7 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,6 +185,13 @@ void setEnvVar(const std::string& name, const std::string& value)
       return;
 
    if (name == "RS_SESSION_TMP_DIR" && !core::system::getenv(name).empty())
+      return;
+
+   // don't restore misc launcher environment that is set when the session is launched
+   if (name == "RSTUDIO_STANDALONE_PORT" && !core::system::getenv(name).empty())
+      return;
+
+   if (name == "RSTUDIO_SESSION_RSA_PRIVATE_KEY" && !core::system::getenv(name).empty())
       return;
 
    core::system::setenv(name, value);

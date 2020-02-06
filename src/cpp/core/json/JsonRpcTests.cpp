@@ -1,7 +1,7 @@
 /*
  * JsonRpcTests.cpp
  *
- * Copyright (C) 2020 by RStudio, Inc.
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,9 @@ json::Object createObject()
    object["f"] = std::string("Hello world");
 
    json::Array simpleArray;
-   simpleArray.push_back(json::Value(100));
-   simpleArray.push_back(json::Value(200));
-   simpleArray.push_back(json::Value(300));
+   simpleArray.push_back(100);
+   simpleArray.push_back(200);
+   simpleArray.push_back(300);
    object["g"] = simpleArray;
 
    json::Array objectArray;
@@ -60,9 +60,9 @@ json::Object createObject()
    json::Object obj4;
    obj4["a"] = "Inner object a";
    json::Array innerArray;
-   innerArray.push_back(json::Value(1));
-   innerArray.push_back(json::Value(5));
-   innerArray.push_back(json::Value(6));
+   innerArray.push_back(1);
+   innerArray.push_back(5);
+   innerArray.push_back(6);
    obj4["b"] = innerArray;
    obj4["c"] = json::Value();
    obj3["inner"] = obj4;
@@ -223,9 +223,9 @@ TEST_CASE("JsonRpc")
    SECTION("readParams tests")
    {
       json::Array array;
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(false));
-      array.push_back(json::Value("Hello there"));
+      array.push_back(1);
+      array.push_back(false);
+      array.push_back("Hello there");
 
       int a;
       bool b;
@@ -261,10 +261,10 @@ TEST_CASE("JsonRpc")
       obj["b"] = true;
       obj["c"] = "Hello there";
 
-      array.push_back(json::Value(obj));
-      array.push_back(json::Value(1));
-      array.push_back(json::Value(false));
-      array.push_back(json::Value(obj));
+      array.push_back(obj);
+      array.push_back(1);
+      array.push_back(false);
+      array.push_back(obj);
 
       int a;
       bool b;
@@ -308,9 +308,9 @@ TEST_CASE("JsonRpc")
       object["f"] = std::string("Hello world");
 
       json::Array simpleArray;
-      simpleArray.push_back(json::Value(100));
-      simpleArray.push_back(json::Value(200));
-      simpleArray.push_back(json::Value(300));
+      simpleArray.push_back(100);
+      simpleArray.push_back(200);
+      simpleArray.push_back(300);
       object["g"] = simpleArray;
 
       json::Array objectArray;
@@ -323,8 +323,8 @@ TEST_CASE("JsonRpc")
       obj2["b1"] = "b1";
       obj2["b2"] = 2;
 
-      objectArray.push_back(json::Value(obj1));
-      objectArray.push_back(json::Value(obj2));
+      objectArray.push_back(obj1);
+      objectArray.push_back(obj2);
 
       object["h"] = objectArray;
 
@@ -333,8 +333,8 @@ TEST_CASE("JsonRpc")
       json::Object obj4;
       obj4["a"] = "Inner object a";
       json::Array innerArray;
-      innerArray.push_back(json::Value(1));
-      innerArray.push_back(json::Value(5));
+      innerArray.push_back(1);
+      innerArray.push_back(5);
       innerArray.push_back(json::Value(6));
       obj4["b"] = innerArray;
       obj4["c"] = 3;

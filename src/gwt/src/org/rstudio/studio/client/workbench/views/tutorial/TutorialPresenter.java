@@ -1,7 +1,7 @@
 /*
  * TutorialPresenter.java
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -341,6 +341,6 @@ public class TutorialPresenter
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    
-   public static final String URLS_HOME = "./tutorial/home";
+   public static final String URLS_HOME = "/tutorial/home";
    
 }

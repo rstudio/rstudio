@@ -1,7 +1,7 @@
 /*
  * FindOutputPresenter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -248,7 +248,8 @@ public class FindOutputPresenter extends BasePresenter
                                       {
                                          view_.clearMatches();
                                          currentFindHandle_ = handle;
-                                         dialogState_.clearResultsCount();
+                                         if (dialogState_ != null)
+                                            dialogState_.clearResultsCount();
                                       }
                                    });
          }
@@ -463,7 +464,6 @@ public class FindOutputPresenter extends BasePresenter
       view_.ensureVisible(false);
 
       currentFindHandle_ = state.getHandle();
-      dialogState_.clearResultsCount();
       view_.clearMatches();
       view_.addMatches(state.getResults().toArrayList());
 

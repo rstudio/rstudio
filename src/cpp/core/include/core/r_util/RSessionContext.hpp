@@ -1,7 +1,7 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,10 +31,12 @@
 #define kJupyterLabId              "21f2ed72"
 #define kJupyterNotebookId         "2cb256d2"
 #define kWorkspacesId              "3c286bd3"
+#define kVSCodeId                  "3c9ab5a7"
 
 #define kWorkbenchRStudio          "RStudio"
 #define kWorkbenchJupyterLab       "JupyterLab"
 #define kWorkbenchJupyterNotebook  "Jupyter Notebook"
+#define kWorkbenchVSCode           "VS Code"
 
 #ifdef _WIN32
 typedef unsigned int uid_t;
@@ -153,6 +155,8 @@ public:
    static SessionScope jupyterLabSession(const std::string& id);
    static SessionScope jupyterNotebookSession(const std::string& id);
 
+   static SessionScope vscodeSession(const std::string& id);
+
    SessionScope()
    {
    }
@@ -164,6 +168,7 @@ public:
    bool isJupyter() const;
    bool isJupyterLab() const;
    bool isJupyterNotebook() const;
+   bool isVSCode() const;
 
    std::string workbench() const;
 

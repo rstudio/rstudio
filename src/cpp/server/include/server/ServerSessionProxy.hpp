@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,8 @@ struct RequestType
       Content,
       Events,
       ClientInit,
-      Jupyter
+      Jupyter,
+      VSCode
    };
 };
 
@@ -81,6 +82,10 @@ void proxyLocalhostRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
 
 void proxyJupyterRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+
+void proxyVSCodeRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    

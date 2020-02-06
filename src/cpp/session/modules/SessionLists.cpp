@@ -1,7 +1,7 @@
 /*
  * SessionLists.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ json::Array listToJson(const std::list<std::string>& list)
    json::Array jsonArray;
    for (const std::string& val : list)
    {
-      jsonArray.push_back(json::Value(val));
+      jsonArray.push_back(val);
    }
    return jsonArray;
 }

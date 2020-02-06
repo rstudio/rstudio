@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -508,12 +508,22 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
+
+   // fill the initial filters outside of the visible frame
+   // unfortunately the code that consumes these filters assumes
+   // it's purely index based and needs to be padded out
+   for (int i = 0; i < columnOffset; i++)
+   {
+      std::string emptyStr = "";
+      filters.push_back(emptyStr);
+   }
    for (int i = 1; i <= ncol; i++)
    {
       std::string filterVal = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]"
                   "[search][value]", ""));
+
       if (!filterVal.empty())
       {
          hasFilter = true;
@@ -650,16 +660,16 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(json::Value(Rf_translateCharUTF8(nameSEXP)));
+            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
          }
          else
          {
-            rowData.push_back(json::Value(row + start));
+            rowData.push_back(row + start);
          }
       }
       else
       {
-         rowData.push_back(json::Value(row + start));
+         rowData.push_back(row + start);
       }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
@@ -674,20 +684,20 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(json::Value(Rf_translateCharUTF8(stringSEXP)));
+               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
             }
             else if (stringSEXP == NA_STRING)
             {
-               rowData.push_back(json::Value(SPECIAL_CELL_NA));
+               rowData.push_back(SPECIAL_CELL_NA);
             }
             else
             {
-               rowData.push_back(json::Value(""));
+               rowData.push_back("");
             }
          }
          else
          {
-            rowData.push_back(json::Value(""));
+            rowData.push_back("");
          }
       }
       data.push_back(rowData);

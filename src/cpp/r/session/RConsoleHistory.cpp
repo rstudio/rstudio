@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,7 +144,7 @@ void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 {
    const_iterator it = begin();
    while(it != end())
-      pHistoryArray->push_back(json::Value(*it++));
+      pHistoryArray->push_back(*it++);
 }
       
 Error ConsoleHistory::loadFromFile(const FilePath& filePath,

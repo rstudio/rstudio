@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -90,6 +90,10 @@ bool proxyRequest(int requestType,
 void proxyJupyterRequest(const r_util::SessionContext& context,
                          boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
                          const http::ErrorHandler& errorHandler);
+
+void proxyVSCodeRequest(const r_util::SessionContext& context,
+                        boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                        const http::ErrorHandler& errorHandler);
 
 bool proxyLocalhostRequest(http::Request& request,
                            const std::string& port,
@@ -908,6 +912,20 @@ void proxyJupyterRequest(
    overlay::proxyJupyterRequest(context,
                                 ptrConnection,
                                 boost::bind(handleContentError, ptrConnection, context, _1));
+}
+
+void proxyVSCodeRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   // get session context
+   r_util::SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
+
+   overlay::proxyVSCodeRequest(context,
+                               ptrConnection,
+                               boost::bind(handleContentError, ptrConnection, context, _1));
 }
 
 void proxyLocalhostRequest(

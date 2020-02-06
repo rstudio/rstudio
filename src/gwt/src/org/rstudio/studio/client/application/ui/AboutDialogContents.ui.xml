@@ -92,7 +92,7 @@
                <g:HTMLPanel styleName="{style.productVersion}">
                        <g:InlineLabel text="&copy;"></g:InlineLabel>
                        <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
-                       <g:InlineLabel text="RStudio, Inc."></g:InlineLabel>
+                       <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
                </g:HTMLPanel>
             </g:HTMLPanel>
          </g:HTMLPanel>

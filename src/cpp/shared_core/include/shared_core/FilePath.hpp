@@ -1,7 +1,7 @@
 /*
  * FilePath.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -608,6 +608,16 @@ public:
     * @param in_time    The time to which to set the last write time of this file. Default: now.
     */
    void setLastWriteTime(std::time_t in_time = ::time(nullptr)) const;
+
+   /**
+    * @brief Checks if a file can be written to by opening the file.
+    *
+    * To be successful, the file must already exist on the system.
+    * If write access is not absolutely necessary, use isFileWriteable from FileMode.hpp.
+    *
+    * @return Success if file can be written to; system error otherwise (e.g. EPERM, ENOENT, etc.)
+    */
+   Error testWritePermissions() const;
 
 private:
    // The private implementation of FilePath.

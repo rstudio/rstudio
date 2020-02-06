@@ -1,7 +1,7 @@
 /*
  * LocalhostAsyncClient.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,42 @@
 #define SERVER_CORE_LOCALHOST_ASYNC_CLIENT_HPP
 
 #include <core/http/TcpIpAsyncClient.hpp>
+#include <core/http/TcpIpAsyncClientSsl.hpp>
 
 namespace rstudio {
 namespace server_core {
 namespace http {
+
+namespace {
+
+// detect when we've got the whole response and force a response and a
+// close of the socket (this is because the current version of httpuv
+// expects a close from the client end of the socket). however, don't
+// do this for Jetty (as it often doesn't send a Content-Length header)
+// and do not do it if we are streaming chunked encoding
+bool stopReadingAndRespondImpl(const core::http::Response& response,
+                               bool chunkedEncoding)
+{
+   std::string server = response.headerValue("Server");
+   if (boost::algorithm::contains(server, "Jetty"))
+   {
+      return false;
+   }
+   else
+   {
+      return !chunkedEncoding &&
+             (response.body().length() >= response.contentLength());
+   }
+}
+
+// ensure that we don't close the connection when a websockets
+// upgrade is taking place
+bool keepConnectionAliveImpl(const core::http::Response& response)
+{
+   return response.statusCode() == core::http::status::SwitchingProtocols;
+}
+
+} // anonymous namespace
 
 class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
 {
@@ -33,30 +65,37 @@ public:
    }
 
 private:
-   // detect when we've got the whole response and force a response and a
-   // close of the socket (this is because the current version of httpuv
-   // expects a close from the client end of the socket). however, don't
-   // do this for Jetty (as it often doesn't send a Content-Length header)
-   // and do not do it if we are streaming chunked encoding
    virtual bool stopReadingAndRespond()
    {
-      std::string server = response_.headerValue("Server");
-      if (boost::algorithm::contains(server, "Jetty"))
-      {
-         return false;
-      }
-      else
-      {
-         return !chunkedEncoding_ &&
-                (response_.body().length() >= response_.contentLength());
-      }
+      return stopReadingAndRespondImpl(response_, chunkedEncoding_);
    }
 
-   // ensure that we don't close the connection when a websockets
-   // upgrade is taking place
    virtual bool keepConnectionAlive()
    {
-      return response_.statusCode() == core::http::status::SwitchingProtocols;
+      return keepConnectionAliveImpl(response_);
+   }
+};
+
+class LocalhostAsyncClientSsl : public core::http::TcpIpAsyncClientSsl
+{
+public:
+   LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
+                           const std::string& address,
+                           const std::string& port,
+                           bool verify)
+      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verify)
+   {
+   }
+
+private:
+   virtual bool stopReadingAndRespond()
+   {
+      return stopReadingAndRespondImpl(response_, chunkedEncoding_);
+   }
+
+   virtual bool keepConnectionAlive()
+   {
+      return keepConnectionAliveImpl(response_);
    }
 };
 

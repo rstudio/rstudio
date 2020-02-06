@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxyOverlay.cpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,12 @@ bool proxyLocalhostRequest(
 void proxyJupyterRequest(const r_util::SessionContext& context,
                          boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
                          const http::ErrorHandler& errorHandler)
+{
+}
+
+void proxyVSCodeRequest(const r_util::SessionContext& context,
+                        boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                        const http::ErrorHandler& errorHandler)
 {
 }
 

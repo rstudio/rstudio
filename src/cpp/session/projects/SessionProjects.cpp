@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -441,7 +441,7 @@ json::Object projectVcsContextJson()
    json::Array applicableJson;
    for (const std::string& vcs : vcsContext.applicableVcs)
    {
-      applicableJson.push_back(json::Value(vcs));
+      applicableJson.push_back(vcs);
    }
    contextJson["applicable_vcs"] = applicableJson;
 

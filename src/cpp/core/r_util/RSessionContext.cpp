@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -108,6 +108,13 @@ SessionScope SessionScope::jupyterNotebookSession(const std::string& id)
    return SessionScope(ProjectId(kJupyterNotebookId), id);
 }
 
+SessionScope SessionScope::vscodeSession(const std::string& id)
+{
+   // note: project ID is currently unused as it is meaningless
+   // in the context of external workbenches
+   return SessionScope(ProjectId(kVSCodeId), id);
+}
+
 bool SessionScope::isProjectNone() const
 {
    return project_.id() == kProjectNoneId;
@@ -133,12 +140,17 @@ bool SessionScope::isJupyterNotebook() const
    return project_.id() == kJupyterNotebookId;
 }
 
+bool SessionScope::isVSCode() const
+{
+   return project_.id() == kVSCodeId;
+}
+
 std::string SessionScope::workbench() const
 {
-   if (!isJupyter())
-      return kWorkbenchRStudio;
-   else if (isJupyterLab())
-      return kWorkbenchJupyterLab;
+   if (isJupyter())
+      return isJupyterLab() ? kWorkbenchJupyterLab : kWorkbenchJupyterNotebook;
+   else if (isVSCode())
+      return kWorkbenchVSCode;
    else
       return kWorkbenchJupyterNotebook;
 }
@@ -428,7 +440,6 @@ std::string generateScopeId()
    reserved.push_back(kJupyterNotebookId);
 
    // a few more for future expansion
-   reserved.push_back("3c9ab5a7");
    reserved.push_back("f468a750");
    reserved.push_back("6ae9dc1b");
    reserved.push_back("1d717df9");

@@ -1,7 +1,7 @@
 /*
  * SessionSVN.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1412,11 +1412,11 @@ Error svnHistoryEnd_CommitCallback(json::Array *pIds,
                                    json::Array *pDates,
                                    const CommitInfo& commit)
 {
-   pIds->push_back(json::Value(commit.id));
-   pAuthors->push_back(json::Value(commit.author));
-   pSubjects->push_back(json::Value(commit.subject));
-   pDescriptions->push_back(json::Value(commit.description));
-   pDates->push_back(json::Value(commit.date));
+   pIds->push_back(commit.id);
+   pAuthors->push_back(commit.author);
+   pSubjects->push_back(commit.subject);
+   pDescriptions->push_back(commit.description);
+   pDates->push_back(commit.date);
    return Success();
 }
 
