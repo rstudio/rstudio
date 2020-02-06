@@ -55,7 +55,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Environments";
+      return "renv";
    }
 
    @Override
@@ -63,7 +63,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    {
       String labelText =
             "RStudio uses the renv package to give your projects their " +
-            "own privately-managed package library, making your R code " +
+            "own project-local library of R packages, making your projects " +
             "more isolated, portable, and reproducible.";
             
       Label label = new Label(labelText);

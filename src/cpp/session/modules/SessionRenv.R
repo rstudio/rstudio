@@ -114,11 +114,29 @@
 {
    lockpath <- file.path(project, "renv.lock")
    lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- renv:::renv_records(lockfile)
-   filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
+   records <- renv:::renv_records(lockfile)
+   
+   `%||%` <- function(x, y) if (is.null(x)) y else x
+   
+   filtered <- lapply(records, function(record) {
+      
+      object <- list()
+      
+      object$Package <- record$Package %||% "(unknown)"
+      object$Version <- record$Version %||% "(unknown)"
+      object$Source <-
+         record$Repository %||%
+         record$Source %||%
+         "(unknown)"
+      
+      object
+         
+   })
+   
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL
    df
+   
 })
 
 .rs.addFunction("renv.listPackages", function(project)
