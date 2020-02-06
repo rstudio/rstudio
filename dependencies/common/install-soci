@@ -29,12 +29,12 @@ SOCI_BRANCH=release/4.0
 BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
-if ! test -e $SOCI_BIN_DIR/lib/libsoci_core.so.4.0.0
+if ! ls $SOCI_BIN_DIR/lib/libsoci_core* &> /dev/null
 then
    cd $RSTUDIO_TOOLS_DIR
 
    # download SOCI from source
-   if ! test -n $SOCI_DIR
+   if ! [ -d "$SOCI_DIR" ]
    then
       git clone git://github.com/SOCI/soci.git
    fi
