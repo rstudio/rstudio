@@ -129,6 +129,7 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
@@ -548,6 +549,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::preview::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
       (modules::rmarkdown::initialize)
