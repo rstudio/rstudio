@@ -162,6 +162,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    private boolean applyAnnouncementList(UserPrefs prefs)
    {
       boolean origConsoleLog = ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG);
+      boolean origConsoleCommand = ariaLive_.isDisabled(AriaLiveService.CONSOLE_COMMAND);
       boolean restartNeeded = false;
 
       JsArrayString settings = prefs.disabledAriaLiveAnnouncements().getValue();
@@ -174,6 +175,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          
          if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_LOG) &&
                origConsoleLog == chk.getValue())
+         {
+            restartNeeded = true;
+         }
+         else if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_COMMAND) &&
+               origConsoleCommand == chk.getValue())
          {
             restartNeeded = true;
          }

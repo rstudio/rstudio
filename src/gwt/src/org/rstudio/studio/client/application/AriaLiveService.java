@@ -37,6 +37,7 @@ public class AriaLiveService
    // associate description for preferences UI.
    public static final String CONSOLE_CLEARED = "console_cleared";
    public static final String CONSOLE_LOG = "console_log";
+   public static final String CONSOLE_COMMAND = "console_command";
    public static final String FILTERED_LIST = "filtered_list";
    public static final String GIT_MESSAGE_LENGTH = "git_message_length";
    public static final String INACCESSIBLE_FEATURE = "inaccessible_feature";
@@ -65,6 +66,7 @@ public class AriaLiveService
       announcements_ = new HashMap<>();
       announcements_.put(CONSOLE_CLEARED, "Console cleared");
       announcements_.put(CONSOLE_LOG, "Console output (requires restart)");
+      announcements_.put(CONSOLE_COMMAND, "Console command (requires restart)");
       announcements_.put(FILTERED_LIST, "Filtered result count");
       announcements_.put(GIT_MESSAGE_LENGTH, "Commit message length");
       announcements_.put(INACCESSIBLE_FEATURE, "Inaccessible feature warning");

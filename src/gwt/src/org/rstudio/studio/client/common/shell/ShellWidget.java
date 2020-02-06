@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
@@ -71,11 +72,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events)
+   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events, AriaLiveService ariaLive)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
       prefs_ = prefs;
+      ariaLive_ = ariaLive;
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
@@ -267,7 +269,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/, true /*announce*/);
+      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
 
       // Pick up the elements emitted to the console by this call. If we get 
       // extended information for this error, we'll need to swap out the simple 
@@ -331,7 +334,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
-      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/, true /*announce*/);
+      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }
 
    @Override
@@ -345,7 +349,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       clearPendingInput();
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/, 
-            false /*ignoreLineCount*/, false /*announce*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
    
    private void clearPendingInput()
@@ -358,7 +362,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWritePrompt(final String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
-            false /*ignoreLineCount*/, false /*announce*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
       clearErrors_ = true;
    }
 
@@ -828,6 +832,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
          liveRegion_.clearLiveRegion();
    }
 
+   private boolean isAnnouncementEnabled(String announcement)
+   {
+      return ariaLive_ != null && !ariaLive_.isDisabled(announcement);
+   }
+
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
    private final PreWidget pendingInput_;
@@ -841,6 +850,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean suppressPendingInput_;
    private final EventBus events_;
    private final UserPrefs prefs_;
+   private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
 
    // A list of errors that have occurred between console prompts. 
