@@ -57,7 +57,7 @@
     .ProseMirror .notes.editing-footnote {
       border-top: 1px solid;
       visibility: visible;
-      top: calc(100% - #{$toolbarHeight} - 100px - 10px);
+      top: calc(100% - #{$toolbarHeight} - 90px - 10px);
     }
   }
 }

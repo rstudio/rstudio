@@ -43,7 +43,8 @@
 }
 
 .ProseMirror .notes.editing-footnote {
-  height: 100px;
+  height: 90px;
+  padding-top: 10px;
   z-index: 5;
 }
 
