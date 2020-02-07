@@ -590,7 +590,7 @@ public:
     *
     * @return Success if the readability of this file could be checked; Error otherwise. (e.g. EACCES).
     */
-   Error isReadable(bool& out_readable);
+   Error isReadable(bool& out_readable) const;
 
 #endif
 
@@ -627,7 +627,7 @@ public:
     *
     * @return Success if the writeability of this file could be checked; Error otherwise. (e.g. EACCES).
     */
-   Error isWriteable(bool& out_writeable);
+   Error isWriteable(bool& out_writeable) const;
 
 #endif
 
