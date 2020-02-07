@@ -4,21 +4,21 @@
 ## TODO
 
 
-- focus of find or replace doesn't update find
-- checking e.g. regex causes advance to next
-- escape key in shelf
-- invalid regex causes js exception
+- clicking the editor after find session doesn't update selection to click location
 
+- scroll to selection
 
+- may need a selectCurrent rather than selectNext so that we don't jump to the top.
+- perhaps find should just hunt for decorations starting at the current selection
+
+- sometimes a replace or a replace-all cannot be undone! (is it that we aren't getting the command?)
+
+- sizing (width) for find/replace UI
 
 - margin above footnote
 
-- windows deps/build
-
+- windows/linux deps/build
 - initial article on using
-
-- wire up find and replace actions to panmirror stubs
-
 - standard editor dialog boxes
 
 
