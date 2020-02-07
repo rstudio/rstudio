@@ -23,6 +23,4 @@ public class PanmirrorEvents
    public String Update;
    public String OutlineChange;
    public String SelectionChange;
-   public String Focus;
-   public String Blur;
 }

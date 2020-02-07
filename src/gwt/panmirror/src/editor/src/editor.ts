@@ -88,9 +88,7 @@ export interface EditorKeybindings {
 export enum EditorEvents {
   Update = 'update',
   OutlineChange = 'outlineChange',
-  SelectionChange = 'selectionChange',
-  Focus = 'gotFocus',
-  Blur = 'lostFocus'
+  SelectionChange = 'selectionChange'
 }
 
 export interface EditorSelection {
@@ -404,8 +402,6 @@ export class Editor {
     events.set(EditorEvents.Update, new Event(EditorEvents.Update));
     events.set(EditorEvents.OutlineChange, new Event(EditorEvents.OutlineChange));
     events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
-    events.set(EditorEvents.Focus, new Event(EditorEvents.Focus));
-    events.set(EditorEvents.Blur, new Event(EditorEvents.Blur));
     return events;
   }
 

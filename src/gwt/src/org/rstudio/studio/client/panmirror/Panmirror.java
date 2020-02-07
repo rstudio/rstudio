@@ -42,3 +42,5 @@ public class Panmirror
      new ExternalJavaScriptLoader("js/panmirror/panmirror.js");
    
 }
+
+
