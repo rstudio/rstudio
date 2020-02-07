@@ -3,12 +3,7 @@
 
 ## TODO
 
-
-- scroll to selection
-
-- sizing (width) for find/replace UI
-
-- margin above footnote
+- outline not working
 
 - windows/linux deps/build
 - initial article on using
