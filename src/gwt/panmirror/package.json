@@ -91,7 +91,6 @@
     "concurrently": "^4.1.2",
     "express": "^4.17.1",
     "fuse-box": "^3.7.1",
-    "fsevents": "^2.1.2",
     "node-sass": "^4.12.0",
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
@@ -99,6 +98,9 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-react": "^4.0.0",
     "uglify-js": "^3.7.4"
+  },
+  "optionalDependencies": {
+     "fsevents": "^2.1.2"
   },
   "proxy": "http://localhost:8080"
 }

@@ -82,11 +82,12 @@
    </target>
 
    <!-- panmirror typescript library -->
+   <property name="node.dir" value="../../../../../dependencies/common/node/10.15.3/bin"/>
    <property name="panmirror.dir" value="./panmirror/src/editor"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>      
    <target name="panmirror" description="Compile panmirror library">
       <mkdir dir="${panmirror.build.dir}"/>
-      <exec executable="node" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
+      <exec executable="${node.dir}/node" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
          <arg value="fuse"/>
          <arg value="${panmirror.target}"/>
       </exec>
