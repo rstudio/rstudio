@@ -122,8 +122,6 @@ Error initialize()
    // initialize renv options from prefs
    if (projects::projectContext().hasProject())
    {
-      std::cerr << "Hello, world!" << std::endl;
-      
       r::exec::RFunction options("base:::options");
       options.addParam("renv.config.sandbox.enabled", prefs::userPrefs().renvSandboxEnabled());
       options.addParam("renv.config.shims.enabled", prefs::userPrefs().renvShimsEnabled());
