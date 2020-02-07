@@ -3,12 +3,13 @@
 
 ## TODO
 
-- hightlighted search not shown w/ no focus (need a mark or other decorator?)
+
+- focus of find or replace doesn't update find
+- checking e.g. regex causes advance to next
+- escape key in shelf
 - invalid regex causes js exception
-- clear document indicators when not active
-- confirm that footnotes work
-- wire up replace and replace all
-- test out keyboard shortcuts
+
+
 
 - margin above footnote
 
