@@ -277,7 +277,7 @@ Error initialize()
    s_pSessionRpcServer = boost::make_shared<http::LocalStreamAsyncServer>(
             "Session RPCs",
             std::string(),
-            core::system::EveryoneReadWriteMode);
+            core::FileMode::ALL_READ_WRITE);
 
    // initialize with path to our socket
    Error error = boost::static_pointer_cast<http::LocalStreamAsyncServer>(s_pSessionRpcServer)->init(
