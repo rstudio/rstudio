@@ -84,12 +84,9 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
       getReplaceAll().addClickHandler((event) -> {
          PanmirrorFindReplace find = findWithResults();
          String text = getReplaceValue().getValue();
-         if (text.length() > 0)
-         {
-            find.replaceAll(text);
-         }
+         find.replaceAll(text);
       });
-         
+     
       
    }
    
@@ -143,11 +140,8 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    {
       PanmirrorFindReplace find = findWithResults();
       String text = getReplaceValue().getValue();
-      if (text.length() > 0) 
-      {
-         find.replace(text);
-         find.selectNext();
-      }
+      find.replace(text);
+      find.selectNext();
    }
    
    private PanmirrorFindReplace findWithResults()
