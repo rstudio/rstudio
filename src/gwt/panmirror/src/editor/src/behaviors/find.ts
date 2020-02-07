@@ -189,10 +189,7 @@ class FindPlugin extends Plugin<DecorationSet> {
 
       if (dispatch) {
         const tr = state.tr;
-        const selStart = tr.selection.from;
-        tr.insertText(text);
-        tr.setSelection(new TextSelection(tr.doc.resolve(selStart), tr.doc.resolve(selStart + text.length)));
-        tr.scrollIntoView();
+        tr.insertText(text, tr.selection.from, tr.selection.to);
         this.withResultUpdates(() => {
           dispatch(tr);
         });
@@ -211,8 +208,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       
       if (dispatch) {
         const tr = state.tr;
-        const oldSel = tr.selection.from;
-
+      
         const decorationSet = key.getState(state);
 
         let decorations: Decoration[] = decorationSet.find(0);
@@ -221,10 +217,6 @@ class FindPlugin extends Plugin<DecorationSet> {
           const to = tr.mapping.map(decoration.to);
           tr.insertText(text, from, to);
         });
-
-        const newSel = tr.mapping.map(oldSel);
-        tr.setSelection(new TextSelection(tr.doc.resolve(newSel)));
-        tr.scrollIntoView();
         this.withResultUpdates(() => {
           dispatch(tr);
         });
@@ -303,8 +295,7 @@ class FindPlugin extends Plugin<DecorationSet> {
 
   private selectResult(tr: Transaction, decoration: Decoration) {
     const selection = new TextSelection(tr.doc.resolve(decoration.from), tr.doc.resolve(decoration.to));
-    tr.setSelection(selection).scrollIntoView();
-    return tr;
+    return tr.setSelection(selection).scrollIntoView();
   }
 
   private isResultSelected(state: EditorState) {
