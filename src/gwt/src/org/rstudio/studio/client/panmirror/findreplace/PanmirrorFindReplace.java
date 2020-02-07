@@ -22,6 +22,7 @@ public class PanmirrorFindReplace
 {
    public native boolean find(String term, PanmirrorFindOptions options);
    public native int matches();
+   public native boolean selectCurrent();
    public native boolean selectFirst();
    public native boolean selectNext();
    public native boolean selectPrevious();

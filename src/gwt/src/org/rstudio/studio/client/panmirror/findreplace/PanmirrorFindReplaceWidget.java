@@ -101,7 +101,7 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
       options.regex = getRegex().getValue();
       options.wrap = getWrapSearch().getValue();
       find.find(getFindValue().getValue(), options);
-      find.selectFirst();
+      find.selectCurrent();
    }
    
    

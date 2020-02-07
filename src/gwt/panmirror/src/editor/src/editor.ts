@@ -54,7 +54,8 @@ import {
   selectPrevious, 
   replace, 
   replaceAll, 
-  clear
+  clear,
+  selectCurrent
 } from './behaviors/find';
 
 
@@ -100,6 +101,7 @@ export interface EditorFindReplace {
   find: (term: string, options: FindOptions) => boolean;
   matches: () => number;
   selectFirst: () => boolean;
+  selectCurrent: () => boolean;
   selectNext: () => boolean;
   selectPrevious: () => boolean;
   replace: (text: string) => boolean;
@@ -288,6 +290,7 @@ export class Editor {
     return {
       find: (term: string, options: FindOptions) => find(this.view, term, options),
       matches: () => matchCount(this.view),
+      selectCurrent: () => selectCurrent(this.view),
       selectFirst: () => selectFirst(this.view),
       selectNext: () => selectNext(this.view),
       selectPrevious: () => selectPrevious(this.view),

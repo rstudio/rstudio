@@ -88,11 +88,19 @@ class FindPlugin extends Plugin<DecorationSet> {
     };
   }
 
-  public selectNext() {
+  public selectCurrent() {
+    return this.selectNext(false);
+  }
+
+  public selectNext(afterSelection = true) {
     return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
       
       const selectedText = state.doc.textBetween(state.selection.from, state.selection.to);
-      const searchFrom = this.matchesTerm(selectedText) ? state.selection.to + 1 : state.selection.to;
+      const searchFrom = afterSelection ? 
+        this.matchesTerm(selectedText) ? 
+          state.selection.to + 1 : 
+          state.selection.to :
+        state.selection.from;
 
       const decorationSet = key.getState(state);
       let decorations: Decoration[] = decorationSet.find(searchFrom);
@@ -241,7 +249,9 @@ class FindPlugin extends Plugin<DecorationSet> {
 
   private updateResults(state: EditorState, dispatch: ((tr: Transaction<any>) => void)) {
     this.withResultUpdates(() => { 
-      dispatch(state.tr);
+      const tr = state.tr;
+      tr.setMeta('addToHistory', false);
+      dispatch(tr);
     });
   }
 
@@ -361,6 +371,10 @@ export function matchCount(view: EditorView) : number {
 
 export function selectFirst(view: EditorView) : boolean {
   return findPlugin(view).selectFirst()(view.state, view.dispatch);
+}
+
+export function selectCurrent(view: EditorView) : boolean {
+  return findPlugin(view).selectCurrent()(view.state, view.dispatch);
 }
 
 export function selectNext(view: EditorView) : boolean {
