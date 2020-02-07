@@ -38,10 +38,8 @@ class FindPlugin extends Plugin<DecorationSet> {
           apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
             if (this.updating) {
               return this.resultDecorations(tr);
-            } else if (tr.docChanged) {
-              return old.map(tr.mapping, tr.doc);
-            } else {
-              return old;
+            } else  {
+              return DecorationSet.empty;
             }
           },
         },
@@ -260,7 +258,7 @@ class FindPlugin extends Plugin<DecorationSet> {
 
     // perform search and populate results
     const textNodes = mergedTextNodes(tr.doc);
-    
+
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
       if (!search) {

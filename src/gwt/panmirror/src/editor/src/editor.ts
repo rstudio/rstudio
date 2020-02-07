@@ -172,17 +172,7 @@ export class Editor {
     this.view = new EditorView(this.parent, {
       state: this.state,
       dispatchTransaction: this.dispatchTransaction.bind(this),
-      domParser: new EditorDOMParser(this.schema),
-      handleDOMEvents: {
-        focus: (_view: EditorView, _event: Event) => {
-          this.emitEvent(EditorEvents.Focus);
-          return false;
-        },
-        blur: (_view: EditorView, _event: Event) => {
-          this.emitEvent(EditorEvents.Blur);
-          return false;
-        }
-      },
+      domParser: new EditorDOMParser(this.schema)
     });
 
     // add proportinal font class to parent

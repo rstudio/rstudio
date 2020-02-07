@@ -252,16 +252,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          SelectionChangeEvent.fire(this);
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.OutlineChange, () -> {
-         
-         // sync outline
-         outline_.updateOutline(editor_.getOutline());
-             
-      }));
-      
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Focus, () -> {
-         editor_.getFindReplace().clear();
-      }));
    }
    
    @Override
