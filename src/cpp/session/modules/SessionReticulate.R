@@ -13,6 +13,10 @@
 #
 #
 
+options(reticulate.initialized = function() {
+   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
+})
+
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
 .rs.addJsonRpcHandler("python_get_completions", function(line, ctx)

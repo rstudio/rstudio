@@ -855,6 +855,8 @@ bool isPathViewAllowed(const core::FilePath& path);
 
 void onBackgroundProcessing(bool isIdle);
 
+void initializeConsoleCtrlHandler();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio
