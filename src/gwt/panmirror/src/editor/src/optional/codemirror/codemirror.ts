@@ -129,7 +129,7 @@ class CodeBlockNodeView implements NodeView {
     setTimeout(() => {
       this.cm.refresh();
 
-      // if we start out hidden then poll every 250ms to check if we 
+      // if we start out hidden then poll every 250ms to check if we
       // have been shown (after which time we need to call refresh())
       if (this.dom.offsetHeight === 0) {
         const timerId = setInterval(() => {

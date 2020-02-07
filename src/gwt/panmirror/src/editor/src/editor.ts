@@ -45,19 +45,18 @@ import { EditingLocation, getEditingLocation, restoreEditingLocation } from './a
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
 import { getOutline } from './behaviors/outline';
-import { 
-  FindOptions, 
-  find, 
-  matchCount, 
-  selectFirst, 
-  selectNext, 
-  selectPrevious, 
-  replace, 
-  replaceAll, 
+import {
+  FindOptions,
+  find,
+  matchCount,
+  selectFirst,
+  selectNext,
+  selectPrevious,
+  replace,
+  replaceAll,
   clear,
-  selectCurrent
+  selectCurrent,
 } from './behaviors/find';
-
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
@@ -65,7 +64,6 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
-
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -89,7 +87,7 @@ export interface EditorKeybindings {
 export enum EditorEvents {
   Update = 'update',
   OutlineChange = 'outlineChange',
-  SelectionChange = 'selectionChange'
+  SelectionChange = 'selectionChange',
 }
 
 export interface EditorSelection {
@@ -172,7 +170,7 @@ export class Editor {
     this.view = new EditorView(this.parent, {
       state: this.state,
       dispatchTransaction: this.dispatchTransaction.bind(this),
-      domParser: new EditorDOMParser(this.schema)
+      domParser: new EditorDOMParser(this.schema),
     });
 
     // add proportinal font class to parent
@@ -186,12 +184,7 @@ export class Editor {
     window.addEventListener('resize', this.applyLayoutFixups);
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(
-      this.schema,
-      this.extensions,
-      config.pandoc,
-      this.pandocFormat.fullName
-    );
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc, this.pandocFormat.fullName);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -296,7 +289,7 @@ export class Editor {
       selectPrevious: () => selectPrevious(this.view),
       replace: (text: string) => replace(this.view, text),
       replaceAll: (text: string) => replaceAll(this.view, text),
-      clear: () => clear(this.view)
+      clear: () => clear(this.view),
     };
   }
 

@@ -56,12 +56,7 @@ export class PandocConverter {
 
   private apiVersion: PandocApiVersion | null;
 
-  constructor(
-    schema: Schema,
-    extensions: ExtensionManager,
-    pandoc: PandocEngine,
-    format: string,
-  ) {
+  constructor(schema: Schema, extensions: ExtensionManager, pandoc: PandocEngine, format: string) {
     this.schema = schema;
 
     this.preprocessors = extensions.pandocPreprocessors();

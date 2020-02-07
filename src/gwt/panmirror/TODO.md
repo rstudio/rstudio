@@ -3,9 +3,17 @@
 
 ## TODO
 
+- event and command constants directly in js
+
 - outline not working
 
-- windows/linux deps/build
+- invalid regex filter on firefox (on ubuntu 18.04) in yaml_metadata:
+return markdown.replace(
+   /^(?:---\s*\n)(.*?)(?:\n---|\n\.\.\.)(?:[ \t]*)$/gms,
+   '```{.' + kYamlMetadataClass + '}\n---\n$1\n---\n```',
+);
+
+- windows deps/build
 - initial article on using
 - standard editor dialog boxes
 

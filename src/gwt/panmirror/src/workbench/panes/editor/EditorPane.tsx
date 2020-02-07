@@ -102,14 +102,14 @@ class EditorPane extends React.Component<EditorPaneProps> {
       format: 'markdown',
       ui: {
         dialogs: this.editorDialogs,
-        context: this.editorUIContext
+        context: this.editorUIContext,
       },
       options: {
         autoFocus: true,
         spellCheck: false,
         autoLink: true,
         rmdCodeChunks: true,
-        codemirror: true
+        codemirror: true,
       },
     });
 
@@ -195,8 +195,8 @@ class EditorPane extends React.Component<EditorPaneProps> {
 
   private get editorUIContext(): EditorUIContext {
     return {
-      translateResourcePath: (href: string) => href
-    }
+      translateResourcePath: (href: string) => href,
+    };
   }
 
   private async setEditorContent(markdown: string) {

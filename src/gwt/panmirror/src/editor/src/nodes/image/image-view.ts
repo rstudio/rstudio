@@ -23,16 +23,16 @@ import { imageDialog } from './image-dialog';
 
 export class ImageNodeView implements NodeView {
   private readonly type: ImageType;
-  
+
   public readonly dom: HTMLElement;
   private readonly img: HTMLImageElement;
- 
+
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
   private node: ProsemirrorNode;
   private readonly view: EditorView;
-  
+
   private readonly translateResourcePath: (path: string) => string;
 
   constructor(
@@ -45,7 +45,7 @@ export class ImageNodeView implements NodeView {
     // determine type
     const schema = node.type.schema;
     this.type = node.type === schema.nodes.image ? ImageType.Image : ImageType.Figure;
-   
+
     this.node = node;
     this.view = view;
     this.translateResourcePath = editorUI.context.translateResourcePath;
@@ -71,13 +71,13 @@ export class ImageNodeView implements NodeView {
 
     const noPropagateClick = (ev: MouseEvent) => {
       ev.stopPropagation();
-    };  
-    
+    };
+
     // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
     this.img.onclick = selectOnClick;
     this.img.ondblclick = editOnDblClick;
-   
+
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
       this.dom = document.createElement('figure');
@@ -101,8 +101,6 @@ export class ImageNodeView implements NodeView {
       this.figcaption = null;
       this.updateImg(node);
     }
-
-    
   }
 
   public update(node: ProsemirrorNode) {

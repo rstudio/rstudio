@@ -35,8 +35,7 @@ export interface EditorDialogs {
   insertCitation: InsertCitationFn;
 }
 
-export interface EditorUIContext
-{
+export interface EditorUIContext {
   translateResourcePath: (path: string) => string;
 }
 

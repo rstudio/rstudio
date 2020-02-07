@@ -57,53 +57,51 @@ export interface CodeTheme {
   errorColor: string;
 }
 
-
-export function defaultTheme() : EditorTheme {
+export function defaultTheme(): EditorTheme {
   return {
-    cursorColor: "black",
-    selectionColor: "#8cf",
-    backgroundColor: "white",
-    metadataBackgroundColor: "rgb(251,251,251)", 
-    chunkBackgroundColor: "rgb(251,251,251)",
-    spanBackgroundColor: "#fff8dc",
-    divBackgroundColor: "rgb(236, 249, 250)",
-    textColor: "black",
-    lightTextColor: "rgb(60, 76, 114)",
-    linkTextColor: " #106ba3",
-    markupTextColor: "rgb(185, 6, 144)",
-    findTextBackgroundColor: "rgb(250, 250, 255)",
-    findTextBorderColor: "rgb(200, 200, 250)",
-    borderBackgroundColor: "#ddd",
-    blockBorderColor: "#ddd",
-    focusOutlineColor: "#ddd",
-    paneBorderColor: "silver",
-    fixedWidthFont: "monospace, monospace",
+    cursorColor: 'black',
+    selectionColor: '#8cf',
+    backgroundColor: 'white',
+    metadataBackgroundColor: 'rgb(251,251,251)',
+    chunkBackgroundColor: 'rgb(251,251,251)',
+    spanBackgroundColor: '#fff8dc',
+    divBackgroundColor: 'rgb(236, 249, 250)',
+    textColor: 'black',
+    lightTextColor: 'rgb(60, 76, 114)',
+    linkTextColor: ' #106ba3',
+    markupTextColor: 'rgb(185, 6, 144)',
+    findTextBackgroundColor: 'rgb(250, 250, 255)',
+    findTextBorderColor: 'rgb(200, 200, 250)',
+    borderBackgroundColor: '#ddd',
+    blockBorderColor: '#ddd',
+    focusOutlineColor: '#ddd',
+    paneBorderColor: 'silver',
+    fixedWidthFont: 'monospace, monospace',
     fixedWidthFontSizePt: 9,
     proportionalFont: '"Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif',
     proportionalFontSizePt: 10,
     code: {
-      keywordColor: "rgb(0, 0, 255)",
-      atomColor: "rgb(88, 92, 246)",
-      numberColor: "rgb(0, 0, 205)",
-      variableColor: "rgb(0, 0, 0)",
-      defColor: "rgb(0, 0, 0)",
-      operatorColor: "rgb(104, 118, 135)",
-      commentColor: "rgb(76, 136, 107)",
-      stringColor: "rgb(3, 106, 7)",
-      metaColor: "rgb(0, 0, 0)",
-      builtinColor: "rgb(0, 0, 0)",
-      bracketColor: "rgb(104, 118, 135)",
-      tagColor: "rgb(0, 22, 142)",
-      attributeColor: "rgb(0, 0, 0)",
-      hrColor: "rgb(0, 0, 0)",
-      linkColor: "rgb(0, 0, 255)",
-      errorColor: "rgb(197, 6, 11)"
-    }
-  }
+      keywordColor: 'rgb(0, 0, 255)',
+      atomColor: 'rgb(88, 92, 246)',
+      numberColor: 'rgb(0, 0, 205)',
+      variableColor: 'rgb(0, 0, 0)',
+      defColor: 'rgb(0, 0, 0)',
+      operatorColor: 'rgb(104, 118, 135)',
+      commentColor: 'rgb(76, 136, 107)',
+      stringColor: 'rgb(3, 106, 7)',
+      metaColor: 'rgb(0, 0, 0)',
+      builtinColor: 'rgb(0, 0, 0)',
+      bracketColor: 'rgb(104, 118, 135)',
+      tagColor: 'rgb(0, 22, 142)',
+      attributeColor: 'rgb(0, 0, 0)',
+      hrColor: 'rgb(0, 0, 0)',
+      linkColor: 'rgb(0, 0, 255)',
+      errorColor: 'rgb(197, 6, 11)',
+    },
+  };
 }
 
-export function applyTheme(theme: EditorTheme)
-{
+export function applyTheme(theme: EditorTheme) {
   // merge w/ defaults
   const defaults = defaultTheme();
   theme = {
@@ -111,8 +109,8 @@ export function applyTheme(theme: EditorTheme)
     ...theme,
     code: {
       ...defaults.code,
-      ...theme.code
-    }
+      ...theme.code,
+    },
   };
 
   // generate theme css
@@ -222,17 +220,17 @@ export function applyTheme(theme: EditorTheme)
     .cm-s-default .cm-link {color:${theme.code.linkColor};}
     .cm-s-default .cm-error {color: ${theme.code.errorColor};}
   `;
-  
+
   // get access to theme element (create if necessary)
   const themeElementId = 'pm-editor-theme';
   let themeElement = window.document.getElementById(themeElementId);
   if (themeElement === null) {
-    themeElement = window.document.createElement("style");
-    themeElement.setAttribute("id", themeElementId);
-    themeElement.setAttribute("type", "text/css");
+    themeElement = window.document.createElement('style');
+    themeElement.setAttribute('id', themeElementId);
+    themeElement.setAttribute('type', 'text/css');
     window.document.head.appendChild(themeElement);
   }
 
-  // set theme 
+  // set theme
   themeElement.innerHTML = themeCss;
 }

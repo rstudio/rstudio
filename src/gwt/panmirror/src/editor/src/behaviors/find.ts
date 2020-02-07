@@ -13,7 +13,6 @@
  *
  */
 
-
 import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
@@ -24,8 +23,7 @@ import { editingRootNode } from '../api/node';
 const key = new PluginKey<DecorationSet>('find-plugin');
 
 class FindPlugin extends Plugin<DecorationSet> {
-
-  private term: string = "";
+  private term: string = '';
   private options: FindOptions = {};
   private updating: boolean = false;
 
@@ -39,7 +37,7 @@ class FindPlugin extends Plugin<DecorationSet> {
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
           if (this.updating) {
             return this.resultDecorations(tr);
-          } else  {
+          } else {
             return DecorationSet.empty;
           }
         },
@@ -49,18 +47,18 @@ class FindPlugin extends Plugin<DecorationSet> {
           if (this.isResultSelected(view.state)) {
             this.scrollToSelectedResult(view);
           }
-        }
+        },
       }),
       props: {
         decorations: (state: EditorState) => {
           return key.getState(state);
         },
       },
-    });    
+    });
   }
 
   public find(term: string, options: FindOptions) {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       if (dispatch) {
         this.term = !options.regex ? term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') : term;
         this.options = options;
@@ -74,22 +72,19 @@ class FindPlugin extends Plugin<DecorationSet> {
     return key.getState(state).find().length;
   }
 
-
   public selectFirst() {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
-      
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       const decorations: Decoration[] = key.getState(state).find(0);
       if (decorations.length === 0) {
         return false;
       }
-      
+
       if (dispatch) {
         const tr = state.tr;
         this.selectResult(tr, decorations[0]);
         this.withResultUpdates(() => {
           dispatch(tr);
         });
-       
       }
 
       return true;
@@ -101,19 +96,17 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   public selectNext(afterSelection = true) {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
-      
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       const selectedText = state.doc.textBetween(state.selection.from, state.selection.to);
-      const searchFrom = afterSelection ? 
-        this.matchesTerm(selectedText) ? 
-          state.selection.to + 1 : 
-          state.selection.to :
-        state.selection.from;
+      const searchFrom = afterSelection
+        ? this.matchesTerm(selectedText)
+          ? state.selection.to + 1
+          : state.selection.to
+        : state.selection.from;
 
       const decorationSet = key.getState(state);
       let decorations: Decoration[] = decorationSet.find(searchFrom);
       if (decorations.length === 0) {
-
         // check for wrapping
         if (this.options.wrap) {
           const searchTo = this.matchesTerm(selectedText) ? state.selection.from - 1 : state.selection.from;
@@ -121,12 +114,12 @@ class FindPlugin extends Plugin<DecorationSet> {
           if (decorations.length === 0) {
             return false;
           }
-        // no wrapping
+          // no wrapping
         } else {
           return false;
         }
       }
-      
+
       if (dispatch) {
         const tr = state.tr;
         this.selectResult(tr, decorations[0]);
@@ -136,13 +129,10 @@ class FindPlugin extends Plugin<DecorationSet> {
       }
       return true;
     };
-
   }
 
-
   public selectPrevious() {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
-      
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       // sort out where we are searching up to
       const selectedText = state.doc.textBetween(state.selection.from, state.selection.to);
       const searchTo = this.matchesTerm(selectedText) ? state.selection.from - 1 : state.selection.from;
@@ -151,22 +141,21 @@ class FindPlugin extends Plugin<DecorationSet> {
       const decorationSet = key.getState(state);
       let decorations: Decoration[] = decorationSet.find(0, searchTo);
       if (decorations.length === 0) {
-         // handle wrapping
-         if (this.options.wrap) {
+        // handle wrapping
+        if (this.options.wrap) {
           const searchFrom = this.matchesTerm(selectedText) ? state.selection.to + 1 : state.selection.to;
           decorations = decorationSet.find(searchFrom);
           if (decorations.length === 0) {
             return false;
           }
-         // no wrapping
-         } else {
+          // no wrapping
+        } else {
           return false;
-         }
+        }
       }
-      
+
       // find the one closest to the beginning of the current selection
       if (dispatch) {
-
         // now we need to find the decoration with the largest from value
         const decoration = decorations.reduce((lastDecoration, nextDecoration) => {
           if (nextDecoration.from > lastDecoration.from) {
@@ -181,19 +170,16 @@ class FindPlugin extends Plugin<DecorationSet> {
         this.withResultUpdates(() => {
           dispatch(tr);
         });
-
       }
       return true;
     };
-
   }
-  
+
   public replace(text: string) {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
-      
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       if (!this.isResultSelected(state)) {
         return false;
-      }      
+      }
 
       if (dispatch) {
         const tr = state.tr;
@@ -208,15 +194,14 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   public replaceAll(text: string) {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
-      
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       if (!this.hasTerm()) {
         return false;
-      }      
-      
+      }
+
       if (dispatch) {
         const tr = state.tr;
-      
+
         const decorationSet = key.getState(state);
 
         let decorations: Decoration[] = decorationSet.find(0);
@@ -233,12 +218,11 @@ class FindPlugin extends Plugin<DecorationSet> {
       return true;
     };
   }
-  
 
   public clear() {
-    return (state: EditorState<any>, dispatch?: ((tr: Transaction<any>) => void)) => {
+    return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
       if (dispatch) {
-        this.term = "";
+        this.term = '';
         this.options = {};
         this.updateResults(state, dispatch);
       }
@@ -246,18 +230,15 @@ class FindPlugin extends Plugin<DecorationSet> {
     };
   }
 
-
-  private updateResults(state: EditorState, dispatch: ((tr: Transaction<any>) => void)) {
-    this.withResultUpdates(() => { 
+  private updateResults(state: EditorState, dispatch: (tr: Transaction<any>) => void) {
+    this.withResultUpdates(() => {
       const tr = state.tr;
       tr.setMeta('addToHistory', false);
       dispatch(tr);
     });
   }
 
-
-  private resultDecorations(tr: Transaction) : DecorationSet {
-  
+  private resultDecorations(tr: Transaction): DecorationSet {
     // bail if no search term
     if (!this.hasTerm()) {
       return DecorationSet.empty;
@@ -294,7 +275,7 @@ class FindPlugin extends Plugin<DecorationSet> {
     // return as decoration set
     return decorations.length ? DecorationSet.create(tr.doc, decorations) : DecorationSet.empty;
   }
-  
+
   private withResultUpdates(f: () => void) {
     this.updating = true;
     f();
@@ -348,25 +329,18 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   private findRegEx() {
-    try
-    {
+    try {
       return new RegExp(this.term, !this.options.caseSensitive ? 'gui' : 'gu');
-    }
-    catch
-    {
+    } catch {
       return null;
     }
   }
-};
+}
 
 const extension: Extension = {
-  
   plugins: () => {
-    return [
-      new FindPlugin()
-    ];
-  }
-
+    return [new FindPlugin()];
+  },
 };
 
 export interface FindOptions {
@@ -375,31 +349,31 @@ export interface FindOptions {
   wrap?: boolean;
 }
 
-export function find(view: EditorView, term: string, options: FindOptions) : boolean {
+export function find(view: EditorView, term: string, options: FindOptions): boolean {
   return findPlugin(view).find(term, options)(view.state, view.dispatch);
 }
 
-export function matchCount(view: EditorView) : number {
+export function matchCount(view: EditorView): number {
   return findPlugin(view).matchCount(view.state);
 }
 
-export function selectFirst(view: EditorView) : boolean {
+export function selectFirst(view: EditorView): boolean {
   return findPlugin(view).selectFirst()(view.state, view.dispatch);
 }
 
-export function selectCurrent(view: EditorView) : boolean {
+export function selectCurrent(view: EditorView): boolean {
   return findPlugin(view).selectCurrent()(view.state, view.dispatch);
 }
 
-export function selectNext(view: EditorView) : boolean {
+export function selectNext(view: EditorView): boolean {
   return findPlugin(view).selectNext()(view.state, view.dispatch);
 }
 
-export function selectPrevious(view: EditorView) : boolean {
+export function selectPrevious(view: EditorView): boolean {
   return findPlugin(view).selectPrevious()(view.state, view.dispatch);
 }
 
-export function replace(view: EditorView, text: string) : boolean {
+export function replace(view: EditorView, text: string): boolean {
   return findPlugin(view).replace(text)(view.state, view.dispatch);
 }
 
@@ -407,12 +381,11 @@ export function replaceAll(view: EditorView, text: string) {
   return findPlugin(view).replaceAll(text)(view.state, view.dispatch);
 }
 
-export function clear(view: EditorView) : boolean {
+export function clear(view: EditorView): boolean {
   return findPlugin(view).clear()(view.state, view.dispatch);
 }
 
-
-function findPlugin(view: EditorView) : FindPlugin {
+function findPlugin(view: EditorView): FindPlugin {
   return key.get(view.state) as FindPlugin;
 }
 

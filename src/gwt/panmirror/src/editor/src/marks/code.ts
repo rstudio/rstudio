@@ -48,14 +48,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           toDOM(mark: Mark) {
             const fontClass = 'pm-fixedwidth-font';
-            const attrs = codeAttrs ?
-              pandocAttrToDomAttr({
-                ...mark.attrs,
-                classes: [...mark.attrs.classes, fontClass],
-              }) :
-              {
-                class: fontClass
-              };
+            const attrs = codeAttrs
+              ? pandocAttrToDomAttr({
+                  ...mark.attrs,
+                  classes: [...mark.attrs.classes, fontClass],
+                })
+              : {
+                  class: fontClass,
+                };
             return ['code', attrs];
           },
         },

@@ -32,7 +32,7 @@ const extension: Extension = {
         readers: [
           { token: PandocTokenType.Str, text: true, getText: (tok: PandocToken) => tok.c },
           { token: PandocTokenType.Space, text: true, getText: () => ' ' },
-          { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' }
+          { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
         ],
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           let text = node.textContent;
