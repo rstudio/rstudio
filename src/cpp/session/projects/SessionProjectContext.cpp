@@ -477,12 +477,13 @@ void ProjectContext::onDeferredInit(bool newSession)
                             this, _1);
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
+
+   bool hideObjectFiles = prefs::userPrefs().hideObjectFiles();
    core::system::file_monitor::registerMonitor(
-                                         directory(),
-                                         true,
-                                         boost::bind(module_context::fileListingFilter,
-                                            _1, prefs::userPrefs().hideObjectFiles()),
-                                         cb);
+         directory(),
+         true,
+         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, hideObjectFiles),
+         cb);
 }
 
 void ProjectContext::fileMonitorRegistered(
@@ -553,6 +554,29 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       // notify subscribers
       onMonitoringDisabled_();
    }
+}
+
+bool ProjectContext::fileMonitorFilter(
+      const FileInfo& fileInfo,
+      bool ignoreObjectFiles) const
+{
+   // ignore files within an renv or packrat library
+   auto ignored = {
+         "/renv/library",
+         "/renv/staging",
+         "/packrat/lib"
+   };
+
+   std::string path = fileInfo.absolutePath();
+   for (auto&& component : ignored)
+   {
+      if (boost::algorithm::icontains(path, component))
+      {
+         return false;
+      }
+   }
+
+   return module_context::fileListingFilter(fileInfo, ignoreObjectFiles);
 }
 
 bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const

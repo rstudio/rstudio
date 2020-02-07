@@ -217,6 +217,7 @@ private:
    void fileMonitorFilesChanged(
                    const std::vector<core::system::FileChangeEvent>& events);
    void fileMonitorTermination(const core::Error& error);
+   bool fileMonitorFilter(const core::FileInfo& fileInfo, bool ignoreObjectFiles) const;
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
