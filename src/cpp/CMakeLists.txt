@@ -18,6 +18,8 @@ cmake_minimum_required(VERSION 3.4.3)
 
 project (RSTUDIO_CPP)
 
+include(GetPrerequisites)
+
 # set compiler
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeCompiler.txt")
 
@@ -385,10 +387,37 @@ if (SOCI_LIB_COUNT EQUAL 0)
 else()
    message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}.")
 
-   # ensure the soci libraries are installed with the installation package
+   # ensure the soci/sqlite/postgres libraries are installed with the installation package
    if(UNIX)
       if (NOT APPLE)
-         install(PROGRAMS "${SOCI_LIBRARY_DIR}/*.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_core.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_odbc.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_sqlite3.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_postgresql.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_empty.so.4.0.0" DESTINATION ${RSTUDIO_INSTALL_BIN})
+
+         GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_sqlite3.so.4.0.0" SQLITE_LIBS "0" "0" "." "")
+         foreach(LIBRARY IN LISTS SQLITE_LIBS)
+            string(FIND "${LIBRARY}" "libsqlite3" INDEX)
+            if(INDEX GREATER "-1")
+               set(SQLITE_LIB "${LIBRARY}")
+            endif()
+         endforeach(LIBRARY)
+
+         GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_postgresql.so.4.0.0" POSTGRES_LIBS "0" "0" "." "")
+         foreach(LIBRARY IN LISTS POSTGRES_LIBS)
+            string(FIND "${LIBRARY}" "libpq" INDEX)
+            if(INDEX GREATER "-1")
+               set(POSTGRES_LIB "${LIBRARY}")
+            endif()
+         endforeach(LIBRARY)
+
+         get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
+         get_filename_component(POSTGRES_LIB "${POSTGRES_LIB}" REALPATH)
+         message(STATUS "SQLite lib: ${SQLITE_LIB}")
+         message(STATUS "PostgreSQL lib: ${POSTGRES_LIB}")
+         install(PROGRAMS "${SQLITE_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${POSTGRES_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
       else()
           install(PROGRAMS "${SOCI_LIBRARY_DIR}/*.dylib" DESTINATION ${RSTUDIO_INSTALL_BIN})
       endif()
