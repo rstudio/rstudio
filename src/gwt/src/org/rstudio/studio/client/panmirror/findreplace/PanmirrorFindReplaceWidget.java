@@ -56,8 +56,7 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
          
          // reject navigational and control keys
          int keycode = event.getNativeKeyCode();
-         if (KeyboardHelper.isNavigationalKeycode(keycode) || 
-             KeyboardHelper.isControlKeycode(keycode)) 
+         if (KeyboardHelper.isNavigationalKeycode(keycode))
          {
             return;
          } 
@@ -76,8 +75,13 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
          performFind();
       });
       
+      // perform find on text box focus
+      addTextBoxFocusHandler((event) -> {
+         performFind();
+      });
+      
       // hookup replace all
-      this.getReplaceAll().addClickHandler((event) -> {
+      getReplaceAll().addClickHandler((event) -> {
          PanmirrorFindReplace find = findWithResults();
          String text = getReplaceValue().getValue();
          if (text.length() > 0)
@@ -97,7 +101,7 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
       options.regex = getRegex().getValue();
       options.wrap = getWrapSearch().getValue();
       find.find(getFindValue().getValue(), options);
-      find.selectNext();
+      find.selectFirst();
    }
    
    
