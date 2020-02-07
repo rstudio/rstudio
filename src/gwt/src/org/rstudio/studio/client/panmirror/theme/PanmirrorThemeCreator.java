@@ -19,6 +19,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -67,7 +68,8 @@ public class PanmirrorThemeCreator
       theme.blockBorderColor = borderColor;
       theme.focusOutlineColor = borderColor;
       
-      theme.paneBorderColor = DomUtils.extractCssValue("ace_print-margin", "backgroundColor");
+      // pane border based on outline widget border (it's a single color for all themes)
+      theme.paneBorderColor =  DomUtils.extractCssValue(DocumentOutlineWidget.RES.styles().leftSeparator(), "borderLeftColor");
       
       // calculate standard font size in pts
       double fontSize = prefs.fontSizePoints().getValue();
