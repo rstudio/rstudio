@@ -260,8 +260,13 @@ class FindPlugin extends Plugin<DecorationSet> {
 
     // perform search and populate results
     const textNodes = mergedTextNodes(tr.doc);
+    
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
+      if (!search) {
+        return;
+      }
+
       let m;
       // eslint-disable-next-line no-cond-assign
       while ((m = search.exec(textNode.text))) {
@@ -309,17 +314,27 @@ class FindPlugin extends Plugin<DecorationSet> {
 
   private matchesTerm(text: string) {
     if (this.hasTerm()) {
-      return this.findRegEx().test(text);
+      const regex = this.findRegEx();
+      if (regex) {
+        return regex.test(text);
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
   }
 
   private findRegEx() {
-    return new RegExp(this.term, !this.options.caseSensitive ? 'gui' : 'gu');
+    try
+    {
+      return new RegExp(this.term, !this.options.caseSensitive ? 'gui' : 'gu');
+    }
+    catch
+    {
+      return null;
+    }
   }
-
-
 };
 
 const extension: Extension = {
