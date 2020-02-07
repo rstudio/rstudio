@@ -54,14 +54,28 @@
    
    # validate that renv is installed
    location <- find.package("renv", quiet = TRUE)
-   context[["installed"]] <- length(location) != 0
+   context[["installed"]] <- .rs.scalar(length(location) != 0)
    
    # check and see if renv is active
    project <- Sys.getenv("RENV_PROJECT", unset = NA)
-   context[["active"]] <- !is.na(project)
+   active <- !is.na(project)
+   context[["active"]] <- .rs.scalar(active)
    
-   # return context
-   lapply(context, .rs.scalar)
+   # read renv settings for active project
+   context[["settings"]] <- list()
+   if (active)
+   {
+      lapply(names(renv::settings), function(setting) {
+         context[["settings"]][[setting]] <<-
+            renv::settings[[setting]](project = project)
+      })
+      
+      context$settings$snapshot.type      <- .rs.scalar(context$settings$snapshot.type)
+      context$settings$use.cache          <- .rs.scalar(context$settings$use.cache)
+      context$settings$vcs.ignore.library <- .rs.scalar(context$settings$vcs.ignore.library)
+   }
+   
+   context
    
 })
 
@@ -71,11 +85,20 @@
    
    options <- list()
    
-   options[["useRenv"]] <- context[["active"]]
-   # TODO: surface options associated with
-   # the current project
+   active <- context[["active"]]
+   options[["useRenv"]] <- active
    
-   options
+   if (active)
+   {
+      options[["projectUseCache"]]         <- context$settings$use.cache
+      options[["projectVcsIgnoreLibrary"]] <- context$settings$vcs.ignore.library
+      
+      options[["userSandboxEnabled"]] <- renv:::renv_config("sandbox.enabled", default = TRUE)
+      options[["userShimsEnabled"]]   <- renv:::renv_config("shims.enabled", default = TRUE)
+      options[["userUpdatesCheck"]]   <- renv:::renv_config("updates.check", default = TRUE)
+   }
+   
+   .rs.scalarListFromList(options)
    
 })
 

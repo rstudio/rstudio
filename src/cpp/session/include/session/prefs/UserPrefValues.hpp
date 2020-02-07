@@ -314,6 +314,9 @@ namespace prefs {
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
+#define kRenvSandboxEnabled "renv_sandbox_enabled"
+#define kRenvShimsEnabled "renv_shims_enabled"
+#define kRenvUpdatesCheck "renv_updates_check"
 
 class UserPrefValues: public Preferences
 {
@@ -1386,6 +1389,24 @@ public:
     */
    core::json::Array disabledAriaLiveAnnouncements();
    core::Error setDisabledAriaLiveAnnouncements(core::json::Array val);
+
+   /**
+    * Enable sandboxing of system library in renv projects
+    */
+   bool renvSandboxEnabled();
+   core::Error setRenvSandboxEnabled(bool val);
+
+   /**
+    * Enable renv shims in renv projects
+    */
+   bool renvShimsEnabled();
+   core::Error setRenvShimsEnabled(bool val);
+
+   /**
+    * Automatically check for package updates in renv projects
+    */
+   bool renvUpdatesCheck();
+   core::Error setRenvUpdatesCheck(bool val);
 
 };
 

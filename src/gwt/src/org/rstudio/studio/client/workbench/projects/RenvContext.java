@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.projects;
 
+import org.rstudio.core.client.js.JsObject;
+
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
@@ -22,4 +24,5 @@ public class RenvContext
 {
    public boolean installed;
    public boolean active;
+   public JsObject settings;
 }

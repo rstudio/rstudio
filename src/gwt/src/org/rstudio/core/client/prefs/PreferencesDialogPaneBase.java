@@ -24,12 +24,14 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -153,6 +155,23 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       helpStyle.setMarginLeft(6, Unit.PX);
       panel.add(helpButton);
       return panel;
+   }
+   
+   protected Label header(String text)
+   {
+      Label label = new Label(text);
+      label.addStyleName(res_.styles().headerLabel());
+      nudgeRight(label);
+      return label;
+   }
+   
+   protected Label info(String text)
+   {
+      Label label = new Label(text);
+      label.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
+      nudgeRight(label);
+      spaced(label);
+      return label;
    }
    
    protected void forceClosed(Command onClosed)

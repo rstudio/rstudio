@@ -29,4 +29,13 @@ public class RProjectRenvOptions
    }
    
    public boolean useRenv;
+   
+   // Project settings
+   public boolean projectUseCache;
+   public boolean projectVcsIgnoreLibrary;
+   
+   // User configuration
+   public boolean userSandboxEnabled;
+   public boolean userShimsEnabled;
+   public boolean userUpdatesCheck;
 }

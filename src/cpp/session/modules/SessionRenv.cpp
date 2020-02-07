@@ -22,6 +22,7 @@
 #include <r/RJson.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 
@@ -117,6 +118,21 @@ Error initialize()
    // initialize renv after session init (need to make sure
    // all other RStudio startup code runs first)
    events().onConsolePrompt.connect(onConsolePrompt);
+   
+   // initialize renv options from prefs
+   if (projects::projectContext().hasProject())
+   {
+      std::cerr << "Hello, world!" << std::endl;
+      
+      r::exec::RFunction options("base:::options");
+      options.addParam("renv.config.sandbox.enabled", prefs::userPrefs().renvSandboxEnabled());
+      options.addParam("renv.config.shims.enabled", prefs::userPrefs().renvShimsEnabled());
+      options.addParam("renv.config.updates.check", prefs::userPrefs().renvUpdatesCheck());
+
+      Error error = options.call();
+      if (error)
+         LOG_ERROR(error);
+   }
 
    using boost::bind;
    ExecBlock initBlock;

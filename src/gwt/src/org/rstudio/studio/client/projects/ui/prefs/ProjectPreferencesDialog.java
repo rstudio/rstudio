@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
@@ -153,16 +157,66 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       
    }
    
-   private void emitRenvConsoleActions(RProjectRenvOptions options)
+   private void emitRenvConsoleActions(RProjectRenvOptions newOptions)
    {
-      if (options.useRenv == renvOptions_.useRenv)
+      EventBus events = pEventBus_.get();
+      
+      // renv is off and staying off -- nothing to do
+      if (!renvOptions_.useRenv && !newOptions.useRenv)
          return;
       
-      String renvAction = options.useRenv
-            ? "renv::activate()"
-            : "renv::deactivate()";
+      // turning renv off -- just call deactivate
+      if (renvOptions_.useRenv && !newOptions.useRenv)
+      {
+         String action = "renv::deactivate()";
+         events.fireEvent(new SendToConsoleEvent(action, true, true));
+         return;
+      }
       
-      pEventBus_.get().fireEvent(new SendToConsoleEvent(renvAction, true, true));
+      // turning renv on -- just call activate
+      if (newOptions.useRenv != renvOptions_.useRenv)
+      {
+         String action = "renv::activate()";
+         events.fireEvent(new SendToConsoleEvent(action, true, true));
+         return;
+      }
+      
+      // update project settings, etc
+      List<String> commands = new ArrayList<>();
+      
+      if (renvOptions_.projectUseCache != newOptions.projectUseCache)
+         commands.add(setting("use.cache", newOptions.projectUseCache));
+      
+      if (renvOptions_.projectVcsIgnoreLibrary != newOptions.projectVcsIgnoreLibrary)
+         commands.add(setting("vcs.ignore.library", newOptions.projectVcsIgnoreLibrary));
+      
+      if (renvOptions_.userSandboxEnabled != newOptions.userSandboxEnabled)
+         commands.add(config("sandbox.enabled", newOptions.userSandboxEnabled));
+      
+      if (renvOptions_.userShimsEnabled != newOptions.userShimsEnabled)
+         commands.add(config("shims.enabled", newOptions.userShimsEnabled));
+      
+      if (renvOptions_.userUpdatesCheck != newOptions.userUpdatesCheck)
+         commands.add(config("updates.check", newOptions.userUpdatesCheck));
+      
+      if (!commands.isEmpty())
+      {
+         String command = StringUtil.join(commands, "\n");
+         events.fireEvent(new SendToConsoleEvent(command, true, true));
+      }
+      
+   }
+   
+   private String setting(String key, boolean value)
+   {
+      String toggle = (value ? "TRUE" : "FALSE");
+      return "renv::settings$" + key + "(" + toggle + ")";
+   }
+   
+   private String config(String key, boolean value)
+   {
+      String toggle = (value ? "TRUE" : "FALSE");
+      return "options(renv.config." + key + " = " + toggle + ")";
    }
    
    private final Provider<Session> session_;

@@ -1665,6 +1665,30 @@ public class UserPrefsAccessor extends Prefs
       return object("disabled_aria_live_announcements", JsArrayUtil.createStringArray());
    }
 
+   /**
+    * Enable sandboxing of system library in renv projects
+    */
+   public PrefValue<Boolean> renvSandboxEnabled()
+   {
+      return bool("renv_sandbox_enabled", true);
+   }
+
+   /**
+    * Enable renv shims in renv projects
+    */
+   public PrefValue<Boolean> renvShimsEnabled()
+   {
+      return bool("renv_shims_enabled", true);
+   }
+
+   /**
+    * Automatically check for package updates in renv projects
+    */
+   public PrefValue<Boolean> renvUpdatesCheck()
+   {
+      return bool("renv_updates_check", false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2023,6 +2047,12 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
+      if (source.hasKey("renv_sandbox_enabled"))
+         renvSandboxEnabled().setValue(layer, source.getBool("renv_sandbox_enabled"));
+      if (source.hasKey("renv_shims_enabled"))
+         renvShimsEnabled().setValue(layer, source.getBool("renv_shims_enabled"));
+      if (source.hasKey("renv_updates_check"))
+         renvUpdatesCheck().setValue(layer, source.getBool("renv_updates_check"));
    }
    
 

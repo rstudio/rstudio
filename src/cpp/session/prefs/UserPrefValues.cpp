@@ -2337,6 +2337,45 @@ core::Error UserPrefValues::setDisabledAriaLiveAnnouncements(core::json::Array v
    return writePref("disabled_aria_live_announcements", val);
 }
 
+/**
+ * Enable sandboxing of system library in renv projects
+ */
+bool UserPrefValues::renvSandboxEnabled()
+{
+   return readPref<bool>("renv_sandbox_enabled");
+}
+
+core::Error UserPrefValues::setRenvSandboxEnabled(bool val)
+{
+   return writePref("renv_sandbox_enabled", val);
+}
+
+/**
+ * Enable renv shims in renv projects
+ */
+bool UserPrefValues::renvShimsEnabled()
+{
+   return readPref<bool>("renv_shims_enabled");
+}
+
+core::Error UserPrefValues::setRenvShimsEnabled(bool val)
+{
+   return writePref("renv_shims_enabled", val);
+}
+
+/**
+ * Automatically check for package updates in renv projects
+ */
+bool UserPrefValues::renvUpdatesCheck()
+{
+   return readPref<bool>("renv_updates_check");
+}
+
+core::Error UserPrefValues::setRenvUpdatesCheck(bool val)
+{
+   return writePref("renv_updates_check", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2518,6 +2557,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
       kDisabledAriaLiveAnnouncements,
+      kRenvSandboxEnabled,
+      kRenvShimsEnabled,
+      kRenvUpdatesCheck,
    });
 }
    

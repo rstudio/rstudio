@@ -1009,6 +1009,21 @@
             "type": "array",
             "default": [],
             "description": "List of aria-live announcements to disable."
+        },
+        "renv_sandbox_enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable sandboxing of system library in renv projects"
+        },
+        "renv_shims_enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable renv shims in renv projects"
+        },
+        "renv_updates_check": {
+            "type": "boolean",
+            "default": false,
+            "description": "Automatically check for package updates in renv projects"
         }
     }
 }
