@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.find;
+package org.rstudio.studio.client.panmirror.findreplace;
 
 import jsinterop.annotations.JsType;
 

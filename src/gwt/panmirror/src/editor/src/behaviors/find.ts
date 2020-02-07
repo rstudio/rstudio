@@ -17,7 +17,6 @@
 import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { mergedTextNodes } from '../api/text';
 
@@ -38,7 +37,7 @@ class FindPlugin extends Plugin<DecorationSet> {
           },
           apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
             if (this.updating) {
-              return this.resultDecorations(tr.doc);
+              return this.resultDecorations(tr);
             } else if (tr.docChanged) {
               return old.map(tr.mapping, tr.doc);
             } else {
@@ -81,7 +80,10 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (dispatch) {
         const tr = state.tr;
         this.selectResult(tr, decorations[0]);
-        dispatch(tr);
+        this.withResultUpdates(() => {
+          dispatch(tr);
+        });
+       
       }
 
       return true;
@@ -114,7 +116,9 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (dispatch) {
         const tr = state.tr;
         this.selectResult(tr, decorations[0]);
-        dispatch(tr);
+        this.withResultUpdates(() => {
+          dispatch(tr);
+        });
       }
       return true;
     };
@@ -160,7 +164,9 @@ class FindPlugin extends Plugin<DecorationSet> {
 
         const tr = state.tr;
         this.selectResult(tr, decoration);
-        dispatch(tr);
+        this.withResultUpdates(() => {
+          dispatch(tr);
+        });
 
       }
       return true;
@@ -242,7 +248,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
 
-  private resultDecorations(doc: ProsemirrorNode) : DecorationSet {
+  private resultDecorations(tr: Transaction) : DecorationSet {
   
     // bail if no search term
     if (!this.hasTerm()) {
@@ -253,7 +259,7 @@ class FindPlugin extends Plugin<DecorationSet> {
     const decorations: Decoration[] = [];
 
     // perform search and populate results
-    const textNodes = mergedTextNodes(doc);
+    const textNodes = mergedTextNodes(tr.doc);
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
       let m;
@@ -264,13 +270,16 @@ class FindPlugin extends Plugin<DecorationSet> {
         }
         const from = textNode.pos + m.index;
         const to = textNode.pos + m.index + m[0].length;
-        const cls = 'pm-find-text';
-        decorations.push(Decoration.inline(from, to, { class: cls }));
+        const classes = ['pm-find-text'];
+        if (from === tr.selection.from && to === tr.selection.to) {
+          classes.push('pm-find-text-selected');
+        }
+        decorations.push(Decoration.inline(from, to, { class: classes.join(' ') }));
       }
     });
 
     // return as decoration set
-    return decorations.length ? DecorationSet.create(doc, decorations) : DecorationSet.empty;
+    return decorations.length ? DecorationSet.create(tr.doc, decorations) : DecorationSet.empty;
   }
   
   private withResultUpdates(f: () => void) {
@@ -356,6 +365,11 @@ export function replace(view: EditorView, text: string) : boolean {
 export function replaceAll(view: EditorView, text: string) {
   return findPlugin(view).replaceAll(text)(view.state, view.dispatch);
 }
+
+export function clear(view: EditorView) : boolean {
+  return findPlugin(view).clear()(view.state, view.dispatch);
+}
+
 
 function findPlugin(view: EditorView) : FindPlugin {
   return key.get(view.state) as FindPlugin;

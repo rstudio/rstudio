@@ -53,7 +53,8 @@ import {
   selectNext, 
   selectPrevious, 
   replace, 
-  replaceAll 
+  replaceAll, 
+  clear
 } from './behaviors/find';
 
 
@@ -88,6 +89,8 @@ export enum EditorEvents {
   Update = 'update',
   OutlineChange = 'outlineChange',
   SelectionChange = 'selectionChange',
+  Focus = 'gotFocus',
+  Blur = 'lostFocus'
 }
 
 export interface EditorSelection {
@@ -95,7 +98,7 @@ export interface EditorSelection {
   to: number;
 }
 
-export interface EditorFind {
+export interface EditorFindReplace {
   find: (term: string, options: FindOptions) => boolean;
   matches: () => number;
   selectFirst: () => boolean;
@@ -103,6 +106,7 @@ export interface EditorFind {
   selectPrevious: () => boolean;
   replace: (text: string) => boolean;
   replaceAll: (text: string) => boolean;
+  clear: () => boolean;
 }
 
 export { EditorCommandId as EditorCommands } from './api/command';
@@ -169,6 +173,16 @@ export class Editor {
       state: this.state,
       dispatchTransaction: this.dispatchTransaction.bind(this),
       domParser: new EditorDOMParser(this.schema),
+      handleDOMEvents: {
+        focus: (_view: EditorView, _event: Event) => {
+          this.emitEvent(EditorEvents.Focus);
+          return false;
+        },
+        blur: (_view: EditorView, _event: Event) => {
+          this.emitEvent(EditorEvents.Blur);
+          return false;
+        }
+      },
     });
 
     // add proportinal font class to parent
@@ -282,7 +296,7 @@ export class Editor {
     return getOutline(this.state);
   }
 
-  public getFind(): EditorFind {
+  public getFindReplace(): EditorFindReplace {
     return {
       find: (term: string, options: FindOptions) => find(this.view, term, options),
       matches: () => matchCount(this.view),
@@ -290,7 +304,8 @@ export class Editor {
       selectNext: () => selectNext(this.view),
       selectPrevious: () => selectPrevious(this.view),
       replace: (text: string) => replace(this.view, text),
-      replaceAll: (text: string) => replaceAll(this.view, text)
+      replaceAll: (text: string) => replaceAll(this.view, text),
+      clear: () => clear(this.view)
     };
   }
 
@@ -399,6 +414,8 @@ export class Editor {
     events.set(EditorEvents.Update, new Event(EditorEvents.Update));
     events.set(EditorEvents.OutlineChange, new Event(EditorEvents.OutlineChange));
     events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
+    events.set(EditorEvents.Focus, new Event(EditorEvents.Focus));
+    events.set(EditorEvents.Blur, new Event(EditorEvents.Blur));
     return events;
   }
 

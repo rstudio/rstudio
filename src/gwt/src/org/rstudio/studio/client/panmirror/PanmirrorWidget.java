@@ -33,8 +33,8 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
-import org.rstudio.studio.client.panmirror.find.PanmirrorFind;
-import org.rstudio.studio.client.panmirror.find.PanmirrorFindReplaceWidget;
+import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
+import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
@@ -135,11 +135,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             findReplaceShowing_ = show;
             setWidgetHidden(findReplace_, !findReplaceShowing_);
             toolbar_.setFindReplaceLatched(findReplaceShowing_);
+            if (findReplaceShowing_)
+               findReplace_.performFind();
+            else
+               editor_.getFindReplace().clear();
          }
          @Override
-         public PanmirrorFind getPanmirrorFind()
+         public PanmirrorFindReplace getFindReplace()
          {
-            return editor_.getFind();
+            return editor_.getFindReplace();
          } 
       });
       addNorth(findReplace_, findReplace_.getHeight());
@@ -253,6 +257,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          // sync outline
          outline_.updateOutline(editor_.getOutline());
              
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Focus, () -> {
+         editor_.getFindReplace().clear();
       }));
    }
    

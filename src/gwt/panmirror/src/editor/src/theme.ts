@@ -151,7 +151,7 @@ export function applyTheme(theme: EditorTheme)
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }
-    .pm-find-text-selection {
+    .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
     }
     .pm-border-background-color {

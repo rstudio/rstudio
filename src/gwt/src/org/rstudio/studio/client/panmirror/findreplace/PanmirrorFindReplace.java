@@ -13,12 +13,12 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.find;
+package org.rstudio.studio.client.panmirror.findreplace;
 
 import jsinterop.annotations.JsType;
 
 @JsType(isNative = true)
-public class PanmirrorFind
+public class PanmirrorFindReplace
 {
    public native boolean find(String term, PanmirrorFindOptions options);
    public native int matches();
@@ -27,4 +27,5 @@ public class PanmirrorFind
    public native boolean selectPrevious();
    public native boolean replace(String term);
    public native boolean replaceAll(String term);
+   public native boolean clear();
 }

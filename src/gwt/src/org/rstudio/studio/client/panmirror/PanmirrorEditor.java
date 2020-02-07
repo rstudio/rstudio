@@ -19,7 +19,7 @@ import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
-import org.rstudio.studio.client.panmirror.find.PanmirrorFind;
+import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
@@ -53,7 +53,7 @@ public class PanmirrorEditor
    
    public native PanmirrorOutlineItem[] getOutline();
    
-   public native PanmirrorFind getFind();
+   public native PanmirrorFindReplace getFindReplace();
    
    public native PanmirrorEditingLocation getEditingLocation();
    public native void restoreEditingLocation(PanmirrorEditingLocation location);
