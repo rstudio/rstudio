@@ -162,11 +162,12 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       EventBus events = pEventBus_.get();
       
       // renv is off and staying off -- nothing to do
-      if (!renvOptions_.useRenv && !newOptions.useRenv)
-         return;
+      if (!newOptions.useRenv && !renvOptions_.useRenv)
+      {
+      }
       
       // turning renv off -- just call deactivate
-      if (renvOptions_.useRenv && !newOptions.useRenv)
+      else if (!newOptions.useRenv && renvOptions_.useRenv)
       {
          String action = "renv::deactivate()";
          events.fireEvent(new SendToConsoleEvent(action, true, true));
@@ -174,35 +175,42 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       }
       
       // turning renv on -- just call activate
-      if (newOptions.useRenv != renvOptions_.useRenv)
+      //
+      // TODO: we need to apply project options here, but we need to call
+      // renv::activate() first to activate the project ... and that will
+      // force the R session to restart. is there a way for us to cleanly
+      // orchestrate this chain of events?
+      else if (newOptions.useRenv && !renvOptions_.useRenv)
       {
          String action = "renv::activate()";
          events.fireEvent(new SendToConsoleEvent(action, true, true));
          return;
       }
-      
-      // update project settings, etc
-      List<String> commands = new ArrayList<>();
-      
-      if (renvOptions_.projectUseCache != newOptions.projectUseCache)
-         commands.add(setting("use.cache", newOptions.projectUseCache));
-      
-      if (renvOptions_.projectVcsIgnoreLibrary != newOptions.projectVcsIgnoreLibrary)
-         commands.add(setting("vcs.ignore.library", newOptions.projectVcsIgnoreLibrary));
-      
-      if (renvOptions_.userSandboxEnabled != newOptions.userSandboxEnabled)
-         commands.add(config("sandbox.enabled", newOptions.userSandboxEnabled));
-      
-      if (renvOptions_.userShimsEnabled != newOptions.userShimsEnabled)
-         commands.add(config("shims.enabled", newOptions.userShimsEnabled));
-      
-      if (renvOptions_.userUpdatesCheck != newOptions.userUpdatesCheck)
-         commands.add(config("updates.check", newOptions.userUpdatesCheck));
-      
-      if (!commands.isEmpty())
+      else
       {
-         String command = StringUtil.join(commands, "\n");
-         events.fireEvent(new SendToConsoleEvent(command, true, true));
+         // update project settings, etc
+         List<String> commands = new ArrayList<>();
+
+         if (renvOptions_.projectUseCache != newOptions.projectUseCache)
+            commands.add(setting("use.cache", newOptions.projectUseCache));
+
+         if (renvOptions_.projectVcsIgnoreLibrary != newOptions.projectVcsIgnoreLibrary)
+            commands.add(setting("vcs.ignore.library", newOptions.projectVcsIgnoreLibrary));
+
+         if (renvOptions_.userSandboxEnabled != newOptions.userSandboxEnabled)
+            commands.add(config("sandbox.enabled", newOptions.userSandboxEnabled));
+
+         if (renvOptions_.userShimsEnabled != newOptions.userShimsEnabled)
+            commands.add(config("shims.enabled", newOptions.userShimsEnabled));
+
+         if (renvOptions_.userUpdatesCheck != newOptions.userUpdatesCheck)
+            commands.add(config("updates.check", newOptions.userUpdatesCheck));
+
+         if (!commands.isEmpty())
+         {
+            String command = StringUtil.join(commands, "\n");
+            events.fireEvent(new SendToConsoleEvent(command, true, true));
+         }
       }
       
    }

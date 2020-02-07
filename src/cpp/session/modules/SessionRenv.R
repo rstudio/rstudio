@@ -70,6 +70,7 @@
             renv::settings[[setting]](project = project)
       })
       
+      # add only settings understood by RStudio to the context object
       context$settings$snapshot.type      <- .rs.scalar(context$settings$snapshot.type)
       context$settings$use.cache          <- .rs.scalar(context$settings$use.cache)
       context$settings$vcs.ignore.library <- .rs.scalar(context$settings$vcs.ignore.library)
@@ -90,9 +91,11 @@
    
    if (active)
    {
+      # project options that are understood by RStudio
       options[["projectUseCache"]]         <- context$settings$use.cache
       options[["projectVcsIgnoreLibrary"]] <- context$settings$vcs.ignore.library
       
+      # user settings understood by RStudio
       options[["userSandboxEnabled"]] <- renv:::renv_config("sandbox.enabled", default = TRUE)
       options[["userShimsEnabled"]]   <- renv:::renv_config("shims.enabled", default = TRUE)
       options[["userUpdatesCheck"]]   <- renv:::renv_config("updates.check", default = TRUE)
@@ -121,7 +124,8 @@
    # check for changes
    old <- .rs.renvCache[["modifiedTimes"]]
    
-   # have things changed?
+   # if neither the lockfile nor the library has been mutated,
+   # then there is nothing to do
    if (identical(old, new))
       return()
    
@@ -147,6 +151,11 @@
       
       object$Package <- record$Package %||% "(unknown)"
       object$Version <- record$Version %||% "(unknown)"
+      
+      # for packages from a known R package repository (e.g. CRAN),
+      # we prefer displaying the repository name as opposed to just
+      # plain "Repository". other sources (e.g. GitHub) are okay
+      # to display as-is and will not have a Repository field
       object$Source <-
          record$Repository %||%
          record$Source %||%
