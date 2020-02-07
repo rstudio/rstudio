@@ -148,6 +148,7 @@
 * Fix incorrect column type display when paging columns (#5479)
 * Fix incorrect sorting in data viewer when paging columns (#4682)
 * Fix carryover of light ANSI background colors (#6092)
+* Fix issue where Shiny applications using `reticulate` on Windows could crash on run (#6140)
 
 ### RStudio Professional
 
