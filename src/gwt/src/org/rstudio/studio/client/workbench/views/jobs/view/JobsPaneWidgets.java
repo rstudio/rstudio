@@ -86,7 +86,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
             toolbar_.removeLeftWidget(progress_);
          
          // show progress
-         progress_ = new JobProgress();
+         progress_ = new JobProgress(events_);
          toolbar_.addLeftWidget(progress_);
          progress_.showJob(job);
       }
@@ -144,7 +144,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
    {
       if (progress_ == null)
       {
-         progress_ = new JobProgress();
+         progress_ = new JobProgress(events_);
          toolbar_.addLeftWidget(progress_);
       }
       progress_.showJob(job);

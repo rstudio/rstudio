@@ -43,7 +43,8 @@ struct RequestType
       Content,
       Events,
       ClientInit,
-      Jupyter
+      Jupyter,
+      VSCode
    };
 };
 
@@ -81,6 +82,10 @@ void proxyLocalhostRequest(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
 
 void proxyJupyterRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+
+void proxyVSCodeRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    

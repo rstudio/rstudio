@@ -607,6 +607,30 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   void breakChunks(std::deque<boost::shared_ptr<std::string>>& chunks)
+   {
+      std::deque<boost::shared_ptr<std::string>> newChunks;
+
+      for (const boost::shared_ptr<std::string>& chunk : chunks)
+      {
+         if (chunk->size() > maxChunkSize)
+         {
+            // break the chunk into more reasonable partial chunks
+            size_t numChunks = static_cast<size_t>(ceil(static_cast<double>(chunk->size()) / maxChunkSize));
+            size_t newChunkSize = static_cast<size_t>(static_cast<double>(chunk->size()) / numChunks);
+            for (size_t i = 0; i < numChunks; ++i)
+            {
+               std::string chunkPiece = chunk->substr(i * newChunkSize, newChunkSize);
+               newChunks.push_back(boost::make_shared<std::string>(std::move(chunkPiece)));
+            }
+         }
+         else
+            newChunks.push_back(chunk);
+      }
+
+      chunks = newChunks;
+   }
+
    void processChunks()
    {
       if (!chunkParser_)
@@ -622,6 +646,10 @@ private:
       // parse the bytes into chunks
       std::deque<boost::shared_ptr<std::string> > chunks;
       bool complete = chunkParser_->parse(bufferPtr, responseBuffer_.size(), &chunks);
+
+      // break up any enormous chunks into more manageable pieces ensure we
+      // do not hit any buffering limits preventing us from forwarding the chunk
+      breakChunks(chunks);
 
       bool chunksHandled = deliverChunks(chunks, complete);
 
@@ -747,6 +775,8 @@ protected:
    bool chunkedEncoding_;
 
 private:
+   static constexpr double maxChunkSize = 1024.0*1024.0; // 1MB
+
    boost::asio::io_service& ioService_;
    ConnectionRetryContext connectionRetryContext_;
    bool logToStderr_;

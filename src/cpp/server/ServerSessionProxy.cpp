@@ -91,6 +91,10 @@ void proxyJupyterRequest(const r_util::SessionContext& context,
                          boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
                          const http::ErrorHandler& errorHandler);
 
+void proxyVSCodeRequest(const r_util::SessionContext& context,
+                        boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+                        const http::ErrorHandler& errorHandler);
+
 bool proxyLocalhostRequest(http::Request& request,
                            const std::string& port,
                            const r_util::SessionContext& context,
@@ -908,6 +912,20 @@ void proxyJupyterRequest(
    overlay::proxyJupyterRequest(context,
                                 ptrConnection,
                                 boost::bind(handleContentError, ptrConnection, context, _1));
+}
+
+void proxyVSCodeRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   // get session context
+   r_util::SessionContext context;
+   if (!sessionContextForRequest(ptrConnection, username, &context))
+      return;
+
+   overlay::proxyVSCodeRequest(context,
+                               ptrConnection,
+                               boost::bind(handleContentError, ptrConnection, context, _1));
 }
 
 void proxyLocalhostRequest(
