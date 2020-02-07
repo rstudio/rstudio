@@ -19,6 +19,7 @@ import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'pros
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { mergedTextNodes } from '../api/text';
+import { editingRootNode } from '../api/node';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -31,23 +32,30 @@ class FindPlugin extends Plugin<DecorationSet> {
   constructor() {
     super({
       key,
-        state: {
-          init: (_config: { [key: string]: any }, instance: EditorState) => {
+      state: {
+        init: (_config: { [key: string]: any }, instance: EditorState) => {
+          return DecorationSet.empty;
+        },
+        apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
+          if (this.updating) {
+            return this.resultDecorations(tr);
+          } else  {
             return DecorationSet.empty;
-          },
-          apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-            if (this.updating) {
-              return this.resultDecorations(tr);
-            } else  {
-              return DecorationSet.empty;
-            }
-          },
+          }
         },
-        props: {
-          decorations: (state: EditorState) => {
-            return key.getState(state);
-          },
+      },
+      view: () => ({
+        update: (view: EditorView, prevState: EditorState) => {
+          if (this.isResultSelected(view.state)) {
+            this.scrollToSelectedResult(view);
+          }
+        }
+      }),
+      props: {
+        decorations: (state: EditorState) => {
+          return key.getState(state);
         },
+      },
     });    
   }
 
@@ -304,6 +312,21 @@ class FindPlugin extends Plugin<DecorationSet> {
       return this.matchesTerm(selectedText);
     } else {
       return false;
+    }
+  }
+
+  private scrollToSelectedResult(view: EditorView) {
+    const selection = view.state.selection;
+    const editingRoot = editingRootNode(selection);
+    if (editingRoot) {
+      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      const node = view.nodeDOM(view.state.doc.resolve(selection.from).before()) as HTMLElement;
+      if (container && node) {
+        const rect = node.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > container.clientHeight) {
+          node.scrollIntoView({ behavior: 'auto' });
+        }
+      }
     }
   }
 
