@@ -82,13 +82,13 @@
    </target>
 
    <!-- panmirror typescript library -->
-   <property name="node.dir" value="../../dependencies/common/node/10.15.3/"/>
-   <condition property="node.bin" value="${node.dir}bin/node">
+   <property name="node.dir" value="../../dependencies/common/node/10.15.3"/>
+   <condition property="node.bin" value="../../../${node.dir}/bin/node">
      <not>
         <os family="windows" />
      </not>
    </condition>
-   <condition property="node.bin" value="${node.dir}node.exe">
+   <condition property="node.bin" value="${node.dir}/node.exe">
      <os family="windows" />
    </condition>
    <property name="panmirror.dir" value="./panmirror/src/editor"/>
