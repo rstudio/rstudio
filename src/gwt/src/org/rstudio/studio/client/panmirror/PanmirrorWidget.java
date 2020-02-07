@@ -35,6 +35,7 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
@@ -250,6 +251,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
          // fire to clients
          SelectionChangeEvent.fire(this);
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.OutlineChange, () -> {
+
+         // sync outline items
+         PanmirrorOutlineItem[] outline = editor_.getOutline();
+         outline_.updateOutline(outline);
+         
       }));
       
    }

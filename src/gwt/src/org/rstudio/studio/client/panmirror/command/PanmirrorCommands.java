@@ -19,7 +19,6 @@ package org.rstudio.studio.client.panmirror.command;
 public class PanmirrorCommands
 {
    // text editing
-   
    public static String Undo = "201CA961-829E-4708-8FBC-8896FDE85A10";
    public static String Redo = "B6272475-04E0-48C0-86E3-DAFA763BDF7B";
    public static String SelectAll = "E42BF0DA-8A02-4FCE-A202-7EA8A4833FC5";
