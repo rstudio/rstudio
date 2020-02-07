@@ -15,12 +15,10 @@
 
 package org.rstudio.studio.client.panmirror;
 
-import jsinterop.annotations.JsType;
-
-@JsType(isNative = true)
 public class PanmirrorEvents
 {
-   public String Update;
-   public String OutlineChange;
-   public String SelectionChange;
+   public static String Update = "update";
+   public static String OutlineChange = "outlineChange";
+   public static String SelectionChange = "selectionChange";
 }
+

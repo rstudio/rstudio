@@ -321,12 +321,11 @@ public class TextEditingTargetVisualMode
             panmirror_ = panmirror;
             
             // remove some keybindings that conflict with the ide
-            PanmirrorCommands commands = Panmirror.EditorCommands;
             disableKeys(
-               commands.Paragraph, 
-               commands.Heading1, commands.Heading2, commands.Heading3,
-               commands.Heading4, commands.Heading5, commands.Heading6,
-               commands.BulletList, commands.OrderedList, commands.TightList
+               PanmirrorCommands.Paragraph, 
+               PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
+               PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
+               PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
             );
            
             // periodically sync edits back to main editor

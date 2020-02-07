@@ -232,14 +232,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       });
       
       
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.Update, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.Update, () -> {
          
          // fire to clients
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(Panmirror.EditorEvents.SelectionChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.SelectionChange, () -> {
          
          // sync toolbar commands
          if (toolbar_ != null)
