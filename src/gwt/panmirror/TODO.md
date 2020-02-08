@@ -3,7 +3,6 @@
 
 ## TODO
 
-- can't applyTheme to null object (windows desktop erorr, is it a general desktop error?)
 
 - initial article on using
 
