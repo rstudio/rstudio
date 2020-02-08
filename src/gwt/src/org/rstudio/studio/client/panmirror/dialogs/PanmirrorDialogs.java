@@ -19,6 +19,7 @@ import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 
 import com.google.inject.Inject;
 
@@ -82,10 +83,24 @@ public class PanmirrorDialogs {
    {
       return PanmirrorInsertTableDialog.show();
    }
+   
+   public Promise<PanmirrorAttrProps> editAttr(PanmirrorAttrProps attr) 
+   {
+      return new Promise<PanmirrorAttrProps>((ResolveCallbackFn<PanmirrorAttrProps> resolve, RejectCallbackFn reject) -> {  
+         PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(attr, (result) -> {
+            resolve.onInvoke(result);
+         });
+         dialog.showModal();
+      });
+   }
   
    
    
-   private GlobalDisplay globalDisplay_;
-
-  
+   private GlobalDisplay globalDisplay_; 
 }
+
+
+
+
+
+
