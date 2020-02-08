@@ -17,7 +17,6 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/system/PosixSystem.hpp>
-#include <core/system/FileMode.hpp>
 
 #include <server_core/SecureKeyFile.hpp>
 
@@ -68,7 +67,7 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
          return error;
 
       // change mode it so it is only readable and writeable by this user
-      error = changeFileMode(secureKeyPath, core::system::UserReadWriteMode);
+      error = secureKeyPath.changeFileMode(core::FileMode::USER_READ_WRITE);
       if (error)
          return error;
 

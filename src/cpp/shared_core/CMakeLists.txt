@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2019 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -49,6 +49,7 @@ if (UNIX)
 
    set (SHARED_CORE_SOURCE_FILES
       ${SHARED_CORE_SOURCE_FILES}
+      system/PosixSystem.cpp
       system/SyslogDestination.cpp
       system/User.cpp
    )

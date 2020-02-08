@@ -23,10 +23,6 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include "config.h"
 
 #ifndef RSTUDIO_CRASHPAD_ENABLED
@@ -231,7 +227,7 @@ Error initialize(ProgramMode programMode)
          // ensure that it is writeable by all users
          // this is best case and we swallow the error because it is legitimately possible we
          // lack the permissions to perform this (such as if we are an unprivileged rsession user)
-         core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
+         databasePath.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE);
 
          databasePathStr = databasePath.getAbsolutePath();
       }
@@ -301,7 +297,7 @@ Error initialize(ProgramMode programMode)
       std::vector<FilePath> dbFolders;
       FilePath(databasePathStr).getChildren(dbFolders);
       for (const FilePath& subPath : dbFolders)
-         core::system::changeFileMode(subPath, core::system::EveryoneReadWriteExecuteMode);
+         subPath.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE);
    }
 #endif
 

@@ -561,10 +561,12 @@ void run(const boost::function<void()>& checkForInput)
          while (true)
          {
             // read
-            int len = posixCall<int>(boost::bind(::read,
-                                                 pContext->fd,
-                                                 eventBuffer,
-                                                 kEventBufferLength));
+            int len = posix::posixCall<int>(
+               boost::bind(
+                  ::read,
+                  pContext->fd,
+                  eventBuffer,
+                  kEventBufferLength));
             if (len < 0)
             {
                // don't terminate for errors indicating no events available

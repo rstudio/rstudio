@@ -72,13 +72,13 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
 
 // TODO: how to handle on Windows?
 #ifndef _WIN32
-      error = core::system::isFileWriteable(projectFilePath, &writeable);
+      error = projectFilePath.isWriteable(writeable);
       if (error)
          return error;
 
       if (writeable)
       {
-         error = core::system::isFileWriteable(projectFilePath.getParent(), &writeable);
+         error = projectFilePath.getParent().isWriteable(writeable);
          if (error)
             return error;
       }

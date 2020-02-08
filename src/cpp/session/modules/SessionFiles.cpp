@@ -46,9 +46,6 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -273,7 +270,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
 
 #ifndef _WIN32
    // on *nix systems, see if browsing above this path is possible
-   error = core::system::isFileReadable(targetPath.getParent(), &browseable);
+   error = targetPath.getParent().isReadable(browseable);
    if (error && !core::isPathNotFoundError(error))
       LOG_ERROR(error);
 #endif
