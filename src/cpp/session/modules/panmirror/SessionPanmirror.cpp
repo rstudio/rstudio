@@ -261,9 +261,9 @@ Error initialize()
 {
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(module_context::registerRpcMethod, "pandoc_ast_to_markdown", pandocAstToMarkdown))
-      (bind(module_context::registerRpcMethod, "pandoc_markdown_to_ast", pandocMarkdownToAst))
-      (bind(module_context::registerRpcMethod, "pandoc_list_extensions", pandocListExtensions))
+      (boost::bind(module_context::registerRpcMethod, "pandoc_ast_to_markdown", pandocAstToMarkdown))
+      (boost::bind(module_context::registerRpcMethod, "pandoc_markdown_to_ast", pandocMarkdownToAst))
+      (boost::bind(module_context::registerRpcMethod, "pandoc_list_extensions", pandocListExtensions))
    ;
    return initBlock.execute();
 }
