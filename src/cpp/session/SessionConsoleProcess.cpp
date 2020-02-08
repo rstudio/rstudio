@@ -55,6 +55,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    if (shellEnv.empty())
       core::system::environment(&shellEnv);
 
+#ifdef __APPLE__
+   // suppress macOS Catalina warning suggesting switching to zsh
+   core::system::setenv(&shellEnv, "BASH_SILENCE_DEPRECATION_WARNING", "1");
+#endif
+
    *pSelectedShellType = procInfo.getShellType();
 
 #ifndef _WIN32
