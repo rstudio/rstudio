@@ -26,6 +26,8 @@
 
 #include <shared_core/ILogDestination.hpp>
 
+#include <shared_core/PImpl.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -74,6 +76,10 @@ public:
     * @param in_message     The message to write to syslog.
     */
    void writeLog(log::LogLevel in_logLevel, const std::string& in_message) override;
+
+private:
+   // The private implementation of SyslogDestination
+   PRIVATE_IMPL(m_impl);
 };
 
 } // namespace system
