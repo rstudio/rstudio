@@ -559,6 +559,8 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="showDomElements"/>
             <cmd refid="showShortcutCommand"/>
+            <separator/>
+            <cmd refid="enableProsemirrorDevTools"/>
          </menu>
       </menu>
    </menu>
@@ -1994,6 +1996,11 @@ well as menu structures (for main menu and popup menus).
         label="Toggle Visual Markdown Editor"
         menuLabel="_Use Visual Editor"
         desc="Toggle visual markdown editor"/>
+        
+   <cmd id="enableProsemirrorDevTools"
+        label="Enable Prosemirror DevTools"
+        menuLabel="_Prosemirror DevTools"
+        desc="Enable Prosemirror DevTools" />
 
    <cmd id="usingRMarkdownHelp"
         menuLabel="_Using R Markdown"

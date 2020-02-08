@@ -215,7 +215,13 @@ public class TextEditingTargetVisualMode
       }  
    }
    
-   
+   public void enableDevTools()
+   {
+      withPanmirror(() -> {
+         panmirror_.enableDevTools();
+      });
+   }
+  
   
    private void manageUI(boolean activate, boolean focus)
    {

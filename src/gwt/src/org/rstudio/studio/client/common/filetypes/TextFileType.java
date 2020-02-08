@@ -417,6 +417,7 @@ public class TextFileType extends EditableFileType
       if (isMarkdown())
       {
          results.add(commands.toggleRmdVisualMode());
+         results.add(commands.enableProsemirrorDevTools());
       }
       if (canCheckSpelling())
       {

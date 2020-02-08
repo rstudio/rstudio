@@ -2978,6 +2978,12 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onEnableProsemirrorDevTools()
+   {
+      visualMode_.enableDevTools();
+   }
+   
+   @Handler
    void onReformatCode()
    {
       // Only allow if entire selection in R mode for now
