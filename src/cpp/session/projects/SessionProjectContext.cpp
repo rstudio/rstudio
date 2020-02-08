@@ -560,21 +560,25 @@ bool ProjectContext::fileMonitorFilter(
       const FileInfo& fileInfo,
       bool ignoreObjectFiles) const
 {
-   // ignore files within an renv or packrat library
    auto ignored = {
-         "/renv/library",
-         "/renv/staging",
-         "/packrat/lib"
+
+      // don't monitor things in .Rproj.user
+      "/.Rproj.user",
+
+      // ignore things within a .git folder
+      "/.git",
+
+      // ignore files within an renv or packrat library
+      "/renv/library",
+      "/renv/staging",
+      "/packrat/lib"
+
    };
 
    std::string path = fileInfo.absolutePath();
    for (auto&& component : ignored)
-   {
       if (boost::algorithm::icontains(path, component))
-      {
          return false;
-      }
-   }
 
    return module_context::fileListingFilter(fileInfo, ignoreObjectFiles);
 }
