@@ -575,6 +575,12 @@ bool ProjectContext::fileMonitorFilter(
 
    };
 
+   // check and see if the path matches any of the above components.
+   // note that we check for the component occurring anywhere in the
+   // path as the Windows file monitor watches all files within the
+   // monitored directory recursively (irrespective of the filter)
+   // and so we need the filter to apply to files which are 'ignored'
+   // and yet still monitored in ignored sub-directories
    std::string path = fileInfo.absolutePath();
    for (auto&& component : ignored)
       if (boost::algorithm::icontains(path, component))
