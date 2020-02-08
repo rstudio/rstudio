@@ -33,10 +33,14 @@ namespace panmirror {
 
 namespace {
 
-
 Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
 {
-   FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath("pandoc");
+#ifndef WIN32
+   std::string pandoc = "pandoc";
+#else
+   std::string pandoc = "pandoc.exe";
+#endif
+   FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(pandoc);
    return core::system::runProgram(
       string_utils::utf8ToSystem(pandocPath.getAbsolutePath()),
       args,
