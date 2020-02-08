@@ -1,7 +1,7 @@
 /*
  * TerminalShellInfo.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,8 @@ public class TerminalShellInfo extends JavaScriptObject
          return "Custom";
       case UserPrefs.POSIX_TERMINAL_SHELL_NONE:
          return "User command";
+      case UserPrefs.POSIX_TERMINAL_SHELL_ZSH:
+         return "Zsh";
       default:
          return "Unknown";
       }

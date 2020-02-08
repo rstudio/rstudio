@@ -201,6 +201,7 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String POSIX_TERMINAL_SHELL_DEFAULT = "default";
    public final static String POSIX_TERMINAL_SHELL_BASH = "bash";
+   public final static String POSIX_TERMINAL_SHELL_ZSH = "zsh";
    public final static String POSIX_TERMINAL_SHELL_CUSTOM = "custom";
    public final static String POSIX_TERMINAL_SHELL_NONE = "none";
 

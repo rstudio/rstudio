@@ -54,6 +54,7 @@
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 * Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
 * Add 'Close All Terminals' command to Terminal menu (#3564)
+* Zsh option in terminal for Mac and Linux desktop, and RStudio Server (#5587)
 
 ### Diagnostics and Recovery
 
