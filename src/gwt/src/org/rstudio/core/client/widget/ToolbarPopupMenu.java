@@ -1,7 +1,7 @@
 /*
  * ToolbarPopupMenu.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,13 +34,19 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
+import org.rstudio.core.client.command.CommandEvent;
+import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 
 public class ToolbarPopupMenu extends ThemedPopupPanel
+                              implements CommandHandler
 {
    // Extensibility point for dynamically constructed popup menus. The default
    // implementation returns itself, but extensions can do some work to build
@@ -58,6 +64,8 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_ = createMenuBar();
       Widget mainWidget = createMainWidget();
       setWidget(mainWidget);
+      events_ = RStudioGinjector.INSTANCE.getEventBus();
+      commandHandler_ = new HandlerRegistrations();
    }
    
    public ToolbarPopupMenu(ToolbarPopupMenu parent)
@@ -77,10 +85,18 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    }
    
    @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      commandHandler_.add(events_.addHandler(CommandEvent.TYPE, this));
+   }
+
+   @Override
    protected void onUnload()
    {
       super.onUnload();
       menuBar_.selectItem(null);
+      commandHandler_.removeHandler();
    }
    
    public void selectFirst()
@@ -131,25 +147,25 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    
    public void insertItem(MenuItem menuItem, int beforeIndex)
    {
-     ScheduledCommand command = menuItem.getScheduledCommand() ;
+     ScheduledCommand command = menuItem.getScheduledCommand();
       if (command != null)
          menuItem.setScheduledCommand(new ToolbarPopupMenuCommand(command));
-      menuBar_.insertItem(menuItem, beforeIndex) ;
+      menuBar_.insertItem(menuItem, beforeIndex);
    }
    
    public void removeItem(MenuItem menuItem)
    {
-      menuBar_.removeItem(menuItem) ;
+      menuBar_.removeItem(menuItem);
    }
    
    public boolean containsItem(MenuItem menuItem)
    {
-      return menuBar_.getItemIndex(menuItem) >= 0 ;
+      return menuBar_.getItemIndex(menuItem) >= 0;
    }
    
    public void clearItems()
    {
-      menuBar_.clearItems() ;
+      menuBar_.clearItems();
    }
    
    public void addSeparator()
@@ -174,7 +190,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    
    public int getItemCount()
    {
-      return menuBar_.getItemCount() ;
+      return menuBar_.getItemCount();
    }
 
    public List<MenuItem> getMenuItems() { return menuBar_.getMenuItems(); }
@@ -214,7 +230,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       public ToolbarMenuBar(boolean vertical)
       {
-         super(vertical) ;
+         super(vertical);
       }
       
       @Override
@@ -292,7 +308,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
 
       public int getItemCount()
       {
-         return getItems().size() ;
+         return getItems().size();
       }
 
       public List<MenuItem> getMenuItems() { return getItems(); }
@@ -351,10 +367,22 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       if (tableNode == null)
          return null;
       
-      return tableNode.<Element>cast();
+      return tableNode.cast();
       
+   }
+
+   @Override
+   public void onCommand(AppCommand command)
+   {
+      if (command.getExecutedFromShortcut())
+      {
+         if (menuBar_.isVisible())
+            menuBar_.setVisible(false);
+      }
    }
    
    protected ToolbarMenuBar menuBar_;
    private ToolbarPopupMenu parent_;
+   private EventBus events_;
+   private HandlerRegistrations commandHandler_;
 }
