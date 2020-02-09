@@ -1,5 +1,5 @@
 /*
- * PanimrrorEditAttributesDialog.java
+ * PanimrrorEditAttrDialog.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
