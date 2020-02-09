@@ -42,7 +42,7 @@ export class RawInlineCommand extends ProsemirrorCommand {
             // get the range of the mark
             let range = { from: state.selection.from, to: state.selection.to };
             if (isActive) {
-              range = getMarkRange(state.selection.$head, schema.marks.raw_inline) as { from: number; to: number };
+              range = getMarkRange(state.selection.$from, schema.marks.raw_inline) as { from: number; to: number };
             }
 
             // get raw attributes if we have them
