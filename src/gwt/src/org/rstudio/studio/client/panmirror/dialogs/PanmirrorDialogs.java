@@ -20,6 +20,8 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 
 import com.google.inject.Inject;
 
@@ -93,8 +95,29 @@ public class PanmirrorDialogs {
          dialog.showModal();
       });
    }
-  
    
+   
+   public Promise<PanmirrorRawFormatResult> editRawInline(PanmirrorRawFormatProps raw) 
+   {
+      return editRaw(raw, 2);
+   }
+   
+   public Promise<PanmirrorRawFormatResult> editRawBlock(PanmirrorRawFormatProps raw) 
+   {
+      return editRaw(raw, 10);
+   }
+   
+   private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, int minLines)
+   {
+      return new Promise<PanmirrorRawFormatResult>(
+         (ResolveCallbackFn<PanmirrorRawFormatResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, minLines, 
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal();
+         }
+      );
+   }
    
    private GlobalDisplay globalDisplay_; 
 }

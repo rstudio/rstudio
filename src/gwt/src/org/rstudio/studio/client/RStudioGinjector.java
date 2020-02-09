@@ -67,6 +67,7 @@ import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.plumber.PlumberAPI;
@@ -294,6 +295,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
+   void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
    void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

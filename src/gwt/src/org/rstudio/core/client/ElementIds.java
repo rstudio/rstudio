@@ -452,6 +452,11 @@ public class ElementIds
    public final static String FRAME_MAX_BTN = "frame_max_btn";
    public final static String MIN_FRAME_MIN_BTN = "min_frame_min_btn";
    public final static String MIN_FRAME_MAX_BTN = "min_frame_max_btn";
+   
+   // Visual Markdown Editing dialogs
+   public final static String VISUAL_MD_RAW_FORMAT_SELECT = "visual_md_raw_format_select";
+   public final static String VISUAL_MD_RAW_FORMAT_CONTENT = "visual_md_raw_format_content";
+   public final static String VISUAL_MD_RAW_FORMAT_REMOVE_BUTTON = "visual_md_raw_format_remove_button";
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";

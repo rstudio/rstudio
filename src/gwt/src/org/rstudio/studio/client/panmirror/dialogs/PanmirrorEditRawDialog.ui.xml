@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rs="urn:import:org.rstudio.core.client.widget"
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   
+   <ui:style>
+      @external gwt-Label;
+      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+	    
+      .dialog {
+         width: 400px;
+      }
+      .formatSelect select {
+         width: 100%;
+      }
+      .spaced {
+         margin-bottom: 10px;
+      }
+   		
+      .dialog label,
+      .dialog .gwt-Label {
+         margin-bottom: 4px;
+      }
+		
+      .rawContent {
+         -moz-box-sizing: border-box;
+         -webkit-box-sizing: border-box;
+         box-sizing: border-box;
+         border: 1px solid #c3c5c7;
+         border-radius: 4px;
+         font-family: fixedWidthFont;
+         width: 100%;
+      }
+     
+   </ui:style>
+   
+   <g:HTMLPanel styleName="{style.dialog}">
+   
+      <dialogs:RawFormatSelect styleName="{style.formatSelect} {style.spaced}" ui:field="rawFormatSelect_">
+      </dialogs:RawFormatSelect>
+   		
+      <g:Label text="Raw content:"/>
+      <rs:FormTextArea styleName="{style.rawContent} {style.spaced}"
+                 	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
+      </rs:FormTextArea>
+      	
+   </g:HTMLPanel>
+
+</ui:UiBinder> 
