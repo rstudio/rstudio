@@ -53,6 +53,7 @@
 * PowerShell Core option in terminal (Windows-only)
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 * Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
+* Suppress macOS Catalina message about switching to zsh in Terminal pane (#6182)
 * Add 'Close All Terminals' command to Terminal menu (#3564)
 
 ### Diagnostics and Recovery
