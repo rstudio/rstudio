@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
@@ -80,23 +81,37 @@ public class PanmirrorDialogs {
             {
                resolve.onInvoke(true);    
             }        
-         });
-       
+         });    
       });
-      
    }
-   
-   
-   
+
 
    
-   public Promise<PanmirrorAttrProps> editAttr(PanmirrorAttrProps attr) 
+   public Promise<PanmirrorAttrResult> editAttr(PanmirrorAttrProps attr)
    {
-      return new Promise<PanmirrorAttrProps>(
-         (ResolveCallbackFn<PanmirrorAttrProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(attr, (result) -> {
-               resolve.onInvoke(result);
-            });
+      return editPanmirrorAttr("Edit Attributes", false, attr);
+   }
+
+   
+   public Promise<PanmirrorAttrResult> editSpan(PanmirrorAttrProps attr)
+   {
+      return editPanmirrorAttr("Span Attributes", true, attr);
+   }
+   
+   public Promise<PanmirrorAttrResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
+   {
+      return editPanmirrorAttr("Section/Div Attributes", removeEnabled, attr);
+   }
+
+
+   // TODO
+   private Promise<PanmirrorAttrResult> editPanmirrorAttr(String caption, boolean removeEnabled, PanmirrorAttrProps attr) 
+   {
+      return new Promise<PanmirrorAttrResult>(
+         (ResolveCallbackFn<PanmirrorAttrResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeEnabled, attr, 
+               (result) -> { resolve.onInvoke(result); }
+            );
             dialog.showModal();
          }
       );
@@ -113,6 +128,7 @@ public class PanmirrorDialogs {
       return editRaw(raw, 10);
    }
    
+
    private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, int minLines)
    {
       return new Promise<PanmirrorRawFormatResult>(
@@ -137,6 +153,8 @@ public class PanmirrorDialogs {
       );
    }
    
+   
+   // TODO
    public Promise<PanmirrorInsertCitationResult> insertCitation()
    {
       return new Promise<PanmirrorInsertCitationResult>(

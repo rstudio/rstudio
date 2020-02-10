@@ -28,7 +28,7 @@ export interface EditorDialogs {
   editOrderedList: OrderedListEditorFn;
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
-  editDiv: AttrEditorFn;
+  editDiv: DivAttrEditorFn;
   editRawInline: RawFormatEditorFn;
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
@@ -48,6 +48,8 @@ export enum AlertType {
 export type AlertFn = (message: string, title?: string, type?: AlertType) => Promise<boolean>;
 
 export type AttrEditorFn = (attr: AttrProps) => Promise<AttrEditResult | null>;
+
+export type DivAttrEditorFn = (attr: AttrProps, removeEnabled: boolean) => Promise<AttrEditResult | null>;
 
 export type LinkEditorFn = (
   link: LinkProps,

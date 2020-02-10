@@ -55,7 +55,6 @@ import {
   RawFormatProps as EditRawProps,
 } from 'editor/src/api/ui';
 
-import { pandocAttrAvailable } from 'editor/src/api/pandoc_attr';
 import { ListCapabilities } from 'editor/src/api/list';
 import { LinkTargets, LinkCapabilities } from 'editor/src/api/link';
 
@@ -211,13 +210,13 @@ export default class EditorDialogs extends React.Component<Readonly<{}>, EditorD
     });
   }
 
-  public editDiv(attr: AttrProps): Promise<AttrEditResult | null> {
+  public editDiv(attr: AttrProps, removeEnabled: boolean): Promise<AttrEditResult | null> {
     return new Promise(resolve => {
       this.setState({
         editDiv: {
           isOpen: true,
           attr,
-          removeEnabled: pandocAttrAvailable(attr),
+          removeEnabled,
           caption: t('edit_div_dialog_caption'),
           onClosed: (result: AttrEditResult | null) => {
             this.setState({ editDiv: { ...this.state.editDiv, isOpen: false } });

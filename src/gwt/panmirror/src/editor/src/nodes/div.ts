@@ -25,6 +25,7 @@ import {
   pandocAttrParseDom,
   pandocAttrReadAST,
   pandocAttrFrom,
+  pandocAttrAvailable,
 } from '../api/pandoc_attr';
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
@@ -133,7 +134,7 @@ class DivCommand extends ProsemirrorCommand {
 
 async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
   const attr = pandocAttrFrom(div.node.attrs);
-  const result = await ui.dialogs.editDiv(attr);
+  const result = await ui.dialogs.editDiv(attr, pandocAttrAvailable(attr));
   if (result) {
     const tr = state.tr;
     if (result.action === 'edit') {
@@ -146,7 +147,7 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
 }
 
 async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void) {
-  const result = await ui.dialogs.editDiv({});
+  const result = await ui.dialogs.editDiv({}, false);
   if (result) {
     wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;

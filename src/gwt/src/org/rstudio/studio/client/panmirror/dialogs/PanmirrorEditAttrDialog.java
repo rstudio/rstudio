@@ -18,16 +18,20 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 
 import com.google.gwt.aria.client.Roles;
+
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrResult;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
 
-public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrProps>
+public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrResult>
 {
 
    public interface Binder extends UiBinder<Widget, 
@@ -36,13 +40,34 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrProps>
    }
    
    public PanmirrorEditAttrDialog(
+               String caption,
+               boolean removeEnabled,
                PanmirrorAttrProps attr,
-               OperationWithInput<PanmirrorAttrProps> operation)
+               OperationWithInput<PanmirrorAttrResult> operation)
    {
-      super("Edit Attributes", Roles.getDialogRole(), operation);
+      super(caption, Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       
+      if (removeEnabled)
+      {
+         ThemedButton removeAttributesButton = new ThemedButton("Remove Attributes");
+         removeAttributesButton.addClickHandler((event) -> {
+            PanmirrorAttrResult input = collectInput();
+            input.action = "remove";
+            validateAndGo(input, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  closeDialog();
+                  if (operation != null)
+                     operation.execute(input);
+                  onSuccess();
+               }
+            });
+         });
+      }
    }
    
    @Override
@@ -52,17 +77,20 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrProps>
    }
    
    @Override
-   protected PanmirrorAttrProps collectInput()
+   protected PanmirrorAttrResult collectInput()
    {
       PanmirrorAttrProps attr = new PanmirrorAttrProps();
       attr.id = "foo";
       attr.classes = new String[]{"boo", "too"};
-      return attr;
+      PanmirrorAttrResult result = new PanmirrorAttrResult();
+      result.action = "edit";
+      result.attr = attr;
+      return result;
    }
 
 
    @Override
-   protected boolean validate(PanmirrorAttrProps input)
+   protected boolean validate(PanmirrorAttrResult input)
    {
       return true;
    }
