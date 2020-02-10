@@ -30,8 +30,8 @@
    
    <g:HTMLPanel styleName="{res.styles.dialog} {style.rawDialog}">
    
-      <dialogs:RawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
-      </dialogs:RawFormatSelect>
+      <dialogs:PanmirrorRawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
+      </dialogs:PanmirrorRawFormatSelect>
    		
       <g:Label text="Raw content:"/>
       <rw:FormTextArea styleName="{style.rawContent} {res.styles.spaced}"

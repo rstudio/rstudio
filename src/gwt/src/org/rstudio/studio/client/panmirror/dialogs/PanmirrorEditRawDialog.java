@@ -135,7 +135,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    private GlobalDisplay globalDisplay_;
    
    private Widget mainWidget_; 
-   @UiField RawFormatSelect rawFormatSelect_;
+   @UiField PanmirrorRawFormatSelect rawFormatSelect_;
    @UiField FormTextArea rawContent_;
    
    private static PanmirrorEditRawDialogUiBinder uiBinder = GWT

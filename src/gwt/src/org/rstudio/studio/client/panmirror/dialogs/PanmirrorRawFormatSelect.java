@@ -20,9 +20,9 @@ import java.util.Arrays;
 
 import org.rstudio.core.client.widget.SelectWidget;
 
-public class RawFormatSelect extends SelectWidget
+public class PanmirrorRawFormatSelect extends SelectWidget
 {
-   public RawFormatSelect()
+   public PanmirrorRawFormatSelect()
    {
       super("Format:", getOptions(), getValues(), false);
    }
