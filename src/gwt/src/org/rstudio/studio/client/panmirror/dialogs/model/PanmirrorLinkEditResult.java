@@ -1,5 +1,5 @@
 /*
- * PanmirrorAttrResult.java
+ * PanmirrorLinkEditResult.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -19,10 +19,10 @@ package org.rstudio.studio.client.panmirror.dialogs.model;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorAttrResult
+public class PanmirrorLinkEditResult
 {
    public String action;
-   public PanmirrorAttrProps attr;
+   public PanmirrorLinkProps link;
 }
 
 

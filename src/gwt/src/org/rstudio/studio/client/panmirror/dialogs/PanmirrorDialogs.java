@@ -20,9 +20,16 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListCapabilities;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 
@@ -85,29 +92,71 @@ public class PanmirrorDialogs {
       });
    }
 
-
    
-   public Promise<PanmirrorAttrResult> editAttr(PanmirrorAttrProps attr)
+   // TODO
+   public Promise<PanmirrorLinkEditResult> editLink(
+      PanmirrorLinkProps link, PanmirrorLinkTargets targets, PanmirrorLinkCapabilities capabilities)
+   {
+      return new Promise<PanmirrorLinkEditResult>(
+         (ResolveCallbackFn<PanmirrorLinkEditResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditLinkDialog dialog = new PanmirrorEditLinkDialog(link, targets, capabilities,
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal();
+         }   
+      );
+   }
+   
+   
+   // TODO
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, boolean editAttributes)
+   {
+      return new Promise<PanmirrorImageProps>(
+         (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, editAttributes,
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal();
+         }
+      );      
+   }
+   
+   
+   // TODO
+   public Promise<PanmirrorOrderedListProps> editOrderedList(PanmirrorOrderedListProps props, 
+                                                             PanmirrorListCapabilities capabilities)
+   {
+      return new Promise<PanmirrorOrderedListProps>(
+         (ResolveCallbackFn<PanmirrorOrderedListProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditOrderedListDialog dialog = new PanmirrorEditOrderedListDialog(props, capabilities,
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal();
+         }
+      );
+   }
+   
+   public Promise<PanmirrorAttrEditResult> editAttr(PanmirrorAttrProps attr)
    {
       return editPanmirrorAttr("Edit Attributes", false, attr);
    }
 
    
-   public Promise<PanmirrorAttrResult> editSpan(PanmirrorAttrProps attr)
+   public Promise<PanmirrorAttrEditResult> editSpan(PanmirrorAttrProps attr)
    {
       return editPanmirrorAttr("Span Attributes", true, attr);
    }
    
-   public Promise<PanmirrorAttrResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
+   public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
       return editPanmirrorAttr("Section/Div Attributes", removeEnabled, attr);
    }
 
 
-   private Promise<PanmirrorAttrResult> editPanmirrorAttr(String caption, boolean removeEnabled, PanmirrorAttrProps attr) 
+   private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, boolean removeEnabled, PanmirrorAttrProps attr) 
    {
-      return new Promise<PanmirrorAttrResult>(
-         (ResolveCallbackFn<PanmirrorAttrResult> resolve, RejectCallbackFn reject) -> {  
+      return new Promise<PanmirrorAttrEditResult>(
+         (ResolveCallbackFn<PanmirrorAttrEditResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeEnabled, attr, 
                (result) -> { resolve.onInvoke(result); }
             );

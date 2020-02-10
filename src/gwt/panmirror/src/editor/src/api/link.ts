@@ -17,9 +17,9 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { findChildren, findChildrenByType } from 'prosemirror-utils';
 
 export enum LinkType {
-  URL,
-  Heading,
-  ID,
+  URL = 0,
+  Heading = 1,
+  ID = 2,
 }
 
 export interface LinkCapabilities {
