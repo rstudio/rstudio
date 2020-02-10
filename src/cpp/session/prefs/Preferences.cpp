@@ -113,8 +113,8 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
 {
    Error result;
 
-   // A vector of all the preferences actually changed in this update
-   std::vector<std::string> changed;
+   // A set of all the preferences actually changed in this update
+   std::set<std::string> changed;
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
@@ -123,7 +123,7 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
       // Write only the unique values in this layer.
-      json::Object unique;
+      json::Object newPrefs;
       for (const auto pref: prefs)
       {
          // Check to see whether the value for this preference (a) exists in some other lower layer,
@@ -142,7 +142,7 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
                   {
                      // The pref exists in this layer and has a different value; emit a changed
                      // notification for it later.
-                     changed.push_back(pref.getName());
+                     changed.insert(pref.getName());
                   }
                   else
                   {
@@ -162,11 +162,30 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
          {
             // If the preference doesn't exist in any other layer, or the value doesn't match the
             // value found elsewhere, record the unique value in this layer.
-            unique[pref.getName()] = pref.getValue();
+            newPrefs[pref.getName()] = pref.getValue();
          }
       }
 
-      result = layers_[layer]->writePrefs(unique);
+      // We emitted change notifications for values that changed; now we need to emit them for
+      // added/removed values.
+      auto oldPrefs = layers_[layer]->allPrefs();
+
+      // Find prefs we removed (in the old set but not the new set)
+      for (const auto pref: oldPrefs)
+      {
+         if (newPrefs.find(pref.getName()) == newPrefs.end())
+            changed.insert(pref.getName());
+      }
+
+      // Find prefs we added (in the new set but not the old set)
+      for (const auto pref: newPrefs)
+      {
+         if (oldPrefs.find(pref.getName()) == oldPrefs.end())
+            changed.insert(pref.getName());
+      }
+
+      // Commit new prefs
+      result = layers_[layer]->writePrefs(newPrefs);
    }
    END_LOCK_MUTEX;
 
