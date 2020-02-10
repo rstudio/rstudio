@@ -3,26 +3,19 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
-
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs.Resources" />
    <ui:style>
-      @external gwt-Label;
+     
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 	    
-      .dialog {
+      .rawDialog {
          width: 400px;
       }
+	    
       .formatSelect select {
          width: 100%;
       }
-      .spaced {
-         margin-bottom: 10px;
-      }
-   		
-      .dialog label,
-      .dialog .gwt-Label {
-         margin-bottom: 4px;
-      }
-		
+     
       .rawContent {
          -moz-box-sizing: border-box;
          -webkit-box-sizing: border-box;
@@ -35,13 +28,13 @@
      
    </ui:style>
    
-   <g:HTMLPanel styleName="{style.dialog}">
+   <g:HTMLPanel styleName="{res.styles.dialog} {style.rawDialog}">
    
-      <dialogs:RawFormatSelect styleName="{style.formatSelect} {style.spaced}" ui:field="rawFormatSelect_">
+      <dialogs:RawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:RawFormatSelect>
    		
       <g:Label text="Raw content:"/>
-      <rw:FormTextArea styleName="{style.rawContent} {style.spaced}"
+      <rw:FormTextArea styleName="{style.rawContent} {res.styles.spaced}"
                  	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
       </rw:FormTextArea>
       	
