@@ -51,7 +51,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
       });
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-      mainWidget_ = uiBinder.createAndBindUi(this);
+      mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
    
       rawFormatSelect_.setValue(StringUtil.notNull(raw.format));
       rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
@@ -134,16 +134,11 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
 
    private GlobalDisplay globalDisplay_;
    
+   interface Binder extends UiBinder<Widget, PanmirrorEditRawDialog> {}
+   
    private Widget mainWidget_; 
    @UiField PanmirrorRawFormatSelect rawFormatSelect_;
    @UiField FormTextArea rawContent_;
    
-   private static PanmirrorEditRawDialogUiBinder uiBinder = GWT
-         .create(PanmirrorEditRawDialogUiBinder.class);
-
-   interface PanmirrorEditRawDialogUiBinder extends
-         UiBinder<Widget, PanmirrorEditRawDialog>
-   {
-   }
    
 }

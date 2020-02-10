@@ -38,13 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 
 public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrResult>
-{
-
-   public interface Binder extends UiBinder<Widget, 
-                                            PanmirrorEditAttrDialog>
-   {
-   }
-   
+{ 
    public PanmirrorEditAttrDialog(
                String caption,
                boolean removeEnabled,
@@ -112,6 +106,8 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrResult>
    }
  
    private final PanmirrorUITools uiTools_;
+   
+   interface Binder extends UiBinder<Widget, PanmirrorEditAttrDialog> {}
    
    private Widget mainWidget_; 
    

@@ -39,7 +39,7 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
          operation.execute(null);
       });
    
-      mainWidget_ = uiBinder.createAndBindUi(this);
+      mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       citationId_.getElement().setId(ElementIds.VISUAL_MD_CITATION_ID);
       locator_.getElement().setId(ElementIds.VISUAL_MD_CITATION_LOCATOR);
@@ -66,14 +66,7 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
       return true;
    }
    
-   private static PanmirrorInsertTableDialogUiBinder uiBinder = GWT
-         .create(PanmirrorInsertTableDialogUiBinder.class);
-
-   interface PanmirrorInsertTableDialogUiBinder extends
-         UiBinder<Widget, PanmirrorInsertCitationDialog>
-   {
-   }
-   
+   interface Binder extends UiBinder<Widget, PanmirrorInsertCitationDialog> {}
    
    private Widget mainWidget_;
 

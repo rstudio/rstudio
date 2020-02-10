@@ -40,7 +40,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
          operation.execute(null);
       });
    
-      mainWidget_ = uiBinder.createAndBindUi(this);
+      mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       configureNumeric(rows_);
       configureNumeric(columns_);
@@ -86,14 +86,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
       return value.length() > 0 ? Integer.parseInt(value) : 0;
    }
    
-   private static PanmirrorInsertTableDialogUiBinder uiBinder = GWT
-         .create(PanmirrorInsertTableDialogUiBinder.class);
-
-   interface PanmirrorInsertTableDialogUiBinder extends
-         UiBinder<Widget, PanmirrorInsertTableDialog>
-   {
-   }
-   
+   interface Binder extends UiBinder<Widget, PanmirrorInsertTableDialog> {}
    
    private Widget mainWidget_;
 
