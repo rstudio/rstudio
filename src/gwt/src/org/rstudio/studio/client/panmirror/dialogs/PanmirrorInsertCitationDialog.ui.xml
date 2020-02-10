@@ -1,0 +1,20 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs.Resources" />
+   <ui:style>
+     
+   
+      
+   </ui:style>
+   
+   <g:VerticalPanel styleName="{res.styles.dialog}">
+   
+      
+
+      	
+   </g:VerticalPanel>
+
+</ui:UiBinder> 

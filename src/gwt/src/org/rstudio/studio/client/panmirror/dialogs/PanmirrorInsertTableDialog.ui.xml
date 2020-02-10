@@ -3,25 +3,11 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
-
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs.Resources" />
    <ui:style>
-      @external gwt-Label;
-   
-      .dialog {
-         width: 350px;
-      }
       
       .column {
          width: 175px;
-      }
-      
-      .spaced {
-         margin-bottom: 10px;
-      }
-   		
-      .dialog label,
-      .dialog .gwt-Label {
-         margin-bottom: 4px;
       }
       
       .caption {
@@ -33,9 +19,9 @@
       }  
    </ui:style>
    
-   <g:VerticalPanel styleName="{style.dialog}">
+   <g:VerticalPanel styleName="{res.styles.dialog}">
    
-      <rw:LayoutGrid styleName="{style.spaced}">
+      <rw:LayoutGrid styleName="{res.styles.spaced}">
          <rw:row>
             <rw:customCell styleName="{style.column}">
                <rw:NumericValueWidget label="Rows" value="3" ui:field="rows_"></rw:NumericValueWidget>
@@ -47,11 +33,11 @@
       </rw:LayoutGrid>
     
       <g:Label text="Caption"></g:Label>
-      <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {style.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
+      <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
           
       <g:cell><g:Label></g:Label></g:cell>  
           
-      <g:CheckBox styleName="{style.header} {style.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+      <g:CheckBox styleName="{style.header} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
         
 
       	

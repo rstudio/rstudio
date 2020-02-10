@@ -20,10 +20,14 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -82,17 +86,9 @@ public class PanmirrorDialogs {
       
    }
    
-   public Promise<PanmirrorInsertTableResult> insertTable()
-   {
-      return new Promise<PanmirrorInsertTableResult>(
-         (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog((result) -> {
-               resolve.onInvoke(result);
-            });
-            dialog.showModal();
-         }
-      );
-   }
+   
+   
+
    
    public Promise<PanmirrorAttrProps> editAttr(PanmirrorAttrProps attr) 
    {
@@ -128,6 +124,51 @@ public class PanmirrorDialogs {
          }
       );
    }
+   
+   public Promise<PanmirrorInsertTableResult> insertTable()
+   {
+      return new Promise<PanmirrorInsertTableResult>(
+         (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog((result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal();
+         }
+      );
+   }
+   
+   public Promise<PanmirrorInsertCitationResult> insertCitation()
+   {
+      return new Promise<PanmirrorInsertCitationResult>(
+         (ResolveCallbackFn<PanmirrorInsertCitationResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorInsertCitationDialog dialog = new PanmirrorInsertCitationDialog((result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal();
+         }
+      );
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      public interface Styles extends CssResource
+      {
+         String dialog();
+         String spaced();
+      }
+
+      @Source("PanmirrorDialogsStyles.css")
+      Styles styles();
+      
+   
+   }
+   
+   public static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   public static void ensureStylesInjected()
+   {
+      RESOURCES.styles().ensureInjected();
+   }
+   
    
    private GlobalDisplay globalDisplay_; 
 }

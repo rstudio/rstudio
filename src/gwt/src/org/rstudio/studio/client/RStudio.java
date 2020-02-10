@@ -76,6 +76,7 @@ import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarResources;
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineResources;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
@@ -462,6 +463,7 @@ public class RStudio implements EntryPoint
       NewConnectionShinyHost.ensureStylesInjected();
       NewConnectionSnippetHost.ensureStylesInjected();
       NewConnectionSnippetDialog.ensureStylesInjected();
+      PanmirrorDialogs.ensureStylesInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();

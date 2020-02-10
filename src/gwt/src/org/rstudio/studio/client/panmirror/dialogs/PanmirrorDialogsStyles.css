@@ -1,0 +1,17 @@
+@external gwt-Label;
+
+
+.dialog {
+   width: 350px;
+}
+	   
+.dialog label,
+.dialog .gwt-Label {
+   margin-bottom: 4px;
+}
+
+.spaced {
+   margin-bottom: 10px;
+}
+
+
