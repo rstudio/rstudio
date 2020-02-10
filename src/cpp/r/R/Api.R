@@ -825,8 +825,8 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # return system username 
-.rs.addApiFunction("systemUser", function() {
-   .Call("rs_systemUser", PACKAGE = "(embedding)")
+.rs.addApiFunction("systemUsername", function() {
+   .Call("rs_systemUsername", PACKAGE = "(embedding)")
 })
 
 # Tutorial ----

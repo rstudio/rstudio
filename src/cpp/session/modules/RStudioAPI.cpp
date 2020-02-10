@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -216,10 +216,19 @@ SEXP rs_highlightUi(SEXP queriesSEXP)
 SEXP rs_userIdentity()
 {
    r::sexp::Protect protect;
-   return r::sexp::create(session::options().userIdentity(), &protect);
+   // Check RSTUDIO_USER_IDENTITY_DISPLAY first; it is used in Pro to override the system user
+   // identity (username) with a display name in some auth forms
+   std::string display = core::system::getenv("RSTUDIO_USER_IDENTITY_DISPLAY");
+   if (display.empty())
+   {
+      // no env var; look up value in options provided at session start
+      display = session::options().userIdentity();
+   }
+
+   return r::sexp::create(display, &protect);
 }
 
-SEXP rs_systemUser()
+SEXP rs_systemUsername()
 {
    r::sexp::Protect protect;
    return r::sexp::create(core::system::username(), &protect);
@@ -239,7 +248,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
    RS_REGISTER_CALL_METHOD(rs_highlightUi);
    RS_REGISTER_CALL_METHOD(rs_userIdentity);
-   RS_REGISTER_CALL_METHOD(rs_systemUser);
+   RS_REGISTER_CALL_METHOD(rs_systemUsername);
    
    using boost::bind;
    ExecBlock initBlock;
