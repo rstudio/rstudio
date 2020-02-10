@@ -104,7 +104,6 @@ public class PanmirrorDialogs {
    }
 
 
-   // TODO
    private Promise<PanmirrorAttrResult> editPanmirrorAttr(String caption, boolean removeEnabled, PanmirrorAttrProps attr) 
    {
       return new Promise<PanmirrorAttrResult>(
@@ -154,7 +153,6 @@ public class PanmirrorDialogs {
    }
    
    
-   // TODO
    public Promise<PanmirrorInsertCitationResult> insertCitation()
    {
       return new Promise<PanmirrorInsertCitationResult>(

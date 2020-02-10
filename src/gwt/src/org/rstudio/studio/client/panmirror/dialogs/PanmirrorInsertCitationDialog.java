@@ -16,13 +16,17 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -37,7 +41,8 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
    
       mainWidget_ = uiBinder.createAndBindUi(this);
       
-     
+      citationId_.getElement().setId(ElementIds.VISUAL_MD_CITATION_ID);
+      locator_.getElement().setId(ElementIds.VISUAL_MD_CITATION_LOCATOR);
    }
    
    @Override
@@ -50,7 +55,8 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
    protected PanmirrorInsertCitationResult collectInput()
    {
       PanmirrorInsertCitationResult result = new PanmirrorInsertCitationResult();
-      result.id = "@Tufte";
+      result.id = citationId_.getText().trim();
+      result.locator = locator_.getText().trim();
       return result;
    }
    
@@ -71,5 +77,7 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
    
    private Widget mainWidget_;
 
+   @UiField TextBox citationId_;
+   @UiField TextBoxWithCue locator_;
    
 }
