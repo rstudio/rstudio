@@ -40,7 +40,7 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
    unzip(outputFile, exdir = extractDir)
 }
 
-if (!file.exists(normalizePath(file.path(soci_build_dir, "lib\\Debug\\libsoci_core_4_0.lib"), winslash = "\\"))) {
+if (!file.exists(normalizePath(file.path(soci_build_dir, "lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\"))) {
    # download and install sqlite source
    dir.create(sqlite_dir)
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
@@ -62,10 +62,14 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "lib\\Debug\\libsoci_co
    dir.create("build")
    setwd("build")
    
-   # run CMAKE
-   cmake_args <- sprintf("-G \"Visual Studio 15 2017 Win64\" -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DSOCI_SHARED=OFF ..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3.lib"))
+   # run CMAKE twice - once for debug lib (/MDd) and once for release lib (/MD)
+   cmake_args <- sprintf("-G \"Visual Studio 15 2017 Win64\" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DSOCI_SHARED=OFF ..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3-debug.lib"))
    exec("cmake", cmake_args)
-   exec("cmake", "--build .")
+   exec("cmake", "--build . --config Debug")
+   
+   cmake_args <- gsub("sqlite3-debug.lib", "sqlite3-release.lib", cmake_args)
+   exec("cmake", cmake_args)
+   exec("cmake", "--build . --config Release")
 }
 
 progress("SOCI installed successfully!")
