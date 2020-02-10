@@ -70,6 +70,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
    {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
 #else

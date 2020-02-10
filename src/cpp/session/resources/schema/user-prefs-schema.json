@@ -107,7 +107,7 @@
         },
         "posix_terminal_shell": {
             "type": "string",
-            "enum": ["default", "bash", "custom", "none"],
+            "enum": ["default", "bash", "zsh", "custom", "none"],
             "default": "default", 
             "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
         },

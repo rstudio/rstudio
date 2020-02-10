@@ -64,6 +64,7 @@ namespace prefs {
 #define kPosixTerminalShell "posix_terminal_shell"
 #define kPosixTerminalShellDefault "default"
 #define kPosixTerminalShellBash "bash"
+#define kPosixTerminalShellZsh "zsh"
 #define kPosixTerminalShellCustom "custom"
 #define kPosixTerminalShellNone "none"
 #define kCustomShellCommand "custom_shell_command"
