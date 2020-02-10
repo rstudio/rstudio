@@ -1,0 +1,57 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+
+   <ui:style>
+      @external gwt-Label;
+   
+       
+      .dialog {
+         width: 400px;
+      }
+      
+      .column {
+	     width: 200px;
+      }
+      .spaced {
+         margin-bottom: 10px;
+      }
+   		
+      .dialog label,
+      .dialog .gwt-Label {
+         margin-bottom: 4px;
+      }
+		
+     
+   </ui:style>
+   
+   <g:HTMLPanel styleName="{style.dialog}">
+   
+
+    <rw:LayoutGrid>
+      <rw:row>
+         <rw:customCell styleName="{style.column}">
+            <g:Label>Rows</g:Label>
+         </rw:customCell>
+         <rw:customCell styleName="{style.column}">
+            <g:Label>Cols</g:Label>
+         </rw:customCell>
+      </rw:row>
+      <rw:row>
+         <rw:customCell>
+            <g:Label>Header</g:Label>
+         </rw:customCell>
+      </rw:row>
+      <rw:row>
+         <rw:customCell>
+            <g:Label>Caption</g:Label>
+         </rw:customCell>
+      </rw:row>
+   </rw:LayoutGrid>
+
+      	
+   </g:HTMLPanel>
+
+</ui:UiBinder> 

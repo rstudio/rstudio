@@ -16,30 +16,58 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
-import elemental2.promise.Promise;
-import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
-import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
-import jsinterop.annotations.JsType;
+import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 
-public class PanmirrorInsertTableDialog
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.ui.Widget;
+
+
+public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTableResult>
 {
-   @JsType
-   public static class Result 
+   public PanmirrorInsertTableDialog(OperationWithInput<PanmirrorInsertTableResult> operation)
    {
-      public int rows;
-      public int cols;
-      public boolean header;
-      public String caption;
+      super("Insert Table", Roles.getDialogRole(), operation, () -> {
+         // cancel returns null
+         operation.execute(null);
+      });
+      
+      
+      mainWidget_ = uiBinder.createAndBindUi(this);
    }
    
-   public static Promise<Result> show() {
-      return new Promise<Result>((ResolveCallbackFn<Result> resolve, RejectCallbackFn reject) -> {
-         Result result = new Result();
-         result.rows = 3;
-         result.cols = 3;
-         result.header = true;
-         resolve.onInvoke(result);
-      });
+   @Override
+   protected PanmirrorInsertTableResult collectInput()
+   {
+      PanmirrorInsertTableResult result = new PanmirrorInsertTableResult();
+      result.rows = 3;
+      result.cols = 3;
+      result.header = true;
+      return result;
    }
 
+
+   @Override
+   protected Widget createMainWidget()
+   {
+      return mainWidget_;
+   }
+   
+
+   private static PanmirrorInsertTableDialogUiBinder uiBinder = GWT
+         .create(PanmirrorInsertTableDialogUiBinder.class);
+
+   interface PanmirrorInsertTableDialogUiBinder extends
+         UiBinder<Widget, PanmirrorInsertTableDialog>
+   {
+   }
+   
+   
+   private Widget mainWidget_;
+
+
+  
 }
