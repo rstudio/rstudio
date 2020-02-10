@@ -25,11 +25,17 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 public class NumericValueWidget extends Composite
       implements HasValue<String>,
-                 HasEnsureVisibleHandlers
+                 HasEnsureVisibleHandlers,
+                 CanSetControlId
 {
    public static final Integer ZeroMinimum = null;
    public static final Integer NoMaximum = null;
 
+   public NumericValueWidget()
+   {
+      this("", ZeroMinimum, NoMaximum);
+   }
+   
    /**
     * Prompt for an integer in the range [min, max]
     * 
@@ -43,20 +49,23 @@ public class NumericValueWidget extends Composite
 
       textBox_ = new NumericTextBox();
       textBox_.setWidth("48px");
-      minValue_ = minValue;
-      maxValue_ = maxValue;
-      if (minValue == ZeroMinimum)
-         textBox_.setMin(0);
-      else
-         textBox_.setMin(minValue);
-      if (maxValue != NoMaximum)
-         textBox_.setMax(maxValue);
+      setLimits(minValue, maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
 
-      flowPanel.add(new SpanLabel(label, textBox_, true));
+      flowPanel.add(label_ = new SpanLabel(label, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
+   }
+   
+   public String getLabel()
+   {
+      return label_.getText();
+   }
+   
+   public void setLabel(String text)
+   {
+      label_.setText(text);
    }
 
    public String getValue()
@@ -72,6 +81,18 @@ public class NumericValueWidget extends Composite
    public void setValue(String value, boolean fireEvents)
    {
       textBox_.setValue(value, fireEvents);
+   }
+   
+   public void setLimits(Integer minValue, Integer maxValue)
+   {
+      minValue_ = minValue;
+      maxValue_ = maxValue;
+      if (minValue == ZeroMinimum)
+         textBox_.setMin(0);
+      else
+         textBox_.setMin(minValue);
+      if (maxValue != NoMaximum)
+         textBox_.setMax(maxValue);
    }
    
    public void setWidth(String width)
@@ -133,8 +154,17 @@ public class NumericValueWidget extends Composite
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
 
+   @Override
+   public void setElementId(String id)
+   {
+      textBox_.getElement().setId(id);      
+   }
+
+   private final SpanLabel label_;
    private final NumericTextBox textBox_;
-   private final Integer minValue_;
-   private final Integer maxValue_;
+   private Integer minValue_;
+   private Integer maxValue_;
+
 }

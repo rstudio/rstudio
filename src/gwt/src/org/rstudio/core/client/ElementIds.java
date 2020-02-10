@@ -457,6 +457,10 @@ public class ElementIds
    public final static String VISUAL_MD_RAW_FORMAT_SELECT = "visual_md_raw_format_select";
    public final static String VISUAL_MD_RAW_FORMAT_CONTENT = "visual_md_raw_format_content";
    public final static String VISUAL_MD_RAW_FORMAT_REMOVE_BUTTON = "visual_md_raw_format_remove_button";
+   public final static String VISUAL_MD_INSERT_TABLE_ROWS = "visual_md_insert_table_rows";
+   public final static String VISUAL_MD_INSERT_TABLE_COLUMNS = "visual_md_insert_table_columns";
+   public final static String VISUAL_MD_INSERT_TABLE_CAPTION = "visual_md_insert_table_caption";
+   public final static String VISUAL_MD_INSERT_TABLE_HEADER = "visual_md_insert_table_heaeder";
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";

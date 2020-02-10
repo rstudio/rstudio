@@ -16,13 +16,18 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -34,29 +39,53 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
          // cancel returns null
          operation.execute(null);
       });
-      
-      
+   
       mainWidget_ = uiBinder.createAndBindUi(this);
+      
+      configureNumeric(rows_);
+      configureNumeric(columns_);
+      
+      rows_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_ROWS);
+      columns_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_COLUMNS);
+      caption_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_CAPTION);
+      header_.getElement().setId(ElementIds.VISUAL_MD_INSERT_TABLE_HEADER);
    }
    
-   @Override
-   protected PanmirrorInsertTableResult collectInput()
-   {
-      PanmirrorInsertTableResult result = new PanmirrorInsertTableResult();
-      result.rows = 3;
-      result.cols = 3;
-      result.header = true;
-      return result;
-   }
-
-
    @Override
    protected Widget createMainWidget()
    {
       return mainWidget_;
    }
    
-
+   @Override
+   protected PanmirrorInsertTableResult collectInput()
+   {
+      PanmirrorInsertTableResult result = new PanmirrorInsertTableResult();
+      result.rows = readNumeric(rows_);
+      result.cols = readNumeric(columns_);
+      result.caption = caption_.getText();
+      result.header = header_.getValue();
+      return result;
+   }
+   
+   @Override
+   protected boolean validate(PanmirrorInsertTableResult result)
+   {
+      return rows_.validate("Rows") && columns_.validate("Columns");
+   }
+   
+   private void configureNumeric(NumericValueWidget widget)
+   {
+      widget.setWidth("100px");
+      widget.setLimits(1, NumericValueWidget.NoMaximum);
+   }
+   
+   private int readNumeric(NumericValueWidget widget)
+   {
+      String value = widget.getValue().trim();
+      return value.length() > 0 ? Integer.parseInt(value) : 0;
+   }
+   
    private static PanmirrorInsertTableDialogUiBinder uiBinder = GWT
          .create(PanmirrorInsertTableDialogUiBinder.class);
 
@@ -68,6 +97,9 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
    
    private Widget mainWidget_;
 
-
-  
+   @UiField NumericValueWidget rows_;
+   @UiField NumericValueWidget columns_;
+   @UiField TextBoxWithCue caption_;
+   @UiField CheckBox header_;
+   
 }

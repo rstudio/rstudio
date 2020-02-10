@@ -7,14 +7,14 @@
    <ui:style>
       @external gwt-Label;
    
-       
       .dialog {
-         width: 400px;
+         width: 350px;
       }
       
       .column {
-	     width: 200px;
+         width: 175px;
       }
+      
       .spaced {
          margin-bottom: 10px;
       }
@@ -23,35 +23,38 @@
       .dialog .gwt-Label {
          margin-bottom: 4px;
       }
-		
-     
+      
+      .caption {
+         width: 335px;
+      }
+	  
+      .header input[type="checkbox"] {
+         margin-right: 5px; 
+      }  
    </ui:style>
    
-   <g:HTMLPanel styleName="{style.dialog}">
+   <g:VerticalPanel styleName="{style.dialog}">
    
-
-    <rw:LayoutGrid>
-      <rw:row>
-         <rw:customCell styleName="{style.column}">
-            <g:Label>Rows</g:Label>
-         </rw:customCell>
-         <rw:customCell styleName="{style.column}">
-            <g:Label>Cols</g:Label>
-         </rw:customCell>
-      </rw:row>
-      <rw:row>
-         <rw:customCell>
-            <g:Label>Header</g:Label>
-         </rw:customCell>
-      </rw:row>
-      <rw:row>
-         <rw:customCell>
-            <g:Label>Caption</g:Label>
-         </rw:customCell>
-      </rw:row>
-   </rw:LayoutGrid>
+      <rw:LayoutGrid styleName="{style.spaced}">
+         <rw:row>
+            <rw:customCell styleName="{style.column}">
+               <rw:NumericValueWidget label="Rows" value="3" ui:field="rows_"></rw:NumericValueWidget>
+            </rw:customCell>
+            <rw:customCell styleName="{style.column}">
+               <rw:NumericValueWidget label="Columns" value="3" ui:field="columns_"></rw:NumericValueWidget>
+            </rw:customCell>
+         </rw:row>
+      </rw:LayoutGrid>
+    
+      <g:Label text="Caption"></g:Label>
+      <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {style.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
+          
+      <g:cell><g:Label></g:Label></g:cell>  
+          
+      <g:CheckBox styleName="{style.header} {style.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+        
 
       	
-   </g:HTMLPanel>
+   </g:VerticalPanel>
 
 </ui:UiBinder> 
