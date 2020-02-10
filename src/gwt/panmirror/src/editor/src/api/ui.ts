@@ -136,3 +136,65 @@ export interface RawFormatResult {
   readonly action: 'edit' | 'remove';
   readonly raw: RawFormatProps;
 }
+
+export interface AttrEditInput {
+  id?: string;
+  classes?: string;
+  keyvalue?: string;
+}
+
+export function attrPropsToInput(attr: AttrProps): AttrEditInput {
+  return {
+    id: asHtmlId(attr.id) || undefined,
+    classes: attr.classes ? attr.classes.map(asHtmlClass).join(' ') : undefined,
+    keyvalue: attr.keyvalue ? attr.keyvalue.map(keyvalue => `${keyvalue[0]}=${keyvalue[1]}`).join('\n') : undefined,
+  };
+}
+
+export function attrInputToProps(attr: AttrEditInput): AttrProps {
+
+  const classes = attr.classes ? attr.classes.split(/\s+/) : [];
+  let keyvalue: Array<[string, string]> | undefined;
+  if (attr.keyvalue) {
+    const lines = attr.keyvalue.trim().split('\n');
+    keyvalue = lines.map(line => line.trim().split('=') as [string, string]);
+  }
+  return {
+    id: asPandocId(attr.id || ''),
+    classes: classes.map(asPandocClass),
+    keyvalue,
+  };
+}
+
+function asHtmlId(id: string | undefined) {
+  if (id) {
+    if (id.startsWith('#')) {
+      return id;
+    } else {
+      return '#' + id;
+    }
+  } else {
+    return id;
+  }
+}
+
+function asHtmlClass(clz: string | undefined) {
+  if (clz) {
+    if (clz.startsWith('.')) {
+      return clz;
+    } else {
+      return '.' + clz;
+    }
+  } else {
+    return clz;
+  }
+}
+
+function asPandocId(id: string) {
+  return id.replace(/^#/, '');
+}
+
+function asPandocClass(clz: string) {
+  return clz.replace(/^\./, '');
+}
+

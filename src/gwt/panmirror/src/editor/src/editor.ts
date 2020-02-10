@@ -33,7 +33,7 @@ import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
 import { PandocNode } from './api/node';
-import { EditorUI } from './api/ui';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine, pandocFormat, PandocFormat } from './api/pandoc';
@@ -108,6 +108,12 @@ export interface EditorFindReplace {
 }
 
 export { EditorCommandId as EditorCommands } from './api/command';
+
+export class UITools {
+  public attrPropsToInput(attr: AttrProps) { return attrPropsToInput(attr); }
+  public attrInputToProps(input: AttrEditInput) { return attrInputToProps(input); }
+};
+
 
 export class Editor {
   private static readonly keybindingsPlugin = new PluginKey('keybindings');
