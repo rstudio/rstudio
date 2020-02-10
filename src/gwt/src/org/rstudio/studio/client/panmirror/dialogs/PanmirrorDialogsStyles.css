@@ -1,8 +1,9 @@
-@external gwt-Label;
+@external gwt-Label, gwt-TextBox;
 
 
 .dialog {
    width: 350px;
+   position: relative;
 }
 	   
 .dialog label,
@@ -10,8 +11,20 @@
    margin-bottom: 4px;
 }
 
+.dialog .fullWidthText {
+   width: 98%;
+}
+
 .spaced {
    margin-bottom: 10px;
 }
 
+.dialog .textArea {
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   box-sizing: border-box;
+   border: 1px solid #c3c5c7;
+   border-radius: 4px;
+   width: 100%;
+}
 

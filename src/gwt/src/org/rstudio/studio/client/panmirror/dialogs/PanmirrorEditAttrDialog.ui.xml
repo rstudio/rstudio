@@ -1,31 +1,25 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw="urn:import:org.rstudio.core.client.widget">
 
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs.Resources" />
    <ui:style>
-      .panel {
-         width: 300px;
-      }
-      .panel fieldset {
-         border: none;
-         padding: 0;
-         margin: 0;
-      }
-      .panel legend {
-         padding: 0;
-      }
+   
+
    </ui:style>
 
-   <g:HTMLPanel styleName="{style.panel}">
-      <fieldset>
-         <legend><g:Label text="Use roxygen to generate:"/></legend>
-         
-      </fieldset>
-      <br/>
-      <fieldset>
-         <legend><g:Label text="Automatically roxygenize when running:"/></legend>
-         
-       </fieldset>
-      <br/>
-   </g:HTMLPanel>
+   <g:VerticalPanel styleName="{res.styles.dialog}">
+   
+      <g:Label text="ID"></g:Label>
+      <g:TextBox styleName="{res.styles.fullWidthText} {res.styles.spaced}" ui:field="id_"></g:TextBox>
+    
+      <g:Label text="Classes"></g:Label>
+      <g:TextBox styleName="{res.styles.fullWidthText} {res.styles.spaced}" ui:field="classes_"></g:TextBox>
+    
+      <g:Label text="Attributes"/>
+      <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"
+                       ui:field="attributes_" visibleLines="3" ariaLabel="Attributes">
+      </rw:FormTextArea>
+   </g:VerticalPanel>
 
 </ui:UiBinder>

@@ -35,7 +35,7 @@ export const pandocAttrSpec = {
 };
 
 export function pandocAttrAvailable(attrs: any) {
-  return attrs.id || (attrs.classes && attrs.classes.length > 0) || (attrs.keyvalue && attrs.keyvalue.length > 0);
+  return !!attrs.id || (attrs.classes && attrs.classes.length > 0) || (attrs.keyvalue && attrs.keyvalue.length > 0);
 }
 
 export function pandocAttrFrom(attrs: any) {

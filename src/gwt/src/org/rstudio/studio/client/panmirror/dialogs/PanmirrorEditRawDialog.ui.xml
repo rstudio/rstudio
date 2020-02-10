@@ -17,13 +17,7 @@
       }
      
       .rawContent {
-         -moz-box-sizing: border-box;
-         -webkit-box-sizing: border-box;
-         box-sizing: border-box;
-         border: 1px solid #c3c5c7;
-         border-radius: 4px;
          font-family: fixedWidthFont;
-         width: 100%;
       }
      
    </ui:style>
@@ -34,7 +28,7 @@
       </dialogs:PanmirrorRawFormatSelect>
    		
       <g:Label text="Raw content:"/>
-      <rw:FormTextArea styleName="{style.rawContent} {res.styles.spaced}"
+      <rw:FormTextArea styleName="{res.styles.textArea} {style.rawContent} {res.styles.spaced}"
                  	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
       </rw:FormTextArea>
       	

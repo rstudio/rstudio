@@ -461,6 +461,11 @@ public class ElementIds
    public final static String VISUAL_MD_INSERT_TABLE_COLUMNS = "visual_md_insert_table_columns";
    public final static String VISUAL_MD_INSERT_TABLE_CAPTION = "visual_md_insert_table_caption";
    public final static String VISUAL_MD_INSERT_TABLE_HEADER = "visual_md_insert_table_heaeder";
+   public final static String VISUAL_MD_ATTR_REMOVE_BUTTON = "visual_md_attr_remove_button";
+   public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
+   public final static String VISUAL_MD_ATTR_CLASSES = "visual_md_attr_classes";
+   public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
+   
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";

@@ -173,6 +173,8 @@ public class PanmirrorDialogs {
       {
          String dialog();
          String spaced();
+         String textArea();
+         String fullWidthText();
       }
 
       @Source("PanmirrorDialogsStyles.css")
