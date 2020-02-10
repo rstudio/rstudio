@@ -2,8 +2,15 @@ call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd6
 cd sqlite
 cd sqlite-*
 cl /c /EHsc /MDd sqlite3.c
-lib /OUT:sqlite3-debug.lib sqlite3.obj
-move sqlite3-debug.lib ..
+lib /OUT:sqlite3-debug-x64.lib sqlite3.obj
+move sqlite3-debug-x64.lib ..
 cl /c /EHsc /MD sqlite3.c
-lib /OUT:sqlite3-release.lib sqlite3.obj
-move sqlite3-release.lib ..
+lib /OUT:sqlite3-release-x64.lib sqlite3.obj
+move sqlite3-release-x64.lib ..
+call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+cl /c /EHsc /MDd sqlite3.c
+lib /OUT:sqlite3-debug-x86.lib sqlite3.obj
+move sqlite3-debug-x86.lib ..
+cl /c /EHsc /MD sqlite3.c
+lib /OUT:sqlite3-release-x86.lib sqlite3.obj
+move sqlite3-release-x86.lib ..

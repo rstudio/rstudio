@@ -22,6 +22,8 @@ soci_branch <- "release/4.0"
 soci_dir <- file.path(owd, "soci")
 soci_build_dir <- file.path(soci_dir, "build")
 sqlite_dir <- file.path(owd, "sqlite")
+postgresql_dir <- file.path(owd, "postgresql")
+postgresql_branch <- "REL_12_STABLE"
 sqlite_header_zip_url <- "https://sqlite.org/2020/sqlite-amalgamation-3310100.zip"
 sqlite_header_zip <- file.path(sqlite_dir, "sqlite-header.zip")
 sqlite_header_dir <- file.path(sqlite_dir, "sqlite-amalgamation-3310100")
@@ -40,13 +42,22 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
    unzip(outputFile, exdir = extractDir)
 }
 
-if (!file.exists(normalizePath(file.path(soci_build_dir, "lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\"))) {
+if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\"))) {
    # download and install sqlite source
    dir.create(sqlite_dir)
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
    
    # build SQLite static library
    exec("build-sqlite.cmd")
+   
+   # get postgresql source to build libpq
+   #if (!file.exists("postgresql")) {
+   #   exec("git", "clone git://git.postgresql.org/git/postgresql.git")
+   #}
+   
+   # checkout postgresql version branch
+   #setwd(postgresql_dir)
+   #exec("git", paste("checkout", postgresql_branch))
    
    # clone repository if we dont already have it
    if (!file.exists("soci")) {
@@ -58,16 +69,28 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "lib\\Release\\libsoci_
    setwd(soci_dir)
    exec("git", paste("checkout", soci_branch))
    
-   # create build directory
+   # create build directories
    dir.create("build")
    setwd("build")
+   dir.create("x86")
+   dir.create("x64")
    
-   # run CMAKE twice - once for debug lib (/MDd) and once for release lib (/MD)
-   cmake_args <- sprintf("-G \"Visual Studio 15 2017 Win64\" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DSOCI_SHARED=OFF ..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3-debug.lib"))
+   # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
+   setwd("x86")
+   cmake_args <- sprintf("-G \"Visual Studio 15 2017\" -A Win32 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DWITH_POSTGRESQL=OFF -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DSOCI_SHARED=OFF ..\\..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3-debug-x86.lib"))
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
    
-   cmake_args <- gsub("sqlite3-debug.lib", "sqlite3-release.lib", cmake_args)
+   cmake_args <- gsub("sqlite3-debug-x86.lib", "sqlite3-release-x86.lib", cmake_args)
+   exec("cmake", cmake_args)
+   exec("cmake", "--build . --config Release")
+   
+   setwd(normalizePath("..\\x64", winslash = "\\"))
+   cmake_args <- sprintf("-G \"Visual Studio 15 2017\" -A x64 -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INCLUDE_PATH=\"%s\" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH=\"%s\" -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DSQLITE3_INCLUDE_DIR=\"%s\" -DSQLITE3_LIBRARY=\"%s\" -DSOCI_SHARED=OFF ..\\..", file.path(boost_dir, "include"), file.path(boost_dir, "lib"), sqlite_header_dir, file.path(sqlite_dir, "sqlite3-debug-x64.lib"))
+   exec("cmake", cmake_args)
+   exec("cmake", "--build . --config Debug")
+   
+   cmake_args <- gsub("sqlite3-debug-x64.lib", "sqlite3-release-x64.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
 }
