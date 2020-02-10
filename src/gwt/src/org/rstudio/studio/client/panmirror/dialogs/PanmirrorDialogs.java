@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 
@@ -81,19 +82,28 @@ public class PanmirrorDialogs {
       
    }
    
-   public Promise<PanmirrorInsertTableDialog.Result> insertTable()
+   public Promise<PanmirrorInsertTableResult> insertTable()
    {
-      return PanmirrorInsertTableDialog.show();
+      return new Promise<PanmirrorInsertTableResult>(
+         (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog((result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal();
+         }
+      );
    }
    
    public Promise<PanmirrorAttrProps> editAttr(PanmirrorAttrProps attr) 
    {
-      return new Promise<PanmirrorAttrProps>((ResolveCallbackFn<PanmirrorAttrProps> resolve, RejectCallbackFn reject) -> {  
-         PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(attr, (result) -> {
-            resolve.onInvoke(result);
-         });
-         dialog.showModal();
-      });
+      return new Promise<PanmirrorAttrProps>(
+         (ResolveCallbackFn<PanmirrorAttrProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(attr, (result) -> {
+               resolve.onInvoke(result);
+            });
+            dialog.showModal();
+         }
+      );
    }
    
    
