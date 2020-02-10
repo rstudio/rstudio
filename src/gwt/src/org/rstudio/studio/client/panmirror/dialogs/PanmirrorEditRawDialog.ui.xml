@@ -3,7 +3,7 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
-   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs.Resources" />
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:style>
      
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();

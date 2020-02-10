@@ -33,15 +33,11 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListPro
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
-
 import jsinterop.annotations.JsType;
 
 
@@ -213,29 +209,7 @@ public class PanmirrorDialogs {
          }
       );
    }
-   
-   public interface Resources extends ClientBundle
-   {
-      public interface Styles extends CssResource
-      {
-         String dialog();
-         String spaced();
-         String textArea();
-         String fullWidthText();
-      }
 
-      @Source("PanmirrorDialogsStyles.css")
-      Styles styles();
-      
-   
-   }
-   
-   public static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
-   public static void ensureStylesInjected()
-   {
-      RESOURCES.styles().ensureInjected();
-   }
-   
    
    private GlobalDisplay globalDisplay_; 
 }
