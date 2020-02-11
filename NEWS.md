@@ -127,6 +127,7 @@
 * Keep keyboard focus in the console during debugging (#6039)
 * Enable wrap-around for previous/next source tab by default (#6139)
 * Provide full SHA in detail of Git commits (#6155)
+* File monitor now ignores Packrat, renv library folders (#3267)
 
 ### Bugfixes
 
