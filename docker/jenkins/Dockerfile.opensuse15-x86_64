@@ -27,7 +27,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     lsof \
     make \
     openssl-devel \
-    p7zip-full \
+    p7zip \
     pam-devel \
     pango-devel \
     python \
