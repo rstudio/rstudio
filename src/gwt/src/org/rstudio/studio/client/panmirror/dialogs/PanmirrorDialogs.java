@@ -117,8 +117,6 @@ public class PanmirrorDialogs {
       );      
    }
    
-   
-   // TODO
    public Promise<PanmirrorOrderedListProps> editOrderedList(PanmirrorOrderedListProps props, 
                                                              PanmirrorListCapabilities capabilities)
    {

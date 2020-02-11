@@ -6,9 +6,11 @@
 
 - initial article on using
 
+
 - codemirror behavior (tabs/spaces) from ide settings
 - consider whether we can keep spelling and find (For stable visual mode button location)
 - standard editor dialog boxes
+- ensure we've used ids for new dialogs
 
 
 ## Enhancements

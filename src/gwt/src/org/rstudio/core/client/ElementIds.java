@@ -468,6 +468,9 @@ public class ElementIds
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
    public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";
    
+   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
+   public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
+   
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";

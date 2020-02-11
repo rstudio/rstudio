@@ -18,7 +18,7 @@
    margin-top: 5px;
 }
 
-.dialog .fullWidth{
+.dialog .fullWidth {
    width: 98%;
 }
 
@@ -42,4 +42,10 @@
    border-radius: 4px;
    width: 100%;
 }
+
+.imageDialogTabs {
+   width: 350px;
+   height: 235px;
+}
+
 

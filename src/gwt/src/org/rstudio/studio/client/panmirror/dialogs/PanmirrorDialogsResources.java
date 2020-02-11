@@ -30,6 +30,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String checkBox();
       String fullWidth();
       String infoLabel();
+      String imageDialogTabs();
    }
 
    @Source("PanmirrorDialogsStyles.css")
