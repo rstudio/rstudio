@@ -31,5 +31,8 @@ mkdir -p ${DEST}
     qtsvg \
     qtxmlpatterns \
     qttools \
-    icu
+    icu \
+    qttranslations \
+    qtwayland \
+    qtwebsockets \
 
