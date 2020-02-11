@@ -2350,6 +2350,19 @@ core::Error UserPrefValues::setScreenreaderConsoleAnnounceLimit(int val)
    return writePref("screenreader_console_announce_limit", val);
 }
 
+/**
+ * List of file components; file monitor will ignore files containing one or more of these components.
+ */
+core::json::Array UserPrefValues::fileMonitorIgnoredComponents()
+{
+   return readPref<core::json::Array>("file_monitor_ignored_components");
+}
+
+core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array val)
+{
+   return writePref("file_monitor_ignored_components", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2532,6 +2545,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFullProjectPathInWindowTitle,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
+      kFileMonitorIgnoredComponents,
    });
 }
    

@@ -1674,6 +1674,14 @@ public class UserPrefsAccessor extends Prefs
       return integer("screenreader_console_announce_limit", 25);
    }
 
+   /**
+    * List of file components; file monitor will ignore files containing one or more of these components.
+    */
+   public PrefValue<JsArrayString> fileMonitorIgnoredComponents()
+   {
+      return object("file_monitor_ignored_components", JsArrayUtil.createStringArray());
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2034,6 +2042,8 @@ public class UserPrefsAccessor extends Prefs
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))
          screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
+      if (source.hasKey("file_monitor_ignored_components"))
+         fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
    }
    
 

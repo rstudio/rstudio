@@ -456,7 +456,38 @@ Error ProjectContext::initialize()
    return Success();
 }
 
+namespace {
 
+std::vector<std::string> fileMonitorIgnoredComponents()
+{
+   // first, built-in ignores
+   std::vector<std::string> ignores = {
+
+      // don't monitor things in .Rproj.user
+      "/.Rproj.user",
+
+      // ignore things within a .git folder
+      "/.git",
+
+      // ignore files within an renv or packrat library
+      "/renv/library",
+      "/renv/staging",
+      "/packrat/lib"
+
+   };
+   
+   // now add user-defined ignores
+   json::Array userIgnores = prefs::userPrefs().fileMonitorIgnoredComponents();
+   for (auto&& userIgnore : userIgnores)
+      if (userIgnore.isString())
+         ignores.push_back(userIgnore.getString());
+   
+   // return vector of ignored components
+   return ignores;
+   
+}
+
+} // end anonymous namespace
 
 void ProjectContext::onDeferredInit(bool newSession)
 {
@@ -478,11 +509,14 @@ void ProjectContext::onDeferredInit(bool newSession)
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
 
-   bool hideObjectFiles = prefs::userPrefs().hideObjectFiles();
+   FileMonitorFilterContext context;
+   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
+   context.ignoredComponents = fileMonitorIgnoredComponents();
+   
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
-         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, hideObjectFiles),
+         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
          cb);
 }
 
@@ -558,35 +592,19 @@ void ProjectContext::fileMonitorTermination(const Error& error)
 
 bool ProjectContext::fileMonitorFilter(
       const FileInfo& fileInfo,
-      bool ignoreObjectFiles) const
+      const FileMonitorFilterContext& context) const
 {
-   auto ignored = {
-
-      // don't monitor things in .Rproj.user
-      "/.Rproj.user",
-
-      // ignore things within a .git folder
-      "/.git",
-
-      // ignore files within an renv or packrat library
-      "/renv/library",
-      "/renv/staging",
-      "/packrat/lib"
-
-   };
-
-   // check and see if the path matches any of the above components.
    // note that we check for the component occurring anywhere in the
    // path as the Windows file monitor watches all files within the
    // monitored directory recursively (irrespective of the filter)
    // and so we need the filter to apply to files which are 'ignored'
    // and yet still monitored in ignored sub-directories
    std::string path = fileInfo.absolutePath();
-   for (auto&& component : ignored)
+   for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
-
-   return module_context::fileListingFilter(fileInfo, ignoreObjectFiles);
+   
+   return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }
 
 bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const

@@ -316,6 +316,7 @@ namespace prefs {
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
+#define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
 
 class UserPrefValues: public Preferences
 {
@@ -1394,6 +1395,12 @@ public:
     */
    int screenreaderConsoleAnnounceLimit();
    core::Error setScreenreaderConsoleAnnounceLimit(int val);
+
+   /**
+    * List of file components; file monitor will ignore files containing one or more of these components.
+    */
+   core::json::Array fileMonitorIgnoredComponents();
+   core::Error setFileMonitorIgnoredComponents(core::json::Array val);
 
 };
 

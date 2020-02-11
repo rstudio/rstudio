@@ -52,6 +52,13 @@ struct FileMonitorCallbacks
    boost::function<void()> onMonitoringDisabled;
 };
 
+// file monitor ignore context
+struct FileMonitorFilterContext
+{
+   std::vector<std::string> ignoredComponents;
+   bool ignoreObjectFiles;
+};
+
 // vcs options
 struct RProjectVcsOptions
 {
@@ -217,7 +224,8 @@ private:
    void fileMonitorFilesChanged(
                    const std::vector<core::system::FileChangeEvent>& events);
    void fileMonitorTermination(const core::Error& error);
-   bool fileMonitorFilter(const core::FileInfo& fileInfo, bool ignoreObjectFiles) const;
+   bool fileMonitorFilter(const core::FileInfo& fileInfo,
+                          const FileMonitorFilterContext& context) const;
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
