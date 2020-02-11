@@ -71,7 +71,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
    @Override
    protected boolean validate(PanmirrorInsertTableResult result)
    {
-      return rows_.validate("Rows") && columns_.validate("Columns");
+      return rows_.validate() && columns_.validate();
    }
    
    private void configureNumeric(NumericValueWidget widget)

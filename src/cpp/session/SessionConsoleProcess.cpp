@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    if (shellEnv.empty())
       core::system::environment(&shellEnv);
 
+#ifdef __APPLE__
+   // suppress macOS Catalina warning suggesting switching to zsh
+   core::system::setenv(&shellEnv, "BASH_SILENCE_DEPRECATION_WARNING", "1");
+#endif
+
    *pSelectedShellType = procInfo.getShellType();
 
 #ifndef _WIN32
@@ -65,6 +70,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
    {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
 #else

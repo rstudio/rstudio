@@ -64,6 +64,7 @@ namespace prefs {
 #define kPosixTerminalShell "posix_terminal_shell"
 #define kPosixTerminalShellDefault "default"
 #define kPosixTerminalShellBash "bash"
+#define kPosixTerminalShellZsh "zsh"
 #define kPosixTerminalShellCustom "custom"
 #define kPosixTerminalShellNone "none"
 #define kCustomShellCommand "custom_shell_command"
@@ -317,6 +318,8 @@ namespace prefs {
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
+#define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
+#define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
 
 class UserPrefValues: public Preferences
 {
@@ -1407,6 +1410,18 @@ public:
     */
    core::json::Array disabledAriaLiveAnnouncements();
    core::Error setDisabledAriaLiveAnnouncements(core::json::Array val);
+
+   /**
+    * Maximum number of lines of console output announced after a command.
+    */
+   int screenreaderConsoleAnnounceLimit();
+   core::Error setScreenreaderConsoleAnnounceLimit(int val);
+
+   /**
+    * List of path components; file monitor will ignore paths containing one or more of these components.
+    */
+   core::json::Array fileMonitorIgnoredComponents();
+   core::Error setFileMonitorIgnoredComponents(core::json::Array val);
 
 };
 

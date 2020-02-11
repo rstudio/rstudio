@@ -1,7 +1,7 @@
 /*
  * PrivateCommand.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,10 @@ const std::string kEol = "\r\n";
  * Command is prefixed with a space, to take advantage of
  * HISTCONTROL=ignorespace (or ignoreboth) as a way to prevent command from
  * showing up in shell history.
+ * 
+ * In Zsh, we rely on the shell having the HIST_IGNORE_SPACE option set, which we
+ * do via -g when we start Zsh. There is no attempt to detect if this setting has
+ * been overridden.
  */
 
 PrivateCommand::PrivateCommand(const std::string& command,

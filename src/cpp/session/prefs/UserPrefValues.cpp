@@ -2376,6 +2376,32 @@ core::Error UserPrefValues::setDisabledAriaLiveAnnouncements(core::json::Array v
    return writePref("disabled_aria_live_announcements", val);
 }
 
+/**
+ * Maximum number of lines of console output announced after a command.
+ */
+int UserPrefValues::screenreaderConsoleAnnounceLimit()
+{
+   return readPref<int>("screenreader_console_announce_limit");
+}
+
+core::Error UserPrefValues::setScreenreaderConsoleAnnounceLimit(int val)
+{
+   return writePref("screenreader_console_announce_limit", val);
+}
+
+/**
+ * List of path components; file monitor will ignore paths containing one or more of these components.
+ */
+core::json::Array UserPrefValues::fileMonitorIgnoredComponents()
+{
+   return readPref<core::json::Array>("file_monitor_ignored_components");
+}
+
+core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array val)
+{
+   return writePref("file_monitor_ignored_components", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2560,6 +2586,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
       kDisabledAriaLiveAnnouncements,
+      kScreenreaderConsoleAnnounceLimit,
+      kFileMonitorIgnoredComponents,
    });
 }
    

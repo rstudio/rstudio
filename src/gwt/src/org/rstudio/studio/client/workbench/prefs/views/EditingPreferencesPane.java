@@ -607,11 +607,11 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!spacesForTab_.getValue() || tabWidth_.validate("Tab width")) && 
-             (!showMargin_.getValue() || marginCol_.validate("Margin column")) &&
-             alwaysCompleteChars_.validate("Characters entered") &&
-             alwaysCompleteDelayMs_.validate("Completion keyboard idle (ms)") &&
-             backgroundDiagnosticsDelayMs_.validate("Diagnostics keyboard idle (ms):");
+      return (!spacesForTab_.getValue() || tabWidth_.validate()) && 
+             (!showMargin_.getValue() || marginCol_.validate()) &&
+             alwaysCompleteChars_.validate() &&
+             alwaysCompleteDelayMs_.validate() &&
+             backgroundDiagnosticsDelayMs_.validate();
    }
 
    @Override

@@ -19,6 +19,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
@@ -28,9 +29,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 public class ShellPane extends ShellWidget implements Shell.Display
 {
    @Inject
-   public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events)
+   public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events, AriaLiveService ariaLive)
    {
-      super(editor, uiPrefs, events);
+      super(editor, uiPrefs, events, ariaLive);
 
       editor.setDisableOverwrite(true);
       

@@ -225,7 +225,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return visualModeWrapColumn_.validate("Linebreak at column");
+      return visualModeWrapColumn_.validate();
    }
 
    @Override

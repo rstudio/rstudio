@@ -37,7 +37,7 @@ class LocalStreamHttpConnectionListener :
 {
 public:
    LocalStreamHttpConnectionListener(const FilePath& streamPath,
-                                     core::system::FileMode streamFileMode,
+                                     core::FileMode streamFileMode,
                                      const std::string& secret,
                                      int limitRpcClientUid)
       : localStreamPath_(streamPath),
@@ -142,8 +142,7 @@ private:
          return error;
 
       // chmod to ensure other users can read the file
-      return changeFileMode(pidFile,
-                            core::system::UserReadWriteGroupEveryoneReadMode);
+      return pidFile.changeFileMode(core::FileMode::USER_READ_WRITE_ALL_READ);
    }
 
    Error cleanupPidFile()
@@ -158,7 +157,7 @@ private:
 
 private:
    core::FilePath localStreamPath_;
-   core::system::FileMode streamFileMode_;
+   core::FileMode streamFileMode_;
 
    // desktop shared secret
    std::string secret_;

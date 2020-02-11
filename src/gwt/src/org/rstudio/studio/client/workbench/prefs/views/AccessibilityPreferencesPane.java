@@ -58,6 +58,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
             1, 9999, prefs.typingStatusDelayMs());
       generalPanel.add(indent(typingStatusDelay_));
+      generalPanel.add(indent(maxOutput_ = numericPref("Maximum number of console output lines to read",
+            0, UserPrefs.MAX_SCREEN_READER_CONSOLE_OUTPUT, prefs.screenreaderConsoleAnnounceLimit())));
 
       Label displayLabel = headerLabel("Other");
       generalPanel.add(displayLabel);
@@ -136,7 +138,8 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return (!chkScreenReaderEnabled_.getValue() || typingStatusDelay_.validate("Speak results after typing delay"));
+      return (!chkScreenReaderEnabled_.getValue() ||
+            (typingStatusDelay_.validate() && maxOutput_.validate()));
    }
 
    private void populateAnnouncementList()
@@ -159,6 +162,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    private boolean applyAnnouncementList(UserPrefs prefs)
    {
       boolean origConsoleLog = ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG);
+      boolean origConsoleCommand = ariaLive_.isDisabled(AriaLiveService.CONSOLE_COMMAND);
       boolean restartNeeded = false;
 
       JsArrayString settings = prefs.disabledAriaLiveAnnouncements().getValue();
@@ -174,6 +178,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
          {
             restartNeeded = true;
          }
+         else if (StringUtil.equals(chk.getFormValue(), AriaLiveService.CONSOLE_COMMAND) &&
+               origConsoleCommand == chk.getValue())
+         {
+            restartNeeded = true;
+         }
       }
       
       prefs.disabledAriaLiveAnnouncements().setGlobalValue(settings);
@@ -182,6 +191,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
+   private final NumericValueWidget maxOutput_;
    private final CheckBox chkTabMovesFocus_;
    private final CheckBoxList announcements_;
 

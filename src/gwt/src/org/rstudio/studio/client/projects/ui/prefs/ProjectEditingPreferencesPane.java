@@ -142,7 +142,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Override
    public boolean validate()
    {
-      return numSpacesForTab_.validate("Tab width"); 
+      return numSpacesForTab_.validate();
    }
 
    @Override

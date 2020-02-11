@@ -107,7 +107,7 @@
         },
         "posix_terminal_shell": {
             "type": "string",
-            "enum": ["default", "bash", "custom", "none"],
+            "enum": ["default", "bash", "zsh", "custom", "none"],
             "default": "default", 
             "description": "The terminal shell to use on POSIX operating systems (MacOS and Linux)."
         },
@@ -1024,6 +1024,18 @@
             "type": "array",
             "default": [],
             "description": "List of aria-live announcements to disable."
+        },
+        "screenreader_console_announce_limit": {
+            "type": "integer",
+            "default": 25,
+            "description": "Maximum number of lines of console output announced after a command."
+        },
+        "file_monitor_ignored_components": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "List of path components; file monitor will ignore paths containing one or more of these components."
         }
     }
 }

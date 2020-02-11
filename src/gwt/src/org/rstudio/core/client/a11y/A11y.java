@@ -132,4 +132,18 @@ public class A11y
       // of setting it to false
       el.removeAttribute("aria-expanded");
    }
+
+   public static void setInert(Element el, boolean inert)
+   {
+      if (inert)
+      {
+         setARIAHidden(el);
+         el.setAttribute("inert", "");
+      }
+      else
+      {
+         setARIAVisible(el);
+         el.removeAttribute("inert");
+      }
+   }
 }

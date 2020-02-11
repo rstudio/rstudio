@@ -13,8 +13,6 @@ REM call:install rsconnect master rstudio --no-build-vignettes
 REM call:install rmarkdown master rstudio --no-build-vignettes
 REM call:install renv master rstudio --no-build-vignettes
 
-call:install rstudioapi master rstudio --no-build-vignettes
-
 GOTO:EOF
 
 :install

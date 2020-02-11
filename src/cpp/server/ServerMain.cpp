@@ -25,7 +25,6 @@
 
 #include <core/text/TemplateFilter.hpp>
 
-#include <core/system/FileMode.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -55,6 +54,7 @@
 #include <server/ServerPaths.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
@@ -571,7 +571,12 @@ int main(int argc, char * const argv[])
             return true;
          };
 
-         error = file_utils::changeOwnership(serverDataDir, options.serverUser(), true, shouldChown);
+         system::User serverUser;
+         error = system::User::getUserFromIdentifier(options.serverUser(), serverUser);
+         if (error)
+            return core::system::exitFailure(error, ERROR_LOCATION);
+
+         error = serverDataDir.changeOwnership(serverUser, true, shouldChown);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
       }
@@ -593,9 +598,7 @@ int main(int argc, char * const argv[])
       if ((st.st_mode & desiredMode) != desiredMode)
       {
          // permissions aren't correct - attempt to fix them
-         Error error = core::system::changeFileMode(serverDataDir,
-                                                    core::system::EveryoneReadWriteExecuteMode,
-                                                    true);
+         Error error = serverDataDir.changeFileMode(core::FileMode::ALL_READ_WRITE_EXECUTE, true);
          if (error)
          {
             LOG_ERROR_MESSAGE("Could not change permissions for specified 'server-data-dir' - "

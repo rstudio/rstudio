@@ -129,6 +129,7 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
@@ -304,23 +305,6 @@ bool s_destroySession = false;
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
 
-#ifdef _WIN32
-
-BOOL CALLBACK handleConsoleCtrl(DWORD type)
-{
-   switch (type)
-   {
-   case CTRL_C_EVENT:
-   case CTRL_BREAK_EVENT:
-      rstudio::r::exec::setInterruptsPending(true);
-      return true;
-   default:
-      return false;
-   }
-}
-
-#endif
-
 void handleINT(int)
 {
    rstudio::r::exec::setInterruptsPending(true);
@@ -383,13 +367,7 @@ Error registerSignalHandlers()
 
    ExecBlock registerBlock;
 
-#ifdef _WIN32
-   // accept Ctrl + C interrupts
-   ::SetConsoleCtrlHandler(nullptr, FALSE);
-
-   // register console control handler
-   ::SetConsoleCtrlHandler(handleConsoleCtrl, TRUE);
-#endif
+   module_context::initializeConsoleCtrlHandler();
    
    // SIGINT: set interrupt flag on R session
    registerBlock.addFunctions()
@@ -549,6 +527,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::preview::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
       (modules::rmarkdown::initialize)
