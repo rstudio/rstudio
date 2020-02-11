@@ -164,6 +164,10 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
+   # necessary windows libraries
+   find_library(WIN_LDAP_LIBRARY NAMES Wldap32)
+   find_library(WIN_SSPI_LIBRARY NAMES Secur32)
+
    # require Windows-7 SP1
    add_definitions(
       -DNOMINMAX
@@ -383,6 +387,7 @@ if (APPLE)
    include_directories(SYSTEM "/usr/local/Cellar/postgresql/12.1/include/libpq")
 elseif(WIN32)
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite-amalgamation-3310100")
+   include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/include")
 endif()
 
 # find SOCI libraries
@@ -397,10 +402,20 @@ else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Debug/*.lib")
+       list(APPEND SOCI_LIBRARIES "${WIN_LDAP_LIBRARY}")
+       list(APPEND SOCI_LIBRARIES "${WIN_SSPI_LIBRARY}")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-debug-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpq-debug-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgcommon-debug-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgport-debug-${SOCI_ARCH}.lib")
    else()
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
+       list(APPEND SOCI_LIBRARIES "${WIN_LDAP_LIBRARY}")
+       list(APPEND SOCI_LIBRARIES "${WIN_SSPI_LIBRARY}")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-release-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpq-release-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgcommon-release-${SOCI_ARCH}.lib")
+       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgport-release-${SOCI_ARCH}.lib")
    endif()
 endif()
 list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
@@ -444,8 +459,6 @@ else()
       message(STATUS "PostgreSQL lib: ${POSTGRES_LIB}")
       install(PROGRAMS "${SQLITE_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
       install(PROGRAMS "${POSTGRES_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-   else()
-      install(PROGRAMS "${SOCI_LIBRARY_DIR}/*.dll" DESTINATION ${RSTUDIO_INSTALL_BIN})
    endif()
 endif()
 
