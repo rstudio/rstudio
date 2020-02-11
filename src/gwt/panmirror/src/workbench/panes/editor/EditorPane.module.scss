@@ -32,7 +32,7 @@
       height: calc(100% - #{$toolbarHeight});
       overflow-y: scroll;
     }
-    .ProseMirror .body, .ProseMirror .notes { 
+    .ProseMirror .pm-content { 
       width: 900px;
       max-width: calc(100% - (2 * #{$sidebarWidth}) - 20px);
       margin: 12px auto;  
