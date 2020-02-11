@@ -476,8 +476,16 @@ public class ElementIds
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
    public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
+   public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
+   public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";
+   public final static String VISUAL_MD_LINK_TYPE = "visual_md_link_type";
+   public final static String VISUAL_MD_LINK_HREF = "visual_md_link_href";
+   public final static String VISUAL_MD_LINK_SELECT_HEADING = "visual_md_link_select_heading";
+   public final static String VISUAL_MD_LINK_SELECT_ID = "visual_md_link_select_id";
+   public final static String VISUAL_MD_LINK_TEXT = "visual_md_link_text";
+   public final static String VISUAL_MD_LINK_TITLE = "visual_md_link_title";
+   public final static String VISUAL_MD_LINK_TAB_ATTRIBUTES = "visual_md_link_tab_attributes";
    
-
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
 

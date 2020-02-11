@@ -16,16 +16,22 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -36,14 +42,64 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
                                   PanmirrorLinkCapabilities capabilities,
                                   OperationWithInput<PanmirrorLinkEditResult> operation)
    {
-      super("Image", Roles.getDialogRole(), operation, () -> {
+      super("Link", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
    
-      mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      VerticalTabPanel linkTab = new VerticalTabPanel(ElementIds.VISUAL_MD_LINK_TAB_LINK);
+      linkTab.addStyleName(RES.styles().dialog());
       
-     
+      if (!StringUtil.isNullOrEmpty(link.href))
+      {
+         ThemedButton removeLinkButton = new ThemedButton("Remove Link");
+         removeLinkButton.addClickHandler((event) -> {
+            PanmirrorLinkEditResult result = collectInput();
+            result.action = "remove";
+            validateAndGo(result, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  closeDialog();
+                  if (operation != null)
+                     operation.execute(result);
+                  onSuccess();
+               }
+            });
+         });
+         addLeftButton(removeLinkButton, ElementIds.VISUAL_MD_LINK_REMOVE_LINK_BUTTON); 
+      }
+      
+      href_ = new PanmirrorHRefSelect(targets, capabilities);
+      href_.addStyleName(RES.styles().hrefSelect());
+      href_.addStyleName(RES.styles().spaced());
+      href_.setHRef(link.type, link.href);
+      linkTab.add(href_);
+      text_ = PanmirrorDialogsUtil.addTextBox(linkTab, ElementIds.VISUAL_MD_LINK_TEXT, "Text", link.text);
+      title_ = PanmirrorDialogsUtil.addTextBox(linkTab, ElementIds.VISUAL_MD_LINK_TITLE, "Title/Tooltip", link.title);
+      
+      editAttr_ =  new PanmirrorEditAttrWidget();
+      editAttr_.setAttr(link);
+      
+      if (capabilities.attributes)
+      {
+         VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);
+         attributesTab.addStyleName(RES.styles().dialog());
+         attributesTab.add(editAttr_);
+         
+         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
+         tabPanel.addStyleName(RES.styles().linkDialogTabs());
+         tabPanel.add(linkTab, "Link", linkTab.getBasePanelId());
+         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+         tabPanel.selectTab(0);
+         
+         mainWidget_ = tabPanel;
+      }
+      else
+      {
+         mainWidget_ = linkTab;
+      }
    }
    
    @Override
@@ -58,7 +114,14 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       PanmirrorLinkEditResult result = new PanmirrorLinkEditResult();
       result.action = "edit";
       result.link = new PanmirrorLinkProps();
-      result.link.href = "foo.htm";
+      result.link.type = href_.getType();
+      result.link.href = href_.getHRef();
+      result.link.text = text_.getValue().trim();
+      result.link.title = title_.getValue().trim();
+      PanmirrorAttrProps attr = editAttr_.getAttr();
+      result.link.id = attr.id;
+      result.link.classes = attr.classes;
+      result.link.keyvalue = attr.keyvalue;
       return result;
    }
    
@@ -68,12 +131,14 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       return true;
    }
    
+   private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
    
-   interface Binder extends UiBinder<Widget, PanmirrorEditLinkDialog> {}
+   private final Widget mainWidget_;
    
+   private final PanmirrorHRefSelect href_;
    
-   private Widget mainWidget_;
+   private final TextBox text_;
+   private final TextBox title_;
 
- 
-   
+   private final PanmirrorEditAttrWidget editAttr_;
 }

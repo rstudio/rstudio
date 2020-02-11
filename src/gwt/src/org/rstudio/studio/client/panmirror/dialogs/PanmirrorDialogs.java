@@ -103,8 +103,6 @@ public class PanmirrorDialogs {
       );
    }
    
-   
-   // TODO
    public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, boolean editAttributes)
    {
       return new Promise<PanmirrorImageProps>(

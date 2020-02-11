@@ -40,33 +40,33 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          operation.execute(null);
       }); 
       
-      VerticalTabPanel image = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
-      image.addStyleName(RES.styles().dialog());
+      VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
+      imageTab.addStyleName(RES.styles().dialog());
       
-      url_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
-      title_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
-      alt_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
+      url_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
+      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
+      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
          
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props);
       
       if (editAttributes)
       {
-         VerticalTabPanel attributes = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);
-         attributes.addStyleName(RES.styles().dialog());
-         attributes.add(editAttr_);
+         VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_ATTRIBUTES);
+         attributesTab.addStyleName(RES.styles().dialog());
+         attributesTab.add(editAttr_);
          
          DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
          tabPanel.addStyleName(RES.styles().imageDialogTabs());
-         tabPanel.add(image, "Image", image.getBasePanelId());
-         tabPanel.add(attributes, "Attributes", attributes.getBasePanelId());
+         tabPanel.add(imageTab, "Image", imageTab.getBasePanelId());
+         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
          
          mainWidget_ = tabPanel;
       }
       else
       {
-         mainWidget_ = image;
+         mainWidget_ = imageTab;
       }
    }
    
