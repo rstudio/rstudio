@@ -1,7 +1,7 @@
 #
 # test-environment.R
 #
-# Copyright (C) 2009-18 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,11 @@
 context("environment")
 
 test_that("environment object listings are correct", {
+   # our test-runner sets runAllTests function in the global environment, so initial
+   # length is one
+   .rs.invokeRpc("set_environment", "R_GlobalEnv")
+   expect_equal(length(.rs.invokeRpc("list_environment")), 1)
+
    # add some items to the global environment
    assign("obj1", 1, envir = globalenv())
    assign("obj2", "two", envir = globalenv())
@@ -25,8 +30,8 @@ test_that("environment object listings are correct", {
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
    contents <- .rs.invokeRpc("list_environment")
 
-   # verify contents
-   expect_equal(length(contents), 3)
+   # verify contents (newly added plus the initial runAllTests function)
+   expect_equal(length(contents), 4)
    obj1 <- contents[[1]]
    expect_equal(obj1[["name"]], "obj1")
    expect_equal(obj1[["value"]], "1")
