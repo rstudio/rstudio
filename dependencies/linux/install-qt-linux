@@ -26,7 +26,7 @@ if [ -z "$QT_SDK_DIR" ]; then
 fi
 
 mkdir -p ${QT_SDK_DIR}
-./install-qt.sh --version $QT_VERSION --directory ${QT_SDK_DIR}/$QT_VERSION \
+./install-qt.sh --version $QT_VERSION --directory ${QT_SDK_DIR}/Qt$QT_VERSION \
     qtbase \
     qtwebengine \
     qtwebchannel \
