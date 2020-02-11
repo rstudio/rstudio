@@ -136,11 +136,18 @@ Error posixCall(const std::function<T()>& in_posixFunction,
 bool realUserIsRoot();
 
 /**
- * @briefs Restores root privileges.
+ * @brief Restores root privileges.
  *
  * @return Success if root privileges could be restored; Error otherwise.
  */
 Error restoreRoot();
+
+/**
+ * @brief Restores privileges of the previous user, whose privileges were dropped by calling temporarilyDropPrivileges.
+ *
+ * @return Success if privileges could be restored; Error otherwise.
+ */
+Error restorePrivileges();
 
 /**
  * @brief Temporarily drops privileges from root to the requested user.
@@ -149,7 +156,7 @@ Error restoreRoot();
  *
  * @return Success if privileges could be dropped to the requested user; Error otherwise.
  */
-Error temporarilyDropPriv(const User& in_user);
+Error temporarilyDropPrivileges(const User& in_user);
 
 } // namespace posix
 } // namespace system
