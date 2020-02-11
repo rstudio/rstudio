@@ -43,9 +43,10 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       
       VerticalTabPanel image = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       image.addStyleName(RES.styles().dialog());
-      url_ = addTextBox(image, "URL", props.src);
-      title_ = addTextBox(image, "Title/Tooltip", props.title);
-      alt_ = addTextBox(image, "Caption/Alt", props.alt); 
+      
+      url_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
+      title_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
+      alt_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
          
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props);
@@ -96,10 +97,11 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       return true;
    }
    
-   private TextBox addTextBox(VerticalTabPanel panel, String label, String initialValue)
+   private TextBox addTextBox(VerticalTabPanel panel, String id, String label, String initialValue)
    {
       panel.add(new Label(label));
       TextBox textBox = new TextBox();
+      textBox.getElement().setId(id);
       textBox.addStyleName(RES.styles().fullWidth());
       textBox.addStyleName(RES.styles().spaced());
       textBox.setText(initialValue);

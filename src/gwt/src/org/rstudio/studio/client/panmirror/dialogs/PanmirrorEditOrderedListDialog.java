@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericTextBox;
@@ -48,11 +49,13 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       startingNumber_.setMin(1);
+      startingNumber_.getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_ORDER);
       
       startingNumber_.setVisible(capabilities.order);
       numberStyle_.setVisible(capabilities.fancy);
       numberDelimiter_.setVisible(capabilities.fancy);
       
+      numberStyle_.getListBox().getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_NUMBER_STYLE);
       numberStyle_.setChoices(new String[] {
          "DefaultStyle",
          "Decimal",
@@ -68,11 +71,12 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
          "OneParen",
          "TwoParens",   
       });
+      numberDelimiter_.getListBox().getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_NUMBER_DELIM);
+
+      tight_.getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_TIGHT);
       
       startingNumber_.setValue(props.order + "");
-      
       numberStyle_.setValue(props.number_style);
-      
       numberDelimiter_.setValue(props.number_delim);
       tight_.setValue(props.tight);
       
