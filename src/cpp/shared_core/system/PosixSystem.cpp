@@ -27,7 +27,10 @@
 #include <grp.h>
 #include <memory.h>
 #include <pwd.h>
+
+#ifndef __APPLE__
 #include <sys/prctl.h>
+#endif
 
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
@@ -36,6 +39,42 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace posix {
+
+namespace {
+
+Error restorePrivilegesImpl(uid_t in_uid)
+{
+   // Reset error state.
+   errno = 0;
+
+   // Change the effective user to root.
+   if (::seteuid(in_uid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // Verify
+   if (::geteuid() != 0)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   // Get user info to use in group calls
+   struct passwd* pPrivPasswd = ::getpwuid(in_uid);
+   if (pPrivPasswd == nullptr)
+      return systemError(errno, ERROR_LOCATION);
+
+   // Supplemental groups
+   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // Set effective group
+   if (::setegid(pPrivPasswd->pw_gid) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // Verify
+   if (::getegid() != pPrivPasswd->pw_gid)
+      return systemError(EACCES, ERROR_LOCATION);
+
+   return Success();
+
+}
+
+} // anonymous namespace
 
 Error enableCoreDumps()
 {
@@ -72,36 +111,51 @@ bool realUserIsRoot()
 
 Error restoreRoot()
 {
-   // Reset error state.
+   return restorePrivilegesImpl(0);
+}
+
+// privilege manipulation for systems that support setresuid/getresuid
+#if defined(HAVE_SETRESUID)
+
+Error restorePrivileges()
+{
+   // reset error state
    errno = 0;
 
-   // Change the effective user to root.
-   if (::seteuid(0) < 0)
+   // set user
+   uid_t ruid, euid, suid;
+   if (::getresuid(&ruid, &euid, &suid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   // Verify
-   if (::geteuid() != 0)
+   if (::setresuid(-1, suid, -1) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // verify
+   if (::geteuid() != suid)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // Get user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(0);
+   // get saved user info to use in group calls
+   struct passwd* pPrivPasswd = ::getpwuid(suid);
    if (pPrivPasswd == nullptr)
       return systemError(errno, ERROR_LOCATION);
 
-   // Supplemental groups
+   // supplemental groups
    if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
       return systemError(errno, ERROR_LOCATION);
 
-   // Set effective group
-   if (::setegid(pPrivPasswd->pw_gid) < 0)
+   // set group
+   gid_t rgid, egid, sgid;
+   if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   // Verify
-   if (::getegid() != pPrivPasswd->pw_gid)
+   if (::setresgid(-1, sgid, -1) < 0)
+      return systemError(errno, ERROR_LOCATION);
+   // verify
+   if (::getegid() != sgid)
       return systemError(EACCES, ERROR_LOCATION);
 
+   // success
    return Success();
 }
 
-Error temporarilyDropPriv(const system::User& in_user)
+Error temporarilyDropPrivileges(const system::User& in_user)
 {
    // clear error state
    errno = 0;
@@ -127,6 +181,71 @@ Error temporarilyDropPriv(const system::User& in_user)
    // success
    return Success();
 }
+
+// privilege manipulation for systems that don't support setresuid/getresuid
+#else
+
+namespace {
+   uid_t s_privUid;
+}
+
+Error restorePrivileges()
+{
+   return restorePrivilegesImpl(s_privUid);
+}
+
+Error temporarilyDropPrivileges(const system::User& in_user)
+{
+   // clear error state
+   errno = 0;
+
+   // init supplemental group list
+   if (::initgroups(in_user.getUsername().c_str(), in_user.getGroupId()) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // set group
+
+   // save old EGUID
+   gid_t oldEGUID = ::getegid();
+
+   // copy EGUID to SGID
+   if (::setregid(::getgid(), oldEGUID) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // set new EGID
+   if (::setegid(in_user.getGroupId()) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::getegid() != in_user.getGroupId())
+      return systemError(EACCES, ERROR_LOCATION);
+
+
+   // set user
+
+   // save old EUID
+   uid_t oldEUID = ::geteuid();
+
+   // copy EUID to SUID
+   if (::setreuid(::getuid(), oldEUID) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // set new EUID
+   if (::seteuid(in_user.getUserId()) < 0)
+      return systemError(errno, ERROR_LOCATION);
+
+   // verify
+   if (::geteuid() != in_user.getUserId())
+      return systemError(EACCES, ERROR_LOCATION);
+
+   // save privilleged user id
+   s_privUid = oldEUID;
+
+   // success
+   return Success();
+}
+
+#endif
 
 } // namespace posix
 } // namespace system
