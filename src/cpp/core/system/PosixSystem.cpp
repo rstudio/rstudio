@@ -2399,9 +2399,6 @@ bool effectiveUserIsRoot()
    return ::geteuid() == 0;
 }
 
-// privilege manipulation for systems that support setresuid/getresuid
-#if defined(HAVE_SETRESUID)
-
 Error temporarilyDropPriv(const std::string& newUsername)
 {
    // clear error state
@@ -2413,8 +2410,16 @@ Error temporarilyDropPriv(const std::string& newUsername)
    if (error)
       return error;
 
-   return posix::temporarilyDropPriv(user);
+   return posix::temporarilyDropPrivileges(user);
 }
+
+Error restorePriv()
+{
+   return posix::restorePrivileges();
+}
+
+// privilege manipulation for systems that support setresuid/getresuid
+#if defined(HAVE_SETRESUID)
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
@@ -2455,106 +2460,11 @@ Error permanentlyDropPriv(const std::string& newUsername)
    return Success();
 }
 
-Error restorePriv()
-{
-   // reset error state
-   errno = 0;
-
-   // set user
-   uid_t ruid, euid, suid;
-   if (::getresuid(&ruid, &euid, &suid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   if (::setresuid(-1, suid, -1) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::geteuid() != suid)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // get saved user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(suid);
-   if (pPrivPasswd == nullptr)
-      return systemError(errno, ERROR_LOCATION);
-
-   // supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set group
-   gid_t rgid, egid, sgid;
-   if (::getresgid(&rgid, &egid, &sgid) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   if (::setresgid(-1, sgid, -1) < 0)
-      return systemError(errno, ERROR_LOCATION);
-   // verify
-   if (::getegid() != sgid)
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // success
-   return Success();
-}
-
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
 
 namespace {
    uid_t s_privUid;
-}
-
-Error temporarilyDropPriv(const std::string& newUsername)
-{
-   // clear error state
-   errno = 0;
-
-   // get user info
-   User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
-   if (error)
-      return error;
-
-   // init supplemental group list
-   if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set group
-
-   // save old EGUID
-   gid_t oldEGUID = ::getegid();
-
-   // copy EGUID to SGID
-   if (::setregid(::getgid(), oldEGUID) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set new EGID
-   if (::setegid(user.getGroupId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // verify
-   if (::getegid() != user.getGroupId())
-      return systemError(EACCES, ERROR_LOCATION);
-
-
-   // set user
-
-   // save old EUID
-   uid_t oldEUID = ::geteuid();
-
-   // copy EUID to SUID
-   if (::setreuid(::getuid(), oldEUID) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // set new EUID
-   if (::seteuid(user.getUserId()) < 0)
-      return systemError(errno, ERROR_LOCATION);
-
-   // verify
-   if (::geteuid() != user.getUserId())
-      return systemError(EACCES, ERROR_LOCATION);
-
-   // save privilleged user id
-   s_privUid = oldEUID;
-
-   // success
-   return Success();
 }
 
 Error permanentlyDropPriv(const std::string& newUsername)
@@ -2588,11 +2498,6 @@ Error permanentlyDropPriv(const std::string& newUsername)
 
    // success
    return Success();
-}
-
-Error restorePriv()
-{
-   return restorePrivImpl(s_privUid);
 }
 
 #endif
