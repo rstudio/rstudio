@@ -1397,7 +1397,7 @@ public:
    core::Error setScreenreaderConsoleAnnounceLimit(int val);
 
    /**
-    * List of file components; file monitor will ignore files containing one or more of these components.
+    * List of path components; file monitor will ignore paths containing one or more of these components.
     */
    core::json::Array fileMonitorIgnoredComponents();
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
