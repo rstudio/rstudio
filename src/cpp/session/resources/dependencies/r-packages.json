@@ -231,7 +231,7 @@
             "source": false
         },
         "rstudioapi": {
-            "version": "0.10",
+            "version": "0.11",
             "location": "cran",
             "source": false
         },
