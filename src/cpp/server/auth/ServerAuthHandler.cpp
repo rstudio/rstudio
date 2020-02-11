@@ -454,15 +454,15 @@ Error initialize()
    }
 
    core::system::User serverUser;
-   error = core::system::User::getUserFromIdentifier(options().serverUser(), serverUser);
-   if (error)
-   {
-      error.addProperty("description", "Could not get server user details");
-      return error;
-   }
-
    if (core::system::effectiveUserIsRoot())
    {
+      error = core::system::User::getUserFromIdentifier(options().serverUser(), serverUser);
+      if (error)
+      {
+         error.addProperty("description", "Could not get server user details");
+         return error;
+      }
+
       error = rootDir.changeOwnership(serverUser);
       if (error)
       {
