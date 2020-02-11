@@ -254,7 +254,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          ((Element) listPresetFilePatterns_.getElement().getChild(
                Include.Package.ordinal()))
             .setAttribute("disabled", "disabled");
-         listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
+         if (listPresetFilePatterns_.getSelectedIndex() ==
+             Include.Package.ordinal())
+            listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
       }
       else
          ((Element) listPresetFilePatterns_.getElement().getChild(

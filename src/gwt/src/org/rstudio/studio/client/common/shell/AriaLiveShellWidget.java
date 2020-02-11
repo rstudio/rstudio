@@ -19,15 +19,16 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 /**
  * Visibly-hidden live region used to report recent console output to a screen reader.
  */
 public class AriaLiveShellWidget extends Widget
 {
-   private static final int LINE_REPORTING_LIMIT = 25;
-   public AriaLiveShellWidget()
+   public AriaLiveShellWidget(UserPrefs prefs)
    {
+      prefs_ = prefs;
       lineCount_ = 0;
       setElement(Document.get().createDivElement());
       A11y.setVisuallyHidden(getElement());
@@ -36,7 +37,7 @@ public class AriaLiveShellWidget extends Widget
    
    public void announce(String text)
    {
-      if (lineCount_ > LINE_REPORTING_LIMIT)
+      if (lineCount_ > prefs_.screenreaderConsoleAnnounceLimit().getValue())
          return;
 
       StringBuilder line = new StringBuilder();
@@ -50,9 +51,9 @@ public class AriaLiveShellWidget extends Widget
             append(line.toString());
             line.setLength(0);
             
-            if (lineCount_ == LINE_REPORTING_LIMIT)
+            if (lineCount_ == prefs_.screenreaderConsoleAnnounceLimit().getValue())
             {
-               append("Too much output to announce in console.");
+               append("Too much console output to announce.");
                lineCount_++;
                return;
             }
@@ -80,4 +81,5 @@ public class AriaLiveShellWidget extends Widget
    }
 
    private int lineCount_;
+   private final UserPrefs prefs_;
 }

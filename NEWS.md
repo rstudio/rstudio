@@ -53,7 +53,9 @@
 * PowerShell Core option in terminal (Windows-only)
 * Custom terminal shell option for Windows desktop (previously only on Mac, Linux, and server)
 * Change shortcuts for Next/Previous terminal to avoid clash with common Windows shortcuts (#4892)
+* Suppress macOS Catalina message about switching to zsh in Terminal pane (#6182)
 * Add 'Close All Terminals' command to Terminal menu (#3564)
+* Zsh option in terminal for Mac and Linux desktop, and RStudio Server (#5587)
 
 ### Diagnostics and Recovery
 
@@ -124,6 +126,8 @@
 * Keyboard shortcuts for searching R help in Help pane, and next/previous help page (#5149)
 * Keep keyboard focus in the console during debugging (#6039)
 * Enable wrap-around for previous/next source tab by default (#6139)
+* Provide full SHA in detail of Git commits (#6155)
+* File monitor now ignores Packrat, renv library folders (#3267)
 
 ### Bugfixes
 
@@ -141,6 +145,13 @@
 * Fix issue where session restore could fail when using multiple user libraries
 * Fix issue where library paths were not forwarded when building package documentation
 * Restore ability to select and copy text in version control diffs (#4734)
+* Fix incorrect column names when non-dataframes with a column named `x` were viewed (#3304)
+* Fix inconsistent shading in R Markdown chunk backgrounds with folding (#2992)
+* Fix list column display in columns past 50 with data viewer (#5851)
+* Fix incorrect column type display when paging columns (#5479)
+* Fix incorrect sorting in data viewer when paging columns (#4682)
+* Fix carryover of light ANSI background colors (#6092)
+* Fix issue where Shiny applications using `reticulate` on Windows could crash on run (#6140)
 
 ### RStudio Professional
 

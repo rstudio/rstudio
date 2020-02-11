@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,8 +46,9 @@ struct TerminalShell
       CustomShell  = 8, // User-specified shell command
       NoShell      = 9, // Non-interactive job with no shell
       PSCore      = 10, // PowerShell Core (v6)
+      PosixZsh    = 11, // Posix: Zsh
 
-      Max          = PSCore
+      Max          = PosixZsh
    };
 
    TerminalShell() = default;

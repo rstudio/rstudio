@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShellTests.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,7 +106,7 @@ test_context("session terminal shell tests")
 
 
 #else // Posix
-   test_that("One shell (bash) on Posix")
+   test_that("Bash on Posix")
    {
       AvailableTerminalShells shells;
       TerminalShell shell;
