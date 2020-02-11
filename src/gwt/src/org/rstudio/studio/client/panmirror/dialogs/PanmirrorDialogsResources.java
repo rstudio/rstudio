@@ -27,7 +27,9 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String dialog();
       String spaced();
       String textArea();
-      String fullWidthText();
+      String checkBox();
+      String fullWidth();
+      String infoLabel();
    }
 
    @Source("PanmirrorDialogsStyles.css")

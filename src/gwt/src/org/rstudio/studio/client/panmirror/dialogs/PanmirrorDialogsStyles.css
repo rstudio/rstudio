@@ -3,6 +3,7 @@
 
 .dialog {
    width: 350px;
+   margin-bottom: 12px;
    position: relative;
 }
 	   
@@ -11,13 +12,27 @@
    margin-bottom: 4px;
 }
 
-.dialog .fullWidthText {
+.dialog .infoLabel {
+   color: #606060;
+   font-size: 0.7rem;
+   margin-top: 5px;
+}
+
+.dialog .fullWidth{
    width: 98%;
+}
+
+.dialog .fullWidth select {
+	width: 100%;
 }
 
 .spaced {
    margin-bottom: 10px;
 }
+
+.dialog .checkBox  input[type="checkbox"] {
+   margin-right: 5px; 
+}  
 
 .dialog .textArea {
    -moz-box-sizing: border-box;

@@ -13,10 +13,10 @@
 
    <g:VerticalPanel styleName="{style.editAttr}">
       <g:Label text="ID"></g:Label>
-      <g:TextBox styleName="{res.styles.fullWidthText} {res.styles.spaced}" ui:field="id_"></g:TextBox>
+      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_"></g:TextBox>
     
       <g:Label text="Classes"></g:Label>
-      <g:TextBox styleName="{res.styles.fullWidthText} {res.styles.spaced}" ui:field="classes_"></g:TextBox>
+      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="classes_"></g:TextBox>
     
       <g:Label text="Attributes"/>
       <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"

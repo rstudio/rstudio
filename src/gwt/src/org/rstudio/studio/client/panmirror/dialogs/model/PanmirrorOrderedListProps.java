@@ -22,7 +22,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorOrderedListProps
 {
    public boolean tight;
-   public int number;
+   public int order;
    public String number_style;
    public String number_delim;
 }

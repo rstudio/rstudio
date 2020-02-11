@@ -37,7 +37,7 @@
           
       <g:cell><g:Label></g:Label></g:cell>  
           
-      <g:CheckBox styleName="{style.header} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
         
 
       	
