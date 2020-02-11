@@ -25,7 +25,6 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,9 +43,9 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       VerticalTabPanel image = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       image.addStyleName(RES.styles().dialog());
       
-      url_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
-      title_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
-      alt_ = addTextBox(image, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
+      url_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
+      title_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
+      alt_ = PanmirrorDialogsUtil.addTextBox(image, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
          
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props);
@@ -95,18 +94,6 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    protected boolean validate(PanmirrorImageProps result)
    {
       return true;
-   }
-   
-   private TextBox addTextBox(VerticalTabPanel panel, String id, String label, String initialValue)
-   {
-      panel.add(new Label(label));
-      TextBox textBox = new TextBox();
-      textBox.getElement().setId(id);
-      textBox.addStyleName(RES.styles().fullWidth());
-      textBox.addStyleName(RES.styles().spaced());
-      textBox.setText(initialValue);
-      panel.add(textBox);
-      return textBox;
    }
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
