@@ -28,9 +28,11 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabiliti
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkType;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -74,13 +76,31 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       href_ = new PanmirrorHRefSelect(targets, capabilities);
       href_.addStyleName(RES.styles().hrefSelect());
       href_.addStyleName(RES.styles().spaced());
-      href_.setHRef(link.type, link.href);
       linkTab.add(href_);
-      text_ = PanmirrorDialogsUtil.addTextBox(linkTab, ElementIds.VISUAL_MD_LINK_TEXT, "Text", link.text);
-      title_ = PanmirrorDialogsUtil.addTextBox(linkTab, ElementIds.VISUAL_MD_LINK_TITLE, "Title/Tooltip", link.title);
       
+      text_ = PanmirrorDialogsUtil.addTextBox(
+         linkTab, 
+         ElementIds.VISUAL_MD_LINK_TEXT, 
+         textLabel_ = new Label("Text"), 
+         link.text
+      );
+      title_ = PanmirrorDialogsUtil.addTextBox(
+         linkTab, 
+         ElementIds.VISUAL_MD_LINK_TITLE, 
+         titleLabel_ = new Label("Title/Tooltip"), 
+         link.title
+      );
+        
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(link);
+      
+      
+      href_.addTypeChangedHandler((event) -> {
+        manageVisibility();
+      });
+      href_.setHRef(link.type, link.href);
+      manageVisibility();
+    
       
       if (capabilities.attributes)
       {
@@ -116,12 +136,19 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       result.link = new PanmirrorLinkProps();
       result.link.type = href_.getType();
       result.link.href = href_.getHRef();
-      result.link.text = text_.getValue().trim();
-      result.link.title = title_.getValue().trim();
-      PanmirrorAttrProps attr = editAttr_.getAttr();
-      result.link.id = attr.id;
-      result.link.classes = attr.classes;
-      result.link.keyvalue = attr.keyvalue;
+      if (result.link.type != PanmirrorLinkType.Heading)
+      {
+         result.link.text = text_.getValue().trim();
+         result.link.title = title_.getValue().trim();
+         PanmirrorAttrProps attr = editAttr_.getAttr();
+         result.link.id = attr.id;
+         result.link.classes = attr.classes;
+         result.link.keyvalue = attr.keyvalue;
+      }
+      else
+      {
+         result.link.text = result.link.href;
+      }
       return result;
    }
    
@@ -131,13 +158,24 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       return true;
    }
    
+   private void manageVisibility()
+   {
+      text_.setVisible(href_.getType() != PanmirrorLinkType.Heading);
+      textLabel_.setVisible(text_.isVisible());
+      title_.setVisible(text_.isVisible());
+      titleLabel_.setVisible(text_.isVisible());
+      editAttr_.setVisible(text_.isVisible());
+   }
+   
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
    
    private final Widget mainWidget_;
    
    private final PanmirrorHRefSelect href_;
    
+   private final Label textLabel_;
    private final TextBox text_;
+   private final Label titleLabel_;
    private final TextBox title_;
 
    private final PanmirrorEditAttrWidget editAttr_;

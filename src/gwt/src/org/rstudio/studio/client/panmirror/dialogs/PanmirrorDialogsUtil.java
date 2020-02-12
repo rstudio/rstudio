@@ -25,7 +25,12 @@ public class PanmirrorDialogsUtil
 {
    public static TextBox addTextBox(VerticalTabPanel panel, String id, String label, String initialValue)
    {
-      panel.add(new Label(label));
+      return addTextBox(panel, id, new Label(label), initialValue);
+   }
+   
+   public static TextBox addTextBox(VerticalTabPanel panel, String id, Label label, String initialValue)
+   {
+      panel.add(label);
       TextBox textBox = new TextBox();
       textBox.getElement().setId(id);
       textBox.addStyleName(RES.styles().fullWidth());
