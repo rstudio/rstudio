@@ -98,14 +98,20 @@ class CodeBlockNodeView implements NodeView {
     // option defaults
     this.options = options;
 
-    // Create a CodeMirror instance
-    this.cm = CodeMirror(null!, {
+    // CodeMirror options
+    const cmOptions: any = {
       value: this.node.textContent,
       extraKeys: this.codeMirrorKeymap(),
       lineWrapping: true,
       lineNumbers: this.options.lineNumbers,
       styleSelectedText: true,
-    } as CodeMirror.EditorConfiguration);
+    };
+    if (this.options.lineNumberFormatter) {
+      cmOptions.lineNumberFormatter = this.options.lineNumberFormatter;
+    }
+
+    // Create a CodeMirror instance
+    this.cm = CodeMirror(null!, cmOptions as CodeMirror.EditorConfiguration);
 
     // update mode
     this.updateMode();

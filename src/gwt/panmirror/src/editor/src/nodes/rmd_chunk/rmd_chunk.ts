@@ -53,6 +53,14 @@ const extension: Extension = {
 
       code_view: {
         firstLineMeta: true,
+        lineNumbers: true,
+        lineNumberFormatter: (line: number) => {
+          if (line === 1) {
+            return "";
+          } else {
+            return (line - 1) + "";
+          }
+        },
         classes: ['pm-chunk-background-color'],
         lang: (_node: ProsemirrorNode, content: string) => {
           const match = content.match(/^[a-zA-Z0-9_]+/);

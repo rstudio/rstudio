@@ -55,6 +55,7 @@ export interface CodeViewOptions {
   classes?: string[];
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
+  lineNumberFormatter?: (line: number) => string;
 }
 
 export type NodeTraversalFn = (
