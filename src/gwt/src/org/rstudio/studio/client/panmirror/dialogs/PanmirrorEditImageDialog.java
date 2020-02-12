@@ -77,6 +77,13 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    }
    
    @Override
+   public void focusFirstControl()
+   {
+      url_.setFocus(true);
+      url_.selectAll();
+   }
+   
+   @Override
    protected PanmirrorImageProps collectInput()
    {
       PanmirrorImageProps result = new PanmirrorImageProps();

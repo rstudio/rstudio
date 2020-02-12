@@ -16,6 +16,8 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkHeadingTarget;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
@@ -25,6 +27,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -35,7 +38,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 
 
-public class PanmirrorHRefSelect extends Composite
+public class PanmirrorHRefSelect extends Composite implements CanFocus
 {
    public PanmirrorHRefSelect(PanmirrorLinkTargets targets, 
                               PanmirrorLinkCapabilities capabilities)
@@ -162,6 +165,12 @@ public class PanmirrorHRefSelect extends Composite
       return type_.addChangeHandler(handler);
    }
    
+   @Override
+   public void focus()
+   {
+      if (hrefContainer_.getWidget() instanceof Focusable)
+         FocusHelper.setFocusDeferred((Focusable)hrefContainer_.getWidget());
+   }
    
    private void syncHRefType()
    {
@@ -190,4 +199,5 @@ public class PanmirrorHRefSelect extends Composite
    private final TextBox href_; 
    private final ListBox headings_;
    private final ListBox ids_;
+   
 }

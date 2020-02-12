@@ -129,6 +129,13 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    }
    
    @Override
+   public void focusFirstControl()
+   {
+      href_.focus();
+   }
+   
+   
+   @Override
    protected PanmirrorLinkEditResult collectInput()
    {
       PanmirrorLinkEditResult result = new PanmirrorLinkEditResult();
