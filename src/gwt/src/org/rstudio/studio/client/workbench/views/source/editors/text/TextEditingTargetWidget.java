@@ -355,8 +355,6 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
       
-      addVisualModeToggleButton(toolbar);
-
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
@@ -562,6 +560,10 @@ public class TextEditingTargetWidget
          }
       }.schedule(100);
       
+
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(createVisualModeToggleButton());
+      
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
       
@@ -586,7 +588,7 @@ public class TextEditingTargetWidget
       return toolbar;
    }
    
-   private void addVisualModeToggleButton(Toolbar toolbar)
+   private ToolbarButton createVisualModeToggleButton()
    {
       toggleRmdVisualModeButton_ = new LatchingToolbarButton(
          ToolbarButton.NoText,
@@ -604,7 +606,7 @@ public class TextEditingTargetWidget
       });
       toggleRmdVisualModeButton_.setLatched(isVisualMode());
       toggleRmdVisualModeButton_.addStyleName("rstudio-themes-inverts");
-      toolbar.addLeftWidget(toggleRmdVisualModeButton_);
+      return toggleRmdVisualModeButton_;
    }
    
    private void addVisualModeOutlineButton(Toolbar toolbar)
@@ -1674,7 +1676,7 @@ public class TextEditingTargetWidget
    private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
-   private Widget findReplaceButton_;
+   private ToolbarButton findReplaceButton_;
    private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
