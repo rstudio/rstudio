@@ -17,7 +17,7 @@ systems. Specific version requirements for various components include:
 Installation of Qt SDK 5.12.6
 =============================================================================
 
-To build RStudio Desktop, install Qt 5.12.6 from https:/qt.io. Include the
+To build RStudio Desktop, install Qt 5.12.6 from https://qt.io. Include the
 QtWebEngine component.
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
