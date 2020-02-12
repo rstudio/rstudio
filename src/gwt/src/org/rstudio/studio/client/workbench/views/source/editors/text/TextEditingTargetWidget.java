@@ -291,7 +291,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(srcOnSaveLabel_);
 
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(checkSpellingButton_ = commands_.checkSpelling().createToolbarButton());
+      toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
       
       toolbar.addLeftWidget(findReplaceButton_ = findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
@@ -773,7 +773,6 @@ public class TextEditingTargetWidget
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
       
-      checkSpellingButton_.setVisible(!visualRmdMode);
       findReplaceButton_.setVisible(!visualRmdMode);
       
       
@@ -1671,7 +1670,6 @@ public class TextEditingTargetWidget
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private Widget findReplaceButton_;
-   private Widget checkSpellingButton_;
    private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;

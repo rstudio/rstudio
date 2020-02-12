@@ -3141,8 +3141,10 @@ public class TextEditingTarget implements
 
    @Handler
    void onCheckSpelling()
-   {
-      spelling_.checkSpelling();
+   {  
+      visualMode_.deactivate(() -> {
+         spelling_.checkSpelling();
+      }); 
    }
 
    @Handler

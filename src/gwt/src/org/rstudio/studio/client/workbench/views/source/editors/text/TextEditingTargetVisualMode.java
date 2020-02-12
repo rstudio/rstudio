@@ -191,7 +191,6 @@ public class TextEditingTargetVisualMode
         commands_.notebookClearOutput(),
         commands_.goToLine(),
         commands_.wordCount(),
-        commands_.checkSpelling(),
         commands_.restartRClearOutput(),
         commands_.restartRRunAllChunks(),
         commands_.profileCode()
