@@ -3,7 +3,7 @@
 #
 # install-qt-linux
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,9 @@
 
 # Install minimal Qt bits needed to build via command-line (e.g. Docker).
 # For developer environments, better to install using Qt's online installer.
+
+set -e
+command -v 7z >/dev/null 2>&1 || { echo >&2 "7z command required to install Qt but not found."; exit 1; }
 
 if [ -z "$QT_VERSION" ]; then
     QT_VERSION=5.12.6
