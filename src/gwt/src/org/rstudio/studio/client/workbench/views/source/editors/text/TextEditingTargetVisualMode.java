@@ -205,6 +205,7 @@ public class TextEditingTargetVisualMode
          return new HasFindReplace() {
             public boolean isFindReplaceShowing() { return false; }
             public void showFindReplace(boolean defaultForward) {}
+            public void hideFindReplace() {}
             public void findNext() {}
             public void findPrevious() {}
             public void replaceAndFind() {}

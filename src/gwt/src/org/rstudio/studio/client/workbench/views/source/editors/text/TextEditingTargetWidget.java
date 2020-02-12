@@ -1040,6 +1040,11 @@ public class TextEditingTargetWidget
       findReplace_.showFindReplace(defaultForward);
    }
    
+   public void hideFindReplace()
+   {
+      findReplace_.hideFindReplace();
+   }
+   
    @Override
    public void findNext()
    {

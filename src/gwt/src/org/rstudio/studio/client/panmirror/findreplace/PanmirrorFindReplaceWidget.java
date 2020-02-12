@@ -119,6 +119,12 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
          });
       }
    }
+   
+   @Override
+   public void hideFindReplace()
+   {
+      container_.showFindReplace(false);
+   }
 
    @Override
    public void findNext()
