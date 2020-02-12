@@ -103,6 +103,9 @@ class CodeBlockNodeView implements NodeView {
       value: this.node.textContent,
       extraKeys: this.codeMirrorKeymap(),
       lineWrapping: true,
+      indentUnit: 2,
+      tabSize: 2,
+      indentWithTabs: false,
       lineNumbers: this.options.lineNumbers,
       styleSelectedText: true,
     };
@@ -263,6 +266,7 @@ class CodeBlockNodeView implements NodeView {
       Down: () => this.arrowMaybeEscape('line', 1),
       Right: () => this.arrowMaybeEscape('char', 1),
       Backspace: () => this.backspaceMaybeDeleteNode(),
+      Tab: () => this.cm.execCommand(this.cm.getOption("indentWithTabs") ? "insertTab" : "insertSoftTab"),
       // undo/redo keys are technically rebindable in the parent
       // editor so we may need a way to propagate the rebinding here
       [`${mod}-Z`]: () => undo(view.state, view.dispatch),
