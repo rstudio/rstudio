@@ -10,11 +10,9 @@
 
 ## Enhancements
 
-Consider where format reading should go (PanmirrorUITools)
-
 Tables not round-tripping in gfm mode
-Definition menu still present in gfm mode
 
+Consider where format reading should go (PanmirrorUITools)
 Add fill-column to magic comments
 
 Consider dynamic read of format comments (signal via event)
