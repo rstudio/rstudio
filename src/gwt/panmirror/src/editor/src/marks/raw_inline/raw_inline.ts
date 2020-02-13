@@ -16,7 +16,7 @@
 import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-model';
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { findChildrenByMark } from 'prosemirror-utils';
-import { DecorationSet } from 'prosemirror-view';
+import { DecorationSet, Decoration } from 'prosemirror-view';
 
 import { Extension } from '../../api/extension';
 import { ProsemirrorCommand } from '../../api/command';
@@ -230,9 +230,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     // plugin to add and remove raw_inline latex marks as the user edits
     plugins: (schema: Schema) => {
       const plugins: Plugin[] = [];
-      if (pandocExtensions.raw_tex) {
-        plugins.push(latexHighlightPlugin(schema));
-      }
+      plugins.push(rawInlineHighlightPlugin(schema));
       return plugins;
     },
   };
@@ -240,7 +238,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
 const key = new PluginKey<DecorationSet>('latex-highlight');
 
-export function latexHighlightPlugin(schema: Schema) {
+export function rawInlineHighlightPlugin(schema: Schema) {
+
+  const kLightTextClass = 'pm-light-text-color';
+  const delimiterRegex = /[{}]/g;
+  const htmlCommentRegex = /^<!--([\s\S]*?)-->$/;
+
   return markHighlightPlugin(key, schema.marks.raw_inline, (text, attrs, markRange) => {
     if (attrs.format === TEX_FORMAT) {
       // commands
@@ -249,11 +252,17 @@ export function latexHighlightPlugin(schema: Schema) {
       let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
 
       // delimieters
-      const kDelimiterClass = 'pm-light-text-color';
-      const delimiterRegex = /[{}]/g;
-      decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kDelimiterClass));
+      
+      decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
 
       return decorations;
+    } else if (attrs.format === HTML_FORMAT) {
+      if (htmlCommentRegex.test(text)) {
+        return [Decoration.inline(markRange.from, markRange.to, { class: kLightTextClass })];
+      } else {
+        return [];
+      }
+
     } else {
       return [];
     }
