@@ -204,12 +204,19 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Footnote);
       insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();
-      PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
-      definitionMenu.addCommand(PanmirrorCommands.DefinitionList);
-      definitionMenu.addSeparator();
-      definitionMenu.addCommand(PanmirrorCommands.DefinitionTerm);
-      definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
-      insertMenu.addSeparator();
+      
+      if (haveAnyOf(PanmirrorCommands.DefinitionList,
+                    PanmirrorCommands.DefinitionTerm,
+                    PanmirrorCommands.DefinitionDescription))
+      {
+         PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
+         definitionMenu.addCommand(PanmirrorCommands.DefinitionList);
+         definitionMenu.addSeparator();
+         definitionMenu.addCommand(PanmirrorCommands.DefinitionTerm);
+         definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
+         insertMenu.addSeparator();
+      }
+      
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
       insertMenu.addCommand(PanmirrorCommands.InlineLatex);
@@ -245,6 +252,16 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       tableMenu.addCommand(PanmirrorCommands.TableDeleteColumn);
       tableMenu.addCommand(PanmirrorCommands.TableDeleteTable);
       return tableMenu;
+   }
+   
+   private boolean haveAnyOf(String...ids)
+   {
+      for (String id : ids)
+      {
+         if (commands_.get(id).isVisible())
+            return true;
+      }
+      return false;
    }
   
    
