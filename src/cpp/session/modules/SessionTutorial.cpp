@@ -171,8 +171,12 @@ std::string htmlFormatTutorialName(const std::string& packageName,
 {
    using namespace string_utils;
    
+   // NOTE: because these URLs will be displayed in a page served from
+   // a '/tutorial' endpoint (e.g. '/tutorial/home'), it's sufficient to
+   // use a relative link to the URL. (this is also required on RSP,
+   // where absolute URIs will not work due to how URLs are proxied)
    std::stringstream href;
-   href << "/tutorial/run"
+   href << "./run"
         << "?package=" + htmlEscape(packageName)
         << "&name=" + htmlEscape(tutorial.name);
    
