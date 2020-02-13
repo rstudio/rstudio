@@ -235,7 +235,10 @@
    
    # find dependencies
    deps <- renv::dependencies(path, quiet = TRUE)
-   pkgs <- sort(unique(deps$Package))
+   
+   # ensure rstudioapi is included (required for communication between
+   # the child R process hosting the tutorial + the main IDE session)
+   pkgs <- sort(unique(c(deps$Package, "rstudioapi")))
    
    # screen out some potentially invalid package names
    pkgs <- grep("^[a-zA-Z0-9._]+$", pkgs, value = TRUE)
