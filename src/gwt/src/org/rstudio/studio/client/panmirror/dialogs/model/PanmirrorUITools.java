@@ -7,4 +7,6 @@ public class PanmirrorUITools
 {
    public native PanmirrorAttrEditInput attrPropsToInput(PanmirrorAttrProps attr);
    public native PanmirrorAttrProps attrInputToProps(PanmirrorAttrEditInput input);
+   public native String pandocFormatFromCode(String code);
 }
+

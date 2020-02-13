@@ -36,7 +36,7 @@ import { PandocNode } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
-import { PandocEngine, pandocFormat, PandocFormat } from './api/pandoc';
+import { PandocEngine, pandocFormat, PandocFormat, pandocFormatFromCode } from './api/pandoc';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
 import { EditorOutline } from './api/outline';
@@ -112,6 +112,7 @@ export { EditorCommandId as EditorCommands } from './api/command';
 export class UITools {
   public attrPropsToInput(attr: AttrProps) { return attrPropsToInput(attr); }
   public attrInputToProps(input: AttrEditInput) { return attrInputToProps(input); }
+  public pandocFormatFromCode(code: string) { return pandocFormatFromCode(code); }
 };
 
 

@@ -237,7 +237,6 @@ public class TextEditingTargetVisualMode
       
       // get references to the editing container and it's source editor
       TextEditorContainer editorContainer = display_.editorContainer();
-      TextEditorContainer.Editor editor = editorContainer.getEditor();
         
       // visual mode enabled (panmirror editor)
       if (activate)
@@ -263,7 +262,7 @@ public class TextEditingTargetVisualMode
             if (!isPanmirrorActive()) 
             {
                loadingFromSource_ = true;
-               panmirror_.setMarkdown(editor.getCode(), true, (done) -> {  
+               panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
                   
                   isDirty_ = false;
                   loadingFromSource_ = false;
@@ -320,7 +319,7 @@ public class TextEditingTargetVisualMode
          config.options.rmdCodeChunks = true;
            
          PanmirrorWidget.Options options = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(config, options, (panmirror) -> {
+         PanmirrorWidget.create(config, options, getEditorCode(), (panmirror) -> {
             
             // save reference to panmirror
             panmirror_ = panmirror;
@@ -405,6 +404,13 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    } 
+   
+   private String getEditorCode()
+   {
+      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer.Editor editor = editorContainer.getEditor();
+      return editor.getCode();
+   }
    
    // is our widget active in the editor container
    private boolean isPanmirrorActive()

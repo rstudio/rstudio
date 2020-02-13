@@ -211,6 +211,40 @@ export function pandocFormatWith(format: string, prepend: string, append: string
   return `${split.format}${prepend}${split.options}${append}`;
 }
 
+export function pandocFormatFromCode(code: string) {
+  const variables = {
+    mode: 'markdown',
+    extensions: '',
+    ...pandocFormatVariablesFromCode(code)
+  };
+  return pandocFormatWith(variables.mode, '', variables.extensions);
+}
+
+export function pandocFormatVariablesFromCode(code: string) {
+  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
+  const keyValueRegEx = /^([^:]+):\s*(.*)$/;
+  const match = code.match(magicCommentRegEx);
+  if (match) {
+    const comment = match[1];
+    // split into semicolons
+    const fields = comment.split(/\s*;\s/).map(field => field.trim());
+    const variables: { [key: string]: string } = {};
+    fields.forEach(field => {
+      const keyValueMatch = field.match(keyValueRegEx);
+      if (keyValueMatch) {
+        variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
+      }
+    });    
+    return variables;
+  } else {
+    return {};
+  }
+}
+
+
+
+
+
 export interface PandocAst {
   blocks: PandocToken[];
   'pandoc-api-version': PandocApiVersion;
@@ -439,6 +473,7 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
   return tokens.map(mapToken);
 }
 
+
 function splitFormat(format: string) {
   // split out base format from options
   let optionsPos = format.indexOf('-');
@@ -452,3 +487,5 @@ function splitFormat(format: string) {
     options,
   };
 }
+
+

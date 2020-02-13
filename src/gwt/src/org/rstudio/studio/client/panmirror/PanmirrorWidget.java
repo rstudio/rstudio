@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
@@ -91,11 +92,19 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public static void create(PanmirrorConfig config,
                              Options options,
+                             String code,
                              CommandWithArg<PanmirrorWidget> completed) {
       
       PanmirrorWidget editorWidget = new PanmirrorWidget(options);
+   
       
       Panmirror.load(() -> {
+         
+         // read magic comments for format info
+         PanmirrorUITools uiTools =  new PanmirrorUITools();
+         config.format = uiTools.pandocFormatFromCode(code);
+         
+         // create the editor
          new PromiseWithProgress<PanmirrorEditor>(
             PanmirrorEditor.create(editorWidget.editorParent_.getElement(), config),
             null,
