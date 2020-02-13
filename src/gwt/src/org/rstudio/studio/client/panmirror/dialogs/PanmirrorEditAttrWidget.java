@@ -20,9 +20,9 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.FormTextArea;
+import org.rstudio.studio.client.panmirror.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorUITools;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;

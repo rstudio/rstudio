@@ -1,4 +1,7 @@
-package org.rstudio.studio.client.panmirror.dialogs.model;
+package org.rstudio.studio.client.panmirror;
+
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 
 import jsinterop.annotations.JsType;
 

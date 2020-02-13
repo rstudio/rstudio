@@ -33,7 +33,6 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
