@@ -317,7 +317,7 @@ function htmlLength(text: string) {
     if (i === 0 && ch !== '<') {
       return 0;
     }
-    if (i === 1 && !isLetter(ch) && ch !== '/') {
+    if (i === 1 && !isLetter(ch) && ch !== '!' && ch !== '/') {
       return 0;
     }
 

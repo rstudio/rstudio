@@ -13,13 +13,26 @@
  *
  */
 
-import { smartQuotes, ellipsis, emDash } from 'prosemirror-inputrules';
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { smartQuotes, ellipsis, InputRule } from 'prosemirror-inputrules';
+import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
 
 const plugin = new PluginKey('smartypaste');
+
+
+// match emDash but only for lines that aren't an html comment
+const emDash = new InputRule(/^(?:.*)---$/, (state: EditorState, match: string[], start: number, end: number) => {
+  if (!state.doc.textBetween(start, end).startsWith("<!--")) {
+    const tr = state.tr;
+    tr.insertText("—", end - 2, end);
+    return tr;
+  } else {
+    return null;
+  }
+});
+
 
 const extension: Extension = {
   inputRules: () => {

@@ -21,7 +21,7 @@ import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
@@ -84,11 +84,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawBlock,
-              block: 'raw_block',
-              getAttrs: (tok: PandocToken) => ({
-                format: tok.c[RAW_BLOCK_FORMAT],
-              }),
-              getText: (tok: PandocToken) => tok.c[RAW_BLOCK_CONTENT],
+              handler: (schema: Schema) => readPandocRawBlock(schema),
             },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
@@ -110,6 +106,31 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     },
   };
 };
+
+function readPandocRawBlock(schema: Schema) {
+  return (writer: ProsemirrorWriter, tok: PandocToken) => {
+    
+    const format = tok.c[RAW_BLOCK_FORMAT];
+    const text = tok.c[RAW_BLOCK_CONTENT];
+
+    // html comments should be read as inline html. this allows them to be 
+    // edited more naturally in the editor and to be written without 
+    // raw_block attribute formatting
+    const commentRe = /^<!--([\s\S]*?)-->$/;
+    if (format === 'html' && commentRe.test(text)) {
+      writer.openNode(schema.nodes.paragraph, {});
+      const mark = schema.marks.raw_inline.create({ format });
+      writer.openMark(mark);
+      writer.writeText(text);
+      writer.closeMark(mark);
+      writer.closeNode();
+    } else {
+      writer.openNode(schema.nodes.raw_block, { format });
+      writer.writeText(text);    
+      writer.closeNode();
+    }   
+  };
+}
 
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
