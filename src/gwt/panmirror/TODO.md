@@ -5,9 +5,37 @@
 
 
 
+
+
+
 ## Enhancements
 
+Consider where format reading should go (PanmirrorUITools)
+
+Tables not round-tripping in gfm mode
+Definition menu still present in gfm mode
+
+Add fill-column to magic comments
+
+Consider dynamic read of format comments (signal via event)
+https://jblevins.org/log/file-local-variables
+
+
+Dialog/picker for images
+
+Sizing/alignment inline for images
+
+Surface attributes
+
+Better direct manipulation for tables
+
+Unit testing for core panmirror code
+
 Improved treatment for relative image paths that don't resolve
+
+
+FindUX in standalone
+Magic comments in standalone
 
 Cursor location for insert yaml in the middle of paragraph
 
@@ -44,11 +72,6 @@ EditorUI.translate call for translatable text
 handling for div with only an id (shading treatment a bit much?)
 
 internal links / external links via cmd+click
-
-find/replace
-  https://tiptap.scrumpy.io/search-and-replace 
-  https://github.com/scrumpy/tiptap/blob/master/packages/tiptap-extensions/src/extensions/Search.js
-  https://github.com/mattberkowitz/prosemirror-find-replace
 
 Direct parsing of citations (get rid of special post-processing + supported nested)
  (note: for nested we need excludes: '')
