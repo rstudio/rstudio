@@ -154,7 +154,6 @@ export function delimiterMarkInputRule(delim: string, markType: MarkType, prefix
       }
     };
     validateParam('delim', delim);
-    validateParam('mask', prefixMask);
 
     // build regex (this regex assumes that mask is one character)
     const regexp = `(?:^|[^${prefixMask}])(?:${delim})([^${delim}]+)(?:${delim})$`;
