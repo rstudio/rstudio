@@ -530,7 +530,6 @@ private:
              // it will always fail because we have inputStream_ reading the file
 #ifndef _WIN32
             error = FilePath(currentFile_).testWritePermissions();
-#endif
             if (error)
             {
                json::Array replaceMatchOn, replaceMatchOff;
@@ -538,6 +537,7 @@ private:
                   &replaceMatchOff, &fileSuccess_);
                return error;
             }
+#endif
             std::string line;
             while (std::getline(*inputStream_, line))
             {
@@ -549,7 +549,13 @@ private:
             outputStream_.reset();
             error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
-            return error;
+            if (error)
+            {
+               json::Array replaceMatchOn, replaceMatchOff;
+               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+                  &replaceMatchOff, &fileSuccess_);
+               return error;
+            }
          }
       }
       return Success();
