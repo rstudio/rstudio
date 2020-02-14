@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'macos-v1.3' }
+  agent { label 'macos-v1.4' }
   options {
     timestamps()
     disableConcurrentBuilds()

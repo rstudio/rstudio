@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'windows-v1.3' }
+  agent { label 'windows-v1.4' }
   options {
     timestamps()
     disableConcurrentBuilds()
