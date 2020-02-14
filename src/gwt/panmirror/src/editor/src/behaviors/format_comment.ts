@@ -6,7 +6,7 @@ import { RangeStep } from "../api/transaction";
 import { Extension } from "../api/extension";
 import { PandocFormatComment, pandocFormatCommentFromState } from "../api/pandoc_format";
 
-const plugin = new PluginKey<PandocFormatComment>('format-magic-comment');
+const plugin = new PluginKey<PandocFormatComment>('format-comment');
 
 const extension : Extension = {
   plugins: () => [formatCommentPlugin()],
