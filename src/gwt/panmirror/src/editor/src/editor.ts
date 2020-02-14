@@ -122,7 +122,6 @@ export class Editor {
 
   private readonly parent: HTMLElement;
   private readonly ui: EditorUI;
-  private readonly options: EditorOptions;
   private readonly hooks: EditorHooks;
   private readonly schema: Schema;
   private readonly view: EditorView;
@@ -147,8 +146,8 @@ export class Editor {
     this.hooks = config.hooks || {};
     this.pandocFormat = pandocFormat;
 
-    // initialize options
-    this.options = {
+    // provide default options
+    const options = {
       autoFocus: false,
       spellCheck: true,
       codemirror: true,
@@ -162,7 +161,7 @@ export class Editor {
     this.events = this.initEvents();
 
     // create extensions
-    this.extensions = initExtensions(this.options, config.extensions, pandocFormat.extensions);
+    this.extensions = initExtensions(options, config.extensions, pandocFormat.extensions);
 
     // create schema
     this.schema = this.initSchema();
@@ -195,14 +194,14 @@ export class Editor {
     this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc, this.pandocFormat.fullName);
 
     // focus editor immediately if requested
-    if (this.options.autoFocus) {
+    if (options.autoFocus) {
       setTimeout(() => {
         this.focus();
       }, 10);
     }
 
     // disale spellcheck if requested
-    if (!this.options.spellCheck) {
+    if (!options.spellCheck) {
       this.parent.setAttribute('spellcheck', 'false');
     }
   }
