@@ -525,7 +525,12 @@ private:
              !tempReplaceFile_.getAbsolutePath().empty() &&
              outputStream_->good())
          {
-            Error error = FilePath(currentFile_).testWritePermissions();
+             Error error;
+             // For Windows we ignore this additional safety check
+             // it will always fail because we have inputStream_ reading the file
+#ifndef _WIN32
+            error = FilePath(currentFile_).testWritePermissions();
+#endif
             if (error)
             {
                json::Array replaceMatchOn, replaceMatchOff;
