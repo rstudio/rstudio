@@ -23,15 +23,21 @@ import { InsertTableResult } from 'editor/src/api/ui';
 import { Dialog } from 'workbench/widgets/dialog/Dialog';
 import { focusInput } from 'workbench/widgets/utils';
 import { DialogNumericInput, DialogTextInput } from 'workbench/widgets/dialog/DialogInputs';
+import { TableCapabilities } from 'editor/src/api/table';
 
 export interface EditorDialogInsertTableProps {
   isOpen: boolean;
+  capabilities: TableCapabilities;
   onClosed: (result: InsertTableResult | null) => void;
 }
 
 export function defaultInsertTableProps(): EditorDialogInsertTableProps {
   return {
     isOpen: false,
+    capabilities: {
+      captions: true,
+      headerOptional: true,
+    },
     onClosed: () => {
       /* */
     },
@@ -63,8 +69,8 @@ export const EditorDialogInsertTable: React.FC<EditorDialogInsertTableProps> = p
     props.onClosed({
       rows: parseInt(inputRows!.value || defaultRows, 10),
       cols: parseInt(inputCols!.value || defaultCols, 10),
-      header: inputHeader!.checked,
-      caption: inputCaption!.value,
+      header: props.capabilities.headerOptional ? inputHeader!.checked : true,
+      caption: props.capabilities.captions ? inputCaption!.value: '',
     });
   };
 
@@ -96,17 +102,25 @@ export const EditorDialogInsertTable: React.FC<EditorDialogInsertTableProps> = p
           ref={setInputCols}
         />
       </ControlGroup>
-      <DialogTextInput
-        defaultValue={''}
-        label={t('insert_table_dialog_table_caption')}
-        labelInfo={t('label_optional')}
-        ref={setInputCaption}
-      />
-      <FormGroup>
-        <Checkbox defaultChecked={true} inputRef={setInputHeader}>
-          {t('insert_table_dialog_header')}
-        </Checkbox>
-      </FormGroup>
+
+      { props.capabilities.captions ? 
+          <DialogTextInput
+            defaultValue={''}
+            label={t('insert_table_dialog_table_caption')}
+            labelInfo={t('label_optional')}
+            ref={setInputCaption}
+          /> : 
+          null
+      }
+      
+      { props.capabilities.headerOptional  ?
+          <FormGroup>
+            <Checkbox defaultChecked={true} inputRef={setInputHeader}>
+              {t('insert_table_dialog_header')}
+            </Checkbox>
+          </FormGroup> : 
+          null
+      }
     </Dialog>
   );
 };

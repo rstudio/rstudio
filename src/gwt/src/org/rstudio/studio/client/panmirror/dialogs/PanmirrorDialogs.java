@@ -32,6 +32,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListCapabiliti
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 
 import com.google.inject.Inject;
 
@@ -181,11 +182,11 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorInsertTableResult> insertTable()
+   public Promise<PanmirrorInsertTableResult> insertTable(PanmirrorTableCapabilities capabilities)
    {
       return new Promise<PanmirrorInsertTableResult>(
          (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog((result) -> {
+            PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog(capabilities, (result) -> {
                resolve.onInvoke(result);
             });
             dialog.showModal();

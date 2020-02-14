@@ -57,6 +57,7 @@ import {
 
 import { ListCapabilities } from 'editor/src/api/list';
 import { LinkTargets, LinkCapabilities } from 'editor/src/api/link';
+import { TableCapabilities } from 'editor/src/api/table';
 
 export interface EditorDialogsState {
   alert: AlertDialogProps;
@@ -258,11 +259,12 @@ export default class EditorDialogs extends React.Component<Readonly<{}>, EditorD
     });
   }
 
-  public insertTable(): Promise<InsertTableResult | null> {
+  public insertTable(capabilities: TableCapabilities): Promise<InsertTableResult | null> {
     return new Promise(resolve => {
       this.setState({
         insertTable: {
           isOpen: true,
+          capabilities,
           onClosed: (result: InsertTableResult | null) => {
             this.setState({ insertTable: { ...this.state.insertTable, isOpen: false } });
             resolve(result);

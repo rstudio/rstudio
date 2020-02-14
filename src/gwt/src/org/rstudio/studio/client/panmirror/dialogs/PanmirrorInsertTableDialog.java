@@ -16,24 +16,28 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 
 public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTableResult>
 {
-   public PanmirrorInsertTableDialog(OperationWithInput<PanmirrorInsertTableResult> operation)
+   public PanmirrorInsertTableDialog(PanmirrorTableCapabilities capabilities, 
+                                     OperationWithInput<PanmirrorInsertTableResult> operation)
    {
       super("Insert Table", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
@@ -44,6 +48,11 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
       
       configureNumeric(rows_);
       configureNumeric(columns_);
+      
+      header_.setValue(true);
+      header_.setVisible(capabilities.headerOptional);
+      captionLabel_.setVisible(capabilities.captions);
+      caption_.setVisible(capabilities.captions);
       
       rows_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_ROWS);
       columns_.setElementId(ElementIds.VISUAL_MD_INSERT_TABLE_COLUMNS);
@@ -92,6 +101,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
 
    @UiField NumericValueWidget rows_;
    @UiField NumericValueWidget columns_;
+   @UiField Label captionLabel_;
    @UiField TextBoxWithCue caption_;
    @UiField CheckBox header_;
    

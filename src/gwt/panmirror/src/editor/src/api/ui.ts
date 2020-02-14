@@ -15,6 +15,7 @@
 
 import { ListCapabilities } from './list';
 import { LinkTargets, LinkCapabilities, LinkType } from './link';
+import { TableCapabilities } from './table';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -66,7 +67,7 @@ export type OrderedListEditorFn = (
 
 export type RawFormatEditorFn = (raw: RawFormatProps) => Promise<RawFormatResult | null>;
 
-export type InsertTableFn = () => Promise<InsertTableResult | null>;
+export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
 export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
 

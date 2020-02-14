@@ -22,8 +22,9 @@ import { InsertTableFn } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { EditorView } from 'prosemirror-view';
 import { canInsertNode } from '../../api/node';
+import { TableCapabilities } from '../../api/table';
 
-export function insertTable(onInsertTable: InsertTableFn) {
+export function insertTable(capabilities: TableCapabilities, onInsertTable: InsertTableFn) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -41,7 +42,7 @@ export function insertTable(onInsertTable: InsertTableFn) {
 
     async function asyncInsertTable() {
       if (dispatch) {
-        const result = await onInsertTable();
+        const result = await onInsertTable(capabilities);
         if (result) {
           // create cells
           const rows: ProsemirrorNode[] = [];

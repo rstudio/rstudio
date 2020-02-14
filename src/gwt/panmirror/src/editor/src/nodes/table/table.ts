@@ -62,6 +62,7 @@ import { tablePaste } from './table-paste';
 
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
+import { TableCapabilities } from '../../api/table';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // not enabled if there are no tables enabled
@@ -73,6 +74,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   ) {
     return null;
   }
+
+  // define table capabilities
+  const capabilities : TableCapabilities = {
+    captions: pandocExtensions.table_captions,
+    headerOptional: pandocExtensions.grid_tables,
+  };
 
   return {
     nodes: [
@@ -86,8 +93,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     commands: (_schema: Schema, ui: EditorUI) => {
       const commands = [
-        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(ui.dialogs.insertTable)),
-        new TableToggleHeaderCommand(),
+        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui.dialogs.insertTable)),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
         new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumnAfter),
@@ -102,8 +108,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         new TableColumnAlignmentCommand(EditorCommandId.TableAlignColumnCenter, CssAlignment.Center),
         new TableColumnAlignmentCommand(EditorCommandId.TableAlignColumnDefault, null),
       ];
-      if (pandocExtensions.table_captions) {
+      if (capabilities.captions) {
         commands.push(new TableToggleCaptionCommand());
+      }
+      if (capabilities.headerOptional) {
+        commands.push(new TableToggleHeaderCommand());
       }
       return commands;
     },
