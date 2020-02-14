@@ -116,34 +116,39 @@ export class UITools {
   public pandocFormatFromCode(code: string) { return pandocFormatFromCode(code); }
 };
 
+const keybindingsPlugin = new PluginKey('keybindings');
 
 export class Editor {
-  private static readonly keybindingsPlugin = new PluginKey('keybindings');
 
+  // core immutable context (are never )
   private readonly parent: HTMLElement;
-  private readonly ui: EditorUI;
-  private readonly hooks: EditorHooks;
-  private readonly schema: Schema;
-  private readonly view: EditorView;
-  private readonly extensions: ExtensionManager;
-  private readonly pandocConverter: PandocConverter;
-  private readonly pandocFormat: PandocFormat;
+  private readonly config: EditorConfig;
+  private readonly events: ReadonlyMap<string, Event>;
 
+  // pandoc format (drives extensions, schema, etc.)
+  private readonly pandocFormat: PandocFormat;
+  
+  // core prosemirror state/behaviors 
+  private readonly extensions: ExtensionManager;
+  private readonly schema: Schema;
   private state: EditorState;
-  private events: ReadonlyMap<string, Event>;
+  private readonly view: EditorView;
+  private readonly pandocConverter: PandocConverter;
+
+  // setting via setKeybindings forces reconfiguration of EditorState
+  // with plugins recreated
   private keybindings: EditorKeybindings;
 
   public static async create(parent: HTMLElement, config: EditorConfig): Promise<Editor> {
-    const formatInfo = await pandocFormat(config.pandoc, config.format);
-    return Promise.resolve(new Editor(parent, config, formatInfo));
+    const format = await pandocFormat(config.pandoc, config.format);
+    return Promise.resolve(new Editor(parent, config, format));
   }
 
   private constructor(parent: HTMLElement, config: EditorConfig, pandocFormat: PandocFormat) {
     // initialize references
     this.parent = parent;
-    this.ui = config.ui;
+    this.config = config;
     this.keybindings = {};
-    this.hooks = config.hooks || {};
     this.pandocFormat = pandocFormat;
 
     // provide default options
@@ -336,7 +341,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.ui, kMac).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema, this.config.ui, kMac).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -482,17 +487,18 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.ui, kMac),
+      ...this.extensions.plugins(this.schema, this.config.ui, kMac),
       this.inputRulesPlugin(),
       this.editablePlugin(),
     ];
   }
 
   private editablePlugin() {
+    const hooks = this.config.hooks || {};
     return new Plugin({
       key: new PluginKey('editable'),
       props: {
-        editable: this.hooks.isEditable || (() => true),
+        editable: hooks.isEditable || (() => true),
       },
     });
   }
@@ -529,7 +535,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.config.ui, kMac);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -541,7 +547,7 @@ export class Editor {
 
     // return plugin
     return new Plugin({
-      key: Editor.keybindingsPlugin,
+      key: keybindingsPlugin,
       props: {
         handleKeyDown: keydownHandler(pluginKeys),
       },
@@ -550,7 +556,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.config.ui, kMac);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;
