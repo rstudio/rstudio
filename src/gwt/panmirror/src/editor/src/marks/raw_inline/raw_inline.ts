@@ -39,6 +39,7 @@ const HTML_FORMAT = 'html';
 
 const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
 const kBeginHTML = /(^|[^\\])</;
+const kHTMLComment = /^<!--([\s\S]*?)-->$/;
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // short circuit to no extension if none of the raw format bits are set
@@ -56,6 +57,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           excludes: '_',
           attrs: {
             format: {},
+            comment: { default: false }
           },
           parseDOM: [
             {
@@ -64,15 +66,18 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 const el = dom as Element;
                 return {
                   format: el.getAttribute('data-format'),
+                  comment: el.getAttribute('data-comment') === "1"
                 };
               },
             },
           ],
           toDOM(mark: Mark) {
-            return [
-              'span',
-              { class: 'raw-inline pm-fixedwidth-font pm-markup-text-color', 'data-format': mark.attrs.format },
-            ];
+            const attr: any = {
+              class: 'raw-inline pm-fixedwidth-font pm-markup-text-color',
+              'data-format': mark.attrs.format,
+              'data-comment': mark.attrs.comment ? "1" : "0"
+            };
+            return [ 'span', attr ];
           },
         },
         pandoc: {
@@ -81,8 +86,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               token: PandocTokenType.RawInline,
               mark: 'raw_inline',
               getAttrs: (tok: PandocToken) => {
+                const text = tok.c[RAW_INLINE_CONTENT];
+                const comment = kHTMLComment.test(text);
                 return {
                   format: tok.c[RAW_INLINE_FORMAT],
+                  comment,
                 };
               },
               getText: (tok: PandocToken) => {
@@ -181,7 +189,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               }
             });
 
-            const addRawInlineMarks = (format: string, beginMarkup: RegExp, markupLength: (text: string) => number) => {
+            const addRawInlineMarks = (format: string, beginMarkup: RegExp, markupLength: (text: string) => number, commentRegex?: RegExp) => {
               const searchForMarkup = (text: string) => {
                 const match = text.match(beginMarkup);
                 if (match && match.index !== undefined) {
@@ -203,7 +211,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                     const to = from + length;
                     const markRange = getMarkRange(tr.doc.resolve(markupNode.pos + beginIdx), schema.marks.raw_inline);
                     if (!markRange || markRange.to !== to) {
-                      const mark = schema.mark('raw_inline', { format });
+                      let comment = commentRegex ? commentRegex.test(tr.doc.textBetween(from, to)) : false;
+                      const mark = schema.mark('raw_inline', { format, comment });
                       tr.addMark(from, to, mark);
                     }
                   }
@@ -220,7 +229,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               addRawInlineMarks(TEX_FORMAT, kBeginTex, texLength);
             }
             if (pandocExtensions.raw_html) {
-              addRawInlineMarks(HTML_FORMAT, kBeginHTML, htmlLength);
+              addRawInlineMarks(HTML_FORMAT, kBeginHTML, htmlLength, kHTMLComment);
             }
           },
         },
@@ -242,27 +251,16 @@ export function rawInlineHighlightPlugin(schema: Schema) {
 
   const kLightTextClass = 'pm-light-text-color';
   const delimiterRegex = /[{}]/g;
-  const htmlCommentRegex = /^<!--([\s\S]*?)-->$/;
 
   return markHighlightPlugin(key, schema.marks.raw_inline, (text, attrs, markRange) => {
     if (attrs.format === TEX_FORMAT) {
-      // commands
       const kIdClass = 'pm-markup-text-color';
       const idRegEx = /\\[A-Za-z]+/g;
-      let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
-
-      // delimieters
-      
+      let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);      
       decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
-
       return decorations;
-    } else if (attrs.format === HTML_FORMAT) {
-      if (htmlCommentRegex.test(text)) {
-        return [Decoration.inline(markRange.from, markRange.to, { class: kLightTextClass })];
-      } else {
-        return [];
-      }
-
+    } else if (attrs.format === HTML_FORMAT && attrs.comment) {
+      return [Decoration.inline(markRange.from, markRange.to, { class: kLightTextClass })];
     } else {
       return [];
     }

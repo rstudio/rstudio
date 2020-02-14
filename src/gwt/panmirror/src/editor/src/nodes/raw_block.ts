@@ -119,7 +119,7 @@ function readPandocRawBlock(schema: Schema) {
     const commentRe = /^<!--([\s\S]*?)-->\s*$/;
     if (format === 'html' && commentRe.test(text)) {
       writer.openNode(schema.nodes.paragraph, {});
-      const mark = schema.marks.raw_inline.create({ format });
+      const mark = schema.marks.raw_inline.create({ format, comment: true });
       writer.openMark(mark);
       writer.writeText(text.trimRight());
       writer.closeMark(mark);

@@ -1,16 +1,3 @@
-import { InputRule } from 'prosemirror-inputrules';
-import { Schema } from 'prosemirror-model';
-import { Plugin, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-
-import { ProsemirrorCommand } from './command';
-import { PandocMark } from './mark';
-import { PandocNode } from './node';
-import { EditorUI } from './ui';
-import { BaseKeyBinding } from './basekeys';
-import { AppendTransactionHandler, AppendMarkTransactionHandler } from './transaction';
-import { EditorOptions } from './options';
-import { PandocExtensions } from './pandoc';
 /*
  * extension.ts
  *
@@ -25,6 +12,20 @@ import { PandocExtensions } from './pandoc';
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+import { InputRule } from 'prosemirror-inputrules';
+import { Schema } from 'prosemirror-model';
+import { Plugin, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+
+import { ProsemirrorCommand } from './command';
+import { PandocMark } from './mark';
+import { PandocNode } from './node';
+import { EditorUI } from './ui';
+import { BaseKeyBinding } from './basekeys';
+import { AppendTransactionHandler, AppendMarkTransactionHandler } from './transaction';
+import { EditorOptions } from './options';
+import { PandocExtensions } from './pandoc';
 
 export interface Extension {
   marks?: PandocMark[];

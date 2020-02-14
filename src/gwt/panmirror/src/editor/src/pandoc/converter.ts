@@ -27,9 +27,12 @@ import {
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
   PandocMarkdownOutputFilter,
-  pandocFormatWith,
   PandocPostprocessorFn,
 } from '../api/pandoc';
+
+import { 
+  pandocFormatWith
+} from '../api/pandoc_format';
 
 import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';

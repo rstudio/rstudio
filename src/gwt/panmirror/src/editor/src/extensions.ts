@@ -36,7 +36,7 @@ import {
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
   PandocMarkdownOutputFilter,
-  PandocExtensions,
+  PandocExtensions
 } from './api/pandoc';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
@@ -68,6 +68,7 @@ import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
 import behaviorBraceMatch from './behaviors/bracematch';
 import behaviorTextFocus from './behaviors/text_focus';
+import behaviorFormatComment from './behaviors/format_comment';
 
 // marks
 
@@ -122,6 +123,7 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorFormatComment
   ]);
 
   // optional extensions
