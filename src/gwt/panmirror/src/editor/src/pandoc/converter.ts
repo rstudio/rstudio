@@ -38,6 +38,7 @@ import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
 import { ExtensionManager } from '../extensions';
 
+
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
   wrapColumn?: boolean | number;
@@ -55,11 +56,12 @@ export class PandocConverter {
   private readonly astOutputFilters: readonly PandocAstOutputFilter[];
   private readonly markdownOutputFilters: readonly PandocMarkdownOutputFilter[];
   private readonly pandoc: PandocEngine;
-  private readonly format: string;
 
   private apiVersion: PandocApiVersion | null;
 
-  constructor(schema: Schema, extensions: ExtensionManager, pandoc: PandocEngine, format: string) {
+  
+
+  constructor(schema: Schema, extensions: ExtensionManager, pandoc: PandocEngine) {
     this.schema = schema;
 
     this.preprocessors = extensions.pandocPreprocessors();
@@ -72,21 +74,21 @@ export class PandocConverter {
     this.astOutputFilters = extensions.pandocAstOutputFilters();
     this.markdownOutputFilters = extensions.pandocMarkdownOutputFilters();
 
-    // markdown format (for editing it never makes sense to automaticallly inject identifiers)
-    const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-    this.format = pandocFormatWith(format, '', kDisabledFormatOptions);
-
     this.pandoc = pandoc;
     this.apiVersion = null;
   }
 
-  public async toProsemirror(markdown: string): Promise<ProsemirrorNode> {
+  public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
+    
+    // adjust format
+    format = this.adjustedFormat(format);
+    
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
       markdown = preprocessor(markdown);
     });
 
-    const ast = await this.pandoc.markdownToAst(markdown, this.format, []);
+    const ast = await this.pandoc.markdownToAst(markdown, format, []);
     this.apiVersion = ast['pandoc-api-version'];
     let doc = pandocToProsemirror(ast, this.schema, this.readers, this.blockReaders, this.codeBlockFilters);
 
@@ -99,16 +101,19 @@ export class PandocConverter {
     return doc;
   }
 
-  public async fromProsemirror(doc: ProsemirrorNode, options: PandocWriterOptions): Promise<string> {
+  public async fromProsemirror(doc: ProsemirrorNode, format: string, options: PandocWriterOptions): Promise<string> {
     if (!this.apiVersion) {
       throw new Error('API version not available (did you call toProsemirror first?)');
     }
+
+    // adjust format
+    format = this.adjustedFormat(format);
 
     // generate pandoc ast
     const output = pandocFromProsemirror(doc, this.apiVersion, this.nodeWriters, this.markWriters);
 
     // run ast filters
-    let ast = await this.applyAstOutputFilters(output.ast, options);
+    let ast = await this.applyAstOutputFilters(output.ast, format, options);
 
     // prepare options
     let pandocOptions: string[] = [];
@@ -122,8 +127,8 @@ export class PandocConverter {
     // known markdown variants that support tables also support pipe
     // tables so this seems unlikely to ever be required.
     const disable =
-      !this.format.startsWith('gfm') && !this.format.startsWith('commonmark') ? '-simple_tables-multiline_tables' : '';
-    let format = pandocFormatWith(this.format, disable, '');
+      !format.startsWith('gfm') && !format.startsWith('commonmark') ? '-simple_tables-multiline_tables' : '';
+    format = pandocFormatWith(format, disable, '');
 
     // render to markdown
     let markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
@@ -140,17 +145,17 @@ export class PandocConverter {
     return markdown;
   }
 
-  private async applyAstOutputFilters(ast: PandocAst, options: PandocWriterOptions) {
+  private async applyAstOutputFilters(ast: PandocAst, format: string, options: PandocWriterOptions) {
     let filteredAst = ast;
 
     for (let i = 0; i < this.astOutputFilters.length; i++) {
       const filter = this.astOutputFilters[i];
       filteredAst = await filter(filteredAst, {
         astToMarkdown: (ast: PandocAst, format_options: string) => {
-          return this.pandoc.astToMarkdown(ast, this.format + format_options, []);
+          return this.pandoc.astToMarkdown(ast, format + format_options, []);
         },
         markdownToAst: (markdown: string) => {
-          return this.pandoc.markdownToAst(markdown, this.format, this.wrapColumnOptions(options));
+          return this.pandoc.markdownToAst(markdown, format, this.wrapColumnOptions(options));
         },
       });
     }
@@ -174,5 +179,12 @@ export class PandocConverter {
       pandocOptions.push('--wrap=none');
     }
     return pandocOptions;
+  }
+
+  // adjust the specified format (remove options that are never applicable
+  // to editing scenarios)
+  private adjustedFormat(format: string) {
+    const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
+    return pandocFormatWith(format, '', kDisabledFormatOptions);
   }
 }

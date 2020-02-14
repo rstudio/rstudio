@@ -196,7 +196,7 @@ export class Editor {
     window.addEventListener('resize', this.applyLayoutFixups);
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc, this.pandocFormat.fullName);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc);
 
     // focus editor immediately if requested
     if (options.autoFocus) {
@@ -235,8 +235,8 @@ export class Editor {
   }
 
   public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
-    // get the doc
-    const doc = await this.pandocConverter.toProsemirror(markdown);
+    // get the doc 
+    const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // re-initialize editor state
     this.state = EditorState.create({
@@ -260,7 +260,7 @@ export class Editor {
   }
 
   public getMarkdown(options: PandocWriterOptions): Promise<string> {
-    return this.pandocConverter.fromProsemirror(this.state.doc, options);
+    return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);
   }
 
   public getHTML(): string {
