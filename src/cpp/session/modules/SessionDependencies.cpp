@@ -315,6 +315,12 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // Start script with all the CRAN download settings
    std::string script = module_context::CRANDownloadOptions() + "\n\n";
 
+   // Lock during installation since we will be doing this in a background job and want to minimize
+   // the risk of competing processes attempting to write to the library (note that this only
+   // affects binary installations on Windows and MacOS; source installations are locked with
+   // 00LOCK)
+   script += "options(install.lock = TRUE)\n\n";
+
    bool isPackrat = module_context::packratContext().modeOn;
    bool isRenv = module_context::isRenvActive();
    bool isProjectLocal = isPackrat || isRenv;
@@ -382,10 +388,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
          }
          else
          {
-            // Build install command for CRAN. We specify lock = TRUE (here and elsewhere) to ensure
-            // that the package directory is locked during installation; since this will run in the
-            // background we want reduce the odds of corruption via a competing package install attempt
-            // in another process.
+            // Build install command for CRAN. 
             script += "utils::install.packages('" + dep.name + "', " +
                   "repos = '"+ module_context::CRANReposURL() + "'";
 
@@ -395,7 +398,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
                script += ", type = 'source'";
             }
 
-            script += ", lock = TRUE)";
+            script += ")";
          }
       }
       else if (dep.location == kEmbeddedPackageDependency)
@@ -404,7 +407,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
 
          // Build install command for bundled archive
          script += "utils::install.packages('" + pkg.archivePath + 
-            "', repos = NULL, type = 'source', lock = TRUE)";
+            "', repos = NULL, type = 'source')";
       }
 
       script += "\n\n";
