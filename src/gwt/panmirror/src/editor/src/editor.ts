@@ -305,8 +305,16 @@ export class Editor {
 
   public async getMarkdown(options: PandocWriterOptions): Promise<string> {
 
+    // get current format comment
+    const formatComment = getFormatComment(this.state)
+
     // update format from source code magic comments
-    await this.updatePandocFormat(getFormatComment(this.state));
+    await this.updatePandocFormat(formatComment);
+
+    // override wrapColumn option if it was specified
+    if (this.options.formatComment) {
+      options.wrapColumn = formatComment.fillColumn || options.wrapColumn;
+    }
     
     // do the conversion
     return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);

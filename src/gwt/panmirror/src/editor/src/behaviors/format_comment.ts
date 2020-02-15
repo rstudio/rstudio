@@ -60,11 +60,11 @@ function formatCommentPlugin() {
   });
 }
 
-export function getFormatComment(state: EditorState) {
+export function getFormatComment(state: EditorState) : PandocFormatComment {
   return plugin.getState(state);
 }
 
-function formatCommentFromState(state: EditorState) {
+function formatCommentFromState(state: EditorState) : PandocFormatComment {
   const comment = pandocFormatCommentFromState(state);
   return comment;
 }

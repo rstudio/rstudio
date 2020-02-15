@@ -187,14 +187,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       VerticalPanel visualModeOptions = new VerticalPanel();
       CheckBox checkBoxAutoWrap = checkboxPref(
-         "Auto-wrap lines (insert linebreaks at specified column)", 
+         "Auto-wrap text (break lines at specified fill column)", 
          prefs.visualMarkdownEditingWrapAuto(),
          false
       );
      
       visualModeOptions.add(checkBoxAutoWrap);
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Linebreak at column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          "Fill column:", 1, UserPrefs.MAX_WRAP_COLUMN,
           prefs.visualMarkdownEditingWrapColumn()
       )));
       visualModeWrapColumn_.setWidth("36px");
