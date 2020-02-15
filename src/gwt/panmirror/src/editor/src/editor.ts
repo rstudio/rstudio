@@ -155,12 +155,24 @@ export class Editor {
   private readonly events: ReadonlyMap<string, Event>;
 
   public static async create(parent: HTMLElement, config: EditorConfig, markdown?: string): Promise<Editor> {
+    
+    // provide default options
+    const options = {
+      autoFocus: false,
+      spellCheck: true,
+      codemirror: true,
+      autoLink: false,
+      braceMatching: true,
+      rmdCodeChunks: false,
+      formatComment: true,
+      ...config.options,
+    };
 
     // default format to what is specified in the config
     let format = config.format;
 
     // if markdown was specified then try to read the format from it
-    if (markdown && (config.options.formatComment !== false)) {
+    if (markdown && options.formatComment) {
       format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
     }
    
@@ -168,7 +180,7 @@ export class Editor {
     const pandocFmt = await resolvePandocFormat(config.pandoc, format);
 
     // create editor
-    const editor = new Editor(parent, config, pandocFmt);
+    const editor = new Editor(parent, config, options, pandocFmt);
 
     // set initial markdown if specified
     if (markdown) {
@@ -179,24 +191,13 @@ export class Editor {
     return Promise.resolve(editor);
   }
 
-  private constructor(parent: HTMLElement, config: EditorConfig, pandocFormat: PandocFormat) {
+  private constructor(parent: HTMLElement, config: EditorConfig, options: EditorOptions, pandocFormat: PandocFormat) {
     // initialize references
     this.parent = parent;
     this.config = config;
+    this.options = options;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
-
-    // provide default options
-    this.options = {
-      autoFocus: false,
-      spellCheck: true,
-      codemirror: true,
-      autoLink: false,
-      braceMatching: true,
-      rmdCodeChunks: false,
-      formatComment: true,
-      ...config.options,
-    };
 
     // initialize custom events
     this.events = this.initEvents();
