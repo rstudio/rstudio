@@ -40,7 +40,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
   let warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
   // split out base format from options
-  const split = splitFormat(format);
+  const split = splitPandocFormatString(format);
   let baseName = split.format;
   let options = split.options;
 
@@ -127,7 +127,7 @@ function parseExtensions(options: string) {
 }
 
 export function pandocFormatWith(format: string, prepend: string, append: string) {
-  const split = splitFormat(format);
+  const split = splitPandocFormatString(format);
   return `${split.format}${prepend}${split.options}${append}`;
 }
 
@@ -192,7 +192,20 @@ export function pandocFormatCommentFromState(state: EditorState) : PandocFormatC
   return comment;
 }
 
-export function splitFormat(format: string) {
+
+export function resolvePandocFormatComment(formatComment: PandocFormatComment, defaultFormat: string) {
+    const format = splitPandocFormatString(defaultFormat);
+    if (formatComment.mode) {
+      format.format = formatComment.mode;
+    }
+    if (formatComment.extensions) {
+      format.options = formatComment.extensions;
+    }
+    return format.format + format.options;
+}
+
+
+export function splitPandocFormatString(format: string) {
     // split out base format from options
     let optionsPos = format.indexOf('-');
     if (optionsPos === -1) {

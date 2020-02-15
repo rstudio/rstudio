@@ -98,14 +98,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
       
       Panmirror.load(() -> {
-         
-         // read magic comments for format info
-         PanmirrorUITools uiTools =  new PanmirrorUITools();
-         String format = uiTools.pandocFormatFromCode(code);
-         
+               
          // create the editor
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), config, format),
+            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), config, code),
             null,
             editor -> {
                editorWidget.attachEditor(editor);

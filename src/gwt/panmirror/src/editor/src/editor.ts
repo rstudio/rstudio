@@ -37,7 +37,15 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
-import { resolvePandocFormat, PandocFormat, pandocFormatFromCode, PandocFormatComment, splitFormat, pandocFormatCommentFromCode, pandocFormatCommentFromState } from './api/pandoc_format';
+import { 
+  PandocFormat, 
+  resolvePandocFormat, 
+  splitPandocFormatString, 
+  PandocFormatComment, 
+  resolvePandocFormatComment, 
+  pandocFormatCommentFromCode, 
+  pandocFormatCommentFromState, 
+} from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
 import { EditorOutline } from './api/outline';
@@ -113,17 +121,15 @@ export { EditorCommandId as EditorCommands } from './api/command';
 export class UITools {
   public attrPropsToInput(attr: AttrProps) { return attrPropsToInput(attr); }
   public attrInputToProps(input: AttrEditInput) { return attrInputToProps(input); }
-  public pandocFormatFromCode(code: string) { return pandocFormatFromCode(code); }
 };
 
 const keybindingsPlugin = new PluginKey('keybindings');
 
 export class Editor {
 
-  // core immutable context (are never )
+  // core context passed from client
   private readonly parent: HTMLElement;
   private readonly config: EditorConfig;
-  private readonly events: ReadonlyMap<string, Event>;
 
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
@@ -132,7 +138,8 @@ export class Editor {
   // note that this can change from what is specified at
   // construction time based on magic comments being 
   // provided within the document
-  private pandocFormat: PandocFormat;  
+  private pandocFormat: PandocFormat; 
+  
   // core prosemirror state/behaviors 
   private readonly extensions: ExtensionManager;
   private readonly schema: Schema;
@@ -144,10 +151,32 @@ export class Editor {
   // with plugins recreated
   private keybindings: EditorKeybindings;
 
-  public static async create(parent: HTMLElement, config: EditorConfig, format?: string): Promise<Editor> {
-    format = format || config.format;
+  // event sinks
+  private readonly events: ReadonlyMap<string, Event>;
+
+  public static async create(parent: HTMLElement, config: EditorConfig, markdown?: string): Promise<Editor> {
+
+    // default format to what is specified in the config
+    let format = config.format;
+
+    // if markdown was specified then try to read the format from it
+    if (markdown && (config.options.formatComment !== false)) {
+      format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
+    }
+   
+    // resolve the format
     const pandocFmt = await resolvePandocFormat(config.pandoc, format);
-    return Promise.resolve(new Editor(parent, config, pandocFmt));
+
+    // create editor
+    const editor = new Editor(parent, config, pandocFmt);
+
+    // set initial markdown if specified
+    if (markdown) {
+      await editor.setMarkdown(markdown, false);
+    }
+
+    // return editor
+    return Promise.resolve(editor);
   }
 
   private constructor(parent: HTMLElement, config: EditorConfig, pandocFormat: PandocFormat) {
@@ -399,17 +428,13 @@ export class Editor {
     }
 
     // start with existing format
-    const existingFormat = splitFormat(this.pandocFormat.fullName);
+    const existingFormat = splitPandocFormatString(this.pandocFormat.fullName);
 
     // determine the target format (this is either from a format comment
     // or alternatively based on the default format)
-    const targetFormat = splitFormat(this.config.format);
-    if (formatComment.mode) {
-      targetFormat.format = formatComment.mode;
-    }
-    if (formatComment.extensions) {
-      targetFormat.options = formatComment.extensions;
-    }
+    const targetFormat = splitPandocFormatString(
+      resolvePandocFormatComment(formatComment, this.config.format)
+    );
    
     // if this differs from the one in the source code, then update the format
     if (targetFormat.format !== existingFormat.format || 
