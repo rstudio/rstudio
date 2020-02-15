@@ -559,15 +559,13 @@ public class TextEditingTargetWidget
             setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
-      
-
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(createVisualModeToggleButton());
-      
+       
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
-      
       addVisualModeOutlineButton(toolbar);
+      
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(createVisualModeToggleButton());
        
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
