@@ -175,7 +175,7 @@ export class Editor {
     this.events = this.initEvents();
 
     // create extensions
-    this.extensions = initExtensions(this.options, config.extensions, pandocFormat.extensions);
+    this.extensions = this.initExtensions();
 
     // create schema
     this.schema = this.initSchema();
@@ -457,6 +457,10 @@ export class Editor {
     events.set(EditorEvents.OutlineChange, new Event(EditorEvents.OutlineChange));
     events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
     return events;
+  }
+
+  private initExtensions() {
+    return initExtensions(this.options, this.config.extensions, this.pandocFormat.extensions);
   }
 
   private initSchema(): Schema {
