@@ -37,7 +37,7 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
-import { pandocFormat, PandocFormat, pandocFormatFromCode, PandocFormatComment, splitFormat, pandocFormatCommentFromCode } from './api/pandoc_format';
+import { resolvePandocFormat, PandocFormat, pandocFormatFromCode, PandocFormatComment, splitFormat, pandocFormatCommentFromCode } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
 import { EditorOutline } from './api/outline';
@@ -59,13 +59,14 @@ import {
   selectCurrent,
 } from './behaviors/find';
 
+import { getFormatComment } from './behaviors/format_comment';
+
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
 import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
-import { getFormatComment } from './behaviors/format_comment';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -126,15 +127,14 @@ export class Editor {
   private readonly config: EditorConfig;
   private readonly events: ReadonlyMap<string, Event>;
 
+  // options (derived from defaults + config)
+  private readonly options: EditorOptions;
+
   // pandoc format used for reading and writing markdown
   // note that this can change from what is specified at
   // construction time based on magic comments being 
   // provided within the document
-  private pandocFormat: PandocFormat;
-  private readonly defaultPandocFormat: PandocFormat;
-
-  // TODO: environment default (for no magic comment scenario)
-  
+  private pandocFormat: PandocFormat;  
   // core prosemirror state/behaviors 
   private readonly extensions: ExtensionManager;
   private readonly schema: Schema;
@@ -146,9 +146,10 @@ export class Editor {
   // with plugins recreated
   private keybindings: EditorKeybindings;
 
-  public static async create(parent: HTMLElement, config: EditorConfig): Promise<Editor> {
-    const format = await pandocFormat(config.pandoc, config.format);
-    return Promise.resolve(new Editor(parent, config, format));
+  public static async create(parent: HTMLElement, config: EditorConfig, format?: string): Promise<Editor> {
+    format = format || config.format;
+    const pandocFmt = await resolvePandocFormat(config.pandoc, format);
+    return Promise.resolve(new Editor(parent, config, pandocFmt));
   }
 
   private constructor(parent: HTMLElement, config: EditorConfig, pandocFormat: PandocFormat) {
@@ -157,16 +158,16 @@ export class Editor {
     this.config = config;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
-    this.defaultPandocFormat = pandocFormat;
 
     // provide default options
-    const options = {
+    this.options = {
       autoFocus: false,
       spellCheck: true,
       codemirror: true,
       autoLink: false,
       braceMatching: true,
       rmdCodeChunks: false,
+      formatComment: true,
       ...config.options,
     };
 
@@ -174,7 +175,7 @@ export class Editor {
     this.events = this.initEvents();
 
     // create extensions
-    this.extensions = initExtensions(options, config.extensions, pandocFormat.extensions);
+    this.extensions = initExtensions(this.options, config.extensions, pandocFormat.extensions);
 
     // create schema
     this.schema = this.initSchema();
@@ -207,14 +208,14 @@ export class Editor {
     this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc);
 
     // focus editor immediately if requested
-    if (options.autoFocus) {
+    if (this.options.autoFocus) {
       setTimeout(() => {
         this.focus();
       }, 10);
     }
 
     // disale spellcheck if requested
-    if (!options.spellCheck) {
+    if (!this.options.spellCheck) {
       this.parent.setAttribute('spellcheck', 'false');
     }
   }
@@ -394,15 +395,29 @@ export class Editor {
 
   private async updatePandocFormat(formatComment: PandocFormatComment) {
 
+    // don't do it if our options tell us not to
+    if (!this.options.formatComment) {
+      return;
+    }
+
     // start with existing format
     const existingFormat = splitFormat(this.pandocFormat.fullName);
-    
+
+    // determine the target format (this is either from a format comment
+    // or alternatively based on the default format)
+    const targetFormat = splitFormat(this.config.format);
+    if (formatComment.mode) {
+      targetFormat.format = formatComment.mode;
+    }
+    if (formatComment.extensions) {
+      targetFormat.options = formatComment.extensions;
+    }
+   
     // if this differs from the one in the source code, then update the format
-    if ((formatComment.mode && (formatComment.mode !== existingFormat.format)) || 
-        (formatComment.extensions && (formatComment.extensions !== existingFormat.options))) {
-      const format = `${(formatComment.mode) || existingFormat.format}` +
-                     `${(formatComment.extensions) || existingFormat.options}`;
-      this.pandocFormat = await pandocFormat(this.config.pandoc, format);
+    if (targetFormat.format !== existingFormat.format || 
+        targetFormat.options !== existingFormat.options) {
+      const format = targetFormat.format + targetFormat.options;
+      this.pandocFormat = await resolvePandocFormat(this.config.pandoc, format);
     }
   }
 

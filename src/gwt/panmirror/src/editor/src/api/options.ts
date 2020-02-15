@@ -20,4 +20,5 @@ export interface EditorOptions {
   readonly autoLink?: boolean;
   readonly braceMatching?: boolean;
   readonly rmdCodeChunks?: boolean;
+  readonly formatComment?: boolean;
 }

@@ -35,7 +35,7 @@ export interface PandocFormatComment {
   fillColumn?: number;
 }
 
-export async function pandocFormat(pandoc: PandocEngine, format: string) {
+export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
   // setup warnings
   let warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
