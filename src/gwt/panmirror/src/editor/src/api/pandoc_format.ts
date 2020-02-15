@@ -192,7 +192,7 @@ export function pandocFormatCommentFromState(state: EditorState) : PandocFormatC
   return comment;
 }
 
-function splitFormat(format: string) {
+export function splitFormat(format: string) {
     // split out base format from options
     let optionsPos = format.indexOf('-');
     if (optionsPos === -1) {
