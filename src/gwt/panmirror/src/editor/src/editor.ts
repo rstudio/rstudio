@@ -80,7 +80,6 @@ export interface EditorConfig {
   readonly pandoc: PandocEngine;
   readonly format: string;
   readonly ui: EditorUI;
-  readonly options: EditorOptions;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
 }
@@ -154,10 +153,13 @@ export class Editor {
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
-  public static async create(parent: HTMLElement, config: EditorConfig, markdown?: string): Promise<Editor> {
+  public static async create(parent: HTMLElement, 
+                             config: EditorConfig, 
+                             options: EditorOptions,
+                             markdown?: string): Promise<Editor> {
     
     // provide default options
-    const options = {
+    options = {
       autoFocus: false,
       spellCheck: true,
       codemirror: true,
@@ -165,7 +167,7 @@ export class Editor {
       braceMatching: true,
       rmdCodeChunks: false,
       formatComment: true,
-      ...config.options,
+      ...options
     };
 
     // default format to what is specified in the config

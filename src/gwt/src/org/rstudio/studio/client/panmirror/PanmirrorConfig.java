@@ -29,7 +29,6 @@ public class PanmirrorConfig
    }
    
    public String format = "markdown";
-   public PanmirrorOptions options = new PanmirrorOptions();
    public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
    public PanmirrorUI ui;
    public PanmirrorHooks hooks = new PanmirrorHooks();
