@@ -40,10 +40,6 @@ export async function pandocFormat(pandoc: PandocEngine, format: string) {
   let warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
   // split out base format from options
-  let optionsPos = format.indexOf('-');
-  if (optionsPos === -1) {
-    optionsPos = format.indexOf('+');
-  }
   const split = splitFormat(format);
   let baseName = split.format;
   let options = split.options;
