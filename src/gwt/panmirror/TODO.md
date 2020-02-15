@@ -3,20 +3,8 @@
 
 ## TODO
 
-
-
-
-
-
 ## Enhancements
 
-Tables not round-tripping in gfm mode
-
-Consider where format reading should go (PanmirrorUITools)
-Add fill-column to magic comments
-
-Consider dynamic read of format comments (signal via event)
-https://jblevins.org/log/file-local-variables
 
 
 Dialog/picker for images
@@ -31,9 +19,9 @@ Unit testing for core panmirror code
 
 Improved treatment for relative image paths that don't resolve
 
-
 FindUX in standalone
 Magic comments in standalone
+Dynamic commands/format for standalone front-end
 
 Cursor location for insert yaml in the middle of paragraph
 
