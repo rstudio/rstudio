@@ -34,7 +34,7 @@ import elemental2.promise.Promise;
 public class PanmirrorEditor
 {
    public native static Promise<PanmirrorEditor> create(Element parent, 
-                                                        PanmirrorConfig config, 
+                                                        PanmirrorContext context, 
                                                         PanmirrorOptions options, 
                                                         String code);
    

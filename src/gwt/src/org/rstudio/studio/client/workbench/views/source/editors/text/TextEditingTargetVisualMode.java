@@ -20,7 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.panmirror.PanmirrorConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
@@ -314,14 +314,14 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         PanmirrorConfig config = new PanmirrorConfig(uiContext());
+         PanmirrorContext context = new PanmirrorContext(uiContext());
          
          PanmirrorOptions options = new PanmirrorOptions();
          options.rmdCodeChunks = true;
            
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          
-         PanmirrorWidget.create(config, options, widgetOptions, getEditorCode(), (panmirror) -> {
+         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
             
             // save reference to panmirror
             panmirror_ = panmirror;

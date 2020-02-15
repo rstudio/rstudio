@@ -76,7 +76,7 @@ import './styles/styles.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
-export interface EditorConfig {
+export interface EditorContext {
   readonly pandoc: PandocEngine;
   readonly format: string;
   readonly ui: EditorUI;
@@ -128,7 +128,7 @@ export class Editor {
 
   // core context passed from client
   private readonly parent: HTMLElement;
-  private readonly config: EditorConfig;
+  private readonly context: EditorContext;
 
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
@@ -154,7 +154,7 @@ export class Editor {
   private readonly events: ReadonlyMap<string, Event>;
 
   public static async create(parent: HTMLElement, 
-                             config: EditorConfig, 
+                             context: EditorContext, 
                              options: EditorOptions,
                              markdown?: string): Promise<Editor> {
     
@@ -171,7 +171,7 @@ export class Editor {
     };
 
     // default format to what is specified in the config
-    let format = config.format;
+    let format = context.format;
 
     // if markdown was specified then try to read the format from it
     if (markdown && options.formatComment) {
@@ -179,10 +179,10 @@ export class Editor {
     }
    
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(config.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
 
     // create editor
-    const editor = new Editor(parent, config, options, pandocFmt);
+    const editor = new Editor(parent, context, options, pandocFmt);
 
     // set initial markdown if specified
     if (markdown) {
@@ -193,10 +193,10 @@ export class Editor {
     return Promise.resolve(editor);
   }
 
-  private constructor(parent: HTMLElement, config: EditorConfig, options: EditorOptions, pandocFormat: PandocFormat) {
+  private constructor(parent: HTMLElement, context: EditorContext, options: EditorOptions, pandocFormat: PandocFormat) {
     // initialize references
     this.parent = parent;
-    this.config = config;
+    this.context = context;
     this.options = options;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
@@ -235,7 +235,7 @@ export class Editor {
     window.addEventListener('resize', this.applyLayoutFixups);
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, config.pandoc);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -389,7 +389,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.config.ui, kMac).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema, this.context.ui, kMac).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -436,14 +436,14 @@ export class Editor {
     // determine the target format (this is either from a format comment
     // or alternatively based on the default format)
     const targetFormat = splitPandocFormatString(
-      resolvePandocFormatComment(formatComment, this.config.format)
+      resolvePandocFormatComment(formatComment, this.context.format)
     );
    
     // if this differs from the one in the source code, then update the format
     if (targetFormat.format !== existingFormat.format || 
         targetFormat.options !== existingFormat.options) {
       const format = targetFormat.format + targetFormat.options;
-      this.pandocFormat = await resolvePandocFormat(this.config.pandoc, format);
+      this.pandocFormat = await resolvePandocFormat(this.context.pandoc, format);
     }
   }
 
@@ -486,7 +486,7 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(this.options, this.config.extensions, this.pandocFormat.extensions);
+    return initExtensions(this.options, this.context.extensions, this.pandocFormat.extensions);
   }
 
   private initSchema(): Schema {
@@ -563,14 +563,14 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.config.ui, kMac),
+      ...this.extensions.plugins(this.schema, this.context.ui, kMac),
       this.inputRulesPlugin(),
       this.editablePlugin(),
     ];
   }
 
   private editablePlugin() {
-    const hooks = this.config.hooks || {};
+    const hooks = this.context.hooks || {};
     return new Plugin({
       key: new PluginKey('editable'),
       props: {
@@ -611,7 +611,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.config.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -632,7 +632,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.config.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;

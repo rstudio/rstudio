@@ -89,7 +89,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       public boolean border = false;
    }
    
-   public static void create(PanmirrorConfig config,
+   public static void create(PanmirrorContext context,
                              PanmirrorOptions options,
                              Options widgetOptions,
                              String code,
@@ -102,7 +102,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                
          // create the editor
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), config, options, code),
+            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, code),
             null,
             editor -> {
                editorWidget.attachEditor(editor);

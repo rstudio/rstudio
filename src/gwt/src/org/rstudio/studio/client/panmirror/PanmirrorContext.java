@@ -21,9 +21,9 @@ import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorConfig
+public class PanmirrorContext
 {  
-   public PanmirrorConfig(PanmirrorUIContext uiContext)
+   public PanmirrorContext(PanmirrorUIContext uiContext)
    {
       ui = new PanmirrorUI(uiContext);
    }
