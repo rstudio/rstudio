@@ -517,7 +517,7 @@ private:
       }
    }
 
-   Error completeFileReplace()
+   Error completeFileReplace(std::set<std::string>* pErrorMessage)
    {
       if (fileSuccess_)
       {
@@ -525,9 +525,19 @@ private:
              !tempReplaceFile_.getAbsolutePath().empty() &&
              outputStream_->good())
          {
-            Error error = FilePath(currentFile_).testWritePermissions();
+             Error error;
+             // For Windows we ignore this additional safety check
+             // it will always fail because we have inputStream_ reading the file
+#ifndef _WIN32
+            error = FilePath(currentFile_).testWritePermissions();
             if (error)
+            {
+               json::Array replaceMatchOn, replaceMatchOff;
+               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+                  &replaceMatchOff, &fileSuccess_);
                return error;
+            }
+#endif
             std::string line;
             while (std::getline(*inputStream_, line))
             {
@@ -539,7 +549,13 @@ private:
             outputStream_.reset();
             error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
-            return error;
+            if (error)
+            {
+               json::Array replaceMatchOn, replaceMatchOff;
+               addReplaceErrorMessage(error.asString(), pErrorMessage, &replaceMatchOn,
+                  &replaceMatchOff, &fileSuccess_);
+               return error;
+            }
          }
       }
       return Success();
@@ -882,7 +898,7 @@ private:
                if (currentFile_.empty() || currentFile_ != fullPath.getAbsolutePath())
                {
                   if (!currentFile_.empty())
-                     completeFileReplace();
+                     completeFileReplace(&errorMessage);
                   Error error = initializeFileForReplace(fullPath);
                   if (error)
                      addReplaceErrorMessage(error.asString(), &errorMessage,
@@ -932,7 +948,12 @@ private:
          }
       }
       if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
-         completeFileReplace();
+      {
+         std::set<std::string> errorMessage;
+         completeFileReplace(&errorMessage);
+         for (std::string newError : errorMessage)
+            errors.push_back(json::Value(newError));
+      }
 
       if (nextLineStart)
       {
