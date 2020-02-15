@@ -1,8 +1,13 @@
 @charset "UTF-8";
 
-@external ProseMirror, pm-content;
+@external ProseMirror, pm-content, body;
 
 
 .ProseMirror .pm-content {
-	padding: 10px 20px !important;
+   padding-left: 20px !important;
+   padding-right: 20px !important;
+}
+
+.ProseMirror .body {
+   padding-top: 10px !important;
 }
