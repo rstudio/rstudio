@@ -68,7 +68,6 @@ import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
 import behaviorBraceMatch from './behaviors/bracematch';
 import behaviorTextFocus from './behaviors/text_focus';
-import behaviorFormatComment from './behaviors/format_comment';
 
 // marks
 
@@ -122,8 +121,7 @@ export function initExtensions(
     behaviorHistory,
     behaviorSelectAll,
     behaviorCursor,
-    behaviorFind,
-    behaviorFormatComment
+    behaviorFind
   ]);
 
   // optional extensions

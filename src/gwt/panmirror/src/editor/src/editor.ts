@@ -37,7 +37,7 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
-import { resolvePandocFormat, PandocFormat, pandocFormatFromCode, PandocFormatComment, splitFormat, pandocFormatCommentFromCode } from './api/pandoc_format';
+import { resolvePandocFormat, PandocFormat, pandocFormatFromCode, PandocFormatComment, splitFormat, pandocFormatCommentFromCode, pandocFormatCommentFromState } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
 import { EditorOutline } from './api/outline';
@@ -58,8 +58,6 @@ import {
   clear,
   selectCurrent,
 } from './behaviors/find';
-
-import { getFormatComment } from './behaviors/format_comment';
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
@@ -275,7 +273,7 @@ export class Editor {
   public async getMarkdown(options: PandocWriterOptions): Promise<string> {
 
     // update format from source code magic comments
-    await this.updatePandocFormat(getFormatComment(this.state));
+    await this.updatePandocFormat(pandocFormatCommentFromState(this.state));
     
     // do the conversion
     return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);
