@@ -127,6 +127,9 @@
    if (.rs.tutorial.openExistingTutorial(name, package))
       return()
    
+   # install any required package dependencies before running tutorial
+   .rs.tutorial.installPackageDependencies(name, package)
+   
    # prepare the call to learnr to run the tutorial
    shiny_args$launch.browser <- quote(rstudioapi:::tutorialLaunchBrowser)
    
@@ -220,3 +223,60 @@
       description = .rs.scalar(desc)
    )
 })
+
+.rs.addFunction("tutorial.installPackageDependencies", function(name, package)
+{
+   pkgs <- character()
+
+   # form path to tutorial folder   
+   path <- system.file("tutorials", name, package = package)
+   if (!file.exists(path))
+      return(character())
+   
+   # find dependencies
+   deps <- renv::dependencies(path, quiet = TRUE)
+   
+   # ensure rstudioapi is included (required for communication between
+   # the child R process hosting the tutorial + the main IDE session)
+   pkgs <- sort(unique(c(deps$Package, c("learnr", "rstudioapi"))))
+   
+   # screen out some potentially invalid package names
+   pkgs <- grep("^[a-zA-Z0-9._]+$", pkgs, value = TRUE)
+   
+   # find packages which are not installed
+   installed <- vapply(pkgs, function(pkg) {
+      location <- find.package(pkg, quiet = TRUE)
+      length(location) > 0
+   }, FUN.VALUE = logical(1))
+   
+   missing <- pkgs[!installed]
+   if (length(missing) == 0)
+      return(character())
+   
+   # ask user to install these packages
+   title <- "Install Required Packages"
+   message <- paste(
+      "The following tutorial package dependencies are missing and will be installed:\n",
+      paste("-", .rs.formatListForDialog(missing)),
+      "\nWould you like to proceed?",
+      sep = "\n"
+   )
+   
+   ok <- .rs.api.showQuestion(title, message)
+   if (!ok) {
+      fmt <- "cannot run tutorial '%s'; required dependencies not installed"
+      msg <- sprintf(fmt, name)
+      stop(msg, call. = FALSE)
+   }
+ 
+   # write out call to console for user
+   call <- substitute(
+      install.packages(missing),
+      list(missing = missing)
+   )
+   
+   writeLines(paste(getOption("prompt"), format(call), sep = ""))
+   install.packages(missing)
+   
+})
+

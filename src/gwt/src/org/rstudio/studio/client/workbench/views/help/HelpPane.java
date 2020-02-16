@@ -477,15 +477,13 @@ public class HelpPane extends WorkbenchPane
                WindowEx contentWindow = getContentWindow();
                if (contentWindow != null)
                {
-                  // escape or tab means exit find mode and put focus 
+                  // escape means exit find mode and put focus 
                   // into the main content window
-                  if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE ||
-                      event.getNativeKeyCode() == KeyCodes.KEY_TAB)
+                  if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
                   {
                      event.preventDefault();
                      event.stopPropagation();
-                     if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
-                        clearTerm();
+                     clearTerm();
                      contentWindow.focus();
                   }
                   else
@@ -566,7 +564,6 @@ public class HelpPane extends WorkbenchPane
                // we handle these directly so prevent the browser
                // from handling them
                if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE ||
-                   event.getNativeKeyCode() == KeyCodes.KEY_TAB ||
                    event.getNativeKeyCode() == KeyCodes.KEY_ENTER)
                {
                   event.preventDefault();
