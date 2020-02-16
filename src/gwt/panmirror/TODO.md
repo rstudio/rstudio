@@ -3,8 +3,15 @@
 
 ## TODO
 
-## Enhancements
+Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
 
+Currently in rstudio.wiki loading the project hangs on pandoc_markdown_to_ast (I believe this is due to
+an entirely empty document, which probably has us hang on stdin write -- note need to fix this for
+both the C++ and nodejs wrappers). The problem in C++ land is that SyncProcess::run checks whether input is empty and doesn't actually write input if it is
+
+DeleteRows DeleteCols gestures for table
+
+## Enhancements
 
 
 Dialog/picker for images
