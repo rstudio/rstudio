@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.panmirror.pandoc;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -45,9 +46,14 @@ public class PanmirrorPandocEngine {
 
    public Promise<JavaScriptObject> markdownToAst(String markdown, String format, JsArrayString options)
    {
+      // rsession pandoc back-end doesn't handle empty stdiput well (SyncProcess.run doesn't
+      // ever write stdin if it's empty)
+      final String input = !StringUtil.isNullOrEmpty(markdown) ? markdown : " ";
+      
       return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         
          server_.pandocMarkdownToAst(
-            markdown, format, options, 
+            input, format, options, 
             new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
          );
       });
