@@ -76,7 +76,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   }
 
   // define table capabilities
-  const capabilities : TableCapabilities = {
+  const capabilities: TableCapabilities = {
     captions: pandocExtensions.table_captions,
     headerOptional: pandocExtensions.grid_tables,
   };
@@ -93,7 +93,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     commands: (_schema: Schema, ui: EditorUI) => {
       const commands = [
-        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui.dialogs.insertTable)),
+        new ProsemirrorCommand(
+          EditorCommandId.TableInsertTable,
+          ['Alt-Mod-t'],
+          insertTable(capabilities, ui.dialogs.insertTable),
+        ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
         new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumnAfter),

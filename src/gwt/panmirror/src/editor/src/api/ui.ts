@@ -153,7 +153,6 @@ export function attrPropsToInput(attr: AttrProps): AttrEditInput {
 }
 
 export function attrInputToProps(attr: AttrEditInput): AttrProps {
-
   const classes = attr.classes ? attr.classes.split(/\s+/) : [];
   let keyvalue: Array<[string, string]> | undefined;
   if (attr.keyvalue) {
@@ -198,4 +197,3 @@ function asPandocId(id: string) {
 function asPandocClass(clz: string) {
   return clz.replace(/^\./, '');
 }
-

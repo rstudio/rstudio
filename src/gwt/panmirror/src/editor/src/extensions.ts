@@ -36,7 +36,7 @@ import {
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
   PandocMarkdownOutputFilter,
-  PandocExtensions
+  PandocExtensions,
 } from './api/pandoc';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
@@ -123,7 +123,7 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
-    behaviorFormatComment
+    behaviorFormatComment,
   ]);
 
   // optional extensions

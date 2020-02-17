@@ -57,7 +57,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           excludes: '_',
           attrs: {
             format: {},
-            comment: { default: false }
+            comment: { default: false },
           },
           parseDOM: [
             {
@@ -66,7 +66,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 const el = dom as Element;
                 return {
                   format: el.getAttribute('data-format'),
-                  comment: el.getAttribute('data-comment') === "1"
+                  comment: el.getAttribute('data-comment') === '1',
                 };
               },
             },
@@ -75,9 +75,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             const attr: any = {
               class: 'raw-inline pm-fixedwidth-font pm-markup-text-color',
               'data-format': mark.attrs.format,
-              'data-comment': mark.attrs.comment ? "1" : "0"
+              'data-comment': mark.attrs.comment ? '1' : '0',
             };
-            return [ 'span', attr ];
+            return ['span', attr];
           },
         },
         pandoc: {
@@ -189,7 +189,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               }
             });
 
-            const addRawInlineMarks = (format: string, beginMarkup: RegExp, markupLength: (text: string) => number, commentRegex?: RegExp) => {
+            const addRawInlineMarks = (
+              format: string,
+              beginMarkup: RegExp,
+              markupLength: (text: string) => number,
+              commentRegex?: RegExp,
+            ) => {
               const searchForMarkup = (text: string) => {
                 const match = text.match(beginMarkup);
                 if (match && match.index !== undefined) {
@@ -248,7 +253,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function rawInlineHighlightPlugin(schema: Schema) {
-
   const kLightTextClass = 'pm-light-text-color';
   const delimiterRegex = /[{}]/g;
 
@@ -256,7 +260,7 @@ export function rawInlineHighlightPlugin(schema: Schema) {
     if (attrs.format === TEX_FORMAT) {
       const kIdClass = 'pm-markup-text-color';
       const idRegEx = /\\[A-Za-z]+/g;
-      let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);      
+      let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
       decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
       return decorations;
     } else if (attrs.format === HTML_FORMAT && attrs.comment) {

@@ -13,9 +13,9 @@
  *
  */
 
-import { EditorState } from "prosemirror-state";
+import { EditorState } from 'prosemirror-state';
 
-import { PandocEngine, PandocExtensions } from "./pandoc";
+import { PandocEngine, PandocExtensions } from './pandoc';
 
 export interface PandocFormat {
   baseName: string;
@@ -131,17 +131,16 @@ export function pandocFormatWith(format: string, prepend: string, append: string
   return `${split.format}${prepend}${split.options}${append}`;
 }
 
-
 export function pandocFormatFromCode(code: string) {
   const variables = {
     mode: 'markdown',
     extensions: '',
-    ...pandocFormatCommentFromCode(code)
+    ...pandocFormatCommentFromCode(code),
   };
   return pandocFormatWith(variables.mode, '', variables.extensions);
 }
 
-export function pandocFormatCommentFromCode(code: string) : PandocFormatComment {
+export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
   const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = code.match(magicCommentRegEx);
@@ -155,8 +154,8 @@ export function pandocFormatCommentFromCode(code: string) : PandocFormatComment 
       if (keyValueMatch) {
         variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
       }
-    });    
-    const formatComment : PandocFormatComment = {};
+    });
+    const formatComment: PandocFormatComment = {};
     if (variables.mode) {
       formatComment.mode = variables.mode;
     }
@@ -172,7 +171,7 @@ export function pandocFormatCommentFromCode(code: string) : PandocFormatComment 
   }
 }
 
-export function pandocFormatCommentFromState(state: EditorState) : PandocFormatComment {
+export function pandocFormatCommentFromState(state: EditorState): PandocFormatComment {
   let comment: PandocFormatComment = {};
   let foundFirstRawInline = false;
   state.doc.descendants((node, pos) => {
@@ -192,31 +191,27 @@ export function pandocFormatCommentFromState(state: EditorState) : PandocFormatC
   return comment;
 }
 
-
 export function resolvePandocFormatComment(formatComment: PandocFormatComment, defaultFormat: string) {
-    const format = splitPandocFormatString(defaultFormat);
-    if (formatComment.mode) {
-      format.format = formatComment.mode;
-    }
-    if (formatComment.extensions) {
-      format.options = formatComment.extensions;
-    }
-    return format.format + format.options;
+  const format = splitPandocFormatString(defaultFormat);
+  if (formatComment.mode) {
+    format.format = formatComment.mode;
+  }
+  if (formatComment.extensions) {
+    format.options = formatComment.extensions;
+  }
+  return format.format + format.options;
 }
 
-
 export function splitPandocFormatString(format: string) {
-    // split out base format from options
-    let optionsPos = format.indexOf('-');
-    if (optionsPos === -1) {
-      optionsPos = format.indexOf('+');
-    }
-    const base = optionsPos === -1 ? format : format.substr(0, optionsPos);
-    const options = optionsPos === -1 ? '' : format.substr(optionsPos);
-    return {
-      format: base,
-      options,
-    };
+  // split out base format from options
+  let optionsPos = format.indexOf('-');
+  if (optionsPos === -1) {
+    optionsPos = format.indexOf('+');
   }
-  
-  
+  const base = optionsPos === -1 ? format : format.substr(0, optionsPos);
+  const options = optionsPos === -1 ? '' : format.substr(optionsPos);
+  return {
+    format: base,
+    options,
+  };
+}

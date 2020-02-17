@@ -56,9 +56,9 @@ const extension: Extension = {
         lineNumbers: true,
         lineNumberFormatter: (line: number) => {
           if (line === 1) {
-            return "";
+            return '';
           } else {
-            return (line - 1) + "";
+            return line - 1 + '';
           }
         },
         classes: ['pm-chunk-background-color'],

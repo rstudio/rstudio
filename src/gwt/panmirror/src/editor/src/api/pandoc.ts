@@ -21,7 +21,6 @@ export interface PandocEngine {
   listExtensions(format: string): Promise<string>;
 }
 
-
 export interface PandocExtensions {
   abbreviations: boolean;
   all_symbols_escapable: boolean;
@@ -99,7 +98,6 @@ export interface PandocExtensions {
   gutenberg: boolean;
   [key: string]: boolean;
 }
-
 
 export interface PandocAst {
   blocks: PandocToken[];
@@ -328,4 +326,3 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
   return tokens.map(mapToken);
 }
-

@@ -21,18 +21,16 @@ import { Extension, extensionIfEnabled } from '../api/extension';
 
 const plugin = new PluginKey('smartypaste');
 
-
 // match emDash but only for lines that aren't an html comment
 const emDash = new InputRule(/^(?:.*)---$/, (state: EditorState, match: string[], start: number, end: number) => {
-  if (!state.doc.textBetween(start, end).startsWith("<!--")) {
+  if (!state.doc.textBetween(start, end).startsWith('<!--')) {
     const tr = state.tr;
-    tr.insertText("—", end - 2, end);
+    tr.insertText('—', end - 2, end);
     return tr;
   } else {
     return null;
   }
 });
-
 
 const extension: Extension = {
   inputRules: () => {

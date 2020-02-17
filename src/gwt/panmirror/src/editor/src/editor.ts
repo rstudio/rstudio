@@ -37,13 +37,13 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
-import { 
-  PandocFormat, 
-  resolvePandocFormat, 
-  splitPandocFormatString, 
-  PandocFormatComment, 
-  resolvePandocFormatComment, 
-  pandocFormatCommentFromCode, 
+import {
+  PandocFormat,
+  resolvePandocFormat,
+  splitPandocFormatString,
+  PandocFormatComment,
+  resolvePandocFormatComment,
+  pandocFormatCommentFromCode,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
@@ -119,14 +119,17 @@ export interface EditorFindReplace {
 export { EditorCommandId as EditorCommands } from './api/command';
 
 export class UITools {
-  public attrPropsToInput(attr: AttrProps) { return attrPropsToInput(attr); }
-  public attrInputToProps(input: AttrEditInput) { return attrInputToProps(input); }
-};
+  public attrPropsToInput(attr: AttrProps) {
+    return attrPropsToInput(attr);
+  }
+  public attrInputToProps(input: AttrEditInput) {
+    return attrInputToProps(input);
+  }
+}
 
 const keybindingsPlugin = new PluginKey('keybindings');
 
 export class Editor {
-
   // core context passed from client
   private readonly parent: HTMLElement;
   private readonly context: EditorContext;
@@ -136,11 +139,11 @@ export class Editor {
 
   // pandoc format used for reading and writing markdown
   // note that this can change from what is specified at
-  // construction time based on magic comments being 
+  // construction time based on magic comments being
   // provided within the document
-  private pandocFormat: PandocFormat; 
-  
-  // core prosemirror state/behaviors 
+  private pandocFormat: PandocFormat;
+
+  // core prosemirror state/behaviors
   private readonly extensions: ExtensionManager;
   private readonly schema: Schema;
   private state: EditorState;
@@ -154,11 +157,12 @@ export class Editor {
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
-  public static async create(parent: HTMLElement, 
-                             context: EditorContext, 
-                             options: EditorOptions,
-                             markdown?: string): Promise<Editor> {
-    
+  public static async create(
+    parent: HTMLElement,
+    context: EditorContext,
+    options: EditorOptions,
+    markdown?: string,
+  ): Promise<Editor> {
     // provide default options
     options = {
       autoFocus: false,
@@ -168,7 +172,7 @@ export class Editor {
       braceMatching: true,
       rmdCodeChunks: false,
       formatComment: true,
-      ...options
+      ...options,
     };
 
     // default format to what is specified in the config
@@ -178,7 +182,7 @@ export class Editor {
     if (markdown && options.formatComment) {
       format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
     }
-   
+
     // resolve the format
     const pandocFmt = await resolvePandocFormat(context.pandoc, format);
 
@@ -275,11 +279,10 @@ export class Editor {
   }
 
   public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
-
     // update format from source code magic comments
     await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
 
-    // get the doc 
+    // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // re-initialize editor state
@@ -304,9 +307,8 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<string> {
-
     // get current format comment
-    const formatComment = getFormatComment(this.state)
+    const formatComment = getFormatComment(this.state);
 
     // update format from source code magic comments
     await this.updatePandocFormat(formatComment);
@@ -315,7 +317,7 @@ export class Editor {
     if (this.options.formatComment) {
       options.wrapColumn = formatComment.fillColumn || options.wrapColumn;
     }
-    
+
     // do the conversion
     return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);
   }
@@ -433,7 +435,6 @@ export class Editor {
   }
 
   private async updatePandocFormat(formatComment: PandocFormatComment) {
-
     // don't do it if our options tell us not to
     if (!this.options.formatComment) {
       return;
@@ -444,13 +445,10 @@ export class Editor {
 
     // determine the target format (this is either from a format comment
     // or alternatively based on the default format)
-    const targetFormat = splitPandocFormatString(
-      resolvePandocFormatComment(formatComment, this.context.format)
-    );
-   
+    const targetFormat = splitPandocFormatString(resolvePandocFormatComment(formatComment, this.context.format));
+
     // if this differs from the one in the source code, then update the format
-    if (targetFormat.format !== existingFormat.format || 
-        targetFormat.options !== existingFormat.options) {
+    if (targetFormat.format !== existingFormat.format || targetFormat.options !== existingFormat.options) {
       const format = targetFormat.format + targetFormat.options;
       this.pandocFormat = await resolvePandocFormat(this.context.pandoc, format);
     }

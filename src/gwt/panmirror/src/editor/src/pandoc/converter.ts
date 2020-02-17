@@ -30,14 +30,11 @@ import {
   PandocPostprocessorFn,
 } from '../api/pandoc';
 
-import { 
-  pandocFormatWith
-} from '../api/pandoc_format';
+import { pandocFormatWith } from '../api/pandoc_format';
 
 import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
 import { ExtensionManager } from '../extensions';
-
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
@@ -59,8 +56,6 @@ export class PandocConverter {
 
   private apiVersion: PandocApiVersion | null;
 
-  
-
   constructor(schema: Schema, extensions: ExtensionManager, pandoc: PandocEngine) {
     this.schema = schema;
 
@@ -79,10 +74,9 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
-    
     // adjust format
     format = this.adjustedFormat(format);
-    
+
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
       markdown = preprocessor(markdown);

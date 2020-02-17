@@ -70,7 +70,7 @@ export const EditorDialogInsertTable: React.FC<EditorDialogInsertTableProps> = p
       rows: parseInt(inputRows!.value || defaultRows, 10),
       cols: parseInt(inputCols!.value || defaultCols, 10),
       header: props.capabilities.headerOptional ? inputHeader!.checked : true,
-      caption: props.capabilities.captions ? inputCaption!.value: '',
+      caption: props.capabilities.captions ? inputCaption!.value : '',
     });
   };
 
@@ -103,24 +103,22 @@ export const EditorDialogInsertTable: React.FC<EditorDialogInsertTableProps> = p
         />
       </ControlGroup>
 
-      { props.capabilities.captions ? 
-          <DialogTextInput
-            defaultValue={''}
-            label={t('insert_table_dialog_table_caption')}
-            labelInfo={t('label_optional')}
-            ref={setInputCaption}
-          /> : 
-          null
-      }
-      
-      { props.capabilities.headerOptional  ?
-          <FormGroup>
-            <Checkbox defaultChecked={true} inputRef={setInputHeader}>
-              {t('insert_table_dialog_header')}
-            </Checkbox>
-          </FormGroup> : 
-          null
-      }
+      {props.capabilities.captions ? (
+        <DialogTextInput
+          defaultValue={''}
+          label={t('insert_table_dialog_table_caption')}
+          labelInfo={t('label_optional')}
+          ref={setInputCaption}
+        />
+      ) : null}
+
+      {props.capabilities.headerOptional ? (
+        <FormGroup>
+          <Checkbox defaultChecked={true} inputRef={setInputHeader}>
+            {t('insert_table_dialog_header')}
+          </Checkbox>
+        </FormGroup>
+      ) : null}
     </Dialog>
   );
 };

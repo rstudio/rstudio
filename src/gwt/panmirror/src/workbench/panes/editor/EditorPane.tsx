@@ -97,14 +97,15 @@ class EditorPane extends React.Component<EditorPaneProps> {
 
   public async componentDidMount() {
     // create editor
-    this.editor = await Editor.create(this.parent!, 
+    this.editor = await Editor.create(
+      this.parent!,
       {
         pandoc: this.pandocEngine,
         format: 'markdown',
         ui: {
           dialogs: this.editorDialogs,
           context: this.editorUIContext,
-        }
+        },
       },
       {
         autoFocus: true,
@@ -112,7 +113,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
         autoLink: true,
         rmdCodeChunks: true,
         codemirror: true,
-      }
+      },
     );
 
     // show any warnings

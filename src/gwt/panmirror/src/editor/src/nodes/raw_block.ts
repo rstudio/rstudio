@@ -109,12 +109,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
 function readPandocRawBlock(schema: Schema) {
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
-    
     const format = tok.c[RAW_BLOCK_FORMAT];
     const text = tok.c[RAW_BLOCK_CONTENT];
 
-    // html comments should be read as inline html. this allows them to be 
-    // edited more naturally in the editor and to be written without 
+    // html comments should be read as inline html. this allows them to be
+    // edited more naturally in the editor and to be written without
     // raw_block attribute formatting
     const commentRe = /^<!--([\s\S]*?)-->\s*$/;
     if (format === 'html' && commentRe.test(text)) {
@@ -126,9 +125,9 @@ function readPandocRawBlock(schema: Schema) {
       writer.closeNode();
     } else {
       writer.openNode(schema.nodes.raw_block, { format });
-      writer.writeText(text);    
+      writer.writeText(text);
       writer.closeNode();
-    }   
+    }
   };
 }
 

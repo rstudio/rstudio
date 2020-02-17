@@ -266,7 +266,7 @@ class CodeBlockNodeView implements NodeView {
       Down: () => this.arrowMaybeEscape('line', 1),
       Right: () => this.arrowMaybeEscape('char', 1),
       Backspace: () => this.backspaceMaybeDeleteNode(),
-      Tab: () => this.cm.execCommand(this.cm.getOption("indentWithTabs") ? "insertTab" : "insertSoftTab"),
+      Tab: () => this.cm.execCommand(this.cm.getOption('indentWithTabs') ? 'insertTab' : 'insertSoftTab'),
       // undo/redo keys are technically rebindable in the parent
       // editor so we may need a way to propagate the rebinding here
       [`${mod}-Z`]: () => undo(view.state, view.dispatch),
