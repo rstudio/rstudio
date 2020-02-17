@@ -1,7 +1,7 @@
 /*
  * UnifiedParser.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 
 import java.util.ArrayList;
@@ -118,12 +119,12 @@ public class UnifiedParser implements DiffParser
          int directive = ' ';
          for (int i = 0; i < columns; i++)
          {
-            mask[i] = diffLine.charAt(i) != ' ';
+            mask[i] = StringUtil.charAt(diffLine, i) != ' ';
             if (mask[i])
             {
                if (directive == ' ')
-                  directive = diffLine.charAt(i);
-               else if (directive != diffLine.charAt(i))
+                  directive = StringUtil.charAt(diffLine, i);
+               else if (directive != StringUtil.charAt(diffLine,i))
                   throw new DiffFormatException("Conflicting directives");
             }
          }
@@ -256,7 +257,7 @@ public class UnifiedParser implements DiffParser
 
    private boolean nextLineIsComment()
    {
-      return !isEOD() && data_.charAt(pos_) == '\\';
+      return !isEOD() && StringUtil.charAt(data_, pos_) == '\\';
    }
 
    private String peekLine()
@@ -285,7 +286,7 @@ public class UnifiedParser implements DiffParser
          i = data_.length();
          length = 0;
       }
-      else if (i > 0 && data_.charAt(i-1) == '\r')
+      else if (i > 0 && StringUtil.charAt(data_, i - 1) == '\r')
       {
          i--;
          length = 2;
