@@ -1,7 +1,7 @@
 /*
  * GitStatusRenderer.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,7 +79,7 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
    private String descForStatus(String str)
    {
       if (str.length() < 2)
-         return null;
+         return "";
 
       String indexDesc = descForStatus(str.charAt(0));
       String treeDesc = descForStatus(str.charAt(1));
