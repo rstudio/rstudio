@@ -78,6 +78,9 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
 
    private String descForStatus(String str)
    {
+      if (str.length() < 2)
+         return null;
+
       String indexDesc = descForStatus(str.charAt(0));
       String treeDesc = descForStatus(str.charAt(1));
       

@@ -85,6 +85,9 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 
    private String descForStatus(String str)
    {
+      if (str.isEmpty())
+         return "";
+
       char c = str.charAt(0);
       
       switch (c)

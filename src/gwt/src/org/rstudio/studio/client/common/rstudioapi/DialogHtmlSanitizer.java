@@ -56,7 +56,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
          String tag = null;
          boolean isValidTag = false;
          if (tagEnd > 0) {
-            if (segment.charAt(0) == '/') {
+            if (StringUtil.charAt(segment, 0) == '/') {
                tagStart = 1;
             }
             tag = segment.substring(tagStart, tagEnd).toLowerCase();
