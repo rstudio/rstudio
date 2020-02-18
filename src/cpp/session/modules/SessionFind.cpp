@@ -1504,7 +1504,7 @@ boost::regex getGrepOutputRegex(bool isGitGrep)
 {
    boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
+      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+)\x1B\\[36m:\x1B\\[m(.*)");
    else
       regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
    return regex;
