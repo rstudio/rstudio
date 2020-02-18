@@ -14,7 +14,7 @@ pipeline {
   }
   environment {
     PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
-    PACKAGE_OS=macOS
+    PACKAGE_OS = 'macOS'
   }
 
   stages {
