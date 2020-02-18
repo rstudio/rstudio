@@ -40,7 +40,8 @@ pipeline {
           if (params.RSTUDIO_VERSION_SUFFIX != 0) {
             env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
           }
-          sh 'cd package/osx && ${env} PACKAGE_OS=macOS ./make-package clean && cd ../..'
+          env = "${env} PACKAGE_OS=macOS"
+          sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
         }
       }
     }
