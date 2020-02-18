@@ -14,6 +14,7 @@ pipeline {
   }
   environment {
     PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+    PACKAGE_OS=macOS
   }
 
   stages {
@@ -40,7 +41,7 @@ pipeline {
           if (params.RSTUDIO_VERSION_SUFFIX != 0) {
             env = "${env} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}" 
           }
-          sh 'cd package/osx && ${env} PACKAGE_OS=macOS ./make-package clean && cd ../..'
+          sh 'cd package/osx && ${env} ./make-package clean && cd ../..'
         }
       }
     }
