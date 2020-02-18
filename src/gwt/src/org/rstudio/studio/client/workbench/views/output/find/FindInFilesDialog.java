@@ -154,7 +154,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       AllFiles,
       CommonRSourceFiles,
       RScripts,
-      Package,
+      PackageSource,
+      PackageTests,
       CustomFilter
    }
 
@@ -252,15 +253,25 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (!packageStatus_)
       {
          ((Element) listPresetFilePatterns_.getElement().getChild(
-               Include.Package.ordinal()))
+               Include.PackageSource.ordinal()))
             .setAttribute("disabled", "disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+               Include.PackageTests.ordinal()))
+            .setAttribute("disabled", "disabled");
+
          if (listPresetFilePatterns_.getSelectedIndex() ==
-             Include.Package.ordinal())
+             Include.PackageSource.ordinal() ||
+             listPresetFilePatterns_.getSelectedIndex() ==
+             Include.PackageTests.ordinal())
             listPresetFilePatterns_.setSelectedIndex(Include.AllFiles.ordinal());
       }
       else
+      {
          ((Element) listPresetFilePatterns_.getElement().getChild(
-            Include.Package.ordinal())).removeAttribute("disabled");
+            Include.PackageSource.ordinal())).removeAttribute("disabled");
+         ((Element) listPresetFilePatterns_.getElement().getChild(
+            Include.PackageTests.ordinal())).removeAttribute("disabled");
+      }
    }
 
    private void manageExcludeFilePattern()
@@ -423,7 +434,8 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetFilePatterns_.setSelectedIndex(index);
       else
          listPresetFilePatterns_.setSelectedIndex(Include.CustomFilter.ordinal());
-      if (index == Include.Package.ordinal())
+      if (index == Include.PackageSource.ordinal() ||
+          index == Include.PackageTests.ordinal())
          packageStatus_ = true;
       txtFilePattern_.setText(includeFilePatterns);
       manageFilePattern();
