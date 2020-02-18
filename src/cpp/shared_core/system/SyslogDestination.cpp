@@ -61,11 +61,30 @@ int logLevelToLogPriority(log::LogLevel in_logLevel)
 
 } // anonymous namespace
 
+struct SyslogDestination::Impl
+{
+   /**
+    * @brief Constructor.
+    *
+    * param in_programId        The ID of the program for which system logs should be written.
+    */
+   explicit Impl(const std::string& in_programId) :
+      ProgramId(in_programId)
+   {
+   }
+
+   /** The program ID. It must be persisted. */
+   std::string ProgramId;
+};
+
+PRIVATE_IMPL_DELETER_IMPL(SyslogDestination);
+
 SyslogDestination::SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId) :
-   ILogDestination(in_logLevel)
+   ILogDestination(in_logLevel),
+   m_impl(new Impl(in_programId))
 {
    // Open the system log. Don't set a mask because filtering is done at a higher level.
-   ::openlog(in_programId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
+   ::openlog(m_impl->ProgramId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
 }
 
 SyslogDestination::~SyslogDestination()
