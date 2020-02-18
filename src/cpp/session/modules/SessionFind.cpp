@@ -1276,6 +1276,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
+      cmd << "-c" << "grep.lineNumber=true";
+      cmd << "-c" << "grep.column=false";
+      cmd << "-c" << "grep.patternType=default";
+      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       cmd <<  "grep";
