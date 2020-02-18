@@ -190,6 +190,19 @@ TEST_CASE("SessionFind")
       CHECK(match[3].str().compare(kGitGrepPattern) == 0);
    }
 
+   SECTION("Git grep with colon get file, line number, and contents")
+   {
+      boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ true);
+      std::string contents(
+         "file.test\033[36m:\033[m9\033[36m:\033[m  - \033[1;31mr:\033[m devel");
+
+      boost::smatch match;
+      CHECK(regex_utils::match(contents, match, regex));
+      CHECK(match[1].str().compare("file.test") == 0);
+      CHECK(match[2].str().compare("9") == 0);
+      CHECK(match[3].str().compare("  - \033[1;31mr:\033[m devel") == 0);
+   }
+
    SECTION("Git grep get color encoding regex")
    {
       boost::regex regex = getColorEncodingRegex(/*isGitGrep*/ true);
