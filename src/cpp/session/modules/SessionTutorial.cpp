@@ -217,7 +217,7 @@ void handleTutorialHomeRequest(const http::Request& request,
 
       for (auto tutorial : tutorials)
       {
-         ss << "<div>";
+         ss << "<div class=\"rstudio-tutorials-section\">";
          
          ss << "<div class=\"rstudio-tutorials-label-container\">";
          
@@ -233,6 +233,10 @@ void handleTutorialHomeRequest(const http::Request& request,
             << "</span>";
          
          ss << "</div>";
+         
+         ss << "<div class=\"rstudio-tutorials-sublabel\">"
+            << pkgName << ": " << tutorial.name
+            << "</div>";
          
          if (tutorial.description.empty())
          {
@@ -259,9 +263,8 @@ void handleTutorialHomeRequest(const http::Request& request,
                << descriptionHtml
                << "</div>";
          }
- 
+         
          ss << "</div>";
-         ss << "<hr class=\"rstudio-tutorials-separator\">";
          
       }
       
