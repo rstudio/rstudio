@@ -20,9 +20,93 @@
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
+// Database Boost Errors
+// Declare soci errors as boost errors.
+// =================================================================================================================
+namespace RSTUDIO_BOOST_NAMESPACE {
+namespace system {
+
+template <>
+struct is_error_code_enum<soci::soci_error::error_category>
+{
+   static const bool value = true;
+};
+
+} // namespace system
+} // namespace boost
+
 namespace rstudio {
 namespace core {
 namespace database {
+   const boost::system::error_category& databaseErrorCategory();
+}
+}
+}
+
+namespace soci {
+
+inline boost::system::error_code make_error_code(soci::soci_error::error_category e)
+{
+   return { e, rstudio::core::database::databaseErrorCategory() };
+}
+
+inline boost::system::error_condition make_error_condition(soci::soci_error::error_category e)
+{
+   return { e, rstudio::core::database::databaseErrorCategory() };
+}
+
+}
+
+namespace rstudio {
+namespace core {
+namespace database {
+
+class DatabaseErrorCategory : public boost::system::error_category
+{
+public:
+   const char* name() const BOOST_NOEXCEPT override;
+
+   std::string message(int ev) const override;
+};
+
+const boost::system::error_category& databaseErrorCategory()
+{
+   static DatabaseErrorCategory databaseErrorCategoryConst;
+   return databaseErrorCategoryConst;
+}
+
+const char* DatabaseErrorCategory::name() const BOOST_NOEXCEPT
+{
+   return "database";
+}
+
+std::string DatabaseErrorCategory::message(int ev) const
+{
+   switch (ev)
+   {
+      case soci::soci_error::error_category::connection_error:
+         return "Connection Error";
+      case soci::soci_error::error_category::invalid_statement:
+         return "Invalid Statement";
+      case soci::soci_error::error_category::no_privilege:
+         return "No Privilege";
+      case soci::soci_error::error_category::no_data:
+         return "No Data";
+      case soci::soci_error::error_category::constraint_violation:
+         return "Constraint Violation";
+      case soci::soci_error::error_category::unknown_transaction_state:
+         return "Unknown Transaction State";
+      case soci::soci_error::error_category::system_error:
+         return "System Error";
+      case soci::soci_error::error_category::unknown:
+      default:
+         return "Unknown Error";
+   }
+}
+
+#define DatabaseError(sociError) Error(sociError.get_error_category(), sociError.get_error_message(), ERROR_LOCATION);
+
+// Database errors =================================================================================================
 
 class ConnectVisitor : public boost::static_visitor<Error>
 {
@@ -42,7 +126,7 @@ public:
       }
       catch(soci::soci_error& error)
       {
-         return Error(boost::system::errc::protocol_error, error.get_error_message(), ERROR_LOCATION);
+         return DatabaseError(error);
       }
    }
 
@@ -91,7 +175,7 @@ Query Connection::query(const std::string& sqlStatement)
 Error Connection::execute(Query& query)
 {
    if (query.prepareError_)
-      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
+      return DatabaseError(query.prepareError_.get());
 
    try
    {
@@ -99,9 +183,9 @@ Error Connection::execute(Query& query)
       query.statement_.execute(true);
       query.statement_.bind_clean_up();
    }
-   catch (soci::soci_error&)
+   catch (soci::soci_error& error)
    {
-      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
+      return DatabaseError(error);
    }
 
    return Success();
