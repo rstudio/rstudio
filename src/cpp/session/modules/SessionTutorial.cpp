@@ -18,6 +18,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
+#include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/YamlUtil.hpp>
 
@@ -166,28 +167,6 @@ FilePath resourcesPath()
    return options().rResourcesPath().completePath("tutorial_resources");
 }
 
-std::string htmlFormatTutorialName(const std::string& packageName,
-                                   const TutorialInfo& tutorial)
-{
-   using namespace string_utils;
-   
-   // NOTE: because these URLs will be displayed in a page served from
-   // a '/tutorial' endpoint (e.g. '/tutorial/home'), it's sufficient to
-   // use a relative link to the URL. (this is also required on RSP,
-   // where absolute URIs will not work due to how URLs are proxied)
-   std::stringstream href;
-   href << "./run"
-        << "?package=" + htmlEscape(packageName)
-        << "&name=" + htmlEscape(tutorial.name);
-   
-   std::stringstream ss;
-   ss << "<a class=\"rstudio-tutorials-link\" href=\"" << href.str() << "\">"
-      << "<code>" << htmlEscape(tutorial.name) << "</code>"
-      << "</a>";
-   
-   return ss.str();
-}
-
 void handleTutorialRunRequest(const http::Request& request,
                               http::Response* pResponse)
 {
@@ -236,24 +215,34 @@ void handleTutorialHomeRequest(const http::Request& request,
       if (tutorials.empty())
          continue;
 
-      ss << "<h2 class=\"rstudio-tutorials-package\">" << htmlEscape(pkgName) << "</h2>";
-      ss << "<hr class=\"rstudio-tutorials-separator\">";
-
       for (auto tutorial : tutorials)
       {
-         ss << "<div>";
+         ss << "<div class=\"rstudio-tutorials-section\">";
          
          ss << "<div class=\"rstudio-tutorials-label-container\">";
          
-         ss << "<span class=\"rstudio-tutorials-label\">"
+         ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
             << htmlEscape(tutorial.title)
             << "</span>";
          
-         ss << "<span class=\"rstudio-tutorials-name\">"
-            << htmlFormatTutorialName(pkgName, tutorial)
+         ss << "<span class=\"rstudio-tutorials-run-container\">"
+            
+            << "<button"
+            << " class=\"rstudio-tutorials-run-button\""
+            << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
+            << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+            << ">"
+               
+            << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
+            << "<span class=\"rstudio-tutorials-run-button-icon\">\u25b6</span>"
+            << "</button>"
             << "</span>";
          
          ss << "</div>";
+         
+         ss << "<div class=\"rstudio-tutorials-sublabel\">"
+            << pkgName << ": " << tutorial.name
+            << "</div>";
          
          if (tutorial.description.empty())
          {
@@ -263,14 +252,28 @@ void handleTutorialHomeRequest(const http::Request& request,
          }
          else
          {
+            std::string descriptionHtml;
+            Error error = core::markdown::markdownToHTML(
+                     tutorial.description,
+                     core::markdown::Extensions(),
+                     core::markdown::HTMLOptions(),
+                     &descriptionHtml);
+            
+            if (error)
+            {
+               LOG_ERROR(error);
+               descriptionHtml = tutorial.description;
+            }
+            
             ss << "<div class=\"rstudio-tutorials-description\">"
-               << tutorial.description
+               << descriptionHtml
                << "</div>";
          }
          
          ss << "</div>";
-         ss << "<hr class=\"rstudio-tutorials-separator\">";
+         
       }
+      
    }
    
    std::map<std::string, std::string> vars;
@@ -282,6 +285,22 @@ void handleTutorialHomeRequest(const http::Request& request,
    pResponse->setFile(homePath, request, text::TemplateFilter(vars));
 }
 
+void handleTutorialFileRequest(const http::Request& request,
+                               http::Response* pResponse)
+{
+   FilePath resourcesPath =
+         options().rResourcesPath().completePath("tutorial_resources");
+   
+   std::string path = http::util::pathAfterPrefix(request, "/tutorial/");
+   if (path.empty())
+   {
+      pResponse->setStatusCode(http::status::NotFound);
+      return;
+   }
+   
+   pResponse->setCacheableFile(resourcesPath.completePath(path), request);
+}
+
 void handleTutorialRequest(const http::Request& request,
                            http::Response* pResponse)
 {
@@ -290,6 +309,8 @@ void handleTutorialRequest(const http::Request& request,
       handleTutorialRunRequest(request, pResponse);
    else if (path == "/home")
       handleTutorialHomeRequest(request, pResponse);
+   else if (boost::algorithm::ends_with(path, ".png"))
+      handleTutorialFileRequest(request, pResponse);
    else
    {
       LOG_ERROR_MESSAGE("Unhandled tutorial URI '" + path + "'");

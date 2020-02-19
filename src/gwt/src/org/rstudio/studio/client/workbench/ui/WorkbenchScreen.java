@@ -376,6 +376,8 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomViewer() { paneManager_.zoomTab(Tab.Viewer); }
    @Handler
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
+   @Handler
+   void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
 
    @Handler
    void onLayoutZoomLeftColumn() { paneManager_.zoomColumn(PaneManager.LEFT_COLUMN); }
