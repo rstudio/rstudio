@@ -35,6 +35,7 @@ set (CORE_SOURCE_FILES
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
+   Database.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Exec.cpp

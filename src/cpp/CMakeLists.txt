@@ -380,11 +380,15 @@ include_directories(SYSTEM ${SOCI_INCLUDE_DIR})
 include_directories(SYSTEM ${SOCI_INCLUDE_BUILD_DIR})
 
 # database library includes
-if (APPLE)
-   # We assume that libpq is available under the default brew install location
-   # since we install postgresql via brew in install-dependencies-osx
-   include_directories(SYSTEM "/usr/local/Cellar/postgresql/12.1/include")
-   include_directories(SYSTEM "/usr/local/Cellar/postgresql/12.1/include/libpq")
+if (UNIX)
+   if (APPLE)
+      # We assume that libpq is available under the default brew install location
+      # since we install postgresql via brew in install-dependencies-osx
+      include_directories(SYSTEM "/usr/local/Cellar/postgresql/12.1/include")
+      include_directories(SYSTEM "/usr/local/Cellar/postgresql/12.1/include/libpq")
+   else()
+      include_directories(SYSTEM "/usr/include/postgresql")
+   endif()
 elseif(WIN32)
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite-amalgamation-3310100")
    include_directories(SYSTEM "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/include")

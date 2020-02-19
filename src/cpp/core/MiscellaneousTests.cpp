@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include <core/Algorithm.hpp>
+#include <core/Database.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
@@ -293,6 +294,35 @@ test_context("SOCI")
 
       boost::tuple<int, std::string> row;
       sql << "select id, text from Test where id = (:id)", soci::use(id), soci::into(row);
+
+      CHECK(row.get<0>() == id);
+      CHECK(row.get<1>() == text);
+   }
+
+   test_that("Can do it the other way")
+   {
+      using namespace core::database;
+
+      boost::shared_ptr<Connection> connection;
+
+      REQUIRE_FALSE(connect(SqliteConnectionOptions{"/tmp/testdb2"}, &connection));
+
+      Query query = connection->query("create table Test(id int, text varchar(255))");
+      REQUIRE_FALSE(connection->execute(query));
+
+      int id = 10;
+      std::string text = "Hello, database!";
+
+      query = connection->query("insert into Test(id, text) values(:id, :text)")
+            .withInput(id)
+            .withInput(text);
+      REQUIRE_FALSE(connection->execute(query));
+
+      boost::tuple<int, std::string> row;
+      query = connection->query("select id, text from Test where id = (:id)")
+            .withInput(id)
+            .withOutput(row);
+      REQUIRE_FALSE(connection->execute(query));
 
       CHECK(row.get<0>() == id);
       CHECK(row.get<1>() == text);
