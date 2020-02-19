@@ -1276,6 +1276,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
+      // -c is used to override potential user-defined git parameters
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
