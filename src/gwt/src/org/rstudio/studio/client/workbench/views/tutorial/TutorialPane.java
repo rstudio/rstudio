@@ -68,6 +68,7 @@ public class TutorialPane
       
       events.addHandler(ThemeChangedEvent.TYPE, this);
       
+      initTutorialJsCallbacks();
       ensureWidget();
    }
 
@@ -214,6 +215,13 @@ public class TutorialPane
       return frame_.getWindowName();
    }
    
+   private void runTutorial(String tutorialName,
+                            String packageName)
+   {
+      Tutorial tutorial = new Tutorial(tutorialName, packageName);
+      launchTutorial(tutorial);
+   }
+   
    private void navigate(String url, boolean replaceUrl)
    {
       if (URIUtils.isLocalUrl(url))
@@ -315,6 +323,16 @@ public class TutorialPane
    {
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
+   
+   private final native void initTutorialJsCallbacks()
+   /*-{
+   
+      var self = this;
+      $wnd.tutorialRun = $entry(function(tutorialName, tutorialPackage) {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::runTutorial(*)(tutorialName, tutorialPackage);
+      });
+      
+   }-*/;
    
    // Resources ---- 
    public interface Resources extends ClientBundle

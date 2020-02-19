@@ -18,9 +18,16 @@
 @external rstudio-tutorials-package;
 @external rstudio-tutorials-label-container;
 @external rstudio-tutorials-label;
-@external rstudio-tutorials-name;
+@external rstudio-tutorials-logo;
+@external rstudio-tutorials-run-container;
+@external rstudio-tutorials-run-button;
+@external rstudio-tutorials-run-button-label;
+@external rstudio-tutorials-run-button-icon;
 @external rstudio-tutorials-description;
 @external rstudio-tutorials-description-empty;
+@external rstudio-tutorials-sublabel;
+@external rstudio-tutorials-footer;
+@external rstudio-tutorials-footer-text;
 @external rstudio-tutorials-separator;
 
 /* Scrollbars */
@@ -64,11 +71,12 @@
 /* Common styles */
 
 .rstudio-tutorials {
+   margin: 8px;
+   padding: 4px;
    font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .rstudio-tutorials-container {
-   margin: 10px;
 }
 
 .rstudio-tutorials-package {
@@ -79,29 +87,25 @@
    display: inline-block;
 }
 
-.rstudio-tutorials-name {
+.rstudio-tutorials-run-container {
    float: right;
-   font-size: large;
-}
-
-.rstudio-tutorials-name::before {
-   content: "[ ";
-}
-
-.rstudio-tutorials-name::after {
-   content: " ]";
 }
 
 .rstudio-tutorials-label-container {
    overflow: auto;
    width: 100%;
-   margin-bottom: 16px;
+   padding: 4px;
+   margin-bottom: 8px;
 }
 
 .rstudio-tutorials-label {
    float: left;
    font-size: large;
    font-weight: bold;
+}
+
+.rstudio-tutorials-description {
+   padding: 4px;
 }
 
 .rstudio-tutorials-description-empty {
@@ -114,12 +118,51 @@
    margin-bottom: 24px;
 }
 
+.rstudio-tutorials-run-button {
+   
+   border-radius: 4px;
+   padding: 2px 6px;
+   font-size: 0.8em;
+   margin-right: 2px;
+}
+
+.rstudio-tutorials-logo {
+   width: 24px;
+   height: 24px;
+   vertical-align: middle;
+}
+
+.rstudio-tutorials-footer-text {
+   font-size: 12px;
+}
+
+a.rstudio-tutorials-run-button:active {
+   margin-top: 2px;
+}
+
+.rstudio-tutorials-run-button-icon {
+   color: rgb(2, 164, 79);
+   padding-left: 4px;
+   font-size: 0.9em;
+}
+
+.rstudio-tutorials-sublabel {
+}
 
 /* Light styles */
 
 .rstudio-themes-light-menus.rstudio-tutorials {
    background: white;
    color: black;
+}
+
+.rstudio-themes-light-menus .rstudio-tutorials-run-button {
+   background-color: white;
+   color: black;
+   border-top: 1px solid rgb(216, 216, 216);
+   border-left: 1px solid rgb(210, 210, 210);
+   border-right: 1px solid rgb(210, 210, 210);
+   border-bottom: 1px solid rgb(186, 186, 186);
 }
 
 /* Dark styles */
@@ -142,5 +185,12 @@
 }
 
 .rstudio-themes-dark-menus .rstudio-tutorials-separator {
-   border: 1px solid rgb(81, 92, 103);
+   border: none;
+   border-top: 1px solid rgb(81, 92, 103);
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-run-button {
+   color: rgb(232, 232, 232);
+   background-color: rgb(78, 92, 104);
+   border: 1px solid rgb(108, 121, 131);
 }
