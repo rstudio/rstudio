@@ -310,6 +310,41 @@ test_context("SOCI")
       CHECK(row.get<0>() == id);
       CHECK(row.get<1>() == text);
    }
+
+   test_that("Can create PostgreSQL database")
+   {
+      using namespace core::database;
+
+      PostgresqlConnectionOptions options;
+      options.connectionTimeoutSeconds = 10;
+      options.database = "rstudio";
+      options.host = "localhost";
+      options.user = "postgres";
+      options.password = "postgres";
+
+      boost::shared_ptr<Connection> connection;
+      REQUIRE_FALSE(connect(options, &connection));
+
+      Query query = connection->query("create table Test(id int, text varchar(255))");
+      REQUIRE_FALSE(connection->execute(query));
+
+      int id = 10;
+      std::string text = "Hello, database!";
+
+      query = connection->query("insert into Test(id, text) values(:id, :text)")
+            .withInput(id)
+            .withInput(text);
+      REQUIRE_FALSE(connection->execute(query));
+
+      boost::tuple<int, std::string> row;
+      query = connection->query("select id, text from Test where id = (:id)")
+            .withInput(id)
+            .withOutput(row);
+      REQUIRE_FALSE(connection->execute(query));
+
+      CHECK(row.get<0>() == id);
+      CHECK(row.get<1>() == text);
+   }
 }
 
 } // namespace unit_tests

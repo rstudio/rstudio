@@ -137,11 +137,12 @@ public:
    {
       try
       {
-         boost::format fmt("host='%1' port='%2' dbname='%3' user='%4' password='%5' connect_timeout='%6'");
+         boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' password='%5%' connect_timeout='%6%'");
          std::string connectionStr =
                boost::str(fmt %
                           options.host %
                           options.port %
+                          options.database %
                           options.user %
                           options.password %
                           safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
