@@ -18,6 +18,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
+#include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/YamlUtil.hpp>
 
@@ -241,8 +242,21 @@ void handleTutorialHomeRequest(const http::Request& request,
          }
          else
          {
+            std::string descriptionHtml;
+            Error error = core::markdown::markdownToHTML(
+                     tutorial.description,
+                     core::markdown::Extensions(),
+                     core::markdown::HTMLOptions(),
+                     &descriptionHtml);
+            
+            if (error)
+            {
+               LOG_ERROR(error);
+               descriptionHtml = tutorial.description;
+            }
+            
             ss << "<div class=\"rstudio-tutorials-description\">"
-               << tutorial.description
+               << descriptionHtml
                << "</div>";
          }
  
