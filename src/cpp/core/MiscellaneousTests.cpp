@@ -285,27 +285,10 @@ test_context("SOCI")
 {
    test_that("Can create SQLite database")
    {
-      soci::session sql(soci::sqlite3, "dbname=/tmp/testdb");
-      sql.once << "create table Test(id int, text varchar(255))";
-
-      int id = 10;
-      std::string text = "Hello, database!";
-      sql << "insert into Test(id, text) values(:id, :text)", soci::use(id), soci::use(text);
-
-      boost::tuple<int, std::string> row;
-      sql << "select id, text from Test where id = (:id)", soci::use(id), soci::into(row);
-
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
-   }
-
-   test_that("Can do it the other way")
-   {
       using namespace core::database;
 
       boost::shared_ptr<Connection> connection;
-
-      REQUIRE_FALSE(connect(SqliteConnectionOptions{"/tmp/testdb2"}, &connection));
+      REQUIRE_FALSE(connect(SqliteConnectionOptions{"/tmp/testdb"}, &connection));
 
       Query query = connection->query("create table Test(id int, text varchar(255))");
       REQUIRE_FALSE(connection->execute(query));

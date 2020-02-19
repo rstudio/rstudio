@@ -15,7 +15,10 @@
 
 #include <core/Database.hpp>
 
+#include <boost/format.hpp>
+
 #include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
@@ -120,11 +123,11 @@ public:
    {
       try
       {
-         boost::shared_ptr<Connection> pConnection(new Connection(soci::sqlite3, "dbname=" + options.file));
+         boost::shared_ptr<Connection> pConnection(new Connection(soci::sqlite3, "dbname=\"" + options.file + "\""));
          *pPtrConnection_ = pConnection;
          return Success();
       }
-      catch(soci::soci_error& error)
+      catch (soci::soci_error& error)
       {
          return DatabaseError(error);
       }
@@ -132,7 +135,25 @@ public:
 
    Error operator()(const PostgresqlConnectionOptions& options) const
    {
-      return Success();
+      try
+      {
+         boost::format fmt("host='%1' port='%2' dbname='%3' user='%4' password='%5' connect_timeout='%6'");
+         std::string connectionStr =
+               boost::str(fmt %
+                          options.host %
+                          options.port %
+                          options.user %
+                          options.password %
+                          safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
+
+         boost::shared_ptr<Connection> pConnection(new Connection(soci::postgresql, connectionStr));
+         *pPtrConnection_ = pConnection;
+         return Success();
+      }
+      catch (soci::soci_error& error)
+      {
+         return DatabaseError(error);
+      }
    }
 
 private:
