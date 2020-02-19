@@ -614,6 +614,11 @@ public:
    {
       return useSecureCookies_;
    }
+
+   bool restrictDirectoryView() const
+   {
+      return restrictDirectoryView_;
+   }
    
    std::string directoryViewWhitelist() const
    {
@@ -699,6 +704,7 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;
 
