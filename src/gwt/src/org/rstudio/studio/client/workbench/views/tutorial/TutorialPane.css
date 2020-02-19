@@ -114,8 +114,7 @@
 
 .rstudio-tutorials-separator {
    border-radius: 10px;
-   margin-top: 24px;
-   margin-bottom: 24px;
+   margin-bottom: 16px;
 }
 
 .rstudio-tutorials-run-button {
@@ -136,7 +135,7 @@
    font-size: 12px;
 }
 
-a.rstudio-tutorials-run-button:active {
+.rstudio-tutorials-run-button:active {
    margin-top: 2px;
 }
 
