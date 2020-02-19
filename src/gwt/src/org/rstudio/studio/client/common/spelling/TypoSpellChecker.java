@@ -380,6 +380,9 @@ public class TypoSpellChecker
       if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
          return false;
 
+      if (isWordIgnored(word))
+         return false;
+
       // Don't spellcheck yaml
       Scope s = ((AceEditor)dd).getScopeAtPosition(r.getStart());
       if (s != null && s.isYaml())
