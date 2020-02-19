@@ -221,12 +221,18 @@ void handleTutorialHomeRequest(const http::Request& request,
          
          ss << "<div class=\"rstudio-tutorials-label-container\">";
          
-         ss << "<span class=\"rstudio-tutorials-label\">"
+         ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
             << htmlEscape(tutorial.title)
             << "</span>";
          
          ss << "<span class=\"rstudio-tutorials-run-container\">"
-            << "<button class=\"rstudio-tutorials-run-button\" onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name) << "', '" << htmlEscape(pkgName) << "')\">"
+            
+            << "<button"
+            << " class=\"rstudio-tutorials-run-button\""
+            << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
+            << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+            << ">"
+               
             << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
             << "<span class=\"rstudio-tutorials-run-button-icon\">\u25b6</span>"
             << "</button>"
