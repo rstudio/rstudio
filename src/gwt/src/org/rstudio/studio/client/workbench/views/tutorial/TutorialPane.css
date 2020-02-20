@@ -162,10 +162,7 @@
 }
 
 .rstudio-themes-light-menus .rstudio-tutorials-section {
-   background-image: linear-gradient(to right, rgb(160, 160, 160) 25%, white 0%);
-   background-position: bottom;
-   background-size: 4px 1px;
-   background-repeat: repeat-x;
+   border-bottom: 1px dotted rgb(204, 204, 204);
 }
 
 
@@ -190,10 +187,7 @@
 }
 
 .rstudio-themes-dark-menus .rstudio-tutorials-section {
-   background-image: linear-gradient(to right, rgb(78, 92, 104) 25%, black 0%);
-   background-position: bottom;
-   background-size: 4px 1px;
-   background-repeat: repeat-x;
+   border-bottom: 1px dotted rgb(58, 72, 84);
 }
 
 .rstudio-themes-dark-menus.rstudio-tutorials a:visited {
