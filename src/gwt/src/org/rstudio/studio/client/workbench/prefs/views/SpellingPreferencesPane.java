@@ -150,7 +150,7 @@ public class SpellingPreferencesPane extends PreferencesPane
                                        languageWidget_.getSelectedLanguage());
       
       RestartRequirement restart = super.onApply(rPrefs);
-      restart.setDesktopRestartRequired(customDictsWidget_.getCustomDictsModified());
+      restart.setDesktopRestartRequired(restart.getDesktopRestartRequired() || customDictsWidget_.getCustomDictsModified());
       return restart;
    }
 
