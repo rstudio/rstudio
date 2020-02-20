@@ -62,7 +62,12 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, ")
+  if(EXISTS "/etc/SuSE-release")
+     # SuSE based systems name this dependency with a -0 suffix
+     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11-0, ")
+  else()
+     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, ")
+  endif()
 
   # deb dependencies
   set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, ")
