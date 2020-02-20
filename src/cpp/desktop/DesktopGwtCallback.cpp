@@ -73,23 +73,11 @@ extern QString scratchPath;
 GwtCallback::GwtCallback(MainWindow* pMainWindow, GwtWindow* pOwner, bool isRemoteDesktop)
    : pMainWindow_(pMainWindow),
      pOwner_(pOwner),
-     pLauncher_(new JobLauncher(pMainWindow)),
      isRemoteDesktop_(isRemoteDesktop),
      pSynctex_(nullptr),
      pendingQuit_(PendingQuitNone)
 {
    initialize();
-
-   Error error = pLauncher_->initialize();
-   if (error)
-   {
-      LOG_ERROR(error);
-      showError(nullptr,
-                QStringLiteral("Initialization error"),
-                QStringLiteral("Could not initialize Job Launcher"),
-                QString());
-      ::_exit(EXIT_FAILURE);
-   }
    
 #ifdef Q_OS_LINUX
    // assume light theme on startup (theme will be dynamically updated
@@ -1548,7 +1536,7 @@ QJsonObject GwtCallback::getSessionServer()
 
 QJsonObject GwtCallback::getLauncherServer()
 {
-   SessionServer server = pLauncher_->getLauncherServer();
+   SessionServer server = pMainWindow_->getJobLauncher()->getLauncherServer();
    return server.toJson();
 }
 
@@ -1575,37 +1563,37 @@ void GwtCallback::reconnectToSessionServer(const QJsonValue& sessionServerJson)
 bool GwtCallback::setLauncherServer(const QJsonObject& sessionServerJson)
 {
    SessionServer server = SessionServer::fromJson(sessionServerJson);
-   return pLauncher_->setSessionServer(server);
+   return pMainWindow_->getJobLauncher()->setSessionServer(server);
 }
 
 void GwtCallback::connectToLauncherServer()
 {
-   pLauncher_->signIn();
+   pMainWindow_->getJobLauncher()->signIn();
 }
 
 void GwtCallback::startLauncherJobStatusStream(QString jobId)
 {
-   pLauncher_->startLauncherJobStatusStream(jobId.toStdString());
+   pMainWindow_->getJobLauncher()->startLauncherJobStatusStream(jobId.toStdString());
 }
 
 void GwtCallback::stopLauncherJobStatusStream(QString jobId)
 {
-   pLauncher_->stopLauncherJobStatusStream(jobId.toStdString());
+   pMainWindow_->getJobLauncher()->stopLauncherJobStatusStream(jobId.toStdString());
 }
 
 void GwtCallback::startLauncherJobOutputStream(QString jobId)
 {
-   pLauncher_->startLauncherJobOutputStream(jobId.toStdString());
+   pMainWindow_->getJobLauncher()->startLauncherJobOutputStream(jobId.toStdString());
 }
 
 void GwtCallback::stopLauncherJobOutputStream(QString jobId)
 {
-   pLauncher_->stopLauncherJobOutputStream(jobId.toStdString());
+   pMainWindow_->getJobLauncher()->stopLauncherJobOutputStream(jobId.toStdString());
 }
 
 void GwtCallback::controlLauncherJob(QString jobId, QString operation)
 {
-   pLauncher_->controlLauncherJob(jobId.toStdString(), operation.toStdString());
+   pMainWindow_->getJobLauncher()->controlLauncherJob(jobId.toStdString(), operation.toStdString());
 }
 
 void GwtCallback::submitLauncherJob(const QJsonObject& job)
@@ -1634,22 +1622,22 @@ void GwtCallback::submitLauncherJob(const QJsonObject& job)
       LOG_ERROR_MESSAGE("Empty job object submitted");
    }
 
-   pLauncher_->submitLauncherJob(obj);
+   pMainWindow_->getJobLauncher()->submitLauncherJob(obj);
 }
 
 void GwtCallback::getJobContainerUser()
 {
-   pLauncher_->getJobContainerUser();
+   pMainWindow_->getJobLauncher()->getJobContainerUser();
 }
 
 void GwtCallback::validateJobsConfig()
 {
-   pLauncher_->validateJobsConfig();
+   pMainWindow_->getJobLauncher()->validateJobsConfig();
 }
 
 int GwtCallback::getProxyPortNumber()
 {
-   return pLauncher_->getProxyPortNumber();
+   return pMainWindow_->getJobLauncher()->getProxyPortNumber();
 }
 
 void GwtCallback::signOut()

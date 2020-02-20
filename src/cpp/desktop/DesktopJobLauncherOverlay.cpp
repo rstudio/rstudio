@@ -85,5 +85,10 @@ SessionServer JobLauncher::getLauncherServer()
    return SessionServer("", "");
 }
 
+std::map<std::string, QNetworkCookie> JobLauncher::getCookies()
+{
+   return std::map<std::string, QNetworkCookie>();
+}
+
 } // namespace desktop
 } // namespace rstudio
