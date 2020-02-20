@@ -31,7 +31,7 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -66,7 +66,7 @@ public class TutorialPane
    protected TutorialPane(GlobalDisplay globalDisplay,
                           EventBus events,
                           Commands commands,
-                          SessionInfo sessionInfo,
+                          Session session,
                           PackagesServerOperations server)
    {
       super("Tutorial");
@@ -74,7 +74,7 @@ public class TutorialPane
       globalDisplay_ = globalDisplay;
       events_        = events;
       commands_      = commands;
-      sessionInfo_   = sessionInfo;
+      session_       = session;
       server_        = server;
       
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
@@ -189,10 +189,12 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
+      
       String url = GWT.getHostPageBaseURL() +
             "tutorial/run" +
             "?package=" + tutorial.getPackageName() +
             "&name=" + tutorial.getTutorialName();
+      
       navigate(url, false);
    }
    
@@ -360,7 +362,7 @@ public class TutorialPane
                {
                   handler_.removeHandler();
                   
-                  String version = sessionInfo_.getPackageDependencies().getPackage("learnr").getVersion();
+                  String version = session_.getSessionInfo().getPackageDependencies().getPackage("learnr").getVersion();
                   server_.isPackageInstalled("learnr", version, new ServerRequestCallback<Boolean>()
                   {
                      @Override
@@ -426,7 +428,7 @@ public class TutorialPane
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
    private final Commands commands_;
-   private final SessionInfo sessionInfo_;
+   private final Session session_;
    private final PackagesServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
