@@ -201,7 +201,6 @@ void handleTutorialHomeRequest(const http::Request& request,
       
       if (!module_context::isPackageInstalled("learnr"))
       {
-         // Button for 'click here' action (styled like a link; behaves like button)
          std::stringstream clickHere;
          clickHere << "<a"
                    << " aria-label\"Install learnr\""

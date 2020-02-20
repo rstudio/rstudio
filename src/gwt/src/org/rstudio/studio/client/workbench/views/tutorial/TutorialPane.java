@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.tutorial;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.URIConstants;
@@ -27,9 +28,15 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
@@ -58,13 +65,17 @@ public class TutorialPane
    @Inject
    protected TutorialPane(GlobalDisplay globalDisplay,
                           EventBus events,
-                          Commands commands)
+                          Commands commands,
+                          SessionInfo sessionInfo,
+                          PackagesServerOperations server)
    {
       super("Tutorial");
       
       globalDisplay_ = globalDisplay;
       events_        = events;
       commands_      = commands;
+      sessionInfo_   = sessionInfo;
+      server_        = server;
       
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
       
@@ -328,8 +339,58 @@ public class TutorialPane
    
    private void installLearnr()
    {
-      SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
-      events_.fireEvent(event);
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+         private ProgressIndicator progress_;
+         
+         private final String errorCaption = "Error installing learnr";
+         private final String errorMessage =
+               "RStudio was unable to install the learnr package.";
+         
+         @Override
+         protected void invoke()
+         {
+            // double-check that we were able to successfully install learnr
+            progress_ = globalDisplay_.getProgressIndicator(errorCaption);
+            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
+            {
+               @Override
+               public void onConsolePrompt(ConsolePromptEvent event)
+               {
+                  handler_.removeHandler();
+                  
+                  String version = sessionInfo_.getPackageDependencies().getPackage("learnr").getVersion();
+                  server_.isPackageInstalled("learnr", version, new ServerRequestCallback<Boolean>()
+                  {
+                     @Override
+                     public void onResponseReceived(Boolean installed)
+                     {
+                        if (!installed)
+                        {
+                           progress_.onError(errorMessage);
+                           return;
+                        }
+                        
+                        progress_.onCompleted();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        progress_.onError(errorMessage);
+                     }
+                  });
+               }
+            });
+            
+            // fire console event installing learnr
+            progress_.onProgress("Installing learnr...");
+            SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
+            events_.fireEvent(event);
+         }
+      };
    }
    
    private final native void initTutorialJsCallbacks()
@@ -365,6 +426,8 @@ public class TutorialPane
    private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
    private final Commands commands_;
+   private final SessionInfo sessionInfo_;
+   private final PackagesServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
 }
