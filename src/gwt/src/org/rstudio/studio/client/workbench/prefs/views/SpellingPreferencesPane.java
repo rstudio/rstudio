@@ -138,7 +138,7 @@ public class SpellingPreferencesPane extends PreferencesPane
       
       languageWidget_.setSelectedLanguage(
                         uiPrefs_.spellingDictionaryLanguage().getValue());
-      
+
       customDictsWidget_.setDictionaries(context.getCustomDictionaries());
       customDictsWidget_.setProgressIndicator(getProgressIndicator());
    }
@@ -149,7 +149,9 @@ public class SpellingPreferencesPane extends PreferencesPane
       uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
                                        languageWidget_.getSelectedLanguage());
       
-      return super.onApply(rPrefs);
+      RestartRequirement restart = super.onApply(rPrefs);
+      restart.setDesktopRestartRequired(restart.getDesktopRestartRequired() || customDictsWidget_.getCustomDictsModified());
+      return restart;
    }
 
    

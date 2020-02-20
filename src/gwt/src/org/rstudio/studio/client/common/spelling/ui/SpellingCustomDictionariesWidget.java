@@ -85,6 +85,7 @@ public class SpellingCustomDictionariesWidget extends Composite
       globalDisplay_= globalDisplay;
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
+      customDictsModified_ = false;
    }
    
    public void setDictionaries(JsArrayString dictionaries)
@@ -125,6 +126,8 @@ public class SpellingCustomDictionariesWidget extends Composite
                   spellingService_.addCustomDictionary(
                                                   input.getPath(),
                                                   customDictRequestCallback_);
+
+                  customDictsModified_ = true;
                }
                
             }); 
@@ -155,6 +158,8 @@ public class SpellingCustomDictionariesWidget extends Composite
                         spellingService_.removeCustomDictionary(
                                                   dictionary,
                                                   customDictRequestCallback_);
+
+                        customDictsModified_ = true;
                      }
                   },
                   false);
@@ -187,14 +192,20 @@ public class SpellingCustomDictionariesWidget extends Composite
       button.fillWidth();
       return button;
    }
-   
+
+   public boolean getCustomDictsModified()
+   {
+      return customDictsModified_;
+   }
+
    private final ListBox listBox_;
    private SpellingService spellingService_;
    private ProgressIndicator progressIndicator_;
    private GlobalDisplay globalDisplay_;
    private FileDialogs fileDialogs_;
    private RemoteFileSystemContext fileSystemContext_;
-   
+   private boolean customDictsModified_;
+
    static interface Styles extends CssResource
    {
       String helpButton();
@@ -213,4 +224,5 @@ public class SpellingCustomDictionariesWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
+
 }
