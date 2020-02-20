@@ -345,26 +345,6 @@ public class TutorialPane
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
       });
       
-      $wnd.tutorialKeydown = $entry(function(event) {
-         
-         var code = event.code;
-         var button = event.which || event.keyCode;
-         
-         var handled =
-            code === "Space" ||
-            code === "Enter" ||
-            button === 13 ||
-            button === 32;
-            
-         if (handled) {
-            self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
-            return false;
-         }
-         
-         return true;
-         
-      });
-      
    }-*/;
    
    // Resources ---- 

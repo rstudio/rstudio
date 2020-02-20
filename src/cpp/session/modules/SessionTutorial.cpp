@@ -204,12 +204,9 @@ void handleTutorialHomeRequest(const http::Request& request,
          // Button for 'click here' action (styled like a link; behaves like button)
          std::stringstream clickHere;
          clickHere << "<a"
-                   << " aria-role=\"button\""
-                   << " aria-label=\"Install learnr\""
                    << " class=\"rstudio-tutorials-install-learnr-link\""
-                   << " href=\"#\""
+                   << " href=\"javascript:void(0)\""
                    << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\""
-                   << " onkeydown=\"window.parent.tutorialKeydown(event)\">"
                    << "click here"
                    << "</a>";
          
