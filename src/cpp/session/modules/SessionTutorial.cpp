@@ -207,7 +207,7 @@ void handleTutorialHomeRequest(const http::Request& request,
                    << " aria-label\"Install learnr\""
                    << " class=\"rstudio-tutorials-install-learnr-link\""
                    << " href=\"javascript:void(0)\""
-                   << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\""
+                   << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
                    << "click here"
                    << "</a>";
          
