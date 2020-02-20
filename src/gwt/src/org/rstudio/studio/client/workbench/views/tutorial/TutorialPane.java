@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
@@ -62,7 +63,8 @@ public class TutorialPane
       super("Tutorial");
       
       globalDisplay_ = globalDisplay;
-      commands_ = commands;
+      events_        = events;
+      commands_      = commands;
       
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
       
@@ -324,12 +326,43 @@ public class TutorialPane
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
    
+   private void installLearnr()
+   {
+      SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
+      events_.fireEvent(event);
+   }
+   
    private final native void initTutorialJsCallbacks()
    /*-{
    
       var self = this;
+      
       $wnd.tutorialRun = $entry(function(tutorialName, tutorialPackage) {
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::runTutorial(*)(tutorialName, tutorialPackage);
+      });
+      
+      $wnd.tutorialInstallLearnr = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
+      });
+      
+      $wnd.tutorialKeydown = $entry(function(event) {
+         
+         var code = event.code;
+         var button = event.which || event.keyCode;
+         
+         var handled =
+            code === "Space" ||
+            code === "Enter" ||
+            button === 13 ||
+            button === 32;
+            
+         if (handled) {
+            self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
+            return false;
+         }
+         
+         return true;
+         
       });
       
    }-*/;
@@ -350,6 +383,7 @@ public class TutorialPane
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
    private final Commands commands_;
 
    private static final Resources RES = GWT.create(Resources.class);
