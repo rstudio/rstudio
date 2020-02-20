@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.spelling;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.http.client.Request;
@@ -48,16 +49,19 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 public class TypoSpellChecker
 {
    private class TypoDictionaryRequest
    {
-      public TypoDictionaryRequest(String language)
+      public TypoDictionaryRequest(String language, boolean isCustom)
       {
          language_ = language;
+         isCustom_ = isCustom;
       }
       
       public void send()
@@ -72,10 +76,16 @@ public class TypoSpellChecker
                return;
 
             typoLoader_.addCallback(() -> {
-               typoNative_ = new TypoNative(language_, aff.get(), dic.get(), null);
-               loadedDict_ = language_;
-               typoLoaded_ = true;
-               
+               TypoNative typo = new TypoNative(language_, aff.get(), dic.get(), null);
+               if (!isCustom_)
+               {
+                  typoNative_ = typo;
+                  loadedDict_ = language_;
+                  typoLoaded_ = true;
+               }
+               else
+                  customTypoNative_.put(language_, typo);
+
                aff.clear();
                dic.clear();
                alive_ = false;
@@ -150,6 +160,7 @@ public class TypoSpellChecker
       private boolean alive_;
       
       private final String language_;
+      private final boolean isCustom_;
    }
    
    public interface Context
@@ -228,6 +239,11 @@ public class TypoSpellChecker
          }
       }
       loadDictionary();
+
+      // if the user has custom dictionaries set, load those as well
+      JsArrayString customDictionaries = uiPrefs.spellingCustomDictionaries().getValue();
+      if (customDictionaries.length() > 0)
+         loadCustomDictionaries(customDictionaries);
    }
 
    // Check the spelling of a single word, directly returning an
@@ -235,7 +251,25 @@ public class TypoSpellChecker
    // word is deemed correct by the dictionary
    public boolean checkSpelling(String word)
    {
-      return domainSpecificWords_.contains(word.toLowerCase()) || allIgnoredWords_.contains(word) || typoNative_.check(word);
+      return domainSpecificWords_.contains(word.toLowerCase()) ||
+         allIgnoredWords_.contains(word) ||
+         typoNative_.check(word) ||
+         checkCustomDicts(word);
+   }
+
+   // go through all of the custom dictionaries and check the word
+   private boolean checkCustomDicts(String word)
+   {
+      for (Map.Entry<String, TypoNative> pair : customTypoNative_.entrySet())
+      {
+         TypoNative dictNative = pair.getValue();
+         if (dictNative != null)
+         {
+            if (dictNative.check(word))
+               return true;
+         }
+      }
+      return false;
    }
 
    public void checkSpelling(List<String> words, final ServerRequestCallback<SpellCheckerResult> callback)
@@ -361,10 +395,24 @@ public class TypoSpellChecker
       }
 
       // create and send
-      activeRequest_ = new TypoDictionaryRequest(language);
+      activeRequest_ = new TypoDictionaryRequest(language, false);
       activeRequest_.send();
    }
-   
+
+   private void loadCustomDictionaries(JsArrayString customDictionaries)
+   {
+      for (int i = 0; i < customDictionaries.length(); i++)
+      {
+         String dict = customDictionaries.get(i);
+         if (!customTypoNative_.containsKey(dict))
+         {
+            customTypoNative_.put(dict, null);
+            TypoDictionaryRequest req = new TypoDictionaryRequest(dict, true);
+            req.send();
+         }
+      }
+   }
+
    public void prefetchWords(ArrayList<String> words)
    {
       if (spellingWorkerInitialized_)
@@ -440,6 +488,7 @@ public class TypoSpellChecker
    private static String loadedDict_;
    private static boolean typoLoaded_ = false;
    private static TypoNative typoNative_;
+   private static HashMap<String, TypoNative> customTypoNative_ = new HashMap<>();
    private static TypoDictionaryRequest activeRequest_;
 
    private WorkbenchList userDictionary_;
