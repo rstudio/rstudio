@@ -349,7 +349,7 @@ Error clearPresentationCache(const json::JsonRpcRequest& request,
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errorResponse.message));
+                          json::toJsonValue(errorResponse.message));
    }
 
    return Success();
@@ -371,7 +371,7 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errorResponse.message));
+                          json::toJsonValue(errorResponse.message));
    }
 
    return Success();
@@ -392,7 +392,7 @@ Error createDesktopViewInBrowserPresentation(
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errorResponse.message));
+                          json::toJsonValue(errorResponse.message));
    }
 
    return Success();
@@ -421,7 +421,7 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errorResponse.message));
+                          json::toJsonValue(errorResponse.message));
    }
 
    return Success();
