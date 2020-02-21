@@ -23,10 +23,6 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
 
@@ -72,7 +68,7 @@ Options::Options() :
          LOG_ERROR(error);
    }
 
-   Error error = core::system::changeFileMode(optionsFile, core::system::UserReadWriteMode);
+   Error error = optionsFile.changeFileMode(FileMode::USER_READ_WRITE);
    if (error)
       LOG_ERROR(error);
 #endif
@@ -575,3 +571,4 @@ void Options::setCookies(const QStringList& cookies)
 
 } // namespace desktop
 } // namespace rstudio
+
