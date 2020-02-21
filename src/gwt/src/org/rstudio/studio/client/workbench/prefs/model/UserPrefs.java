@@ -305,6 +305,12 @@ public class UserPrefs extends UserPrefsComputed
          RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().setGlobalValue(enabled);
 
       screenReaderEnabled_ = enabled;
+
+      // When screen-reader is enabled, reduce UI animations as they serve no purpose 
+      // other than to potentially confuse the screen reader; turn animations back
+      // on when screen-reader support is disabled as that is the normal default and most
+      // users will never touch it.
+      RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().setGlobalValue(enabled);
    }
 
    @Handler

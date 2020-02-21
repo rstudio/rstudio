@@ -32,6 +32,7 @@ namespace rstudio {
 namespace desktop {
 
 class SessionLauncher;
+class JobLauncher;
 class RemoteDesktopSessionLauncher;
 
 class MainWindow : public GwtWindow
@@ -51,6 +52,8 @@ public:
    void launchRemoteRStudioProject(const QString& projectUrl);
 
    RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
+   JobLauncher* getJobLauncher();
+
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
    bool workbenchInitialized();
@@ -111,6 +114,8 @@ private:
    void onUrlChanged(QUrl url);
    void onLoadFinished(bool ok);
 
+   void saveRemoteCookies();
+
 private:
    bool isRemoteDesktop_;
    bool quitConfirmed_ = false;
@@ -120,6 +125,7 @@ private:
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
    RemoteDesktopSessionLauncher* pRemoteSessionLauncher_;
+   JobLauncher* pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 

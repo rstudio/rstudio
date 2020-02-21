@@ -26,6 +26,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/Thread.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include "DesktopApplicationLaunch.hpp"
@@ -129,6 +130,8 @@ public:
                            bool devMode,
                            const QStringList& arguments);
 
+   std::map<std::string, QNetworkCookie> getCookies();
+
    const SessionServer& sessionServer() const { return server_; }
 
    bool failedToLaunch() const { return failedToLaunch_; }
@@ -171,6 +174,8 @@ private:
    bool failedToLaunch_;
 
    std::string workspacesUrl_;
+
+   boost::mutex mutex_;
    std::map<std::string, QNetworkCookie> authCookies_;
 };
 

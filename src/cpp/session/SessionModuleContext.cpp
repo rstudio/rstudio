@@ -2388,6 +2388,10 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
 
 bool isPathViewAllowed(const FilePath& filePath)
 {
+   // Check to see if restrictions are in place
+   if (!options().restrictDirectoryView())
+      return true;
+
    // No paths are restricted in desktop mode
    if (options().programMode() != kSessionProgramModeServer)
       return true;

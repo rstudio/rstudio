@@ -121,13 +121,11 @@ public:
    QString lastRemoteSessionUrl(const QString& serverUrl);
    void setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl);
 
+   QStringList cookies() const;
+   void setCookies(const QStringList& cookies);
+
 private:
-   Options() : settings_(FORMAT, QSettings::UserScope,
-                         QString::fromUtf8("RStudio"),
-                         QString::fromUtf8("desktop")),
-               runDiagnostics_(false)
-   {
-   }
+   Options();
    friend Options& options();
 
    void setFont(QString key, QString font);

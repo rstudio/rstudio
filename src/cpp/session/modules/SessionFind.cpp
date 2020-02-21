@@ -1077,9 +1077,19 @@ public:
       return excludeFilePatterns_;
    }
 
-   bool packageFlag() const
+   bool packageSourceFlag() const
    {
-      return packageFlag_;
+      return packageSourceFlag_;
+   }
+
+   bool packageTestsFlag() const
+   {
+      return packageTestsFlag_;
+   }
+
+   bool anyPackageFlag() const
+   {
+      return packageSourceFlag_ || packageTestsFlag_;
    }
 
    const std::vector<std::string>& includeArgs() const
@@ -1109,7 +1119,8 @@ private:
 
    // derived from includeFilePatterns
    std::vector<std::string> includeArgs_;
-   bool packageFlag_;
+   bool packageSourceFlag_;
+   bool packageTestsFlag_;
 
    // derived from excludeFilePatterns
    std::vector<std::string> excludeArgs_;
@@ -1135,7 +1146,8 @@ private:
 
    void processIncludeFilePatterns()
    {
-      packageFlag_ = false;
+      packageSourceFlag_ = false;
+      packageTestsFlag_ = false;
       for (json::Value filePattern : includeFilePatterns_)
       {
          if (filePattern.getType() != json::Type::STRING)
@@ -1143,8 +1155,10 @@ private:
          else
          {
             std::string includeText = boost::algorithm::trim_copy(filePattern.getString());
-            if (includeText.compare("package") == 0)
-               packageFlag_ = true;
+            if (includeText.compare("packageSource") == 0)
+               packageSourceFlag_ = true;
+            else if (includeText.compare("packageTests") == 0)
+               packageTestsFlag_ = true;
             else if (!includeText.empty())
                includeArgs_.push_back("--include=" + filePattern.getString());
          }
@@ -1172,26 +1186,32 @@ struct ReplaceOptions
 };
 
 void addDirectoriesToCommand(
-   bool packageFlag, const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+   bool packageSourceFlag, bool packageTestsFlag,
+   const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-   if (!packageFlag)
+   if (!(packageSourceFlag || packageTestsFlag))
       *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
-   else
+   else if (packageSourceFlag)
    {
       FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
       FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
-      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
-   
       if (rPath.exists())
          *pCmd << rPath; 
       if (srcPath.exists())
          *pCmd << srcPath;
+      else if (!rPath.exists())
+         LOG_WARNING_MESSAGE(
+            "Package source directories not found in " + directoryPath.getAbsolutePath());
+   }
+   else
+   {
+      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
       if (testsPath.exists())
          *pCmd << testsPath;
-      else if (!rPath.exists() && !srcPath.exists())
-         LOG_WARNING_MESSAGE("Package directories not found in " + directoryPath.getAbsolutePath());
+      else
+         LOG_WARNING_MESSAGE("Package test directory not found in " + directoryPath.getAbsolutePath());
    }
 }
 
@@ -1253,6 +1273,12 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
+      // -c is used to override potential user-defined git parameters
+      cmd << "-c" << "grep.lineNumber=true";
+      cmd << "-c" << "grep.column=false";
+      cmd << "-c" << "grep.patternType=default";
+      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       cmd <<  "grep";
@@ -1269,9 +1295,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << tempFile;
       if (!grepOptions.asRegex())
          cmd << "-F";
-      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
+      addDirectoriesToCommand(
+         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
 
-      if (grepOptions.packageFlag() && !grepOptions.includeArgs().empty())
+      if (grepOptions.anyPackageFlag() &&
+          !grepOptions.includeArgs().empty())
       {
          for (std::string arg : grepOptions.includeArgs())
             LOG_DEBUG_MESSAGE(
@@ -1298,7 +1326,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          cmd << arg;
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
-      addDirectoriesToCommand(grepOptions.packageFlag(), dirPath, &cmd);
+      addDirectoriesToCommand(
+         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
    }
 
    // Clear existing results
@@ -1501,7 +1530,7 @@ boost::regex getGrepOutputRegex(bool isGitGrep)
 {
    boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+).*:\x1B\\[m(.*)");
+      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+)\x1B\\[36m:\x1B\\[m(.*)");
    else
       regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
    return regex;

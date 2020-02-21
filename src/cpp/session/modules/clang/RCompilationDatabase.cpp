@@ -1050,12 +1050,17 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // further scope to actual path of package (as the locations of the
    // header files must be stable)
    std::string pkgPath;
-   Error error = r::exec::RFunction("find.package", pkgName).call(&pkgPath);
+   Error error = r::exec::RFunction("find.package")
+         .addParam(pkgName)
+         .addParam("quiet", true)
+         .call(&pkgPath);
+   
    if (error)
    {
       LOG_ERROR(error);
       return std::vector<std::string>();
    }
+   
    pkgPath = core::hash::crc32HexHash(pkgPath);
    precompiledDir = precompiledDir.completeChildPath(pkgPath);
 
