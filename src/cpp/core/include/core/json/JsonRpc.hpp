@@ -320,21 +320,13 @@ template <typename T>
 core::Error getOptionalParam(const Object& json, const std::string& param,
                              const T& defaultValue, T* outParam)
 {
-   Object::Iterator it = json.find(param);
-   if (it != json.end() && !(*it).getValue().isNull())
-   {
-      if (!isType<T>((*it).getValue()))
-      {
-         core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-         error.addProperty("description", "Invalid type for optional param " + param);
-         return error;
-      }
+   boost::optional<T> paramVal;
+   Error error = readObject(json, param, paramVal);
+   if (error)
+      return error;
 
-      *outParam = (*it).getValue().getValue<T>();
-      return Success();
-   }
+   *outParam = paramVal.get_value_or(defaultValue);
 
-   *outParam = defaultValue;
    return Success();
 }
 
@@ -343,22 +335,7 @@ core::Error getOptionalParam(const Object& json,
                              const std::string& param,
                              boost::optional<T>* pOutParam)
 {
-   Object::Iterator it = json.find(param);
-   if (it != json.end() && !(*it).getValue().isNull())
-   {
-      if (!isType<T>((*it).getValue()))
-      {
-         core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-         error.addProperty("description", "Invalid type for optional param " + param);
-         return error;
-      }
-
-      *pOutParam = (*it).getValue().getValue<T>();
-      return Success();
-   }
-
-   *pOutParam = boost::none;
-   return Success();
+   return readObject(json, param, *pOutParam);
 }
 
 // json rpc response
