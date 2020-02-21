@@ -161,12 +161,6 @@ private:
    boost::shared_ptr<Connection>* pPtrConnection_;
 };
 
-Error connect(const ConnectionOptions& options,
-              boost::shared_ptr<Connection>* pPtrConnection)
-{
-   return boost::apply_visitor(ConnectVisitor(pPtrConnection), options);
-}
-
 Query::Query(const std::string& sqlStatement,
              soci::session& session) :
    statement_(session)
@@ -194,7 +188,8 @@ Query Connection::query(const std::string& sqlStatement)
    return Query(sqlStatement, session_);
 }
 
-Error Connection::execute(Query& query)
+Error Connection::execute(Query& query,
+                          bool* pDataReturned)
 {
    if (query.prepareError_)
       return DatabaseError(query.prepareError_.get());
@@ -202,12 +197,100 @@ Error Connection::execute(Query& query)
    try
    {
       query.statement_.define_and_bind();
-      query.statement_.execute(true);
+      bool result = query.statement_.execute(true);
+
+      if (pDataReturned)
+         *pDataReturned = result;
+
       query.statement_.bind_clean_up();
    }
    catch (soci::soci_error& error)
    {
       return DatabaseError(error);
+   }
+
+   return Success();
+}
+
+PooledConnection::PooledConnection(const boost::shared_ptr<ConnectionPool>& pool,
+                                   const boost::shared_ptr<Connection>& connection) :
+   pool_(pool),
+   connection_(connection)
+{
+}
+
+PooledConnection::~PooledConnection()
+{
+   pool_->returnConnection(connection_);
+}
+
+Query PooledConnection::query(const std::string& sqlStatement)
+{
+   return connection_->query(sqlStatement);
+}
+
+Error PooledConnection::execute(Query& query,
+                                bool* pDataReturned)
+{
+   return connection_->execute(query, pDataReturned);
+}
+
+boost::shared_ptr<PooledConnection> ConnectionPool::getConnection()
+{
+   // block until a connection is available
+   boost::shared_ptr<Connection> connection;
+   connections_.deque(&connection, boost::posix_time::pos_infin);
+
+   // create wrapper PooledConnection around retrieved Connection
+   return boost::shared_ptr<PooledConnection>(new PooledConnection(shared_from_this(), connection));
+}
+
+void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
+{
+   connections_.enque(connection);
+}
+
+Transaction::Transaction(const boost::shared_ptr<Connection>& connection) :
+   connection_(connection),
+   transaction_(connection->session_)
+{
+}
+
+void Transaction::commit()
+{
+   transaction_.commit();
+}
+
+void Transaction::rollback()
+{
+   transaction_.rollback();
+}
+
+Error connect(const ConnectionOptions& options,
+              boost::shared_ptr<Connection>* pPtrConnection)
+{
+   return boost::apply_visitor(ConnectVisitor(pPtrConnection), options);
+}
+
+Error createConnectionPool(size_t poolSize,
+                           const ConnectionOptions& options,
+                           boost::shared_ptr<ConnectionPool>* pPool)
+{
+   pPool->reset(new ConnectionPool());
+
+   for (size_t i = 0; i < poolSize; ++i)
+   {
+      boost::shared_ptr<Connection> connection;
+      Error error = connect(options, &connection);
+      if (error)
+      {
+         // destroy the pool, which will free each previously created connections
+         pPool->reset();
+         return error;
+      }
+
+      // add connection to the pool
+      (*pPool)->returnConnection(connection);
    }
 
    return Success();

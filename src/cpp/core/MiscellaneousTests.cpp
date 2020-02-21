@@ -21,6 +21,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Database.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/collection/LruCache.hpp>
 #include <core/collection/Position.hpp>
@@ -344,6 +345,88 @@ test_context("SOCI")
 
       CHECK(row.get<0>() == id);
       CHECK(row.get<1>() == text);
+   }
+
+   test_that("Can perform transactions")
+   {
+      using namespace core::database;
+
+      boost::shared_ptr<Connection> connection;
+      REQUIRE_FALSE(connect(SqliteConnectionOptions{"/tmp/testdb"}, &connection));
+
+      Transaction transaction(connection);
+      int numFailed = 0;
+      bool dataReturned = false;
+
+      // verify that we can commit a transaction
+      Query query = connection->query("insert into Test(id, text) values(:id, :text)");
+      for (int id = 0; id < 100; ++id)
+      {
+         std::string text = "Test text " + core::safe_convert::numberToString(id);
+         query.withInput(id).withInput(text);
+
+         if (connection->execute(query))
+            ++numFailed;
+      }
+
+      REQUIRE(numFailed == 0);
+      transaction.commit();
+
+      boost::tuple<int, std::string> row;
+      query = connection->query("select id, text from Test where id = 50")
+            .withOutput(row);
+
+      REQUIRE_FALSE(connection->execute(query, &dataReturned));
+      REQUIRE(dataReturned);
+      REQUIRE(row.get<0>() == 50);
+      REQUIRE(row.get<1>() == "Test text 50");
+
+      // now attempt to rollback a transaction
+      Transaction transaction2(connection);
+      query = connection->query("insert into Test(id, text) values(:id, :text)");
+      for (int id = 100; id < 200; ++id)
+      {
+         std::string text = "Test text " + core::safe_convert::numberToString(id);
+         query.withInput(id).withInput(text);
+
+         if (connection->execute(query))
+            ++numFailed;
+      }
+
+      REQUIRE(numFailed == 0);
+      transaction2.rollback();
+
+      query = connection->query("select id, text from Test where id = 150")
+            .withOutput(row);
+
+      // expect no data
+      REQUIRE_FALSE(connection->execute(query, &dataReturned));
+      REQUIRE_FALSE(dataReturned);
+   }
+
+   test_that("Can use connection pool")
+   {
+      using namespace core::database;
+
+      boost::shared_ptr<ConnectionPool> connectionPool;
+      REQUIRE_FALSE(createConnectionPool(5, SqliteConnectionOptions{"/tmp/testdb"}, &connectionPool));
+
+      boost::shared_ptr<PooledConnection> connection = connectionPool->getConnection();
+      boost::tuple<int, std::string> row;
+      Query query = connection->query("select id, text from Test where id = 50")
+            .withOutput(row);
+
+      bool dataReturned = false;
+      REQUIRE_FALSE(connection->execute(query, &dataReturned));
+      REQUIRE(dataReturned);
+
+      boost::shared_ptr<PooledConnection> connection2 = connectionPool->getConnection();
+      Query query2 = connection2->query("select id, text from Test where id = 25")
+            .withOutput(row);
+
+      dataReturned = false;
+      REQUIRE_FALSE(connection2->execute(query2, &dataReturned));
+      REQUIRE(dataReturned);
    }
 }
 
