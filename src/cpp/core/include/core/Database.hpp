@@ -17,6 +17,7 @@
 #define CORE_DATABASE_HPP
 
 #include <core/Thread.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
@@ -28,9 +29,6 @@
 
 namespace rstudio {
 namespace core {
-
-class Error;
-
 namespace database {
 
 struct SqliteConnectionOptions
@@ -102,15 +100,20 @@ public:
    virtual Query query(const std::string& sqlStatement) = 0;
    virtual Error execute(Query& query,
                          bool* pDataReturned = nullptr) = 0;
+
+   virtual std::string driverName() const = 0;
 };
 
 class Connection : public IConnection
 {
 public:
+   virtual ~Connection() {}
+
    Query query(const std::string& sqlStatement) override;
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
-   virtual ~Connection() {}
+
+   std::string driverName() const override;
 
 private:
    friend class ConnectVisitor;
@@ -131,6 +134,8 @@ public:
    Query query(const std::string& sqlStatement) override;
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
+
+   std::string driverName() const override;
 
 private:
    friend class ConnectionPool;
@@ -175,9 +180,46 @@ private:
    soci::transaction transaction_;
 };
 
+class SchemaUpdater
+{
+public:
+   SchemaUpdater(const boost::shared_ptr<Connection>& connection,
+                 const FilePath& migrationsPath);
+
+   // updates the database schema to the highest version
+   Error update();
+
+   // updates the database schema to the specified version
+   Error updateToVersion(const std::string& maxVersion);
+
+   // applies a particular database schema update
+   Error applyUpdate(const std::string& version);
+
+   // returns whether or not the schema is up-to-date with the latest schema version
+   Error isUpToDate(bool* pUpToDate);
+
+   // gets the current database schema version
+   Error databaseSchemaVersion(std::string* pVersion);
+
+private:
+   // returns whether or not a schema version is present in the database
+   Error isSchemaVersionPresent(bool* pIsPresent);
+
+   // returns the highest version that can be migrated to with the migrations
+   // specified when constructing this SchemaUpdater
+   Error highestMigrationVersion(std::string* pVersion);
+
+   boost::shared_ptr<Connection> connection_;
+   FilePath migrationsPath_;
+};
+
+// connect to the database with the specified connection options
 Error connect(const ConnectionOptions& options,
               boost::shared_ptr<Connection>* pPtrConnection);
 
+// create a pool of database connections with the specified connection options
+// the pool will create/establish multiple connections with the database and
+// will only be returned if every connection was successful
 Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool);

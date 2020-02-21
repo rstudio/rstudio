@@ -212,6 +212,11 @@ Error Connection::execute(Query& query,
    return Success();
 }
 
+std::string Connection::driverName() const
+{
+   return session_.get_backend_name();
+}
+
 PooledConnection::PooledConnection(const boost::shared_ptr<ConnectionPool>& pool,
                                    const boost::shared_ptr<Connection>& connection) :
    pool_(pool),
@@ -233,6 +238,11 @@ Error PooledConnection::execute(Query& query,
                                 bool* pDataReturned)
 {
    return connection_->execute(query, pDataReturned);
+}
+
+std::string PooledConnection::driverName() const
+{
+   return connection_->driverName();
 }
 
 boost::shared_ptr<PooledConnection> ConnectionPool::getConnection()
@@ -264,6 +274,175 @@ void Transaction::commit()
 void Transaction::rollback()
 {
    transaction_.rollback();
+}
+
+SchemaUpdater::SchemaUpdater(const boost::shared_ptr<Connection>& connection,
+                             const FilePath& migrationsPath) :
+   connection_(connection),
+   migrationsPath_(migrationsPath)
+{
+}
+
+Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
+{
+   std::vector<FilePath> migrationFiles;
+   Error error = migrationsPath_.getChildren(migrationFiles);
+   if (error)
+      return error;
+
+   if (migrationFiles.empty())
+   {
+      // no migration files - we do not consider this an error, but instead
+      // simply consider that this database cannot be migrated past version 0
+      *pVersion = "0";
+      return Success();
+   }
+
+   // sort descending - highest version filename wins
+   auto comparator = [](const FilePath& a, const FilePath& b)
+   {
+      return a.getStem() > b.getStem();
+   };
+   std::sort(migrationFiles.begin(), migrationFiles.end(), comparator);
+
+   *pVersion = migrationFiles.at(0).getStem();
+   return Success();
+}
+
+Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
+{
+   std::string queryStr;
+   if (connection_->driverName() == "sqlite3")
+   {
+      queryStr = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='rstudio_version'";
+   }
+   else if (connection_->driverName() == "postgresql")
+   {
+      queryStr = "SELECT COUNT(1) FROM information_schema.tables WHERE table_name='rstudio_version'"
+                 " AND table_schema = current_schema";
+   }
+   else
+   {
+      return DatabaseError(soci::soci_error("Unsupported database driver"));
+   }
+
+   int count = 0;
+   Query query = connection_->query(queryStr);
+   Error error = connection_->execute(query);
+   if (error)
+      return error;
+
+   *pIsPresent = count > 0;
+   return Success();
+}
+
+Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
+{
+   bool versionPresent = false;
+   Error error = isSchemaVersionPresent(&versionPresent);
+   if (error)
+      return error;
+
+   std::string currentSchemaVersion = "0";
+   if (!versionPresent)
+   {
+      *pVersion = currentSchemaVersion;
+      return Success();
+   }
+
+   Query query = connection_->query("SELECT current_version FROM rstudio_version")
+         .withOutput(currentSchemaVersion);
+
+   error = connection_->execute(query);
+   if (error)
+      return error;
+
+   *pVersion = currentSchemaVersion;
+   return Success();
+}
+
+Error SchemaUpdater::isUpToDate(bool* pUpToDate)
+{
+   std::string version;
+   Error error = databaseSchemaVersion(&version);
+   if (error)
+      return error;
+
+   std::string migrationVersion;
+   error = highestMigrationVersion(&migrationVersion);
+   if (error)
+      return error;
+
+   *pUpToDate = version >= migrationVersion;
+   return Success();
+}
+
+Error SchemaUpdater::update()
+{
+   std::string migrationVersion;
+   Error error = highestMigrationVersion(&migrationVersion);
+   if (error)
+      return error;
+
+   return updateToVersion(migrationVersion);
+}
+
+Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
+{
+   std::string currentVersion;
+   Error error = databaseSchemaVersion(&currentVersion);
+   if (error)
+      return error;
+
+   std::vector<FilePath> migrationFiles;
+   error = migrationsPath_.getChildren(migrationFiles);
+   if (error)
+      return error;
+
+   // sort ascending
+   auto comparator = [](const FilePath& a, const FilePath& b)
+   {
+      return a.getStem() < b.getStem();
+   };
+   std::sort(migrationFiles.begin(), migrationFiles.end(), comparator);
+
+   for (const FilePath& migrationFile : migrationFiles)
+   {
+      // if the version has already been applied (database version is newer or same)
+      // then skip this particular migration
+      if (migrationFile.getStem() <= currentVersion)
+         continue;
+
+      bool applyMigration = false;
+
+      if (migrationFile.getExtensionLowerCase() == ".sql")
+      {
+         // plain sql - apply the migration
+         applyMigration = true;
+      }
+      else if (migrationFile.getExtensionLowerCase() == ".sqlite")
+      {
+         // sqlite file - only apply migration if we are connected to a SQLite database
+         applyMigration = connection_->driverName() == "sqlite3";
+      }
+      else if (migrationFile.getExtensionLowerCase() == ".postgresql")
+      {
+         // postgresql file - only apply migration if we are connected to a PostgreSQL database
+         applyMigration = connection_->driverName() == "postgresql";
+      }
+
+      if (!applyMigration)
+         continue;
+
+      // we are clear to apply the migration
+   }
+
+   return Success();
+}
+
+Error SchemaUpdater::applyUpdate(const std::string& version)
+{
+   return Success();
 }
 
 Error connect(const ConnectionOptions& options,
