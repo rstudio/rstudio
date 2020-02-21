@@ -1978,7 +1978,7 @@ Error readObject(const Object& in_object, const std::string& in_name, boost::opt
 {
    // If the value is optional, no need to report that it's missing.
    Object::Iterator itr = in_object.find(in_name);
-   if (itr == in_object.end())
+   if (itr == in_object.end() || (*itr).getValue().isNull())
       return Success();
 
    if (!isType<T>((*itr).getValue()))
@@ -2021,7 +2021,6 @@ Error readObject(const Object& in_object, const std::string& in_name, std::vecto
       return jsonReadError(JsonReadError::INVALID_TYPE,
                            "Member " + in_name + " is not an array.",
                            ERROR_LOCATION);
-
 
    Array array = (*itr).getValue().getArray();
    for (size_t i = 0, n = array.getSize(); i < n; ++i)
