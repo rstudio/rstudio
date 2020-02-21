@@ -38,6 +38,30 @@ namespace rstudio {
 namespace session {
 namespace modules {      
 namespace jobs {
+namespace {
+
+Error startScriptJobInternal(const ScriptLaunchSpec& spec, 
+      boost::optional<boost::function<void()> > onComplete,
+      std::string *pId)
+{
+   boost::shared_ptr<ScriptJob> pJob = ScriptJob::create(spec);
+
+   // add caller-specified finalizer if given
+   if (onComplete)
+   {
+      pJob->addOnComplete(*onComplete);
+   }
+
+   Error error = registerAsyncRJob(pJob, pId);
+   if (error)
+      return error;
+
+   pJob->start();
+   return Success();
+}
+
+
+} // anonymous namespace
 
 boost::shared_ptr<ScriptJob> ScriptJob::create(
       const ScriptLaunchSpec& spec)
@@ -381,16 +405,17 @@ boost::optional<async_r::AsyncRProcessOptions> ScriptLaunchSpec::procOptions()
    return procOptions_;
 }
 
-Error startScriptJob(const ScriptLaunchSpec& spec, std::string *pId)
+core::Error startScriptJob(const ScriptLaunchSpec& spec, 
+      std::string *pId)
 {
-   boost::shared_ptr<ScriptJob> pJob = ScriptJob::create(spec);
+   return startScriptJobInternal(spec, boost::none, pId);
+}
 
-   Error error = registerAsyncRJob(pJob, pId);
-   if (error)
-      return error;
-
-   pJob->start();
-   return Success();
+core::Error startScriptJob(const ScriptLaunchSpec& spec, 
+      boost::function<void()> onComplete,
+      std::string *pId)
+{
+   return startScriptJobInternal(spec, onComplete, pId);
 }
 
 Error stopScriptJob(const std::string& id)
