@@ -5287,7 +5287,7 @@ public class TextEditingTarget implements
       {
          String text = scopeHelper_.getSweaveChunkText(chunk);
          code.append(text);
-         if (text.length() > 0 && text.charAt(text.length()-1) != '\n')
+         if (text.length() > 0 && StringUtil.charAt(text, text.length()-1) != '\n')
             code.append('\n');
       }
       return code.toString();

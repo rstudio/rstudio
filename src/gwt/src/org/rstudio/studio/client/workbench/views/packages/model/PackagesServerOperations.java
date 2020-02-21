@@ -37,6 +37,10 @@ public interface PackagesServerOperations extends PackratServerOperations
    void isPackageLoaded(String packageName, String libName,
                         ServerRequestCallback<Boolean> requestCallback);
    
+   void isPackageInstalled(String packageName,
+                           String version,
+                           ServerRequestCallback<Boolean> requestCallback);
+   
    void checkForPackageUpdates(
             ServerRequestCallback<JsArray<PackageUpdate>> requestCallback);
 

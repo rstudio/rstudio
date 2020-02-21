@@ -1,7 +1,7 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -753,7 +753,7 @@ public class RCompletionManager implements CompletionManager
          // Immediately display completions after '$', '::', etc.
          if (input_.getCursorPosition().getColumn() > 0)
          {
-            char prevChar = docDisplay_.getCurrentLine().charAt(
+            char prevChar = StringUtil.charAt(docDisplay_.getCurrentLine(),
                   input_.getCursorPosition().getColumn() - 1);
             if (
                   (c == ':' && prevChar == ':') ||
@@ -1885,7 +1885,7 @@ public class RCompletionManager implements CompletionManager
             int startPos = selection_.getStart().getPosition();
             String currentLine = docDisplay_.getCurrentLine();
             while (startPos < currentLine.length() &&
-                  currentLine.charAt(startPos) == ' ')
+                  StringUtil.charAt(currentLine, startPos) == ' ')
                ++startPos;
             
             input_.setSelection(new InputEditorSelection(

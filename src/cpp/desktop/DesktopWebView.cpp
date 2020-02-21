@@ -92,7 +92,7 @@ WebView::WebView(QWebEngineProfile *profile,
    QWebEngineView(parent),
    baseUrl_(baseUrl)
 {
-   pWebPage_ = new WebPage(profile, baseUrl, parent, allowExternalNavigate);
+   pWebPage_ = new WebPage(profile, baseUrl, this, allowExternalNavigate);
    init();
 }
 

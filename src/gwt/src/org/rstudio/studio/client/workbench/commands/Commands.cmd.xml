@@ -325,6 +325,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activateTutorial"/>
          <cmd refid="activateJobs"/>
          <cmd refid="activateLauncherJobs"/>
          <cmd refid="activateFindInFiles"/>
@@ -584,6 +585,7 @@ well as menu structures (for main menu and popup menus).
       <!-- "Cmd" means Ctrl OR Meta -->
       <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
+      <!-- When adding/changing shortcuts, also update keyboard.htm -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R" disableModes="sublime"/>
@@ -848,18 +850,18 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showCodeMenu" value="Ctrl+Alt+C"/>
          <shortcut refid="showViewMenu" value="Ctrl+Alt+V"/>
          <shortcut refid="showPlotsMenu" value="Ctrl+Alt+P"/>
-         <shortcut refid="showSessionMenu" value="Ctrl+Alt+S"/>
+         <shortcut refid="showSessionMenu" value="Ctrl+Alt+Shift+S"/>
          <shortcut refid="showBuildMenu" value="Ctrl+Alt+B"/>
          <shortcut refid="showDebugMenu" value="Ctrl+Alt+U"/>
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O"/>
-         <shortcut refid="showToolsMenu" value="Ctrl+Alt+T"/>
+         <shortcut refid="showToolsMenu" value="Ctrl+Alt+L"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
          <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Alt+Shift+B"/>
-         <shortcut refid="focusMainToolbar" value="Ctrl+Alt+L"/>
+         <shortcut refid="focusMainToolbar" value="Ctrl+Alt+Y"/>
       </shortcutgroup>
       <!-- 
       Shortcuts in this group won't be shown in the quick reference card. 
@@ -1353,7 +1355,12 @@ well as menu structures (for main menu and popup menus).
         label="Show Connections Pane"
         menuLabel = "Show Co_nnections"
         windowMode="main"/>
-        
+
+   <cmd id="activateTutorial"
+        label="Show Tutorial Pane"
+        menuLabel="Show _Tutorial"
+        windowMode="main"/>
+    
    <cmd id="activateJobs"
         label="Show Jobs Pane"
         menuLabel = "Show _Jobs"

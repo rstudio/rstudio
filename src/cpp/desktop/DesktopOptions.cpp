@@ -48,6 +48,32 @@ Options& options()
    return singleton;
 }
 
+Options::Options() :
+   settings_(FORMAT,
+             QSettings::UserScope,
+             QString::fromUtf8("RStudio"),
+             QString::fromUtf8("desktop")),
+   runDiagnostics_(false)
+{
+#ifndef _WIN32
+   // ensure that the options file is only readable by this user
+   FilePath optionsFile(settings_.fileName().toStdString());
+   if (!optionsFile.exists())
+   {
+      // file doesn't yet exist - QT can lazily write to the settings file
+      // create an empty file so we can set its permissions before it's created by QT
+      std::shared_ptr<std::ostream> pOfs;
+      Error error = optionsFile.openForWrite(pOfs, false);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   Error error = optionsFile.changeFileMode(FileMode::USER_READ_WRITE);
+   if (error)
+      LOG_ERROR(error);
+#endif
+}
+
 void Options::initFromCommandLine(const QStringList& arguments)
 {
    for (int i=1; i<arguments.size(); i++)
@@ -533,5 +559,16 @@ void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& s
    settings_.endGroup();
 }
 
+QStringList Options::cookies() const
+{
+   return settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+}
+
+void Options::setCookies(const QStringList& cookies)
+{
+   settings_.setValue(QString::fromUtf8("cookies"), cookies);
+}
+
 } // namespace desktop
 } // namespace rstudio
+

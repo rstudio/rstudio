@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <QNetworkCookie>
+
 #include <core/http/AsyncClient.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -60,6 +62,8 @@ public:
     int getProxyPortNumber();
 
     SessionServer getLauncherServer();
+
+    std::map<std::string, QNetworkCookie> getCookies();
 
 private:
     boost::shared_ptr<JobLauncherImpl> pImpl_;

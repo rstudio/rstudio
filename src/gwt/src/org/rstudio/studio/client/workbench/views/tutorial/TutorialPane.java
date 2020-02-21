@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.tutorial;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.URIConstants;
@@ -27,8 +28,15 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
@@ -57,17 +65,23 @@ public class TutorialPane
    @Inject
    protected TutorialPane(GlobalDisplay globalDisplay,
                           EventBus events,
-                          Commands commands)
+                          Commands commands,
+                          Session session,
+                          PackagesServerOperations server)
    {
       super("Tutorial");
       
       globalDisplay_ = globalDisplay;
-      commands_ = commands;
+      events_        = events;
+      commands_      = commands;
+      session_       = session;
+      server_        = server;
       
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
       
       events.addHandler(ThemeChangedEvent.TYPE, this);
       
+      initTutorialJsCallbacks();
       ensureWidget();
    }
 
@@ -175,10 +189,12 @@ public class TutorialPane
    {
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
+      
       String url = GWT.getHostPageBaseURL() +
             "tutorial/run" +
             "?package=" + tutorial.getPackageName() +
             "&name=" + tutorial.getTutorialName();
+      
       navigate(url, false);
    }
    
@@ -212,6 +228,13 @@ public class TutorialPane
    public String getName()
    {
       return frame_.getWindowName();
+   }
+   
+   private void runTutorial(String tutorialName,
+                            String packageName)
+   {
+      Tutorial tutorial = new Tutorial(tutorialName, packageName);
+      launchTutorial(tutorial);
    }
    
    private void navigate(String url, boolean replaceUrl)
@@ -316,6 +339,77 @@ public class TutorialPane
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
    
+   private void installLearnr()
+   {
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+         private ProgressIndicator progress_;
+         
+         private final String errorCaption = "Error installing learnr";
+         private final String errorMessage =
+               "RStudio was unable to install the learnr package.";
+         
+         @Override
+         protected void invoke()
+         {
+            // double-check that we were able to successfully install learnr
+            progress_ = globalDisplay_.getProgressIndicator(errorCaption);
+            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
+            {
+               @Override
+               public void onConsolePrompt(ConsolePromptEvent event)
+               {
+                  handler_.removeHandler();
+                  
+                  String version = session_.getSessionInfo().getPackageDependencies().getPackage("learnr").getVersion();
+                  server_.isPackageInstalled("learnr", version, new ServerRequestCallback<Boolean>()
+                  {
+                     @Override
+                     public void onResponseReceived(Boolean installed)
+                     {
+                        if (!installed)
+                        {
+                           progress_.onError(errorMessage);
+                           return;
+                        }
+                        
+                        progress_.onCompleted();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        progress_.onError(errorMessage);
+                     }
+                  });
+               }
+            });
+            
+            // fire console event installing learnr
+            progress_.onProgress("Installing learnr...");
+            SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
+            events_.fireEvent(event);
+         }
+      };
+   }
+   
+   private final native void initTutorialJsCallbacks()
+   /*-{
+   
+      var self = this;
+      
+      $wnd.tutorialRun = $entry(function(tutorialName, tutorialPackage) {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::runTutorial(*)(tutorialName, tutorialPackage);
+      });
+      
+      $wnd.tutorialInstallLearnr = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
+      });
+      
+   }-*/;
+   
    // Resources ---- 
    public interface Resources extends ClientBundle
    {
@@ -332,7 +426,10 @@ public class TutorialPane
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;
+   private final EventBus events_;
    private final Commands commands_;
+   private final Session session_;
+   private final PackagesServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
 }

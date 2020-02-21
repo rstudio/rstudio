@@ -21,12 +21,14 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
 #include <core/text/TemplateFilter.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "DesktopJobLauncherOverlay.hpp"
 #include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DockTileView.hpp"
 #include "DesktopActivationOverlay.hpp"
@@ -61,6 +63,7 @@ MainWindow::MainWindow(QUrl url,
       gwtCallback_(this, this, isRemoteDesktop),
       pSessionLauncher_(nullptr),
       pRemoteSessionLauncher_(nullptr),
+      pLauncher_(new JobLauncher(this)),
       pCurrentSessionProcess_(nullptr)
 {
    RCommandEvaluator::setMainWindow(this);
@@ -155,6 +158,17 @@ MainWindow::MainWindow(QUrl url,
 #endif
 
    desktop::enableFullscreenMode(this, true);
+
+   Error error = pLauncher_->initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      showError(nullptr,
+                QStringLiteral("Initialization error"),
+                QStringLiteral("Could not initialize Job Launcher"),
+                QString());
+      ::_exit(EXIT_FAILURE);
+   }
 }
 
 bool MainWindow::isRemoteDesktop() const
@@ -194,8 +208,29 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
     pAppLauncher_->launchRStudio(args, initialDir);
 }
 
+void MainWindow::saveRemoteCookies()
+{
+   QStringList cookieList;
+
+   std::map<std::string, QNetworkCookie> cookies = pRemoteSessionLauncher_->getCookies();
+   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   {
+      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+   }
+
+   cookies = pLauncher_->getCookies();
+   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   {
+      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+   }
+
+   options().setCookies(cookieList);
+}
+
 void MainWindow::launchRemoteRStudio()
 {
+   saveRemoteCookies();
+
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
    args.push_back(pRemoteSessionLauncher_->sessionServer().url());
@@ -205,6 +240,8 @@ void MainWindow::launchRemoteRStudio()
 
 void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
 {
+   saveRemoteCookies();
+
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
    args.push_back(pRemoteSessionLauncher_->sessionServer().url());
@@ -470,6 +507,11 @@ void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
 RemoteDesktopSessionLauncher* MainWindow::getRemoteDesktopSessionLauncher()
 {
    return pRemoteSessionLauncher_;
+}
+
+JobLauncher* MainWindow::getJobLauncher()
+{
+   return pLauncher_;
 }
 
 void MainWindow::setRemoteDesktopSessionLauncher(RemoteDesktopSessionLauncher* pSessionLauncher)

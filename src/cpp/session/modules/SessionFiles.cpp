@@ -1271,13 +1271,13 @@ SEXP rs_readLines(SEXP filePathSEXP)
       return r::sexp::create(contents, &protect);
    
    std::vector<std::string> splat = core::algorithm::split(contents, "\n");
-   if (splat[splat.size() - 1].empty())
+   if (splat.size() && splat[splat.size() - 1].empty())
       splat.pop_back();
    
    for (std::size_t i = 0, n = splat.size(); i < n; ++i)
    {
       std::string& rElement = splat[i];
-      if (rElement[rElement.size() - 1] == '\r')
+      if (rElement.size() && rElement[rElement.size() - 1] == '\r')
          rElement.erase(rElement.size() - 1);
    }
    

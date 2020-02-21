@@ -708,6 +708,7 @@ int main(int argc, char* argv[])
       // if we have a filename and it is NOT a project file then see
       // if we can open it within an existing instance - we do not attempt
       // to do this if opening an rdprsp file since that should start a remote session
+      bool forceLocalStart = false;
       FilePath openFile(filename.toUtf8().constData());
       std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
@@ -755,6 +756,8 @@ int main(int argc, char* argv[])
       }
       else
       {
+         forceLocalStart = !filename.isEmpty();
+
          // try to register ourselves as a peer for others
          pAppLaunch->attemptToRegisterPeer();
       }
@@ -884,6 +887,9 @@ int main(int argc, char* argv[])
             launchServer = SessionServer(std::string(), serverUrl);
          }
       }
+
+      if (forceLocalStart)
+         forceSessionServerLaunch = true;
 
       bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
       bool forceReuseSession = false;
