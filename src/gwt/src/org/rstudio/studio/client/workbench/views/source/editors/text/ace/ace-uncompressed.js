@@ -65007,8 +65007,7 @@ var VirtualRenderer = function(container, theme) {
         var offset = offsetX / this.characterWidth;
         var col = this.$blockCursor ? Math.floor(offset) : Math.round(offset);
 
-        var row = Math.floor((y + this.scrollTop - canvasPos.top) / this.lineHeight);
-
+        var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
         return this.session.screenToDocumentPosition(row, Math.max(col, 0), offsetX);
     };
     this.textToScreenCoordinates = function(row, column) {
@@ -66574,7 +66573,7 @@ function LineWidgets(session) {
         if (this.$useWrapMode && this.$wrapData[row])
             height += this.$wrapData[row].length;
 
-        return Math.ceil(height + 1);
+        return height + 1;
 
     };
 
