@@ -83,6 +83,19 @@ dumpfile <- function(path) {
   
 }
 
+envvars <- function() {
+  
+  # log environment variables, redacting any banned words (e.g. those that might
+  # expose API tokens or other secrets). match it on the list of environment
+  # variable names with _ converted to a space (so that e.g. GITHUB_PAT becomes
+  # GITHUB PAT and matches the banned word PAT)
+  vars <- Sys.getenv()
+  keys <- gsub("_", " ", names(vars), fixed = TRUE)
+  matches <- grepl(redact_regex(), keys, ignore.case = TRUE)
+  vars[matches] <- "*** redacted ***"
+  as.list(vars)
+}
+
 # Main script ----
 
 capture.output(file = diagnosticsFile, {
@@ -120,32 +133,12 @@ sensitive information before submitting your diagnostics report.
   dump(.Platform)
   newlines()
   
+  header("Environment Variables")
+  dump(envvars())
+  newlines()
+  
   header("R Version")
   dump(R.Version())
-  newlines()
-  
-  # log environment variables, redacting any banned words (e.g. those that might
-  # expose API tokens or other secrets). match it on the list of environment
-  # variable names with _ converted to a space (so that e.g. GITHUB_PAT becomes
-  # GITHUB PAT and matches the banned word PAT)
-  envVars <- Sys.getenv()
-  matches <- grepl(
-    redact_regex(),
-    gsub("_", " ", names(envVars), fixed = TRUE),
-    ignore.case = TRUE
-  )
-  
-  envVars[matches] <- "*** redacted ***"
-  
-  header("Environment Variables")
-  dump(as.list(envVars))
-  newlines()
-  
-  header("Loaded Packages")
-  packages <- loadedNamespaces()
-  paths <- find.package(packages)
-  names(paths) <- packages
-  dump(sort(paths))
   newlines()
   
   header("R Home")
@@ -155,6 +148,31 @@ sensitive information before submitting your diagnostics report.
   header("R Search Path")
   dump(search())
   newlines()
+  
+  header("R Library Paths")
+  dump(.libPaths())
+  newlines()
+  
+  header("Loaded Packages")
+  packages <- loadedNamespaces()
+  paths <- find.package(packages)
+  names(paths) <- packages
+  dump(sort(paths))
+  newlines()
+  
+  local({
+    
+    op <- options()
+    on.exit(options(op), add = TRUE)
+    options(width = 1000, max.print = 50000)
+    
+    header("Installed Packages")
+    ip <- as.data.frame(installed.packages(noCache = TRUE), stringsAsFactors = FALSE)
+    rownames(ip) <- NULL
+    print(ip[c("Package", "LibPath", "Version")])
+    newlines()
+  
+  })
   
   # dump .Rprofiles
   r_base_profile <- file.path(R.home(), "library/base/R/Rprofile")
