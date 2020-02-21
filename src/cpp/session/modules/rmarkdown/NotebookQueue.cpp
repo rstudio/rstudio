@@ -260,8 +260,7 @@ private:
       {
          // get the chunk label to see if this is the setup chunk 
          std::string label;
-         json::readObject(execContext_->options().chunkOptions(), "label", 
-               &label);
+         json::readObject(execContext_->options().chunkOptions(), "label", label);
          if (label == "setup")
             saveSetupContext();
       }
@@ -370,7 +369,7 @@ private:
       // if this is the setup chunk, prepare for its execution by switching
       // knitr chunk defaults
       std::string label;
-      json::readObject(chunkOptions, "label", &label);
+      json::readObject(chunkOptions, "label", label);
       if (label == "setup")
          prepareSetupContext();
 

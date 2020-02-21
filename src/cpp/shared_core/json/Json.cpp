@@ -1723,6 +1723,20 @@ Array toJsonArray<Array>(const std::set<Array>& set)
    return results;
 }
 
+Error jsonReadError(JsonReadError in_errorCode, const std::string& in_message, const ErrorLocation& in_errorLocation)
+{
+   if (in_errorCode == JsonReadError::SUCCESS)
+      return Success();
+
+   return Error("JsonReadError", static_cast<int>(in_errorCode), in_message, in_errorLocation);
+}
+
+bool isMissingMemberError(const Error& in_error)
+{
+   return ((in_error.getName() == "JsonReadError") &&
+           (static_cast<JsonReadError>(in_error.getCode()) == JsonReadError::MISSING_MEMBER));
+}
+
 } // namespace json
 } // namespace core
 } // namespace rstudio

@@ -229,24 +229,24 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
    int type = static_cast<int>(JobTypeSession);
    boost::int64_t recorded = 0, started = 0, completed = 0;
    Error error = json::readObject(src,
-      kJobId,        &pJob->id_,
-      kJobName,      &pJob->name_,
-      kJobStatus,    &pJob->status_,
-      kJobProgress,  &pJob->progress_,
-      kJobMax,       &pJob->max_,
-      kJobRecorded,  &recorded,
-      kJobStarted,   &started,
-      kJobCompleted, &completed,
-      kJobState,     &state,
-      kJobType,      &type,
-      kJobShow,      &pJob->show_,
-      kJobTags,      &pJob->tags_);
+      kJobId,        pJob->id_,
+      kJobName,      pJob->name_,
+      kJobStatus,    pJob->status_,
+      kJobProgress,  pJob->progress_,
+      kJobMax,       pJob->max_,
+      kJobRecorded,  recorded,
+      kJobStarted,   started,
+      kJobCompleted, completed,
+      kJobState,     state,
+      kJobType,      type,
+      kJobShow,      pJob->show_,
+      kJobTags,      pJob->tags_);
    if (error)
       return error;
    
    error = json::readObject(src,
-      kJobSaveOutput, &pJob->saveOutput_,
-      kJobCluster, &pJob->cluster_);
+      kJobSaveOutput, pJob->saveOutput_,
+      kJobCluster, pJob->cluster_);
    if (error)
       return error;
 

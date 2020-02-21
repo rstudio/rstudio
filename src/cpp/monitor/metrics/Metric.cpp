@@ -91,8 +91,8 @@ Error metricFromJson(const json::Object& metricJson, Metric* pMetric)
       return error;
 
    error = json::readObject(metricJson,
-                            "name", &name,
-                            "value", &value);
+                            "name", name,
+                            "value", value);
    if (error)
       return error;
 
@@ -138,7 +138,7 @@ Error metricFromJson(const json::Object& multiMetricJson,
 
    // read the data array
    json::Array dataJson;
-   error = json::readObject(multiMetricJson, "data", &dataJson);
+   error = json::readObject(multiMetricJson, "data", dataJson);
    if (error)
       return error;
 
@@ -152,8 +152,8 @@ Error metricFromJson(const json::Object& multiMetricJson,
       MetricData dataItem;
       const json::Object& valueObj = value.getObject();
       Error error = json::readObject(valueObj,
-                                     "name", &dataItem.name,
-                                     "value", &dataItem.value);
+                                     "name", dataItem.name,
+                                     "value", dataItem.value);
       if (error)
          return error;
 

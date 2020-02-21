@@ -136,10 +136,10 @@ private:
          
          TutorialInfo info;
          error = json::readObject(tutorialJson.getObject(),
-                                  "name",        &info.name,
-                                  "file",        &info.file,
-                                  "title",       &info.title,
-                                  "description", &info.description);
+                                  "name",        info.name,
+                                  "file",        info.file,
+                                  "title",       info.title,
+                                  "description", info.description);
 
          if (error)
          {
