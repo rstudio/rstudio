@@ -25,6 +25,10 @@
       .presetFilePatterns {
          width: 100%;
       }
+
+      .presetFilePatterns option:disabled {
+         color: #999;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.panel}">

@@ -197,15 +197,28 @@ void handleTutorialHomeRequest(const http::Request& request,
    
    if (tutorialIndex().empty())
    {
-      ss << "<p>No tutorials are currently available.</p>";
+      ss << "<div class=\"rstudio-tutorials-section\">";
+      
       if (!module_context::isPackageInstalled("learnr"))
       {
-         ss << "<p>Please install the learnr package to enable tutorials for RStudio.</p>";
+         std::stringstream clickHere;
+         clickHere << "<a"
+                   << " aria-label\"Install learnr\""
+                   << " class=\"rstudio-tutorials-install-learnr-link\""
+                   << " href=\"javascript:void(0)\""
+                   << " onclick=\"window.parent.tutorialInstallLearnr(); return false;\">"
+                   << "click here"
+                   << "</a>";
+         
+         ss << "<p>The <code>learnr</code> package is required to run tutorials for RStudio.</p>"
+            << "<p>Please " << clickHere.str() << " to install the <code>learnr</code> package.</p>";
       }
       else
       {
-         ss << "<p>Please wait while RStudio finishes indexing...</p>";
+         ss << "<p>Please wait while RStudio finishes indexing available tutorials...</p>";
       }
+      
+      ss << "</div>";
    }
    
    for (auto entry : tutorialIndex())

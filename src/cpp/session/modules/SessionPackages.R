@@ -1716,3 +1716,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .rs.scalar(FALSE)
    })
 })
+
+.rs.addJsonRpcHandler("is_package_installed", function(package, version)
+{
+   installed <- if (is.null(version))
+      .rs.isPackageInstalled(package)
+   else
+      .rs.isPackageVersionInstalled(package, version)
+   .rs.scalar(installed)
+})
