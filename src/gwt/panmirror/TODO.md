@@ -3,6 +3,8 @@
 
 ## TODO
 
+too much space at top when heading is first element of doc
+
 Handling of character escaping and \ around special markup syntax.
 (ability to include html entities?)
 
