@@ -646,8 +646,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
             // Don't drive focus to the input unless there is no selection.
             // Otherwise it would interfere with the ability to select stuff
             // from the output buffer for copying to the clipboard.
-            if (!DomUtils.selectionExists() && isInputOnscreen())
-               input_.setFocus(true);
+            if (DomUtils.selectionExists() || !isInputOnscreen())
+               return;
+            
+            // When focusing Ace, if the user hasn't yet typed anything into
+            // the input line, then Ace will erroneously adjust the scroll
+            // position upwards upon focus. Rather than patching Ace, we instead
+            // just re-scroll to the bottom if we were already scrolled to the
+            // bottom after giving focus to the Ace editor instance.
+            //
+            // https://github.com/rstudio/rstudio/issues/6231
+            boolean wasScrolledToBottom = scrollPanel_.isScrolledToBottom();
+            input_.setFocus(true);
+            if (wasScrolledToBottom)
+               scrollPanel_.scrollToBottom();
          }
       };
    }
