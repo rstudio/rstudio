@@ -153,7 +153,6 @@
 * Fix carryover of light ANSI background colors (#6092)
 * Fix issue where Shiny applications using `reticulate` on Windows could crash on run (#6140)
 * Fix issue where pasting text into last chunk in document could occasionally cause hang (#6226)
-* Fix inability to scroll to bottom of R Markdown documents containing many chunk outputs (#6261)
 
 ### RStudio Professional
 
