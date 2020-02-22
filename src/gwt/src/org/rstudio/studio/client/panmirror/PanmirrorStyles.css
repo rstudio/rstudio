@@ -2,11 +2,9 @@
 
 @external ProseMirror, pm-content, body;
 
-
 .ProseMirror .pm-content {
    padding-left: 20px !important;
    padding-right: 20px !important;
-   font-size: 11pt
 }
 
 .ProseMirror .body {
