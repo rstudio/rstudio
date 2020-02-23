@@ -3,27 +3,26 @@
 
 ## TODO
 
-too much space at top when heading is first element of doc
+after creating a link or image with the UI doc scrolls to top (IDE front end only)
 
 Handling of character escaping and \ around special markup syntax.
-(ability to include html entities?)
+(ability to include html entities?). Add docs on escaping.
 
-Visual interface for raw_html <img> (required for gfm width, etc.)
+link input rule doesn't mesh well with bracematch (also, conflict with autolink). perhaps 
+link detection should be more global?
 
-after creating a link with the UI doc scrolls to top
-
-link input ruule not working?
-
-Visual mode outline doesn't properly outdent
-
-single line of html becomes a block (turn into inline)
+Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
+document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
 
 Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
+
+Backspace key seems to be the culprit for both of the above
 
 DeleteRows DeleteCols gestures for table
 
 ## Enhancements
 
+Images should support width/align for gfm (write raw_html)
 
 Dialog/picker for images
 
@@ -48,7 +47,8 @@ Provide some extra vertical space at the bottom when typing at the bottom
 Should we consider scanning for heading links the way we scan for citations?
 Or should we just get rid of input rules for heading links (and perhaps other 
 links outside of plain links) entirely b/c the behavior is so hard to predict
-and reason about (and this could be worse than no behavior at all)
+and reason about (and this could be worse than no behavior at all). generally,
+what sorts of things should be input rules and what should be full on scanners
 
 Mark input rules should screen whether the mark is valid. Or do they even need to?
 (i.e. the mark will be prevented)
