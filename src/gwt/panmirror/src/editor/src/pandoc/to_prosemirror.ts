@@ -189,9 +189,15 @@ class Parser {
             }
           }
 
+          // trim trailing newline if we have one
+          let text = tok.c[CODE_BLOCK_TEXT] as string;
+          if (text.endsWith('\n')) {
+            text = text.substr(0, text.length - 1);
+          }
+
           // write node
           writer.openNode(nodeType, attr);
-          writer.writeText(tok.c[CODE_BLOCK_TEXT]);
+          writer.writeText(text);
           writer.closeNode();
         };
       }
