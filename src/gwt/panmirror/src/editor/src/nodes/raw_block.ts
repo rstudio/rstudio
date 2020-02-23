@@ -110,15 +110,18 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 function readPandocRawBlock(schema: Schema) {
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
     const format = tok.c[RAW_BLOCK_FORMAT];
-    const text = tok.c[RAW_BLOCK_CONTENT];
+    const text = tok.c[RAW_BLOCK_CONTENT] as string;
 
     // html comments should be read as inline html. this allows them to be
     // edited more naturally in the editor and to be written without
     // raw_block attribute formatting
     const commentRe = /^<!--([\s\S]*?)-->\s*$/;
-    if (format === 'html' && commentRe.test(text)) {
+    if (format === 'html' && text.trimRight().split('\n').length === 1) {
       writer.openNode(schema.nodes.paragraph, {});
-      const mark = schema.marks.raw_inline.create({ format, comment: true });
+      const mark = schema.marks.raw_inline.create({ 
+        format, 
+        comment: commentRe.test(text) 
+      });
       writer.openMark(mark);
       writer.writeText(text.trimRight());
       writer.closeMark(mark);
