@@ -89,8 +89,6 @@ public class PanmirrorDialogs {
       });
    }
 
-   
-   // TODO
    public Promise<PanmirrorLinkEditResult> editLink(
       PanmirrorLinkProps link, PanmirrorLinkTargets targets, PanmirrorLinkCapabilities capabilities)
    {
