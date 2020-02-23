@@ -109,8 +109,6 @@ class EditorPane extends React.Component<EditorPaneProps> {
       },
       {
         autoFocus: true,
-        spellCheck: false,
-        autoLink: true,
         rmdCodeChunks: true,
         codemirror: true,
       },
