@@ -22,6 +22,10 @@
   margin-bottom: 1em;
 }
 
+.pm-content > p:first-child {
+  margin-top: 10px;
+}
+
 /* Pseudo-element so that outline navigation leaves some space above headings */
 .pm-content h1::before,
 .pm-content h2::before,
