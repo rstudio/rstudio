@@ -324,6 +324,7 @@ public class TextEditingTargetVisualMode
          PanmirrorContext context = new PanmirrorContext(uiContext());
          
          PanmirrorOptions options = new PanmirrorOptions();
+         options.autoLink = true;
          options.rmdCodeChunks = true;
            
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
