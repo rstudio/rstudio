@@ -2743,7 +2743,7 @@ public class TextEditingTarget implements
    private void fixupCodeBeforeSaving(Command ready)
    { 
       // sync edits from visual mode if it's active
-      visualMode_.sync(() -> {
+      visualMode_.syncToEditor(() -> {
          
          int lineCount = docDisplay_.getRowCount();
          if (lineCount < 1)
@@ -6628,7 +6628,7 @@ public class TextEditingTarget implements
 
                      if (!dirtyState_.getValue())
                      {
-                        docUpdateSentinel_.revert();
+                        revertEdits();
                      }
                      else
                      {
@@ -6646,7 +6646,7 @@ public class TextEditingTarget implements
                                  public void execute()
                                  {
                                     isWaitingForUserResponseToExternalEdit_ = false;
-                                    docUpdateSentinel_.revert();
+                                    revertEdits();
                                  }
                               },
                               new Operation()
@@ -6672,6 +6672,15 @@ public class TextEditingTarget implements
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void revertEdits()
+   {
+      docUpdateSentinel_.revert(() -> {
+         if (visualMode_.isActivated())
+            visualMode_.syncFromEditor(null, true);
+      }, false);
+      
    }
    
    private SourcePosition toSourcePosition(Scope func)

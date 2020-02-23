@@ -109,12 +109,12 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   public void sync()
+   public void syncToEditor()
    {
-      sync(null);
+      syncToEditor(null);
    }
    
-   public void sync(Command ready)
+   public void syncToEditor(Command ready)
    {
       // if panmirror is active then generate markdown & sync it to the editor
       if (isPanmirrorActive() && isDirty_)
@@ -138,6 +138,30 @@ public class TextEditingTargetVisualMode
          if (ready != null)
             ready.execute();
       }
+   }
+
+   
+   public void syncFromEditor(Command ready, boolean focus)
+   {
+      loadingFromSource_ = true;
+      panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+         
+         isDirty_ = false;
+         loadingFromSource_ = false;
+         
+         // activate editor
+         if (ready != null)
+            ready.execute();
+         
+         // restore selection if we have one
+         Scheduler.get().scheduleDeferred(() -> {
+            PanmirrorEditingLocation location = savedEditingLocation();
+            if (location != null)
+               panmirror_.restoreEditingLocation(location);
+            if (focus)
+              panmirror_.focus();
+         });                
+      });
    }
  
    public void manageCommands()
@@ -262,24 +286,7 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               loadingFromSource_ = true;
-               panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
-                  
-                  isDirty_ = false;
-                  loadingFromSource_ = false;
-                  
-                  // activate editor
-                  activator.execute();
-                  
-                  // restore selection if we have one
-                  Scheduler.get().scheduleDeferred(() -> {
-                     PanmirrorEditingLocation location = savedEditingLocation();
-                     if (location != null)
-                        panmirror_.restoreEditingLocation(location);
-                     if (focus)
-                       panmirror_.focus();
-                  });                
-               });
+               syncFromEditor(activator, focus);
             }
             else
             {
@@ -292,7 +299,7 @@ public class TextEditingTargetVisualMode
       else 
       {
          // sync any pending edits, then activate the editor
-         sync(() -> {
+         syncToEditor(() -> {
             
             editorContainer.activateEditor(focus); 
             
@@ -341,7 +348,7 @@ public class TextEditingTargetVisualMode
                protected void execute()
                {
                   if (isDirty_)
-                     sync();
+                     syncToEditor();
                }
             };
             
