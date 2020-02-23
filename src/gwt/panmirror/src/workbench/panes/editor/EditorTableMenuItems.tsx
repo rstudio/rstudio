@@ -50,6 +50,7 @@ const EditorTableMenuItems: React.FC = () => {
       <Menu.Divider />
       <CommandMenuItem id={EditorCommandId.TableDeleteRow} />
       <CommandMenuItem id={EditorCommandId.TableDeleteColumn} />
+      <Menu.Divider />
       <CommandMenuItem id={EditorCommandId.TableDeleteTable} />
     </>
   );
