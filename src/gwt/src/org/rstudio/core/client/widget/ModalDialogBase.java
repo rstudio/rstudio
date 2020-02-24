@@ -182,8 +182,13 @@ public abstract class ModalDialogBase extends DialogBox
    {
       enterDisabled_ = enterDisabled;
    }
-
+   
    public void showModal()
+   {
+      showModal(true);
+   }
+
+   public void showModal(boolean restoreFocus)
    {
       if (mainWidget_ == null)
       {
@@ -194,9 +199,12 @@ public abstract class ModalDialogBase extends DialogBox
          mainPanel_.insert(mainWidget_, 0);
       }
 
-      originallyActiveElement_ = DomUtils.getActiveElement();
-      if (originallyActiveElement_ != null)
-         originallyActiveElement_.blur();
+      if (restoreFocus) 
+      {
+         originallyActiveElement_ = DomUtils.getActiveElement();
+         if (originallyActiveElement_ != null)
+            originallyActiveElement_.blur();
+      }
 
       // position the dialog
       positionAndShowDialog(() ->

@@ -97,7 +97,7 @@ public class PanmirrorDialogs {
             PanmirrorEditLinkDialog dialog = new PanmirrorEditLinkDialog(link, targets, capabilities,
                (result) -> { resolve.onInvoke(result); }
             );
-            dialog.showModal();
+            dialog.showModal(false);
          }   
       );
    }
@@ -109,7 +109,7 @@ public class PanmirrorDialogs {
             PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, editAttributes,
                (result) -> { resolve.onInvoke(result); }
             );
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );      
    }
@@ -122,7 +122,7 @@ public class PanmirrorDialogs {
             PanmirrorEditOrderedListDialog dialog = new PanmirrorEditOrderedListDialog(props, capabilities,
                (result) -> { resolve.onInvoke(result); }
             );
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );
    }
@@ -151,7 +151,7 @@ public class PanmirrorDialogs {
             PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeEnabled, attr, 
                (result) -> { resolve.onInvoke(result); }
             );
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );
    }
@@ -175,7 +175,7 @@ public class PanmirrorDialogs {
             PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, minLines, 
                (result) -> { resolve.onInvoke(result); }
             );
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );
    }
@@ -187,7 +187,7 @@ public class PanmirrorDialogs {
             PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog(capabilities, (result) -> {
                resolve.onInvoke(result);
             });
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );
    }
@@ -200,7 +200,7 @@ public class PanmirrorDialogs {
             PanmirrorInsertCitationDialog dialog = new PanmirrorInsertCitationDialog((result) -> {
                resolve.onInvoke(result);
             });
-            dialog.showModal();
+            dialog.showModal(false);
          }
       );
    }
