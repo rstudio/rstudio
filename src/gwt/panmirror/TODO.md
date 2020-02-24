@@ -3,7 +3,8 @@
 
 ## TODO
 
-after creating a link or image with the UI doc scrolls to top (IDE front end only)
+if the href select control ever receives focus in the link/image dialog then
+when the dialog is dismissed the editor scrolls to the top?
 
 Handling of character escaping and \ around special markup syntax.
 (ability to include html entities?). Add docs on escaping.
