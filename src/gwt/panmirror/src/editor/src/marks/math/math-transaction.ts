@@ -66,7 +66,11 @@ export function mathAppendMarkTransaction(): AppendMarkTransactionHandler {
         const text = dollarNode.text;
         let dollarIdx = text.indexOf('$');
         while (dollarIdx !== -1) {
-          const math = findMath(text.substring(dollarIdx));
+          // look for math (assuming an escape doesn't occur right before)
+          let math : MathMatch = { type: undefined, length: 0 };
+          if (dollarIdx === 0 || text.charAt(dollarIdx - 1) !== '\\') {
+            math = findMath(text.substring(dollarIdx))
+          }
           if (math.type) {
             const from = pos + 1 + dollarNode.pos + dollarIdx;
             const to = from + math.length;
@@ -92,7 +96,12 @@ const hasUnmarkedDollar = (node: ProsemirrorNode, parentNode: ProsemirrorNode) =
   );
 };
 
-function findMath(str: string): { type: MathType | undefined; length: number } {
+interface MathMatch {
+  type: MathType | undefined; 
+  length: number;
+}
+
+function findMath(str: string): MathMatch {
   // look for display math
   const displayMatch = str.match(/^\$\$.*\$\$/);
   if (displayMatch) {
