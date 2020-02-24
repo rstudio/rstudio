@@ -155,7 +155,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
       return [
         new ProsemirrorCommand(
           EditorCommandId.Link,
-          ['Shift-Mod-v'],
+          ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
         ),
       ];
