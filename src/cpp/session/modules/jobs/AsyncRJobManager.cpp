@@ -121,7 +121,7 @@ Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
    job->registerJob();
 
    // remove the job from the registry when it's done
-   job->addOnComplete([&]() 
+   job->addOnComplete([=]() 
    { 
       // remove the job from the list of those running
       s_jobs.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
