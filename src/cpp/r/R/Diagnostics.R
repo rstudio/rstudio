@@ -240,7 +240,7 @@ sensitive information before submitting your diagnostics report.
 })
 
 footer <- c(
-  paste("Diagnotics report written to:", diagnosticsFile),
+  paste("Diagnostics report written to:", diagnosticsFile),
   "Please audit the report and remove any sensitive information before sharing this report with RStudio."
 )
 
