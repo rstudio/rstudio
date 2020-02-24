@@ -3,20 +3,14 @@
 
 ## TODO
 
-Docs on Math and inline html/latex
+Outline navigation is off by 1
 
-Add docs on escaping (derived from inlines, can escape $, \, and <)
+ Math with embedded latex messed up, e.g.  $\sqrt{x}=5$
 
-Docs on more advanced constructs (insert menu w/ yaml, code chunks, etc.)
-Docs on tables?
-Perhaps some menu screenshots to provide a better sense?
-  
-Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
-document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
+ Display math round-tripping ends up duplicating $$
 
-Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
+Using brackets creates math!
 
-Backspace key seems to be the culprit for both of the above
 
 DeleteRows DeleteCols gestures for table
 Insert Multiple Rows for table?
@@ -45,11 +39,11 @@ Cursor location for insert yaml in the middle of paragraph
 
 Provide some extra vertical space at the bottom when typing at the bottom
 
-Should we consider scanning for heading links the way we scan for citations?
-Or should we just get rid of input rules for heading links (and perhaps other 
-links outside of plain links) entirely b/c the behavior is so hard to predict
-and reason about (and this could be worse than no behavior at all). generally,
-what sorts of things should be input rules and what should be full on scanners
+- Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
+document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
+- Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
+- Backspace key seems to be the culprit for both of the above
+
 
 Mark input rules should screen whether the mark is valid. Or do they even need to?
 (i.e. the mark will be prevented)
