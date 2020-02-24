@@ -53,7 +53,11 @@ export async function imageDialog(
     // content if the alt/caption actually changed (as it will blow away formatting)
     if (type === ImageType.Figure) {
       if (image.alt !== result.alt) {
-        content = Fragment.from(state.schema.text(result.alt));
+        if (result.alt) {
+          content = Fragment.from(state.schema.text(result.alt));
+        } else {
+          content = Fragment.empty;
+        }
       }
     }
 
