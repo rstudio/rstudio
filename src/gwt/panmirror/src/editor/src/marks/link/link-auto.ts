@@ -20,19 +20,12 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { markInputRule } from '../../api/mark';
 import { markPasteHandler } from '../../api/clipboard';
-import { EditorOutlineItem } from '../../api/outline';
-
-import { getOutline } from '../../behaviors/outline';
 
 export function linkInputRules(autoLink: boolean, headingLink: boolean) {
   return (schema: Schema) => {
     const rules = [
       // <link> style link
-      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, (match: string[]) => ({ href: match[1] })),
-      // full markdown link
-      markInputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, schema.marks.link, (match: string[]) => ({
-        href: match[2],
-      })),
+      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, (match: string[]) => ({ href: match[1] }))
     ];
 
     if (autoLink) {
@@ -46,37 +39,6 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
           tr.insertText(' ');
           setTextSelection(end + 1)(tr);
           return tr;
-        }),
-      );
-    }
-
-    if (headingLink) {
-      rules.push(
-        new InputRule(/(?:\[)([^@]+)(?:\] )/, (state: EditorState, match: string[], start: number, end: number) => {
-          // check to see if the text matches a heading
-          const text = match[1];
-          const outline = getOutline(state);
-          const hasMatchingHeading = (item: EditorOutlineItem) => {
-            if (item.type === 'heading' && item.title === text) {
-              return true;
-            } else {
-              return item.children.some(hasMatchingHeading);
-            }
-          };
-          if (outline.some(hasMatchingHeading)) {
-            const tr = state.tr;
-            tr.addMark(
-              start + 1,
-              start + 1 + text.length,
-              state.schema.marks.link.create({ href: text, heading: text }),
-            );
-            tr.delete(start, start + 1);
-            tr.delete(end - 2, end - 1);
-            tr.insertText(' ');
-            return tr;
-          } else {
-            return null;
-          }
         }),
       );
     }
