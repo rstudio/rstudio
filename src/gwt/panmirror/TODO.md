@@ -3,15 +3,13 @@
 
 ## TODO
 
-if the href select control ever receives focus in the link/image dialog then
-when the dialog is dismissed the editor scrolls to the top?
+Docs on Math and inline html/latex
 
-Handling of character escaping and \ around special markup syntax.
-(ability to include html entities?). Add docs on escaping.
+Add docs on escaping (derived from inlines, can escape $, \, and <)
 
-link input rule doesn't mesh well with bracematch (also, conflict with autolink). perhaps 
-link detection should be more global?
+Docs on more advanced constructs (insert menu w/ yaml, code chunks, etc.)
 
+  
 Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
 document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
 
@@ -20,6 +18,7 @@ Observed a situation with a table above another table, where attemptign to selec
 Backspace key seems to be the culprit for both of the above
 
 DeleteRows DeleteCols gestures for table
+Insert Multiple Rows for table?
 
 ## Enhancements
 
