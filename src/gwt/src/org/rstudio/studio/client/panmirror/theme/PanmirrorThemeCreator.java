@@ -75,7 +75,7 @@ public class PanmirrorThemeCreator
       double fontSize = prefs.fontSizePoints().getValue();
       fontSize = fontSize + BrowseCap.getFontSkew();
       theme.fixedWidthFont = ThemeFonts.getFixedWidthFont();
-      theme.fixedWidthFontSizePt = fontSize;
+      theme.fixedWidthFontSizePt = fontSize + 1;
       theme.proportionalFont = ThemeFonts.getProportionalFont();
       theme.proportionalFontSizePt = fontSize + 1;
       
