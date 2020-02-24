@@ -8,7 +8,8 @@ Docs on Math and inline html/latex
 Add docs on escaping (derived from inlines, can escape $, \, and <)
 
 Docs on more advanced constructs (insert menu w/ yaml, code chunks, etc.)
-
+Docs on tables?
+Perhaps some menu screenshots to provide a better sense?
   
 Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
 document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
