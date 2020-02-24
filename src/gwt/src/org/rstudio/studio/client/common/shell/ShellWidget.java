@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -72,7 +73,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events, AriaLiveService ariaLive)
+   public ShellWidget(AceEditor editor,
+                      UserPrefs prefs,
+                      EventBus events,
+                      AriaLiveService ariaLive,
+                      String outputLabel)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
@@ -186,6 +191,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
+      if (!StringUtil.isNullOrEmpty(outputLabel))
+      {
+         Roles.getRegionRole().set(output_.getElement());
+         Roles.getRegionRole().setAriaLabelProperty(output_.getElement(), outputLabel);
+      }
       verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
