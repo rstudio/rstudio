@@ -15,8 +15,10 @@
 
 #include <core/Database.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
 
@@ -124,6 +126,12 @@ public:
       try
       {
          boost::shared_ptr<Connection> pConnection(new Connection(soci::sqlite3, "dbname=\"" + options.file + "\""));
+
+         // foreign keys must explicitly be enabled for sqlite
+         Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
+         if (error)
+            return error;
+
          *pPtrConnection_ = pConnection;
          return Success();
       }
@@ -203,13 +211,37 @@ Error Connection::execute(Query& query,
          *pDataReturned = result;
 
       query.statement_.bind_clean_up();
+
+      return Success();
    }
    catch (soci::soci_error& error)
    {
       return DatabaseError(error);
    }
+}
 
-   return Success();
+Error Connection::executeStr(const std::string& queryStr)
+{
+   try
+   {
+      // SOCI backends do not necessarily support running multiple statements
+      // in one invocation - to work around this, we split any passed in SQL
+      // into one invocation per SQL statement (delimited by ;)
+      std::vector<std::string> queries;
+      boost::split(queries, queryStr, boost::is_any_of(";"));
+      for (std::string& query : queries)
+      {
+         query = string_utils::trimWhitespace(query);
+         if (!query.empty())
+            session_ << query;
+      }
+
+      return Success();
+   }
+   catch (soci::soci_error& error)
+   {
+      return DatabaseError(error);
+   }
 }
 
 std::string Connection::driverName() const
@@ -238,6 +270,11 @@ Error PooledConnection::execute(Query& query,
                                 bool* pDataReturned)
 {
    return connection_->execute(query, pDataReturned);
+}
+
+Error PooledConnection::executeStr(const std::string& queryStr)
+{
+   return connection_->executeStr(queryStr);
 }
 
 std::string PooledConnection::driverName() const
@@ -283,14 +320,35 @@ SchemaUpdater::SchemaUpdater(const boost::shared_ptr<Connection>& connection,
 {
 }
 
-Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
+Error SchemaUpdater::migrationFiles(std::vector<FilePath>* pMigrationFiles)
 {
-   std::vector<FilePath> migrationFiles;
-   Error error = migrationsPath_.getChildren(migrationFiles);
+   std::vector<FilePath> children;
+   Error error = migrationsPath_.getChildren(children);
    if (error)
       return error;
 
-   if (migrationFiles.empty())
+   for (const FilePath& file : children)
+   {
+      std::string extension = file.getExtensionLowerCase();
+      if (extension == SQL_EXTENSION ||
+          extension == SQLITE_EXTENSION ||
+          extension == POSTGRESQL_EXTENSION)
+      {
+         pMigrationFiles->push_back(file);
+      }
+   }
+
+   return Success();
+}
+
+Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
+{
+   std::vector<FilePath> files;
+   Error error = migrationFiles(&files);
+   if (error)
+      return error;
+
+   if (files.empty())
    {
       // no migration files - we do not consider this an error, but instead
       // simply consider that this database cannot be migrated past version 0
@@ -303,23 +361,23 @@ Error SchemaUpdater::highestMigrationVersion(std::string* pVersion)
    {
       return a.getStem() > b.getStem();
    };
-   std::sort(migrationFiles.begin(), migrationFiles.end(), comparator);
+   std::sort(files.begin(), files.end(), comparator);
 
-   *pVersion = migrationFiles.at(0).getStem();
+   *pVersion = files.at(0).getStem();
    return Success();
 }
 
 Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
 {
    std::string queryStr;
-   if (connection_->driverName() == "sqlite3")
+   if (connection_->driverName() == SQLITE_DRIVER)
    {
-      queryStr = "SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='rstudio_version'";
+      queryStr = std::string("SELECT COUNT(1) FROM sqlite_master WHERE type='table' AND name='") + SCHEMA_TABLE + "'";
    }
-   else if (connection_->driverName() == "postgresql")
+   else if (connection_->driverName() == POSTGRESQL_DRIVER)
    {
-      queryStr = "SELECT COUNT(1) FROM information_schema.tables WHERE table_name='rstudio_version'"
-                 " AND table_schema = current_schema";
+      queryStr = std::string("SELECT COUNT(1) FROM information_schema.tables WHERE table_name='") + SCHEMA_TABLE +
+                 "' AND table_schema = current_schema";
    }
    else
    {
@@ -327,7 +385,8 @@ Error SchemaUpdater::isSchemaVersionPresent(bool* pIsPresent)
    }
 
    int count = 0;
-   Query query = connection_->query(queryStr);
+   Query query = connection_->query(queryStr)
+         .withOutput(count);
    Error error = connection_->execute(query);
    if (error)
       return error;
@@ -346,11 +405,23 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
    std::string currentSchemaVersion = "0";
    if (!versionPresent)
    {
+      // no schema version present - add the table to the database so it is available
+      // for updating whenever migrations occur
+      error = connection_->executeStr(std::string("CREATE TABLE ") + SCHEMA_TABLE + "(current_version text)");
+      if (error)
+         return error;
+
+      Query query = connection_->query(std::string("INSERT INTO ") + SCHEMA_TABLE + " VALUES (:val)")
+            .withInput(currentSchemaVersion);
+      error = connection_->execute(query);
+      if (error)
+         return error;
+
       *pVersion = currentSchemaVersion;
       return Success();
    }
 
-   Query query = connection_->query("SELECT current_version FROM rstudio_version")
+   Query query = connection_->query(std::string("SELECT current_version FROM ") + SCHEMA_TABLE)
          .withOutput(currentSchemaVersion);
 
    error = connection_->execute(query);
@@ -384,18 +455,46 @@ Error SchemaUpdater::update()
    if (error)
       return error;
 
-   return updateToVersion(migrationVersion);
+   std::string currentVersion;
+   error = databaseSchemaVersion(&currentVersion);
+   if (currentVersion < migrationVersion)
+      return updateToVersion(migrationVersion);
+   else
+      return Success();
 }
 
 Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 {
+   // create a transaction to perform the following steps:
+   // 1. Check the current database schema version
+   // 2. Check if we need to update
+   // 3. Update (if necessary)
+   // 4. Save new database schema version
+   // performing this in a transaction ensures that we rollback if anything
+   // fails, and also ensures that other nodes cannot update concurrently
+   Transaction transaction(connection_);
+
+   // for postgresql, specifically lock the version table in exclusive mode
+   // to ensure that no other connection can use the version table AT ALL
+   // during this schema update
+   if (connection_->driverName() == POSTGRESQL_DRIVER)
+   {
+      Query query = connection_->query(std::string("LOCK ") + SCHEMA_TABLE + " IN ACCESS EXCLUSIVE MODE");
+      Error error = connection_->execute(query);
+      if (error)
+         return error;
+   }
+
    std::string currentVersion;
    Error error = databaseSchemaVersion(&currentVersion);
    if (error)
       return error;
 
-   std::vector<FilePath> migrationFiles;
-   error = migrationsPath_.getChildren(migrationFiles);
+   if (currentVersion >= maxVersion)
+      return Success();
+
+   std::vector<FilePath> files;
+   error = migrationFiles(&files);
    if (error)
       return error;
 
@@ -404,9 +503,9 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
    {
       return a.getStem() < b.getStem();
    };
-   std::sort(migrationFiles.begin(), migrationFiles.end(), comparator);
+   std::sort(files.begin(), files.end(), comparator);
 
-   for (const FilePath& migrationFile : migrationFiles)
+   for (const FilePath& migrationFile : files)
    {
       // if the version has already been applied (database version is newer or same)
       // then skip this particular migration
@@ -415,33 +514,46 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
       bool applyMigration = false;
 
-      if (migrationFile.getExtensionLowerCase() == ".sql")
+      if (migrationFile.getExtensionLowerCase() == SQL_EXTENSION)
       {
          // plain sql - apply the migration
          applyMigration = true;
       }
-      else if (migrationFile.getExtensionLowerCase() == ".sqlite")
+      else if (migrationFile.getExtensionLowerCase() == SQLITE_EXTENSION)
       {
          // sqlite file - only apply migration if we are connected to a SQLite database
-         applyMigration = connection_->driverName() == "sqlite3";
+         applyMigration = connection_->driverName() == SQLITE_DRIVER;
       }
-      else if (migrationFile.getExtensionLowerCase() == ".postgresql")
+      else if (migrationFile.getExtensionLowerCase() == POSTGRESQL_EXTENSION)
       {
          // postgresql file - only apply migration if we are connected to a PostgreSQL database
-         applyMigration = connection_->driverName() == "postgresql";
+         applyMigration = connection_->driverName() == POSTGRESQL_DRIVER;
       }
 
       if (!applyMigration)
          continue;
 
       // we are clear to apply the migration
+      // load the file and execute its SQL contents
+      std::string fileContents;
+      error = readStringFromFile(migrationFile, &fileContents);
+      if (error)
+         return error;
+
+      error = connection_->executeStr(fileContents);
+      if (error)
+         return error;
+
+      // record the new version in the version table
+      std::string version = migrationFile.getStem();
+      Query updateVersionQuery = connection_->query(std::string("UPDATE ") + SCHEMA_TABLE + " SET current_version = (:ver)")
+            .withInput(version);
+      error = connection_->execute(updateVersionQuery);
+      if (error)
+         return error;
    }
 
-   return Success();
-}
-
-Error SchemaUpdater::applyUpdate(const std::string& version)
-{
+   transaction.commit();
    return Success();
 }
 

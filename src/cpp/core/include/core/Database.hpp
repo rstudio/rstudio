@@ -98,8 +98,11 @@ class IConnection
 {
 public:
    virtual Query query(const std::string& sqlStatement) = 0;
+
    virtual Error execute(Query& query,
                          bool* pDataReturned = nullptr) = 0;
+
+   virtual Error executeStr(const std::string& queryStr) = 0;
 
    virtual std::string driverName() const = 0;
 };
@@ -112,6 +115,7 @@ public:
    Query query(const std::string& sqlStatement) override;
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
+   Error executeStr(const std::string& queryStr) override;
 
    std::string driverName() const override;
 
@@ -134,6 +138,7 @@ public:
    Query query(const std::string& sqlStatement) override;
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
+   Error executeStr(const std::string& queryStr) override;
 
    std::string driverName() const override;
 
@@ -180,6 +185,9 @@ private:
    soci::transaction transaction_;
 };
 
+static constexpr const char* SQLITE_DRIVER = "sqlite3";
+static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
+
 class SchemaUpdater
 {
 public:
@@ -192,9 +200,6 @@ public:
    // updates the database schema to the specified version
    Error updateToVersion(const std::string& maxVersion);
 
-   // applies a particular database schema update
-   Error applyUpdate(const std::string& version);
-
    // returns whether or not the schema is up-to-date with the latest schema version
    Error isUpToDate(bool* pUpToDate);
 
@@ -202,12 +207,20 @@ public:
    Error databaseSchemaVersion(std::string* pVersion);
 
 private:
+   static constexpr const char* SCHEMA_TABLE = "schema_version";
+   static constexpr const char* SQL_EXTENSION = ".sql";
+   static constexpr const char* SQLITE_EXTENSION = ".sqlite";
+   static constexpr const char* POSTGRESQL_EXTENSION = ".postgresql";
+
    // returns whether or not a schema version is present in the database
    Error isSchemaVersionPresent(bool* pIsPresent);
 
    // returns the highest version that can be migrated to with the migrations
    // specified when constructing this SchemaUpdater
    Error highestMigrationVersion(std::string* pVersion);
+
+   // gets the actual migration files from the migration path
+   Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
 
    boost::shared_ptr<Connection> connection_;
    FilePath migrationsPath_;
