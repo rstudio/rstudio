@@ -36,11 +36,6 @@ const extension: Extension = {
         ],
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           let text = node.textContent;
-
-          // we allow escaping of \ and < (to avoid creating unintential raw inlines)
-          text = text.replace(/\\\\(\w)/, '\\$1');
-          text = text.replace('\\<', '<');
-
           output.writeText(text);
         },
       },
