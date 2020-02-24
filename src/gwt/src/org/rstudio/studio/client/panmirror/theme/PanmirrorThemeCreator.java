@@ -75,9 +75,9 @@ public class PanmirrorThemeCreator
       double fontSize = prefs.fontSizePoints().getValue();
       fontSize = fontSize + BrowseCap.getFontSkew();
       theme.fixedWidthFont = ThemeFonts.getFixedWidthFont();
-      theme.fixedWidthFontSizePt = fontSize + 1;
+      theme.fixedWidthFontSizePt = fontSize;
       theme.proportionalFont = ThemeFonts.getProportionalFont();
-      theme.proportionalFontSizePt = fontSize + 2;
+      theme.proportionalFontSizePt = fontSize + 1;
       
       PanmirrorThemeCode code = new PanmirrorThemeCode();
       code.keywordColor = DomUtils.extractCssValue("ace_keyword", "color");

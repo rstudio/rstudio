@@ -20,6 +20,7 @@
 .pm-content p {
   margin-top: 0;
   margin-bottom: 1em;
+  line-height: 1.5;
 }
 
 .pm-content > p:first-child {
