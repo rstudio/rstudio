@@ -47,6 +47,7 @@ const extension: Extension = {
           type: {},
         },
         inclusive: false,
+        excludes: "_",
         parseDOM: [
           {
             tag: "span[class*='math']",
