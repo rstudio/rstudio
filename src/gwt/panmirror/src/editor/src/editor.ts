@@ -321,7 +321,7 @@ export class Editor {
     this.applyLayoutFixups();
 
     // do the conversion
-    return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);
+    return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
   }
 
   public getHTML(): string {

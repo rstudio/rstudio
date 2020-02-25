@@ -28,22 +28,25 @@ import {
 } from '../api/pandoc';
 
 import { uuidv4 } from '../api/util';
+import { PandocFormat } from '../api/pandoc_format';
 
 export function pandocFromProsemirror(
   doc: ProsemirrorNode,
   apiVersion: PandocApiVersion,
+  format: PandocFormat,
   nodeWriters: readonly PandocNodeWriter[],
   markWriters: readonly PandocMarkWriter[],
 ) {
   const bodyNode = doc.child(0);
   const notesNode = doc.child(1);
-  const writer = new PandocWriter(apiVersion, nodeWriters, markWriters, notesNode);
+  const writer = new PandocWriter(apiVersion, format, nodeWriters, markWriters, notesNode);
   writer.writeNodes(bodyNode);
   return writer.output();
 }
 
 class PandocWriter implements PandocOutput {
   private readonly ast: PandocAst;
+  private readonly format: PandocFormat;
   private readonly rawMarkdown: { [key: string]: string };
   private readonly nodeWriters: { [key: string]: PandocNodeWriterFn };
   private readonly markWriters: { [key: string]: PandocMarkWriter };
@@ -54,10 +57,13 @@ class PandocWriter implements PandocOutput {
 
   constructor(
     apiVersion: PandocApiVersion,
+    format: PandocFormat,
     nodeWriters: readonly PandocNodeWriter[],
     markWriters: readonly PandocMarkWriter[],
     notes: ProsemirrorNode,
   ) {
+    // save format
+    this.format = format;
     // create maps of node and mark writers
     this.nodeWriters = {};
     nodeWriters.forEach((writer: PandocNodeWriter) => {
@@ -185,14 +191,23 @@ class PandocWriter implements PandocOutput {
   public writeText(text: string | null) {
     if (text) {
       let textRun = '';
+      const flushTextRun = () => {
+        if (textRun) {
+          this.writeToken(PandocTokenType.Str, textRun);
+          textRun = '';
+        }
+      };
       for (let i=0; i<text.length; i++) {
         const ch = text.charAt(i);
         if (this.options.writeSpaces && ch === ' ') {
-          if (textRun) {
-            this.writeToken(PandocTokenType.Str, textRun);
-            textRun = '';
-          }
+          flushTextRun()
           this.writeToken(PandocTokenType.Space);
+        } else if (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch)) {
+          flushTextRun();
+          this.writeToken(PandocTokenType.RawInline, () => {
+            this.write('markdown');
+            this.write(ch);
+          });
         } else {
           textRun += ch;
         }

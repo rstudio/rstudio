@@ -321,7 +321,7 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         String format = "markdown+autolink_bare_uris";
+         String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
          PanmirrorContext context = new PanmirrorContext(format, uiContext());
          
          PanmirrorOptions options = new PanmirrorOptions();

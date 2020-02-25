@@ -30,7 +30,7 @@ import {
   PandocPostprocessorFn,
 } from '../api/pandoc';
 
-import { pandocFormatWith } from '../api/pandoc_format';
+import { pandocFormatWith, PandocFormat } from '../api/pandoc_format';
 
 import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
@@ -95,16 +95,16 @@ export class PandocConverter {
     return doc;
   }
 
-  public async fromProsemirror(doc: ProsemirrorNode, format: string, options: PandocWriterOptions): Promise<string> {
+  public async fromProsemirror(doc: ProsemirrorNode, pandocFormat: PandocFormat, options: PandocWriterOptions): Promise<string> {
     if (!this.apiVersion) {
       throw new Error('API version not available (did you call toProsemirror first?)');
     }
 
-    // adjust format
-    format = this.adjustedFormat(format);
-
     // generate pandoc ast
-    const output = pandocFromProsemirror(doc, this.apiVersion, this.nodeWriters, this.markWriters);
+    const output = pandocFromProsemirror(doc, this.apiVersion, pandocFormat, this.nodeWriters, this.markWriters);
+
+    // adjust format
+    let format = this.adjustedFormat(pandocFormat.fullName);
 
     // run ast filters
     let ast = await this.applyAstOutputFilters(output.ast, format, options);
