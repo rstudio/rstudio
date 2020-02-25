@@ -100,6 +100,11 @@ export function fixupTableWidths(view: EditorView) {
   return (tr: Transaction) => {
     const schema = tr.doc.type.schema;
 
+    // don't do fixup if we aren't connected to the DOM
+    if (!view.dom || !view.dom.isConnected) {
+      return tr;
+    }
+
     const tables = findChildrenByType(tr.doc, schema.nodes.table);
     for (const table of tables) {
       // get table width
