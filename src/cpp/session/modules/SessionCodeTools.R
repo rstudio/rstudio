@@ -2287,6 +2287,8 @@
    
    # read the associated source file
    contents <- .rs.readSourceDocument(id)
+   if (is.null(contents))
+      return(character())
 
    # parse to find packages
    packages <- .rs.parsePackageDependencies(contents, extension)

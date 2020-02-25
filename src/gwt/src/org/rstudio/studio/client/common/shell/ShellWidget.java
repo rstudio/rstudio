@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -72,7 +73,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events, AriaLiveService ariaLive)
+   public ShellWidget(AceEditor editor,
+                      UserPrefs prefs,
+                      EventBus events,
+                      AriaLiveService ariaLive,
+                      String outputLabel)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
@@ -186,6 +191,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
+      if (!StringUtil.isNullOrEmpty(outputLabel))
+      {
+         Roles.getRegionRole().set(output_.getElement());
+         Roles.getRegionRole().setAriaLabelProperty(output_.getElement(), outputLabel);
+      }
       verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
@@ -646,8 +656,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
             // Don't drive focus to the input unless there is no selection.
             // Otherwise it would interfere with the ability to select stuff
             // from the output buffer for copying to the clipboard.
-            if (!DomUtils.selectionExists() && isInputOnscreen())
-               input_.setFocus(true);
+            if (DomUtils.selectionExists() || !isInputOnscreen())
+               return;
+            
+            // When focusing Ace, if the user hasn't yet typed anything into
+            // the input line, then Ace will erroneously adjust the scroll
+            // position upwards upon focus. Rather than patching Ace, we instead
+            // just re-scroll to the bottom if we were already scrolled to the
+            // bottom after giving focus to the Ace editor instance.
+            //
+            // https://github.com/rstudio/rstudio/issues/6231
+            boolean wasScrolledToBottom = scrollPanel_.isScrolledToBottom();
+            input_.setFocus(true);
+            if (wasScrolledToBottom)
+               scrollPanel_.scrollToBottom();
          }
       };
    }

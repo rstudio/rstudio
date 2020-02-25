@@ -149,7 +149,7 @@ public class Files
                 DataImportPresenter dataImportPresenter)
    {
       super(view);
-      view_ = view ;
+      view_ = view;
       view_.setObserver(new DisplayObserver());
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
@@ -158,7 +158,7 @@ public class Files
       eventBus_ = eventBus;
       server_ = server;
       fileSystemContext_ = fileSystemContext;
-      globalDisplay_ = globalDisplay ;
+      globalDisplay_ = globalDisplay;
       session_ = session;
       pFilesCopy_ = pFilesCopy;
       pFilesUpload_ = pFilesUpload;
@@ -287,7 +287,7 @@ public class Files
 
    public Display getDisplay()
    {
-      return view_ ;
+      return view_;
    }
    
    // observer for display
@@ -436,11 +436,11 @@ public class Files
       
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
-         return ;
+         return;
 
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "moved"))
-         return ;
+         return;
       
       view_.showFolderPicker(
                         "Choose Folder", 
@@ -466,7 +466,7 @@ public class Files
                    fileParent.getPath() == targetDir.getPath())
                {
                   progress.onError("Invalid target folder");
-                  return ;
+                  return;
                } 
             }
             
@@ -499,7 +499,7 @@ public class Files
       
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
-         return ;
+         return;
       
       // validation: no more than one file selected
       if  (selectedFiles.size() > 1)
@@ -507,12 +507,12 @@ public class Files
          globalDisplay_.showErrorMessage(
                            "Invalid Selection", 
                            "Please select only one file to rename");
-         return ;
+         return;
       }
       
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "renamed"))
-         return ;
+         return;
       
       // perform the rename
       final FileSystemItem file = selectedFiles.get(0);
@@ -527,11 +527,11 @@ public class Files
       
       // validation: some selection exists
       if  (selectedFiles.size() == 0)
-         return ;
+         return;
       
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "deleted"))
-         return ;
+         return;
       
       // confirm delete then execute it
       globalDisplay_.showYesNoMessage(
@@ -789,13 +789,13 @@ public class Files
          }
       };
 
-   private final Display view_ ;
+   private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final WorkbenchContext workbenchContext_;
    private final FilesServerOperations server_;
    private final EventBus eventBus_;
-   private final GlobalDisplay globalDisplay_ ;
+   private final GlobalDisplay globalDisplay_;
    private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private FileSystemItem currentPath_ = FileSystemItem.home();
