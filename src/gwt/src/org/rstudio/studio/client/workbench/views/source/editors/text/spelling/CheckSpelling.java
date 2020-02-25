@@ -184,10 +184,6 @@ public class CheckSpelling
             wordRanges.add(r);
             words.add(docDisplay_.getTextForRange(r));
 
-            SourcePosition startPos = SourcePosition.create(r.getStart().getRow(), r.getStart().getColumn());
-            SourcePosition endPos = SourcePosition.create(r.getEnd().getRow(), r.getEnd().getColumn());
-            docDisplay_.highlightDebugLocation(startPos, endPos, true);
-
             // Check a maximum of N words at a time
             if (wordRanges.size() == 100)
                break;
