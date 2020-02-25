@@ -100,4 +100,16 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-shared-core
       ${Boost_LIBRARIES}
    )
+
+   # Separate test binary for LoggerTests.
+   add_executable(rstudio-shared-core-logger-tests
+      ${TESTS_INCLUDE_DIR}/tests/TestMain.cpp
+      LoggerTestsIndependent.cpp
+      ${SHARED_CORE_HEADER_FILES}
+   )
+
+   target_link_libraries(rstudio-shared-core-logger-tests
+      rstudio-shared-core
+      ${Boost_LIBRARIES}
+   )
 endif()
