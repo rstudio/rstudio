@@ -87,28 +87,28 @@ private:
 TEST_CASE("Log after shutdown")
 {
    // Initialize the log.
-   std::shared_ptr<MockLogDestintation> mockLog(new MockLogDestintation());
-   addLogDestination(std::static_pointer_cast<ILogDestination>(mockLog));
+   addLogDestination(std::shared_ptr<ILogDestination>(new MockLogDestintation()));
 
    // Start a background thread.
-   boost::asio::io_service ioService;
+   std::shared_ptr<boost::asio::io_service> ioService(new boost::asio::io_service());
    std::shared_ptr<boost::thread> thread(
       new boost::thread([&ioService]()
      {
-         boost::asio::io_service::work work(ioService);
-         ioService.run();
+         boost::asio::io_service::work work(*ioService);
+         ioService->run();
      }));
 
    // Post work that will sleep for a second and then log a message.
    boost::asio::post(
-      ioService,
-      [thread]() // Ensure the thread isn't deleted.
+      *ioService,
+      [thread, ioService]() // Ensure the thread isn't deleted.
       {
          sleep(1);
          logDebugMessage("Log something");
       });
 
    // Immediately exit the main process so shutdown beings.
+   atexit([]() { sleep(2); });
 }
 
 } // namespace log
