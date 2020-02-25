@@ -184,26 +184,22 @@ class PandocWriter implements PandocOutput {
 
   public writeText(text: string | null) {
     if (text) {
-      if (this.options.writeSpaces) {
-        let textRun = '';
-        for (let i=0; i<text.length; i++) {
-          const ch = text.charAt(i);
-          if (ch === ' ') {
-            if (textRun) {
-              this.writeToken(PandocTokenType.Str, textRun);
-              textRun = '';
-            }
-            this.writeToken(PandocTokenType.Space);
-          } else {
-            textRun += ch;
+      let textRun = '';
+      for (let i=0; i<text.length; i++) {
+        const ch = text.charAt(i);
+        if (this.options.writeSpaces && ch === ' ') {
+          if (textRun) {
+            this.writeToken(PandocTokenType.Str, textRun);
+            textRun = '';
           }
+          this.writeToken(PandocTokenType.Space);
+        } else {
+          textRun += ch;
         }
-        if (textRun) {
-          this.writeToken(PandocTokenType.Str, textRun);
-        } 
-      } else {
-        this.writeToken(PandocTokenType.Str, text);
       }
+      if (textRun) {
+        this.writeToken(PandocTokenType.Str, textRun);
+      } 
     }
   }
 
