@@ -114,6 +114,21 @@ TEST_CASE("Empty File Path tests")
       CHECK(f.isWithin(f));
       CHECK_FALSE(f.isWithin(FilePath("/some/path")));
    }
+
+   SECTION("Complete path methods")
+   {
+      FilePath f1, f2;
+      FilePath fExpected = FilePath::safeCurrentPath(
+         FilePath("/this/shouldn't/be/used")).completeChildPath("some/path");
+
+      CHECK(f1.completeChildPath("some/path") == fExpected);
+      CHECK_FALSE(f1.completeChildPath("some/path", f2));
+      CHECK(f2 == fExpected);
+      CHECK(f1.completePath("some/path") == fExpected);
+      CHECK(f1.completeChildPath("/some/absolute/path") == f1);
+      CHECK(f1.completeChildPath("/some/absolute/path", f2)); // Error here.
+      CHECK(f2 == f1); // f2 should have been set to f1.
+   }
 }
 
 } // namespace core
