@@ -212,14 +212,13 @@
    contents <- readLines(tutorialFile, encoding = "UTF-8", warn = FALSE)
    yaml <- rmarkdown:::parse_yaml_front_matter(contents)
    
-   desc <- yaml$description
-   if (is.null(desc))
-      desc <- ""
+   title <- .rs.nullCoalesce(yaml$title, "")
+   desc  <- .rs.nullCoalesce(yaml$description, "")
    
    list(
       name        = .rs.scalar(basename(tutorialDir)),
       file        = .rs.scalar(tutorialFile),
-      title       = .rs.scalar(yaml$title),
+      title       = .rs.scalar(title),
       description = .rs.scalar(desc)
    )
 })
