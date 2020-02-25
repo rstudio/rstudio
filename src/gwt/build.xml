@@ -82,7 +82,7 @@
    </target>
 
    <!-- panmirror typescript library -->
-   <property name="node.dir" value="../../dependencies/common/node/10.15.3"/>
+   <property name="node.dir" value="../../dependencies/common/node/10.19.0"/>
    <condition property="node.bin" value="../../../${node.dir}/bin/node">
      <not>
         <os family="windows" />

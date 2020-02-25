@@ -20,7 +20,7 @@ set -e
 source rstudio-tools
 
 # variables that control download + installation process
-NODE_VERSION="10.15.3"
+NODE_VERSION="10.19.0"
 NODE_ROOT="node"
 NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
 NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
