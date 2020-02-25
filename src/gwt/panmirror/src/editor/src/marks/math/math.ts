@@ -202,7 +202,5 @@ export function delimiterForType(type: string) {
 }
 
 export default extensionIfEnabled(extension, [
-  'tex_math_dollars',
-  'tex_math_single_backslash',
-  'tex_math_double_backslash',
+  'tex_math_dollars'
 ]);
