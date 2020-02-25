@@ -3,40 +3,19 @@
 
 ## TODO
 
-Table widths not working
 
-Using brackets creates math!
+Default pandoc format options persist into writing even if gfm specified
 
-DeleteRows DeleteCols gestures for table
-Insert Multiple Rows for table?
+Can we use the pandoc RawBlock token instead of writeRaw?
 
-## Exceptions
+Make character escaping more configurable (don't rely on tex_math_ extension flag)
 
-
-
-User-Agent: Mozilla/5.0 (Macintosh  Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36
-24 Feb 2020 17:59:37 [rserver] ERROR CLIENT EXCEPTION (rsession-jjallaire): 13 exceptions caught: (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function;
-Unknown@-1#-1::google.gwt.event.shared.UmbrellaException: 13 exceptions caught:
-rstudio-0.js@10#639::Throwable.createError
-rstudio-0.js@48#703::Throwable.initializeBackingError
-rstudio-0.js@8#546::Throwable.Throwable
-rstudio-0.js@18#815::Exception.Exception
-rstudio-0.js@18#869::RuntimeException.RuntimeException
-rstudio-0.js@25#34710::UmbrellaException.UmbrellaException
-rstudio-0.js@26#34781::UmbrellaException
-rstudio-0.js@23#34273::HandlerManager.fireEvent
-rstudio-0.js@19#59068::fire
-rstudio-0.js@10#58986::fireNativePreviewEvent
-rstudio-0.js@14#58579::previewEvent
-rstudio-0.js@21#60307::dispatchCapturedMouseEvent
-rstudio-0.js@28#16335::apply
-rstudio-0.js@16#16394::entry0
-rstudio-0.js@14#16373::anonymous
-Client-ID: 3d803b4c-6043-4112-9aa2-0d6b8362b18b
-
+Link input rule doesn't work for enter after link
 
 ## Enhancements
 
+DeleteRows DeleteCols gestures for table
+Insert Multiple Rows for table?
 
 Images should support width/align for gfm (write raw_html)
 
