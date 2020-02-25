@@ -99,7 +99,7 @@ TEST_CASE("Empty File Path tests")
       CHECK(f.getLexicallyNormalPath().empty());
       CHECK(f.getMimeContentType() == "text/plain"); // text/plain is the default.
       CHECK(f.getParent() == f); // Error on getting the parent, so self should be returned.
-      CHECK(f.getRelativePath(FilePath("/a/parent/path")) == "");
+      CHECK(f.getRelativePath(FilePath("/a/parent/path")).empty());
       CHECK(f.getSize() == 0);
       CHECK(f.getSizeRecursive() == 0);
       CHECK(f.getStem().empty());
