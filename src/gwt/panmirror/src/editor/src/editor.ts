@@ -318,6 +318,9 @@ export class Editor {
       options.wrapColumn = formatComment.fillColumn || options.wrapColumn;
     }
 
+    // apply layout fixups
+    this.applyLayoutFixups();
+
     // do the conversion
     return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat.fullName, options);
   }
