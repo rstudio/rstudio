@@ -13,7 +13,48 @@
 #
 #
 
-.rs.addFunction("topoSortPackages", function
+.rs.addFunction("topoSortPackages", function(nodes, edges) {
+   # List of sorted packages
+   sorted <- c()
+
+   # All nodes are unvisited to begin with
+   visited <- c()
+
+   # Define recursive descent function for dependencies
+   visit <- function(node, stack) {
+      if (node %in% visited) {
+         return()
+      }
+      if (node %in% stack) {
+         # We visited this node while visiting itself; this is a dependency loop.
+         stop("Package dependency graph is not a directed acyclic graph.")
+      }
+
+      # Visit all the edges of this node
+      stack <- c(stack, node)
+      for (edge in edges) {
+         if (identical(edge$from, node)) {
+            visit(edge$to, stack)
+         }
+      }
+
+      visited <<- c(visited, node)
+      sorted <<- c(sorted, node)
+   }
+
+   # Keep visiting unvisited nodes until we have visited all of them
+   while (length(visited) < length(nodes)) {
+      for (node in nodes) {
+         if (!(node %in% visited)) {
+            visit(node, c())
+            break
+         }
+      }
+   }
+
+   # Return topologically sorted list
+   sorted
+})
 
 .rs.addFunction("expandPkgDependencies", function(dependencies) {
    .rs.expandDependencies(available.packages(), dependencies)
@@ -23,10 +64,7 @@
    nodes <- c()
 
    # A vector of lists, with "from" and "to" named elements giving the dependencies
-   edges <- c()
-
-   # Read the available packages database to discover package dependency information
-   available <- available.packages()
+   edges <- list()
 
    # Get the dependencies of each package
 	for (dep in dependencies) {
@@ -34,7 +72,7 @@
       nodes <- c(nodes, dep)
 
       # Dependencies are discovered from these three fields
-		fields <- ("Depends", "Imports", "LinkingTo")
+		fields <- c("Depends", "Imports", "LinkingTo")
 		data <- lapply(fields, function(field) {
 			# Read contents for field (ignore if no contents)
 			contents <- available[dep$name, field]
@@ -67,7 +105,7 @@
 
          pkgNames <- vapply(matches, `[[`, 2L, FUN.VALUE = character(1))
          for (pkgName in pkgNames) {
-            edges <- c(edges, list(from = dep$name, to = pkgName))
+            edges <- append(edges, list(list(from = dep$name, to = pkgName)))
          }
 		})
 	}

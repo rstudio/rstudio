@@ -120,22 +120,22 @@ struct Dependency
    SEXP asSEXP(r::sexp::Protect *protect) const
    {
       SEXP dep = r::sexp::createList(std::vector<std::string>(), protect);
-      Error error = setNamedListElement(dep, "name", name);
+      Error error = r::sexp::setNamedListElement(dep, "name", name);
       if (error)
          LOG_ERROR(error);
-      error = setNamedListElement(dep, "location", location);
+      error = r::sexp::setNamedListElement(dep, "location", location);
       if (error)
          LOG_ERROR(error);
-      error = setNamedListElement(dep, "version", version);
+      error = r::sexp::setNamedListElement(dep, "version", version);
       if (error)
          LOG_ERROR(error);
-      error = setNamedListElement(dep, "source", source);
+      error = r::sexp::setNamedListElement(dep, "source", source);
       if (error)
          LOG_ERROR(error);
-      error = setNamedListElement(dep, "availableVersion", availableVersion);
+      error = r::sexp::setNamedListElement(dep, "availableVersion", availableVersion);
       if (error)
          LOG_ERROR(error);
-      error = setNamedListElement(dep, "versionSatisifed", versionSatisfied);
+      error = r::sexp::setNamedListElement(dep, "versionSatisifed", versionSatisfied);
       if (error)
          LOG_ERROR(error);
       return dep;
@@ -495,6 +495,7 @@ Error initialize()
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionDependencies.R"))
       (bind(registerRpcMethod, "unsatisfied_dependencies", unsatisfiedDependencies))
       (bind(registerRpcMethod, "install_dependencies", installDependencies));
    return initBlock.execute();
