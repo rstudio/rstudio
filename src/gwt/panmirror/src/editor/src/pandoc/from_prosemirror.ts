@@ -27,7 +27,6 @@ import {
   PandocOutputOption,
 } from '../api/pandoc';
 
-import { uuidv4 } from '../api/util';
 import { PandocFormat } from '../api/pandoc_format';
 
 export function pandocFromProsemirror(
@@ -47,7 +46,6 @@ export function pandocFromProsemirror(
 class PandocWriter implements PandocOutput {
   private readonly ast: PandocAst;
   private readonly format: PandocFormat;
-  private readonly rawMarkdown: { [key: string]: string };
   private readonly nodeWriters: { [key: string]: PandocNodeWriterFn };
   private readonly markWriters: { [key: string]: PandocMarkWriter };
   private readonly notes: { [key: string]: ProsemirrorNode };
@@ -78,8 +76,6 @@ class PandocWriter implements PandocOutput {
     notes.forEach((note: ProsemirrorNode) => {
       this.notes[note.attrs.ref] = note;
     });
-    // create md content
-    this.rawMarkdown = {};
 
     this.ast = {
       blocks: [],
@@ -96,7 +92,6 @@ class PandocWriter implements PandocOutput {
   public output() {
     return {
       ast: this.ast,
-      rawMarkdown: this.rawMarkdown,
     };
   }
 
@@ -312,9 +307,6 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeRawMarkdown(markdown: Fragment | string) {
-    // allocate unique id
-    const id = this.uniqueId();
-
     // collect markdown text if necessary
     let md = '';
     if (markdown instanceof Fragment) {
@@ -324,11 +316,10 @@ class PandocWriter implements PandocOutput {
       md = markdown;
     }
 
-    // record
-    this.rawMarkdown[id] = md;
-
-    // write the token
-    this.writeToken(PandocTokenType.Str, id);
+    this.writeToken(PandocTokenType.RawInline, () => {
+      this.write('markdown');
+      this.write(md);
+    });
   }
 
   public withOption(option: PandocOutputOption, value: boolean, f: () => void) {
@@ -342,9 +333,5 @@ class PandocWriter implements PandocOutput {
     this.containers.push(container);
     content();
     this.containers.pop();
-  }
-
-  private uniqueId() {
-    return 'id-' + uuidv4();
   }
 }

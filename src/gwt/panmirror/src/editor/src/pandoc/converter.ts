@@ -130,11 +130,6 @@ export class PandocConverter {
     // apply markdown filters
     markdown = this.applyMarkdownOutputFilters(markdown);
 
-    // substitue raw markdown blocks
-    Object.keys(output.rawMarkdown).forEach(id => {
-      markdown = markdown.replace(id, output.rawMarkdown[id]);
-    });
-
     // return markdown
     return markdown;
   }
