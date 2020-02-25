@@ -1,7 +1,7 @@
 /*
  * SessionUserPrefsMigration.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <r/session/RSession.hpp>
 
@@ -149,6 +150,7 @@ core::Error migratePrefs(const FilePath& src)
 {
    json::Object srcPrefs;
    json::Object destPrefs;
+   json::Object destState;
 
    // Read the old settings file
    Settings settings; 
@@ -246,6 +248,30 @@ core::Error migratePrefs(const FilePath& src)
    destPrefs[kLatexShellEscape] = settings.getBool("enableLaTeXShellEscape", false);
    destPrefs[kCleanTexi2dviOutput] = settings.getBool("cleanTexi2DviOutput", true);
    destPrefs[kUseSecureDownload] = settings.getBool("securePackageDownload", true);
+
+   // Migrate state 
+   std::string contextId = settings.get("contextIdentifier");
+   if (!contextId.empty())
+      destState[kContextId] = contextId;
+   std::string agreementHash = settings.get("agreedToHash");
+   if (!agreementHash.empty())
+      destState[kAgreementHash] = agreementHash;
+   int handlerType = settings.getInt("errorHandlerType", 1);
+   if (handlerType == 0)
+      destState[kErrorHandlerType] = kErrorHandlerTypeMessage;
+   else if (handlerType == 1)
+      destState[kErrorHandlerType] = kErrorHandlerTypeTraceback;
+   else if (handlerType == 2)
+      destState[kErrorHandlerType] = kErrorHandlerTypeBreak;
+   else if (handlerType == 3)
+      destState[kErrorHandlerType] = kErrorHandlerTypeCustom;
+   else if (handlerType == 4)
+      destState[kErrorHandlerType] = kErrorHandlerTypeNotebook;
+
+   // Commit migrated state (state is runtime recoverable so don't hard fail)
+   err = userState().writeLayer(STATE_LAYER_USER, destState);
+   if (err)
+      LOG_ERROR(err);
 
    // Write the accumulated preferences to our user prefs layer
    return userPrefs().writeLayer(PREF_LAYER_USER, destPrefs); 

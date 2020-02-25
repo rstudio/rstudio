@@ -26,6 +26,11 @@ void RemoteDesktopSessionLauncher::launchFirstSession(const core::FilePath& inst
 {
 }
 
+std::map<std::string, QNetworkCookie> RemoteDesktopSessionLauncher::getCookies()
+{
+   return std::map<std::string, QNetworkCookie>();
+}
+
 void RemoteDesktopSessionLauncher::onLaunchError(QString message)
 {
 }

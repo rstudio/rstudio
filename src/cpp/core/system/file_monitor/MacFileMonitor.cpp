@@ -46,7 +46,7 @@ public:
    {
       const char* cpath = path.c_str();
       auto f = [&]() { return ::open(cpath, O_DIRECTORY); };
-      Error error = posixCall<int>(f, ERROR_LOCATION, &fd_);
+      Error error = posix::posixCall<int>(f, ERROR_LOCATION, &fd_);
       if (error)
          LOG_ERROR(error);
    }
@@ -65,7 +65,7 @@ public:
       // read the path associated with the descriptor
       char path[PATH_MAX];
       auto f = [&]() { return ::fcntl(fd_, F_GETPATH, path); };
-      Error error = posixCall<int>(f, ERROR_LOCATION);
+      Error error = posix::posixCall<int>(f, ERROR_LOCATION);
       if (error)
          return FilePath();
 

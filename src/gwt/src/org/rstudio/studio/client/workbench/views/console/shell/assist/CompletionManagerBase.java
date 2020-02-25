@@ -1,7 +1,7 @@
 /*
  * CompletionManagerBase.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -611,7 +611,7 @@ public abstract class CompletionManagerBase
       for (int i = 0; i < lookbackLimit; i++)
       {
          int index = cursorColumn - i - 1;
-         if (isBoundaryCharacter(currentLine.charAt(index)))
+         if (isBoundaryCharacter(StringUtil.charAt(currentLine, index)))
             return false;
       }
       
@@ -703,7 +703,7 @@ public abstract class CompletionManagerBase
          }
          
          String line = docDisplay_.getCurrentLine();
-         char ch = line.charAt(cursorColumn - 1);
+         char ch = StringUtil.charAt(line, cursorColumn - 1);
          if (isBoundaryCharacter(ch))
          {
             invalidatePendingRequests();

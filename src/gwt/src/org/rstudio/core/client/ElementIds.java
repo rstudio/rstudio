@@ -456,4 +456,7 @@ public class ElementIds
    // AccessibilityPreferencesPane
    public final static String A11Y_GENERAL_PREFS = "a11y_general_prefs";
    public final static String A11Y_ANNOUNCEMENTS_PREFS = "a11y_announcements_prefs";
+   
+   // SatelliteWindow
+   public final static String SATELLITE_PANEL = "satellite_panel";
 }

@@ -47,10 +47,6 @@
 
 #include <session/prefs/UserPrefs.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
@@ -927,8 +923,7 @@ void onClientInit()
 
 #ifndef _WIN32
    // tighten permissions on viewer cache directory
-   error = core::system::changeFileMode(
-            cacheDir,  core::system::UserReadWriteExecuteMode);
+   error = cacheDir.changeFileMode(core::FileMode::USER_READ_WRITE_EXECUTE);
    if (error)
    {
       // not fatal, log and continue

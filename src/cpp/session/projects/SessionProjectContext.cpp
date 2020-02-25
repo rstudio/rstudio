@@ -27,10 +27,6 @@
 
 #include <core/system/FileMonitor.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
@@ -456,7 +452,38 @@ Error ProjectContext::initialize()
    return Success();
 }
 
+namespace {
 
+std::vector<std::string> fileMonitorIgnoredComponents()
+{
+   // first, built-in ignores
+   std::vector<std::string> ignores = {
+
+      // don't monitor things in .Rproj.user
+      "/.Rproj.user",
+
+      // ignore things within a .git folder
+      "/.git",
+
+      // ignore files within an renv or packrat library
+      "/renv/library",
+      "/renv/staging",
+      "/packrat/lib"
+
+   };
+   
+   // now add user-defined ignores
+   json::Array userIgnores = prefs::userPrefs().fileMonitorIgnoredComponents();
+   for (auto&& userIgnore : userIgnores)
+      if (userIgnore.isString())
+         ignores.push_back(userIgnore.getString());
+   
+   // return vector of ignored components
+   return ignores;
+   
+}
+
+} // end anonymous namespace
 
 void ProjectContext::onDeferredInit(bool newSession)
 {
@@ -477,12 +504,16 @@ void ProjectContext::onDeferredInit(bool newSession)
                             this, _1);
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
+
+   FileMonitorFilterContext context;
+   context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
+   context.ignoredComponents = fileMonitorIgnoredComponents();
+   
    core::system::file_monitor::registerMonitor(
-                                         directory(),
-                                         true,
-                                         boost::bind(module_context::fileListingFilter,
-                                            _1, prefs::userPrefs().hideObjectFiles()),
-                                         cb);
+         directory(),
+         true,
+         boost::bind(&ProjectContext::fileMonitorFilter, this, _1, context),
+         cb);
 }
 
 void ProjectContext::fileMonitorRegistered(
@@ -553,6 +584,23 @@ void ProjectContext::fileMonitorTermination(const Error& error)
       // notify subscribers
       onMonitoringDisabled_();
    }
+}
+
+bool ProjectContext::fileMonitorFilter(
+      const FileInfo& fileInfo,
+      const FileMonitorFilterContext& context) const
+{
+   // note that we check for the component occurring anywhere in the
+   // path as the Windows file monitor watches all files within the
+   // monitored directory recursively (irrespective of the filter)
+   // and so we need the filter to apply to files which are 'ignored'
+   // and yet still monitored in ignored sub-directories
+   std::string path = fileInfo.absolutePath();
+   for (auto&& component : context.ignoredComponents)
+      if (boost::algorithm::icontains(path, component))
+         return false;
+   
+   return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }
 
 bool ProjectContext::isMonitoringDirectory(const FilePath& dir) const
@@ -850,7 +898,7 @@ bool ProjectContext::parentBrowseable()
    return true;
 #else
    bool browse = true;
-   Error error = core::system::isFileReadable(directory().getParent(), &browse);
+   Error error = directory().getParent().isReadable(browse);
    if (error)
    {
       // if we can't figure it out, presume it to be browseable (this preserves

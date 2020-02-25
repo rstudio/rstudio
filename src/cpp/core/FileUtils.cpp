@@ -162,59 +162,6 @@ bool isDirectoryWriteable(const FilePath& directory)
    }
 }
 
-#ifndef _WIN32
-Error changeOwnership(const FilePath& file,
-                      const std::string& owner,
-                      bool recursive,
-                      const FilePath::RecursiveIterationFunction& shouldChown)
-{
-   // changes ownership of file to the server user
-   core::system::User user;
-   Error error = core::system::User::getUserFromIdentifier(owner, user);
-   if (error)
-      return error;
-
-   auto chown = [&](const FilePath& f)
-   {
-      return core::system::posixCall<int>(
-               boost::bind(::chown,
-                           f.getAbsolutePath().c_str(),
-                           user.getUserId(),
-                           user.getGroupId()),
-               ERROR_LOCATION);
-   };
-
-   error = chown(file);
-   if (error)
-   {
-      error.addProperty("path", file.getAbsolutePath());
-      return error;
-   }
-
-   if (!recursive)
-      return Success();
-
-   // recurse into subdirectories
-   if (file.isDirectory())
-   {
-      file.getChildrenRecursive([&](int depth, const FilePath& child)
-      {
-         if (shouldChown && !shouldChown(depth, child))
-            return true;
-
-         error = chown(child);
-         if (error)
-            error.addProperty("path", child.getAbsolutePath());
-
-         // if there was an error, stop iterating
-         return !error;
-      });
-   }
-
-   return error;
-}
-#endif
-
 } // namespace file_utils
 } // namespace core
 } // namespace rstudio

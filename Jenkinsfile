@@ -274,6 +274,10 @@ try {
           trigger_external_build('IDE/macos-v1.3')
           trigger_external_build('IDE/windows-v1.3')
         }
+        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.4') {
+          trigger_external_build('IDE/macos-v1.4')
+          trigger_external_build('IDE/windows-v1.4')
+        }
         else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2-patch') {
           trigger_external_build('IDE/macos-v1.2')
           trigger_external_build('IDE/windows-v1.2')

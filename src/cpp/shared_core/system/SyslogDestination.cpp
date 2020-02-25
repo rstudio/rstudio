@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.cpp
  * 
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -61,11 +61,30 @@ int logLevelToLogPriority(log::LogLevel in_logLevel)
 
 } // anonymous namespace
 
+struct SyslogDestination::Impl
+{
+   /**
+    * @brief Constructor.
+    *
+    * param in_programId        The ID of the program for which system logs should be written.
+    */
+   explicit Impl(const std::string& in_programId) :
+      ProgramId(in_programId)
+   {
+   }
+
+   /** The program ID. It must be persisted. */
+   std::string ProgramId;
+};
+
+PRIVATE_IMPL_DELETER_IMPL(SyslogDestination);
+
 SyslogDestination::SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId) :
-   ILogDestination(in_logLevel)
+   ILogDestination(in_logLevel),
+   m_impl(new Impl(in_programId))
 {
    // Open the system log. Don't set a mask because filtering is done at a higher level.
-   ::openlog(in_programId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
+   ::openlog(m_impl->ProgramId.c_str(), LOG_CONS | LOG_PID, LOG_USER);
 }
 
 SyslogDestination::~SyslogDestination()

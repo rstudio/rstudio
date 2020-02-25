@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1693,7 +1693,7 @@ public class AceEditor implements DocDisplay,
       if (column == line.length())
          return '\0';
 
-      return line.charAt(column);
+      return StringUtil.charAt(line, column);
    }
 
    public char getCharacterBeforeCursor()
@@ -1704,7 +1704,7 @@ public class AceEditor implements DocDisplay,
          return '\0';
 
       String line = getLine(cursorPos.getRow());
-      return line.charAt(column - 1);
+      return StringUtil.charAt(line, column - 1);
    }
 
 

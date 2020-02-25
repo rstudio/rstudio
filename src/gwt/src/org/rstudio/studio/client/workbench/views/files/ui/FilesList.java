@@ -499,7 +499,7 @@ public class FilesList extends Composite
       List<FileSystemItem> files = getFiles();
       for (int i=0; i<files.size(); i++)
          if (files.get(i).equalTo(file))
-            return i ;
+            return i;
       
       return -1;
    }
@@ -641,7 +641,7 @@ public class FilesList extends Composite
        
        protected abstract int doItemCompare(FileSystemItem arg0, FileSystemItem arg1);    
        
-       private final int sortFactor_ ;   
+       private final int sortFactor_;
     }
     
     private abstract class FoldersOnBottomComparator extends SeparateFoldersComparator
@@ -677,8 +677,8 @@ public class FilesList extends Composite
    private final ListDataProvider<FileSystemItem> dataProvider_;
    private final ColumnSortEvent.ListHandler<FileSystemItem> sortHandler_;
 
-   private final Files.Display.Observer observer_ ;
-   private final ResizeLayoutPanel layoutPanel_ ;  
+   private final Files.Display.Observer observer_;
+   private final ResizeLayoutPanel layoutPanel_;
    
    private static final int CHECK_COLUMN_WIDTH_PIXELS = 30;
    private static final int ICON_COLUMN_WIDTH_PIXELS = 26;

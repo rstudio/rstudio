@@ -785,8 +785,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Override
    public void onScreenReaderStateReady(ScreenReaderStateReadyEvent e)
    {
-      if (prefs_.getScreenReaderEnabled() && !ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG))
+      if (prefs_.getScreenReaderEnabled() &&
+            (!ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG) ||
+             !ariaLive_.isDisabled(AriaLiveService.CONSOLE_COMMAND)))
+      {
          view_.enableLiveReporting();
+      }
    }
 
    private final ConsoleServerOperations server_;

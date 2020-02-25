@@ -890,6 +890,40 @@ void onBackgroundProcessing(bool isIdle)
       executeScheduledCommands(&s_idleScheduledCommands);
 }
 
+#ifdef _WIN32
+
+namespace {
+
+BOOL CALLBACK consoleCtrlHandler(DWORD type)
+{
+   switch (type)
+   {
+   case CTRL_C_EVENT:
+   case CTRL_BREAK_EVENT:
+      rstudio::r::exec::setInterruptsPending(true);
+      return true;
+   default:
+      return false;
+   }
+}
+
+} // end anonymous namespace
+
+#endif
+
+void initializeConsoleCtrlHandler()
+{
+#ifdef _WIN32
+   // accept Ctrl + C interrupts
+   ::SetConsoleCtrlHandler(nullptr, FALSE);
+
+   // remove an old registration (if any)
+   ::SetConsoleCtrlHandler(consoleCtrlHandler, FALSE);
+
+   // register console control handler
+   ::SetConsoleCtrlHandler(consoleCtrlHandler, TRUE);
+#endif
+}
 
 Error registerIdleOnlyAsyncRpcMethod(
                              const std::string& name,
@@ -2177,11 +2211,14 @@ core::system::ProcessSupervisor& processSupervisor()
 
 FilePath sourceDiagnostics()
 {
-   r::exec::RFunction sourceFx("source");
-   sourceFx.addParam(string_utils::utf8ToSystem(
-      options().coreRSourcePath().completeChildPath("Diagnostics.R").getAbsolutePath()));
-   sourceFx.addParam("chdir", true);
-   Error error = sourceFx.call();
+   FilePath diagnosticsPath =
+         options().coreRSourcePath().completeChildPath("Diagnostics.R");
+   
+   Error error = r::exec::RFunction("source")
+         .addParam(string_utils::utf8ToSystem(diagnosticsPath.getAbsolutePath()))
+         .addParam("chdir", true)
+         .call();
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -2191,8 +2228,10 @@ FilePath sourceDiagnostics()
    {
       // note this path is also in Diagnostics.R so changes to the path
       // need to be synchronized there
-      return module_context::resolveAliasedPath(
-                        "~/rstudio-diagnostics/diagnostics-report.txt");
+      std::string reportPath = core::system::getenv("RSTUDIO_DIAGNOSTICS_REPORT");
+      if (reportPath.empty())
+         reportPath = "~/rstudio-diagnostics/diagnostics-report.txt";
+      return module_context::resolveAliasedPath(reportPath);
    }
 }
    
@@ -2354,6 +2393,10 @@ std::string sessionTempDirUrl(const std::string& sessionTempPath)
 
 bool isPathViewAllowed(const FilePath& filePath)
 {
+   // Check to see if restrictions are in place
+   if (!options().restrictDirectoryView())
+      return true;
+
    // No paths are restricted in desktop mode
    if (options().programMode() != kSessionProgramModeServer)
       return true;

@@ -101,7 +101,7 @@ public class FilesUpload
    {
       JsArray<FileSystemItem> overwrites = pendingUpload.getOverwrites();
       FileSystemItem firstFile = overwrites.get(0);
-      boolean multiple = overwrites.length() > 1 ;
+      boolean multiple = overwrites.length() > 1;
       StringBuilder msg = new StringBuilder();
       msg.append("The upload will overwrite ");
       if (multiple)
@@ -156,9 +156,8 @@ public class FilesUpload
       };
    }
 
-   
    private final Files.Display display_;
-   private final GlobalDisplay globalDisplay_ ;
-   private final FilesServerOperations server_ ;
+   private final GlobalDisplay globalDisplay_;
+   private final FilesServerOperations server_;
    private final EventBus eventBus_;
 }

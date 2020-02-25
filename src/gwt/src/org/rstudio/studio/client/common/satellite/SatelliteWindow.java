@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.satellite;
 
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
@@ -65,7 +66,8 @@ public abstract class SatelliteWindow extends Composite
 
       // create application panel
       mainPanel_ = new LayoutPanel();
-      
+      ElementIds.assignElementId(mainPanel_.getElement(), ElementIds.SATELLITE_PANEL);
+
       // Register an event handler for themes so it will be triggered after a
       // UIPrefsChangedEvent updates the theme. Do this after SessionInit (if we
       // do it beforehand we'll trigger the event before the SessionInfo object

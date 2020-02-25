@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
@@ -71,11 +73,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UserPrefs prefs, EventBus events)
+   public ShellWidget(AceEditor editor,
+                      UserPrefs prefs,
+                      EventBus events,
+                      AriaLiveService ariaLive,
+                      String outputLabel)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
       prefs_ = prefs;
+      ariaLive_ = ariaLive;
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
@@ -184,6 +191,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
+      if (!StringUtil.isNullOrEmpty(outputLabel))
+      {
+         Roles.getRegionRole().set(output_.getElement());
+         Roles.getRegionRole().setAriaLabelProperty(output_.getElement(), outputLabel);
+      }
       verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
@@ -267,7 +279,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/, true /*announce*/);
+      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
 
       // Pick up the elements emitted to the console by this call. If we get 
       // extended information for this error, we'll need to swap out the simple 
@@ -331,7 +344,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
-      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/, true /*announce*/);
+      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }
 
    @Override
@@ -345,7 +359,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       clearPendingInput();
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/, 
-            false /*ignoreLineCount*/, false /*announce*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
    
    private void clearPendingInput()
@@ -358,7 +372,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWritePrompt(final String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
-            false /*ignoreLineCount*/, false /*announce*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
       clearErrors_ = true;
    }
 
@@ -642,8 +656,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
             // Don't drive focus to the input unless there is no selection.
             // Otherwise it would interfere with the ability to select stuff
             // from the output buffer for copying to the clipboard.
-            if (!DomUtils.selectionExists() && isInputOnscreen())
-               input_.setFocus(true);
+            if (DomUtils.selectionExists() || !isInputOnscreen())
+               return;
+            
+            // When focusing Ace, if the user hasn't yet typed anything into
+            // the input line, then Ace will erroneously adjust the scroll
+            // position upwards upon focus. Rather than patching Ace, we instead
+            // just re-scroll to the bottom if we were already scrolled to the
+            // bottom after giving focus to the Ace editor instance.
+            //
+            // https://github.com/rstudio/rstudio/issues/6231
+            boolean wasScrolledToBottom = scrollPanel_.isScrolledToBottom();
+            input_.setFocus(true);
+            if (wasScrolledToBottom)
+               scrollPanel_.scrollToBottom();
          }
       };
    }
@@ -817,7 +843,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void enableLiveReporting()
    {
-      liveRegion_ = new AriaLiveShellWidget();
+      liveRegion_ = new AriaLiveShellWidget(prefs_);
       verticalPanel_.add(liveRegion_);
    }
 
@@ -826,6 +852,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       if (liveRegion_ != null)
          liveRegion_.clearLiveRegion();
+   }
+
+   private boolean isAnnouncementEnabled(String announcement)
+   {
+      return ariaLive_ != null && !ariaLive_.isDisabled(announcement);
    }
 
    private boolean cleared_ = false;
@@ -841,6 +872,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean suppressPendingInput_;
    private final EventBus events_;
    private final UserPrefs prefs_;
+   private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
 
    // A list of errors that have occurred between console prompts. 

@@ -255,9 +255,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kUseSecureCookiesSessionOption,
        value<bool>(&useSecureCookies_)->default_value(false),
        "whether to mark cookies as secure")
+      ("restrict-directory-view",
+       value<bool>(&restrictDirectoryView_)->default_value(false),
+       "whether to restrict the directories that can be viewed in the IDE")
       ("directory-view-whitelist",
        value<std::string>(&directoryViewWhitelist_)->default_value(""),
-       "list of directories where files can be viewed, separated by :")
+       "list of directories exempt from directory view restrictions, separated by :")
       (kSessionEnvVarSaveBlacklist,
        value<std::string>(&envVarSaveBlacklist_)->default_value(""),
        "list of environment variables not saved on session suspend, separated by :");

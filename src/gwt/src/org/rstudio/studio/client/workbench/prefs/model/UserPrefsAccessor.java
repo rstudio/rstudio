@@ -201,6 +201,7 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String POSIX_TERMINAL_SHELL_DEFAULT = "default";
    public final static String POSIX_TERMINAL_SHELL_BASH = "bash";
+   public final static String POSIX_TERMINAL_SHELL_ZSH = "zsh";
    public final static String POSIX_TERMINAL_SHELL_CUSTOM = "custom";
    public final static String POSIX_TERMINAL_SHELL_NONE = "none";
 
@@ -1324,7 +1325,7 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> wrapTabNavigation()
    {
-      return bool("wrap_tab_navigation", false);
+      return bool("wrap_tab_navigation", true);
    }
 
    /**
@@ -1663,6 +1664,22 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
    {
       return object("disabled_aria_live_announcements", JsArrayUtil.createStringArray());
+   }
+
+   /**
+    * Maximum number of lines of console output announced after a command.
+    */
+   public PrefValue<Integer> screenreaderConsoleAnnounceLimit()
+   {
+      return integer("screenreader_console_announce_limit", 25);
+   }
+
+   /**
+    * List of path components; file monitor will ignore paths containing one or more of these components.
+    */
+   public PrefValue<JsArrayString> fileMonitorIgnoredComponents()
+   {
+      return object("file_monitor_ignored_components", JsArrayUtil.createStringArray());
    }
 
    public void syncPrefs(String layer, JsObject source)
@@ -2023,6 +2040,10 @@ public class UserPrefsAccessor extends Prefs
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
+      if (source.hasKey("screenreader_console_announce_limit"))
+         screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
+      if (source.hasKey("file_monitor_ignored_components"))
+         fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
    }
    
 

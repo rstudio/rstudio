@@ -89,7 +89,7 @@ public:
    }
    
 public:
-   std::string absolutePath() const { return absolutePath_.c_str(); }
+   std::string absolutePath() const { return absolutePath_; }
    bool isDirectory() const { return isDirectory_; }
    uintmax_t size() const { return size_; }
    std::time_t lastWriteTime() const { return lastWriteTime_; }

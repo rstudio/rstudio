@@ -597,7 +597,7 @@
             "win-ps", "win-git-bash", "win-wsl-bash", "ps-core", "custom")
    }      
    if (!validShellType)
-      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', 'ps-core', or 'custom'.") 
+      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', 'ps-core', 'bash', 'zsh', or 'custom'.") 
 
    .Call("rs_terminalCreate", caption, show, shellType)
 })
@@ -817,6 +817,16 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 # highlight UI elements within the IDE
 .rs.addApiFunction("highlightUi", function(data = list()) {
    .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
+})
+
+# return display username (user identity)
+.rs.addApiFunction("userIdentity", function() {
+   .Call("rs_userIdentity", PACKAGE = "(embedding)")
+})
+
+# return system username 
+.rs.addApiFunction("systemUsername", function() {
+   .Call("rs_systemUsername", PACKAGE = "(embedding)")
 })
 
 # Tutorial ----

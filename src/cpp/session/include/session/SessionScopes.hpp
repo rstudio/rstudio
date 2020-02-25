@@ -31,7 +31,6 @@
 #include <core/json/JsonRpc.hpp>
 
 #ifndef _WIN32
-#include <core/system/FileMode.hpp>
 #include <sys/stat.h>
 #endif
 
@@ -147,7 +146,7 @@ bool isSharedProject(const core::FilePath& sharedStoragePath,
    {
       // an entry exists, meaning this particular project is shared
       // determine if we can access it
-      core::system::isFileReadable(projectEntryPath, pHasAccess);
+      projectEntryPath.isReadable(*pHasAccess);
       return true;
    }
    else
@@ -363,8 +362,7 @@ inline core::r_util::ProjectId toProjectId(const std::string& projectDir,
 
    // ensure the file has restrictive permissions
 #ifndef _WIN32
-   error = core::system::changeFileMode(projectIdsPath,
-                                        core::system::UserReadWriteMode);
+   error = projectIdsPath.changeFileMode(core::FileMode::USER_READ_WRITE);
    if (error)
       LOG_ERROR(error);
 #endif

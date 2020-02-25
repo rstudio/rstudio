@@ -46,9 +46,6 @@
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/RecycleBin.hpp>
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -273,7 +270,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
 
 #ifndef _WIN32
    // on *nix systems, see if browsing above this path is possible
-   error = core::system::isFileReadable(targetPath.getParent(), &browseable);
+   error = targetPath.getParent().isReadable(browseable);
    if (error && !core::isPathNotFoundError(error))
       LOG_ERROR(error);
 #endif
@@ -1274,13 +1271,13 @@ SEXP rs_readLines(SEXP filePathSEXP)
       return r::sexp::create(contents, &protect);
    
    std::vector<std::string> splat = core::algorithm::split(contents, "\n");
-   if (splat[splat.size() - 1].empty())
+   if (splat.size() && splat[splat.size() - 1].empty())
       splat.pop_back();
    
    for (std::size_t i = 0, n = splat.size(); i < n; ++i)
    {
       std::string& rElement = splat[i];
-      if (rElement[rElement.size() - 1] == '\r')
+      if (rElement.size() && rElement[rElement.size() - 1] == '\r')
          rElement.erase(rElement.size() - 1);
    }
    

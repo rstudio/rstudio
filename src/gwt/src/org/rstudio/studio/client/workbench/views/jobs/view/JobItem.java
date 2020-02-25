@@ -36,9 +36,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -55,18 +53,6 @@ public class JobItem extends Composite implements JobItemView
 
    interface JobItemUiBinder extends UiBinder<Widget, JobItem>
    {
-   }
-   
-   public interface JobResources extends ClientBundle
-   {
-      @Source("spinner_2x.png")
-      ImageResource jobSpinner();
-
-      @Source("select_2x.png")
-      ImageResource jobSelect();
-      
-      @Source("cancel_2x.png")
-      ImageResource jobCancel();
    }
    
    public interface Styles extends CssResource

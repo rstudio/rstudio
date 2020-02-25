@@ -32,6 +32,8 @@ RUN yum install -y \
     make \
     mariadb-libs \
     openssl-devel \
+    p7zip \
+    p7zip-plugins \
     pam-devel \
     pango-devel \
     patchelf \
@@ -86,11 +88,9 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
 
 # install Qt SDK
-COPY dependencies/linux/install-qt-sdk /tmp/
-RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.6 && \
-    export QT_QPA_PLATFORM=minimal && \
-    /tmp/install-qt-sdk
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN cd /tmp && /bin/bash ./install-qt-linux
 
 # remove any previous users with conflicting IDs
 ARG JENKINS_GID=999

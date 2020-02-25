@@ -18,9 +18,6 @@
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
 
 #include <shared_core/Error.hpp>
 
@@ -51,7 +48,7 @@ Error MruList::initialize()
 #ifndef _WIN32
    // ensure we have write access to the file
    bool writeable = false;
-   error = system::isFileWriteable(file_, &writeable);
+   error = file_.isWriteable(writeable);
    if (error)
       return error;
 

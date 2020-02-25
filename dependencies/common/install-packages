@@ -82,8 +82,6 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rsconnect master rstudio
 # install renv master rstudio
 
-install rstudioapi master rstudio
-
 RHOME=$(Rscript -e 'Sys.getenv("R_HOME")')
 if [[ ! -w $RHOME ]]; then
   echo "$RHOME is not writable. Creating user R library directory."

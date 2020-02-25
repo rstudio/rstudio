@@ -32,7 +32,7 @@ cd ../osx
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
 then
-  export QT_QPA_PLATFORM=minimal && ./install-qt-sdk-osx
+  ./install-qt-macos
 fi
 
 # enable PAM

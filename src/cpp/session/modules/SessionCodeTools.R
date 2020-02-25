@@ -2287,6 +2287,8 @@
    
    # read the associated source file
    contents <- .rs.readSourceDocument(id)
+   if (is.null(contents))
+      return(character())
 
    # parse to find packages
    packages <- .rs.parsePackageDependencies(contents, extension)
@@ -2371,5 +2373,31 @@
    
    truncated <- substring(string, 1, n - nchar(marker))
    return(paste(truncated, marker))
+   
+})
+
+.rs.addFunction("formatListForDialog", function(list, sep = ", ", max = 50L)
+{
+   # count index entries until we get too long
+   nc <- 0L
+   ns <- nchar(sep)
+   for (index in seq_along(list)) {
+      nc <- nc + ns + nchar(list[[index]])
+      if (nc > max)
+         break
+   }
+   
+   # collect items
+   n <- length(list)
+   items <- list
+   
+   # subset the list if we overflowed (index didn't reach end)
+   # avoid printing 'and 1 other'; no need to subset in that case
+   if (index < n - 1L)
+      items <- c(list[1:index], paste("and", n - index, "others"))
+   
+   # paste and truncate once more for safety
+   text <- paste(items, collapse = sep)
+   .rs.truncate(text, n = max * 2L)
    
 })

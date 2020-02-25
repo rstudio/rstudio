@@ -48,11 +48,13 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
   ⌫    Backspace   &#9003;
   ⎋    Esc         &#9099;
 
+Reference on default Ace shortcuts: https://github.com/ajaxorg/ace/wiki/Default-Keyboard-Shortcuts
 -->
 <body>
 <header id="banner"><img src="../images/rstudio.png" alt/></header>
 <main><div style="margin-left: 20px; margin-right: 20px">
   <h1>Keyboard Shortcuts</h1>
+  <p>Some shortcuts may differ if non-default keybindings are selected (e.g. Emacs, Vim, or Sublime Text).</p>
   <h2 id="a11y">Accessibility</h2>
   <table aria-labelledby="a11y" class="shortcuts">
     <thead>
@@ -76,8 +78,8 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </tr>
     <tr>
       <td>Focus Main Toolbar</td>
-      <td>Ctrl+Alt+L</td>
-      <td>⌃⌥L</td>
+      <td>Ctrl+Alt+Y</td>
+      <td>⌃⌥Y</td>
     </tr>
     </tbody>
   </table>
@@ -136,7 +138,7 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </thead>
     <tbody>
     <tr>
-      <td>Goto File/Function</td>
+      <td>Go to File/Function</td>
       <td>Ctrl+. [period]</td>
       <td>⌃. [period]</td>
     </tr>
@@ -144,6 +146,11 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>Move cursor to Source Editor</td>
       <td>Ctrl+1</td>
       <td>⌃1</td>
+    </tr>
+    <tr>
+      <td>Toggle document outline</td>
+      <td>Ctrl+Shift+O</td>
+      <td>⇧⌘O</td>
     </tr>
     <tr>
       <td>New document (except on Chrome/Windows)</td>
@@ -166,6 +173,11 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌘S</td>
     </tr>
     <tr>
+      <td>Save all documents</td>
+      <td>Ctrl+Alt+S</td>
+      <td>⌃⌥S</td>
+    </tr>
+    <tr>
       <td>Close active document (except on Chrome)</td>
       <td>Ctrl+W</td>
       <td>⌘W</td>
@@ -179,6 +191,11 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>Close all open documents</td>
       <td>Ctrl+Shift+W</td>
       <td>⇧⌘W</td>
+    </tr>
+    <tr>
+      <td>Close other documents</td>
+      <td>Ctrl+Shift+Alt+W</td>
+      <td>⌥⇧⌘W</td>
     </tr>
     <tr>
       <td>Preview HTML (Markdown and HTML)</td>
@@ -267,8 +284,8 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </tr>
     <tr>
       <td>Source a file</td>
-      <td>Ctrl+Shift+O</td>
-      <td>⇧⌘O</td>
+      <td>Ctrl+Alt+G</td>
+      <td>⌃⌥G</td>
     </tr>
     <tr>
       <td>Source the current document</td>
@@ -279,6 +296,11 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>Source the current document (with echo)</td>
       <td>Ctrl+Shift+Enter</td>
       <td>⇧⌘Return</td>
+    </tr>
+    <tr>
+      <td>Send current line/selection to terminal</td>
+      <td>Ctrl+Alt+Enter</td>
+      <td>⌥⌘Return</td>
     </tr>
     <tr>
       <td>Fold Selected</td>
@@ -311,29 +333,69 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌥⇧⌘J</td>
     </tr>
     <tr>
+      <td>Expand selection</td>
+      <td>Ctrl+Shift+Up</td>
+      <td>⌃⌥⇧↑</td>
+    </tr>
+    <tr>
+      <td>Shrink selection</td>
+      <td>Ctrl+Shift+Down</td>
+      <td>⌃⌥⇧↓</td>
+    </tr>
+    <tr>
+      <td>Next section</td>
+      <td>Ctrl+PgDown</td>
+      <td>⌘⇟</td>
+    </tr>
+    <tr>
+      <td>Previous section</td>
+      <td>Ctrl+PgUp</td>
+      <td>⌘⇞</td>
+    </tr>
+    <tr>
+      <td>Split into lines</td>
+      <td>Ctrl+Alt+A</td>
+      <td>⌃⌥A</td>
+    </tr>
+    <tr>
+      <td>Edit lines from start</td>
+      <td>Ctrl+Alt+Shift+A</td>
+      <td>⌃⌥⇧A</td>
+    </tr>
+    <tr>
       <td>Switch to tab</td>
       <td>Ctrl+Shift+. [period]</td>
       <td>⌃⇧. [period]</td>
     </tr>
     <tr>
       <td>Previous tab</td>
-      <td>Ctrl+F11</td>
-      <td>⌃F11</td>
+      <td>Ctrl+F11 or Ctrl+Alt+Left</td>
+      <td>⌃F11 or ⌃⌥←</td>
+    </tr>
+    <tr>
+      <td>Previous tab (desktop only)</td>
+      <td>Ctrl+Shift+Tab</td>
+      <td>⌃⇧⇥</td>
     </tr>
     <tr>
       <td>Next tab</td>
-      <td>Ctrl+F12</td>
-      <td>⌃F12</td>
+      <td>Ctrl+F12 or Ctrl+Alt+Right</td>
+      <td>⌃F12 or ⌃⌥→</td>
+    </tr>
+    <tr>
+      <td>Next tab (desktop only)</td>
+      <td>Ctrl+Tab</td>
+      <td>⌃⇥</td>
     </tr>
     <tr>
       <td>First tab</td>
-      <td>Ctrl+Shift+F11</td>
-      <td>⌃⇧F11</td>
+      <td>Ctrl+Shift+F11 or Ctrl+Alt+Shift+Left</td>
+      <td>⌃⇧F11 or ⌃⌥⇧←</td>
     </tr>
     <tr>
       <td>Last tab</td>
-      <td>Ctrl+Shift+F12</td>
-      <td>⌃⇧F12</td>
+      <td>Ctrl+Shift+F12 or Ctrl+Alt+Shift+Right</td>
+      <td>⌃⇧F12 or ⌃⌥⇧→</td>
     </tr>
     <tr>
       <td>Navigate back</td>
@@ -402,13 +464,8 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </tr>
     <tr>
       <td>Expand to Matching Brace/Paren</td>
-      <td>Ctrl+Shift+E</td>
-      <td>⌃⇧E</td>
-    </tr>
-    <tr>
-      <td>Select to Matching Brace/Paren</td>
       <td>Ctrl+Shift+Alt+E</td>
-      <td>⌃⌥⇧E</td>
+      <td>⌃⇧E</td>
     </tr>
     <tr>
       <td>Add Cursor Above Current Cursor</td>
@@ -423,7 +480,7 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     <tr>
       <td>Move Active Cursor Up</td>
       <td>Ctrl+Alt+Shift+Up</td>
-      <td>⌥⇧↑</td>
+      <td>⌃⌥⇧↑</td>
     </tr>
     <tr>
       <td>Move Active Cursor Down</td>
@@ -670,14 +727,29 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌃1</td>
     </tr>
     <tr>
+      <td>Zoom Source Editor</td>
+      <td>Ctrl+Shift+1</td>
+      <td>⌃⇧1</td>
+    </tr>
+    <tr>
       <td>Move focus to Console</td>
       <td>Ctrl+2</td>
       <td>⌃2</td>
     </tr>
     <tr>
+      <td>Zoom Console</td>
+      <td>Ctrl+Shift+2</td>
+      <td>⌃⇧2</td>
+    </tr>
+    <tr>
       <td>Move focus to Help</td>
       <td>Ctrl+3</td>
       <td>⌃3</td>
+    </tr>
+    <tr>
+      <td>Zoom Help</td>
+      <td>Ctrl+Shift+3</td>
+      <td>⌃⇧3</td>
     </tr>
     <tr>
       <td>Move Focus to Terminal</td>
@@ -690,9 +762,19 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌃4</td>
     </tr>
     <tr>
+      <td>Zoom History</td>
+      <td>Ctrl+Shift+4</td>
+      <td>⌃⇧4</td>
+    </tr>
+    <tr>
       <td>Show Files</td>
       <td>Ctrl+5</td>
       <td>⌃5</td>
+    </tr>
+    <tr>
+      <td>Zoom Files</td>
+      <td>Ctrl+Shift+5</td>
+      <td>⌃⇧5</td>
     </tr>
     <tr>
       <td>Show Plots</td>
@@ -700,9 +782,19 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌃6</td>
     </tr>
     <tr>
+      <td>Zoom Plots</td>
+      <td>Ctrl+Shift+6</td>
+      <td>⌃⇧6</td>
+    </tr>
+    <tr>
       <td>Show Packages</td>
       <td>Ctrl+7</td>
       <td>⌃7</td>
+    </tr>
+    <tr>
+      <td>Zoom Packages</td>
+      <td>Ctrl+Shift+7</td>
+      <td>⌃⇧7</td>
     </tr>
     <tr>
       <td>Show Environment</td>
@@ -710,14 +802,38 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌃8</td>
     </tr>
     <tr>
+      <td>Zoom Environment</td>
+      <td>Ctrl+Shift+8</td>
+      <td>⌃⇧8</td>
+    </tr>
+    <tr>
       <td>Show Viewer</td>
       <td>Ctrl+9</td>
       <td>⌃9</td>
     </tr>
     <tr>
+      <td>Zoom Viewer</td>
+      <td>Ctrl+Shift+9</td>
+      <td>⌃⇧9</td>
+    </tr>
+    <tr>
+      <td>Show Git/SVN</td>
+      <td>Ctrl+F1</td>
+      <td>⌃F1</td>
+    </tr>
+    <tr>
+      <td>Zoom Git/SVN</td>
+      <td>Ctrl+Shift+F1</td>
+      <td>⌃⇧F1</td>
+    <tr>
       <td>Show Build</td>
       <td>Ctrl+F2</td>
       <td>⌃F2</td>
+    </tr>
+    <tr>
+      <td>Zoom Build</td>
+      <td>Ctrl+Shift+F2</td>
+      <td>⌃⇧F2</td>
     </tr>
     <tr>
       <td>Show Connections</td>
@@ -725,7 +841,17 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>⌃F5</td>
     </tr>
     <tr>
-      <td>Show Find in Files</td>
+      <td>Zoom Connections</td>
+      <td>Ctrl+Shift+F5</td>
+      <td>⌃⇧F5</td>
+    </tr>
+    <tr>
+      <td>Zoom Tutorial</td>
+      <td>Ctrl+Shift+F6</td>
+      <td>⌃⇧F6</td>
+    </tr>
+    <tr>
+      <td>Show Find in Files Results</td>
       <td>Ctrl+F6</td>
       <td>⌃F6</td>
     </tr>
@@ -733,6 +859,26 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>Sync Editor &amp; PDF Preview</td>
       <td>Ctrl+F8</td>
       <td>⌘F8</td>
+    </tr>
+    <tr>
+      <td>Zoom left column</td>
+      <td>Ctrl+Alt+Shift+F12</td>
+      <td>⌃⌥⇧F12</td>
+    </tr>
+    <tr>
+      <td>Zoom right column</td>
+      <td>Ctrl+Alt+Shift+F11</td>
+      <td>⌃⌥⇧F11</td>
+    </tr>
+    <tr>
+      <td>Global Options</td>
+      <td>No shortcut</td>
+      <td>⌘, [comma] (Chrome, Desktop) ⌥⌘, [comma] (Safari, Firefox)</td>
+    </tr>
+    <tr>
+      <td>Project Options</td>
+      <td>No shortcut</td>
+      <td>⇧⌘, [comma]</td>
     </tr>
     </tbody>
   </table>
@@ -843,6 +989,11 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
       <td>Shift+F8</td>
       <td>⇧F8</td>
     </tr>
+    <tr>
+      <td>Profile selected lines</td>
+      <td>Ctrl+Alt+Shift+P</td>
+      <td>⌃⌥⇧P</td>
+    </tr>
     </tbody>
   </table>
   <h2 id="plots">Plots</h2>
@@ -853,13 +1004,13 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     <tbody>
     <tr>
       <td>Previous plot</td>
-      <td>Ctrl+Alt+F11</td>
-      <td>⌥⌘F11</td>
+      <td>Ctrl+Alt+F11 or Ctrl+Shift+PageUp</td>
+      <td>⌥⌘F11 or ⇧⌘⇞</td>
     </tr>
     <tr>
       <td>Next plot</td>
-      <td>Ctrl+Alt+F12</td>
-      <td>⌥⌘F12</td>
+      <td>Ctrl+Alt+F12 or Ctrl+Shift+PageDown</td>
+      <td>⌥⌘F12 or ⇧⌘⇟</td>
     </tr>
     </tbody>
   </table>
@@ -975,8 +1126,8 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </tr>
     <tr>
       <td>Session Menu</td>
-      <td>Ctrl+Alt+S</td>
-      <td>⌃⌥S</td>
+      <td>Ctrl+Alt+Shift+S</td>
+      <td>⌃⌥⇧S</td>
     </tr>
     <tr>
       <td>Build Menu</td>
@@ -995,8 +1146,8 @@ Standard listing order for Mac modifiers is Ctrl Option Shift Command whatever.
     </tr>
     <tr>
       <td>Tools Menu</td>
-      <td>Ctrl+Alt+T</td>
-      <td>⌃⌥T</td>
+      <td>Ctrl+Alt+L</td>
+      <td>⌃⌥L</td>
     </tr>
     <tr>
       <td>Help Menu</td>

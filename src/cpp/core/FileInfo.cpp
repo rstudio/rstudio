@@ -43,6 +43,8 @@ FileInfo::FileInfo(const std::string& absolutePath,
       lastWriteTime_(0),
       isSymlink_(isSymlink)
 {
+   // some file paths might be constructed with trailing nul bytes; remove those here
+   absolutePath_ = absolutePath_.c_str();
 }
    
 FileInfo::FileInfo(const std::string& absolutePath,
@@ -56,6 +58,8 @@ FileInfo::FileInfo(const std::string& absolutePath,
       lastWriteTime_(lastWriteTime),
       isSymlink_(isSymlink)
 {
+   // some file paths might be constructed with trailing nul bytes; remove those here
+   absolutePath_ = absolutePath_.c_str();
 }
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo)

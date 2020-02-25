@@ -110,6 +110,11 @@
             "location": "cran",
             "source": false
         },
+        "learnr": {
+            "version": "0.10.1",
+            "location": "cran",
+            "source": false
+        },
         "magrittr": {
             "version": "1.5",
             "location": "cran",
@@ -231,7 +236,7 @@
             "source": false
         },
         "rstudioapi": {
-            "version": "0.10",
+            "version": "0.11",
             "location": "cran",
             "source": false
         },
@@ -519,6 +524,12 @@
             "packages": [
                 "DBI",
                 "RSQLite"
+            ]
+        },
+        "tutorial": {
+            "description": "RStudio Tutorials",
+            "packages": [
+                "learnr"
             ]
         }
     }

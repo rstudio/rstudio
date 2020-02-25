@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.hpp
  * 
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -25,6 +25,8 @@
 #define SHARED_CORE_SYS_LOG_DESTINATION_HPP
 
 #include <shared_core/ILogDestination.hpp>
+
+#include <shared_core/PImpl.hpp>
 
 namespace rstudio {
 namespace core {
@@ -74,6 +76,10 @@ public:
     * @param in_message     The message to write to syslog.
     */
    void writeLog(log::LogLevel in_logLevel, const std::string& in_message) override;
+
+private:
+   // The private implementation of SyslogDestination
+   PRIVATE_IMPL(m_impl);
 };
 
 } // namespace system

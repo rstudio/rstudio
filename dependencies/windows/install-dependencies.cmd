@@ -145,10 +145,6 @@ call install-packages.cmd
 
 popd
 
-if not defined RSTUDIO_SKIP_QT (
-  call install-qt-sdk-win.cmd
-)
-
 regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd

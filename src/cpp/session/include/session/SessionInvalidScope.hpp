@@ -22,10 +22,6 @@
 #include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
-#ifndef _WIN32
-#include <core/system/FileMode.hpp>
-#endif
-
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionLocalStreams.hpp>
@@ -54,8 +50,7 @@ inline void writeInvalidScope(const core::r_util::SessionContext& context,
    if (!error)
    {
       // chmod on the file so the server can read it
-      core::Error error = changeFileMode(filePath,
-                                         core::system::EveryoneReadWriteMode);
+      core::Error error = filePath.changeFileMode(core::FileMode::ALL_READ_WRITE);
       if (error)
          LOG_ERROR(error);
    }

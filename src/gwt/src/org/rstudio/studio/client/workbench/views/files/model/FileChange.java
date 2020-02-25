@@ -42,9 +42,9 @@ public class FileChange extends JavaScriptObject
    private static final native FileChange create(int type, 
                                                  FileSystemItem file) /*-{
       var fileViewAction = new Object();
-      fileViewAction.type = type ;
-      fileViewAction.file = file ;
-      return fileViewAction ;
+      fileViewAction.type = type;
+      fileViewAction.file = file;
+      return fileViewAction;
    }-*/;
    
    protected FileChange()
