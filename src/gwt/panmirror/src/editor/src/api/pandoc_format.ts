@@ -195,8 +195,8 @@ export function resolvePandocFormatComment(formatComment: PandocFormatComment, d
   const format = splitPandocFormatString(defaultFormat);
   if (formatComment.mode) {
     format.format = formatComment.mode;
-  }
-  if (formatComment.extensions) {
+    format.options = formatComment.extensions || '';
+  } else if (formatComment.extensions) {
     format.options = formatComment.extensions;
   }
   return format.format + format.options;
