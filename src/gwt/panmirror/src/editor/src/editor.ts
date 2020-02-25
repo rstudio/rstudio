@@ -168,7 +168,6 @@ export class Editor {
       autoFocus: false,
       spellCheck: true,
       codemirror: true,
-      autoLink: false,
       braceMatching: true,
       rmdCodeChunks: false,
       formatComment: true,

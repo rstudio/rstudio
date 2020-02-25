@@ -24,7 +24,6 @@ public class PanmirrorOptions
    public boolean autoFocus;
    public boolean spellCheck;
    public boolean codemirror;
-   public boolean autoLink;
    public boolean braceMatching;
    public boolean rmdCodeChunks;
    public boolean formatComment;

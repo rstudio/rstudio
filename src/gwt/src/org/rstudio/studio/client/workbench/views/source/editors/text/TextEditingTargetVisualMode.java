@@ -321,10 +321,10 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         PanmirrorContext context = new PanmirrorContext(uiContext());
+         String format = "markdown+autolink_bare_uris";
+         PanmirrorContext context = new PanmirrorContext(format, uiContext());
          
          PanmirrorOptions options = new PanmirrorOptions();
-         options.autoLink = true;
          options.rmdCodeChunks = true;
            
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();

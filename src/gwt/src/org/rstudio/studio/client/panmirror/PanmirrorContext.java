@@ -23,14 +23,15 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorContext
 {  
-   public PanmirrorContext(PanmirrorUIContext uiContext)
+   public PanmirrorContext(String format, PanmirrorUIContext uiContext)
    {
+      this.format = format;
       ui = new PanmirrorUI(uiContext);
    }
    
-   public String format = "markdown";
-   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
+   public String format;
    public PanmirrorUI ui;
+   public PanmirrorPandocEngine pandoc = new PanmirrorPandocEngine();
    public PanmirrorHooks hooks = new PanmirrorHooks();
    public JsObject[] extensions = null;
 }
