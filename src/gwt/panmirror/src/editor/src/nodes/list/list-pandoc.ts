@@ -56,7 +56,7 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
     const children = getChildren(tok);
     const attrs = getAttrs(tok);
-    attrs.tight = children.length && children[0][0].t === 'Plain';
+    attrs.tight = children.length && children[0].length && children[0][0].t === 'Plain';
     writer.openNode(nodeType, attrs);
     children.forEach((child: PandocToken[]) => {
       // setup tokens/attribs for output
