@@ -10,6 +10,52 @@ Insert Multiple Rows for table?
 
 yarn/npm update
 
+## Exceptions
+
+24 Feb 2020 17:57:37 [rserver] ERROR CLIENT EXCEPTION (rsession-jjallaire): (RangeError) : Position 117 out of range;
+http://localhost:8787/js/panmirror/panmirror.js@55#33633::resolve
+http://localhost:8787/js/panmirror/panmirror.js@60#33656::resolveCached
+http://localhost:8787/js/panmirror/panmirror.js@70#33925::resolve
+http://localhost:8787/js/panmirror/panmirror.js@68#41542::anonymous
+http://localhost:8787/js/panmirror/panmirror.js@55#12725::restoreEditingLocation
+http://localhost:8787/js/panmirror/panmirror.js@20#306::restoreEditingLocation
+rstudio-0.js@21#243224::PanmirrorWidget.restoreEditingLocation
+rstudio-0.js@28#503539::TextEditingTargetVisualMode.lambda$16
+rstudio-0.js@25#504234::TextEditingTargetVisualMode$lambda$16$Type.execute
+rstudio-0.js@40#17021::executeScheduled
+
+
+24 Feb 2020 16:32:28 [rserver] ERROR CLIENT EXCEPTION (rsession-jjallaire): TypeError: Cannot read property 'domFromPos' of null;
+http://localhost:8787/js/panmirror/panmirror.js@23#48343::domAtPos
+http://localhost:8787/js/panmirror/panmirror.js@27#11591::_loop_1
+http://localhost:8787/js/panmirror/panmirror.js@13#11612::anonymous
+http://localhost:8787/js/panmirror/panmirror.js@18#590::anonymous
+Unknown@-1#-1::forEach
+http://localhost:8787/js/panmirror/panmirror.js@62#589::extensionLayoutFixups
+http://localhost:8787/js/panmirror/panmirror.js@19#582::applyLayoutFixups
+Client-ID: 452fb9ba-81db-4268-a039-eac6c053e525
+
+User-Agent: Mozilla/5.0 (Macintosh  Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36
+24 Feb 2020 17:59:37 [rserver] ERROR CLIENT EXCEPTION (rsession-jjallaire): 13 exceptions caught: (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function  (TypeError) : asNativeString__Ljava_lang_String$NativeString___devirtual$_0_g$(...).indexOf is not a function;
+Unknown@-1#-1::google.gwt.event.shared.UmbrellaException: 13 exceptions caught:
+rstudio-0.js@10#639::Throwable.createError
+rstudio-0.js@48#703::Throwable.initializeBackingError
+rstudio-0.js@8#546::Throwable.Throwable
+rstudio-0.js@18#815::Exception.Exception
+rstudio-0.js@18#869::RuntimeException.RuntimeException
+rstudio-0.js@25#34710::UmbrellaException.UmbrellaException
+rstudio-0.js@26#34781::UmbrellaException
+rstudio-0.js@23#34273::HandlerManager.fireEvent
+rstudio-0.js@19#59068::fire
+rstudio-0.js@10#58986::fireNativePreviewEvent
+rstudio-0.js@14#58579::previewEvent
+rstudio-0.js@21#60307::dispatchCapturedMouseEvent
+rstudio-0.js@28#16335::apply
+rstudio-0.js@16#16394::entry0
+rstudio-0.js@14#16373::anonymous
+Client-ID: 3d803b4c-6043-4112-9aa2-0d6b8362b18b
+
+
 ## Enhancements
 
 
