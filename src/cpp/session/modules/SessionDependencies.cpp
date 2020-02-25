@@ -116,6 +116,31 @@ struct Dependency
 
    bool empty() const { return name.empty(); }
 
+   // Return a version of the dependency as an S-expression for processing in R.
+   SEXP asSEXP(r::sexp::Protect *protect) const
+   {
+      SEXP dep = r::sexp::createList(std::vector<std::string>(), protect);
+      Error error = setNamedListElement(dep, "name", name);
+      if (error)
+         LOG_ERROR(error);
+      error = setNamedListElement(dep, "location", location);
+      if (error)
+         LOG_ERROR(error);
+      error = setNamedListElement(dep, "version", version);
+      if (error)
+         LOG_ERROR(error);
+      error = setNamedListElement(dep, "source", source);
+      if (error)
+         LOG_ERROR(error);
+      error = setNamedListElement(dep, "availableVersion", availableVersion);
+      if (error)
+         LOG_ERROR(error);
+      error = setNamedListElement(dep, "versionSatisifed", versionSatisfied);
+      if (error)
+         LOG_ERROR(error);
+      return dep;
+   }
+
    std::string location;
    std::string name;
    std::string version;
@@ -325,7 +350,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
    bool isPackrat = module_context::packratContext().modeOn;
    bool isRenv = module_context::isRenvActive();
    bool isProjectLocal = isPackrat || isRenv;
-   
    
    // Emit a message to the user at the beginning of the script declaring what we're about to do
    if (deps.size() > 1)
