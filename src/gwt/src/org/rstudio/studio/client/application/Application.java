@@ -1014,6 +1014,20 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromXLS().remove();
       }
 
+      if (userPrefs_.get().ariaApplicationRole().getValue())
+      {
+         Element el = Document.get().getElementById("rstudio_container");
+         if (el == null)
+         {
+            // some satellite windows don't have "rstudio_container"
+            el = view_.getWidget().getElement();
+         }
+
+         // "application" role prioritizes application keyboard handling
+         // over screen-reader shortcuts
+         el.setAttribute("role", "application");
+      } 
+
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done
       if (!Desktop.isDesktop() &&

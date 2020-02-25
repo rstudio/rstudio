@@ -1,7 +1,7 @@
 /*
  * SatelliteApplication.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,11 +27,13 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class SatelliteApplication
@@ -44,6 +46,7 @@ public class SatelliteApplication
       SatelliteApplicationView view,
       Satellite satellite,
       Provider<AceThemes> pAceThemes,
+      Provider<UserPrefs> pUserPrefs,
       ApplicationUncaughtExceptionHandler uncaughtExHandler,
       Commands commands)
    {
@@ -52,6 +55,7 @@ public class SatelliteApplication
          view,
          satellite,
          pAceThemes,
+         pUserPrefs,
          uncaughtExHandler,
          commands);
    }
@@ -61,6 +65,7 @@ public class SatelliteApplication
       SatelliteApplicationView view,
       Satellite satellite,
       Provider<AceThemes> pAceThemes,
+      Provider<UserPrefs> pUserPrefs,
       ApplicationUncaughtExceptionHandler uncaughtExHandler,
       Commands commands)
    {
@@ -68,6 +73,7 @@ public class SatelliteApplication
       view_ = view;
       satellite_ = satellite;
       pAceThemes_ = pAceThemes;
+      pUserPrefs_ = pUserPrefs;
       uncaughtExHandler_ = uncaughtExHandler;
       
       commands.showRequestLog().addHandler(new CommandHandler()
@@ -143,7 +149,14 @@ public class SatelliteApplication
       rootPanel.add(w);
       rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
       rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 0, Style.Unit.PX);
-      
+
+      if (pUserPrefs_.get().ariaApplicationRole().getValue())
+      {
+         // "application" role prioritizes application keyboard handling
+         // over screen-reader shortcuts
+         view_.getWidget().getElement().setAttribute("role", "application");
+      }
+
       // show the view
       view_.show(satellite_.getParams());
       
@@ -161,5 +174,6 @@ public class SatelliteApplication
    private SatelliteApplicationView view_;
    private Satellite satellite_;
    private Provider<AceThemes> pAceThemes_;
+   private Provider<UserPrefs> pUserPrefs_;
    private ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 }

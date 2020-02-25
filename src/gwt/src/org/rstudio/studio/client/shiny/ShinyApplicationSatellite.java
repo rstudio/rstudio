@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationSatellite.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -49,10 +50,11 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    public void initialize(ShinyApplicationView view,
                           Satellite satellite,
                           Provider<AceThemes> pAceThemes,
+                          Provider<UserPrefs> pUserPrefs,
                           ApplicationUncaughtExceptionHandler exHandler,
                           Commands commands)
    {
-      initialize(name_, view, satellite, pAceThemes, exHandler, commands);
+      initialize(name_, view, satellite, pAceThemes, pUserPrefs, exHandler, commands);
    }
    
    private final String name_;
