@@ -131,5 +131,18 @@ TEST_CASE("Empty File Path tests")
    }
 }
 
+TEST_CASE("Copy FilePath Tests")
+{
+   FilePath f1("/a/path");
+
+   CHECK(f1.getAbsolutePath() == "/a/path");
+
+   FilePath f2 = f1;
+
+   CHECK(f1.getAbsolutePath() == "/a/path");
+   CHECK(f2 == f1);
+   CHECK(f2.getAbsolutePath() == "/a/path");
+}
+
 } // namespace core
 } // namespace rstudio
