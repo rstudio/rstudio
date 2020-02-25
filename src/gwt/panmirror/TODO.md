@@ -3,19 +3,15 @@
 
 ## TODO
 
-Outline navigation is off by 1
-
- Math with embedded latex messed up, e.g.  $\sqrt{x}=5$
-
- Display math round-tripping ends up duplicating $$
-
 Using brackets creates math!
-
 
 DeleteRows DeleteCols gestures for table
 Insert Multiple Rows for table?
 
+yarn/npm update
+
 ## Enhancements
+
 
 Images should support width/align for gfm (write raw_html)
 
