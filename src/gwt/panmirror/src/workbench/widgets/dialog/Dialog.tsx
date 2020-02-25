@@ -20,7 +20,7 @@ import { Classes, Button, Intent, Dialog as BlueprintDialog, IProps } from '@blu
 import dialogStyles from './Dialog.module.scss';
 
 export interface DialogProps extends IProps {
-  title: string;
+  title?: string;
   isOpen: boolean;
   leftButtons?: JSX.Element;
   onOpening?: () => void;
