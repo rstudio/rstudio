@@ -178,6 +178,52 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(dataReturned);
    }
 
+   test_that("Can bulk select")
+   {
+      boost::shared_ptr<Connection> connection;
+      REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
+
+      Rowset rows;
+      Query query = connection->query("select id, text from Test where id >= 50 and id <= 100");
+      REQUIRE_FALSE(connection->execute(query, rows));
+
+      int i = 0;
+      for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+      {
+         Row& row = *it;
+         REQUIRE(row.get<int>(0) == i + 50);
+         REQUIRE(row.get<std::string>(1) == "Test text " + safe_convert::numberToString(i+50));
+         ++i;
+      }
+   }
+
+   test_that("Can bulk insert")
+   {
+      boost::shared_ptr<Connection> connection;
+      REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
+
+      std::vector<int> rowIds {1000, 2000, 3000, 4000, 5000};
+      std::vector<std::string> rowTexts {"1000", "2000", "3000", "4000", "5000"};
+
+      Query query = connection->query("insert into Test values (:id, :txt)")
+            .withInput(rowIds)
+            .withInput(rowTexts);
+      REQUIRE_FALSE(connection->execute(query));
+
+      Query selectQuery = connection->query("select * from Test where id >= 1000");
+
+      Rowset rowset;
+      REQUIRE_FALSE(connection->execute(selectQuery, rowset));
+      int i = 1;
+      for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
+      {
+         Row& row = *it;
+         REQUIRE(row.get<int>(0) == i * 1000);
+         REQUIRE(row.get<std::string>(1) == safe_convert::numberToString(i*1000));
+         ++i;
+      }
+   }
+
    test_that("Can use connection pool")
    {
       boost::shared_ptr<ConnectionPool> connectionPool;

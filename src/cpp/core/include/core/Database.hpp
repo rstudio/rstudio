@@ -23,9 +23,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 
-#include <soci/session.h>
-#include <soci/soci-platform.h>
-#include <soci/transaction.h>
+#define SOCI_USE_BOOST 1
+#include <soci/soci.h>
 
 namespace rstudio {
 namespace core {
@@ -90,14 +89,35 @@ public:
 
 private:
    friend class Connection;
+   friend class Rowset;
+
    soci::statement statement_;
    boost::optional<soci::soci_error> prepareError_;
+};
+
+using Row = soci::row;
+using RowsetIterator = soci::rowset_iterator<Row>;
+
+class Rowset
+{
+public:
+   RowsetIterator begin();
+   RowsetIterator end();
+
+private:
+   friend class Connection;
+
+   Row row_;
+   boost::optional<Query&> query_;
 };
 
 class IConnection
 {
 public:
    virtual Query query(const std::string& sqlStatement) = 0;
+
+   virtual Error execute(Query& query,
+                         Rowset& rowset) = 0;
 
    virtual Error execute(Query& query,
                          bool* pDataReturned = nullptr) = 0;
@@ -113,8 +133,13 @@ public:
    virtual ~Connection() {}
 
    Query query(const std::string& sqlStatement) override;
+
+   Error execute(Query& query,
+                 Rowset& rowset) override;
+
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
+
    Error executeStr(const std::string& queryStr) override;
 
    std::string driverName() const override;
@@ -136,8 +161,13 @@ public:
    virtual ~PooledConnection();
 
    Query query(const std::string& sqlStatement) override;
+
+   Error execute(Query& query,
+                 Rowset& rowset) override;
+
    Error execute(Query& query,
                  bool* pDataReturned = nullptr) override;
+
    Error executeStr(const std::string& queryStr) override;
 
    std::string driverName() const override;

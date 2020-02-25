@@ -22,6 +22,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <soci/row-exchange.h>
 #include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
@@ -177,12 +178,26 @@ Query::Query(const std::string& sqlStatement,
    // do not want to surface errors until execute() is called
    try
    {
+      statement_.alloc();
       statement_.prepare(sqlStatement);
    }
    catch (soci::soci_error& error)
    {
       prepareError_ = error;
    }
+}
+
+RowsetIterator Rowset::begin()
+{
+   if (query_)
+      return RowsetIterator(query_.get().statement_, row_);
+
+   return end();
+}
+
+RowsetIterator Rowset::end()
+{
+   return RowsetIterator();
 }
 
 Connection::Connection(const soci::backend_factory& factory,
@@ -211,6 +226,28 @@ Error Connection::execute(Query& query,
          *pDataReturned = result;
 
       query.statement_.bind_clean_up();
+
+      return Success();
+   }
+   catch (soci::soci_error& error)
+   {
+      return DatabaseError(error);
+   }
+}
+
+Error Connection::execute(Query& query,
+                          Rowset& rowset)
+{
+   if (query.prepareError_)
+      return DatabaseError(query.prepareError_.get());
+
+   try
+   {
+      query.statement_.define_and_bind();
+      query.statement_.exchange_for_rowset(soci::into(rowset.row_));
+      query.statement_.execute(false);
+
+      rowset.query_ = query;
 
       return Success();
    }
@@ -264,6 +301,12 @@ PooledConnection::~PooledConnection()
 Query PooledConnection::query(const std::string& sqlStatement)
 {
    return connection_->query(sqlStatement);
+}
+
+Error PooledConnection::execute(Query& query,
+                              Rowset& rowset)
+{
+   return connection_->execute(query, rowset);
 }
 
 Error PooledConnection::execute(Query& query,
