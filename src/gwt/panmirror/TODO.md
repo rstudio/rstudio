@@ -3,15 +3,6 @@
 
 ## TODO
 
-
-Default pandoc format options persist into writing even if gfm specified
-
-Can we use the pandoc RawBlock token instead of writeRaw?
-
-Make character escaping more configurable (don't rely on tex_math_ extension flag)
-
-Link input rule doesn't work for enter after link
-
 ## Enhancements
 
 DeleteRows DeleteCols gestures for table
@@ -30,6 +21,11 @@ Better direct manipulation for tables
 Unit testing for core panmirror code
 
 Improved treatment for relative image paths that don't resolve
+
+Make character escaping configurable
+
+Link input rule doesn't work for enter after link
+(https://discuss.prosemirror.net/t/trigger-inputrule-on-enter/1118/2)
 
 FindUX in standalone
 Magic comments in standalone
