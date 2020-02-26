@@ -283,6 +283,17 @@ std::string cleanDelimiters(const std::string& in_str)
    return toClean;
 }
 
+void cleanupLogDestinations()
+{
+   Logger& log = logger();
+   WRITE_LOCK_BEGIN(log.Mutex)
+
+   log.DefaultLogDestinations.clear();
+   log.SectionedLogDestinations.clear();
+
+   RW_LOCK_END(false)
+}
+
 void logError(const Error& in_error)
 {
    logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
