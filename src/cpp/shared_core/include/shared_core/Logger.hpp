@@ -108,6 +108,14 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
+ * @brief Removes all log destinations.
+ *
+ * NOTE: This function should be called from the main thread prior to shutdown to ensure all logging attempts from
+ * background threads will be no-ops.
+ */
+void cleanupLogDestinations();
+
+/**
  * @brief Replaces logging delimiters with ' ' in the specified string.
  *
  * @param in_toClean    The string from which to clean logging delimiters.
