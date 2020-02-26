@@ -80,7 +80,6 @@ public class ShinyDisconnectNotifier
       // check to see whether we should handle this message
       boolean ok =
             StringUtil.equals(data, "disconnected") &&
-            StringUtil.equals(name, source_.getWindowName()) &&
             source_.getShinyUrl().startsWith(origin);
       
       if (!ok)
