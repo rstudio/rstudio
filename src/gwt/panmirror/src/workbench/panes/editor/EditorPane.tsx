@@ -101,7 +101,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
       this.parent!,
       {
         pandoc: this.pandocEngine,
-        format: 'markdown',
+        format: 'markdown+autolink_bare_uris+tex_math_single_backslash',
         ui: {
           dialogs: this.editorDialogs,
           context: this.editorUIContext,
