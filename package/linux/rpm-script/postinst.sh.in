@@ -19,6 +19,10 @@ if ! test -f /etc/rstudio/rsession.conf
 then
    printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
 fi
+if ! test -f /etc/rstudio/database.conf
+then
+  cp ${CMAKE_INSTALL_PREFIX}/extras/conf/database.conf /etc/rstudio/
+fi
 
 mkdir -p /etc/rstudio/themes
 if ! test -f /etc/rstudio/themes/README.md

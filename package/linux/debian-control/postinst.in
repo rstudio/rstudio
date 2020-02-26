@@ -19,6 +19,10 @@ if ! test -f /etc/rstudio/rsession.conf
 then
   sh -c "echo '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf"
 fi
+if ! test -f /etc/rstudio/database.conf
+then
+  cp ${CMAKE_INSTALL_PREFIX}/extras/conf/database.conf /etc/rstudio/
+fi
 
 # create directory for global custom themes
 mkdir -p /etc/rstudio/themes

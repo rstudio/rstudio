@@ -181,6 +181,13 @@ file(GLOB DB_MIGRATION_FILES_SQLITE "db/*.sqlite")
 file(GLOB DB_MIGRATION_FILES_POSTGRESQL "db/*.postgresql")
 install(FILES ${DB_MIGRATION_FILES_SQL} ${DB_MIGRATION_FILES_SQLITE} ${DB_MIGRATION_FILES_POSTGRESQL}
         DESTINATION "db")
+
+# install default database.conf file
+set(RSERVER_CONF_DIR "extras/conf")
+set(RSERVER_DATABASE_CONF_FILE "${RSERVER_CONF_DIR}/database.conf")
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_DATABASE_CONF_FILE}
+        DESTINATION ${RSERVER_CONF_DIR})
+
 if (UNIX AND NOT APPLE)
 
    # install configured admin script
