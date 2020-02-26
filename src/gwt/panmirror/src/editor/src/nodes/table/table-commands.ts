@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNodeOfType, setTextSelection, findChildrenByType } from 'prosemirror-utils';
-import { isInTable, Rect, TableMap, selectionCell, CellSelection, toggleHeader } from 'prosemirror-tables';
+import { isInTable, Rect, TableMap, selectionCell, CellSelection, toggleHeader, addRow, addColumn } from 'prosemirror-tables';
 
 import { InsertTableFn } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -125,6 +125,49 @@ export function deleteTableCaption() {
     return true;
   };
 }
+
+
+export function addColumns(after: boolean) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    if (!isInTable(state)) { 
+      return false;
+    }
+    if (dispatch) {
+      let tr = state.tr;
+      const rect = selectedRect(state);
+      const columns = rect.right - rect.left;
+      for (let i = 0; i < columns; i++) {
+        tr = addColumn(tr, rect, after ? rect.right : rect.left);
+        rect.table = tr.doc.nodeAt(rect.tableStart - 1)!;
+        rect.map = TableMap.get(rect.table);
+      }
+      dispatch(tr);
+    }
+    return true;
+  };
+}
+
+
+export function addRows(after: boolean) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    if (!isInTable(state)) { 
+      return false;
+    }
+    if (dispatch) {
+      let tr = state.tr;
+      const rect = selectedRect(state);
+      const rows = rect.bottom - rect.top;
+      for (let i = 0; i < rows; i++) {
+        tr = addRow(tr, rect, after ? rect.bottom : rect.top);
+        rect.table = tr.doc.nodeAt(rect.tableStart - 1)!;
+        rect.map = TableMap.get(rect.table);
+      }
+      dispatch(tr);
+    }
+    return true;
+  };
+}
+
 
 export class TableToggleHeaderCommand extends ProsemirrorCommand {
   constructor() {

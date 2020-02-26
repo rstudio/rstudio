@@ -21,11 +21,7 @@ import {
   tableEditing,
   columnResizing,
   goToNextCell,
-  addColumnAfter,
-  addColumnBefore,
   deleteColumn,
-  addRowAfter,
-  addRowBefore,
   deleteRow,
 } from 'prosemirror-tables';
 
@@ -45,6 +41,8 @@ import {
   TableToggleCaptionCommand,
   CssAlignment,
   deleteTableCaption,
+  addRows,
+  addColumns,
 } from './table-commands';
 
 import {
@@ -100,11 +98,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
-        new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumnAfter),
-        new ProsemirrorCommand(EditorCommandId.TableAddColumnBefore, [], addColumnBefore),
+        new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumns(true)),
+        new ProsemirrorCommand(EditorCommandId.TableAddColumnBefore, [], addColumns(false)),
         new ProsemirrorCommand(EditorCommandId.TableDeleteColumn, [], deleteColumn),
-        new ProsemirrorCommand(EditorCommandId.TableAddRowAfter, [], addRowAfter),
-        new ProsemirrorCommand(EditorCommandId.TableAddRowBefore, [], addRowBefore),
+        new ProsemirrorCommand(EditorCommandId.TableAddRowAfter, [], addRows(true)),
+        new ProsemirrorCommand(EditorCommandId.TableAddRowBefore, [], addRows(false)),
         new ProsemirrorCommand(EditorCommandId.TableDeleteRow, [], deleteRow),
         new ProsemirrorCommand(EditorCommandId.TableDeleteTable, [], deleteTable()),
         new TableColumnAlignmentCommand(EditorCommandId.TableAlignColumnLeft, CssAlignment.Left),
