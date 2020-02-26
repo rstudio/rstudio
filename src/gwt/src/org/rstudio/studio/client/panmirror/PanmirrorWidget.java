@@ -223,12 +223,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       // sync theme
       syncEditorTheme();
       
-      // add focus-visible class to prevent interaction with focus-visible.js plugin
-      // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-      // is content editable, and that triggers a dom mutation event for ProseMirror,
-      // which in turn causes the selection to be reset
-      editor.addClass("focus-visible");
-      
       commands_ = editor.commands();
       
       toolbar_.init(commands_, findReplace_);
