@@ -769,7 +769,10 @@ int main(int argc, char* argv[])
       desktop::options().initFromCommandLine(pApp->arguments());
       ProgramStatus status = initializeOptions(pApp->arguments());
       if (status.exit())
+      {
+         core::log::cleanupLogDestinations();
          return status.exitCode();
+      }
 
       // reset log if we are in run-diagnostics mode
       if (desktop::options().runDiagnostics())
