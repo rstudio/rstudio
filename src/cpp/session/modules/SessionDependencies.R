@@ -13,6 +13,11 @@
 #
 #
 
+# Topographically sorts a list of packages (nodes) by their dependencies (edges). Note that this is
+# not meant to be a general-purpose topo sort algorithm, and that it returns packages in the correct
+# installation order, which is the exact reverse of traditional topological order. For example,
+# given packages with dependencies a -> b -> c, we would want to install packages in the order "c",
+# "b", and then "a".
 .rs.addFunction("topoSortPackages", function(nodes, edges) {
    # List of sorted packages
    sorted <- c()
@@ -61,7 +66,11 @@
 })
 
 .rs.addFunction("expandDependencies", function(available, dependencies) {
+   # A list of nodes (package names) to be installed
    nodes <- c()
+
+   # A list of details for packages to be installed
+   packages <- dependencies
 
    # A vector of lists, with "from" and "to" named elements giving the dependencies
    edges <- list()
@@ -69,11 +78,14 @@
    # Get the dependencies of each package
 	for (dep in dependencies) {
       # Add the package itself to the list of nodes
-      nodes <- c(nodes, dep)
+      nodes <- c(nodes, dep$name)
+   }
 
+   # Look for dependencies of each package
+   for (dep in dependencies) {
       # Dependencies are discovered from these three fields
 		fields <- c("Depends", "Imports", "LinkingTo")
-		data <- lapply(fields, function(field) {
+		for (field in fields) {
 			# Read contents for field (ignore if no contents)
 			contents <- available[dep$name, field]
 			if (!is.character(contents))
@@ -96,17 +108,42 @@
 
          # Decompose matches into additional nodes
          for (match in matches) {
-            # TODO: Do we need to recurse here?
-            nodes <- c(nodes, list(
-                  name    = matches[[2]],
-                  version = matches[[4]]
-               ))
-         }
+            # Extract package name from regex result
+            pkgName <- matches[[2]]
 
-         pkgNames <- vapply(matches, `[[`, 2L, FUN.VALUE = character(1))
-         for (pkgName in pkgNames) {
+            # Append to node list if we don't know about it already
+            if (!pkgName %in% nodes) {
+               nodes <- c(nodes, pkgName)
+               # TODO: do not do this if it is installed
+               packages <- append(packages, list(list(
+                     name = matches[[2]],
+                     location = "cran",
+                     version = matches[[4]],
+                     availableVersion = available[pkgName, "Version"])))
+            }
+
+            # Add a dependency edge
             edges <- append(edges, list(list(from = dep$name, to = pkgName)))
          }
-		})
+		}
 	}
+
+   # We now have a complete list of packages that we need to install. Sort it topologically so that
+   # we install dependencies before the packages they depend on. This returns a character vector of
+   # sorted package names.
+   sorted <- .rs.topoSortPackages(nodes, edges)
+
+   # Rebuild the list of actual package records from the sorted names.
+   result <- list()
+   for (package in sorted) {
+      for (record in packages) {
+         if (record$name == package) {
+            result <- append(result, list(record))
+            break
+         }
+      }
+   }
+
+   # Return the expanded and sorted result
+   result
 })

@@ -29,4 +29,22 @@ test_that("simple topological sort works", {
                 c("c", "b", "a"))
 })
 
+test_that("simple expansion and sorting is done correctly", {
+   # simulation of available.packages for a simple set of packages, foo -> bar -> baz
+   available <- data.frame(
+         Package   = c("foo",                      "bar", "baz"),
+         Version   = c("1.0",                      "1.1", "2.0"),
+         Depends   = c("R (>= 3.2), bar (>= 1.1)",  NA,    NA),
+         Imports   = c(NA,                          "baz", NA),
+         LinkingTo = c(NA,                          NA,    NA))
+
+   # simulation of the dependencies we want to install; just one package
+   dependencies <- list(list(
+         name     = "foo",
+         location = "cran",
+         version  = "1.0",
+         source   = false))
+
+   result <- .rs.expandDependencies(available, dependencies)
+})
 
