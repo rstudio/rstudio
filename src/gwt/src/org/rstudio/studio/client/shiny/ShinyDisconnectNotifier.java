@@ -65,9 +65,9 @@ public class ShinyDisconnectNotifier
             return;
          
          self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(
-            e.data,
-            e.origin,
-            e.target.name
+            event.data,
+            event.origin,
+            event.target.name
          );
          
       });
