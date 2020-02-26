@@ -35,7 +35,7 @@ int main(int argc, char** argv)
       if (argc < 2)
       {
          std::cerr << "Error: Not enough arguments" << std::endl;
-         log::cleanupLogDestinations();
+         rstudio::core::log::cleanupLogDestinations();
          return EXIT_FAILURE;
       }
 
@@ -72,19 +72,19 @@ int main(int argc, char** argv)
            std::cerr << "problem in displaying " << argv[1] << std::endl;
         }
 
-         log::cleanupLogDestinations();
-        return ret;
+         rstudio::core::log::cleanupLogDestinations();
+         return ret;
       }
       else
       {
-         log::cleanupLogDestinations();
+         rstudio::core::log::cleanupLogDestinations();
          return EXIT_SUCCESS;
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
 
    // if we got this far we had an unexpected exception
-   log::cleanupLogDestinations();
+   rstudio::core::log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 
