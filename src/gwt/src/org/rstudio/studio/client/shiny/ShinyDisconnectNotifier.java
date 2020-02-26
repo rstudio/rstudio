@@ -22,7 +22,6 @@ public class ShinyDisconnectNotifier
    public interface ShinyDisconnectSource
    {
       public String getShinyUrl();
-      public String getWindowName();
       public void onShinyDisconnect();
    }
 
