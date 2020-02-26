@@ -3,10 +3,18 @@
 
 ## TODO
 
+- Quotes are included when provided in attributes
+
+- No way to "un-div" something (Remove Attributes)
+
+- Inline LaTeX is busted!
+
+- Line block needs a check toggle
+
+- Raw inline html highlighting issue: <blink>&nbsp;</blink>
+
 ## Enhancements
 
-DeleteRows DeleteCols gestures for table
-Insert Multiple Rows for table?
 
 Images should support width/align for gfm (write raw_html)
 
@@ -15,6 +23,8 @@ Dialog/picker for images
 Sizing/alignment inline for images
 
 Surface attributes
+
+Insert Multiple Rows for table? (may need to ask on the forum about this)
 
 Better direct manipulation for tables
 
@@ -36,7 +46,7 @@ Cursor location for insert yaml in the middle of paragraph
 Provide some extra vertical space at the bottom when typing at the bottom
 
 - Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
-document. Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
+comment). Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
 - Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
 - Backspace key seems to be the culprit for both of the above
 
