@@ -418,6 +418,10 @@ export class Editor {
     });
   }
 
+  public addClass(className: string) {
+    this.view.dom.classList.add(className);
+  }
+
   public applyTheme(theme: EditorTheme) {
     applyTheme(theme);
   }

@@ -68,6 +68,8 @@ public class PanmirrorEditor
    
    public native void navigate(String id);
    
+   public native void addClass(String className);
+   
    public native void applyTheme(PanmirrorTheme theme);
    
    public native void setKeybindings(PanmirrorKeybindings keybindings);
