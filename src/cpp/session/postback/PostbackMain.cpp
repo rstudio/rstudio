@@ -44,6 +44,7 @@ using namespace session::postback ;
 
 int exitFailure(const Error& error)
 {
+   log::cleanupLogDestinations();
    LOG_ERROR(error);
    return EXIT_FAILURE;
 }
@@ -75,7 +76,10 @@ int main(int argc, char * const argv[])
       Options& options = session::postback::options();
       ProgramStatus status = options.read(argc, argv); 
       if ( status.exit() )
-         return status.exitCode() ;
+      {
+         log::cleanupLogDestinations();
+         return status.exitCode();
+      }
       
       http::Response response;
       error = session::http::sendSessionRequest(
@@ -87,11 +91,14 @@ int main(int argc, char * const argv[])
 
       std::string exitCode = response.headerValue(kPostbackExitCodeHeader);
       std::cout << response.body();
+
+      log::cleanupLogDestinations();
       return safe_convert::stringTo<int>(exitCode, EXIT_FAILURE);
    }
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
+   log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 

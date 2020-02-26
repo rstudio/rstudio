@@ -106,5 +106,6 @@ int main(int argc, char** argv)
    writeLogFile("rsession-" + core::system::username() + ".log", std::cout);
    writeUserPrefs(std::cout);
 
+   log::cleanupLogDestinations();
    return EXIT_SUCCESS;
 }

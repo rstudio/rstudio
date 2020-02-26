@@ -751,7 +751,10 @@ int main(int argc, char* argv[])
          else
          {
             if (pAppLaunch->sendMessage(filename))
+            {
+               core::log::cleanupLogDestinations();
                return 0;
+            }
          }
       }
       else
@@ -785,6 +788,7 @@ int main(int argc, char* argv[])
       if (error)
       {
          LOG_ERROR(error);
+         core::log::cleanupLogDestinations();
          return EXIT_FAILURE;
       }
 
@@ -824,7 +828,10 @@ int main(int argc, char* argv[])
 
       Options& options = desktop::options();
       if (!prepareEnvironment(options))
+      {
+         core::log::cleanupLogDestinations();
          return 1;
+      }
 
 #ifdef _WIN32
       RVersion version = detectRVersion(false);
@@ -871,6 +878,8 @@ int main(int argc, char* argv[])
                       QString::fromUtf8("Invalid session server"),
                       QString::fromStdString("Session server " + sessionServer + " does not exist"),
                       QString::null);
+
+            core::log::cleanupLogDestinations();
             return EXIT_FAILURE;
          }
       }
@@ -930,7 +939,10 @@ int main(int argc, char* argv[])
                      // display session location chooser dialog
                      LaunchLocationResult result = sessionServers().showSessionLaunchLocationDialog();
                      if (result.dialogResult == QDialog::Rejected)
+                     {
+                        core::log::cleanupLogDestinations();
                         return EXIT_SUCCESS;
+                     }
 
                      launchServer = result.sessionServer;
                   }
@@ -976,7 +988,10 @@ int main(int argc, char* argv[])
                if (!continueConnecting)
                {
                   if (forceSessionServerLaunch)
+                  {
+                     core::log::cleanupLogDestinations();
                      return EXIT_FAILURE;
+                  }
 
                   forceShowSessionLocationDialog = true;
                   continue;
@@ -1046,10 +1061,15 @@ int main(int argc, char* argv[])
             continue;
          }
 
+         core::log::cleanupLogDestinations();
          return result;
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
+
+   // If we got to this point there was an error.
+   core::log::cleanupLogDestinations();
+   return EXIT_FAILURE;
 }
 
 #ifdef _WIN32

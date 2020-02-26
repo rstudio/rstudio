@@ -1577,6 +1577,8 @@ int sessionExitFailure(const core::Error& error,
    if (!error.isExpected())
       core::log::logError(error, location);
 
+   core::log::cleanupLogDestinations();
+
    return EXIT_FAILURE;
 }
 
@@ -1734,7 +1736,10 @@ int main (int argc, char * const argv[])
          program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       if (status.exit())
-         return status.exitCode() ;
+      {
+         core::log::cleanupLogDestinations();
+         return status.exitCode();
+      }
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -2121,11 +2126,13 @@ int main (int argc, char * const argv[])
       }
       
       // return success for good form
+      log::cleanupLogDestinations();
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
+   log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 
