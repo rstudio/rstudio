@@ -326,6 +326,12 @@ public class TextEditingTargetVisualMode
          
          PanmirrorOptions options = new PanmirrorOptions();
          options.rmdCodeChunks = true;
+         
+         // add focus-visible class to prevent interaction with focus-visible.js
+         // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
+         // is contentEditable, and that triggers a dom mutation event for ProseMirror,
+         // which in turn causes us to lose table selections)
+         options.className = "focus-visible";
            
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          

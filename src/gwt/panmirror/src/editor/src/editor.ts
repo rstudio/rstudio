@@ -221,11 +221,18 @@ export class Editor {
       plugins: this.createPlugins(),
     });
 
+    // additional dom attributes for editor node
+    let attributes : { [name: string]: string; } = {};
+    if (options.className) {
+      attributes.class = options.className;
+    }
+
     // create view
     this.view = new EditorView(this.parent, {
       state: this.state,
       dispatchTransaction: this.dispatchTransaction.bind(this),
-      domParser: new EditorDOMParser(this.schema),
+      domParser: new EditorDOMParser(this.schema), 
+      attributes
     });
 
     // add proportinal font class to parent

@@ -27,4 +27,5 @@ public class PanmirrorOptions
    public boolean braceMatching;
    public boolean rmdCodeChunks;
    public boolean formatComment;
+   public String className;
 }
