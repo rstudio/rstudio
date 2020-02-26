@@ -3,6 +3,11 @@
 
 ## TODO
 
+Sometimes inserting multiple columns fails (not sure exactly when or why)
+- Table errors may be going to the RStudio Server console log!
+There is code in our format-comment.ts that is using an out of range position!
+(Set to catch unhandled JS exceptions to debug)
+
 - Quotes are included when provided in attributes
 
 - No way to "un-div" something (Remove Attributes)
@@ -44,8 +49,6 @@ Cursor location for insert yaml in the middle of paragraph
 Tables with a large number of columns are written as HTML when variable column widths are presented
 (presumably b/c it can't represent the percentage granularity w/ markdown)
 Perhaps don't set widths on all of the columns (only ones explicitly sized?)
-
-Sometimes inserting multiple columns fails (not sure exactly when or why)
 
 Provide some extra vertical space at the bottom when typing at the bottom
 
