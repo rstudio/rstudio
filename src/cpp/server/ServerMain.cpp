@@ -498,6 +498,7 @@ int main(int argc, char * const argv[])
       if (error)
       {
          core::log::writeError(error, std::cerr);
+         log::cleanupLogDestinations();
          return EXIT_FAILURE;
       }
 
@@ -660,6 +661,7 @@ int main(int argc, char * const argv[])
       if (!detected && overlay::requireLocalR())
       {
          program_options::reportError(errMsg, ERROR_LOCATION);
+         log::cleanupLogDestinations();
          return EXIT_FAILURE;
       }
 
@@ -709,6 +711,7 @@ int main(int argc, char * const argv[])
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
+         log::cleanupLogDestinations();
          return EXIT_SUCCESS;
       }
 
@@ -736,11 +739,13 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // NOTE: we never get here because waitForSignals waits forever
+      log::cleanupLogDestinations();
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
+   log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 

@@ -82,6 +82,8 @@ int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
    if (!error.isExpected())
       core::log::logError(error, loggedFromLocation);
+
+   core::log::cleanupLogDestinations();
    return EXIT_FAILURE;
 }
 

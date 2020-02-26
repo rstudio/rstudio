@@ -46,6 +46,7 @@ int inappropriateUsage(const ErrorLocation& location)
    // cause further annoyance
    ::sleep(10);
 
+   log::cleanupLogDestinations();
    return EXIT_FAILURE;
 }
 
@@ -106,6 +107,7 @@ int main(int argc, char * const argv[])
          {
             LOG_WARNING_MESSAGE("Password exceeded maximum length for "
                                 "user " + username);
+            log::cleanupLogDestinations();
             return EXIT_FAILURE;
          }
       }
@@ -113,13 +115,20 @@ int main(int argc, char * const argv[])
       // verify password
       core::system::PAM pam(service, false, true, requirePasswordPrompt);
       if (pam.login(username, password) == PAM_SUCCESS)
+      {
+         log::cleanupLogDestinations();
          return EXIT_SUCCESS;
+      }
       else
+      {
+         log::cleanupLogDestinations();
          return EXIT_FAILURE;
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
    
    // if we got this far we had an unexpected exception
+   log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 

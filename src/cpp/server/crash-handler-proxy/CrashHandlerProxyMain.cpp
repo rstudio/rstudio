@@ -58,5 +58,6 @@ int main(int argc, const char* argv[])
    runCrashHandler(argv);
 
    // if we get here, we failed to run the crash handler
+   log::cleanupLogDestinations();
    return EXIT_FAILURE;
 }

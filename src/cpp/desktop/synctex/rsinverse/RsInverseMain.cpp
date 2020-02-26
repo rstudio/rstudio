@@ -88,7 +88,10 @@ int main(int argc, char** argv)
       // read options
       ProgramStatus status = core::program_options::read(optDesc, argc, argv);
       if (status.exit())
+      {
+         log::cleanupLogDestinations();
          return status.exitCode();
+      }
 
       // activate the window
       HWND hRStudioWnd = reinterpret_cast<HWND>(windowHandle);
@@ -138,11 +141,15 @@ int main(int argc, char** argv)
                                 &response);
 
       std::string exitCode = response.headerValue(kPostbackExitCodeHeader);
+
+      log::cleanupLogDestinations();
       return safe_convert::stringTo<int>(exitCode, EXIT_FAILURE);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
+
    // if we got this far we had an unexpected exception
+   log::cleanupLogDestinations();
    return EXIT_FAILURE ;
 }
 
