@@ -36,15 +36,27 @@ test_that("simple expansion and sorting is done correctly", {
          Version   = c("1.0",                      "1.1", "2.0"),
          Depends   = c("R (>= 3.2), bar (>= 1.1)",  NA,    NA),
          Imports   = c(NA,                          "baz", NA),
-         LinkingTo = c(NA,                          NA,    NA))
+         LinkingTo = c(NA,                          NA,    NA),
+         stringsAsFactors = FALSE)
+   rownames(available) <- available[[1]]
 
    # simulation of the dependencies we want to install; just one package
    dependencies <- list(list(
          name     = "foo",
          location = "cran",
          version  = "1.0",
-         source   = false))
+         source   = FALSE))
 
    result <- .rs.expandDependencies(available, dependencies)
+
+   expect_equal(!!result, list(
+         list(name     = "bar",
+              location = "cran",
+              version  = "1.1",
+              source   = FALSE),
+         list(name     = "foo",
+              location = "cran",
+              version  = "1.0",
+              source   = FALSE)))
 })
 

@@ -76,7 +76,7 @@
    edges <- list()
 
    # Get the dependencies of each package
-	for (dep in dependencies) {
+   for (dep in dependencies) {
       # Add the package itself to the list of nodes
       nodes <- c(nodes, dep$name)
    }
@@ -84,15 +84,15 @@
    # Look for dependencies of each package
    for (dep in dependencies) {
       # Dependencies are discovered from these three fields
-		fields <- c("Depends", "Imports", "LinkingTo")
-		for (field in fields) {
-			# Read contents for field (ignore if no contents)
-			contents <- available[dep$name, field]
-			if (!is.character(contents))
-				return(list())
+      fields <- c("Depends", "Imports", "LinkingTo")
+      for (field in fields) {
+         # Read contents for field (ignore if no contents)
+         contents <- available[dep$name, field]
+         if (!is.character(contents))
+            next
 
          # Split into a list of individual package names, using comma/whitespace as a delimiter
-			prereqs <- strsplit(contents, "\\s*,\\s*)")[[1]]
+         prereqs <- strsplit(contents, "\\s*,\\s*")[[1]]
 
          # Parse the package names into groups:
          # 1. The package name
@@ -100,33 +100,38 @@
          # 3. The package's version
          parsed <- regexec("([a-zA-Z0-9._]+)(?:\\s*\\(([><=]+)\\s*([0-9.-]+)\\))?", prereqs)
          matches <- regmatches(prereqs, parsed)
-         if (empty(matches))
-            return(list())
 
          # pkgReqs <- vapply(matches, `[[`, 3L, FUN.VALUE = character(1))
          # pkgVersions <- vapply(matches, `[[`, 4L, FUN.VALUE = character(1))
 
          # Decompose matches into additional nodes
          for (match in matches) {
+            if (length(matches) < 2)
+               next
+
             # Extract package name from regex result
-            pkgName <- matches[[2]]
+            pkgName <- match[[2]]
+
+            # Ignore packages that don't have an entry in the availability list
+            if (!(pkgName %in% rownames(available)))
+                next
 
             # Append to node list if we don't know about it already
             if (!pkgName %in% nodes) {
                nodes <- c(nodes, pkgName)
                # TODO: do not do this if it is installed
                packages <- append(packages, list(list(
-                     name = matches[[2]],
+                     name = pkgName,
                      location = "cran",
-                     version = matches[[4]],
-                     availableVersion = available[pkgName, "Version"])))
+                     version = available[pkgName, "Version"],
+                     source = FALSE)))
             }
 
             # Add a dependency edge
             edges <- append(edges, list(list(from = dep$name, to = pkgName)))
          }
-		}
-	}
+      }
+   }
 
    # We now have a complete list of packages that we need to install. Sort it topologically so that
    # we install dependencies before the packages they depend on. This returns a character vector of
