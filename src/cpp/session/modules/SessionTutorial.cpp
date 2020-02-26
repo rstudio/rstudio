@@ -235,8 +235,12 @@ void handleTutorialHomeRequest(const http::Request& request,
          
          ss << "<div class=\"rstudio-tutorials-label-container\">";
          
+         std::string title = (tutorial.title.empty())
+               ? "[Untitled tutorial]"
+               : htmlEscape(tutorial.title);
+         
          ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
-            << htmlEscape(tutorial.title)
+            << title
             << "</span>";
          
          ss << "<span class=\"rstudio-tutorials-run-container\">"
@@ -255,7 +259,7 @@ void handleTutorialHomeRequest(const http::Request& request,
          ss << "</div>";
          
          ss << "<div class=\"rstudio-tutorials-sublabel\">"
-            << pkgName << ": " << tutorial.name
+            << pkgName << ": " << htmlEscape(tutorial.name)
             << "</div>";
          
          if (tutorial.description.empty())
