@@ -24,8 +24,6 @@ Sizing/alignment inline for images
 
 Surface attributes
 
-Insert Multiple Rows for table? (may need to ask on the forum about this)
-
 Better direct manipulation for tables
 
 Unit testing for core panmirror code
@@ -42,6 +40,12 @@ Magic comments in standalone
 Dynamic commands/format for standalone front-end
 
 Cursor location for insert yaml in the middle of paragraph
+
+Tables with a large number of columns are written as HTML when variable column widths are presented
+(presumably b/c it can't represent the percentage granularity w/ markdown)
+Perhaps don't set widths on all of the columns (only ones explicitly sized?)
+
+Sometimes inserting multiple columns fails (not sure exactly when or why)
 
 Provide some extra vertical space at the bottom when typing at the bottom
 
