@@ -173,7 +173,6 @@ void handleTutorialRunRequest(const http::Request& request,
    std::string package = request.queryParamValue("package");
    std::string name = request.queryParamValue("name");
    
-   // TODO: Check tutorial pre-requisites first!
    Error error = r::exec::RFunction(".rs.tutorial.runTutorial")
          .addParam(name)
          .addParam(package)
@@ -183,9 +182,11 @@ void handleTutorialRunRequest(const http::Request& request,
    {
       LOG_ERROR(error);
       pResponse->setStatusCode(http::status::NotFound);
+      return;
    }
    
-   pResponse->setStatusCode(http::status::Ok);
+   FilePath loadingPath = resourcesPath().completePath("loading.html");
+   pResponse->setFile(loadingPath, request);
 }
 
 void handleTutorialHomeRequest(const http::Request& request,
