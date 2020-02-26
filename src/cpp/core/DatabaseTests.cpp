@@ -55,7 +55,7 @@ TEST_CASE("Database", "[.database]")
       FilePath sqliteDbPath("/tmp/rstudio-test-db");
       sqliteDbPath.removeIfExists();
 
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       Error error = connect(postgresConnectionOptions(), &connection);
       if (error)
          return;
@@ -73,7 +73,7 @@ TEST_CASE("Database", "[.database]")
 
    test_that("Can create SQLite database")
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
 
       Query query = connection->query("create table Test(id int, text varchar(255))");
@@ -99,7 +99,7 @@ TEST_CASE("Database", "[.database]")
 
    test_that("Can create PostgreSQL database")
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       REQUIRE_FALSE(connect(postgresConnectionOptions(), &connection));
 
       Query query = connection->query("create table Test(id int, text varchar(255))");
@@ -125,7 +125,7 @@ TEST_CASE("Database", "[.database]")
 
    test_that("Can perform transactions")
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
 
       Transaction transaction(connection);
@@ -180,7 +180,7 @@ TEST_CASE("Database", "[.database]")
 
    test_that("Can bulk select")
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
 
       Rowset rows;
@@ -199,7 +199,7 @@ TEST_CASE("Database", "[.database]")
 
    test_that("Can bulk insert")
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
 
       std::vector<int> rowIds {1000, 2000, 3000, 4000, 5000};
@@ -229,7 +229,7 @@ TEST_CASE("Database", "[.database]")
       boost::shared_ptr<ConnectionPool> connectionPool;
       REQUIRE_FALSE(createConnectionPool(5, sqliteConnectionOptions(), &connectionPool));
 
-      boost::shared_ptr<PooledConnection> connection = connectionPool->getConnection();
+      boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
       boost::tuple<int, std::string> row;
       Query query = connection->query("select id, text from Test where id = 50")
             .withOutput(row);
@@ -238,7 +238,7 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
       REQUIRE(dataReturned);
 
-      boost::shared_ptr<PooledConnection> connection2 = connectionPool->getConnection();
+      boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
       Query query2 = connection2->query("select id, text from Test where id = 25")
             .withOutput(row);
 
@@ -337,10 +337,10 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(writeStringToFile(outFile3Sqlite, schema3Sqlite));
       REQUIRE_FALSE(writeStringToFile(outFile3Postgresql, schema3Postgresql));
 
-      boost::shared_ptr<Connection> sqliteConnection;
+      boost::shared_ptr<IConnection> sqliteConnection;
       REQUIRE_FALSE(connect(sqliteConnectionOptions(), &sqliteConnection));
 
-      boost::shared_ptr<Connection> postgresConnection;
+      boost::shared_ptr<IConnection> postgresConnection;
       REQUIRE_FALSE(connect(postgresConnectionOptions(), &postgresConnection));
 
       SchemaUpdater sqliteUpdater(sqliteConnection, workingDir);

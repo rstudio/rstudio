@@ -117,7 +117,7 @@ std::string DatabaseErrorCategory::message(int ev) const
 class ConnectVisitor : public boost::static_visitor<Error>
 {
 public:
-   ConnectVisitor(boost::shared_ptr<Connection>* pPtrConnection) :
+   ConnectVisitor(boost::shared_ptr<IConnection>* pPtrConnection) :
       pPtrConnection_(pPtrConnection)
    {
    }
@@ -126,7 +126,7 @@ public:
    {
       try
       {
-         boost::shared_ptr<Connection> pConnection(new Connection(soci::sqlite3, "dbname=\"" + options.file + "\""));
+         boost::shared_ptr<IConnection> pConnection(new Connection(soci::sqlite3, "dbname=\"" + options.file + "\""));
 
          // foreign keys must explicitly be enabled for sqlite
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
@@ -156,7 +156,7 @@ public:
                           options.password %
                           safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
 
-         boost::shared_ptr<Connection> pConnection(new Connection(soci::postgresql, connectionStr));
+         boost::shared_ptr<IConnection> pConnection(new Connection(soci::postgresql, connectionStr));
          *pPtrConnection_ = pConnection;
          return Success();
       }
@@ -167,7 +167,7 @@ public:
    }
 
 private:
-   boost::shared_ptr<Connection>* pPtrConnection_;
+   boost::shared_ptr<IConnection>* pPtrConnection_;
 };
 
 Query::Query(const std::string& sqlStatement,
@@ -325,14 +325,14 @@ std::string PooledConnection::driverName() const
    return connection_->driverName();
 }
 
-boost::shared_ptr<PooledConnection> ConnectionPool::getConnection()
+boost::shared_ptr<IConnection> ConnectionPool::getConnection()
 {
    // block until a connection is available
    boost::shared_ptr<Connection> connection;
    connections_.deque(&connection, boost::posix_time::pos_infin);
 
    // create wrapper PooledConnection around retrieved Connection
-   return boost::shared_ptr<PooledConnection>(new PooledConnection(shared_from_this(), connection));
+   return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
 }
 
 void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
@@ -340,9 +340,9 @@ void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& conne
    connections_.enque(connection);
 }
 
-Transaction::Transaction(const boost::shared_ptr<Connection>& connection) :
+Transaction::Transaction(const boost::shared_ptr<IConnection>& connection) :
    connection_(connection),
-   transaction_(connection->session_)
+   transaction_(connection->session())
 {
 }
 
@@ -356,7 +356,7 @@ void Transaction::rollback()
    transaction_.rollback();
 }
 
-SchemaUpdater::SchemaUpdater(const boost::shared_ptr<Connection>& connection,
+SchemaUpdater::SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
                              const FilePath& migrationsPath) :
    connection_(connection),
    migrationsPath_(migrationsPath)
@@ -601,7 +601,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 }
 
 Error connect(const ConnectionOptions& options,
-              boost::shared_ptr<Connection>* pPtrConnection)
+              boost::shared_ptr<IConnection>* pPtrConnection)
 {
    return boost::apply_visitor(ConnectVisitor(pPtrConnection), options);
 }
@@ -614,7 +614,7 @@ Error createConnectionPool(size_t poolSize,
 
    for (size_t i = 0; i < poolSize; ++i)
    {
-      boost::shared_ptr<Connection> connection;
+      boost::shared_ptr<IConnection> connection;
       Error error = connect(options, &connection);
       if (error)
       {
@@ -624,7 +624,7 @@ Error createConnectionPool(size_t poolSize,
       }
 
       // add connection to the pool
-      (*pPool)->returnConnection(connection);
+      (*pPool)->returnConnection(boost::static_pointer_cast<Connection>(connection));
    }
 
    return Success();

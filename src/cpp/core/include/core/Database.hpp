@@ -125,6 +125,8 @@ public:
    virtual Error executeStr(const std::string& queryStr) = 0;
 
    virtual std::string driverName() const = 0;
+
+   virtual soci::session& session() = 0;
 };
 
 class Connection : public IConnection
@@ -143,6 +145,8 @@ public:
    Error executeStr(const std::string& queryStr) override;
 
    std::string driverName() const override;
+
+   soci::session& session() override { return session_; }
 
 private:
    friend class ConnectVisitor;
@@ -172,6 +176,8 @@ public:
 
    std::string driverName() const override;
 
+   soci::session& session() override { return connection_->session(); }
+
 private:
    friend class ConnectionPool;
 
@@ -186,7 +192,7 @@ private:
 class ConnectionPool : public boost::enable_shared_from_this<ConnectionPool>
 {
 public:
-   boost::shared_ptr<PooledConnection> getConnection();
+   boost::shared_ptr<IConnection> getConnection();
 
 private:
    friend class PooledConnection;
@@ -202,7 +208,7 @@ private:
 class Transaction
 {
 public:
-   Transaction(const boost::shared_ptr<Connection>& connection);
+   Transaction(const boost::shared_ptr<IConnection>& connection);
 
    void commit();
    void rollback();
@@ -211,7 +217,7 @@ public:
    // is automatically aborted if not previously committed
 
 private:
-   boost::shared_ptr<Connection> connection_;
+   boost::shared_ptr<IConnection> connection_;
    soci::transaction transaction_;
 };
 
@@ -221,7 +227,7 @@ static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
 class SchemaUpdater
 {
 public:
-   SchemaUpdater(const boost::shared_ptr<Connection>& connection,
+   SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
                  const FilePath& migrationsPath);
 
    // updates the database schema to the highest version
@@ -252,13 +258,13 @@ private:
    // gets the actual migration files from the migration path
    Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
 
-   boost::shared_ptr<Connection> connection_;
+   boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
 };
 
 // connect to the database with the specified connection options
 Error connect(const ConnectionOptions& options,
-              boost::shared_ptr<Connection>* pPtrConnection);
+              boost::shared_ptr<IConnection>* pPtrConnection);
 
 // create a pool of database connections with the specified connection options
 // the pool will create/establish multiple connections with the database and
