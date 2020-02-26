@@ -199,10 +199,7 @@ class PandocWriter implements PandocOutput {
           this.writeToken(PandocTokenType.Space);
         } else if (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch)) {
           flushTextRun();
-          this.writeToken(PandocTokenType.RawInline, () => {
-            this.write('markdown');
-            this.write(ch);
-          });
+          this.writeRawMarkdown(ch);
         } else {
           textRun += ch;
         }
