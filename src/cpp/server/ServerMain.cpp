@@ -516,6 +516,7 @@ int main(int argc, char * const argv[])
          if (!optionsWarnings.empty())
             program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
+         core::log::cleanupLogDestinations();
          return status.exitCode() ;
       }
       
