@@ -72,10 +72,10 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right");
       add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left");
-      add(PanmirrorCommands.TableDeleteColumn, "Delete Column");
+      add(PanmirrorCommands.TableDeleteColumn, "Delete Column(s)");
       add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below");
       add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above");
-      add(PanmirrorCommands.TableDeleteRow, "Delete Row");
+      add(PanmirrorCommands.TableDeleteRow, "Delete Row(s)");
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
       add(PanmirrorCommands.TableNextCell, "Next Cell");
       add(PanmirrorCommands.TablePreviousCell, "Previous Cell");
