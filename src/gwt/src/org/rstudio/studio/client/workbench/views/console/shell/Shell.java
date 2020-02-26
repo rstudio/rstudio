@@ -272,6 +272,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    }
 
+   @Handler
+   void onFocusConsoleOutputEnd()
+   {
+      view_.getConsoleOutputWriter().focusEnd();
+   }
+
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
    {
       keyDownPreviewHandlers_.add(handler);

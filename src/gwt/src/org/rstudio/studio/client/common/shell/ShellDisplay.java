@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -36,6 +37,7 @@ public interface ShellDisplay extends ShellOutputWriter,
    void consolePrompt(String prompt, boolean showInput);
    void ensureInputVisible();
    InputEditorDisplay getInputEditorDisplay();
+   ConsoleOutputWriter getConsoleOutputWriter();
    void clearOutput();
    String processCommandEntry();
    int getCharacterWidth();

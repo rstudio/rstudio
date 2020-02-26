@@ -88,6 +88,7 @@ public class ConsoleOutputWriter
       if (virtualConsole_ == null)
       {
          SpanElement trailing = Document.get().createSpanElement();
+         trailing.setTabIndex(-1);
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
       }
@@ -152,6 +153,15 @@ public class ConsoleOutputWriter
          return "";
       else
          return virtualConsole_.getNewText();
+   }
+
+   public void focusEnd()
+   {
+      Node lastChild = output_.getElement().getLastChild();
+      if (lastChild == null)
+         return;
+      Element last = lastChild.cast();
+      last.focus();
    }
 
    private int maxLines_ = -1;
