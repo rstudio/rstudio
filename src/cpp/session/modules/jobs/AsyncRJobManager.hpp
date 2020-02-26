@@ -1,7 +1,7 @@
 /*
  * AsyncRJobManager.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,8 @@
 
 #include <session/jobs/Job.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+
+#include <vector>
 
 namespace rstudio {
 namespace core {
@@ -48,8 +50,8 @@ public:
    // Register the job (create the underlying job)
    void registerJob();
 
-   // Set a callback for the job's exit
-   void setOnComplete(boost::function<void()> onComplete);
+   // Add a callback for the job's exit
+   void addOnComplete(boost::function<void()> onComplete);
 
    // Override default AsyncRProcess methods
    virtual void onStdout(const std::string& output);
@@ -66,7 +68,8 @@ protected:
    // The underlying job
    boost::shared_ptr<Job> job_;
 
-   boost::function<void()> onComplete_;
+   // Methods to call on completion
+   std::vector<boost::function<void()> > onComplete_;
    std::string name_;
 };
 

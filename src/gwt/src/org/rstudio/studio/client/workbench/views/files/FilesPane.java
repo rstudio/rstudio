@@ -67,7 +67,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
-      globalDisplay_ = globalDisplay ;
+      globalDisplay_ = globalDisplay;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -337,9 +337,9 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
 
    private boolean needsInit = false;
-   private FilesList filesList_ ;
+   private FilesList filesList_;
    private FilePathToolbar filePathToolbar_;
-   private final GlobalDisplay globalDisplay_ ;
+   private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private Files.Display.Observer observer_;
    private final Session session_;

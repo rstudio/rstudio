@@ -31,7 +31,7 @@ public class ShellPane extends ShellWidget implements Shell.Display
    @Inject
    public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events, AriaLiveService ariaLive)
    {
-      super(editor, uiPrefs, events, ariaLive);
+      super(editor, uiPrefs, events, ariaLive, "Console Output");
 
       editor.setDisableOverwrite(true);
       

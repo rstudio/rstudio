@@ -1,7 +1,7 @@
 /*
  * AsyncRJobManager.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,7 +85,11 @@ void AsyncRJob::onCompleted(int exitStatus)
       }
    }
    
-   onComplete_();
+   // run all finalizers
+   for (const auto& onComplete: onComplete_)
+   {
+      onComplete();
+   }
 }
 
 std::string AsyncRJob::id()
@@ -105,9 +109,9 @@ void AsyncRJob::cancel()
    }
 }
 
-void AsyncRJob::setOnComplete(boost::function<void()> onComplete)
+void AsyncRJob::addOnComplete(boost::function<void()> onComplete)
 {
-   onComplete_ = onComplete;
+   onComplete_.push_back(onComplete);
 }
 
 Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
@@ -117,7 +121,7 @@ Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
    job->registerJob();
 
    // remove the job from the registry when it's done
-   job->setOnComplete([&]() 
+   job->addOnComplete([=]() 
    { 
       // remove the job from the list of those running
       s_jobs.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());

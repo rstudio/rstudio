@@ -498,12 +498,12 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPub)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return lastCryptoError(ERROR_LOCATION);
 
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPem)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return lastCryptoError(ERROR_LOCATION);
 
    return generateRsa(pBioPub, pBioPem);
 }

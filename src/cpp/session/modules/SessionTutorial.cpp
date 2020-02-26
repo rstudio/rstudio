@@ -260,7 +260,7 @@ void handleTutorialHomeRequest(const http::Request& request,
          if (tutorial.description.empty())
          {
             ss << "<div class=\"rstudio-tutorials-description rstudio-tutorials-description-empty\">"
-               << "[No description available.]"
+               << "<p>[No description available.]</p>"
                << "</div>";
          }
          else

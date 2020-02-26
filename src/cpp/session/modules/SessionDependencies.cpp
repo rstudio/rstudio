@@ -14,6 +14,7 @@
  */
 
 #include "SessionDependencies.hpp"
+#include "SessionPackages.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -447,7 +448,11 @@ Error installDependencies(const json::JsonRpcRequest& request,
       installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
 
    std::string jobId;
-   error = jobs::startScriptJob(installJob, &jobId);
+   error = jobs::startScriptJob(installJob, [&]()
+   {
+      // When job is finished, update the packages state
+      packages::enquePackageStateChanged();
+   }, &jobId);
 
    // Return handle to script job
    pResponse->setResult(jobId);

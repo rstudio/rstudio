@@ -93,17 +93,17 @@
 }
 
 .rstudio-tutorials-run-container {
-   float: right;
+   white-space: nowrap;
 }
 
 .rstudio-tutorials-label-container {
-   overflow: auto;
+   display: flex;
    width: 100%;
    padding: 4px;
 }
 
 .rstudio-tutorials-label {
-   float: left;
+   flex: 1;
    font-size: 16pt;
    font-weight: bold;
 }
@@ -216,4 +216,8 @@
 
 .rstudio-themes-dark-menus .rstudio-tutorials-install-learnr-link:link {
    color: rgb(118, 171, 221);
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-description-empty {
+   color: rgb(172, 172, 172);
 }
