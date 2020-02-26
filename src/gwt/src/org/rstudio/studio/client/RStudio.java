@@ -1,7 +1,7 @@
 /*
  * RStudio.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -36,7 +39,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
@@ -126,7 +128,7 @@ public class RStudio implements EntryPoint
       final Label background = new Label();
       ariaLoadingMessage_ = new Label();
       Roles.getAlertRole().set(ariaLoadingMessage_.getElement());
-      A11y.setVisuallyHidden(ariaLoadingMessage_);
+      setVisuallyHidden(ariaLoadingMessage_.getElement());
 
       background.getElement().getStyle().setZIndex(1000);
       background.getElement().getStyle().setBackgroundColor("#e1e2e5");
@@ -466,6 +468,24 @@ public class RStudio implements EntryPoint
             "button::-moz-focus-inner {border:0}");
    }
    
+   /**
+    * Make an element visually hidden (aka screen reader only). Don't use our shared
+    * function A11y.setVisuallyHidden during boot screen because it relies on styles
+    * being injected which aren't available in boot screen.
+    */
+   private void setVisuallyHidden(Element el)
+   {
+      // Keep in sync with themeStyles.css visuallyHidden
+      el.getStyle().setPosition(Position.ABSOLUTE);
+      el.getStyle().setProperty("clip", "rect(0 0 0 0)");
+      el.getStyle().setBorderWidth(0, Unit.PX);
+      el.getStyle().setWidth(1.0, Unit.PX);
+      el.getStyle().setHeight(1.0, Unit.PX);
+      el.getStyle().setMargin(-1.0, Unit.PX);
+      el.getStyle().setOverflow(Overflow.HIDDEN);
+      el.getStyle().setPadding(0.0, Unit.PX);
+   }
+
    private Command dismissProgressAnimation_;
    private RTimeoutOptions rTimeoutOptions_;
    private Timer showStatusTimer_;
