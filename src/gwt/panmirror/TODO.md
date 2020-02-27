@@ -3,10 +3,24 @@
 
 ## TODO
 
+The problem is that there are multiple steps in the transaction, and when looking at 
+multiple steps you need to map the positions of each step into the old/new docs 
+(need to take a closer look at this). We may not want to mess with these unless
+we really, really understand them well!
+
+We still have the highlighter looking at steps, see this note/recommendation:
+  https://discuss.prosemirror.net/t/changed-part-of-document/992
+  https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676
+
 Sometimes inserting multiple columns fails (not sure exactly when or why)
 - Table errors may be going to the RStudio Server console log!
 There is code in our format-comment.ts that is using an out of range position!
 (Set to catch unhandled JS exceptions to debug)
+
+There is a bug which can occur as a result of table column inserts where
+each row starts with a th element. This is what ends up resulting in the extra
+pipes being included in the table headers (and table is corrupted). May 
+need to call fixupTables after column operations?
 
 - Quotes are included when provided in attributes
 
