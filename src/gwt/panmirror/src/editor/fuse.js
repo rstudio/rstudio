@@ -28,14 +28,14 @@ const kIdeOutputDir = path.join(kIdeJsDir, kLibraryNameLower);
 
 context(
   class {
-    getConfig(outputDir, webIndex = false) {
+    getConfig(outputDir, webIndex = false, vendorSrcMap = false) {
       return FuseBox.init({
         homeDir: "src",
         modulesFolder: "../../node_modules",
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
-        sourceMaps: { inline: true },
+        sourceMaps: { inline: true , project: true, vendor: vendorSrcMap },
         plugins: [
           CSSPlugin(),
           webIndex && WebIndexPlugin({ template: "dev/index.html" }),
@@ -61,7 +61,7 @@ const watch = (fuse, hmrReload) => {
 const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir) => {
   
   // setup fuse for development
-  const fuse = context.getConfig(outputDir, webIndex);
+  const fuse = context.getConfig(outputDir, webIndex, true);
   const bdl = bundle(fuse)
   if (watchChanges)
     watch(bdl, hmrReload)
