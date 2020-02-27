@@ -361,7 +361,7 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       
       if (isRenv)
       {
-         cmd += "renv::install(c(" + pkgList + ")\n\n";
+         cmd += "renv::install(c(" + pkgList + "))\n\n";
       }
       else
       {
@@ -378,7 +378,7 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
 
       if (isRenv)
       {
-         cmd += "options(pkgType = 'source'); renv::install(c(" + pkgList + ")\n\n";
+         cmd += "options(pkgType = 'source'); renv::install(c(" + pkgList + "))\n\n";
       }
       else
       {
