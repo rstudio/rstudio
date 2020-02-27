@@ -62,10 +62,10 @@
 })
 
 .rs.addFunction("expandPkgDependencies", function(dependencies) {
-   .rs.expandDependencies(available.packages(), dependencies)
+   .rs.expandDependencies(available.packages(), installed.packages(), dependencies)
 })
 
-.rs.addFunction("expandDependencies", function(available, dependencies) {
+.rs.addFunction("expandDependencies", function(available, installed, dependencies) {
    # A list of nodes (package names) to be installed
    nodes <- c()
 
@@ -101,12 +101,9 @@
          parsed <- regexec("([a-zA-Z0-9._]+)(?:\\s*\\(([><=]+)\\s*([0-9.-]+)\\))?", prereqs)
          matches <- regmatches(prereqs, parsed)
 
-         # pkgReqs <- vapply(matches, `[[`, 3L, FUN.VALUE = character(1))
-         # pkgVersions <- vapply(matches, `[[`, 4L, FUN.VALUE = character(1))
-
          # Decompose matches into additional nodes
          for (match in matches) {
-            if (length(matches) < 2)
+            if (length(match) < 2)
                next
 
             # Extract package name from regex result
@@ -116,15 +113,19 @@
             if (!(pkgName %in% rownames(available)))
                 next
 
-            # Append to node list if we don't know about it already
+            # Append to node list if we don't know about it already...
             if (!pkgName %in% nodes) {
                nodes <- c(nodes, pkgName)
-               # TODO: do not do this if it is installed
-               packages <- append(packages, list(list(
-                     name = pkgName,
-                     location = "cran",
-                     version = available[pkgName, "Version"],
-                     source = FALSE)))
+
+               # ... and it isn't already installed.
+               if (!(pkgName %in% rownames(installed)))
+               {
+                  packages <- append(packages, list(list(
+                        name = pkgName,
+                        location = "cran",
+                        version = available[pkgName, "Version"],
+                        source = FALSE)))
+               }
             }
 
             # Add a dependency edge

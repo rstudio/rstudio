@@ -47,7 +47,7 @@ test_that("simple expansion and sorting is done correctly", {
          version  = "1.0",
          source   = FALSE))
 
-   result <- .rs.expandDependencies(available, dependencies)
+   result <- .rs.expandDependencies(available, data.frame(), dependencies)
 
    expect_equal(!!result, list(
          list(name     = "bar",
@@ -57,6 +57,59 @@ test_that("simple expansion and sorting is done correctly", {
          list(name     = "foo",
               location = "cran",
               version  = "1.0",
+              source   = FALSE)))
+})
+
+
+test_that("dependencies already installed are not installed again", {
+
+   # simulation of available.packages for a simple set of packages, foo -> bar -> baz
+   available <- data.frame(
+         Package   = c("foo",                      "bar", "baz"),
+         Version   = c("1.0",                      "1.1", "2.0"),
+         Depends   = c("R (>= 3.2), bar (>= 1.1)",  NA,    NA),
+         Imports   = c(NA,                          "baz", NA),
+         LinkingTo = c(NA,                          NA,    NA),
+         stringsAsFactors = FALSE)
+   rownames(available) <- available[[1]]
+
+   # simulation of installed.packages
+   installed <- data.frame(
+         Package   = c("baz"),
+         Version   = c("2.0"),
+         Depends   = c("NA"),
+         Imports   = c("NA"),
+         LinkingTo = c("NA"),
+         stringsAsFactors = FALSE)
+   rownames(installed) <- installed[[1]]
+
+   # simulation of the dependencies we want to install; just one package
+   dependencies <- list(list(
+         name     = "bar",
+         location = "cran",
+         version  = "1.1",
+         source   = FALSE))
+
+   # if the baz package is not installed, we should install it
+   result <- .rs.expandDependencies(available, data.frame(), dependencies)
+
+   expect_equal(!!result, list(
+         list(name     = "baz",
+              location = "cran",
+              version  = "2.0",
+              source   = FALSE),
+         list(name     = "bar",
+              location = "cran",
+              version  = "1.1",
+              source   = FALSE)))
+
+   # if it is installed already, we should not install it
+   result <- .rs.expandDependencies(available, installed, dependencies)
+
+   expect_equal(!!result, list(
+         list(name     = "bar",
+              location = "cran",
+              version  = "1.1",
               source   = FALSE)))
 })
 
