@@ -138,8 +138,6 @@ export function addColumns(after: boolean) {
       const columns = rect.right - rect.left;
       for (let i = 0; i < columns; i++) {
         tr = addColumn(tr, rect, after ? rect.right : rect.left);
-        rect.table = tr.doc.nodeAt(rect.tableStart - 1)!;
-        rect.map = TableMap.get(rect.table);
       }
       dispatch(tr);
     }
@@ -159,8 +157,6 @@ export function addRows(after: boolean) {
       const rows = rect.bottom - rect.top;
       for (let i = 0; i < rows; i++) {
         tr = addRow(tr, rect, after ? rect.bottom : rect.top);
-        rect.table = tr.doc.nodeAt(rect.tableStart - 1)!;
-        rect.map = TableMap.get(rect.table);
       }
       dispatch(tr);
     }
