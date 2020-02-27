@@ -224,12 +224,6 @@ public class TutorialPane
       return frame_.getElement().getAttribute("src");
    }
    
-   @Override
-   public String getName()
-   {
-      return frame_.getWindowName();
-   }
-   
    private void runTutorial(String tutorialName,
                             String packageName)
    {

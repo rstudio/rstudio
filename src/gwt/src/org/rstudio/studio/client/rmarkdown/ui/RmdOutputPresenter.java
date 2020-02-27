@@ -123,12 +123,6 @@ public class RmdOutputPresenter implements
    }
    
    @Override
-   public String getWindowName()
-   {
-      return view_.getName();
-   }
-
-   @Override
    public void onShinyDisconnect()
    {
       WindowEx.get().close();
