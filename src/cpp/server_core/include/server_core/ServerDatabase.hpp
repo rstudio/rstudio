@@ -16,6 +16,7 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_HPP
 #define SERVER_CORE_SERVER_DATABASE_HPP
 
+#include <core/Database.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -32,6 +33,8 @@ namespace database {
 // initialize server database, optionally performing migration
 // to the latest database schema version
 core::Error initialize(bool updateSchema = false);
+
+boost::shared_ptr<core::database::IConnection> getConnection();
 
 } // namespace database
 } // namespace server_core

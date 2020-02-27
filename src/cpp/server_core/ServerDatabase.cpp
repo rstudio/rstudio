@@ -18,7 +18,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread.hpp>
 
-#include <core/Database.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
@@ -193,6 +192,11 @@ Error initialize(bool updateSchema)
    }
 
    return Success();
+}
+
+boost::shared_ptr<IConnection> getConnection()
+{
+   return s_connectionPool->getConnection();
 }
 
 } // namespace database
