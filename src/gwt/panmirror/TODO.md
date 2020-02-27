@@ -9,10 +9,7 @@
 
 ## Enhancements
 
-Dialog/picker for images
 Improved treatment for relative image paths that don't resolve
-
-
 
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
@@ -24,6 +21,8 @@ Sizing/alignment inline for images
 Surface attributes
 
 Better direct manipulation for tables
+
+cmd+click for links (or gdocs style popup)
 
 
 Unit testing for core panmirror code
@@ -53,7 +52,7 @@ multimarkdown support is incomplete:
 
 no support for +pandoc_title_block
 
-cmd+click for links (or gdocs style popup)
+
 
 We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is
 not disimillar from the situation w/ inline footnotes so may be fine)
