@@ -20,7 +20,7 @@ import { findChildrenByMark } from 'prosemirror-utils';
 import { AddMarkStep, RemoveMarkStep } from 'prosemirror-transform';
 
 import { getMarkRange, getMarkAttrs } from './mark';
-import { transactionsChangeSet } from './transaction';
+import { forChangedNodes } from './transaction';
 
 export type MarkHighligher = (
   text: string,
@@ -69,7 +69,7 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
           return set;
         }
 
-        // if one of the steps added or removed a mark of our type then rescan the doc
+        // if one of the steps added or removed a mark of our type then rescan the doc.
         if (tr.steps.some(step => 
           (step instanceof AddMarkStep && (step as any).mark.type === markType) ||
           (step instanceof RemoveMarkStep && (step as any).mark.type === markType)
@@ -100,16 +100,12 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
             });
           };
 
-          // detect changes in a region that has our mark type
-          const changeSet = transactionsChangeSet([tr], oldState, newState);
-          for (const change of changeSet.changes) {
-            const fromPos = newState.doc.resolve(change.fromB);
-            const parent = fromPos.node(fromPos.depth - 1);
-            const parentPos = fromPos.start(fromPos.depth - 1);
-            if (newState.doc.rangeHasMark(parentPos, parentPos + parent.nodeSize, markType)) {
-              rehighlightParent(parentPos);
+          // rehighlight nodes that changed and have our mark type
+          forChangedNodes(oldState, newState, node => node.type.allowsMarkType(markType), (node, pos) => {
+            if (newState.doc.rangeHasMark(pos, pos + node.nodeSize, markType)) {
+              rehighlightParent(pos);
             }
-          }
+          });
 
           return set;
 
