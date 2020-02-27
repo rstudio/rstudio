@@ -17,10 +17,10 @@ import { PluginKey, Plugin, EditorState, Transaction } from 'prosemirror-state';
 import { DecorationSet, Decoration } from 'prosemirror-view';
 import { Node as ProsemirrorNode, MarkType } from 'prosemirror-model';
 import { findChildrenByMark } from 'prosemirror-utils';
-import { ReplaceStep, AddMarkStep, RemoveMarkStep } from 'prosemirror-transform';
+import { AddMarkStep, RemoveMarkStep } from 'prosemirror-transform';
 
 import { getMarkRange, getMarkAttrs } from './mark';
-import { RangeStep } from './transaction';
+import { transactionsChangeSet } from './transaction';
 
 export type MarkHighligher = (
   text: string,
@@ -63,56 +63,58 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
       },
 
       // whenever an edit affecting this mark type occurs then update the decorations
-      apply(tr: Transaction, set: DecorationSet, _oldState: EditorState, _newState: EditorState) {
+      apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
         // ignore selection changes
         if (!tr.docChanged) {
           return set;
         }
 
-        // adjust decoration positions to changes made by the transaction (decorations that apply
-        // to removed chunks of content will be removed by this)
-        set = set.map(tr.mapping, tr.doc);
+        // if one of the steps added or removed a mark of our type then rescan the doc
+        if (tr.steps.some(step => 
+          (step instanceof AddMarkStep && (step as any).mark.type === markType) ||
+          (step instanceof RemoveMarkStep && (step as any).mark.type === markType)
+        )) {
 
-        // function to rehighlight parent of specified pos
-        const rehighlightParent = (pos: number) => {
-          const resolvedPos = tr.doc.resolve(pos);
-          const parent = resolvedPos.node();
-          const from = resolvedPos.start();
-          const marks = findChildrenByMark(parent, markType);
-          marks.forEach(mark => {
-            const markRange = getMarkRange(tr.doc.resolve(from + mark.pos), markType) as { from: number; to: number };
-            const removeDecorations = set.find(markRange.from, markRange.to);
-            set = set.remove(removeDecorations);
-            const addDecorations = markDecorations(tr.doc, markType, markRange.from, highlighter);
-            set = set.add(tr.doc, addDecorations);
-          });
-        };
+          // rehighlight entire doc
+          return decorationsForDoc(newState.doc);
+        
+        // incremental rehighlighting based on presence of mark in changed regions
+        } else {
 
-        // examine each step and update highligthing decorations as appropriate
-        tr.steps.forEach(step => {
-          // highlight new marks of this type
-          if (step instanceof AddMarkStep && (step as any).mark.type === markType) {
-            const from = (step as any).from;
-            const addDecorations = markDecorations(tr.doc, markType, from, highlighter);
-            set = set.add(tr.doc, addDecorations);
+          // adjust decoration positions to changes made by the transaction (decorations that apply
+          // to removed chunks of content will be removed by this)
+          set = set.map(tr.mapping, tr.doc);
 
-            // remove decorations when marks are removed
-          } else if (step instanceof RemoveMarkStep && (step as any).mark.type === markType) {
-            const { from, to } = step as any;
-            const removeDecorations = set.find(from, to);
-            set = set.remove(removeDecorations);
+          // function to rehighlight parent of specified pos
+          const rehighlightParent = (pos: number) => {
+            const resolvedPos = tr.doc.resolve(pos);
+            const parent = resolvedPos.node();
+            const from = resolvedPos.start();
+            const marks = findChildrenByMark(parent, markType);
+            marks.forEach(mark => {
+              const markRange = getMarkRange(tr.doc.resolve(from + mark.pos), markType) as { from: number; to: number };
+              const removeDecorations = set.find(markRange.from, markRange.to);
+              set = set.remove(removeDecorations);
+              const addDecorations = markDecorations(tr.doc, markType, markRange.from, highlighter);
+              set = set.add(tr.doc, addDecorations);
+            });
+          };
 
-            // also rehighlight parent
-            rehighlightParent(from);
-
-            // rehighlight parent for normal replace steps
-          } else if (step instanceof ReplaceStep) {
-            const replaceStep = (step as unknown) as RangeStep;
-            rehighlightParent(tr.mapping.map(replaceStep.from));
+          // detect changes in a region that has our mark type
+          const changeSet = transactionsChangeSet([tr], oldState, newState);
+          for (const change of changeSet.changes) {
+            const fromPos = newState.doc.resolve(change.fromB);
+            const parent = fromPos.node(fromPos.depth - 1);
+            const parentPos = fromPos.start(fromPos.depth - 1);
+            if (newState.doc.rangeHasMark(parentPos, parentPos + parent.nodeSize, markType)) {
+              rehighlightParent(parentPos);
+            }
           }
-        });
 
-        return set;
+          return set;
+
+        }
+      
       },
     },
     props: {
