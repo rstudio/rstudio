@@ -60,7 +60,6 @@ import behaviorCursor from './behaviors/cursor';
 import behaviorFind from './behaviors/find';
 
 // behaviors
-
 import behaviorSmarty from './behaviors/smarty';
 import behaviorAttrEdit from './behaviors/attr_edit';
 import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
@@ -68,10 +67,8 @@ import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
 import behaviorBraceMatch from './behaviors/bracematch';
 import behaviorTextFocus from './behaviors/text_focus';
-import behaviorFormatComment from './behaviors/format_comment';
 
 // marks
-
 import markStrikeout from './marks/strikeout';
 import markSuperscript from './marks/superscript';
 import markSubscript from './marks/subscript';
@@ -123,7 +120,6 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
-    behaviorFormatComment,
   ]);
 
   // optional extensions

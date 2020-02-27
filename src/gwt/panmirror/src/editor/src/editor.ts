@@ -44,6 +44,7 @@ import {
   PandocFormatComment,
   resolvePandocFormatComment,
   pandocFormatCommentFromCode,
+  pandocFormatCommentFromState,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
@@ -65,8 +66,6 @@ import {
   clear,
   selectCurrent,
 } from './behaviors/find';
-
-import { getFormatComment } from './behaviors/format_comment';
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
@@ -314,7 +313,7 @@ export class Editor {
 
   public async getMarkdown(options: PandocWriterOptions): Promise<string> {
     // get current format comment
-    const formatComment = getFormatComment(this.state);
+    const formatComment = pandocFormatCommentFromState(this.state);
 
     // update format from source code magic comments
     await this.updatePandocFormat(formatComment);
