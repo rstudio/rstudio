@@ -1025,6 +1025,11 @@
             },
             "default": [],
             "description": "List of path components; file monitor will ignore paths containing one or more of these components."
+        },
+        "install_pkg_deps_individually": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to install R package dependencies one at a time."
         }
     }
 }

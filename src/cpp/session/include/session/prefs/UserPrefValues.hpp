@@ -317,6 +317,7 @@ namespace prefs {
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
+#define kInstallPkgDepsIndividually "install_pkg_deps_individually"
 
 class UserPrefValues: public Preferences
 {
@@ -1401,6 +1402,12 @@ public:
     */
    core::json::Array fileMonitorIgnoredComponents();
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
+
+   /**
+    * Whether to install R package dependencies one at a time.
+    */
+   bool installPkgDepsIndividually();
+   core::Error setInstallPkgDepsIndividually(bool val);
 
 };
 

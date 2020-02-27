@@ -2363,6 +2363,19 @@ core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array va
    return writePref("file_monitor_ignored_components", val);
 }
 
+/**
+ * Whether to install R package dependencies one at a time.
+ */
+bool UserPrefValues::installPkgDepsIndividually()
+{
+   return readPref<bool>("install_pkg_deps_individually");
+}
+
+core::Error UserPrefValues::setInstallPkgDepsIndividually(bool val)
+{
+   return writePref("install_pkg_deps_individually", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2546,6 +2559,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
+      kInstallPkgDepsIndividually,
    });
 }
    

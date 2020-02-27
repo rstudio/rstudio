@@ -114,31 +114,40 @@ struct Dependency
       source(false), 
       versionSatisfied(true) {}
 
+   Dependency(SEXP sexp)
+   {
+      // Required fields
+      Error error = r::sexp::getNamedListElement(sexp, "name", &name);
+      if (error)
+         LOG_ERROR(error);
+      error = r::sexp::getNamedListElement(sexp, "version", &version);
+      if (error)
+         LOG_ERROR(error);
+
+      // Establish defaults
+      source = false;
+      location = "cran";
+
+      // Optional fields
+      r::sexp::getNamedListElement(sexp, "source", &source);
+      r::sexp::getNamedListElement(sexp, "location", &location);
+      r::sexp::getNamedListElement(sexp, "availableVersion", &availableVersion);
+      r::sexp::getNamedListElement(sexp, "versionSatisfied", &versionSatisfied);
+   }
+
    bool empty() const { return name.empty(); }
 
    // Return a version of the dependency as an S-expression for processing in R.
    SEXP asSEXP(r::sexp::Protect *protect) const
    {
-      SEXP dep = r::sexp::createList(std::vector<std::string>(), protect);
-      Error error = r::sexp::setNamedListElement(dep, "name", name);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::setNamedListElement(dep, "location", location);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::setNamedListElement(dep, "version", version);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::setNamedListElement(dep, "source", source);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::setNamedListElement(dep, "availableVersion", availableVersion);
-      if (error)
-         LOG_ERROR(error);
-      error = r::sexp::setNamedListElement(dep, "versionSatisifed", versionSatisfied);
-      if (error)
-         LOG_ERROR(error);
-      return dep;
+      r::sexp::ListBuilder list(protect);
+      list.add("name", name);
+      list.add("location", location);
+      list.add("version", version);
+      list.add("source", source);
+      list.add("availableVersion", availableVersion);
+      list.add("versionSatisfied", versionSatisfied);
+      return r::sexp::create(list, protect);
    }
 
    std::string location;
@@ -316,66 +325,92 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error installDependencies(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+// Builds an installation script which will install all the dependencies at once. 
+std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
 {
-   // get list of dependencies
-   json::Array depsJson;
-   std::string context;
-   Error error = json::readParams(request.params, &context, &depsJson);
-   if (error)
-      return error;
-   std::vector<Dependency> deps = dependenciesFromJson(depsJson);
+   std::vector<std::string> cranPackages;
+   std::vector<std::string> cranSourcePackages;
+   std::vector<std::string> embeddedPackages;
+   std::string cmd;
 
-   // Ensure we have a writeable user library
-   error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
-   if (error)
-      return error;
-
-   // force unload as necessary
-   std::vector<std::string> names = packageNames(deps);
-   error = r::exec::RFunction(".rs.forceUnloadForPackageInstall", names).call();
-   if (error)
-      LOG_ERROR(error);
-
-   // Start script with all the CRAN download settings
-   std::string script = module_context::CRANDownloadOptions() + "\n\n";
-
-   // Lock during installation since we will be doing this in a background job and want to minimize
-   // the risk of competing processes attempting to write to the library (note that this only
-   // affects binary installations on Windows and MacOS; source installations are locked with
-   // 00LOCK)
-   script += "options(install.lock = TRUE)\n\n";
-
-   bool isPackrat = module_context::packratContext().modeOn;
-   bool isRenv = module_context::isRenvActive();
-   bool isProjectLocal = isPackrat || isRenv;
-   
-   // Emit a message to the user at the beginning of the script declaring what we're about to do
-   if (deps.size() > 1)
+   for (const Dependency& dep: deps)
    {
-      script += "cat('** ";
-      if (context.empty()) 
-         script += "Installing R Packages: ";
-      else
-         script += "Installing R Package Dependencies for " + context + ": ";
-      for (size_t i = 0; i < deps.size(); i++)
+      if (dep.location == kCRANPackageDependency)
       {
-         script += "\\'" + deps[i].name + "\\'";
-         if (i < deps.size() - 1)
-            script += ", ";
+         if (dep.source)
+            cranSourcePackages.push_back("'" + dep.name + "'");
+         else
+            cranPackages.push_back("'" + dep.name + "'");
       }
-      script += "\\n\\n')\n";
-   }
-   else
-   {
-      if (context.empty())
-         script += "cat('Installing \\'" + deps[0].name + "\\' ...\\n\\n')\n";
-      else
-         script += "cat('Installing \\'" + deps[0].name + "\\' for " + context + 
-            "...\\n\\n')\n";
+      else if (dep.location == kEmbeddedPackageDependency)
+      {
+         EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
+         if (!pkg.empty())
+            embeddedPackages.push_back(pkg.archivePath);
+      }
    }
 
+   if (!cranPackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranPackages, ",");
+      cmd += "utils::install.packages(c(" + pkgList + "), " +
+             "repos = '"+ module_context::CRANReposURL() + "'";
+      cmd += ")\n\n";
+   }
+
+   if (!cranSourcePackages.empty())
+   {
+      std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
+      cmd += "utils::install.packages(c(" + pkgList + "), " +
+             "repos = '"+ module_context::CRANReposURL() + "', ";
+      cmd += "type = 'source')\n\n";
+   }
+
+   for (const std::string& pkg: embeddedPackages)
+   {
+      cmd += "utils::install.packages('" + pkg + "', "
+                                      "repos = NULL, type = 'source')\n\n";
+   }
+
+   return cmd;
+}
+
+// Builds an installation script which will install the packages one at a time. This is desirable
+// because it allows us to give much better progress and feedback during the installation process,
+// and also gives us greater control over installation order.
+std::string buildIndividualInstallScript(const std::vector<Dependency>& dependencies)
+{
+   bool isRenv = module_context::isRenvActive();
+
+   // Convert dependencies list to an R list
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder list(&protect);
+   for (const Dependency& dep: dependencies)
+   {
+      list.add(dep.asSEXP(&protect));
+   }
+
+   // Expand (add direct dependencies) and topologically sort the dependencies in R
+   SEXP expanded;
+   r::exec::RFunction expander(".rs.expandPkgDependencies");
+   expander.addParam("dependencies", r::sexp::create(list, &protect));
+   Error error = expander.call(&expanded, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      // Use simple version of installation script as a fallback
+      return buildCombinedInstallScript(dependencies);
+   }
+
+   // Create a new list of dependencies from the expanded list returned from R
+   std::vector<Dependency> deps;
+   for (int idx = 0; idx < r::sexp::length(expanded); idx++)
+   {
+      deps.push_back(Dependency(VECTOR_ELT(expanded, idx)));
+   }
+
+   // Loop over each dependency and add it to the installation script
+   std::string script;
    for (size_t i = 0; i < deps.size(); i++)
    {
       const Dependency& dep = deps[i];
@@ -436,6 +471,79 @@ Error installDependencies(const json::JsonRpcRequest& request,
       }
 
       script += "\n\n";
+   }
+
+   return script;
+}
+
+Error installDependencies(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // get list of dependencies
+   json::Array depsJson;
+   std::string context;
+   Error error = json::readParams(request.params, &context, &depsJson);
+   if (error)
+      return error;
+   std::vector<Dependency> deps = dependenciesFromJson(depsJson);
+
+   // Ensure we have a writeable user library
+   error = r::exec::RFunction(".rs.ensureWriteableUserLibrary").call();
+   if (error)
+      return error;
+
+   // force unload as necessary
+   std::vector<std::string> names = packageNames(deps);
+   error = r::exec::RFunction(".rs.forceUnloadForPackageInstall", names).call();
+   if (error)
+      LOG_ERROR(error);
+
+   // Start script with all the CRAN download settings
+   std::string script = module_context::CRANDownloadOptions() + "\n\n";
+
+   // Lock during installation since we will be doing this in a background job and want to minimize
+   // the risk of competing processes attempting to write to the library (note that this only
+   // affects binary installations on Windows and MacOS; source installations are locked with
+   // 00LOCK)
+   script += "options(install.lock = TRUE)\n\n";
+
+   bool isRenv = module_context::isRenvActive();
+   bool isPackrat = module_context::packratContext().modeOn;
+   bool isProjectLocal = isPackrat || isRenv;
+   
+   // Emit a message to the user at the beginning of the script declaring what we're about to do
+   if (deps.size() > 1)
+   {
+      script += "cat('** ";
+      if (context.empty()) 
+         script += "Installing R Packages: ";
+      else
+         script += "Installing R Package Dependencies for " + context + ": ";
+      for (size_t i = 0; i < deps.size(); i++)
+      {
+         script += "\\'" + deps[i].name + "\\'";
+         if (i < deps.size() - 1)
+            script += ", ";
+      }
+      script += "\\n\\n')\n";
+   }
+   else
+   {
+      if (context.empty())
+         script += "cat('Installing \\'" + deps[0].name + "\\' ...\\n\\n')\n";
+      else
+         script += "cat('Installing \\'" + deps[0].name + "\\' for " + context + 
+            "...\\n\\n')\n";
+   }
+
+   // Build an installation script to install the required packages.
+   if (prefs::userPrefs().installPkgDepsIndividually())
+   {
+      script += buildIndividualInstallScript(deps);
+   }
+   else
+   {
+      script += buildCombinedInstallScript(deps);
    }
 
    // Emit a message indicating that we're done. The script aborts on error, so if we get here we
