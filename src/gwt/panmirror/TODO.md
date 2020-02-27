@@ -3,18 +3,9 @@
 
 ## TODO
 
-Latex highlighthing sometimes misses if delete joins a non latex segmetn with a latex segment
+- 
 
 
-
-
-- Quotes are included when provided in attributes
-
-- No way to "un-div" something (Remove Attributes)
-
-- Inline LaTeX is busted!
-
-- Line block needs a check toggle
 
 
 ## Enhancements
