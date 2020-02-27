@@ -3,17 +3,21 @@
 
 ## TODO
 
-- 
 
 
 
 
 ## Enhancements
 
+Dialog/picker for images
+Improved treatment for relative image paths that don't resolve
+
+
 
 Images should support width/align for gfm (write raw_html)
+(we'd need to do the image tag parsing for this to work).
+Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
 
-Dialog/picker for images
 
 Sizing/alignment inline for images
 
@@ -21,9 +25,8 @@ Surface attributes
 
 Better direct manipulation for tables
 
-Unit testing for core panmirror code
 
-Improved treatment for relative image paths that don't resolve
+Unit testing for core panmirror code
 
 Make character escaping configurable
 
@@ -40,16 +43,6 @@ Tables with a large number of columns are written as HTML when variable column w
 (presumably b/c it can't represent the percentage granularity w/ markdown)
 Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
-Provide some extra vertical space at the bottom when typing at the bottom
-
-- Observed a situation where a pandoc markdown doc with a footnote was converted (via magic comment) to a gfm
-comment). Then, deleting the footnote caused the entire doc to be deleted with no ability to undo!
-- Observed a situation with a table above another table, where attemptign to select and delete the second table (as part of a selection encompassing content before and after the table) resulted in nearly the entire document being removed.
-- Backspace key seems to be the culprit for both of the above
-
-
-Mark input rules should screen whether the mark is valid. Or do they even need to?
-(i.e. the mark will be prevented)
 
 improve scrolling with: https://github.com/cferdinandi/smooth-scroll
 
