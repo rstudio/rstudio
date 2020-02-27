@@ -14,11 +14,10 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { ReplaceStep } from 'prosemirror-transform';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
 import { findTopLevelBodyNodes } from '../../api/node';
-import { RangeStep } from '../../api/transaction';
+import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
 
@@ -31,32 +30,27 @@ export function yamlMetadataTitlePlugin() {
       },
 
       apply(tr: Transaction, title: string, oldState: EditorState, newState: EditorState) {
+        
+        const transactions = [tr];
+
+        // doc didn't change, return existing title
         if (!tr.docChanged) {
           return title;
+
+        // non-typing change, do a full rescan
+        } else if (!transactionsAreTypingChange(transactions)) {
+          return titleFromState(newState);
+        
+        // change that affects a yaml metadata block, do a full rescan
+        } else if (transactionsHaveChange(transactions, oldState, newState, isYamlMetadataNode)) {
+          return titleFromState(newState);
         }
 
-        // if the transaction included a replace within yaml_metadata, then recompute
-        const isYamlEdit = tr.steps.some(step => {
-          if (step instanceof ReplaceStep) {
-            const rangeStep = step as RangeStep;
-            let yamlEdit = false;
-            oldState.doc.nodesBetween(rangeStep.from, rangeStep.to, node => {
-              if (isYamlMetadataNode(node)) {
-                yamlEdit = true;
-                return false; // terminate iteration since we found a yaml node
-              }
-            });
-            return yamlEdit;
-          } else {
-            return false; // not a replace step
-          }
-        });
-
-        if (isYamlEdit) {
-          return titleFromState(newState);
-        } else {
+        // otherwise return the existing title
+        else {
           return title;
         }
+  
       },
     },
   });
