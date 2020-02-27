@@ -29,7 +29,7 @@ import {
   tokensCollectText,
   PandocExtensions,
 } from '../../api/pandoc';
-import { EditorUI, ImageEditorFn } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
@@ -82,7 +82,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
 
     commands: (_schema: Schema, ui: EditorUI) => {
       return [
-        new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui.dialogs.editImage, imageAttr)),
+        new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr)),
       ];
     },
 
@@ -192,7 +192,7 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
   };
 }
 
-function imageCommand(onEditImage: ImageEditorFn, imageAttributes: boolean) {
+function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -219,7 +219,7 @@ function imageCommand(onEditImage: ImageEditorFn, imageAttributes: boolean) {
       }
 
       // show dialog
-      imageDialog(node, nodeType, state, dispatch, view, onEditImage, imageAttributes);
+      imageDialog(node, nodeType, state, dispatch, view, editorUI, imageAttributes);
     }
 
     return true;

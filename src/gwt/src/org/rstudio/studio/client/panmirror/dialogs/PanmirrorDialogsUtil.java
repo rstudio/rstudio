@@ -20,6 +20,7 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 public class PanmirrorDialogsUtil
 {
@@ -33,11 +34,16 @@ public class PanmirrorDialogsUtil
       panel.add(label);
       TextBox textBox = new TextBox();
       textBox.getElement().setId(id);
-      textBox.addStyleName(RES.styles().fullWidth());
-      textBox.addStyleName(RES.styles().spaced());
+      setFullWidthStyles(textBox);
       textBox.setText(initialValue);
       panel.add(textBox);
       return textBox;
+   }
+   
+   public static void setFullWidthStyles(Widget widget)
+   {
+      widget.addStyleName(RES.styles().fullWidth());
+      widget.addStyleName(RES.styles().spaced());
    }
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;

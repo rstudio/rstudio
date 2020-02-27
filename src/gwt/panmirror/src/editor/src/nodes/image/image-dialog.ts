@@ -18,7 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
-import { ImageEditorFn, ImageProps, ImageType } from '../../api/ui';
+import { ImageProps, ImageType, EditorUI } from '../../api/ui';
 
 export async function imageDialog(
   node: Node | null,
@@ -26,7 +26,7 @@ export async function imageDialog(
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   view: EditorView | undefined,
-  onEditImage: ImageEditorFn,
+  editorUI: EditorUI,
   imageAttributes: boolean,
 ) {
   // if we are being called with an existing node then read it's attributes
@@ -46,7 +46,7 @@ export async function imageDialog(
   const type = nodeType === state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
-  const result = await onEditImage(image, imageAttributes);
+  const result = await editorUI.dialogs.editImage(image, editorUI.context.getResourceDir(), imageAttributes);
   if (result) {
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the

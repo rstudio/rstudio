@@ -254,7 +254,8 @@ public class ElementIds
       TEXT_ENCODING("text_encoding"),
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
-      VCS_TERMINAL("vcs_terminal");
+      VCS_TERMINAL("vcs_terminal"),
+      CHOOSE_IMAGE("choose_image");
 
       TextBoxButtonId(String value)
       {

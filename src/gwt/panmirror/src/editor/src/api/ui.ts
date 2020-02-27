@@ -37,7 +37,13 @@ export interface EditorDialogs {
 }
 
 export interface EditorUIContext {
+
+  // get the current resource directory
+  getResourceDir: () => string;
+
+  // provide a URL that can be used to fetch the given resource path
   translateResourcePath: (path: string) => string;
+
 }
 
 export enum AlertType {
@@ -58,7 +64,7 @@ export type LinkEditorFn = (
   capabilities: LinkCapabilities,
 ) => Promise<LinkEditResult | null>;
 
-export type ImageEditorFn = (image: ImageProps, editAttributes: boolean) => Promise<ImageEditResult | null>;
+export type ImageEditorFn = (image: ImageProps, resourceDir: string, editAttributes: boolean) => Promise<ImageEditResult | null>;
 
 export type OrderedListEditorFn = (
   list: OrderedListProps,

@@ -77,7 +77,6 @@ import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.panmirror.PanmirrorResources;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarResources;
-import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineResources;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;

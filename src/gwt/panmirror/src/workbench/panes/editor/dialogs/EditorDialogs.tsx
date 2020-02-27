@@ -144,7 +144,7 @@ export default class EditorDialogs extends React.Component<Readonly<{}>, EditorD
     });
   }
 
-  public editImage(image: ImageProps, editAttributes: boolean): Promise<ImageEditResult | null> {
+  public editImage(image: ImageProps, _resourceDir: string, editAttributes: boolean): Promise<ImageEditResult | null> {
     return new Promise(resolve => {
       this.setState({
         editImage: {

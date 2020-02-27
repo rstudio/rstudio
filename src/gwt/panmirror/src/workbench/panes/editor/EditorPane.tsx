@@ -196,6 +196,7 @@ class EditorPane extends React.Component<EditorPaneProps> {
 
   private get editorUIContext(): EditorUIContext {
     return {
+      getResourceDir: () => "~",
       translateResourcePath: (href: string) => href,
     };
   }

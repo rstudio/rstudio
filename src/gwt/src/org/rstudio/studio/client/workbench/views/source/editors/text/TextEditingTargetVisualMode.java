@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -28,7 +29,9 @@ import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
@@ -87,11 +90,12 @@ public class TextEditingTargetVisualMode
    } 
    
    @Inject
-   public void initialize(Commands commands, UserPrefs prefs, SourceServerOperations source)
+   public void initialize(Commands commands, UserPrefs prefs, SourceServerOperations source, WorkbenchContext context)
    {
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
+      context_ = context;
    }
    
    public boolean isActivated()
@@ -522,12 +526,19 @@ public class TextEditingTargetVisualMode
          else
             return path;
       };
+      uiContext.getResourceDir = () -> {
+         if (docUpdateSentinel_.getPath() != null)
+            return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
+         else
+            return context_.getCurrentWorkingDir().getPath();
+      };
       return uiContext;
    }
-  
+   
    
    private Commands commands_;
    private UserPrefs prefs_;
+   private WorkbenchContext context_;
    private SourceServerOperations source_;
    
    private final TextEditingTarget target_;

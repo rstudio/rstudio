@@ -64,7 +64,7 @@ export class ImageNodeView implements NodeView {
         this.view.state,
         this.view.dispatch,
         this.view,
-        editorUI.dialogs.editImage,
+        editorUI,
         imageAttributes,
       );
     };

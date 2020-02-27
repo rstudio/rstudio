@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -32,6 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
 {
    public PanmirrorEditImageDialog(PanmirrorImageProps props,
+                                   String resourceDir,
                                    boolean editAttributes,
                                    OperationWithInput<PanmirrorImageProps> operation)
    {
@@ -43,7 +45,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       imageTab.addStyleName(RES.styles().dialog());
       
-      url_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_SRC, "URL", props.src);
+      
+      imageTab.add(url_ = new PanmirrorImageChooser(FileSystemItem.createDir(resourceDir)));
       title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
       alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
          
@@ -79,15 +82,15 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    @Override
    public void focusFirstControl()
    {
-      url_.setFocus(true);
-      url_.selectAll();
+      url_.getTextBox().setFocus(true);
+      url_.getTextBox().selectAll();
    }
    
    @Override
    protected PanmirrorImageProps collectInput()
    {
       PanmirrorImageProps result = new PanmirrorImageProps();
-      result.src = url_.getValue().trim();
+      result.src = url_.getText().trim();
       result.title = title_.getValue().trim();
       result.alt = alt_.getValue().trim();
       PanmirrorAttrProps attr = editAttr_.getAttr();
@@ -107,9 +110,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    
    private final Widget mainWidget_;
 
-   private final TextBox url_;
+   private final PanmirrorImageChooser url_;
    private final TextBox title_;
    private final TextBox alt_;
    private final PanmirrorEditAttrWidget editAttr_;
-   
 }
