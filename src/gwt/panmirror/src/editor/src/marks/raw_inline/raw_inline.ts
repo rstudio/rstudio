@@ -154,7 +154,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 return (
                   node.isText &&
                   !schema.marks.code.isInSet(node.marks) &&
-                  !node.marks.some(mark => mark.type.excludes(schema.marks.raw_inline)) &&
+                  (!schema.marks.math || !schema.marks.math.isInSet(node.marks)) &&
                   parentNode.type.allowsMarkType(schema.marks.raw_inline) &&
                   pattern.test(parentNode.textContent)
                 );
