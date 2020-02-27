@@ -157,7 +157,13 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   let keyvalue: Array<[string, string]> | undefined;
   if (attr.keyvalue) {
     const lines = attr.keyvalue.trim().split('\n');
-    keyvalue = lines.map(line => line.trim().split('=') as [string, string]);
+    keyvalue = lines.map(line => {
+      const parts = line.trim().split('=');
+      return [
+        parts[0],
+        (parts[1] || '').replace(/^"/, "").replace(/"$/, "")
+      ];
+    });
   }
   return {
     id: asPandocId(attr.id || ''),
