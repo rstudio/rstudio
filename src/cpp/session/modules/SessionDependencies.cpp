@@ -114,6 +114,7 @@ struct Dependency
       source(false), 
       versionSatisfied(true) {}
 
+   // Construct a new Dependency record from an S-expression containing a named list
    Dependency(SEXP sexp)
    {
       // Required fields
@@ -256,7 +257,7 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
 
-   // build the list of unsatisifed dependencies
+   // build the list of unsatisfied dependencies
    using namespace module_context;
    std::vector<Dependency> unsatisfiedDeps;
    for (Dependency& dep : deps)
@@ -291,7 +292,7 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
       {
          EmbeddedPackage pkg = embeddedPackageInfo(dep.name);
 
-         // package isn't installed so report that it reqires installation
+         // package isn't installed so report that it requires installation
          if (!isPackageInstalled(dep.name))
          {
             unsatisfiedDeps.push_back(dep);
@@ -328,11 +329,14 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
 // Builds an installation script which will install all the dependencies at once. 
 std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
 {
+   bool isRenv = module_context::isRenvActive();
    std::vector<std::string> cranPackages;
    std::vector<std::string> cranSourcePackages;
    std::vector<std::string> embeddedPackages;
    std::string cmd;
 
+   // Sort the dependencies into CRAN packages installed with defaults, CRAN packages explicitly
+   // installed as source, and embedded packages.
    for (const Dependency& dep: deps)
    {
       if (dep.location == kCRANPackageDependency)
@@ -350,22 +354,41 @@ std::string buildCombinedInstallScript(const std::vector<Dependency>& deps)
       }
    }
 
+   // Install the CRAN packages with a single call
    if (!cranPackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranPackages, ",");
-      cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() + "'";
-      cmd += ")\n\n";
+      
+      if (isRenv)
+      {
+         cmd += "renv::install(c(" + pkgList + ")\n\n";
+      }
+      else
+      {
+         cmd += "utils::install.packages(c(" + pkgList + "), " +
+                "repos = '"+ module_context::CRANReposURL() + "'";
+         cmd += ")\n\n";
+      }
    }
 
+   // Install the CRAN source packages with a single call
    if (!cranSourcePackages.empty())
    {
       std::string pkgList = boost::algorithm::join(cranSourcePackages, ",");
-      cmd += "utils::install.packages(c(" + pkgList + "), " +
-             "repos = '"+ module_context::CRANReposURL() + "', ";
-      cmd += "type = 'source')\n\n";
+
+      if (isRenv)
+      {
+         cmd += "options(pkgType = 'source'); renv::install(c(" + pkgList + ")\n\n";
+      }
+      else
+      {
+         cmd += "utils::install.packages(c(" + pkgList + "), " +
+                "repos = '"+ module_context::CRANReposURL() + "', ";
+         cmd += "type = 'source')\n\n";
+      }
    }
 
+   // Install any requested embedded packages
    for (const std::string& pkg: embeddedPackages)
    {
       cmd += "utils::install.packages('" + pkg + "', "
@@ -439,6 +462,10 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
             if (dep.source)
             {
                script += "options(pkgType = 'source'); ";
+            }
+            else
+            {
+               script += "options(pkgType = 'both'); ";
             }
             
             // NOTE: renv will use the repositories as set in the lockfile here;
@@ -552,7 +579,7 @@ Error installDependencies(const json::JsonRpcRequest& request,
    if (deps.size() < 2) 
       script += "Package \\'" + deps[0].name + "\\' successfully installed.";
    else
-      script += safe_convert::numberToString(deps.size()) + " packages installed.";
+      script += "Packages successfully installed.";
    script += "')\n\n";
 
    jobs::ScriptLaunchSpec installJob(
