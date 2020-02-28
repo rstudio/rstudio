@@ -60,7 +60,7 @@ core::Error getChunkDefsValue(const core::FilePath& defs,
       return error;
 
    // extract the chunk definitions
-   return core::json::readObject(defContents, key, pValue);
+   return core::json::readObject(defContents, key, *pValue);
 }
 } // anonymous namespace
 

@@ -316,22 +316,22 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 
    // read publish source information
    std::string sourceDir, sourceDoc, sourceFile, contentCategory, websiteDir;
-   error = json::readObject(source, "deploy_dir",       &sourceDir,
-                                    "deploy_file",      &sourceFile,
-                                    "source_file",      &sourceDoc,
-                                    "content_category", &contentCategory,
-                                    "website_dir",      &websiteDir);
+   error = json::readObject(source, "deploy_dir",       sourceDir,
+                                    "deploy_file",      sourceFile,
+                                    "source_file",      sourceDoc,
+                                    "content_category", contentCategory,
+                                    "website_dir",      websiteDir);
    if (error)
       return error;
 
    // read publish settings
    bool asMultiple = false, asStatic = false;
    json::Array deployFiles, additionalFiles, ignoredFiles;
-   error = json::readObject(settings, "deploy_files",     &deployFiles,
-                                      "additional_files", &additionalFiles,
-                                      "ignored_files",    &ignoredFiles,
-                                      "as_multiple",      &asMultiple, 
-                                      "as_static",        &asStatic);
+   error = json::readObject(settings, "deploy_files",     deployFiles,
+                                      "additional_files", additionalFiles,
+                                      "ignored_files",    ignoredFiles,
+                                      "as_multiple",      asMultiple,
+                                      "as_static",        asStatic);
    if (error)
       return error;
 

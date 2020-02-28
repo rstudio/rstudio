@@ -65,7 +65,8 @@ protected:
           event->type() == QEvent::MouseButtonRelease)
       {
          QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-         if (mouseEvent->buttons() == Qt::NoButton)
+         if (mouseEvent->button() != Qt::NoButton &&
+             mouseEvent->buttons() == Qt::NoButton)
          {
             QMouseEvent* fixedMouseEvent = new QMouseEvent(
                      mouseEvent->type(),

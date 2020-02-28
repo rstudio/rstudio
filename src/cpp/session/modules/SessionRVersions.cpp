@@ -50,9 +50,9 @@ void syncRVersionPref()
    // Load values from prefs
    std::string version, home, label;
    Error error = json::readObject(value->getObject(),
-         kDefaultRVersionVersion, &version,
-         kDefaultRVersionRHome,   &home,
-         kDefaultRVersionLabel,   &label);
+         kDefaultRVersionVersion, version,
+         kDefaultRVersionRHome,   home,
+         kDefaultRVersionLabel,   label);
    if (error)
    {
       // Should not happen when preferences are valid according to schema

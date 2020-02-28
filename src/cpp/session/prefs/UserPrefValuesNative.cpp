@@ -62,11 +62,11 @@ CRANMirror UserPrefValuesNative::getCRANMirror()
    // get the settings
    struct CRANMirror mirror;
    json::readObject(cranMirror(), 
-         kCranMirrorUrl, &mirror.url,
-         kCranMirrorName, &mirror.name,
-         kCranMirrorHost, &mirror.host,
-         kCranMirrorSecondary, &mirror.secondary,
-         kCranMirrorCountry, &mirror.country);
+         kCranMirrorUrl, mirror.url,
+         kCranMirrorName, mirror.name,
+         kCranMirrorHost, mirror.host,
+         kCranMirrorSecondary, mirror.secondary,
+         kCranMirrorCountry, mirror.country);
 
    // upgrade 1.2 preview builds
    std::vector<std::string> parts;

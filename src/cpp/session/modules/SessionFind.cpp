@@ -286,28 +286,28 @@ public:
    {
       json::Object results;
       Error error = json::readObject(asJson,
-                                     "handle", &handle_,
-                                     "input", &input_,
-                                     "path", &path_,
-                                     "regex", &regex_,
-                                     "ignoreCase", &ignoreCase_,
-                                     "results", &results,
-                                     "running", &running_,
-                                     "replace", &replace_,
-                                     "preview", &preview_,
-                                     "gitFlag", &gitFlag_,
-                                     "replacePattern", &replacePattern_);
+                                     "handle", handle_,
+                                     "input", input_,
+                                     "path", path_,
+                                     "regex", regex_,
+                                     "ignoreCase", ignoreCase_,
+                                     "results", results,
+                                     "running", running_,
+                                     "replace", replace_,
+                                     "preview", preview_,
+                                     "gitFlag", gitFlag_,
+                                     "replacePattern", replacePattern_);
       if (error)
          return error;
 
       error = json::readObject(results,
-                               "file", &files_,
-                               "line", &lineNums_,
-                               "lineValue", &contents_,
-                               "matchOn", &matchOns_,
-                               "matchOff", &matchOffs_,
-                               "replaceMatchOn", &replaceMatchOns_,
-                               "replaceMatchOff", &replaceMatchOffs_);
+                               "file", files_,
+                               "line", lineNums_,
+                               "lineValue", contents_,
+                               "matchOn", matchOns_,
+                               "matchOff", matchOffs_,
+                               "replaceMatchOn", replaceMatchOns_,
+                               "replaceMatchOff", replaceMatchOffs_);
       if (error)
          return error;
 

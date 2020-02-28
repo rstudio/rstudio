@@ -738,8 +738,8 @@ int main(int argc, char* argv[])
                   else
                   {
                      error = json::readObject(val.getObject(),
-                                              "sessionUrl", &sessionUrl,
-                                              "serverUrl", &serverUrl);
+                                              "sessionUrl", sessionUrl,
+                                              "serverUrl", serverUrl);
                      if (error)
                      {
                         LOG_ERROR(error);

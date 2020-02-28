@@ -145,25 +145,25 @@ Error actionFromJson(const json::Object& actionJson,
                      ConnectionAction* pAction)
 {
    return json::readObject(actionJson,
-         "name", &(pAction->name),
-         "icon_path", &(pAction->icon));
+         "name", pAction->name,
+         "icon_path", pAction->icon);
 }
 
 Error objectTypeFromJson(const json::Object& objectTypeJson,
                          ConnectionObjectType* pObjectType)
 {
    return json::readObject(objectTypeJson,
-         "name", &(pObjectType->name),
-         "contains", &(pObjectType->contains),
-         "icon_path", &(pObjectType->icon));
+         "name", pObjectType->name,
+         "contains", pObjectType->contains,
+         "icon_path", pObjectType->icon);
 }
 
 Error connectionIdFromJson(const json::Object& connectionIdJson,
                            ConnectionId* pConnectionId)
 {
    return json::readObject(connectionIdJson,
-         "type", &(pConnectionId->type),
-         "host", &(pConnectionId->host));
+         "type", pConnectionId->type,
+         "host", pConnectionId->host);
 }
 
 Error connectionFromJson(const json::Object& connectionJson,
@@ -171,7 +171,7 @@ Error connectionFromJson(const json::Object& connectionJson,
 {
    // read id fields
    json::Object idJson;
-   Error error = json::readObject(connectionJson, "id", &idJson);
+   Error error = json::readObject(connectionJson, "id", idJson);
    if (error)
       return error;
    error = connectionIdFromJson(idJson, &(pConnection->id));
@@ -181,12 +181,12 @@ Error connectionFromJson(const json::Object& connectionJson,
    json::Array objectTypes;
    error = json::readObject(
             connectionJson,
-            "connect_code", &(pConnection->connectCode),
-            "display_name", &(pConnection->displayName),
-            "actions", &actions,
-            "object_types", &objectTypes,
-            "icon_path", &(pConnection->icon),
-            "last_used", &(pConnection->lastUsed));
+            "connect_code", pConnection->connectCode,
+            "display_name", pConnection->displayName,
+            "actions", actions,
+            "object_types", objectTypes,
+            "icon_path", pConnection->icon,
+            "last_used", pConnection->lastUsed);
 
    // read each action
    for (const json::Value& action : actions)
@@ -226,7 +226,7 @@ bool hasConnectionId(const ConnectionId& id,
                      const core::json::Object& connectionJson)
 {
    json::Object idJson;
-   Error error = json::readObject(connectionJson, "id", &idJson);
+   Error error = json::readObject(connectionJson, "id", idJson);
    if (error)
    {
       LOG_ERROR(error);
@@ -234,7 +234,7 @@ bool hasConnectionId(const ConnectionId& id,
    }
 
    std::string type, host;
-   error = json::readObject(idJson, "type", &type, "host", &host);
+   error = json::readObject(idJson, "type", type, "host", host);
    if (error)
    {
       LOG_ERROR(error);

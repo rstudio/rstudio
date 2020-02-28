@@ -191,12 +191,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
-      if (!StringUtil.isNullOrEmpty(outputLabel))
+      if (StringUtil.isNullOrEmpty(outputLabel))
+         verticalPanel_.add(output_.getWidget());
+      else
       {
-         Roles.getRegionRole().set(output_.getElement());
-         Roles.getRegionRole().setAriaLabelProperty(output_.getElement(), outputLabel);
+         HTML wrapper = new HTML();
+         Roles.getRegionRole().set(wrapper.getElement());
+         Roles.getRegionRole().setAriaLabelProperty(wrapper.getElement(), outputLabel);
+         Roles.getDocumentRole().set(output_.getElement());
+         wrapper.getElement().appendChild(output_.getElement());
+         verticalPanel_.add(wrapper);
       }
-      verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
       verticalPanel_.setWidth("100%");
@@ -715,6 +720,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public InputEditorDisplay getInputEditorDisplay()
    {
       return input_;
+   }
+
+   @Override
+   public ConsoleOutputWriter getConsoleOutputWriter()
+   {
+      return output_;
    }
 
    @Override

@@ -1791,7 +1791,7 @@ void getFunctionS3Methods(const std::string& methodName, json::Array* pMethods)
    std::transform(methods.begin(),
                   methods.end(),
                   std::back_inserter(*pMethods),
-                  boost::bind(json::toJsonString, _1));
+                  boost::bind(json::toJsonValue<std::string>, _1));
 
 }
 
@@ -1864,7 +1864,7 @@ void getFunctionS4Methods(const std::string& methodName, json::Array* pMethods)
       std::transform(methods.begin(),
                      methods.end(),
                      std::back_inserter(*pMethods),
-                     boost::bind(json::toJsonString, _1));
+                     boost::bind(json::toJsonValue<std::string>, _1));
    }
 }
 

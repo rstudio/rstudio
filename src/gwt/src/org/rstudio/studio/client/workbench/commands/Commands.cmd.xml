@@ -507,12 +507,15 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <menu label="Acc_essibility">
             <cmd refid="toggleScreenReaderSupport"/>
-            <cmd refid="toggleTabKeyMovesFocus"/>
             <separator/>
-            <menu label="_Speak">
+            <menu label="S_peak">
                <cmd refid="speakEditorLocation"/>
             </menu>
-            <cmd refid="focusMainToolbar"/>
+            <menu label="_Focus">
+               <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="focusMainToolbar"/>
+               <cmd refid="toggleTabKeyMovesFocus"/>
+               </menu>
             <separator/>
             <cmd refid="showAccessibilityOptions"/>
          </menu>
@@ -859,6 +862,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
          <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
+         <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+J"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
          <shortcut refid="speakEditorLocation" value="Ctrl+Alt+Shift+B"/>
          <shortcut refid="focusMainToolbar" value="Ctrl+Alt+Y"/>
@@ -3639,6 +3643,10 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="focusMainToolbar"
         menuLabel="Focus _Main Toolbar"
+        windowMode="main"/>
+
+   <cmd id="focusConsoleOutputEnd"
+        menuLabel="_Focus Console Output"
         windowMode="main"/>
 
    <cmd id="signOut"

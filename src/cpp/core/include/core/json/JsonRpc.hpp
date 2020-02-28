@@ -284,102 +284,6 @@ inline Error typeMismatch(const Value& value,
 
 } // namespace errors
 
-template <typename T>
-core::Error readObject(const Object& object,
-                       const std::string& name, 
-                       T* pValue)
-{
-   Object::Iterator it = object.find(name);
-   if (it == object.end())
-      return errors::paramMissing(name, ERROR_LOCATION);
-
-   if (!isType<T>((*it).getValue()))
-      return errors::typeMismatch(
-               (*it).getValue(),
-               asJsonType(*pValue),
-               ERROR_LOCATION);
-
-   *pValue = (*it).getValue().getValue<T>();
-
-   return Success() ;
-}
-
-inline core::Error readObject(const Object& object,
-                              const std::string& name,
-                              Array* pArray)
-{
-   return readObject<Array>(object, name, pArray);
-}
-
-template <typename T>
-core::Error readObject(
-      const Object& object,
-      const std::string& name,
-      std::vector<T>* pVector)
-{
-   core::Error error;
-   
-   Array array;
-   error = readObject(object, name, &array);
-   if (error)
-      return error;
-   
-   for (std::size_t i = 0, n = array.getSize(); i < n; ++i)
-   {
-      const Value& el = array[i];
-      if (!isType<T>(el))
-         return errors::typeMismatch(
-                  el,
-                  asJsonType(T()),
-                  ERROR_LOCATION);
-      
-      pVector->push_back(el.getValue<T>());
-   }
-   
-   return Success();
-}
-
-template <typename T>
-core::Error readObject(const Object& object,
-                       const std::string& name,
-                       const T& defaultValue,
-                       T* pValue)
-{
-   Object::Iterator it = object.find(name) ;
-   if (it == object.end())
-   {
-      *pValue = defaultValue;
-      return Success();
-   }
-
-   if (!isType<T>((*it).getValue()))
-      return errors::typeMismatch(
-               (*it).getValue(),
-               asJsonType(*pValue),
-               ERROR_LOCATION);
-
-   *pValue = (*it).getValue().getValue<T>() ;
-
-   return Success() ;
-}
-
-template <typename T, typename... Args>
-core::Error readObject(const Object& object,
-                       const std::string& name,
-                       T* pValue,
-                       Args... args)
-{
-   Error error = readObject(object, name, pValue);
-   if (error)
-      return error;
-
-   error = readObject(object, args...);
-   if (error)
-      return error;
-
-   return Success();
-}
-
 template <typename T, typename... Args>
 core::Error readObjectParam(const Array& params,
                             unsigned int index,
@@ -409,28 +313,20 @@ core::Error readObjectParam(const Array& params,
    if (error)
       return error;
    
-   return readObject(object, name, pValue);
+   return readObject(object, name, *pValue);
 }
 
 template <typename T>
 core::Error getOptionalParam(const Object& json, const std::string& param,
                              const T& defaultValue, T* outParam)
 {
-   Object::Iterator it = json.find(param);
-   if (it != json.end() && !(*it).getValue().isNull())
-   {
-      if (!isType<T>((*it).getValue()))
-      {
-         core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-         error.addProperty("description", "Invalid type for optional param " + param);
-         return error;
-      }
+   boost::optional<T> paramVal;
+   Error error = readObject(json, param, paramVal);
+   if (error)
+      return error;
 
-      *outParam = (*it).getValue().getValue<T>();
-      return Success();
-   }
+   *outParam = paramVal.get_value_or(defaultValue);
 
-   *outParam = defaultValue;
    return Success();
 }
 
@@ -439,22 +335,7 @@ core::Error getOptionalParam(const Object& json,
                              const std::string& param,
                              boost::optional<T>* pOutParam)
 {
-   Object::Iterator it = json.find(param);
-   if (it != json.end() && !(*it).getValue().isNull())
-   {
-      if (!isType<T>((*it).getValue()))
-      {
-         core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-         error.addProperty("description", "Invalid type for optional param " + param);
-         return error;
-      }
-
-      *pOutParam = (*it).getValue().getValue<T>();
-      return Success();
-   }
-
-   *pOutParam = boost::none;
-   return Success();
+   return readObject(json, param, *pOutParam);
 }
 
 // json rpc response
@@ -525,7 +406,7 @@ public:
    Error getField(const std::string& name,
                  T* pValue)
    {
-      return readObject(response_, name, pValue);
+      return readObject(response_, name, *pValue);
    }
    
    // low level hook to set the full response

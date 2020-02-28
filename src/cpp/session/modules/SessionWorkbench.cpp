@@ -128,8 +128,8 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
       json::Array rangeJson;
       std::string text;
       Error error = json::readObject(object,
-                                     "range", &rangeJson,
-                                     "text", &text);
+                                     "range", rangeJson,
+                                     "text", text);
       if (error)
       {
          LOG_ERROR(error);

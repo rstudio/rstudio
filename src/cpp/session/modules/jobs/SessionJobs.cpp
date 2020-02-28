@@ -322,13 +322,13 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = json::readObject(jobSpec, "name", &name,
-                                     "path", &path,
-                                     "encoding", &encoding,
-                                     "code", &code,
-                                     "working_dir", &workingDir,
-                                     "import_env", &importEnv,
-                                     "export_env", &exportEnv);
+   error = json::readObject(jobSpec, "name", name,
+                                     "path", path,
+                                     "encoding", encoding,
+                                     "code", code,
+                                     "working_dir", workingDir,
+                                     "import_env", importEnv,
+                                     "export_env", exportEnv);
    if (error)
       return error;
 

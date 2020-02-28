@@ -152,24 +152,26 @@ const char* const kConnectionListFile = "connection-history-database.json";
 Error ConnectionHistory::readConnections(json::Array* pConnections)
 {
    FilePath connectionListFile = connectionsDir_.completeChildPath(kConnectionListFile);
-   if (connectionListFile.exists())
+   if (!connectionListFile.exists())
+      return Success();
+   
+   std::string contents;
+   Error error = core::readStringFromFile(connectionListFile, &contents);
+   if (error)
+      return error;
+
+   json::Value parsedJson;
+   if (parsedJson.parse(contents) || !json::isType<json::Array>(parsedJson))
    {
-      std::string contents;
-      Error error = core::readStringFromFile(connectionListFile, &contents);
-      if (error)
-         return error;
-
-      json::Value parsedJson;
-      if (parsedJson.parse(contents) ||
-          !json::isType<json::Array>(parsedJson))
-      {
-         return systemError(boost::system::errc::protocol_error,
-                            "Error parsing connections json file",
-                            ERROR_LOCATION);
-      }
-
-      *pConnections = parsedJson.getValue<json::Array>();
+      return systemError(boost::system::errc::protocol_error,
+                         "Error parsing connections json file",
+                         ERROR_LOCATION);
    }
+
+   json::Array connections = parsedJson.getArray();
+   for (auto&& connection : connections)
+      if (connection.isObject())
+         pConnections->push_back(connection);
 
    return Success();
 }

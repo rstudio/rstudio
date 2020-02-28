@@ -179,10 +179,10 @@ boost::shared_ptr<Breakpoint> breakpointFromJson(const json::Object& obj)
    std::string path;
 
    Error error = json::readObject(obj,
-                                  "type", &type,
-                                  "line_number", &lineNumber,
-                                  "id", &id,
-                                  "path", &path);
+                                  "type", type,
+                                  "line_number", lineNumber,
+                                  "id", id,
+                                  "path", path);
    if (error)
       LOG_ERROR(error);
 

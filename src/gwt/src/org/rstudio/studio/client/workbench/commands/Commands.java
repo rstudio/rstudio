@@ -648,7 +648,8 @@ public abstract class
    public abstract AppCommand showAccessibilityOptions();
    public abstract AppCommand focusMainToolbar();
    public abstract AppCommand speakEditorLocation();
-   
+   public abstract AppCommand focusConsoleOutputEnd();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();

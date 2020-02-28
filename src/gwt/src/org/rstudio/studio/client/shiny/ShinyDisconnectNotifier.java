@@ -22,7 +22,6 @@ public class ShinyDisconnectNotifier
    public interface ShinyDisconnectSource
    {
       public String getShinyUrl();
-      public String getWindowName();
       public void onShinyDisconnect();
    }
 
@@ -65,9 +64,9 @@ public class ShinyDisconnectNotifier
             return;
          
          self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(
-            e.data,
-            e.origin,
-            e.target.name
+            event.data,
+            event.origin,
+            event.target.name
          );
          
       });
@@ -78,26 +77,25 @@ public class ShinyDisconnectNotifier
    
    private void onMessage(String data, String origin, String name)
    {
-      // check to see whether we should handle this message
-      boolean ok =
-            StringUtil.equals(data, "disconnected") &&
-            StringUtil.equals(name, source_.getWindowName()) &&
-            source_.getShinyUrl().startsWith(origin);
-      
-      if (!ok)
+      // check to see if this is a 'disconnected' message
+      if (!StringUtil.equals(data, "disconnected"))
          return;
       
-      if (StringUtil.equals(source_.getShinyUrl(), suppressUrl_))
+      // check to see if the message originated from the same origin
+      String url = source_.getShinyUrl();
+      if (!url.startsWith(origin))
+         return;
+      
+      // if we were suppressing disconnect notifications from this URL,
+      // consume this disconnection and resume
+      if (StringUtil.equals(url, suppressUrl_))
       {
-         // we were suppressing disconnect notifications from this URL;
-         // consume this disconnection and resume
          unsuppress();
-      }
-      else
-      {
-         source_.onShinyDisconnect();
+         return;
       }
       
+      // respond to Shiny disconnect
+      source_.onShinyDisconnect();
    }
 
    private final ShinyDisconnectSource source_;

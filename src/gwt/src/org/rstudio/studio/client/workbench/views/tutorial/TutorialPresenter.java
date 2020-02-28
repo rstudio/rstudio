@@ -64,7 +64,6 @@ public class TutorialPresenter
       
       String getUrl();
       String getRawSrcUrl();
-      String getName();
       
       void launchTutorial(Tutorial tutorial);
       
@@ -307,12 +306,6 @@ public class TutorialPresenter
       return display_.getUrl();
    }
    
-   @Override
-   public String getWindowName()
-   {
-      return display_.getName();
-   }
-
    @Override
    public void onShinyDisconnect()
    {

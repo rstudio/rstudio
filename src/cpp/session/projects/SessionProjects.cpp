@@ -214,8 +214,8 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
    json::Object descriptionJson;
    json::Object inputsJson;
    error = json::readObject(projectTemplateOptions.getObject(),
-                            "description", &descriptionJson,
-                            "inputs", &inputsJson);
+                            "description", descriptionJson,
+                            "inputs", inputsJson);
    if (error)
       return error;
    
@@ -527,19 +527,19 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
    json::Object autoRoxJson;
    Error error = json::readObject(
        optionsJson,
-       "makefile_args", &(pOptions->makefileArgs),
-       "preview_website", &(pOptions->previewWebsite),
-       "live_preview_website", &(pOptions->livePreviewWebsite),
-       "website_output_format", &(pOptions->websiteOutputFormat),
-       "auto_roxygenize_options", &autoRoxJson);
+       "makefile_args", pOptions->makefileArgs,
+       "preview_website", pOptions->previewWebsite,
+       "live_preview_website", pOptions->livePreviewWebsite,
+       "website_output_format", pOptions->websiteOutputFormat,
+       "auto_roxygenize_options", autoRoxJson);
    if (error)
       return error;
 
    return json::readObject(
        autoRoxJson,
-       "run_on_check", &(pOptions->autoRoxygenizeForCheck),
-       "run_on_package_builds", &(pOptions->autoRoxygenizeForBuildPackage),
-       "run_on_build_and_reload", &(pOptions->autoRoxygenizeForBuildAndReload));
+       "run_on_check", pOptions->autoRoxygenizeForCheck,
+       "run_on_package_builds", pOptions->autoRoxygenizeForBuildPackage,
+       "run_on_build_and_reload", pOptions->autoRoxygenizeForBuildAndReload);
 }
 
 Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
@@ -547,7 +547,7 @@ Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
 {
    return json::readObject(
          optionsJson,
-         "active_vcs_override", &(pOptions->vcsOverride));
+         "active_vcs_override", pOptions->vcsOverride);
 }
 
 Error writeProjectOptions(const json::JsonRpcRequest& request,
@@ -566,18 +566,18 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    r_util::RProjectConfig config;
    error = json::readObject(
                     configJson,
-                    "version", &(config.version),
-                    "restore_workspace", &(config.restoreWorkspace),
-                    "save_workspace", &(config.saveWorkspace),
-                    "always_save_history", &(config.alwaysSaveHistory),
-                    "enable_code_indexing", &(config.enableCodeIndexing),
-                    "use_spaces_for_tab", &(config.useSpacesForTab),
-                    "num_spaces_for_tab", &(config.numSpacesForTab),
-                    "default_encoding", &(config.encoding),
-                    "default_sweave_engine", &(config.defaultSweaveEngine),
-                    "default_latex_program", &(config.defaultLatexProgram),
-                    "root_document", &(config.rootDocument),
-                    "quit_child_processes_on_exit", &(config.quitChildProcessesOnExit));
+                    "version", config.version,
+                    "restore_workspace", config.restoreWorkspace,
+                    "save_workspace", config.saveWorkspace,
+                    "always_save_history", config.alwaysSaveHistory,
+                    "enable_code_indexing", config.enableCodeIndexing,
+                    "use_spaces_for_tab", config.useSpacesForTab,
+                    "num_spaces_for_tab", config.numSpacesForTab,
+                    "default_encoding", config.encoding,
+                    "default_sweave_engine", config.defaultSweaveEngine,
+                    "default_latex_program", config.defaultLatexProgram,
+                    "root_document", config.rootDocument,
+                    "quit_child_processes_on_exit", config.quitChildProcessesOnExit);
    if (error)
       return error;
 
@@ -612,41 +612,41 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    error = json::readObject(
                     configJson,
-                    "auto_append_newline", &(config.autoAppendNewline),
-                    "strip_trailing_whitespace", &(config.stripTrailingWhitespace),
-                    "line_endings", &(config.lineEndings));
+                    "auto_append_newline", config.autoAppendNewline,
+                    "strip_trailing_whitespace", config.stripTrailingWhitespace,
+                    "line_endings", config.lineEndings);
    if (error)
       return error;
 
    error = json::readObject(
                     configJson,
-                    "build_type", &(config.buildType),
-                    "package_use_devtools", &(config.packageUseDevtools),
-                    "package_path", &(config.packagePath),
-                    "package_install_args", &(config.packageInstallArgs),
-                    "package_build_args", &(config.packageBuildArgs),
-                    "package_build_binary_args", &(config.packageBuildBinaryArgs),
-                    "package_check_args", &(config.packageCheckArgs),
-                    "package_roxygenize", &(config.packageRoxygenize),
-                    "makefile_path", &(config.makefilePath),
-                    "website_path", &(config.websitePath),
-                    "custom_script_path", &(config.customScriptPath),
-                    "tutorial_path", &(config.tutorialPath));
+                    "build_type", config.buildType,
+                    "package_use_devtools", config.packageUseDevtools,
+                    "package_path", config.packagePath,
+                    "package_install_args", config.packageInstallArgs,
+                    "package_build_args", config.packageBuildArgs,
+                    "package_build_binary_args", config.packageBuildBinaryArgs,
+                    "package_check_args", config.packageCheckArgs,
+                    "package_roxygenize", config.packageRoxygenize,
+                    "makefile_path", config.makefilePath,
+                    "website_path", config.websitePath,
+                    "custom_script_path", config.customScriptPath,
+                    "tutorial_path", config.tutorialPath);
    if (error)
       return error;
 
-   error = json::readObject(configJson, "disable_execute_rprofile", &(config.disableExecuteRprofile));
+   error = json::readObject(configJson, "disable_execute_rprofile", config.disableExecuteRprofile);
    if (error)
       return error;
 
    // read the r version info
    json::Object rVersionJson;
-   error = json::readObject(configJson, "r_version", &rVersionJson);
+   error = json::readObject(configJson, "r_version", rVersionJson);
    if (error)
       return error;
    error = json::readObject(rVersionJson,
-                            "number", &(config.rVersion.number),
-                            "arch", &(config.rVersion.arch));
+                            "number", config.rVersion.number,
+                            "arch", config.rVersion.arch);
    if (error)
       return error;
 

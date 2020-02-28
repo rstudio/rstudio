@@ -175,7 +175,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
       else
       {
          json::Array oldDefs;
-         error = json::readObject(defContents, kChunkDefs, &oldDefs);
+         error = json::readObject(defContents, kChunkDefs, oldDefs);
          if (!error)
          {
             if (oldDefs == newDefs) 
@@ -216,7 +216,7 @@ void extractChunkIds(const json::Array& chunkOutputs,
       if (chunkOutput.getType() != json::Type::OBJECT)
          continue;
       std::string chunkId;
-      if (!json::readObject(chunkOutput.getObject(), kChunkId, &chunkId))
+      if (!json::readObject(chunkOutput.getObject(), kChunkId, chunkId))
       {
          pIds->push_back(chunkId);
       }

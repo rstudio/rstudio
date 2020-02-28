@@ -455,10 +455,10 @@ void RCompilationDatabase::restorePackageCompilationConfig()
 
    json::Array argsJson;
    error = json::readObject(configJson.getObject(),
-                            "args", &argsJson,
-                            "pch", &packageCompilationConfig_.PCH,
-                            "is_cpp", &packageCompilationConfig_.isCpp,
-                            "hash", &packageBuildFileHash_);
+                            "args", argsJson,
+                            "pch", packageCompilationConfig_.PCH,
+                            "is_cpp", packageCompilationConfig_.isCpp,
+                            "hash", packageBuildFileHash_);
    if (error)
    {
       error.addProperty("json", contents);
