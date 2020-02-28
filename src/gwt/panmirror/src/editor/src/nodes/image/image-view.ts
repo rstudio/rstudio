@@ -73,8 +73,6 @@ export class ImageNodeView implements NodeView {
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
       this.dom = document.createElement('figure');
-      this.dom.onclick = selectOnClick;
-      this.dom.ondblclick = editOnDblClick;
       const container = document.createElement('div');
       this.updateImg(node);
       container.append(this.img);
