@@ -40,7 +40,8 @@
     "dev": "node fuse dev",
     "dist": "node fuse dist",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
-    "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'"
+    "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
+    "watch": "tsc --watch --noEmit --project './tsconfig.json'"
   },
   "devDependencies": {
     "fuse-box": "^3.7.1",
