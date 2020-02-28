@@ -107,7 +107,7 @@ task("ide-dev", async context => {
 
 task("ide-dev-watch", async context => {
   const fuse = dev(context, false, true, true, kIdeOutputDir);
-  fuse.dev( { httpServer: false } )
+  fuse.dev( { port: 5555 } );
   await fuse.run();
 })
 
