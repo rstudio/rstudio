@@ -13,7 +13,7 @@
             "presentation": {
                 "reveal": "always",
                 "revealProblems": "onProblem"
-            },
+            }
         }
     ]
 }
