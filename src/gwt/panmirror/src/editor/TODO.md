@@ -3,12 +3,9 @@
 
 ## TODO
 
-Improved treatment for relative image paths that don't resolve
-
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
 Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
-
 
 Sizing/alignment inline for images
 
