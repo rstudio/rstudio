@@ -17,6 +17,11 @@
     "module": "umd",
     "moduleResolution": "node",
     "noImplicitAny": true,
+    "plugins": [
+      {
+        "name": "typescript-tslint-plugin"
+      }
+    ]
   },
   "include": [
     "src"
