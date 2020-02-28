@@ -148,14 +148,14 @@ public class TextEditingTargetVisualMode
    {
       loadingFromSource_ = true;
       panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
-         
-         isDirty_ = false;
-         loadingFromSource_ = false;
-         
+             
          // activate editor
          if (ready != null)
             ready.execute();
          
+         isDirty_ = false;
+         loadingFromSource_ = false;
+       
          // restore selection if we have one
          Scheduler.get().scheduleDeferred(() -> {
             PanmirrorEditingLocation location = savedEditingLocation();

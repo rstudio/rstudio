@@ -75,6 +75,7 @@ import './styles/frame.css';
 import './styles/styles.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
+const kLayoutFixups = 'layoutFixups';
 
 export interface EditorContext {
   readonly pandoc: PandocEngine;
@@ -475,8 +476,10 @@ export class Editor {
 
     // notify listeners of updates
     if (tr.docChanged) {
-      // fire updated
-      this.emitEvent(EditorEvents.Update);
+      // fire updated (unless this was a layout fixup)
+      if (!tr.getMeta(kLayoutFixups)) {
+        this.emitEvent(EditorEvents.Update);
+      }
 
       // fire outline changed if necessary
       if (getOutline(this.state) !== previousOutline) {
@@ -665,6 +668,7 @@ export class Editor {
     tr = this.extensionLayoutFixups(tr);
     if (tr.docChanged) {
       tr.setMeta('addToHistory', false);
+      tr.setMeta(kLayoutFixups, true);
       this.view.dispatch(tr);
     }
   }

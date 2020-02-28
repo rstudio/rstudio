@@ -120,10 +120,12 @@ export function fixupTableWidths(view: EditorView) {
           rowNode.forEach((cellNode, cellOffset, c) => {
             const cellPos = table.pos + 1 + rowOffset + 1 + cellOffset;
             const colWidth = [colpercents[c] * containerWidth];
-            tr.setNodeMarkup(cellPos, cellNode.type, {
-              ...cellNode.attrs,
-              colwidth: colWidth,
-            });
+            if (colWidth !== cellNode.attrs.colwidth) {
+              tr.setNodeMarkup(cellPos, cellNode.type, {
+                ...cellNode.attrs,
+                colwidth: colWidth,
+              });
+            }
           });
         });
       }
