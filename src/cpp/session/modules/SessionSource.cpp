@@ -842,6 +842,13 @@ Error processSourceTemplate(const std::string& name,
       }
    }
 
+   if (!templatePath.exists())
+   {
+      // We didn't find a user, system, or built-in template, so use an empty one.
+      *pContents = "";
+      return Success();
+   }
+
    // read file with template filter
    return core::readStringFromFile(templatePath,
                                    filter,
