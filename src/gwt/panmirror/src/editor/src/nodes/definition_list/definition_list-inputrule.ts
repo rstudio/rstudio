@@ -36,9 +36,9 @@ export function definitionInputRule() {
     // check for : within a definition list description
     if (container.type === schema.nodes.definition_list_description && parent.type === schema.nodes.paragraph) {
       const tr = state.tr;
-      const start = $head.start($head.depth) - 1;
-      tr.deleteRange(start, start + $head.node($head.depth).nodeSize);
-      const insertPos = tr.mapping.map(start) + 1;
+      const startPos = $head.start($head.depth) - 1;
+      tr.deleteRange(startPos, startPos + $head.node($head.depth).nodeSize);
+      const insertPos = tr.mapping.map(startPos) + 1;
       tr.insert(
         insertPos,
         schema.nodes.definition_list_description.createAndFill({}, schema.nodes.paragraph.create())!,

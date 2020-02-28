@@ -138,7 +138,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
 
                 // write href (but if this is a heading link write a special sentinel that
                 // we will remove in the postprocessor)
-                let href = mark.attrs.heading ? kHeadingLinkSentinel : mark.attrs.href;
+                const href = mark.attrs.heading ? kHeadingLinkSentinel : mark.attrs.href;
                 output.write([href || '', mark.attrs.title || '']);
               });
             },

@@ -107,7 +107,7 @@ export class PandocConverter {
     let format = this.adjustedFormat(pandocFormat.fullName);
 
     // run ast filters
-    let ast = await this.applyAstOutputFilters(output.ast, format, options);
+    const ast = await this.applyAstOutputFilters(output.ast, format, options);
 
     // prepare options
     let pandocOptions: string[] = [];
@@ -137,11 +137,10 @@ export class PandocConverter {
   private async applyAstOutputFilters(ast: PandocAst, format: string, options: PandocWriterOptions) {
     let filteredAst = ast;
 
-    for (let i = 0; i < this.astOutputFilters.length; i++) {
-      const filter = this.astOutputFilters[i];
+    for (const filter of this.astOutputFilters) {
       filteredAst = await filter(filteredAst, {
-        astToMarkdown: (ast: PandocAst, format_options: string) => {
-          return this.pandoc.astToMarkdown(ast, format + format_options, []);
+        astToMarkdown: (pandocAst: PandocAst, formatOptions: string) => {
+          return this.pandoc.astToMarkdown(pandocAst, format + formatOptions, []);
         },
         markdownToAst: (markdown: string) => {
           return this.pandoc.markdownToAst(markdown, format, this.wrapColumnOptions(options));

@@ -204,7 +204,7 @@ class FindPlugin extends Plugin<DecorationSet> {
 
         const decorationSet = key.getState(state);
 
-        let decorations: Decoration[] = decorationSet.find(0);
+        const decorations: Decoration[] = decorationSet.find(0);
         decorations.forEach(decoration => {
           const from = tr.mapping.map(decoration.from);
           const to = tr.mapping.map(decoration.to);
@@ -257,7 +257,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       }
 
       let m;
-      // eslint-disable-next-line no-cond-assign
+      // tslint:disable-next-line no-conditional-assignment
       while ((m = search.exec(textNode.text))) {
         if (m[0] === '') {
           break;

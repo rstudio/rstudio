@@ -37,12 +37,12 @@ export interface PandocFormatComment {
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
   // setup warnings
-  let warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
+  const warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
   // split out base format from options
   const split = splitPandocFormatString(format);
+  const options = split.options;
   let baseName = split.format;
-  let options = split.options;
 
   // validate the base format (fall back to markdown if it's not known)
   if (
@@ -72,7 +72,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
     formatOptions = formatOptions.replace(/\+/g, '-');
 
     // layer on gfm or commonmark
-    let extraOptions = (validOptions = await pandoc.listExtensions(baseName));
+    const extraOptions = (validOptions = await pandoc.listExtensions(baseName));
     formatOptions = formatOptions + extraOptions;
   } else {
     // query for format options
@@ -88,7 +88,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
   });
 
   // now parse extensions for user options (validate and build format name)
-  let validOptionNames = parseExtensions(validOptions).map(option => option.name);
+  const validOptionNames = parseExtensions(validOptions).map(option => option.name);
   let fullName = baseName;
   parseExtensions(options).forEach(option => {
     // validate that the option is valid
@@ -163,7 +163,7 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
       formatComment.extensions = variables.extensions;
     }
     if (variables['fill-column']) {
-      formatComment.fillColumn = parseInt(variables['fill-column']) || undefined;
+      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
     }
     return formatComment;
   } else {

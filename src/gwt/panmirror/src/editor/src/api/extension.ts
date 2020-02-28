@@ -53,8 +53,8 @@ export function extensionIfEnabled(extension: Extension, name: string | string[]
 
       // match any one of several names
     } else if (Array.isArray(name)) {
-      for (let i = 0; i < name.length; i++) {
-        if (pandocExtensions[name[i]]) {
+      for (const nm of name) {
+        if (pandocExtensions[nm]) {
           return extension;
         }
       }

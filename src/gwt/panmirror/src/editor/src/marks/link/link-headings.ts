@@ -44,7 +44,7 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
       if (matchedHeading) {
         // point the link mark at this heading by name
         doc.nodesBetween(markRange.from, markRange.to, node => {
-          const linkMark = node.marks.find(mark => mark.type === schema.marks.link);
+          const linkMark = node.marks.find(m => m.type === schema.marks.link);
           if (linkMark) {
             linkMark.attrs.heading = linkText;
           }
@@ -98,8 +98,7 @@ export function syncHeadingLinksAppendTransaction() {
           });
 
           // find links that don't match and update them
-          const links = findChildrenByMark(tr.doc, schema.marks.link);
-          links.forEach(link => {
+          findChildrenByMark(tr.doc, schema.marks.link).forEach(link => {
             const linkPos = tr.mapping.map(link.pos);
             const range = getMarkRange(tr.doc.resolve(linkPos), schema.marks.link);
             if (range) {

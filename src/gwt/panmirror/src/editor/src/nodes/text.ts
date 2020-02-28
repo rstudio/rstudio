@@ -35,7 +35,7 @@ const extension: Extension = {
           { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
         ],
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          let text = node.textContent;
+          const text = node.textContent;
           output.writeText(text);
         },
       },

@@ -243,10 +243,10 @@ function changedDescendants(
   offset: number,
   f: (node: ProsemirrorNode, pos: number) => void,
 ) {
-  let oldSize = old.childCount,
-    curSize = cur.childCount;
+    const oldSize = old.childCount;
+    const curSize = cur.childCount;
   outer: for (let i = 0, j = 0; i < curSize; i++) {
-    let child = cur.child(i);
+    const child = cur.child(i);
     for (let scan = j, e = Math.min(oldSize, i + 3); scan < e; scan++) {
       if (old.child(scan) === child) {
         j = scan + 1;
@@ -255,8 +255,12 @@ function changedDescendants(
       }
     }
     f(child, offset);
-    if (j < oldSize && old.child(j).sameMarkup(child)) changedDescendants(old.child(j), child, offset + 1, f);
-    else child.nodesBetween(0, child.content.size, f, offset + 1);
+    if (j < oldSize && old.child(j).sameMarkup(child)) { 
+      changedDescendants(old.child(j), child, offset + 1, f);
+    }
+    else {
+      child.nodesBetween(0, child.content.size, f, offset + 1);
+    }
     offset += child.nodeSize;
   }
 }

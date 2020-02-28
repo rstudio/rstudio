@@ -148,13 +148,13 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               return;
             }
 
-            const rawInlineMark = (node: ProsemirrorNode) => schema.marks.raw_inline.isInSet(node.marks);
+            const rawInlineMark = (nd: ProsemirrorNode) => schema.marks.raw_inline.isInSet(nd.marks);
             const hasRawInlineContent = (pattern: RegExp) => {
-              return (node: ProsemirrorNode, parentNode: ProsemirrorNode) => {
+              return (nd: ProsemirrorNode, parentNode: ProsemirrorNode) => {
                 return (
-                  node.isText &&
-                  !schema.marks.code.isInSet(node.marks) &&
-                  (!schema.marks.math || !schema.marks.math.isInSet(node.marks)) &&
+                  nd.isText &&
+                  !schema.marks.code.isInSet(nd.marks) &&
+                  (!schema.marks.math || !schema.marks.math.isInSet(nd.marks)) &&
                   parentNode.type.allowsMarkType(schema.marks.raw_inline) &&
                   pattern.test(parentNode.textContent)
                 );
@@ -164,8 +164,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             // remove marks from inline nodes as needed
             const rawInlineNodes = findChildrenByMark(node, schema.marks.raw_inline, true);
             rawInlineNodes.forEach(rawInlineNode => {
-              const node = rawInlineNode.node;
-              const mark = rawInlineMark(node);
+              const mark = rawInlineMark(rawInlineNode.node);
               if (mark) {
                 const from = pos + 1 + rawInlineNode.pos;
                 const rawInlineRange = getMarkRange(tr.doc.resolve(from), schema.marks.raw_inline);
@@ -217,7 +216,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                     const to = from + length;
                     const markRange = getMarkRange(tr.doc.resolve(markupNode.pos + beginIdx), schema.marks.raw_inline);
                     if (!markRange || markRange.to !== to) {
-                      let comment = commentRegex ? commentRegex.test(tr.doc.textBetween(from, to)) : false;
+                      const comment = commentRegex ? commentRegex.test(tr.doc.textBetween(from, to)) : false;
                       const mark = schema.mark('raw_inline', { format, comment });
                       tr.addMark(from, to, mark);
                     }

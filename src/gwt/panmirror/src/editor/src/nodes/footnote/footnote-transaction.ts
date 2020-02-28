@@ -125,7 +125,7 @@ export function footnoteAppendTransaction() {
       // remove ophraned notes (backwards so the positions stay valid)
       for (let i = allNotes.length - 1; i >= 0; i--) {
         const note = allNotes[i];
-        const footnote = footnotes.find(footnote => footnote.node.attrs.ref === note.node.attrs.ref);
+        const footnote = footnotes.find(fn => fn.node.attrs.ref === note.node.attrs.ref);
         if (!footnote) {
           tr.delete(note.pos, note.pos + note.node.nodeSize);
         }

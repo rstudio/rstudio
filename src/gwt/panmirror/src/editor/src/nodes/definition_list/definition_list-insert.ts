@@ -35,8 +35,7 @@ export function insertDefinitionListAppendTransaction() {
       // if a transaction creates 2 adjacent definition lists then join them
       const schema = tr.doc.type.schema;
       const lists = findChildrenByType(tr.doc, schema.nodes.definition_list, true);
-      for (let i = 0; i < lists.length; i++) {
-        const list = lists[i];
+      for (const list of lists) {
         const listPos = tr.doc.resolve(list.pos + 1);
         const listIndex = listPos.index(listPos.depth - 1);
         const listParent = listPos.node(listPos.depth - 1);

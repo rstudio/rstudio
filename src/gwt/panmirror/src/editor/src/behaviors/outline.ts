@@ -51,9 +51,9 @@ const extension: Extension = {
             }
           };
           const needsOutlineIdNodes = findTopLevelBodyNodes(tr.doc, needsOutlineId);
-          needsOutlineIdNodes.forEach(needsOutlineId => {
-            tr.setNodeMarkup(needsOutlineId.pos, needsOutlineId.node.type, {
-              ...needsOutlineId.node.attrs,
+          needsOutlineIdNodes.forEach(outlineId => {
+            tr.setNodeMarkup(outlineId.pos, outlineId.node.type, {
+              ...outlineId.node.attrs,
               navigation_id: uuidv4(),
             });
             tr.setMeta(kOutlineIdsTransaction, true);

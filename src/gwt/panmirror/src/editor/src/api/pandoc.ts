@@ -261,7 +261,7 @@ export type PandocAstOutputFilter = (ast: PandocAst, util: PandocAstOutputFilter
 
 export interface PandocAstOutputFilterUtil {
   markdownToAst(markdown: string): Promise<PandocAst>;
-  astToMarkdown(ast: PandocAst, format_options: string): Promise<string>;
+  astToMarkdown(ast: PandocAst, formatOptions: string): Promise<string>;
 }
 
 export type PandocMarkdownOutputFilter = (markdown: string) => string;
