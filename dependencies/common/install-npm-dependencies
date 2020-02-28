@@ -89,7 +89,7 @@ else
 fi
 
 # panmirror dependencies
-pushd ../../src/gwt/panmirror/
+pushd ../../src/gwt/panmirror/src/editor
 PATH=${INSTALL_PATH} yarn config set ignore-engines true
 PATH=${INSTALL_PATH} yarn install
 popd
