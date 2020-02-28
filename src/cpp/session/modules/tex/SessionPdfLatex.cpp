@@ -60,7 +60,7 @@ public:
       std::transform(types_.begin(),
                      types_.end(),
                      std::back_inserter(typesJson),
-                     json::toJsonString);
+                     json::toJsonValue<std::string>);
       return typesJson;
    }
 

@@ -78,8 +78,8 @@ Error saveSnippets(const json::JsonRpcRequest& request,
       {
          const json::Object& snippetJson = valueJson.getObject();
          std::string mode, contents;
-         Error error = json::readObject(snippetJson, "mode", &mode,
-                                                     "contents", &contents);
+         Error error = json::readObject(snippetJson, "mode", mode,
+                                                     "contents", contents);
          if (error)
          {
             LOG_ERROR(error);

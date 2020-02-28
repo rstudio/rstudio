@@ -69,13 +69,13 @@ ConsoleAction consoleActionFromJson(const json::Object& actionJson)
 {
    ConsoleAction action;
    Error error = json::readObject(actionJson,
-                                  "session_id", &action.sessionId,
-                                  "project", &action.project,
-                                  "pid", &action.pid,
-                                  "username", &action.username,
-                                  "timestamp", &action.timestamp,
-                                  "type", &action.type,
-                                  "data", &action.data);
+                                  "session_id", action.sessionId,
+                                  "project", action.project,
+                                  "pid", action.pid,
+                                  "username", action.username,
+                                  "timestamp", action.timestamp,
+                                  "type", action.type,
+                                  "data", action.data);
    if (error)
       LOG_ERROR(error);
 

@@ -161,12 +161,12 @@ public:
                bool interactive;
                std::string name, package, title, description, binding;
                Error error = json::readObject(valueJson.getObject(),
-                                              "name", &name,
-                                              "package", &package,
-                                              "title", &title,
-                                              "description", &description,
-                                              "interactive", &interactive,
-                                              "binding", &binding);
+                                              "name", name,
+                                              "package", package,
+                                              "title", title,
+                                              "description", description,
+                                              "interactive", interactive,
+                                              "binding", binding);
                if (error)
                {
                   LOG_ERROR(error);
@@ -178,7 +178,7 @@ public:
                // we don't log errors as they're rather noisy and otherwise
                // harmless)
                int ordinal = 0;
-               json::readObject(valueJson.getObject(), "ordinal", &ordinal);
+               json::readObject(valueJson.getObject(), "ordinal", ordinal);
                addins_[key] = AddinSpecification(name,
                                                  package,
                                                  title,

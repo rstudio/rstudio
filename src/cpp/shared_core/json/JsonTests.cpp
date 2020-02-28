@@ -955,6 +955,51 @@ TEST_CASE("Json")
 
       REQUIRE(error);
    }
+
+   SECTION("readObject tests")
+   {
+      json::Object obj;
+      json::Object obj2;
+      obj["a"] = 1;
+      obj["b"] = false;
+      obj["c"] = "Hello there";
+      obj2["a"] = "Inner obj";
+      obj["d"] = obj2;
+
+      int a;
+      bool b;
+      std::string c;
+      json::Object d;
+      Error error = json::readObject(obj,
+                                     "a", a,
+                                     "b", b,
+                                     "c", c,
+                                     "d", d);
+
+      REQUIRE_FALSE(error);
+      REQUIRE(a == 1);
+      REQUIRE_FALSE(b);
+      REQUIRE(c == "Hello there");
+      REQUIRE(d["a"].getString() == "Inner obj");
+
+      error = json::readObject(obj,
+                               "a", c,
+                               "b", b,
+                               "c", c);
+      REQUIRE(error);
+
+      error = json::readObject(obj,
+                               "a", a,
+                               "b", a,
+                               "c", c);
+      REQUIRE(error);
+
+      error = json::readObject(obj,
+                               "a", a,
+                               "b", b,
+                               "c", a);
+      REQUIRE(error);
+   }
 }
 
 } // end namespace tests

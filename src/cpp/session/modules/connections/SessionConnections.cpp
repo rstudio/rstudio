@@ -165,7 +165,7 @@ void addObjectSpecifiers(const json::Array& specifiers,
       // extract the name and type of the specifier
       std::string name, type;
       Error error = json::readObject(val.getObject(),
-            "name", &name, "type", &type);
+            "name", name, "type", type);
       if (error)
       {
          LOG_ERROR(error);
@@ -219,14 +219,14 @@ SEXP rs_availableRemoteServers()
 
       // get the host
       json::Object idJson;
-      Error error = json::readObject(connectionJson.getObject(), "id", &idJson);
+      Error error = json::readObject(connectionJson.getObject(), "id", idJson);
       if (error)
       {
          LOG_ERROR(error);
          continue;
       }
       std::string host;
-      error = json::readObject(idJson, "host", &host);
+      error = json::readObject(idJson, "host", host);
       if (error)
       {
          LOG_ERROR(error);

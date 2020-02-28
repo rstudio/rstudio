@@ -584,9 +584,9 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
    // parse fields out of token object
    std::string filename, uploadedTempFile, targetDirectory;
    error = json::readObject(token, 
-                            kUploadFilename, &filename,
-                            kUploadedTempFile, &uploadedTempFile,
-                            kUploadTargetDirectory, &targetDirectory);
+                            kUploadFilename, filename,
+                            kUploadedTempFile, uploadedTempFile,
+                            kUploadTargetDirectory, targetDirectory);
    if (error)
       return error;
    

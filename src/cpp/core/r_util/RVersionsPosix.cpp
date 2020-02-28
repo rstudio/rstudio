@@ -457,13 +457,13 @@ Error rVersionFromJson(const json::Object& versionJson,
    std::string library;
 
    Error error = json::readObject(versionJson,
-                                  "number", &number,
-                                  "environment", &environmentJson,
-                                  "label", &label,
-                                  "module", &module,
-                                  "prelaunchScript", &prelaunchScript,
-                                  "repo", &repo,
-                                  "library", &library);
+                                  "number", number,
+                                  "environment", environmentJson,
+                                  "label", label,
+                                  "module", module,
+                                  "prelaunchScript", prelaunchScript,
+                                  "repo", repo,
+                                  "library", library);
    if (error)
       return error;
 

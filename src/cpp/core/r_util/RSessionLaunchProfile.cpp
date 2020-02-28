@@ -40,9 +40,9 @@ Error contextFromJson(const json::Object& contextJson, SessionContext* pContext)
 {
    std::string project, id;
    Error error = json::readObject(contextJson,
-                           "username", &(pContext->username),
-                           "project", &project,
-                           "id", &id);
+                           "username", pContext->username,
+                           "project", project,
+                           "id", id);
    if (error)
       return error;
 
@@ -114,10 +114,10 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    // read top level fields
    json::Object configJson, contextJson;
    Error error = json::readObject(jsonProfile,
-                                  "context", &contextJson,
-                                  "password", &profile.password,
-                                  "executablePath", &profile.executablePath,
-                                  "config", &configJson);
+                                  "context", contextJson,
+                                  "password", profile.password,
+                                  "executablePath", profile.executablePath,
+                                  "config", configJson);
    if (error)
       LOG_ERROR(error);
 
@@ -136,17 +136,17 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    double memoryLimitBytes, stackLimitBytes, userProcessesLimit,
           cpuLimit, niceLimit, filesLimit;
    error = json::readObject(configJson,
-                           "args", &argsJson,
-                           "environment", &envJson,
-                           "stdInput", &stdInput,
-                           "stdStreamBehavior", &stdStreamBehavior,
-                           "priority", &priority,
-                           "memoryLimitBytes", &memoryLimitBytes,
-                           "stackLimitBytes", &stackLimitBytes,
-                           "userProcessesLimit", &userProcessesLimit,
-                           "cpuLimit", &cpuLimit,
-                           "niceLimit", &niceLimit,
-                           "filesLimit", &filesLimit);
+                           "args", argsJson,
+                           "environment", envJson,
+                           "stdInput", stdInput,
+                           "stdStreamBehavior", stdStreamBehavior,
+                           "priority", priority,
+                           "memoryLimitBytes", memoryLimitBytes,
+                           "stackLimitBytes", stackLimitBytes,
+                           "userProcessesLimit", userProcessesLimit,
+                           "cpuLimit", cpuLimit,
+                           "niceLimit", niceLimit,
+                           "filesLimit", filesLimit);
    if (error)
       LOG_ERROR(error);
 
@@ -154,7 +154,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    core::system::CpuAffinity cpuAffinity;
    json::Array cpuAffinityJson;
    error = json::readObject(configJson,
-                            "cpuAffinity", &cpuAffinityJson);
+                            "cpuAffinity", cpuAffinityJson);
    if (error)
       LOG_ERROR(error);
    error = cpuAffinityFromJson(cpuAffinityJson, &cpuAffinity);

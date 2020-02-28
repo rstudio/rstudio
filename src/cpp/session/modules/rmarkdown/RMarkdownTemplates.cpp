@@ -147,8 +147,8 @@ Error getRmdTemplates(const json::JsonRpcRequest&,
       bool multiFile = false;
       std::string templateYaml;
       error = json::readObject(item, 
-            "multi_file",    &multiFile,
-            "template_yaml", &templateYaml);
+            "multi_file",    multiFile,
+            "template_yaml", templateYaml);
       if (error)
          continue;
 

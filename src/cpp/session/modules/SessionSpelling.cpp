@@ -239,7 +239,7 @@ Error suggestionList(const json::JsonRpcRequest& request,
    std::transform(sugs.begin(),
                   sugs.end(),
                   std::back_inserter(sugsJson),
-                  json::toJsonString);
+                  json::toJsonValue<std::string>);
    pResponse->setResult(sugsJson);
 
    return Success();

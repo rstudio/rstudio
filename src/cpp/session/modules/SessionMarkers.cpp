@@ -117,8 +117,8 @@ public:
       std::string activeSet;
       json::Array setsJson;
       Error error = json::readObject(asJson,
-                                     "active_set", &activeSet,
-                                     "sets", &setsJson);
+                                     "active_set", activeSet,
+                                     "sets", setsJson);
       if (error)
          return error;
 
@@ -131,9 +131,9 @@ public:
             std::string name, basePath;
             json::Array markersJson;
             Error error = json::readObject(setJson.getObject(),
-                                           "name", &name,
-                                           "base_path", &basePath,
-                                           "markers", &markersJson);
+                                           "name", name,
+                                           "base_path", basePath,
+                                           "markers", markersJson);
             if (error)
             {
                LOG_ERROR(error);
@@ -151,12 +151,12 @@ public:
                   bool showErrorList;
                   Error error = json::readObject(
                      markerJson.getObject(),
-                     "type", &type,
-                     "path", &path,
-                     "line", &line,
-                     "column", &column,
-                     "message", &message,
-                     "show_error_list", &showErrorList);
+                     "type", type,
+                     "path", path,
+                     "line", line,
+                     "column", column,
+                     "message", message,
+                     "show_error_list", showErrorList);
                   if (error)
                   {
                      LOG_ERROR(error);
@@ -366,12 +366,12 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             bool messageHTML;
             Error error = json::readObject(
                markerJson.getObject(),
-               "type", &type,
-               "file", &path,
-               "line", &line,
-               "column", &column,
-               "message", &message,
-               "messageHTML", &messageHTML);
+               "type", type,
+               "file", path,
+               "line", line,
+               "column", column,
+               "message", message,
+               "messageHTML", messageHTML);
             if (error)
             {
                LOG_ERROR(error);

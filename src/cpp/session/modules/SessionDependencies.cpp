@@ -149,10 +149,10 @@ std::vector<Dependency> dependenciesFromJson(const json::Array& depsJson)
          Dependency dep;
          const json::Object& depJson = depJsonValue.getObject();
          Error error = json::readObject(depJson,
-                                        "location", &(dep.location),
-                                        "name", &(dep.name),
-                                        "version", &(dep.version),
-                                        "source", &(dep.source));
+                                        "location", dep.location,
+                                        "name", dep.name,
+                                        "version", dep.version,
+                                        "source", dep.source);
          if (!error)
          {
             deps.push_back(dep);
