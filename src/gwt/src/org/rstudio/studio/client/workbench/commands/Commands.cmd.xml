@@ -518,6 +518,7 @@ well as menu structures (for main menu and popup menus).
                </menu>
             <separator/>
             <cmd refid="showAccessibilityOptions"/>
+            <cmd refid="showAccessibilityHelp"/>
          </menu>
          <separator/>
          <cmd refid="helpUsingRStudio"/>
@@ -3622,6 +3623,10 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showAccessibilityOptions"
         menuLabel="Accessibility _Options..."
+        windowMode="main"/>
+
+   <cmd id="showAccessibilityHelp"
+        menuLabel="Accessibility _Help..."
         windowMode="main"/>
 
    <cmd id="toggleTabKeyMovesFocus"
