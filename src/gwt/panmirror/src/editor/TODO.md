@@ -3,8 +3,6 @@
 
 ## TODO
 
-Doc is marked dirty on first load
-
 Improved treatment for relative image paths that don't resolve
 
 Images should support width/align for gfm (write raw_html)
