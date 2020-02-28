@@ -3,11 +3,9 @@
 
 ## TODO
 
+Doc is marked dirty on first load
 
-
-
-
-## Enhancements
+Consider moving impl to panmirror package 
 
 Improved treatment for relative image paths that don't resolve
 
