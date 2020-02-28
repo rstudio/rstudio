@@ -30,7 +30,7 @@ RUN apt-get update -y && apt-get install -y \
     libpam0g-dev \
     libffi-dev \
     libpq-dev \
-    libsqlite-dev \
+    libsqlite3-dev \
     procps \
     uuid-dev \
     make \

@@ -18,8 +18,6 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libacl-devel \
     libattr-devel \
     libcap-devel \
-    libpq-devel \
-    libsqlite-devel \
     libuser-devel \
     libuuid-devel \
     libXcursor-devel \
@@ -29,9 +27,11 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     openssl-devel \
     pam-devel \
     pango-devel \
+    postgresql-devel \
     python \
     R \
     rpm-build \
+    sqlite-devel \
     sudo \
     tar \
     unzip \

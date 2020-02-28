@@ -19,18 +19,18 @@ RUN yum install -y \
     libacl-devel \ 
     libcap-devel \ 
     libffi \
-    libpq-devel \
-    libsqlite-devel \
     libuuid-devel \
     lsof \
     make \
     openssl-devel \
     pam-devel \
     pango-devel \
+    postgresql-devel \
     R \
     rpmdevtools \
     rpmsign \
     rrdtool \
+    sqlite-devel \
     sudo \
     wget \
     xml-commons-apis \

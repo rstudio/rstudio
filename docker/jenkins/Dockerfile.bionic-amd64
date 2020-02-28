@@ -41,7 +41,7 @@ RUN apt-get update && \
     libpam-dev \
     libpango1.0-dev \
     libpq-dev \
-    libsqlite-dev \
+    libsqlite3-dev \
     libuser1-dev \
     libssl-dev \
     libxslt1-dev \

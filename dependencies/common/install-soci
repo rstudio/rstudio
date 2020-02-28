@@ -51,7 +51,7 @@ then
    ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
  
    # build SOCI
-   cmake -G "Unix Makefiles" -DSOCI_CXX11=ON -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
+   cmake -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
    make
    
    # fix up permissions (if run as root, bin dir will be unreadable by others)

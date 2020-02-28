@@ -20,8 +20,6 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libattr-devel \
     libcap-devel \
     libcurl-devel \
-    libpq-devel \
-    libsqlite-devel \
     libuser-devel \
     libuuid-devel \
     libXcursor-devel \
@@ -32,10 +30,12 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     p7zip \
     pam-devel \
     pango-devel \
+    postgresql-devel \
     python \
     python-xml \
     R \
     rpm-build \
+    sqlite-devel \
     sudo \
     tar \
     unzip \
