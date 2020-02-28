@@ -37,6 +37,8 @@
     "typescript": "3.6.3"
   },
   "scripts": {
+    "dev": "node fuse dev",
+    "dist": "node fuse dist",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'"
   },
