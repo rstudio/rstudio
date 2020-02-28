@@ -70,17 +70,18 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
         }
 
         // if one of the steps added or removed a mark of our type then rescan the doc.
-        if (tr.steps.some(step => 
-          (step instanceof AddMarkStep && (step as any).mark.type === markType) ||
-          (step instanceof RemoveMarkStep && (step as any).mark.type === markType)
-        )) {
-
+        if (
+          tr.steps.some(
+            step =>
+              (step instanceof AddMarkStep && (step as any).mark.type === markType) ||
+              (step instanceof RemoveMarkStep && (step as any).mark.type === markType),
+          )
+        ) {
           // rehighlight entire doc
           return decorationsForDoc(newState.doc);
-        
-        // incremental rehighlighting based on presence of mark in changed regions
-        } else {
 
+          // incremental rehighlighting based on presence of mark in changed regions
+        } else {
           // adjust decoration positions to changes made by the transaction (decorations that apply
           // to removed chunks of content will be removed by this)
           set = set.map(tr.mapping, tr.doc);
@@ -101,16 +102,19 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
           };
 
           // rehighlight nodes that changed and have our mark type
-          forChangedNodes(oldState, newState, node => node.type.allowsMarkType(markType), (node, pos) => {
-            if (newState.doc.rangeHasMark(pos, pos + node.nodeSize, markType)) {
-              rehighlightParent(pos);
-            }
-          });
+          forChangedNodes(
+            oldState,
+            newState,
+            node => node.type.allowsMarkType(markType),
+            (node, pos) => {
+              if (newState.doc.rangeHasMark(pos, pos + node.nodeSize, markType)) {
+                rehighlightParent(pos);
+              }
+            },
+          );
 
           return set;
-
         }
-      
       },
     },
     props: {

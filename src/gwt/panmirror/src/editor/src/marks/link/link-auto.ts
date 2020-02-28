@@ -25,7 +25,7 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
   return (schema: Schema) => {
     const rules = [
       // <link> style link
-      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, (match: string[]) => ({ href: match[1] }))
+      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, (match: string[]) => ({ href: match[1] })),
     ];
 
     if (autoLink) {

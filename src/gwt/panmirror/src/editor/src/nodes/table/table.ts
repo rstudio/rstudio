@@ -17,13 +17,7 @@ import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { Transaction } from 'prosemirror-state';
 
-import {
-  tableEditing,
-  columnResizing,
-  goToNextCell,
-  deleteColumn,
-  deleteRow,
-} from 'prosemirror-tables';
+import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } from 'prosemirror-tables';
 
 import { findChildrenByType, setTextSelection } from 'prosemirror-utils';
 

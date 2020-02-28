@@ -58,15 +58,7 @@ export class ImageNodeView implements NodeView {
 
     const editOnDblClick = () => {
       selectOnClick();
-      imageDialog(
-        this.node,
-        this.node.type,
-        this.view.state,
-        this.view.dispatch,
-        this.view,
-        editorUI,
-        imageAttributes,
-      );
+      imageDialog(this.node, this.node.type, this.view.state, this.view.dispatch, this.view, editorUI, imageAttributes);
     };
 
     const noPropagateClick = (ev: MouseEvent) => {

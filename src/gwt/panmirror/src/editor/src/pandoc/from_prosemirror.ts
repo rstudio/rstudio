@@ -192,10 +192,10 @@ class PandocWriter implements PandocOutput {
           textRun = '';
         }
       };
-      for (let i=0; i<text.length; i++) {
+      for (let i = 0; i < text.length; i++) {
         const ch = text.charAt(i);
         if (this.options.writeSpaces && ch === ' ') {
-          flushTextRun()
+          flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch)) {
           flushTextRun();
@@ -206,7 +206,7 @@ class PandocWriter implements PandocOutput {
       }
       if (textRun) {
         this.writeToken(PandocTokenType.Str, textRun);
-      } 
+      }
     }
   }
 

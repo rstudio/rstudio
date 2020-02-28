@@ -95,7 +95,11 @@ export class PandocConverter {
     return doc;
   }
 
-  public async fromProsemirror(doc: ProsemirrorNode, pandocFormat: PandocFormat, options: PandocWriterOptions): Promise<string> {
+  public async fromProsemirror(
+    doc: ProsemirrorNode,
+    pandocFormat: PandocFormat,
+    options: PandocWriterOptions,
+  ): Promise<string> {
     if (!this.apiVersion) {
       throw new Error('API version not available (did you call toProsemirror first?)');
     }

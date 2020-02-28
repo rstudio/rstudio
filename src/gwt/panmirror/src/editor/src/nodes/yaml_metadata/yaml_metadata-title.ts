@@ -30,18 +30,17 @@ export function yamlMetadataTitlePlugin() {
       },
 
       apply(tr: Transaction, title: string, oldState: EditorState, newState: EditorState) {
-        
         const transactions = [tr];
 
         // doc didn't change, return existing title
         if (!tr.docChanged) {
           return title;
 
-        // non-typing change, do a full rescan
+          // non-typing change, do a full rescan
         } else if (!transactionsAreTypingChange(transactions)) {
           return titleFromState(newState);
-        
-        // change that affects a yaml metadata block, do a full rescan
+
+          // change that affects a yaml metadata block, do a full rescan
         } else if (transactionsHaveChange(transactions, oldState, newState, isYamlMetadataNode)) {
           return titleFromState(newState);
         }
@@ -50,7 +49,6 @@ export function yamlMetadataTitlePlugin() {
         else {
           return title;
         }
-  
       },
     },
   });

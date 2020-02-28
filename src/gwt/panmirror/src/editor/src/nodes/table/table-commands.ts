@@ -16,7 +16,16 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNodeOfType, setTextSelection, findChildrenByType } from 'prosemirror-utils';
-import { isInTable, Rect, TableMap, selectionCell, CellSelection, toggleHeader, addRow, addColumn } from 'prosemirror-tables';
+import {
+  isInTable,
+  Rect,
+  TableMap,
+  selectionCell,
+  CellSelection,
+  toggleHeader,
+  addRow,
+  addColumn,
+} from 'prosemirror-tables';
 
 import { InsertTableFn } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
@@ -126,10 +135,9 @@ export function deleteTableCaption() {
   };
 }
 
-
 export function addColumns(after: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    if (!isInTable(state)) { 
+    if (!isInTable(state)) {
       return false;
     }
     if (dispatch) {
@@ -145,10 +153,9 @@ export function addColumns(after: boolean) {
   };
 }
 
-
 export function addRows(after: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    if (!isInTable(state)) { 
+    if (!isInTable(state)) {
       return false;
     }
     if (dispatch) {
@@ -163,7 +170,6 @@ export function addRows(after: boolean) {
     return true;
   };
 }
-
 
 export class TableToggleHeaderCommand extends ProsemirrorCommand {
   constructor() {

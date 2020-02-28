@@ -47,7 +47,7 @@ const extension: Extension = {
           type: {},
         },
         inclusive: false,
-        excludes: "_",
+        excludes: '_',
         parseDOM: [
           {
             tag: "span[class*='math']",
@@ -201,6 +201,4 @@ export function delimiterForType(type: string) {
   }
 }
 
-export default extensionIfEnabled(extension, [
-  'tex_math_dollars'
-]);
+export default extensionIfEnabled(extension, ['tex_math_dollars']);

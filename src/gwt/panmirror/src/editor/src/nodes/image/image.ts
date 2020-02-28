@@ -81,9 +81,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     ],
 
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [
-        new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr)),
-      ];
+      return [new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr))];
     },
 
     plugins: (schema: Schema, ui: EditorUI) => {

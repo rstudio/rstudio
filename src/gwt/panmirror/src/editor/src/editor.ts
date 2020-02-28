@@ -221,7 +221,7 @@ export class Editor {
     });
 
     // additional dom attributes for editor node
-    const attributes : { [name: string]: string; } = {};
+    const attributes: { [name: string]: string } = {};
     if (options.className) {
       attributes.class = options.className;
     }
@@ -230,8 +230,8 @@ export class Editor {
     this.view = new EditorView(this.parent, {
       state: this.state,
       dispatchTransaction: this.dispatchTransaction.bind(this),
-      domParser: new EditorDOMParser(this.schema), 
-      attributes
+      domParser: new EditorDOMParser(this.schema),
+      attributes,
     });
 
     // add proportinal font class to parent
