@@ -143,6 +143,21 @@ export function writePandocTableNodes(output: PandocOutput, node: ProsemirrorNod
   });
 }
 
+export function writePandocTableHeaderNodes(output: PandocOutput, node: ProsemirrorNode) {
+
+  output.writeArray(() => {
+    if (node.textContent.length > 0) {
+      output.writeNodes(node);
+    } else {
+      // write a paragraph containing a space (this is an attempt to fix an issue where 
+      // empty headers don't get correct round-tripping)
+      output.writeToken(PandocTokenType.Para, () => {
+        output.writeToken(PandocTokenType.Space);
+      });
+    }
+  });
+}
+
 function columnCssAlignments(tableToken: PandocToken) {
   return tableToken.c[TABLE_COL_ALIGNMENTS].map((alignment: any) => {
     switch (alignment.t) {

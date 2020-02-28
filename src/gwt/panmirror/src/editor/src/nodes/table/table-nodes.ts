@@ -24,6 +24,7 @@ import {
   writePandocTable,
   writePandocTableCaption,
   writePandocTableNodes,
+  writePandocTableHeaderNodes,
 } from './table-pandoc';
 import { tableColumnWidths } from './table-columns';
 
@@ -187,6 +188,6 @@ export const tableHeaderNode = {
   name: 'table_header',
   spec: nodes.table_header,
   pandoc: {
-    writer: writePandocTableNodes,
+    writer: writePandocTableHeaderNodes,
   },
 };
