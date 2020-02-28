@@ -93,7 +93,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    protected PanmirrorImageProps collectInput()
    {
       PanmirrorImageProps result = new PanmirrorImageProps();
-      result.src = url_.getText().trim();
+      result.src = url_.getTextBox().getValue().trim();
       result.title = title_.getValue().trim();
       result.alt = alt_.getValue().trim();
       PanmirrorAttrProps attr = editAttr_.getAttr();

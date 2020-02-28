@@ -105,8 +105,9 @@ export class ImageNodeView implements NodeView {
   }
 
   private updateImg(node: ProsemirrorNode) {
-    // update img attributes
-    this.img.alt = node.textContent;
+    // update img attributes (ensure we display an alt attribute so that we get
+    // default browser broken image treatment)
+    this.img.alt = node.textContent || node.attrs.src; 
     this.img.src = this.translateResourcePath(node.attrs.src);
     this.img.title = node.attrs.title;
 
