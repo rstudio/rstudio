@@ -221,7 +221,7 @@ export class Editor {
     });
 
     // additional dom attributes for editor node
-    let attributes : { [name: string]: string; } = {};
+    const attributes : { [name: string]: string; } = {};
     if (options.className) {
       attributes.class = options.className;
     }
