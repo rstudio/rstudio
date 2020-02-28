@@ -26,6 +26,7 @@ import { EditorOptions } from '../../api/options';
 import { linkCommand } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
 import { linkHeadingsPostprocessor, syncHeadingLinksAppendTransaction } from './link-headings';
+import { LinkPopupPlugin } from './link-popup';
 
 import './link-styles.css';
 
@@ -167,18 +168,18 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
       pandocExtensions.implicit_header_references ? [syncHeadingLinksAppendTransaction()] : [],
 
     plugins: (schema: Schema) => {
+      const plugins = [new LinkPopupPlugin()];
       if (autoLink) {
-        return [
+        plugins.push(
           new Plugin({
             key: new PluginKey('link'),
             props: {
               transformPasted: linkPasteHandler(schema),
             },
           }),
-        ];
-      } else {
-        return [];
-      }
+        );
+      } 
+      return plugins;
     },
   };
 };
