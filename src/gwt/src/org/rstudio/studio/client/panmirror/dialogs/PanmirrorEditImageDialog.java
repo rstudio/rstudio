@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -47,6 +48,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       
       
       imageTab.add(url_ = new PanmirrorImageChooser(FileSystemItem.createDir(resourceDir)));
+      if (!StringUtil.isNullOrEmpty(props.src))
+         url_.setText(props.src);
       title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
       alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
          
