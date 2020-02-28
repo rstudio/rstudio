@@ -5,8 +5,6 @@
 
 Doc is marked dirty on first load
 
-Consider moving impl to panmirror package 
-
 Improved treatment for relative image paths that don't resolve
 
 Images should support width/align for gfm (write raw_html)
@@ -15,6 +13,8 @@ Alternatively, we could send inline html through the schema dom parser to see if
 
 
 Sizing/alignment inline for images
+
+Clipboard / DragDrop support for images
 
 Surface attributes
 
