@@ -1,0 +1,139 @@
+/*
+ * EditorOutlineSidebar.module.scss
+ *
+ * Copyright (C) 2019-20 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+@import '@blueprintjs/core/lib/scss/variables.scss';
+
+@import 'workbench/Theme.scss';
+
+$verticalPadding: 20px;
+
+.outline {
+  position: absolute;
+  left: 0;
+  top: $verticalPadding;
+  bottom: $verticalPadding;
+  width: 0;
+  display: none;
+  box-shadow: $paneBoxShadow;
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+  background-color: white;
+}
+
+.outlineVisible {
+  width: $sidebarWidth;
+  display: flex;
+  flex-direction: column;
+}
+
+.outlineHeader {
+  display: inline-flex;
+  width: 100%;
+  color: $dark-gray4 !important;
+  padding: 20px 18px;
+  font-size: 16px;
+  border-bottom: $borderColor;
+  flex: 0 1 auto;
+}
+
+
+.outlineHeader {
+  :global(.bp3-icon) {
+    color: $gray1 !important;
+  }
+}
+
+.outlineHeaderText {
+  visibility: hidden;
+  margin-left: 12px;
+  margin-top: -2px;
+}
+
+.outlineCloseIcon {
+  visibility: hidden;
+  margin-left: auto;
+  cursor: pointer;
+  color: $gray4;
+}
+
+.outlineVisible .outlineHeaderText,
+.outlineVisible .outlineCloseIcon {
+  visibility: visible;
+}
+
+
+.outlineTreeContainer {
+  flex: 1 1 auto;
+  overflow-y: scroll;
+}
+
+.outlineTree {
+  padding: 10px 0;
+  color: $dark-gray4;
+}
+
+.outlineTree {
+  :global {
+    .bp3-tree-node-caret-none {
+      min-width: 10px !important;
+    }
+    .bp3-tree-node-content {
+      padding-right: 15px;
+    }
+    .bp3-tree-node-content-0 {
+      font-weight: 500 !important;
+      padding-left: 8px;
+    }
+    .bp3-tree-node-content-1 {
+      padding-left: 20px;
+    }
+    .bp3-tree-node-content-2 {
+      padding-left: 30px;
+    }
+    .bp3-tree-node-content-3 {
+      padding-left: 40px;
+    }
+    .bp3-tree-node-content-4 {
+      padding-left: 50px;
+    }
+    .bp3-tree-node-content-5 {
+      padding-left: 60px;
+    }
+  }
+}
+
+.outlineEmpty {
+  padding: 18px 18px;
+  color: $gray1;
+}
+
+
+.showOutlineButton {
+  position: absolute;
+  left: 0;
+  top: $verticalPadding + 8px;
+  color: $gray1 !important;
+  background-color: white !important;
+  box-shadow: $paneBoxShadow !important;
+  border-bottom-right-radius: 30px !important;
+  border-top-right-radius: 30px !important;
+  padding: 10px 25px !important;
+}
+
+.showOutlineButton {
+  :global(.bp3-icon) {
+    color: $gray1  !important;
+  }
+}

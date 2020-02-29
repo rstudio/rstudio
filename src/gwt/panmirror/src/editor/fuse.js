@@ -31,7 +31,7 @@ context(
     getConfig(outputDir, webIndex = false, vendorSrcMap = false) {
       return FuseBox.init({
         homeDir: "src",
-        modulesFolder: "./node_modules",
+        modulesFolder: "../../node_modules",
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
@@ -69,7 +69,7 @@ const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir)
   // copy prosemirror-devtools
   const devtools = 'prosemirror-dev-tools.min.js';
   fs.copyFileSync(
-    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
+    path.join('../../node_modules/prosemirror-dev-tools/dist/umd', devtools),
     path.join(outputDir, devtools)
   );
 

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.Rproj.user": true
+		},
+	   "editor.tabSize": 2,
+      "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "git.ignoreLimitWarning": true
+	}
+}
