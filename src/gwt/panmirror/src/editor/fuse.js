@@ -18,11 +18,9 @@ const { FuseBox, CSSPlugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box"
 
 const path = require('path');
 const fs = require('fs');
-const devserver = require('./dev/server.js')
 
 const kLibraryName = "Panmirror"
 const kLibraryNameLower = kLibraryName.toLowerCase()
-const kOutputDir = "./dist"
 const kIdeJsDir = "../../../www/js"
 const kIdeOutputDir = path.join(kIdeJsDir, kLibraryNameLower);
 
@@ -31,7 +29,7 @@ context(
     getConfig(outputDir, webIndex = false, vendorSrcMap = false) {
       return FuseBox.init({
         homeDir: "src",
-        modulesFolder: "../../node_modules",
+        modulesFolder: "./node_modules",
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
@@ -58,7 +56,7 @@ const watch = (fuse, hmrReload) => {
     .watch()
 }
 
-const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir) => {
+const dev = (context, webIndex, watchChanges, hmrReload, outputDir) => {
   
   // setup fuse for development
   const fuse = context.getConfig(outputDir, webIndex, true);
@@ -69,37 +67,19 @@ const dev = (context, webIndex, watchChanges, hmrReload, outputDir = kOutputDir)
   // copy prosemirror-devtools
   const devtools = 'prosemirror-dev-tools.min.js';
   fs.copyFileSync(
-    path.join('../../node_modules/prosemirror-dev-tools/dist/umd', devtools),
+    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
     path.join(outputDir, devtools)
   );
 
   return fuse;
 }
 
-const dist = (context, outputDir = kOutputDir) => {
+const dist = (context, outputDir) => {
   context.isProduction = true;
   const fuse = context.getConfig(outputDir);
   bundle(fuse);
   return fuse;
 }
-
-task("dev", async context => {
-  const fuse = dev(context, true, true, false);
-  fuse.dev( { root: false }, server => {
-    const app = server.httpServer.app;
-    devserver.initialize(app)
-    const dist = path.resolve(kOutputDir);
-    app.get("*", function(req, res) {
-      res.sendFile(path.join(dist, req.path));
-    });
-  })
-  await fuse.run()
-});
-
-task("dist", async context => {
-  await dist(context).run();
-});
-
 
 task("ide-dev", async context => {
   await dev(context, false, false, false, kIdeOutputDir).run()
@@ -111,10 +91,8 @@ task("ide-dev-watch", async context => {
   await fuse.run();
 })
 
-
 task("ide-dist",async context => {
   await dist(context, kIdeOutputDir).run();
 });
-
 
 
