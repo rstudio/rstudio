@@ -68,15 +68,21 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             // we need to compute whether the popup will be visible (horizontally), and 
             // if not then give it a 'right' position
             const positionRight = (linkCoords.left + kMaxPopupWidth) > editingBox.right;
-            let popupDecoration: Decoration;
+            let popup: HTMLElement;
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
               const linkRightPos = editingBox.right - linkRightCoords.right;
-              popupDecoration = Decoration.widget(range.to, linkPopup(attrs, { right: linkRightPos + "px"}));
+              popup = linkPopup(attrs, { right: linkRightPos + "px"});
             } else {
-              popupDecoration = Decoration.widget(range.from, linkPopup(attrs));
+              popup = linkPopup(attrs);
             }
-            return DecorationSet.create(tr.doc, [popupDecoration]);
+
+            // notify front-end that it should popuplate the popup
+            
+
+            // return decorations
+            return DecorationSet.create(tr.doc, [Decoration.widget(range.from, popup)]);
+           
           } else {
             return DecorationSet.empty;
           }
