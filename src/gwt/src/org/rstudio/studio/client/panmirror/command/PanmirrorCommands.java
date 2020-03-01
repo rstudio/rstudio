@@ -76,6 +76,7 @@ public class PanmirrorCommands
 
    // insert
    public static String Link = "842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9";
+   public static String RemoveLink = "072D2084-218D-4A34-AF1F-7E196AF684B2";
    public static String Image = "808220A3-2B83-4CB6-BCC1-46565D54FA47";
    public static String Footnote = "1D1A73C0-F0E1-4A0F-BEBC-08398DE14A4D";
    public static String ParagraphInsert = "4E68830A-3E68-450A-B3F3-2591F4EB6B9A";

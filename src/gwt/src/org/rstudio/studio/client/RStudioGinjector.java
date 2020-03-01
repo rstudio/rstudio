@@ -65,6 +65,7 @@ import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.panmirror.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
@@ -296,6 +297,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
+   void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

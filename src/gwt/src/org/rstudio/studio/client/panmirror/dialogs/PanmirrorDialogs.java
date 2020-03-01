@@ -34,6 +34,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 
+import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -201,6 +202,15 @@ public class PanmirrorDialogs {
                resolve.onInvoke(result);
             });
             dialog.showModal(false);
+         }
+      );
+   }
+   
+   public Promise<String> popupLink(Element parent, String url)
+   {
+      return new Promise<String>(
+         (ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {  
+            resolve.onInvoke(PanmirrorPopupLink.kOpenResult);
          }
       );
    }

@@ -17,8 +17,10 @@ import { DecorationSet, Decoration, EditorView } from "prosemirror-view";
 import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 
 import { getMarkRange, getMarkAttrs } from "../../api/mark";
-import { LinkProps } from "../../api/ui";
+import { LinkProps, EditorUI, PopupLinkResult } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
+import { CommandFn } from "../../api/command";
+import { kRestoreLocationTransaction } from "../../api/transaction";
 
 // popup positioning based on:
 //   https://prosemirror.net/examples/lint/
@@ -32,7 +34,7 @@ const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
  
-  constructor() {
+  constructor(ui: EditorUI, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
 
     let editorView: EditorView;
 
@@ -48,6 +50,16 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
           
+          // if there is no link popup ui then just return empty
+          if (!ui.dialogs.popupLink) {
+            return DecorationSet.empty;
+          }
+
+          // if this a restore location then return empty
+          if (tr.getMeta(kRestoreLocationTransaction)) {
+            return DecorationSet.empty;
+          }
+
           // if the selection is contained within a link then show the popup
           const schema = tr.doc.type.schema;
           const selection = tr.selection;
@@ -72,13 +84,26 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
               const linkRightPos = editingBox.right - linkRightCoords.right;
-              popup = linkPopup(attrs, { right: linkRightPos + "px"});
+              popup = linkPopup({ right: linkRightPos + "px"});
             } else {
-              popup = linkPopup(attrs);
+              popup = linkPopup();
             }
 
-            // notify front-end that it should popuplate the popup
-            
+            const  showPopupAsync = async () => {
+              const result = await ui.dialogs.popupLink!(popup, attrs.href);
+              switch(result) {
+                case PopupLinkResult.Open:
+                  // ui.display.openURL(attrs.href);
+                  break;
+                case PopupLinkResult.Edit:
+
+                  break;
+                case PopupLinkResult.Remove:
+
+                  break;
+              }
+            };
+            showPopupAsync();
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(range.from, popup)]);
@@ -97,20 +122,18 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
   }
 }
 
-function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
+function linkPopup(style?: { [key: string]: string }) {
   const popup = window.document.createElement("div");
   popup.classList.add("pm-inline-text-popup");
   popup.style.position = "absolute";
   popup.style.display = "inline-block";
   popup.style.maxWidth = kMaxPopupWidth + "px";
   popup.style.backgroundColor = "pink";
-
   if (style) {
     Object.keys(style).forEach(name => {
       popup.style.setProperty(name, style[name]);
     });
   }
-  popup.innerText = attrs.href;
   return popup;
 }
 

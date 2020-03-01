@@ -19,6 +19,7 @@ import { TableCapabilities } from './table';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
+  display: EditorDisplay;
   context: EditorUIContext;
 }
 
@@ -34,14 +35,19 @@ export interface EditorDialogs {
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
   insertCitation: InsertCitationFn;
+  popupLink?: PopupLinkFn;
 }
 
 export interface EditorUIContext {
-  // get the current resource directory
+  // get the current resource directory (e.g. where relative links point to)
   getResourceDir: () => string;
 
   // provide a URL that can be used to fetch the given resource path
   translateResourcePath: (path: string) => string;
+}
+
+export interface EditorDisplay {
+  openURL: (url: string) => void;
 }
 
 export enum AlertType {
@@ -79,6 +85,8 @@ export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertT
 
 export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
 
+export type PopupLinkFn = (el: HTMLElement, href: string) => Promise<PopupLinkResult | null>;
+
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -100,6 +108,12 @@ export interface LinkProps extends AttrProps {
 export interface LinkEditResult {
   readonly action: 'edit' | 'remove';
   readonly link: LinkProps;
+}
+
+export enum PopupLinkResult {
+  Open = "open",
+  Remove = "remove",
+  Edit = "edit",
 }
 
 export enum ImageType {

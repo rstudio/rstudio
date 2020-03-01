@@ -47,7 +47,7 @@ import {
   pandocFormatCommentFromState,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
-import { appendTransactionsPlugin, appendMarkTransactionsPlugin } from './api/transaction';
+import { appendTransactionsPlugin, appendMarkTransactionsPlugin, kLayoutFixupTransaction, kAddToHistoryTransaction } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 
@@ -75,7 +75,7 @@ import './styles/frame.css';
 import './styles/styles.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
-const kLayoutFixups = 'layoutFixups';
+
 
 export interface EditorContext {
   readonly pandoc: PandocEngine;
@@ -477,7 +477,7 @@ export class Editor {
     // notify listeners of updates
     if (tr.docChanged) {
       // fire updated (unless this was a layout fixup)
-      if (!tr.getMeta(kLayoutFixups)) {
+      if (!tr.getMeta(kLayoutFixupTransaction)) {
         this.emitEvent(EditorEvents.Update);
       }
 
@@ -667,8 +667,8 @@ export class Editor {
     let tr = this.state.tr;
     tr = this.extensionLayoutFixups(tr);
     if (tr.docChanged) {
-      tr.setMeta('addToHistory', false);
-      tr.setMeta(kLayoutFixups, true);
+      tr.setMeta(kAddToHistoryTransaction, false);
+      tr.setMeta(kLayoutFixupTransaction, true);
       this.view.dispatch(tr);
     }
   }

@@ -2,6 +2,7 @@ import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { bodyElement } from './dom';
+import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 
 export interface EditingLocation {
   pos: number;
@@ -23,7 +24,9 @@ export function restoreEditingLocation(view: EditorView, location: EditingLocati
 
   // restore selection
   const tr = view.state.tr;
-  setTextSelection(location.pos)(tr).setMeta('addToHistory', false);
+  setTextSelection(location.pos)(tr)
+    .setMeta(kRestoreLocationTransaction, true)
+    .setMeta(kAddToHistoryTransaction, false);
   view.dispatch(tr);
 
   // scroll to selection

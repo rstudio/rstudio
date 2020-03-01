@@ -19,6 +19,7 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
 import { mergedTextNodes } from '../api/text';
 import { editingRootNode } from '../api/node';
+import { kAddToHistoryTransaction } from '../api/transaction';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -233,7 +234,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   private updateResults(state: EditorState, dispatch: (tr: Transaction<any>) => void) {
     this.withResultUpdates(() => {
       const tr = state.tr;
-      tr.setMeta('addToHistory', false);
+      tr.setMeta(kAddToHistoryTransaction, false);
       dispatch(tr);
     });
   }

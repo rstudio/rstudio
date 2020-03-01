@@ -18,7 +18,7 @@ import { LinkEditorFn, LinkProps } from '../../api/ui';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { markIsActive, getMarkAttrs, getSelectionMarkRange } from '../../api/mark';
+import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
 
 import { linkTargets, LinkCapabilities, LinkType } from '../../api/link';
 
@@ -96,3 +96,23 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
     return true;
   };
 }
+
+export function removeLinkCommand(markType: MarkType) {
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    
+    const range = getMarkRange(state.selection.$head, markType);
+    if (!range) {
+      return false;
+    }
+
+    if (dispatch) {
+      const tr = state.tr;
+      tr.removeMark(range.from, range.to, markType);
+      dispatch(tr);
+    }
+
+    return true;
+  };
+}
+
+

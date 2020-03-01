@@ -29,5 +29,6 @@ public class PanmirrorUI
    }
    
    public PanmirrorDialogs dialogs = new PanmirrorDialogs();
+   public PanmirrorUIDisplay display = new PanmirrorUIDisplay();
    public PanmirrorUIContext context;
 }
