@@ -33,7 +33,7 @@ context(
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
-        sourceMaps: { inline: true , project: true, vendor: vendorSrcMap },
+        sourceMaps: { inline: true , project: true, vendor: vendorSrcMap && !this.isProduction },
         plugins: [
           CSSPlugin(),
           webIndex && WebIndexPlugin({ template: "dev/index.html" }),
