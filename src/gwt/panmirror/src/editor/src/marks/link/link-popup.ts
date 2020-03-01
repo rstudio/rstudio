@@ -13,30 +13,35 @@
  *
  */
 
-import { DecorationSet, Decoration } from "prosemirror-view";
+import { DecorationSet, Decoration, EditorView } from "prosemirror-view";
 import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 
 import { getMarkRange, getMarkAttrs } from "../../api/mark";
 import { LinkProps } from "../../api/ui";
+import { editingRootNode } from "../../api/node";
 
-// https://prosemirror.net/examples/tooltip/. see:
-// https://glitch.com/edit/#!/lackadaisical-coffee-streetcar
+// popup positioning based on:
+//   https://prosemirror.net/examples/lint/
+//   https://glitch.com/edit/#!/octagonal-brazen-utahraptor
+// take advantage of the fact that absolutely positioned elements are positioned where 
+// they sit in the document if explicit top/bottom/left/right/etc. properties aren't set.
 
-// /https://prosemirror.net/examples/lint/ (just use from right before the link then
-// use css to push it down and outside of the doc flow). take advantage of the fact
-// that absolutely positioned elements are positioned where they sit in the document
-// if explicit top/bottom/left/right/etc. properties aren't set. See:
-// https://glitch.com/edit/#!/octagonal-brazen-utahraptor?path=index.html:1:0
-// just do this and give it a margin-top!
-
+const kMaxPopupWidth = 400;
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
  
   constructor() {
+
+    let editorView: EditorView;
+
     super({
       key,
+      view(view: EditorView) {
+        editorView = view;
+        return {};
+      },
       state: {
         init: (_config: { [key: string]: any }, instance: EditorState) => {
           return DecorationSet.empty;
@@ -48,14 +53,30 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const selection = tr.selection;
           const range = getMarkRange(selection.$head, schema.marks.link);
           if (range) {
+
+            // get link attributes
             const attrs = getMarkAttrs(tr.doc, tr.selection, schema.marks.link) as LinkProps;
+           
+            // get the (window) DOM coordinates for the start of the mark
+            const linkCoords = editorView.coordsAtPos(range.from);
 
-            // TODO: needs to use range.to if the link is on the right side of the screen
-            
-            // TODO: alternatively we could use an implementation more like the tooltip
-            // (plugin that has access to the view)
+            // get the (window) DOM coordinates for the current editing root note (body or notes)
+            const editingNode = editingRootNode(selection);
+            const editingEl = editorView.domAtPos(editingNode!.pos + 1).node as HTMLElement;
+            const editingBox = editingEl.getBoundingClientRect();
 
-            return DecorationSet.create(tr.doc, [Decoration.widget(range.from, linkPopup(attrs))]);
+            // we need to compute whether the popup will be visible (horizontally), and 
+            // if not then give it a 'right' position
+            const positionRight = (linkCoords.left + kMaxPopupWidth) > editingBox.right;
+            let popupDecoration: Decoration;
+            if (positionRight) {
+              const linkRightCoords = editorView.coordsAtPos(range.to);
+              const linkRightPos = editingBox.right - linkRightCoords.right;
+              popupDecoration = Decoration.widget(range.to, linkPopup(attrs, { right: linkRightPos + "px"}));
+            } else {
+              popupDecoration = Decoration.widget(range.from, linkPopup(attrs));
+            }
+            return DecorationSet.create(tr.doc, [popupDecoration]);
           } else {
             return DecorationSet.empty;
           }
@@ -70,12 +91,19 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
   }
 }
 
-function linkPopup(attrs: LinkProps) {
+function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
   const popup = window.document.createElement("div");
+  popup.classList.add("pm-inline-text-popup");
   popup.style.position = "absolute";
-  popup.style.marginTop = "1.2em";
-  popup.style.backgroundColor = "pink";
   popup.style.display = "inline-block";
+  popup.style.maxWidth = kMaxPopupWidth + "px";
+  popup.style.backgroundColor = "pink";
+
+  if (style) {
+    Object.keys(style).forEach(name => {
+      popup.style.setProperty(name, style[name]);
+    });
+  }
   popup.innerText = attrs.href;
   return popup;
 }
