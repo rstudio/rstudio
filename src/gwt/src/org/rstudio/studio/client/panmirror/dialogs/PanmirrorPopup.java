@@ -18,7 +18,9 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 
+
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class PanmirrorPopup extends SimplePanel
@@ -26,6 +28,10 @@ public class PanmirrorPopup extends SimplePanel
    public PanmirrorPopup(Element parent)
    {
       super(parent);
+      this.onAttach();
+      RootPanel.detachOnWindowClose(this);
+      
+      // TODO: Call RootPanel.detachNow when we know the element no longer exists
       
       addStyleName(RES.styles().popup());
       addStyleName("pm-background-color");
