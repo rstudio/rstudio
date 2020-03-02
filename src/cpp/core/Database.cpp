@@ -17,6 +17,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <shared_core/Error.hpp>
@@ -265,7 +266,9 @@ Error Connection::executeStr(const std::string& queryStr)
       // in one invocation - to work around this, we split any passed in SQL
       // into one invocation per SQL statement (delimited by ;)
       std::vector<std::string> queries;
-      boost::split(queries, queryStr, boost::is_any_of(";"));
+      boost::regex regex(";[ \\t\\r\\f\\v]*\\n");
+      std::string queryStrCopy = queryStr;
+      boost::regex_split(std::back_inserter(queries), queryStrCopy, regex);
       for (std::string& query : queries)
       {
          query = string_utils::trimWhitespace(query);
@@ -450,7 +453,7 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
    {
       // no schema version present - add the table to the database so it is available
       // for updating whenever migrations occur
-      error = connection_->executeStr(std::string("CREATE TABLE ") + SCHEMA_TABLE + "(current_version text)");
+      error = connection_->executeStr(std::string("CREATE TABLE ") + SCHEMA_TABLE + "(CurrentVersion text)");
       if (error)
          return error;
 
@@ -464,7 +467,7 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
       return Success();
    }
 
-   Query query = connection_->query(std::string("SELECT current_version FROM ") + SCHEMA_TABLE)
+   Query query = connection_->query(std::string("SELECT CurrentVersion FROM ") + SCHEMA_TABLE)
          .withOutput(currentSchemaVersion);
 
    error = connection_->execute(query);
@@ -589,7 +592,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
       // record the new version in the version table
       std::string version = migrationFile.getStem();
-      Query updateVersionQuery = connection_->query(std::string("UPDATE ") + SCHEMA_TABLE + " SET current_version = (:ver)")
+      Query updateVersionQuery = connection_->query(std::string("UPDATE ") + SCHEMA_TABLE + " SET CurrentVersion = (:ver)")
             .withInput(version);
       error = connection_->execute(updateVersionQuery);
       if (error)

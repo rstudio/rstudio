@@ -433,6 +433,38 @@ TEST_CASE("Database", "[.database]")
             .withInput(creationTime, "time");
       CHECK(postgresConnection->execute(postgresInsertQuery2));
    }
+
+   test_that("Can execute str with multiple queries")
+   {
+      boost::shared_ptr<IConnection> connection;
+      REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
+
+      std::string queryStr =
+            "CREATE TABLE TestTable_3("
+            "A text, B text\n);            \n"
+            "INSERT INTO TestTable_3 VALUES (\"Hello\", \"World;      \");\n"
+            "INSERT INTO TestTable_3 VALUES (\"Hello2\", \";;;\");";
+
+      REQUIRE_FALSE(connection->executeStr(queryStr));
+
+      Query selectQuery = connection->query("select * from TestTable_3 order by A asc");
+
+      Rowset rowset;
+      REQUIRE_FALSE(connection->execute(selectQuery, rowset));
+      int i = 0;
+      std::string vals[2][2];
+      vals[0][0] = "Hello";
+      vals[0][1] = "World;      ";
+      vals[1][0] = "Hello2";
+      vals[1][1] = ";;;";
+      for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
+      {
+         Row& row = *it;
+         REQUIRE(row.get<std::string>(0) == vals[i][0]);
+         REQUIRE(row.get<std::string>(1) == vals[i][1]);
+         ++i;
+      }
+   }
 }
 
 } // namespace unit_tests
