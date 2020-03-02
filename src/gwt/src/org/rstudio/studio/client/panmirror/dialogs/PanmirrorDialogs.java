@@ -210,7 +210,9 @@ public class PanmirrorDialogs {
    {
       return new Promise<String>(
          (ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {  
-            resolve.onInvoke(PanmirrorPopupLink.kOpenResult);
+            
+            new PanmirrorPopupLink(parent, url);
+            // resolve.onInvoke(PanmirrorPopupLink.kOpenResult);
          }
       );
    }
