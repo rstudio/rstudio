@@ -128,7 +128,6 @@ function linkPopup(style?: { [key: string]: string }) {
   popup.style.position = "absolute";
   popup.style.display = "inline-block";
   popup.style.maxWidth = kMaxPopupWidth + "px";
-  popup.style.backgroundColor = "pink";
   if (style) {
     Object.keys(style).forEach(name => {
       popup.style.setProperty(name, style[name]);
