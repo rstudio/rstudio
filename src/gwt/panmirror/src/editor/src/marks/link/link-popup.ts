@@ -17,7 +17,7 @@ import { DecorationSet, Decoration, EditorView } from "prosemirror-view";
 import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 
 import { getMarkRange, getMarkAttrs } from "../../api/mark";
-import { LinkProps, EditorUI, PopupLinkResult } from "../../api/ui";
+import { LinkProps, EditorUI } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
