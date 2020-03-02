@@ -1,4 +1,6 @@
-@external gwt-Label, gwt-TextBox;
+@external gwt-Label, gwt-TextBox, rstudio-themes-dark, rstudio-ImageButton;
+
+@eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
 
 .dialog {
@@ -50,6 +52,31 @@
 
 .hrefSelect {
    width: 98%;
+}
+
+.popup {
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+   border-radius: 4px;
+   border: solid 1px #a3a8b2;
+   padding: 10px;
+   padding-bottom: 4px;
+}
+
+.rstudio-themes-dark .popup {
+   border: solid 1px THEME_DARKGREY_MENU_BORDER;
+}
+
+.popup .rstudio-ImageButton img {
+   width: 20px;
+   height: 20px;
+   padding: 0 5px;
+}
+
+.linkLabel {
+   margin-right: 12px;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 

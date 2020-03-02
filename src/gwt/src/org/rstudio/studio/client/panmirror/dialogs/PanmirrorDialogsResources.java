@@ -19,6 +19,7 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 public interface PanmirrorDialogsResources extends ClientBundle
 {
@@ -33,10 +34,18 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String imageDialogTabs();
       String linkDialogTabs();
       String hrefSelect();
+      String popup();
+      String linkLabel();
    }
 
    @Source("PanmirrorDialogsStyles.css")
    Styles styles();
+   
+   @Source("break_link_2x.png")
+   ImageResource break_link();
+   
+   @Source("edit_link_2x.png")
+   ImageResource edit_link();
    
    public static PanmirrorDialogsResources INSTANCE = (PanmirrorDialogsResources)GWT.create(PanmirrorDialogsResources.class) ;
    

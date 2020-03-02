@@ -28,8 +28,6 @@ import { kRestoreLocationTransaction } from "../../api/transaction";
 // take advantage of the fact that absolutely positioned elements are positioned where 
 // they sit in the document if explicit top/bottom/left/right/etc. properties aren't set.
 
-const kMaxPopupWidth = 400;
-
 const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
@@ -77,8 +75,9 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const editingEl = editorView.domAtPos(editingNode!.pos + 1).node as HTMLElement;
             const editingBox = editingEl.getBoundingClientRect();
 
-            // we need to compute whether the popup will be visible (horizontally), and 
-            // if not then give it a 'right' position
+            // we need to compute whether the popup will be visible (horizontally), do
+            // this by testing whether this room for 400px
+            const kMaxPopupWidth = 400;
             const positionRight = (linkCoords.left + kMaxPopupWidth) > editingBox.right;
             let popup: HTMLElement;
             if (positionRight) {
@@ -90,16 +89,13 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             }
 
             const  showPopupAsync = async () => {
-              const result = await ui.dialogs.popupLink!(popup, attrs.href);
+              const result = await ui.dialogs.popupLink!(popup, attrs.href, kMaxPopupWidth);
               switch(result) {
-                case PopupLinkResult.Open:
-                  // ui.display.openURL(attrs.href);
-                  break;
                 case PopupLinkResult.Edit:
-
+                  linkCmd(editorView.state, editorView.dispatch, editorView);
                   break;
                 case PopupLinkResult.Remove:
-
+                  removeLinkCmd(editorView.state, editorView.dispatch, editorView);
                   break;
               }
             };
@@ -127,7 +123,6 @@ function linkPopup(style?: { [key: string]: string }) {
   popup.classList.add("pm-inline-text-popup");
   popup.style.position = "absolute";
   popup.style.display = "inline-block";
-  popup.style.maxWidth = kMaxPopupWidth + "px";
   if (style) {
     Object.keys(style).forEach(name => {
       popup.style.setProperty(name, style[name]);

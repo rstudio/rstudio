@@ -85,7 +85,7 @@ export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertT
 
 export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
 
-export type PopupLinkFn = (el: HTMLElement, href: string) => Promise<PopupLinkResult | null>;
+export type PopupLinkFn = (el: HTMLElement, href: string, maxWidth: number) => Promise<PopupLinkResult | null>;
 
 export interface AttrProps {
   readonly id?: string;
@@ -111,7 +111,6 @@ export interface LinkEditResult {
 }
 
 export enum PopupLinkResult {
-  Open = "open",
   Remove = "remove",
   Edit = "edit",
 }

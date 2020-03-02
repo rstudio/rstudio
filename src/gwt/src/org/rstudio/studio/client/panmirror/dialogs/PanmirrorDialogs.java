@@ -206,13 +206,13 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<String> popupLink(Element parent, String url)
+   public Promise<String> popupLink(Element parent, String url, int maxWidth)
    {
       return new Promise<String>(
          (ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {  
-            
-            new PanmirrorPopupLink(parent, url);
-            // resolve.onInvoke(PanmirrorPopupLink.kOpenResult);
+            new PanmirrorPopupLink(parent, url, maxWidth, (String result) -> {
+               resolve.onInvoke(result);
+            });
          }
       );
    }
