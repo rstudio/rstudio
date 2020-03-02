@@ -140,8 +140,8 @@ class Parser {
         handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
           // give the block readers first crack (e.g. handle a paragraph node with
           // a single image as a figure node)
-          for (let i = 0; i < blockReaders.length; i++) {
-            if (blockReaders[i](this.schema, tok, writer)) {
+          for (const blockReader of blockReaders) {
+            if (blockReader(this.schema, tok, writer)) {
               return;
             }
           }
@@ -180,8 +180,7 @@ class Parser {
           let nodeType = this.schema.nodes.code_block;
 
           // allow code block filters (e.g. yaml passthrough, rmd chunks) to have a shot
-          for (let i = 0; i < codeBlockFilters.length; i++) {
-            const filter = codeBlockFilters[i];
+          for (const filter of codeBlockFilters) {
             if ((attr as PandocAttr).classes.includes(filter.class)) {
               attr = filter.getAttrs(tok);
               nodeType = filter.nodeType(this.schema);
