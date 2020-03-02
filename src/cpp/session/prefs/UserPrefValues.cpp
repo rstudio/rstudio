@@ -2234,6 +2234,19 @@ core::Error UserPrefValues::setTypingStatusDelayMs(int val)
 }
 
 /**
+ * Whether to tell screen readers that the entire page is an application.
+ */
+bool UserPrefValues::ariaApplicationRole()
+{
+   return readPref<bool>("aria_application_role");
+}
+
+core::Error UserPrefValues::setAriaApplicationRole(bool val)
+{
+   return writePref("aria_application_role", val);
+}
+
+/**
  * Reduce use of animations in the user interface.
  */
 bool UserPrefValues::reducedMotion()
@@ -2549,6 +2562,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDataViewerMaxColumns,
       kEnableScreenReader,
       kTypingStatusDelayMs,
+      kAriaApplicationRole,
       kReducedMotion,
       kTabKeyMoveFocus,
       kAutoSaveOnIdle,

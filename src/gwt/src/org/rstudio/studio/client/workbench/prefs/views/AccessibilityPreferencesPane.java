@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.Map;
@@ -55,6 +56,10 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
       generalPanel.add(chkScreenReaderEnabled_);
 
+      initialAriaApplicationRole_ = prefs.ariaApplicationRole().getValue();
+      generalPanel.add(chkApplicationRole_ = checkboxPref(
+            "Entire page has application role (requires restart)", prefs.ariaApplicationRole())); 
+
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
             1, 9999, prefs.typingStatusDelayMs());
       generalPanel.add(indent(typingStatusDelay_));
@@ -67,6 +72,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
       chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
       generalPanel.add(chkTabMovesFocus_);
+
+      HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
+      nudgeRight(helpLink);
+      helpLink.addStyleName(res_.styles().newSection());
+      generalPanel.add(helpLink);
 
       Label announcementsLabel = headerLabel("Enable / Disable Announcements");
       announcements_ = new CheckBoxList(announcementsLabel);
@@ -124,6 +134,13 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             restartRequirement.setDesktopRestartRequired(true);
          else
             restartRequirement.setUiReloadRequired(true);
+      }
+
+      boolean applicationRoleSetting = chkApplicationRole_.getValue();
+      if (applicationRoleSetting != initialAriaApplicationRole_)
+      {
+         initialAriaApplicationRole_ = applicationRoleSetting;
+         restartRequirement.setUiReloadRequired(true);
       }
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
@@ -192,11 +209,13 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
    private final NumericValueWidget maxOutput_;
+   private final CheckBox chkApplicationRole_;
    private final CheckBox chkTabMovesFocus_;
    private final CheckBoxList announcements_;
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
+   private boolean initialAriaApplicationRole_;
 
    private final PreferencesDialogResources res_;
    private final AriaLiveService ariaLive_;

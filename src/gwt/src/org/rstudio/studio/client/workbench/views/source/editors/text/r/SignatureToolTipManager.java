@@ -391,6 +391,9 @@ public class SignatureToolTipManager
    
    public void resolveActiveFunctionAndDisplayToolTip()
    {
+      if (!userPrefs_.showFunctionSignatureTooltips().getGlobalValue())
+         return;
+      
       if (docDisplay_.isPopupVisible())
          return;
       
