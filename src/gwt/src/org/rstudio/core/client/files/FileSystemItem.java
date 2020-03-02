@@ -381,7 +381,9 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "shtml", "text/html" );
       MIME_TYPES.put( "tsv",   "text/tab-separated-values" );
       MIME_TYPES.put( "tab",   "text/tab-separated-values" );
+      MIME_TYPES.put( "cl",    "text/plain");
       MIME_TYPES.put( "dcf",   "text/debian-control-file" );
+      MIME_TYPES.put( "i",     "text/plain");
       MIME_TYPES.put( "ini",   "text/plain" );
       MIME_TYPES.put( "txt",   "text/plain" );
       MIME_TYPES.put( "mml",   "text/mathml" );
@@ -400,11 +402,13 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "rout",  "text/plain");
       MIME_TYPES.put( "po",    "text/plain");
       MIME_TYPES.put( "pot",   "text/plain");
+      MIME_TYPES.put( "ps1",   "text/plain");
       MIME_TYPES.put( "rst",   "text/plain");
       MIME_TYPES.put( "gitignore",   "text/plain");
       MIME_TYPES.put( "rbuildignore","text/plain");
       MIME_TYPES.put( "rprofile", "text/x-r-source");
       MIME_TYPES.put( "rprofvis", "text/x-r-profile");
+      MIME_TYPES.put( "vcxproj", "text/xml");
 
       MIME_TYPES.put( "tif",   "image/tiff" );
       MIME_TYPES.put( "tiff",  "image/tiff" );
