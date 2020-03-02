@@ -1,6 +1,6 @@
 # some laziness to ensure we move to the 'install-crashpad' folder
 if (file.exists("rstudio.Rproj"))
-   setwd("dependencies/windows/install-crashpad")
+   setwd("dependencies/windows/install-soci")
 
 source("../tools.R")
 section("The working directory is: '%s'", getwd())
@@ -43,7 +43,7 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
    unzip(outputFile, exdir = extractDir)
 }
 
-if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\"))) {
+if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\", mustWork = FALSE))) {
    # download and install sqlite source
    dir.create(sqlite_dir)
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
