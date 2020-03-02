@@ -14,18 +14,23 @@
  */
 
 .ProseMirror table {
-  margin: 0;
+  width: auto;
 }
 
-.ProseMirror th, .ProseMirror td {
+.ProseMirror .table-container table {
+  margin: 0;
+  width: 100%;
+}
+
+.ProseMirror .table-container th, .ProseMirror .table-container td {
   min-width: 1em;
 }
 
-.ProseMirror .tableWrapper {
+.ProseMirror .table-container .tableWrapper {
   margin: 1em 0;
 }
 
-.ProseMirror .table-caption-inactive {
+.ProseMirror .table-container .table-caption-inactive {
   display: none;
 }
 
