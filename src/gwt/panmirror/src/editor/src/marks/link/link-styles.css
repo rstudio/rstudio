@@ -17,3 +17,10 @@
 .ProseMirror a:hover {
   cursor: text;
 }
+
+.ProseMirror .pm-link-popup a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}

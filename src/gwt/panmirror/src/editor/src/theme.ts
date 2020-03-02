@@ -164,6 +164,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
     }
+    .pm-popup {
+      box-shadow: 0 2px 10px ${theme.paneBorderColor} !important;
+    }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
       outline-color: ${theme.selectionColor} !important;

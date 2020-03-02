@@ -36,6 +36,39 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
     let editorView: EditorView;
 
+    function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
+      const popup = window.document.createElement("div");
+      popup.classList.add(
+        "pm-popup",
+        "pm-popup-inline-text",
+        "pm-link-popup",
+        "pm-pane-border-color",
+        "pm-background-color",
+        "pm-text-color"
+      );
+      popup.style.position = "absolute";
+      popup.style.display = "inline-block";
+      if (style) {
+        Object.keys(style).forEach(name => {
+          popup.style.setProperty(name, style[name]);
+        });
+      }
+      const link = window.document.createElement("a");
+      link.classList.add(
+        "pm-link",
+        "pm-link-text-color"
+      );
+      link.href = attrs.href;
+      link.innerText = attrs.href;
+      link.onclick = () => {
+        ui.display.openURL(attrs.href);
+        return false;
+      };
+      popup.append(link);
+      
+      return popup;
+    }
+
     super({
       key,
       view(view: EditorView) {
@@ -83,11 +116,12 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
               const linkRightPos = editingBox.right - linkRightCoords.right;
-              popup = linkPopup({ right: linkRightPos + "px"});
+              popup = linkPopup(attrs, { right: linkRightPos + "px"});
             } else {
-              popup = linkPopup();
+              popup = linkPopup(attrs);
             }
 
+            /*
             const  showPopupAsync = async () => {
               const result = await ui.dialogs.popupLink!(popup, attrs.href, kMaxPopupWidth);
               switch(result) {
@@ -100,6 +134,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
               }
             };
             showPopupAsync();
+            
+            */
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(range.from, popup)]);
@@ -118,16 +154,5 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
   }
 }
 
-function linkPopup(style?: { [key: string]: string }) {
-  const popup = window.document.createElement("div");
-  popup.classList.add("pm-inline-text-popup");
-  popup.style.position = "absolute";
-  popup.style.display = "inline-block";
-  if (style) {
-    Object.keys(style).forEach(name => {
-      popup.style.setProperty(name, style[name]);
-    });
-  }
-  return popup;
-}
+
 
