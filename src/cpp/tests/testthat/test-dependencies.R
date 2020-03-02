@@ -31,14 +31,13 @@ test_that("simple topological sort works", {
 
 test_that("simple expansion and sorting is done correctly", {
    # simulation of available.packages for a simple set of packages, foo -> bar -> baz
-   available <- data.frame(
-         Package   = c("foo",                      "bar", "baz"),
-         Version   = c("1.0",                      "1.1", "2.0"),
-         Depends   = c("R (>= 3.2), bar (>= 1.1)",  NA,    NA),
-         Imports   = c(NA,                          "baz", NA),
-         LinkingTo = c(NA,                          NA,    NA),
-         stringsAsFactors = FALSE)
-   rownames(available) <- available[[1]]
+   available <- rbind(
+         # Pkg    # Ver  # Depends                  # Imports   # LinkingTo
+         c("foo", "1.0", "R (>= 3.2), bar (>= 1.1)", NA,        NA),
+         c("bar", "1.1", NA,                         "baz",     NA),
+         c("baz", "2.0", NA,                         NA,        NA))
+   colnames(available) <- c("Package", "Version", "Depends", "Imports", "LinkingTo") 
+   rownames(available) <- available[,1]
 
    # simulation of the dependencies we want to install; just one package
    dependencies <- list(list(
@@ -64,14 +63,13 @@ test_that("simple expansion and sorting is done correctly", {
 test_that("dependencies already installed are not installed again", {
 
    # simulation of available.packages for a simple set of packages, foo -> bar -> baz
-   available <- data.frame(
-         Package   = c("foo",                      "bar", "baz"),
-         Version   = c("1.0",                      "1.1", "2.0"),
-         Depends   = c("R (>= 3.2), bar (>= 1.1)",  NA,    NA),
-         Imports   = c(NA,                          "baz", NA),
-         LinkingTo = c(NA,                          NA,    NA),
-         stringsAsFactors = FALSE)
-   rownames(available) <- available[[1]]
+   available <- rbind(
+         # Pkg    # Ver  # Depends                  # Imports   # LinkingTo
+         c("foo", "1.0", "R (>= 3.2), bar (>= 1.1)", NA,        NA),
+         c("bar", "1.1", NA,                         "baz",     NA),
+         c("baz", "2.0", NA,                         NA,        NA))
+   colnames(available) <- c("Package", "Version", "Depends", "Imports", "LinkingTo") 
+   rownames(available) <- available[,1]
 
    # simulation of installed.packages
    installed <- data.frame(
