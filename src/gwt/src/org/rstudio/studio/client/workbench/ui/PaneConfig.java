@@ -28,12 +28,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
                                           JsArrayString tabSet2,
+                                          JsArrayString tabSet3,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop) /*-{
       return { 
          quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
+         tabSet3: tabSet3,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop 
       };
@@ -63,7 +65,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push("Help");
       tabSet2.push("Viewer");
 
-      return create(panes, tabSet1, tabSet2, false, true);
+      JsArrayString tabSet3 = createArray().cast();
+      return create(panes, tabSet1, tabSet2, tabSet3, false, true);
    }
 
    public static String[] getAllPanes()
@@ -208,20 +211,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             return false; // unknown tab
       }
 
-      // If any baseTabs are still present, they weren't part of the tabsets
-      if (baseTabs.size() > 0)
-         return false;
-
-      // Were any addable tabs missing? Add them the appropriate tabset
-      // (Iterate over original array instead of addableTabs set so that order
-      // is well-defined)
-      for (String tab : getAddableTabs())
-         if (addableTabs.contains(tab))
-            if (tab == "Viewer")
-               ts2.push(tab);
-            else
-               ts1.push(tab);
-
       // These tabs can be hidden sometimes; they can't stand alone in a tabset
       Set<String> hideableTabs = makeSet(getHideableTabs());
       if (isSubset(hideableTabs, JsUtil.asIterable(ts1))
@@ -254,6 +243,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return create(copy(getQuadrants()),
                     copy(getTabSet1()),
                     copy(getTabSet2()),
+                    copy(getTabSet3()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop());
    }

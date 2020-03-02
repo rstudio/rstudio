@@ -144,7 +144,7 @@
                     "description": "Allocation of panes to quadrants.",
                     "items": {
                         "type": "string",
-                        "enum": ["Source", "Console", "TabSet1", "TabSet2"]
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "TabSet3"]
                     }
                 },
                 "tabSet1": {
@@ -157,6 +157,13 @@
                 "tabSet2": {
                     "type": "array",
                     "description": "The panes included in the second tabset.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tabSet3": {
+                    "type": "array",
+                    "description": "The panes included in the third tabset.",
                     "items": {
                         "type": "string"
                     }

@@ -260,8 +260,10 @@ public class WorkbenchScreen extends Composite
 
       // build console width
       WorkbenchTabPanel buildPane = paneManager_.getOwnerTabPanel(Tab.Build);
-      int buildConsoleWidth = DomUtils.getCharacterWidth(buildPane.getElement(), 
-            ConsoleResources.INSTANCE.consoleStyles().console());
+      int buildConsoleWidth =
+         buildPane == null ?  0 :
+            DomUtils.getCharacterWidth(buildPane.getElement(),
+               ConsoleResources.INSTANCE.consoleStyles().console());
 
       // if the build console is hidden then just use its last value. if there
       // has never been a valid value then then lastMetrics_ build console width
@@ -271,7 +273,8 @@ public class WorkbenchScreen extends Composite
       
       // plots size (don't allow negative metrics)
       WorkbenchTabPanel plotPanel = paneManager_.getOwnerTabPanel(Tab.Plots);
-      Size deckPanelSize = new Size(
+      Size deckPanelSize = plotPanel == null ? new Size(0, 0) :
+         new Size(
             plotPanel.getOffsetWidth(),
             plotPanel.getOffsetHeight() - ModuleTabLayoutPanel.BAR_HEIGHT);
 

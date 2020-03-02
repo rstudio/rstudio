@@ -543,6 +543,7 @@ public class PaneManager
             panes, 
             paneConfig.getTabSet1(), 
             paneConfig.getTabSet2(),
+            paneConfig.getTabSet3(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop()).cast());
          userPrefs_.writeUserPrefs();
