@@ -30,14 +30,19 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class PanmirrorPopupLink extends PanmirrorPopup
 {
    public PanmirrorPopupLink(Element parent, String url, int maxWidth, CommandWithArg<String> result)
    {
-      // hookup containing panel to provided parent
+      // hookup gwt widget to existing html element
       super(parent);
+      this.onAttach();
+      RootPanel.detachOnWindowClose(this);
+      
+      
       HorizontalPanel panel = new HorizontalPanel();
       setWidget(panel);
      
@@ -46,13 +51,20 @@ public class PanmirrorPopupLink extends PanmirrorPopup
       
       // link label
       HyperlinkLabel urlLabel = new HyperlinkLabel(url);
+      urlLabel.addClickHandler((event) -> {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(url);
+      });
+      
+      /*
       urlLabel.addStyleName(RES.styles().linkLabel());
       urlLabel.getElement().getStyle().setProperty("maxWidth", maxWidth + "px");
       setClickHandler(urlLabel, () -> {
          RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(url);
       });
+      */
       panel.add(urlLabel);
       
+      /*
       // edit link button
       ImageButton editButton = createResultButton("Edit link attributes", RES.edit_link(), () -> {
          result.execute(kEditResult);
@@ -64,6 +76,7 @@ public class PanmirrorPopupLink extends PanmirrorPopup
          result.execute(kRemoveResult);
       });
       panel.add(removeButton);  
+      */
    }
    
    
