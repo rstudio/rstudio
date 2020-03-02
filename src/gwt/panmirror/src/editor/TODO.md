@@ -3,6 +3,8 @@
 
 ## TODO
 
+Enforce/validate minimum pandoc version (requires list_extensions)
+
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
 Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
