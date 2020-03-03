@@ -151,3 +151,44 @@ test_that("dependencies are replaced when too old", {
 })
 
 
+test_that("dependencies are installed only once", {
+   # simulation of available.packages; toast for breakfast and lunch
+   available <- rbind(
+         # Pkg          # Ver  # Depends                    # Imports   # LinkingTo
+         c("breakfast", "1.0", "toast",                     NA,         NA),
+         c("lunch",     "1.1", "breakfast, toast (>= 1.0)", NA,         NA),
+         c("toast",     "2.0", NA,                          NA,         NA))
+   colnames(available) <- c("Package", "Version", "Depends", "Imports", "LinkingTo") 
+   rownames(available) <- available[,1]
+
+   # simulation of the dependencies we want to install -- breakfast and lunch
+   dependencies <- list(list(
+         name     = "breakfast",
+         location = "cran",
+         version  = "1.0",
+         source   = FALSE),
+      list(
+         name     = "lunch",
+         location = "cran",
+         version  = "1.1",
+         source   = FALSE))
+
+   result <- .rs.expandDependencies(available, data.frame(), dependencies)
+
+   # this will require us to install breakfast, lunch, and toast -- but only once each!
+   expect_equal(!!result, list(
+         list(name     = "toast",
+              location = "cran",
+              version  = "2.0",
+              source   = FALSE),
+         list(name     = "breakfast",
+              location = "cran",
+              version  = "1.0",
+              source   = FALSE),
+         list(name     = "lunch",
+              location = "cran",
+              version  = "1.1",
+              source   = FALSE)))
+})
+
+
