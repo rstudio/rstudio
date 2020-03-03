@@ -233,7 +233,8 @@ public:
    // updates the database schema to the highest version
    Error update();
 
-   // updates the database schema to the specified version
+   // updates the database schema to the specified version if it is contained
+   // within the migration schemas, or no higher than that version if it is not present
    Error updateToVersion(const std::string& maxVersion);
 
    // returns whether or not the schema is up-to-date with the latest schema version
