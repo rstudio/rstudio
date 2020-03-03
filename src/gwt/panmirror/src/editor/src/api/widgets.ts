@@ -16,6 +16,17 @@
 
 import './widgets.css';
  
+export function createHorizontalPanel() {
+  const div = window.document.createElement('div');
+  div.classList.add('pm-horizontal-panel');
+  return div;
+}
+
+export function addHorizontalPanelCell(panel: HTMLDivElement, el: HTMLElement) {
+  el.classList.add('pm-horizontal-panel-cell');
+  panel.append(el);
+}
+
 export function createPopup(classes: string[], style?: { [key: string]: string }) {
   const popup = window.document.createElement("div");
   popup.classList.add(
@@ -33,10 +44,8 @@ export function createPopup(classes: string[], style?: { [key: string]: string }
 export function createInlineTextPopup(classes: string[], style?: { [key: string]: string }) {
   const popup = createPopup([ ...classes, "pm-popup-inline-text"], style);
   popup.style.display = "inline-block";
-  popup.style.verticalAlign = "middle";
   return popup;
 }
-
 
 export function createLink(href: string, maxWidth?: number, style?: { [key: string]: string }) {
   const link = window.document.createElement("a");
@@ -47,7 +56,6 @@ export function createLink(href: string, maxWidth?: number, style?: { [key: stri
   link.href = href;
   link.innerText = href;
   if (maxWidth) {
-    link.style.display = 'inline-block';
     link.style.maxWidth = maxWidth + 'px';
   }
   applyStyle(link, style);

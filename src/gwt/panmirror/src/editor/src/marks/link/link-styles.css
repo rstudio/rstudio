@@ -24,7 +24,6 @@
   text-overflow: ellipsis;
   cursor: pointer;
   margin-right: 4px;
-  padding-top: 2px;
 }
 
 
@@ -33,5 +32,4 @@
   width: 20px;
   height: 20px;
   margin-left: 10px;
-  display: inline-block;
 }

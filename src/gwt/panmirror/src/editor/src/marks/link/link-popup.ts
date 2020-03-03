@@ -21,7 +21,7 @@ import { LinkProps, EditorUI } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
-import { createInlineTextPopup, createLink, createImageButton } from "../../api/widgets";
+import { createInlineTextPopup, createLink, createImageButton, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
 
 const kMaxLinkWidth = 400;
 
@@ -40,20 +40,23 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       // the previous line)
       const popup = createInlineTextPopup(["pm-popup-link"], { 'margin-left': '-1ch', ...style } );
 
+      const panel = createHorizontalPanel();
+      popup.append(panel);
+
       // create link
       const link = createLink(attrs.href, kMaxLinkWidth);
       link.onclick = () => {
         ui.display.openURL(attrs.href);
         return false;
       };
-      popup.append(link);
+      addHorizontalPanelCell(panel, link);
 
       // create image butttons
       const editLink = createImageButton(["pm-image-button-edit-link"]);
       editLink.onclick = () => {
         linkCmd(editorView.state, editorView.dispatch, editorView);
       };
-      popup.append(editLink);
+      addHorizontalPanelCell(panel, editLink);
 
       const removeLink = createImageButton(["pm-image-button-remove-link"]);
       removeLink.onclick = () => {
@@ -65,7 +68,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         }, 0);
         
       };
-      popup.append(removeLink);
+      addHorizontalPanelCell(panel, removeLink);
 
       return popup;
     }

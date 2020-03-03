@@ -20,3 +20,12 @@
   border: none;
 }
 
+
+.pm-horizontal-panel {
+  display: table;
+}
+
+.pm-horizontal-panel-cell {
+  display: table-cell;
+  vertical-align: middle;
+}
