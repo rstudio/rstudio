@@ -1690,6 +1690,14 @@ public class UserPrefsAccessor extends Prefs
       return object("file_monitor_ignored_components", JsArrayUtil.createStringArray());
    }
 
+   /**
+    * Whether to install R package dependencies one at a time.
+    */
+   public PrefValue<Boolean> installPkgDepsIndividually()
+   {
+      return bool("install_pkg_deps_individually", true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2054,6 +2062,8 @@ public class UserPrefsAccessor extends Prefs
          screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
       if (source.hasKey("file_monitor_ignored_components"))
          fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
+      if (source.hasKey("install_pkg_deps_individually"))
+         installPkgDepsIndividually().setValue(layer, source.getBool("install_pkg_deps_individually"));
    }
    
 
