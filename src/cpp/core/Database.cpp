@@ -453,11 +453,11 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
    {
       // no schema version present - add the table to the database so it is available
       // for updating whenever migrations occur
-      error = connection_->executeStr(std::string("CREATE TABLE ") + SCHEMA_TABLE + "(CurrentVersion text)");
+      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (CurrentVersion text)");
       if (error)
          return error;
 
-      Query query = connection_->query(std::string("INSERT INTO ") + SCHEMA_TABLE + " VALUES (:val)")
+      Query query = connection_->query(std::string("INSERT INTO \"") + SCHEMA_TABLE + "\" VALUES (:val)")
             .withInput(currentSchemaVersion);
       error = connection_->execute(query);
       if (error)
@@ -467,7 +467,7 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
       return Success();
    }
 
-   Query query = connection_->query(std::string("SELECT CurrentVersion FROM ") + SCHEMA_TABLE)
+   Query query = connection_->query(std::string("SELECT CurrentVersion FROM \"") + SCHEMA_TABLE + "\"")
          .withOutput(currentSchemaVersion);
 
    error = connection_->execute(query);
@@ -525,7 +525,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
    // during this schema update
    if (connection_->driverName() == POSTGRESQL_DRIVER)
    {
-      Query query = connection_->query(std::string("LOCK ") + SCHEMA_TABLE + " IN ACCESS EXCLUSIVE MODE");
+      Query query = connection_->query(std::string("LOCK \"") + SCHEMA_TABLE + "\" IN ACCESS EXCLUSIVE MODE");
       Error error = connection_->execute(query);
       if (error)
          return error;
@@ -596,7 +596,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
       // record the new version in the version table
       std::string version = migrationFile.getStem();
-      Query updateVersionQuery = connection_->query(std::string("UPDATE ") + SCHEMA_TABLE + " SET CurrentVersion = (:ver)")
+      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET CurrentVersion = (:ver)")
             .withInput(version);
       error = connection_->execute(updateVersionQuery);
       if (error)
