@@ -111,3 +111,43 @@ test_that("dependencies already installed are not installed again", {
               source   = FALSE)))
 })
 
+test_that("dependencies are replaced when too old", {
+   # simulation of available.packages for a simple set of packages, foo -> bar -> baz
+   available <- rbind(
+         # Pkg    # Ver  # Depends                  # Imports   # LinkingTo
+         c("foo", "1.0", "R (>= 3.2), bar (>= 1.1)", NA,        NA),
+         c("bar", "1.1", NA,                         "baz",     NA),
+         c("baz", "2.0", NA,                         NA,        NA))
+   colnames(available) <- c("Package", "Version", "Depends", "Imports", "LinkingTo") 
+   rownames(available) <- available[,1]
+
+   # simulation of installed.packages; bar is installed but is an older version
+   installed <- rbind(
+         # Pkg    # Ver  # Depends                  # Imports   # LinkingTo
+         c("bar", "1.0", NA,                         "baz",     NA))
+   colnames(installed) <- c("Package", "Version", "Depends", "Imports", "LinkingTo") 
+   rownames(installed) <- installed[,1]
+
+   # simulation of the dependencies we want to install; just one package
+   dependencies <- list(list(
+         name     = "foo",
+         location = "cran",
+         version  = "1.0",
+         source   = FALSE))
+
+   result <- .rs.expandDependencies(available, installed, dependencies)
+
+   # even though the 'bar' package is installed, it needs to be reinstalled since we need 1.1 and
+   # have 1.0 installed
+   expect_equal(!!result, list(
+         list(name     = "bar",
+              location = "cran",
+              version  = "1.1",
+              source   = FALSE),
+         list(name     = "foo",
+              location = "cran",
+              version  = "1.0",
+              source   = FALSE)))
+})
+
+

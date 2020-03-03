@@ -113,12 +113,49 @@
             if (!(pkgName %in% rownames(available)))
                 next
 
-            # Append to node list if we don't know about it already...
+            # Append to node list if we don't know about it already
             if (!pkgName %in% nodes) {
                nodes <- c(nodes, pkgName)
 
-               # ... and it isn't already installed.
-               if (!(pkgName %in% rownames(installed)))
+
+               # Figure out whether there is a version of the package installed which meets the
+               # given constraints.
+               satisfied <- if (pkgName %in% rownames(installed))
+               {
+                  if (length(match >= 4) && nchar(match[[4]]) > 0)
+                  {
+                     # We found a requirement for a specific version. See if that requirement is
+                     # met.
+                     installedVer <- as.package_version(installed[pkgName, "Version"])
+                     requiredVer <- as.package_version(match[[4]])
+                     if (identical(match[[3]], ">"))
+                     {
+                        # Satisfied if the installed version is strictly greater than the actual
+                        # version.
+                        installedVer > requiredVer
+                     }
+                     else
+                     {
+                        # If we aren't sure, treat it as a simple minimum version (this is by far
+                        # the most common pattern, represented by `>=` in the Depends field and
+                        # others)
+                        installedVer >= requiredVer
+                     }
+                  }
+                  else
+                  {
+                     # No version information was given, so the installed version is okay.
+                     TRUE
+                  }
+               }
+               else
+               {
+                  # The package is not installed, and therefore not satisfied.
+                  FALSE
+               }
+               
+               # The dependency is not satisfied; we will need to install it
+               if (!satisfied)
                {
                   packages <- append(packages, list(list(
                         name = pkgName,
