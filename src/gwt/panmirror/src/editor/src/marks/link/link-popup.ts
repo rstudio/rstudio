@@ -21,12 +21,9 @@ import { LinkProps, EditorUI } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
+import { createInlineTextPopup, createLink, createImageButton } from "../../api/widgets";
 
-// popup positioning based on:
-//   https://prosemirror.net/examples/lint/
-//   https://glitch.com/edit/#!/octagonal-brazen-utahraptor
-// take advantage of the fact that absolutely positioned elements are positioned where 
-// they sit in the document if explicit top/bottom/left/right/etc. properties aren't set.
+const kMaxLinkWidth = 400;
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
@@ -37,35 +34,33 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
     let editorView: EditorView;
 
     function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
-      const popup = window.document.createElement("div");
-      popup.classList.add(
-        "pm-popup",
-        "pm-popup-inline-text",
-        "pm-link-popup",
-        "pm-pane-border-color",
-        "pm-background-color",
-        "pm-text-color"
-      );
-      popup.style.position = "absolute";
-      popup.style.display = "inline-block";
-      if (style) {
-        Object.keys(style).forEach(name => {
-          popup.style.setProperty(name, style[name]);
-        });
-      }
-      const link = window.document.createElement("a");
-      link.classList.add(
-        "pm-link",
-        "pm-link-text-color"
-      );
-      link.href = attrs.href;
-      link.innerText = attrs.href;
+      
+      // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
+      // (this is so that links that start a line don't have their ragne derived from
+      // the previous line)
+      const popup = createInlineTextPopup(["pm-popup-link"], { 'margin-left': '-1ch', ...style } );
+
+      // create link
+      const link = createLink(attrs.href, kMaxLinkWidth);
       link.onclick = () => {
         ui.display.openURL(attrs.href);
         return false;
       };
       popup.append(link);
-      
+
+      // create image butttons
+      const editLink = createImageButton(["pm-image-button-edit-link"]);
+      editLink.onclick = () => {
+        linkCmd(editorView.state, editorView.dispatch, editorView);
+      };
+      popup.append(editLink);
+
+      const removeLink = createImageButton(["pm-image-button-remove-link"]);
+      removeLink.onclick = () => {
+        removeLinkCmd(editorView.state, editorView.dispatch, editorView);
+      };
+      popup.append(removeLink);
+
       return popup;
     }
 
@@ -81,11 +76,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
           
-          // if there is no link popup ui then just return empty
-          if (!ui.dialogs.popupLink) {
-            return DecorationSet.empty;
-          }
-
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
@@ -98,10 +88,12 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           if (range) {
 
             // get link attributes
-            const attrs = getMarkAttrs(tr.doc, tr.selection, schema.marks.link) as LinkProps;
+            const attrs = getMarkAttrs(tr.doc, range, schema.marks.link) as LinkProps;
            
-            // get the (window) DOM coordinates for the start of the mark
-            const linkCoords = editorView.coordsAtPos(range.from);
+            // get the (window) DOM coordinates for the start of the mark. we use range.from + 1 so 
+            // that links that are at the beginning of a line don't have their position set
+            // to the previous line
+            const linkCoords = editorView.coordsAtPos(range.from + 1);
 
             // get the (window) DOM coordinates for the current editing root note (body or notes)
             const editingNode = editingRootNode(selection);
@@ -109,9 +101,9 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const editingBox = editingEl.getBoundingClientRect();
 
             // we need to compute whether the popup will be visible (horizontally), do
-            // this by testing whether this room for 400px
-            const kMaxPopupWidth = 400;
-            const positionRight = (linkCoords.left + kMaxPopupWidth) > editingBox.right;
+            // this by testing whether we have room for the max link width + controls/padding
+            const kPopupChromeWidth = 70;
+            const positionRight = (linkCoords.left + kMaxLinkWidth + kPopupChromeWidth) > editingBox.right;
             let popup: HTMLElement;
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
@@ -121,24 +113,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
               popup = linkPopup(attrs);
             }
 
-            /*
-            const  showPopupAsync = async () => {
-              const result = await ui.dialogs.popupLink!(popup, attrs.href, kMaxPopupWidth);
-              switch(result) {
-                case PopupLinkResult.Edit:
-                  linkCmd(editorView.state, editorView.dispatch, editorView);
-                  break;
-                case PopupLinkResult.Remove:
-                  removeLinkCmd(editorView.state, editorView.dispatch, editorView);
-                  break;
-              }
-            };
-            showPopupAsync();
-            
-            */
-
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(range.from, popup)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(range.from + 1, popup)]);
            
           } else {
             return DecorationSet.empty;

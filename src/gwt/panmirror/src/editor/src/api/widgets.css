@@ -1,5 +1,5 @@
 /*
- * link-styles.css
+ * widgets.css
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -14,24 +14,9 @@
  */
 
 
-.ProseMirror a:hover {
-  cursor: text;
+.pm-image-button {
+  background-color: transparent;
+  background-repeat: no-repeat; 
+  border: none;
 }
 
-.ProseMirror .pm-popup-link a {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-  margin-right: 4px;
-  padding-top: 2px;
-}
-
-
-
-.ProseMirror .pm-popup-link .pm-image-button {
-  width: 20px;
-  height: 20px;
-  margin-left: 10px;
-  display: inline-block;
-}

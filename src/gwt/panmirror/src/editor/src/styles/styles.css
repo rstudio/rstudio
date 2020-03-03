@@ -152,3 +152,12 @@
   margin-top: 1.5em;
 }
 
+.pm-image-button-edit-link {
+  background-image: url("./images/edit_link.png");
+}
+
+.pm-image-button-remove-link {
+  background-image: url("./images/break_link.png");
+}
+
+

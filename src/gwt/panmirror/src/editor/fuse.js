@@ -14,7 +14,7 @@
  */
 
 const { task, context } = require("fuse-box/sparky");
-const { FuseBox, CSSPlugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
+const { FuseBox, CSSPlugin, CSSResourcePlugin, SassPlugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
 
 const path = require('path');
 const fs = require('fs');
@@ -35,8 +35,8 @@ context(
         output: path.join(outputDir, "$name.js"),
         sourceMaps: { inline: true , project: true, vendor: vendorSrcMap && !this.isProduction },
         plugins: [
-          CSSPlugin(),
           webIndex && WebIndexPlugin({ template: "dev/index.html" }),
+          [ CSSResourcePlugin({ inline: true }), CSSPlugin() ],
           this.isProduction && QuantumPlugin({ uglify: { es6: true }, bakeApiIntoBundle: true, containedAPI: true }),
         ],
       });

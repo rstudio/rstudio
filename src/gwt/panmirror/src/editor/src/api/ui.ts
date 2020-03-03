@@ -35,7 +35,6 @@ export interface EditorDialogs {
   editRawBlock: RawFormatEditorFn;
   insertTable: InsertTableFn;
   insertCitation: InsertCitationFn;
-  popupLink?: PopupLinkFn;
 }
 
 export interface EditorUIContext {
@@ -85,8 +84,6 @@ export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertT
 
 export type InsertCitationFn = () => Promise<InsertCitationResult | null>;
 
-export type PopupLinkFn = (el: HTMLElement, href: string, maxWidth: number) => Promise<PopupLinkResult | null>;
-
 export interface AttrProps {
   readonly id?: string;
   readonly classes?: string[];
@@ -108,11 +105,6 @@ export interface LinkProps extends AttrProps {
 export interface LinkEditResult {
   readonly action: 'edit' | 'remove';
   readonly link: LinkProps;
-}
-
-export enum PopupLinkResult {
-  Remove = "remove",
-  Edit = "edit",
 }
 
 export enum ImageType {
