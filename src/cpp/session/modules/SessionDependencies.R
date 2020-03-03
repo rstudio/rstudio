@@ -62,7 +62,14 @@
 })
 
 .rs.addFunction("expandPkgDependencies", function(dependencies) {
-   .rs.expandDependencies(available.packages(), installed.packages(), dependencies)
+   available <- if (identical(R.version$os, "linux-gnu")) {
+      # Get the default set of available packages on Linux (usually source) 
+      available.packages()
+   } else {
+      # On other platforms (Mac and Windows), explicitly list both binary and source packages
+      available.packages(type = "both")
+   }
+   .rs.expandDependencies(available, installed.packages(), dependencies)
 })
 
 .rs.addFunction("expandDependencies", function(available, installed, dependencies) {
