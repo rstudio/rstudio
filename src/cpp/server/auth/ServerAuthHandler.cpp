@@ -194,7 +194,7 @@ Error writeRevokedCookiesToDatabase()
 }
 
 Error readRevocationListFromFile(const FilePath& revocationList,
-                             std::vector<std::string>* pEntries)
+                                 std::vector<std::string>* pEntries)
 {
    // read the current revocation list
    Error error = readStringVectorFromFile(revocationList, pEntries);
