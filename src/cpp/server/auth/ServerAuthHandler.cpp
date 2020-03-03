@@ -540,7 +540,7 @@ Error initialize()
 
          // read the current revocation list into memory
          std::vector<std::string> revokedCookies;
-         Error error = readRevocationListFromFile(revocationList, &revokedCookies);
+         error = readRevocationListFromFile(revocationList, &revokedCookies);
          if (error)
          {
             error.addProperty("description", "Could not read revocation list");
