@@ -1130,11 +1130,14 @@ bool addTinytexToPathIfNecessary()
    if (!module_context::findProgram("pdflatex").isEmpty())
       return false;
    
-   SEXP binDirSEXP;
+   SEXP binDirSEXP = R_NilValue;
    r::sexp::Protect protect;
    Error error = r::exec::RFunction(".rs.tinytexBin").call(&binDirSEXP, &protect);
    if (error)
+   {
       LOG_ERROR(error);
+      return false;
+   }
    
    if (!r::sexp::isString(binDirSEXP))
       return false;
