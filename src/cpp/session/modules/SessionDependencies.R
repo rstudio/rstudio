@@ -88,7 +88,7 @@
       for (field in fields) {
          # Read contents for field (ignore if no contents)
          contents <- available[dep$name, field]
-         if (!is.character(contents))
+         if (is.na(contents) || !is.character(contents))
             next
 
          # Split into a list of individual package names, using comma/whitespace as a delimiter
