@@ -68,6 +68,10 @@ public class PanmirrorThemeCreator
       theme.blockBorderColor = borderColor;
       theme.focusOutlineColor = borderColor;
       
+      theme.gutterBackgroundColor = DomUtils.extractCssValue("ace_gutter", "backgroundColor");
+      theme.gutterTextColor = DomUtils.extractCssValue("ace_gutter", "color");
+    
+      
       // pane border based on outline widget border (it's a single color for all themes)
       theme.paneBorderColor =  DomUtils.extractCssValue(DocumentOutlineWidget.RES.styles().leftSeparator(), "borderLeftColor");
       

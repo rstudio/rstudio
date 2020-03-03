@@ -21,6 +21,8 @@ export interface EditorTheme {
   chunkBackgroundColor: string;
   spanBackgroundColor: string;
   divBackgroundColor: string;
+  gutterBackgroundColor: string;
+  gutterTextColor: string;
   textColor: string;
   lightTextColor: string;
   linkTextColor: string;
@@ -66,6 +68,8 @@ export function defaultTheme(): EditorTheme {
     chunkBackgroundColor: 'rgb(251,251,251)',
     spanBackgroundColor: '#fff8dc',
     divBackgroundColor: 'rgb(236, 249, 250)',
+    gutterBackgroundColor: '#f0f0f0',
+    gutterTextColor: '#333',
     textColor: 'black',
     lightTextColor: 'rgb(60, 76, 114)',
     linkTextColor: ' #106ba3',
@@ -197,9 +201,10 @@ export function applyTheme(theme: EditorTheme) {
     .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }
     .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: ${theme.selectionColor}  ; }
     .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: ${theme.selectionColor}  ; }
-
     .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
+    .CodeMirror-gutters { background-color: ${theme.gutterBackgroundColor} !important; }
+    .CodeMirror-linenumber { color: ${theme.gutterTextColor} !important; }
     .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
     .cm-s-default .cm-atom {color: ${theme.code.atomColor};}
     .cm-s-default .cm-number {color: ${theme.code.numberColor};}
