@@ -57,7 +57,13 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
       const removeLink = createImageButton(["pm-image-button-remove-link"]);
       removeLink.onclick = () => {
-        removeLinkCmd(editorView.state, editorView.dispatch, editorView);
+        // in rstudio (w/ webkit) removing the link during the click results
+        // in a page-navigation! defer to next event cycle to avoid this
+        setTimeout(() => {
+          removeLinkCmd(editorView.state, editorView.dispatch, editorView);
+          editorView.focus();
+        }, 0);
+        
       };
       popup.append(removeLink);
 
