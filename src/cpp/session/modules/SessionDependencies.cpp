@@ -432,8 +432,15 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
       deps.push_back(Dependency(VECTOR_ELT(expanded, idx)));
    }
 
-   // Loop over each dependency and add it to the installation script
    std::string script;
+
+   if (isRenv)
+   {
+      // For renv, remember default setting for package type
+      script += "defaultPkgType <- getOption('pkgType')\n";
+   }
+
+   // Loop over each dependency and add it to the installation script
    for (size_t i = 0; i < deps.size(); i++)
    {
       const Dependency& dep = deps[i];
@@ -465,7 +472,7 @@ std::string buildIndividualInstallScript(const std::vector<Dependency>& dependen
             }
             else
             {
-               script += "options(pkgType = 'both'); ";
+               script += "options(pkgType = defaultPkgType); ";
             }
             
             // NOTE: renv will use the repositories as set in the lockfile here;
