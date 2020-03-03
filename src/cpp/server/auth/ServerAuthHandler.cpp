@@ -534,12 +534,10 @@ Error initialize()
          }
 
          lockAcquired = true;
-      }
 
-      // successfully acquired lock
-      // migrate the revocation list file to the database if it exists
-      if (revocationList.exists())
-      {
+         // successfully acquired lock
+         // migrate the revocation list file to the database if it exists
+
          // read the current revocation list into memory
          std::vector<std::string> revokedCookies;
          Error error = readRevocationListFromFile(revocationList, &revokedCookies);
