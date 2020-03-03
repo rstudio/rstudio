@@ -307,7 +307,7 @@ Query PooledConnection::query(const std::string& sqlStatement)
 }
 
 Error PooledConnection::execute(Query& query,
-                              Rowset& rowset)
+                                Rowset& rowset)
 {
    return connection_->execute(query, rowset);
 }
@@ -557,6 +557,10 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
       // then skip this particular migration
       if (migrationFile.getStem() <= currentVersion)
          continue;
+
+      // if the migration file version is higher than the max specified version, we're done
+      if (migrationFile.getStem() > maxVersion)
+         break;
 
       bool applyMigration = false;
 
