@@ -158,12 +158,15 @@ export interface PandocTokenReader {
   // pandoc token name (e.g. "Str", "Emph", etc.)
   readonly token: PandocTokenType;
 
+  // If present, gives a chance for the reader to decide whether it actually
+  // wants to handle the token, based on factors other than the PandocTokenType
+  readonly match?: (tok: PandocToken) => boolean;
+
   // one and only one of these values must also be set
   readonly text?: boolean;
   readonly node?: string;
   readonly block?: string;
   readonly mark?: string;
-
   readonly code_block?: boolean;
 
   // functions for getting attributes and children
@@ -172,7 +175,7 @@ export interface PandocTokenReader {
   getText?: (tok: PandocToken) => string;
 
   // lower-level handler function that overrides the above handler attributes
-  // (they are ignored when handler is speciried)
+  // (they are ignored when handler is specified)
   handler?: (schema: Schema) => (writer: ProsemirrorWriter, tok: PandocToken) => void;
 
   // post-processor for performing fixups that rely on seeing the entire

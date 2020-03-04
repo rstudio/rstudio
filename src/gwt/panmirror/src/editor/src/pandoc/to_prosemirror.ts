@@ -41,7 +41,7 @@ const CODE_BLOCK_TEXT = 1;
 
 class Parser {
   private readonly schema: Schema;
-  private readonly handlers: { [token: string]: ParserTokenHandler };
+  private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
 
   constructor(
     schema: Schema,
@@ -84,12 +84,17 @@ class Parser {
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
-    const handler = this.handlers[tok.t];
-    if (handler) {
-      handler(writer, tok);
-    } else {
-      throw new Error(`No handler for pandoc token ${tok.t}`);
+    for (const handler of this.handlers[tok.t] || []) {
+      // It's not enough for a pandoc reader's preferred token to match the
+      // current token; it's possible based on the `match` method for the
+      // reader to decline to handle it.
+      if (!handler.match || handler.match(tok)) {
+        handler.handler(writer, tok);
+        return;
+      }
     }
+
+    throw new Error(`No handler for pandoc token ${tok.t}`);
   }
 
   // create parser token handler functions based on the passed readers
@@ -98,7 +103,9 @@ class Parser {
     blockReaders: readonly PandocBlockReaderFn[],
     codeBlockFilters: readonly PandocCodeBlockFilter[],
   ) {
-    const handlers = Object.create(null);
+    
+    const handlers: { [token: string]: ParserTokenHandlerCandidate[] } = {};
+    
     for (const reader of readers) {
       // resolve children (provide default impl)
       const getChildren = reader.getChildren || ((tok: PandocToken) => tok.c);
@@ -106,14 +113,16 @@ class Parser {
       // resolve getAttrs (provide default imple)
       const getAttrs = reader.getAttrs ? reader.getAttrs : (tok: PandocToken) => ({});
 
+      let handler: ParserTokenHandler;
+
       // see if there is a low-level handler
       if (reader.handler) {
-        handlers[reader.token] = reader.handler(this.schema);
+        handler = reader.handler(this.schema);
       }
 
       // text
       else if (reader.text) {
-        handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
+        handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           if (reader.getText) {
             const text = reader.getText(tok);
             writer.writeText(text);
@@ -122,7 +131,7 @@ class Parser {
 
         // marks
       } else if (reader.mark) {
-        handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
+        handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           const markType = this.schema.marks[reader.mark as string];
           const mark = markType.create(getAttrs(tok));
           writer.openMark(mark);
@@ -137,7 +146,7 @@ class Parser {
         // blocks
       } else if (reader.block) {
         const nodeType = this.schema.nodes[reader.block];
-        handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
+        handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           // give the block readers first crack (e.g. handle a paragraph node with
           // a single image as a figure node)
           for (const blockReader of blockReaders) {
@@ -158,7 +167,7 @@ class Parser {
         // nodes
       } else if (reader.node) {
         const nodeType = this.schema.nodes[reader.node];
-        handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
+        handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           if (reader.getChildren) {
             writer.openNode(nodeType, getAttrs(tok));
             writer.writeTokens(getChildren(tok));
@@ -174,7 +183,7 @@ class Parser {
 
         // code blocks
       } else if (reader.code_block) {
-        handlers[reader.token] = (writer: ProsemirrorWriter, tok: PandocToken) => {
+        handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           // default attr and nodeType (before filters)
           let attr: {} = pandocAttrReadAST(tok, CODE_BLOCK_ATTR);
           let nodeType = this.schema.nodes.code_block;
@@ -199,7 +208,17 @@ class Parser {
           writer.writeText(text);
           writer.closeNode();
         };
+      } else {
+        throw new Error("pandoc reader was malformed or unrecognized");
       }
+
+      // Ensure an array exists
+      handlers[reader.token] = handlers[reader.token] || [];
+
+      handlers[reader.token].push({
+        match: reader.match,
+        handler
+      });
     }
     return handlers;
   }
@@ -301,3 +320,8 @@ interface ParserStackElement {
 }
 
 type ParserTokenHandler = (writer: ProsemirrorWriter, tok: PandocToken) => void;
+
+interface ParserTokenHandlerCandidate {
+  match?: (tok: PandocToken) => boolean;
+  handler: ParserTokenHandler;
+}
