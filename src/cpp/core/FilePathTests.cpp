@@ -90,6 +90,27 @@ TEST_CASE("file paths")
    }
 }
 
+TEST_CASE("Null char* construction")
+{
+   SECTION("Null char*")
+   {
+      char* nullPtr = NULL;
+
+      FilePath aPath(nullPtr);
+      CHECK(aPath.isEmpty());
+   }
+
+#ifdef _WIN32
+   SECTION("Null wchar_t*")
+   {
+      wchar_t* nullPtr = NULL;
+
+      FilePath aPath(nullPtr);
+      CHECK(aPath.isEmpty());
+   }
+#endif
+}
+
 } // end namespace tests
 } // end namespace core
 } // end namespace rstudio
