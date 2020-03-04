@@ -26,13 +26,13 @@ import {
 } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findChildren, setTextSelection, findParentNodeOfType, findParentNodeClosestToPos, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
+import { findChildren, setTextSelection, findParentNodeOfType, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode, findTopLevelBodyNodes } from './api/node';
+import { PandocNode } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';

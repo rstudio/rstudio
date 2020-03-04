@@ -3,11 +3,12 @@
 
 ## TODO
 
-Refactor raw_inline to taken advantage of token matching
+Discuss tokens / escaping / etc. with Joe
 
 preservation of cursor position for code <--> visual switching (use sentinel comment)
+    - Integrate w/ EditorPane
 
-Link handler should also handle internal links
+Link navigation handler should also handle internal links
 
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
