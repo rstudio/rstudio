@@ -67,7 +67,7 @@ private:
 } // end anonymous namespace
 
 WebProfile::WebProfile(const QUrl& baseUrl, QObject* parent)
-   : QWebEngineProfile(QString::fromUtf8("rstudio-desktop"), parent)
+   : QWebEngineProfile(parent)
 {
    sharedSecret_ = core::system::getenv("RS_SHARED_SECRET");
    setBaseUrl(baseUrl);
