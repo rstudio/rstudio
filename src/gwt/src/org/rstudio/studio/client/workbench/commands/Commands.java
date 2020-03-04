@@ -649,6 +649,7 @@ public abstract class
    public abstract AppCommand focusMainToolbar();
    public abstract AppCommand speakEditorLocation();
    public abstract AppCommand focusConsoleOutputEnd();
+   public abstract AppCommand showAccessibilityHelp();
 
    // Internal
    public abstract AppCommand showDomElements();
