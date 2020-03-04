@@ -312,7 +312,7 @@ export class Editor {
     return true;
   }
 
-  public async getMarkdown(options: PandocWriterOptions): Promise<string> {
+  public async getMarkdown(options: PandocWriterOptions, cursorSentinel?: string): Promise<string> {
     // get current format comment
     const formatComment = pandocFormatCommentFromState(this.state);
 
@@ -327,8 +327,17 @@ export class Editor {
     // apply layout fixups
     this.applyLayoutFixups();
 
+    // insert cursor sentinel if requested
+    let doc = this.state.doc;
+    if (cursorSentinel) {
+      const tr = this.state.tr;
+      setTextSelection(tr.selection.from, -1)(tr);
+      tr.insertText(cursorSentinel);
+      doc = tr.doc;
+    }
+   
     // do the conversion
-    return this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
+    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
   }
 
   public getHTML(): string {

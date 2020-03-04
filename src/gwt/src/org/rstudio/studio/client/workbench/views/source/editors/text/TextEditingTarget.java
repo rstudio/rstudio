@@ -2743,7 +2743,7 @@ public class TextEditingTarget implements
    private void fixupCodeBeforeSaving(Command ready)
    { 
       // sync edits from visual mode if it's active
-      visualMode_.syncToEditor(() -> {
+      visualMode_.syncToEditor(false, () -> {
          
          int lineCount = docDisplay_.getRowCount();
          if (lineCount < 1)

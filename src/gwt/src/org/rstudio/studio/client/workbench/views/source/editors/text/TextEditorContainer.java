@@ -28,10 +28,15 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class TextEditorContainer extends LayoutPanel implements CanFocus
 {  
+   
+   public static final String CursorReset = "5844AE0A-D58F-48B8-8DF7-89EB43DDF57D";
+   public static final String CursorPreserve = "FF7AEC83-264E-4830-BBBE-49B908AD9E39";
+   public static final String CursorSentinel = "13BF9618-295D-4F21-AAD6-6F5B57860B34";
+   
    public interface Editor extends IsHideableWidget
    {
       String getCode();
-      void setCode(String code, boolean prserveCursorPosition);
+      void setCode(String code, String cursorLocation);
    }
    
    public TextEditorContainer(Editor editor)

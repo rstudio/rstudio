@@ -78,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1630,7 +1631,12 @@ public class TextEditingTargetWidget
       @Override
       public void focus()
       {
-         editor_.focus();  
+         editor_.focus();
+         
+         Scheduler.get().scheduleDeferred(() -> {
+            editor_.scrollCursorIntoViewIfNecessary(3);
+         });
+       
       }
       
       @Override
@@ -1640,9 +1646,37 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(String code, boolean preserveCursorPosition)
+      public void setCode(String code, String cursorLocation)
       {
-         editor_.setCode(code, preserveCursorPosition);
+         // if the cursor location is a sentinel within the code string, then pull it out and note it's position
+         Position cursorPosition = null;
+         if (cursorLocation.equals(TextEditorContainer.CursorSentinel)) {
+            StringBuilder editorCode = new StringBuilder();
+            Iterable<String> lines = StringUtil.getLineIterator(code);
+            int currentLine = 0;
+            for (String line : lines) {
+               if (cursorPosition == null) {
+                  int sentinelLoc = line.indexOf(TextEditorContainer.CursorSentinel);
+                  if (sentinelLoc != -1) {
+                     line = line.substring(0, sentinelLoc) + 
+                            line.substring(sentinelLoc + TextEditorContainer.CursorSentinel.length());
+                     cursorPosition = Position.create(currentLine, sentinelLoc);
+                  }
+               }
+               editorCode.append(line);
+               editorCode.append('\n');
+               currentLine++;
+            }
+            code = editorCode.toString();         
+         }
+         
+         // set the code
+         editor_.setCode(code, !cursorLocation.equals(TextEditorContainer.CursorReset));
+         
+         // set cursor position if we need to
+         if (cursorPosition != null) {
+            editor_.setCursorPosition(cursorPosition);
+         }
       }
       
       @Override
