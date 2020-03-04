@@ -136,8 +136,7 @@ void removeStaleCookieFromDatabase(const RevokedCookie& cookie)
 {
    boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
    std::string expiration = date_time::format(cookie.expiration, date_time::kIso8601Format);
-   Query query = connection->query("DELETE FROM RevokedCookie WHERE Expiration = :exp AND CookieData = :dat")
-         .withInput(expiration)
+   Query query = connection->query("DELETE FROM RevokedCookie WHERE CookieData = :dat")
          .withInput(cookie.cookie);
 
    Error error = connection->execute(query);
