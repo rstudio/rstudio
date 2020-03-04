@@ -23,7 +23,7 @@ import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
 import { createInlineTextPopup, createLink, createImageButton, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
 
-const kMaxLinkWidth = 400;
+const kMaxLinkWidth = 300;
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
