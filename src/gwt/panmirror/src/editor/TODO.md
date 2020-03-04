@@ -5,9 +5,6 @@
 
 Discuss tokens / escaping / etc. with Joe
 
-preservation of cursor position for code <--> visual switching (use sentinel comment)
-    - Integrate w/ EditorPane
-
 Link navigation handler should also handle internal links
 
 Images should support width/align for gfm (write raw_html)
