@@ -319,15 +319,29 @@ FilePath::FilePath() :
 {
 }
 
+FilePath::FilePath(const char* in_absolutePath)
+{
+   if (nullptr == in_absolutePath)
+      m_impl.reset(new Impl());
+   else
+      m_impl.reset(new Impl(in_absolutePath));
+}
+
 FilePath::FilePath(const std::string& in_absolutePath) :
    m_impl(new Impl(fromString(std::string(in_absolutePath.c_str())))) // thwart ref-count
 {
 }
 
 #ifdef _WIN32
-FilePath::FilePath(const std::wstring& absolutePath)
-   : m_impl(new Impl(absolutePath)) // thwart ref-count
+FilePath::FilePath(const std::wstring& absolutePath) :
+   m_impl(new Impl(toString(std::wstring(absolutePath.c_str())))) // thwart ref-count
 {
+}
+
+FilePath::FilePath(const wchar_t* absolutePath)
+{
+   if (nullptr == absolutePath)
+      m_impl.reset(new FilePath())
 }
 #endif
 

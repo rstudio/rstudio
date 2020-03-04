@@ -82,10 +82,17 @@ public:
     *
     * @param in_absolutePath    The string representation of the path.
     */
+   explicit FilePath(const char* in_absolutePath);
+   /**
+    * @brief Constructor.
+    *
+    * @param in_absolutePath    The string representation of the path.
+    */
    explicit FilePath(const std::string& in_absolutePath);
 
 #if _WIN32
    explicit FilePath(const std::wstring& in_absolutePath);
+   explicit FilePath(const wchar_t* absolutePath);
 #endif
 
    /**
