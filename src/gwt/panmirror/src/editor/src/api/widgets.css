@@ -14,6 +14,10 @@
  */
 
 
+.pm-popup {
+  z-index: 1;
+}
+
 .pm-image-button {
   background-color: transparent;
   background-repeat: no-repeat; 
