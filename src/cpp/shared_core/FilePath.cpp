@@ -334,14 +334,16 @@ FilePath::FilePath(const std::string& in_absolutePath) :
 
 #ifdef _WIN32
 FilePath::FilePath(const std::wstring& absolutePath) :
-   m_impl(new Impl(toString(std::wstring(absolutePath.c_str())))) // thwart ref-count
+   m_impl(new Impl(absolutePath)) // thwart ref-count
 {
 }
 
 FilePath::FilePath(const wchar_t* absolutePath)
 {
    if (nullptr == absolutePath)
-      m_impl.reset(new FilePath())
+      m_impl.reset(new Impl());
+   else
+      m_impl.reset(new Impl(absolutePath));
 }
 #endif
 
