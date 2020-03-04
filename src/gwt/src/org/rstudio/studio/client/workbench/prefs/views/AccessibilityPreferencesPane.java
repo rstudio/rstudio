@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.Map;
@@ -71,6 +72,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
       chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
       generalPanel.add(chkTabMovesFocus_);
+
+      HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
+      nudgeRight(helpLink);
+      helpLink.addStyleName(res_.styles().newSection());
+      generalPanel.add(helpLink);
 
       Label announcementsLabel = headerLabel("Enable / Disable Announcements");
       announcements_ = new CheckBoxList(announcementsLabel);

@@ -190,8 +190,7 @@ public class TutorialPane
       commands_.tutorialStop().setVisible(false);
       commands_.tutorialStop().setEnabled(false);
       
-      String url = GWT.getHostPageBaseURL() +
-            "tutorial/run" +
+      String url = "./tutorial/run" +
             "?package=" + tutorial.getPackageName() +
             "&name=" + tutorial.getTutorialName();
       

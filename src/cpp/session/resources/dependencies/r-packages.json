@@ -196,9 +196,9 @@
             "source": false
         },
         "renv": {
-            "version": "0.0.0",
-            "location": "embedded",
-            "source": true
+            "version": "0.9.3",
+            "location": "cran",
+            "source": false
         },
         "reticulate": {
             "version": "1.10",

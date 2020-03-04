@@ -306,6 +306,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html"));
    }
 
+   void onShowAccessibilityHelp()
+   {
+      globalDisplay_.openRStudioLink("rstudio_a11y", false);
+   }
+
    void onProfileHelp()
    {
       globalDisplay_.openRStudioLink("profiling_help", false);
