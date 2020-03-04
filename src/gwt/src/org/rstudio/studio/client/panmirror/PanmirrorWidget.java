@@ -92,7 +92,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public static void create(PanmirrorContext context,
                              PanmirrorOptions options,
                              Options widgetOptions,
-                             String code,
+                             PanmirrorCode editorCode,
                              CommandWithArg<PanmirrorWidget> completed) {
       
       PanmirrorWidget editorWidget = new PanmirrorWidget(widgetOptions);
@@ -102,7 +102,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                
          // create the editor
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, code),
+            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, editorCode),
             null,
             editor -> {
                editorWidget.attachEditor(editor);
@@ -305,17 +305,17 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
   
    
-   public void setMarkdown(String markdown, boolean emitUpdate, CommandWithArg<Boolean> completed) 
+   public void setMarkdown(PanmirrorCode editorCode, boolean emitUpdate, CommandWithArg<Boolean> completed) 
    {
       new PromiseWithProgress<Boolean>(
-         editor_.setMarkdown(markdown, emitUpdate),
+         editor_.setMarkdown(editorCode, emitUpdate),
          false,
          completed
       );
    }
    
-   public void getMarkdown(PanmirrorWriterOptions options, String cursorSentinel, CommandWithArg<String> completed) {
-      new PromiseWithProgress<String>(
+   public void getMarkdown(PanmirrorWriterOptions options, boolean cursorSentinel, CommandWithArg<PanmirrorCode> completed) {
+      new PromiseWithProgress<PanmirrorCode>(
          editor_.getMarkdown(options, cursorSentinel),
          null,
          completed   

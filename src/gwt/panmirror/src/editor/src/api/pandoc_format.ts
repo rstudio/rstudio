@@ -141,7 +141,7 @@ export function pandocFormatFromCode(code: string) {
 }
 
 export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
-  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
+  const magicCommentRegEx = /<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = code.match(magicCommentRegEx);
   if (match) {

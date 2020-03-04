@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.IsHideableWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorCode;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -27,16 +28,36 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 // additional widgets over the top of the editor
 
 public class TextEditorContainer extends LayoutPanel implements CanFocus
-{  
-   
-   public static final String CursorReset = "5844AE0A-D58F-48B8-8DF7-89EB43DDF57D";
-   public static final String CursorPreserve = "FF7AEC83-264E-4830-BBBE-49B908AD9E39";
-   public static final String CursorSentinel = "13BF9618-295D-4F21-AAD6-6F5B57860B34";
-   
-   public interface Editor extends IsHideableWidget
+{     
+   public static class EditorCode
    {
-      String getCode();
-      void setCode(String code, String cursorLocation);
+      public EditorCode()
+      {
+         this.code = "";
+      }
+      
+      public EditorCode(PanmirrorCode editorCode)
+      {
+         this.code = editorCode.markdown;
+         this.cursorSentinel = editorCode.cursorSentinel;
+      }
+      
+      public PanmirrorCode toPanmirrorCode() 
+      {
+         PanmirrorCode editorCode =  new PanmirrorCode();
+         editorCode.markdown = this.code;
+         editorCode.cursorSentinel = this.cursorSentinel;
+         return editorCode;
+      }
+      
+      String code;
+      String cursorSentinel;
+   }
+   
+   public static interface Editor extends IsHideableWidget
+   {
+      EditorCode getCode(boolean cursorSentinel);
+      void setCode(EditorCode editorCode, boolean preserveCursorLocation);
    }
    
    public TextEditorContainer(Editor editor)

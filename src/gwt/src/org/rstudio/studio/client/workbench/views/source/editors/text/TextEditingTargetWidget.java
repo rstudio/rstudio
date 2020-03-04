@@ -85,6 +85,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -1632,11 +1633,9 @@ public class TextEditingTargetWidget
       public void focus()
       {
          editor_.focus();
-         
          Scheduler.get().scheduleDeferred(() -> {
-            editor_.scrollCursorIntoViewIfNecessary(3);
+            editor_.moveCursorNearTop();
          });
-       
       }
       
       @Override
@@ -1646,45 +1645,80 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(String code, String cursorLocation)
+      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation)
       {
          // if the cursor location is a sentinel within the code string, then pull it out and note it's position
-         Position cursorPosition = null;
-         if (cursorLocation.equals(TextEditorContainer.CursorSentinel)) {
-            StringBuilder editorCode = new StringBuilder();
-            Iterable<String> lines = StringUtil.getLineIterator(code);
-            int currentLine = 0;
-            for (String line : lines) {
-               if (cursorPosition == null) {
-                  int sentinelLoc = line.indexOf(TextEditorContainer.CursorSentinel);
+         final Position cursorPosition = Position.create(0, 0);
+         
+      
+         if (editorCode.cursorSentinel != null) {
+            
+            final Position kNoPosition = Position.create(0,0);
+            
+            editorCode.code = filterCode(editorCode.code, (line, number) -> {
+               if (cursorPosition.isEqualTo(kNoPosition)) {
+                  int sentinelLoc = line.indexOf(editorCode.cursorSentinel);
                   if (sentinelLoc != -1) {
                      line = line.substring(0, sentinelLoc) + 
-                            line.substring(sentinelLoc + TextEditorContainer.CursorSentinel.length());
-                     cursorPosition = Position.create(currentLine, sentinelLoc);
+                            line.substring(sentinelLoc + editorCode.cursorSentinel.length());
+                     cursorPosition.setRow(number); 
+                     cursorPosition.setColumn(sentinelLoc);
                   }
                }
-               editorCode.append(line);
-               editorCode.append('\n');
-               currentLine++;
-            }
-            code = editorCode.toString();         
+               return line;
+            });        
          }
          
          // set the code
-         editor_.setCode(code, !cursorLocation.equals(TextEditorContainer.CursorReset));
+         editor_.setCode(editorCode.code, preserveCursorLocation);
          
          // set cursor position if we need to
-         if (cursorPosition != null) {
+         if (editorCode.cursorSentinel != null) {
             editor_.setCursorPosition(cursorPosition);
          }
       }
       
       @Override
-      public String getCode()
+      public TextEditorContainer.EditorCode getCode(boolean cursorSentinel)
       {
-         return editor_.getCode();
-      }
+         TextEditorContainer.EditorCode editorCode = new TextEditorContainer.EditorCode();
+         if (cursorSentinel)
+         {
+            editorCode.cursorSentinel = "CursorSentinel-C4B636D6-5AA6-4CC8-A641-14EF34BAF2F3";  
+            Position cursorPosition = editor_.getCursorPosition();
+            editorCode.code = filterCode(editor_.getCode(), (line, number) -> {
+               if (number == cursorPosition.getRow()) {
+                  line = line.substring(0, cursorPosition.getColumn()) + 
+                          editorCode.cursorSentinel +
+                         line.substring(cursorPosition.getColumn());
+               }
+               return line;
+            });
+            
+         }
+         else
+         {
+            editorCode.code = editor_.getCode();
+         }
+         return editorCode;
+         
+      }   
    };
+   
+   private String filterCode(String code, LineFilter filter) 
+   {
+      ArrayList<String> codeLines = new ArrayList<String>();
+      int lineNumber = 0;
+      for (String line : StringUtil.getLineIterator(code)) {
+         codeLines.add(filter.filterLine(line, lineNumber++));
+      }
+      return String.join("\n", codeLines);         
+   }
+   
+   private interface LineFilter
+   {
+      String filterLine(String line, int number);
+   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;

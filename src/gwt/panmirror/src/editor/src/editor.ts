@@ -26,13 +26,13 @@ import {
 } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findChildren, setTextSelection } from 'prosemirror-utils';
+import { findChildren, setTextSelection, findParentNodeOfType, findParentNodeClosestToPos, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode } from './api/node';
+import { PandocNode, findTopLevelBodyNodes } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -47,9 +47,10 @@ import {
   pandocFormatCommentFromState,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
-import { appendTransactionsPlugin, appendMarkTransactionsPlugin, kLayoutFixupTransaction, kAddToHistoryTransaction } from './api/transaction';
+import { appendTransactionsPlugin, appendMarkTransactionsPlugin, kLayoutFixupTransaction, kAddToHistoryTransaction, kRestoreLocationTransaction } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
+import { mergedTextNodes } from './api/text';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -76,6 +77,11 @@ import './styles/styles.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
+
+export interface EditorCode {
+  markdown: string;
+  cursorSentinel?: string;
+}
 
 export interface EditorContext {
   readonly pandoc: PandocEngine;
@@ -161,7 +167,7 @@ export class Editor {
     parent: HTMLElement,
     context: EditorContext,
     options: EditorOptions,
-    markdown?: string,
+    editorCode: EditorCode,
   ): Promise<Editor> {
     // provide default options
     options = {
@@ -178,8 +184,8 @@ export class Editor {
     let format = context.format;
 
     // if markdown was specified then try to read the format from it
-    if (markdown && options.formatComment) {
-      format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
+    if (editorCode.markdown && options.formatComment) {
+      format = resolvePandocFormatComment(pandocFormatCommentFromCode(editorCode.markdown), format);
     }
 
     // resolve the format
@@ -189,8 +195,8 @@ export class Editor {
     const editor = new Editor(parent, context, options, pandocFmt);
 
     // set initial markdown if specified
-    if (markdown) {
-      await editor.setMarkdown(markdown, false);
+    if (editorCode.markdown) {
+      await editor.setMarkdown(editorCode, false);
     }
 
     // return editor
@@ -284,12 +290,12 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
+  public async setMarkdown(editorCode: EditorCode, emitUpdate = true): Promise<boolean> {
     // update format from source code magic comments
-    await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
+    await this.updatePandocFormat(pandocFormatCommentFromCode(editorCode.markdown));
 
     // get the doc
-    const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const doc = await this.pandocConverter.toProsemirror(editorCode.markdown, this.pandocFormat.fullName);
 
     // re-initialize editor state
     this.state = EditorState.create({
@@ -298,6 +304,11 @@ export class Editor {
       plugins: this.state.plugins,
     });
     this.view.updateState(this.state);
+
+    // restore cursor position if requested
+    if (editorCode.cursorSentinel) {
+      this.setSelectionFromCursorSentinel(editorCode.cursorSentinel);
+    }
 
     // apply layout fixups
     this.applyLayoutFixups();
@@ -312,7 +323,7 @@ export class Editor {
     return true;
   }
 
-  public async getMarkdown(options: PandocWriterOptions, cursorSentinel?: string): Promise<string> {
+  public async getMarkdown(options: PandocWriterOptions, cursorSentinel: boolean): Promise<EditorCode> {
     // get current format comment
     const formatComment = pandocFormatCommentFromState(this.state);
 
@@ -327,17 +338,14 @@ export class Editor {
     // apply layout fixups
     this.applyLayoutFixups();
 
-    // insert cursor sentinel if requested
-    let doc = this.state.doc;
-    if (cursorSentinel) {
-      const tr = this.state.tr;
-      setTextSelection(tr.selection.from, -1)(tr);
-      tr.insertText(cursorSentinel);
-      doc = tr.doc;
-    }
-   
-    // do the conversion
-    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+    // convert doc
+    const docWithCursor = cursorSentinel ? this.docWithCursorSentinel() : { doc: this.state.doc, cursorSentinel: undefined };
+    const markdown = await this.pandocConverter.fromProsemirror(docWithCursor.doc, this.pandocFormat, options);
+
+    return {
+      markdown,
+      cursorSentinel: docWithCursor.cursorSentinel
+    };
   }
 
   public getHTML(): string {
@@ -697,6 +705,56 @@ export class Editor {
         { type: 'notes', content: [] },
       ],
     });
+  }
+
+  private docWithCursorSentinel() {
+    
+    // transaction for inserting the sentinel
+    const tr = this.state.tr;
+
+    // if we are inside a table then get out of it (as the sentinel will mess up 
+    // table column formatting)
+    let sentinelPos = tr.selection.from;
+    const tableContainer = findParentNodeOfType(this.schema.nodes.table_container)(tr.selection);
+    if (tableContainer) {
+      sentinelPos = tableContainer.pos;
+      // don't use it if it's in yet another table
+      const anotherTableContainer = findParentNodeOfTypeClosestToPos(tr.doc.resolve(sentinelPos), this.schema.nodes.table_container);
+      if (anotherTableContainer) {
+        sentinelPos = -1;
+      }
+    }
+
+    // insert it
+    let cursorSentinel: string | undefined;
+    if (sentinelPos !== -1) {
+      cursorSentinel = "CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF";
+      setTextSelection(sentinelPos, -1)(tr);
+      tr.insertText(cursorSentinel);
+    } else {
+      cursorSentinel = undefined;
+    }
+
+    return {
+      doc: tr.doc,
+      cursorSentinel 
+    };
+  }
+
+  private setSelectionFromCursorSentinel(cursorSentinel: string) {
+    const tr = this.state.tr;
+    tr.setMeta(kRestoreLocationTransaction, true);
+    tr.setMeta(kAddToHistoryTransaction, false);
+    const textNodes = mergedTextNodes(tr.doc);
+    textNodes.forEach(textNode => {
+      const sentinelLoc = textNode.text.indexOf(cursorSentinel);
+      if (sentinelLoc !== -1) {
+        const start = textNode.pos + sentinelLoc;
+        tr.deleteRange(start, start + cursorSentinel.length);
+        setTextSelection(start)(tr);
+      }
+    });
+    this.view.dispatch(tr);
   }
 }
 

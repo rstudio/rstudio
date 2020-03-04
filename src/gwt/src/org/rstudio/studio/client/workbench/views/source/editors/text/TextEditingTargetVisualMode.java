@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -127,8 +128,9 @@ public class TextEditingTargetVisualMode
             options.atxHeaders = true;
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
-            panmirror_.getMarkdown(options, TextEditorContainer.CursorSentinel, markdown -> { 
-               getSourceEditor().setCode(markdown, TextEditorContainer.CursorSentinel); 
+            panmirror_.getMarkdown(options, true, markdown -> { 
+               TextEditorContainer.EditorCode editorCode = new TextEditorContainer.EditorCode(markdown);
+               getSourceEditor().setCode(editorCode, true); 
                isDirty_ = false;
                if (ready != null)
                   ready.execute();
@@ -145,9 +147,10 @@ public class TextEditingTargetVisualMode
 
    
    public void syncFromEditor(Command ready, boolean focus)
-   {
+   {      
+      
       loadingFromSource_ = true;
-      panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+      panmirror_.setMarkdown(getEditorCode(true), true, (done) -> {  
              
          // activate editor
          if (ready != null)
@@ -158,9 +161,22 @@ public class TextEditingTargetVisualMode
        
          // restore selection if we have one
          Scheduler.get().scheduleDeferred(() -> {
-            PanmirrorEditingLocation location = savedEditingLocation();
+            
+            // if we are focusing then scroll to the current cursor location, 
+            // otherwise use the saved location
+            PanmirrorEditingLocation location = null;
+            if (focus) 
+            {
+               location = panmirror_.getEditingLocation();
+               location.scrollTop = -1; // determine scrollTop from selection
+            } else 
+            {
+               location = savedEditingLocation();
+            }
+            
             if (location != null)
                panmirror_.restoreEditingLocation(location);
+            
             if (focus)
               panmirror_.focus();
          });                
@@ -338,7 +354,10 @@ public class TextEditingTargetVisualMode
            
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          
-         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
+         
+         PanmirrorWidget.create(context, options, widgetOptions, 
+                               getEditorCode(true), 
+                                (panmirror) -> {
             
             // save reference to panmirror
             panmirror_ = panmirror;
@@ -424,11 +443,12 @@ public class TextEditingTargetVisualMode
       }
    } 
    
-   private String getEditorCode()
+   private PanmirrorCode getEditorCode(boolean cursorSentinel)
    {
       TextEditorContainer editorContainer = display_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
-      return editor.getCode();
+      TextEditorContainer.EditorCode editorCode = editor.getCode(cursorSentinel);
+      return editorCode.toPanmirrorCode();
    }
    
    // is our widget active in the editor container

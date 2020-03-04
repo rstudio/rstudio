@@ -31,6 +31,12 @@ export function restoreEditingLocation(view: EditorView, location: EditingLocati
 
   // scroll to selection
   if (scrollIntoView) {
+
+    // if the scrollTop is -1 then get it from the selection
+    if (location.scrollTop === -1) {
+      location.scrollTop = Math.max(view.coordsAtPos(location.pos).top - 250, 0);
+    }
+
     bodyElement(view).scrollTop = location.scrollTop;
   }
 }

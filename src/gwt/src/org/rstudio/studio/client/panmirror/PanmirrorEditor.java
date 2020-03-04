@@ -36,15 +36,15 @@ public class PanmirrorEditor
    public native static Promise<PanmirrorEditor> create(Element parent, 
                                                         PanmirrorContext context, 
                                                         PanmirrorOptions options, 
-                                                        String code);
+                                                        PanmirrorCode code);
    
    public native void destroy();
    
    public native void setTitle(String title);
    public native String getTitle();
    
-   public native Promise<Boolean> setMarkdown(String markdown, boolean emitUpdate);
-   public native Promise<String> getMarkdown(PanmirrorWriterOptions options, String cursorSentinel);
+   public native Promise<Boolean> setMarkdown(PanmirrorCode editorCode, boolean emitUpdate);
+   public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions options, boolean cursorSentinel);
    
    public native JsVoidFunction subscribe(String event, JsVoidFunction handler);
    
