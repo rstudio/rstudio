@@ -3,6 +3,12 @@
 
 ## TODO
 
+Refactor raw_inline to taken advantage of token matching
+
+preservation of cursor position for code <--> visual switching (use sentinel comment)
+
+Link handler should also handle internal links
+
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
 May be as simple as just letting it through (as pandoc seems to automatically write html tags
@@ -17,9 +23,6 @@ Surface attributes
 
 Better direct manipulation for tables
 
-cmd+click for links (or gdocs style popup)
-
-
 Unit testing for core panmirror code
 
 Make character escaping configurable
@@ -27,9 +30,6 @@ Make character escaping configurable
 Link input rule doesn't work for enter after link
 (https://discuss.prosemirror.net/t/trigger-inputrule-on-enter/1118/2)
 
-FindUX in standalone
-Magic comments in standalone
-Dynamic commands/format for standalone front-end
 
 Cursor location for insert yaml in the middle of paragraph
 
@@ -47,22 +47,16 @@ multimarkdown support is incomplete:
 
 no support for +pandoc_title_block
 
-React for NodeViews/Decorators? 
-  https://discuss.prosemirror.net/t/using-with-react/904/11
-  https://github.com/TeemuKoivisto/prosemirror-react-typescript-example/blob/master/full/src/editor/nodeviews/ReactNodeView.tsx
-
 We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is
 not disimillar from the situation w/ inline footnotes so may be fine)
 
-Improve EditorPane.showPandocWarnings treatment (including localization)
+showPandocWarnings treatment for RStudio IDE (including localization)
 
 No editing support for fancy list auto-numbering (#. as list item that is auto-numbered)
 
 EditorUI.translate call for translatable text
 
 handling for div with only an id (shading treatment a bit much?)
-
-internal links / external links via cmd+click
 
 Direct parsing of citations (get rid of special post-processing + supported nested)
  (note: for nested we need excludes: '')
