@@ -181,7 +181,7 @@ public:
              SessionLocation sessionLocation,
              CloseServerSessions closeServerSessionsOnExit);
 
-   void addSaveHandler(const boost::function<void(void)>& onSave);
+   boost::signals2::scoped_connection addSaveHandler(const boost::function<void(void)>& onSave);
 
 private:
    friend SessionServerSettings& sessionServerSettings();
