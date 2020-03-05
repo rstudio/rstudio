@@ -13,35 +13,38 @@
  *
  */
 
-import { DecorationSet, Decoration, EditorView } from "prosemirror-view";
-import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
+import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
-import ClipboardJS from "clipboard";
+import ClipboardJS from 'clipboard';
 
-import { getMarkRange, getMarkAttrs } from "../../api/mark";
-import { LinkProps, EditorUI } from "../../api/ui";
-import { editingRootNode } from "../../api/node";
-import { CommandFn } from "../../api/command";
-import { kRestoreLocationTransaction } from "../../api/transaction";
-import { createInlineTextPopup, createLinkButton, createImageButton, createHorizontalPanel, addHorizontalPanelCell, showTooltip } from "../../api/widgets";
-import { navigateToId, navigateToHeading } from "../../api/navigation";
+import { getMarkRange, getMarkAttrs } from '../../api/mark';
+import { LinkProps, EditorUI } from '../../api/ui';
+import { editingRootNode } from '../../api/node';
+import { CommandFn } from '../../api/command';
+import { kRestoreLocationTransaction } from '../../api/transaction';
+import {
+  createInlineTextPopup,
+  createLinkButton,
+  createImageButton,
+  createHorizontalPanel,
+  addHorizontalPanelCell,
+  showTooltip,
+} from '../../api/widgets';
+import { navigateToId, navigateToHeading } from '../../api/navigation';
 
 const kMaxLinkWidth = 300;
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
- 
   constructor(ui: EditorUI, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
-
     let editorView: EditorView;
 
     function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
-      
-
-      // we may create a ClipboardJS instance. if we do then clean it up 
+      // we may create a ClipboardJS instance. if we do then clean it up
       // when the popup id destroyed
-      let clipboard : ClipboardJS;
+      let clipboard: ClipboardJS;
       const cleanup = () => {
         if (clipboard) {
           clipboard.destroy();
@@ -51,7 +54,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
       // (this is so that links that start a line don't have their ragne derived from
       // the previous line)
-      const popup = createInlineTextPopup(editorView, ["pm-popup-link"], cleanup, { 'margin-left': '-1ch', ...style } );
+      const popup = createInlineTextPopup(editorView, ['pm-popup-link'], cleanup, { 'margin-left': '-1ch', ...style });
 
       const panel = createHorizontalPanel();
       popup.append(panel);
@@ -63,7 +66,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         editorView.focus();
         if (attrs.heading) {
           navigateToHeading(editorView, attrs.heading);
-        } else if (attrs.href.startsWith("#")) {
+        } else if (attrs.href.startsWith('#')) {
           navigateToId(editorView, attrs.href.substr(1));
         } else {
           ui.display.openURL(attrs.href);
@@ -74,25 +77,28 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
       // copy link
       if (!attrs.heading && ClipboardJS.isSupported()) {
-        const copyLink = createImageButton(["pm-image-button-copy-link"], ui.context.translateText("Copy Link to Clipboard"));
+        const copyLink = createImageButton(
+          ['pm-image-button-copy-link'],
+          ui.context.translateText('Copy Link to Clipboard'),
+        );
         clipboard = new ClipboardJS(copyLink, {
-          text: () => text
+          text: () => text,
         });
         clipboard.on('success', () => {
-          showTooltip(copyLink, ui.context.translateText("Copied to Clipboard"), "s");
+          showTooltip(copyLink, ui.context.translateText('Copied to Clipboard'), 's');
         });
         addHorizontalPanelCell(panel, copyLink);
       }
 
       // edit link
-      const editLink = createImageButton(["pm-image-button-edit-link"], ui.context.translateText("Edit Link"));
+      const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
       editLink.onclick = () => {
         linkCmd(editorView.state, editorView.dispatch, editorView);
       };
       addHorizontalPanelCell(panel, editLink);
 
       // remove link
-      const removeLink = createImageButton(["pm-image-button-remove-link"], ui.context.translateText("Remove Link"));
+      const removeLink = createImageButton(['pm-image-button-remove-link'], ui.context.translateText('Remove Link'));
       removeLink.onclick = () => {
         // in rstudio (w/ webkit) removing the link during the click results
         // in a page-navigation! defer to next event cycle to avoid this
@@ -100,7 +106,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           removeLinkCmd(editorView.state, editorView.dispatch, editorView);
           editorView.focus();
         }, 0);
-        
       };
       addHorizontalPanelCell(panel, removeLink);
 
@@ -118,7 +123,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
@@ -129,11 +133,10 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const selection = tr.selection;
           const range = getMarkRange(selection.$head, schema.marks.link);
           if (range) {
-
             // get link attributes
             const attrs = getMarkAttrs(tr.doc, range, schema.marks.link) as LinkProps;
-           
-            // get the (window) DOM coordinates for the start of the mark. we use range.from + 1 so 
+
+            // get the (window) DOM coordinates for the start of the mark. we use range.from + 1 so
             // that links that are at the beginning of a line don't have their position set
             // to the previous line
             const linkCoords = editorView.coordsAtPos(range.from + 1);
@@ -146,19 +149,18 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             // we need to compute whether the popup will be visible (horizontally), do
             // this by testing whether we have room for the max link width + controls/padding
             const kPopupChromeWidth = 70;
-            const positionRight = (linkCoords.left + kMaxLinkWidth + kPopupChromeWidth) > editingBox.right;
+            const positionRight = linkCoords.left + kMaxLinkWidth + kPopupChromeWidth > editingBox.right;
             let popup: HTMLElement;
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
               const linkRightPos = editingBox.right - linkRightCoords.right;
-              popup = linkPopup(attrs, { right: linkRightPos + "px"});
+              popup = linkPopup(attrs, { right: linkRightPos + 'px' });
             } else {
               popup = linkPopup(attrs);
             }
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(range.from + 1, popup)]);
-           
           } else {
             return DecorationSet.empty;
           }
@@ -172,6 +174,3 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
     });
   }
 }
-
-
-

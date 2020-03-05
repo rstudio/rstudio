@@ -103,9 +103,8 @@ class Parser {
     blockReaders: readonly PandocBlockReaderFn[],
     codeBlockFilters: readonly PandocCodeBlockFilter[],
   ) {
-    
     const handlers: { [token: string]: ParserTokenHandlerCandidate[] } = {};
-    
+
     for (const reader of readers) {
       // resolve children (provide default impl)
       const getChildren = reader.getChildren || ((tok: PandocToken) => tok.c);
@@ -209,7 +208,7 @@ class Parser {
           writer.closeNode();
         };
       } else {
-        throw new Error("pandoc reader was malformed or unrecognized");
+        throw new Error('pandoc reader was malformed or unrecognized');
       }
 
       // Ensure an array exists
@@ -217,7 +216,7 @@ class Parser {
 
       handlers[reader.token].push({
         match: reader.match,
-        handler
+        handler,
       });
     }
     return handlers;

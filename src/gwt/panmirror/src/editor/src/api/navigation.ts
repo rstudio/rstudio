@@ -13,9 +13,8 @@
  *
  */
 
-import { EditorView } from "prosemirror-view";
-import { setTextSelection, Predicate, findChildren } from "prosemirror-utils";
-
+import { EditorView } from 'prosemirror-view';
+import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
 
 export function navigateTo(view: EditorView, predicate: Predicate) {
   const result = findChildren(view.state.doc, predicate);
@@ -42,6 +41,3 @@ export function navigateToPosition(view: EditorView, pos: number) {
     node.scrollIntoView({ behavior: 'smooth' });
   }
 }
-
-
-

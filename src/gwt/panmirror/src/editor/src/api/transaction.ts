@@ -20,7 +20,6 @@ import { ReplaceStep, Step } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 
-
 export const kAddToHistoryTransaction = 'addToHistory';
 export const kLayoutFixupTransaction = 'layoutFixups';
 export const kRestoreLocationTransaction = 'restoreLocation';

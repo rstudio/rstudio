@@ -159,11 +159,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
           ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
         ),
-        new ProsemirrorCommand(
-          EditorCommandId.RemoveLink,
-          [],
-          removeLinkCommand(schema.marks.link)
-        )
+        new ProsemirrorCommand(EditorCommandId.RemoveLink, [], removeLinkCommand(schema.marks.link)),
       ];
     },
 
@@ -173,11 +169,13 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
       pandocExtensions.implicit_header_references ? [syncHeadingLinksAppendTransaction()] : [],
 
     plugins: (schema: Schema, ui: EditorUI) => {
-      const plugins = [new LinkPopupPlugin(
-        ui,
-        linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
-        removeLinkCommand(schema.marks.link)
-      )];
+      const plugins = [
+        new LinkPopupPlugin(
+          ui,
+          linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
+          removeLinkCommand(schema.marks.link),
+        ),
+      ];
       if (autoLink) {
         plugins.push(
           new Plugin({
@@ -187,7 +185,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
             },
           }),
         );
-      } 
+      }
       return plugins;
     },
   };

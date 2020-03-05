@@ -1,4 +1,3 @@
-
 /*
  * widgets.ts
  *
@@ -15,10 +14,10 @@
  */
 import { EditorView } from 'prosemirror-view';
 
-import tlite from "tlite";
+import tlite from 'tlite';
 
 import './widgets.css';
- 
+
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
   div.classList.add('pm-horizontal-panel');
@@ -30,19 +29,17 @@ export function addHorizontalPanelCell(panel: HTMLDivElement, el: HTMLElement) {
   panel.append(el);
 }
 
-export function createPopup(view: EditorView, classes: string[], onDestroyed?: () => void, style?: { [key: string]: string }) {
-  
+export function createPopup(
+  view: EditorView,
+  classes: string[],
+  onDestroyed?: () => void,
+  style?: { [key: string]: string },
+) {
   // create popup
-  const popup = window.document.createElement("div");
-  popup.classList.add(
-    "pm-popup",
-    "pm-pane-border-color",
-    "pm-background-color",
-    "pm-text-color",
-    ...classes
-  );
-  popup.style.position = "absolute";
-  popup.style.zIndex = "10";
+  const popup = window.document.createElement('div');
+  popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color', ...classes);
+  popup.style.position = 'absolute';
+  popup.style.zIndex = '10';
   applyStyle(popup, style);
 
   // create mutation observer that watches for destruction
@@ -63,19 +60,21 @@ export function createPopup(view: EditorView, classes: string[], onDestroyed?: (
   return popup;
 }
 
-export function createInlineTextPopup(view: EditorView, classes: string[], onDestroyed?: () => void, style?: { [key: string]: string }) {
-  const popup = createPopup(view, [ ...classes, "pm-popup-inline-text"], onDestroyed, style);
-  popup.style.display = "inline-block";
+export function createInlineTextPopup(
+  view: EditorView,
+  classes: string[],
+  onDestroyed?: () => void,
+  style?: { [key: string]: string },
+) {
+  const popup = createPopup(view, [...classes, 'pm-popup-inline-text'], onDestroyed, style);
+  popup.style.display = 'inline-block';
   return popup;
 }
 
 export function createLinkButton(text: string, title?: string, maxWidth?: number, style?: { [key: string]: string }) {
-  const link = window.document.createElement("a");
-  link.classList.add(
-    "pm-link",
-    "pm-link-text-color",
-  );
-  link.href = "#";
+  const link = window.document.createElement('a');
+  link.classList.add('pm-link', 'pm-link-text-color');
+  link.href = '#';
   link.innerText = text;
   link.title = title || text;
   if (maxWidth) {
@@ -86,17 +85,19 @@ export function createLinkButton(text: string, title?: string, maxWidth?: number
 }
 
 export function createImageButton(classes: string[], title: string, style?: { [key: string]: string }) {
-  const button = window.document.createElement("button");
-  button.classList.add(
-    "pm-image-button",
-    ...classes
-  );
+  const button = window.document.createElement('button');
+  button.classList.add('pm-image-button', ...classes);
   button.title = title;
   applyStyle(button, style);
   return button;
 }
 
-export function showTooltip(el: Element, text: string, grav: "s" | "n" | "e" | "w" | "sw" | "se" | "nw" | "ne" = "n", timeout = 2000) {
+export function showTooltip(
+  el: Element,
+  text: string,
+  grav: 's' | 'n' | 'e' | 'w' | 'sw' | 'se' | 'nw' | 'ne' = 'n',
+  timeout = 2000,
+) {
   el.setAttribute('title', '');
   el.setAttribute('data-tlite', text);
   tlite.show(el, { grav });

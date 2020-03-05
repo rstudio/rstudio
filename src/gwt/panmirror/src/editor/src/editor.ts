@@ -26,7 +26,12 @@ import {
 } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findChildren, setTextSelection, findParentNodeOfType, findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
+import {
+  findChildren,
+  setTextSelection,
+  findParentNodeOfType,
+  findParentNodeOfTypeClosestToPos,
+} from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
@@ -47,7 +52,13 @@ import {
   pandocFormatCommentFromState,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
-import { appendTransactionsPlugin, appendMarkTransactionsPlugin, kLayoutFixupTransaction, kAddToHistoryTransaction, kRestoreLocationTransaction } from './api/transaction';
+import {
+  appendTransactionsPlugin,
+  appendMarkTransactionsPlugin,
+  kLayoutFixupTransaction,
+  kAddToHistoryTransaction,
+  kRestoreLocationTransaction,
+} from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 import { mergedTextNodes } from './api/text';
@@ -77,7 +88,6 @@ import './styles/frame.css';
 import './styles/styles.css';
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
-
 
 export interface EditorCode {
   markdown: string;
@@ -340,12 +350,14 @@ export class Editor {
     this.applyLayoutFixups();
 
     // convert doc
-    const docWithCursor = cursorSentinel ? this.docWithCursorSentinel() : { doc: this.state.doc, cursorSentinel: undefined };
+    const docWithCursor = cursorSentinel
+      ? this.docWithCursorSentinel()
+      : { doc: this.state.doc, cursorSentinel: undefined };
     const markdown = await this.pandocConverter.fromProsemirror(docWithCursor.doc, this.pandocFormat, options);
 
     return {
       markdown,
-      cursorSentinel: docWithCursor.cursorSentinel
+      cursorSentinel: docWithCursor.cursorSentinel,
     };
   }
 
@@ -697,18 +709,20 @@ export class Editor {
   }
 
   private docWithCursorSentinel() {
-    
     // transaction for inserting the sentinel
     const tr = this.state.tr;
 
-    // if we are inside a table then get out of it (as the sentinel will mess up 
+    // if we are inside a table then get out of it (as the sentinel will mess up
     // table column formatting)
     let sentinelPos = tr.selection.from;
     const tableContainer = findParentNodeOfType(this.schema.nodes.table_container)(tr.selection);
     if (tableContainer) {
       sentinelPos = tableContainer.pos;
       // don't use it if it's in yet another table
-      const anotherTableContainer = findParentNodeOfTypeClosestToPos(tr.doc.resolve(sentinelPos), this.schema.nodes.table_container);
+      const anotherTableContainer = findParentNodeOfTypeClosestToPos(
+        tr.doc.resolve(sentinelPos),
+        this.schema.nodes.table_container,
+      );
       if (anotherTableContainer) {
         sentinelPos = -1;
       }
@@ -717,7 +731,7 @@ export class Editor {
     // insert it
     let cursorSentinel: string | undefined;
     if (sentinelPos !== -1) {
-      cursorSentinel = "CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF";
+      cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
       setTextSelection(sentinelPos, -1)(tr);
       tr.insertText(cursorSentinel);
     } else {
@@ -726,7 +740,7 @@ export class Editor {
 
     return {
       doc: tr.doc,
-      cursorSentinel 
+      cursorSentinel,
     };
   }
 
