@@ -132,9 +132,9 @@ Error readRevocationListFromDatabase(std::vector<std::string>* pEntries)
    return Success();
 }
 
-void removeStaleCookieFromDatabase(const RevokedCookie& cookie)
+void removeStaleCookieFromDatabase(const RevokedCookie& cookie,
+                                   const boost::shared_ptr<IConnection>& connection)
 {
-   boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
    std::string expiration = date_time::format(cookie.expiration, date_time::kIso8601Format);
    Query query = connection->query("DELETE FROM RevokedCookie WHERE CookieData = :dat")
          .withInput(cookie.cookie);
@@ -217,6 +217,8 @@ Error readRevocationListFromFile(const FilePath& revocationList,
 
 bool isCookieRevoked(const std::string& cookie)
 {
+   bool attemptedConnection = false;
+   boost::shared_ptr<IConnection> connection;
    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
 
    LOCK_MUTEX(s_mutex)
@@ -230,9 +232,29 @@ bool isCookieRevoked(const std::string& cookie)
 
          if (other.expiration <= now)
          {
-            removeStaleCookieFromDatabase(other);
-            it = s_revokedCookies.erase(it);
-            continue;
+            if (!attemptedConnection)
+            {
+               // grab a connection from the pool, but only wait for a short amount of time
+               // this ensures that we do not delay the sign in process too long - deleting stale
+               // cookies from the database immediately is not of critical importance, as this operation will
+               // be retried on all subsequent auths / process restarts
+               server_core::database::getConnection(&connection, boost::posix_time::milliseconds(500));
+               attemptedConnection = true;
+            }
+
+            if (connection)
+            {
+               removeStaleCookieFromDatabase(other, connection);
+
+               // we only erase cookies from the memory map if they were also removed from the database
+               // to ensure that if we couldn't delete them immediately, we retry the operation later
+               it = s_revokedCookies.erase(it);
+               continue;
+            }
+            else
+            {
+               ++it;
+            }
          }
          else
          {

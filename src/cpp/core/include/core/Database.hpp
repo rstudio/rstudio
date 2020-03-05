@@ -192,7 +192,14 @@ private:
 class ConnectionPool : public boost::enable_shared_from_this<ConnectionPool>
 {
 public:
+   // get a connection from the connection pool, blocking until one becomes available
    boost::shared_ptr<IConnection> getConnection();
+
+   // get a connection from the connection pool, waiting for at most maxWait for one
+   // to become available. if no connection becomes available, false is returned and
+   // the connection is empty, otherwise the connection is set and true is returned
+   bool getConnection(boost::shared_ptr<IConnection>* pConnection,
+                      const boost::posix_time::time_duration& maxWait);
 
 private:
    friend class PooledConnection;

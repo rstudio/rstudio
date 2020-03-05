@@ -330,12 +330,35 @@ std::string PooledConnection::driverName() const
 
 boost::shared_ptr<IConnection> ConnectionPool::getConnection()
 {
-   // block until a connection is available
+   // block until a connection is available, but log an error
+   // if this takes a long time, because we want to ensure that if we are in a hang
+   // condition (i.e. threads are not properly returning connections to the pool) we
+   // let the users/developers know that something is fishy
    boost::shared_ptr<Connection> connection;
-   connections_.deque(&connection, boost::posix_time::pos_infin);
+   while (true)
+   {
+      if (connections_.deque(&connection, boost::posix_time::seconds(30)))
+      {
+         // create wrapper PooledConnection around retrieved Connection
+         return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE("Potential hang detected: could not get database connection from pool "
+                           "after 30 seconds. If issue persists, please notify RStudio Support");
+      }
+   }
+}
 
-   // create wrapper PooledConnection around retrieved Connection
-   return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
+bool ConnectionPool::getConnection(boost::shared_ptr<IConnection>* pConnection,
+                                   const boost::posix_time::time_duration& maxWait)
+{
+   boost::shared_ptr<Connection> connection;
+   if (!connections_.deque(&connection, maxWait))
+      return false;
+
+   pConnection->reset(new PooledConnection(shared_from_this(), connection));
+   return true;
 }
 
 void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
