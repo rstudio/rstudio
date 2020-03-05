@@ -37,6 +37,7 @@ export function createPopup(classes: string[], style?: { [key: string]: string }
     ...classes
   );
   popup.style.position = "absolute";
+  popup.style.zIndex = "10";
   applyStyle(popup, style);
   return popup;
 }
