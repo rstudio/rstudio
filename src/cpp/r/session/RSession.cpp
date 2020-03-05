@@ -403,7 +403,7 @@ void setClientMetrics(const RClientMetrics& metrics)
    {
       // report to user
       std::string errMsg = r::endUserErrorMessage(error);
-      REprintf((errMsg + "\n").c_str());
+      REprintf("%s\n", errMsg);
 
       // restore previous values (but don't fire plotsChanged b/c
       // the reset doesn't result in a change in graphics state)

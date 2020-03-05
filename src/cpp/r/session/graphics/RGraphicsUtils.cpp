@@ -205,8 +205,8 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
 void reportError(const core::Error& error)
 {
    std::string endUserMessage = r::endUserErrorMessage(error);
-   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
-   REprintf(errmsg.c_str());
+   std::string errmsg = "Graphics error: " + endUserMessage;
+   REprintf("%s\n", errmsg.c_str());
 }
 
 void logAndReportError(const Error& error, const ErrorLocation& location)

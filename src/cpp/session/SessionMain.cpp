@@ -719,7 +719,7 @@ void notifyIfRVersionChanged()
    {
       const char* fmt =
             "R version change [%1% -> %2%] detected when restoring session; "
-            "search path not restored\n";
+            "search path not restored";
       
       boost::format formatter(fmt);
       formatter
@@ -727,7 +727,7 @@ void notifyIfRVersionChanged()
             % std::string(info.activeRVersion);
       
       std::string msg = formatter.str();
-      ::REprintf(msg.c_str());
+      ::REprintf("%s\n", msg.c_str());
    }
 }
 

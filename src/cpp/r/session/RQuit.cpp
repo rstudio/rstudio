@@ -98,14 +98,15 @@ void quit(bool saveWorkspace, int status)
    bool didQuit = win32Quit(save, 0, true, &quitErr);
    if (!didQuit)
    {
-      REprintf((quitErr + "\n").c_str());
+      REprintf("%s\n", quitErr.c_str());
       LOG_ERROR_MESSAGE(quitErr);
    }
  #else
    Error error = r::exec::RFunction("base:::q", save, status, true).call();
    if (error)
    {
-      REprintf((r::endUserErrorMessage(error) + "\n").c_str());
+      std::string message = r::endUserErrorMessage(error);
+      REprintf("%s\n", message.c_str());
       LOG_ERROR(error);
    }
  #endif
