@@ -51,6 +51,7 @@ import { appendTransactionsPlugin, appendMarkTransactionsPlugin, kLayoutFixupTra
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 import { mergedTextNodes } from './api/text';
+import { navigateTo } from './api/navigation';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -399,19 +400,7 @@ export class Editor {
   }
 
   public navigate(id: string) {
-    const result = findChildren(this.state.doc, node => id === node.attrs.navigation_id, true);
-    if (result.length) {
-      const target = result[0];
-
-      // set selection
-      this.view.dispatch(setTextSelection(target.pos)(this.state.tr));
-
-      // scroll to selection
-      const node = this.view.nodeDOM(target.pos);
-      if (node instanceof HTMLElement) {
-        node.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
+    navigateTo(this.view, node => id === node.attrs.navigation_id);
   }
 
   public resize() {

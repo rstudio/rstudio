@@ -24,6 +24,7 @@ import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
 import { createInlineTextPopup, createLinkButton, createImageButton, createHorizontalPanel, addHorizontalPanelCell, showTooltip } from "../../api/widgets";
+import { navigateToId, navigateToHeading } from "../../api/navigation";
 
 const kMaxLinkWidth = 300;
 
@@ -59,7 +60,14 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       const text = attrs.heading ? attrs.heading! : attrs.href;
       const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
       link.onclick = () => {
-        ui.display.openURL(attrs.href);
+        editorView.focus();
+        if (attrs.heading) {
+          navigateToHeading(editorView, attrs.heading);
+        } else if (attrs.href.startsWith("#")) {
+          navigateToId(editorView, attrs.href.substr(1));
+        } else {
+          ui.display.openURL(attrs.href);
+        }
         return false;
       };
       addHorizontalPanelCell(panel, link);
