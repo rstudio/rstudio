@@ -5,6 +5,7 @@ then
    echo "Must specify at least one argument."
    echo "Invocation: ./make-schema.sh name [sql]"
    echo "Ex: ./make-schema.sh AddMyTable"
+   exit 1
 fi
 
 filename=$(date '+%Y%m%d%H%M%S%N')
