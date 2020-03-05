@@ -62,14 +62,9 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
           const tr = state.tr;
           tr.removeMark(range.from, range.to, markType);
           if (result.action === 'edit') {
-            // create the link attributes
-            const attrs = {
-              ...result.link,
-              heading: result.link.type === LinkType.Heading ? result.link.href : undefined,
-            };
-
+           
             // create the mark
-            const mark = markType.create(attrs);
+            const mark = markType.create(result.link);
 
             // if the content changed then replace the range, otherwise
             if (link.text !== result.link.text) {

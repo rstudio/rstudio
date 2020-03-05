@@ -48,14 +48,15 @@ export function createInlineTextPopup(classes: string[], style?: { [key: string]
   return popup;
 }
 
-export function createLink(href: string, maxWidth?: number, style?: { [key: string]: string }) {
+export function createLinkButton(text: string, title?: string, maxWidth?: number, style?: { [key: string]: string }) {
   const link = window.document.createElement("a");
   link.classList.add(
     "pm-link",
     "pm-link-text-color",
   );
-  link.href = href;
-  link.innerText = href;
+  link.href = "#";
+  link.innerText = text;
+  link.title = title || text;
   if (maxWidth) {
     link.style.maxWidth = maxWidth + 'px';
   }

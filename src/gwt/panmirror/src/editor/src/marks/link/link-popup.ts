@@ -21,7 +21,8 @@ import { LinkProps, EditorUI } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
-import { createInlineTextPopup, createLink, createImageButton, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
+import { createInlineTextPopup, createLinkButton, createImageButton, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
+import { LinkType } from "../../api/link";
 
 const kMaxLinkWidth = 300;
 
@@ -44,7 +45,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       popup.append(panel);
 
       // create link
-      const link = createLink(attrs.href, kMaxLinkWidth);
+      const text = attrs.type === LinkType.Heading ? attrs.heading! : attrs.href;
+      const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
       link.onclick = () => {
         ui.display.openURL(attrs.href);
         return false;

@@ -155,6 +155,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       else
       {
          result.link.text = result.link.href;
+         result.link.heading = result.link.href;
       }
       return result;
    }

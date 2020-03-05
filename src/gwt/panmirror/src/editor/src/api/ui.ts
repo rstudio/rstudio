@@ -99,6 +99,7 @@ export interface LinkProps extends AttrProps {
   readonly type: LinkType;
   readonly text: string;
   readonly href: string;
+  readonly heading?: string;
   readonly title?: string;
 }
 

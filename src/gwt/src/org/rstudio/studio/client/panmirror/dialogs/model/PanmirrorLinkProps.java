@@ -25,5 +25,6 @@ public class PanmirrorLinkProps extends PanmirrorAttrProps
    public String text;
    public String href;
    public String title;
+   public String heading;
 }
 
