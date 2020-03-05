@@ -5,8 +5,6 @@
 
 Discuss tokens / escaping / etc. with Joe
 
-Link navigation handler should also handle internal links
-
 Images should support width/align for gfm (write raw_html)
 (we'd need to do the image tag parsing for this to work).
 May be as simple as just letting it through (as pandoc seems to automatically write html tags
@@ -51,8 +49,6 @@ not disimillar from the situation w/ inline footnotes so may be fine)
 showPandocWarnings treatment for RStudio IDE (including localization)
 
 No editing support for fancy list auto-numbering (#. as list item that is auto-numbered)
-
-EditorUI.translate call for translatable text
 
 handling for div with only an id (shading treatment a bit much?)
 
