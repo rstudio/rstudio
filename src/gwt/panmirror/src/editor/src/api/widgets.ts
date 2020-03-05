@@ -13,6 +13,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+import { EditorView } from 'prosemirror-view';
+
+import tlite from "tlite";
 
 import './widgets.css';
  
@@ -27,7 +30,9 @@ export function addHorizontalPanelCell(panel: HTMLDivElement, el: HTMLElement) {
   panel.append(el);
 }
 
-export function createPopup(classes: string[], style?: { [key: string]: string }) {
+export function createPopup(view: EditorView, classes: string[], onDestroyed?: () => void, style?: { [key: string]: string }) {
+  
+  // create popup
   const popup = window.document.createElement("div");
   popup.classList.add(
     "pm-popup",
@@ -39,11 +44,27 @@ export function createPopup(classes: string[], style?: { [key: string]: string }
   popup.style.position = "absolute";
   popup.style.zIndex = "10";
   applyStyle(popup, style);
+
+  // create mutation observer that watches for destruction
+  if (onDestroyed) {
+    const observer = new MutationObserver(mutationsList => {
+      mutationsList.forEach(mutation => {
+        mutation.removedNodes.forEach(node => {
+          if (node === popup) {
+            observer.disconnect();
+            onDestroyed();
+          }
+        });
+      });
+    });
+    observer.observe(view.dom, { attributes: false, childList: true, subtree: true });
+  }
+
   return popup;
 }
 
-export function createInlineTextPopup(classes: string[], style?: { [key: string]: string }) {
-  const popup = createPopup([ ...classes, "pm-popup-inline-text"], style);
+export function createInlineTextPopup(view: EditorView, classes: string[], onDestroyed?: () => void, style?: { [key: string]: string }) {
+  const popup = createPopup(view, [ ...classes, "pm-popup-inline-text"], onDestroyed, style);
   popup.style.display = "inline-block";
   return popup;
 }
@@ -64,14 +85,22 @@ export function createLinkButton(text: string, title?: string, maxWidth?: number
   return link;
 }
 
-export function createImageButton(classes: string[], style?: { [key: string]: string }) {
+export function createImageButton(classes: string[], title: string, style?: { [key: string]: string }) {
   const button = window.document.createElement("button");
   button.classList.add(
     "pm-image-button",
     ...classes
   );
+  button.title = title;
   applyStyle(button, style);
   return button;
+}
+
+export function showTooltip(el: Element, text: string, grav: "s" | "n" | "e" | "w" | "sw" | "se" | "nw" | "ne" = "n", timeout = 2000) {
+  el.setAttribute('title', '');
+  el.setAttribute('data-tlite', text);
+  tlite.show(el, { grav });
+  setTimeout(() => tlite.hide(el), timeout);
 }
 
 function applyStyle(el: HTMLElement, style?: { [key: string]: string }) {

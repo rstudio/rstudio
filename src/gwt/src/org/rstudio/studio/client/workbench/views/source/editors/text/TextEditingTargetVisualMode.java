@@ -539,7 +539,7 @@ public class TextEditingTargetVisualMode
    private PanmirrorUIContext uiContext()
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
-      uiContext.translateResourcePath = path -> {
+      uiContext.mapResourcePath = path -> {
          if (docUpdateSentinel_.getPath() != null)
             return ImagePreviewer.imgSrcPathFromHref(docUpdateSentinel_, path);
          else
@@ -550,6 +550,9 @@ public class TextEditingTargetVisualMode
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else
             return context_.getCurrentWorkingDir().getPath();
+      };
+      uiContext.translateText = text -> {
+         return text;
       };
       return uiContext;
    }

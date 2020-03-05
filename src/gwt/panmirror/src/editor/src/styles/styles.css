@@ -160,4 +160,8 @@
   background-image: url("./images/break_link.png");
 }
 
+.pm-image-button-copy-link {
+  background-image: url("./images/copy_link.png");
+}
+
 

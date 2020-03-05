@@ -16,13 +16,14 @@
 import { DecorationSet, Decoration, EditorView } from "prosemirror-view";
 import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 
+import ClipboardJS from "clipboard";
+
 import { getMarkRange, getMarkAttrs } from "../../api/mark";
 import { LinkProps, EditorUI } from "../../api/ui";
 import { editingRootNode } from "../../api/node";
 import { CommandFn } from "../../api/command";
 import { kRestoreLocationTransaction } from "../../api/transaction";
-import { createInlineTextPopup, createLinkButton, createImageButton, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
-import { LinkType } from "../../api/link";
+import { createInlineTextPopup, createLinkButton, createImageButton, createHorizontalPanel, addHorizontalPanelCell, showTooltip } from "../../api/widgets";
 
 const kMaxLinkWidth = 300;
 
@@ -36,16 +37,26 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
     function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
       
+
+      // we may create a ClipboardJS instance. if we do then clean it up 
+      // when the popup id destroyed
+      let clipboard : ClipboardJS;
+      const cleanup = () => {
+        if (clipboard) {
+          clipboard.destroy();
+        }
+      };
+
       // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
       // (this is so that links that start a line don't have their ragne derived from
       // the previous line)
-      const popup = createInlineTextPopup(["pm-popup-link"], { 'margin-left': '-1ch', ...style } );
+      const popup = createInlineTextPopup(editorView, ["pm-popup-link"], cleanup, { 'margin-left': '-1ch', ...style } );
 
       const panel = createHorizontalPanel();
       popup.append(panel);
 
       // create link
-      const text = attrs.type === LinkType.Heading ? attrs.heading! : attrs.href;
+      const text = attrs.heading ? attrs.heading! : attrs.href;
       const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
       link.onclick = () => {
         ui.display.openURL(attrs.href);
@@ -53,14 +64,27 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       };
       addHorizontalPanelCell(panel, link);
 
-      // create image butttons
-      const editLink = createImageButton(["pm-image-button-edit-link"]);
+      // copy link
+      if (!attrs.heading && ClipboardJS.isSupported()) {
+        const copyLink = createImageButton(["pm-image-button-copy-link"], ui.context.translateText("Copy Link to Clipboard"));
+        clipboard = new ClipboardJS(copyLink, {
+          text: () => text
+        });
+        clipboard.on('success', () => {
+          showTooltip(copyLink, ui.context.translateText("Copied to Clipboard"), "s");
+        });
+        addHorizontalPanelCell(panel, copyLink);
+      }
+
+      // edit link
+      const editLink = createImageButton(["pm-image-button-edit-link"], ui.context.translateText("Edit Link"));
       editLink.onclick = () => {
         linkCmd(editorView.state, editorView.dispatch, editorView);
       };
       addHorizontalPanelCell(panel, editLink);
 
-      const removeLink = createImageButton(["pm-image-button-remove-link"]);
+      // remove link
+      const removeLink = createImageButton(["pm-image-button-remove-link"], ui.context.translateText("Remove Link"));
       removeLink.onclick = () => {
         // in rstudio (w/ webkit) removing the link during the click results
         // in a page-navigation! defer to next event cycle to avoid this

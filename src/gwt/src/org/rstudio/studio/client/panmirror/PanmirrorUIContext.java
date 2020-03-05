@@ -23,7 +23,8 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIContext
 {
    public GetResourceDir getResourceDir;
-   public TranslateResourcePath translateResourcePath;
+   public MapResourcePath mapResourcePath;
+   public TranslateText translateText;
 
    @JsFunction
    public interface GetResourceDir
@@ -32,9 +33,15 @@ public class PanmirrorUIContext
    }
    
    @JsFunction
-   public interface TranslateResourcePath
+   public interface MapResourcePath
    {
-      String translateResourcePath(String path);
+      String mapResourcePath(String path);
+   }
+   
+   @JsFunction
+   public interface TranslateText
+   {
+      String translateText(String path);
    }
 }
 

@@ -33,7 +33,7 @@ export class ImageNodeView implements NodeView {
   private node: ProsemirrorNode;
   private readonly view: EditorView;
 
-  private readonly translateResourcePath: (path: string) => string;
+  private readonly mapResourcePath: (path: string) => string;
 
   constructor(
     node: ProsemirrorNode,
@@ -48,7 +48,7 @@ export class ImageNodeView implements NodeView {
 
     this.node = node;
     this.view = view;
-    this.translateResourcePath = editorUI.context.translateResourcePath;
+    this.mapResourcePath = editorUI.context.mapResourcePath;
 
     const selectOnClick = () => {
       const tr = view.state.tr;
@@ -108,7 +108,7 @@ export class ImageNodeView implements NodeView {
     // update img attributes (ensure we display an alt attribute so that we get
     // default browser broken image treatment)
     this.img.alt = node.textContent || node.attrs.src; 
-    this.img.src = this.translateResourcePath(node.attrs.src);
+    this.img.src = this.mapResourcePath(node.attrs.src);
     this.img.title = node.attrs.title;
 
     // update figure container with width/alignment related keyvalue props

@@ -42,7 +42,10 @@ export interface EditorUIContext {
   getResourceDir: () => string;
 
   // provide a URL that can be used to fetch the given resource path
-  translateResourcePath: (path: string) => string;
+  mapResourcePath: (path: string) => string;
+
+  // translate a string
+  translateText: (text: string) => string;
 }
 
 export interface EditorDisplay {
