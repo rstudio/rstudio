@@ -24,12 +24,13 @@
   text-overflow: ellipsis;
   cursor: pointer;
   margin-right: 4px;
+  padding-left: 2px;
 }
 
 
 
 .ProseMirror .pm-popup-link .pm-image-button {
-  width: 20px;
+  width: 22px;
   height: 20px;
   margin-left: 10px;
 }
