@@ -252,6 +252,10 @@ void finalPlatformInitialize(MainWindow* pMainWindow)
    {
       s_pDockMenu = new DockMenu(pMainWindow);
    }
+   else
+   {
+      s_pDockMenu->setMainWindow(pMainWindow);
+   }
 }
 
 NSString* createAliasedPath(NSString* path)

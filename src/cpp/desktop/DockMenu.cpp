@@ -20,7 +20,8 @@
 namespace rstudio {
 namespace desktop {
 
-DockMenu::DockMenu(MainWindow *pMainWindow)
+DockMenu::DockMenu(MainWindow *pMainWindow) :
+   pMainWindow_(pMainWindow)
 {
    setAsDockMenu();
    
@@ -28,16 +29,21 @@ DockMenu::DockMenu(MainWindow *pMainWindow)
 
    QAction* pNewWindow = addAction(QObject::tr("New RStudio Window"));
 
-   // Lambda holds a raw pointer to MainWindow. When the main window
+   // We hold a raw pointer to MainWindow. When the main window
    // goes away, so does the dock icon, thus the menu and the possibility of the
    // user clicking it, so this is safe (though unpleasant).
-   QObject::connect(pNewWindow, &QAction::triggered, [pMainWindow] () { 
+   QObject::connect(pNewWindow, &QAction::triggered, [this] () {
       std::vector<std::string> args;
-      pMainWindow->launchRStudio(args);
+      pMainWindow_->launchRStudio(args);
    });
 
    connect(this, &QMenu::aboutToShow,
            this, &DockMenu::onAboutToShow);
+}
+
+void DockMenu::setMainWindow(MainWindow* pMainWindow)
+{
+   pMainWindow_ = pMainWindow;
 }
 
 void DockMenu::onAboutToShow()
