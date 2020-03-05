@@ -71,69 +71,13 @@ json::Object createObject()
    return object;
 }
 
-json::Object returnObject()
-{
-   std::string jsonStr = "{\"a\": 5}";
-   json::Value val;
-   REQUIRE(!val.parse(jsonStr));
-
-   return val.getValue<json::Object>();
-}
-
 json::Value createValue()
 {
    json::Object obj = createObject();
    return std::move(obj);
 }
 
-json::Value getValue()
-{
-   std::string jsonStr = "{\"a\": 5}";
-   json::Value val;
-   REQUIRE(!val.parse(jsonStr));
-
-   json::Object obj = val.getObject();
-
-   // must return a copy instead of actual reference
-   return obj["a"].clone();
-}
-
 json::Object s_object;
-
-json::Value getGlobalValue(std::string scope,
-                           std::string name)
-{
-   json::Object::Iterator i = s_object.find(scope);
-   if (i == s_object.end())
-   {
-      return json::Value();
-   }
-   else
-   {
-      if (!json::isType<core::json::Object>((*i).getValue()))
-         return json::Value();
-      json::Object scopeObject = (*i).getValue().getObject();
-      return scopeObject[name];
-   }
-}
-
-void insertGlobalValue(const std::string& scope,
-                       const std::string& entryName,
-                       const json::Value& entryValue)
-{
-   json::Object::Iterator pos = s_object.find(scope);
-   if (pos == s_object.end())
-   {
-      json::Object newScopeObject;
-      s_object.insert(scope, newScopeObject);
-   }
-
-   const json::Value& scopeValue = s_object[scope];
-   json::Object scopeObject = scopeValue.getObject();
-
-   // insert the value into the scope
-   scopeObject.insert(entryName, entryValue);
-}
 
 } // anonymous namespace
 
