@@ -199,10 +199,10 @@ boost::shared_ptr<IConnection> getConnection()
    return s_connectionPool->getConnection();
 }
 
-bool getConnection(boost::shared_ptr<IConnection>* pConnection,
-                   const rstudio_boost::posix_time::time_duration& waitTime)
+bool getConnection(const rstudio_boost::posix_time::time_duration& waitTime,
+                   boost::shared_ptr<IConnection>* pConnection)
 {
-   return s_connectionPool->getConnection(pConnection, waitTime);
+   return s_connectionPool->getConnection(waitTime, pConnection);
 }
 
 } // namespace database

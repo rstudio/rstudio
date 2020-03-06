@@ -238,7 +238,7 @@ bool isCookieRevoked(const std::string& cookie)
                // this ensures that we do not delay the sign in process too long - deleting stale
                // cookies from the database immediately is not of critical importance, as this operation will
                // be retried on all subsequent auths / process restarts
-               server_core::database::getConnection(&connection, boost::posix_time::milliseconds(500));
+               server_core::database::getConnection(boost::posix_time::milliseconds(500), &connection);
                attemptedConnection = true;
             }
 

@@ -198,8 +198,8 @@ public:
    // get a connection from the connection pool, waiting for at most maxWait for one
    // to become available. if no connection becomes available, false is returned and
    // the connection is empty, otherwise the connection is set and true is returned
-   bool getConnection(boost::shared_ptr<IConnection>* pConnection,
-                      const boost::posix_time::time_duration& maxWait);
+   bool getConnection(const boost::posix_time::time_duration& maxWait,
+                      boost::shared_ptr<IConnection>* pConnection);
 
 private:
    friend class PooledConnection;

@@ -350,8 +350,8 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
    }
 }
 
-bool ConnectionPool::getConnection(boost::shared_ptr<IConnection>* pConnection,
-                                   const boost::posix_time::time_duration& maxWait)
+bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWait,
+                                   boost::shared_ptr<IConnection>* pConnection)
 {
    boost::shared_ptr<Connection> connection;
    if (!connections_.deque(&connection, maxWait))

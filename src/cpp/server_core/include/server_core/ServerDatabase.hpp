@@ -35,8 +35,8 @@ namespace database {
 core::Error initialize(bool updateSchema = false);
 
 boost::shared_ptr<core::database::IConnection> getConnection();
-bool getConnection(boost::shared_ptr<core::database::IConnection>* pConnection,
-                   const boost::posix_time::time_duration& waitTime);
+bool getConnection(const boost::posix_time::time_duration& waitTime,
+                   boost::shared_ptr<core::database::IConnection>* pConnection);
 
 } // namespace database
 } // namespace server_core
