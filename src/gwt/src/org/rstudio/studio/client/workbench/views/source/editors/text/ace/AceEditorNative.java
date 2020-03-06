@@ -651,6 +651,10 @@ public class AceEditorNative extends JavaScriptObject
    public final native void setScrollSpeed(double speed) /*-{
       this.setOption("scrollSpeed", speed);
    }-*/;
+   
+   public final native void setIndentedSoftWrap(boolean softWrap) /*-{
+      this.setOption("indentedSoftWrap", softWrap);
+   }-*/;
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
       if (movesFocus) {
@@ -661,6 +665,7 @@ public class AceEditorNative extends JavaScriptObject
          this.commands.bindKey("Shift+Tab", "outdent");
       }
    }-*/;
+   
 
    private static final native void initialize()
    /*-{
