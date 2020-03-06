@@ -130,24 +130,34 @@ export class ImageNodeView implements NodeView {
 
   private updateImg(node: ProsemirrorNode) {
 
-    // update img attributes (ensure we display an alt attribute so that we get
-    // default browser broken image treatment)
-    this.img.alt = node.textContent || node.attrs.src;
+    // map to path reachable within current editing frame
     this.img.src = this.mapResourcePath(node.attrs.src);
+
+    // title/tooltip
     this.img.title = node.attrs.title;
 
-    // update figure container with width/alignment related keyvalue props
-    // if (this.type === ImageType.Figure) {
-      this.updateFigure(node);
-    // }
-  }
+    // ensure alt attribute so that we get default browser broken image treatment
+    this.img.alt = node.textContent || node.attrs.src;
+    
+    // are we a figure
+    const figure = this.type === ImageType.Figure;
 
-  private updateFigure(node: ProsemirrorNode) {
+    // TODO: can we add another outer wrapper for spans
+
+    // alternatively, can we just guarantee that we only ever modfiy img.style (so can fully reset here)
+
+    // the dom.style below is only for figures
+
     // clear existing styles
     // TODO: how should this clearing work since we need the resize properties on there
     // this.dom.setAttribute('style', '');
     
+    // reset img style
     this.img.setAttribute('style', '');
+
+    // reset figure styles
+    this.dom.style.cssFloat = '';
+    this.dom.style.verticalAlign = '';
 
     // TODO: float properties need to go onto the figure
 
@@ -178,6 +188,9 @@ export class ImageNodeView implements NodeView {
         }
       });
     }
+
+
+   
   }
 
   private addResizeHandles(container: HTMLElement) {
