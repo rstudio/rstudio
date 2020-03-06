@@ -21,6 +21,8 @@ import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 
+import './image-styles.css';
+
 export class ImageNodeView implements NodeView {
   private readonly type: ImageType;
 
@@ -231,6 +233,7 @@ export class ImageNodeView implements NodeView {
 
     // create bottom right handle
     const handle = document.createElement('span');
+    handle.classList.add('pm-image-resize-handle');
     handle.style.position = "absolute";
     handle.style.border = "3px solid black";
     handle.style.borderTop = "none";
