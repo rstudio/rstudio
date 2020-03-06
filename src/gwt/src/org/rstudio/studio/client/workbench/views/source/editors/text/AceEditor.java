@@ -4030,6 +4030,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().setScrollSpeed(speed);
    }
+   
+   public final void setIndentedSoftWrap(boolean softWrap)
+   {
+      widget_.getEditor().setIndentedSoftWrap(softWrap);
+   }
 
    private void fireLineWidgetsChanged()
    {
