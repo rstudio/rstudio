@@ -22,6 +22,12 @@ then
   ./install-overlay
 fi
 
+# make sure brew is installed, and error if not
+if ! command -v brew &> /dev/null; then
+   echo "homebrew is not installed, but is needed to install dependencies"
+   exit 1
+fi
+
 # install postgres, needed by SOCI
 brew install postgres
 
