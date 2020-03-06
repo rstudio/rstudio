@@ -149,6 +149,11 @@ export class ImageNodeView implements NodeView {
     if (figure) {
       this.dom.style.cssFloat = '';
       this.dom.style.verticalAlign = '';
+      this.dom.style.margin = '';
+      this.dom.style.marginTop = '';
+      this.dom.style.marginBottom = '';
+      this.dom.style.marginRight = '';
+      this.dom.style.marginLeft = '';
     }
 
     // reset
@@ -162,32 +167,20 @@ export class ImageNodeView implements NodeView {
         // forward styles to image (but set align oriented styles on figure parent)
         if (key === 'style') {
 
-          // pull out align styles 
-          const extractStyle = (style: string) => {
-            let styleValue = "";
-            value = value.replace(new RegExp(style + "\\:\\s*(\\w+)", "g"), (_match, p1) => { 
-              styleValue = p1;
-              return "";
-            });
-            return styleValue;
-          };
-
-          // forward align styles to figure (if we are a figure)
-
-          // TODO: also pull out margin-* and margin
-
+          // pull out certain styles that shoudl really belong to the block container
           if (figure) {
-            const float = extractStyle("float");
-            if (float) {
-              this.dom.style.cssFloat = float;
-            }
-            const verticalAlign = extractStyle("vertical-align");
-            if (verticalAlign) {
-              this.dom.style.verticalAlign = verticalAlign;
-            }
-          }
+            const liftImageStyle = (style: string) => {
+              value = value.replace(new RegExp("(" + style + ")\\:\\s*(\\w+)", "g"), (_match, p1, p2) => { 
+                this.dom.style.setProperty(p1, p2);
+                return "";
+              });
+            };
+            liftImageStyle("float");
+            liftImageStyle("vertical-align");
+            liftImageStyle("margin(?:[\\w\\-])*");
+          }          
 
-          // set image style (modulo the align oriented properties above)
+          // set image style (modulo the properties lifted above)
           this.img.setAttribute('style', value);
 
         } else if (key === 'width') {
@@ -270,20 +263,21 @@ export class ImageNodeView implements NodeView {
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
 
-        // TODO: need to preserve all existing keyvalue except for "width"
+        // TODO: incorporate height
+        // TODO: don't allow sizing to happen if we have no extended attributes
+        // (but we always do if we have raw_html). 
+        // TODO: make sure nodeview still happens even if no raw_html
 
-        // TODO: what to do about "style" (pull out and apply to width)
-
-        const newAttrs = {
-          ...this.node.attrs,
-          keyvalue: [["width", this.img.width.toString()]]
-        };
-        
+        // edit width in keyvalue
+        let keyvalue = this.node.attrs.keyvalue as Array<[string,string]>;
+        keyvalue = keyvalue.filter(value => value[0] !== "width");
+        keyvalue.push(["width", this.img.width.toString()]);
+              
         // create transaction
         const tr = this.view.state.tr;
 
         // set new attributes
-        tr.setNodeMarkup(this.getPos(), this.node.type, newAttrs);
+        tr.setNodeMarkup(this.getPos(), this.node.type, { ...this.node.attrs, keyvalue });
 
         // restore node selection if our tr.setNodeMarkup blew away the selection
         const prevState = this.view.state;
