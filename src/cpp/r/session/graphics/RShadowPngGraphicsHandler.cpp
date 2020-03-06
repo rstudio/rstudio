@@ -77,24 +77,37 @@ struct ShadowDeviceData
 
 void shadowDevOff(DeviceContext* pDC)
 {
-   ShadowDeviceData* pDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
-   if (pDevData->pShadowPngDevice != nullptr)
+   // check for null pointers
+   if (pDC == nullptr)
    {
-      // kill the deviceF
-      pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
-
-      // only kill it is if is still alive
-      if (ndevNumber(pDevData->pShadowPngDevice) > 0)
-      {
-         // close the device -- don't log R errors because they can happen
-         // in the ordinary course of things for invalid graphics staes
-         Error error = r::exec::executeSafely(boost::bind(GEkillDevice, geDev));
-         if (error && !r::isCodeExecutionError(error))
-            LOG_ERROR(error);
-      }
-      // set to null
-      pDevData->pShadowPngDevice = nullptr;
+      LOG_WARNING_MESSAGE("unexpected null device context");
+      return;
    }
+   
+   if (pDC->pDeviceSpecific == nullptr)
+   {
+      LOG_WARNING_MESSAGE("unexpected null device data");
+      return;
+   }
+   
+   // check and see if the device has already been turned off
+   ShadowDeviceData* pDevData = (ShadowDeviceData*) pDC->pDeviceSpecific;
+   if (pDevData->pShadowPngDevice == nullptr)
+      return;
+   
+   // kill the device if it's still alive
+   pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
+   if (ndevNumber(pDevData->pShadowPngDevice) > 0)
+   {
+      // close the device -- don't log R errors because they can happen
+      // in the ordinary course of things for invalid graphics staes
+      Error error = r::exec::executeSafely(boost::bind(GEkillDevice, geDev));
+      if (error && !r::isCodeExecutionError(error))
+         LOG_ERROR(error);
+   }
+   
+   // set to null
+   pDevData->pShadowPngDevice = nullptr;
 }
 
 Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
