@@ -509,7 +509,7 @@ RemoteDesktopSessionLauncher* MainWindow::getRemoteDesktopSessionLauncher()
    return pRemoteSessionLauncher_;
 }
 
-JobLauncher* MainWindow::getJobLauncher()
+boost::shared_ptr<JobLauncher> MainWindow::getJobLauncher()
 {
    return pLauncher_;
 }

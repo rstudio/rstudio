@@ -52,7 +52,7 @@ public:
    void launchRemoteRStudioProject(const QString& projectUrl);
 
    RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
-   JobLauncher* getJobLauncher();
+   boost::shared_ptr<JobLauncher> getJobLauncher();
 
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
@@ -125,7 +125,7 @@ private:
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
    RemoteDesktopSessionLauncher* pRemoteSessionLauncher_;
-   JobLauncher* pLauncher_;
+   boost::shared_ptr<JobLauncher> pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 

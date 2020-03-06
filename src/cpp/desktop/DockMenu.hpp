@@ -31,6 +31,8 @@ class DockMenu: public QMenu
 public:
    explicit DockMenu(MainWindow* pMainWindow);
 
+   void setMainWindow(MainWindow* pMainWindow);
+
 protected Q_SLOTS:
    void onAboutToShow();
    void showWindow();
@@ -38,6 +40,8 @@ protected Q_SLOTS:
 private:
    QAction* pWindowPlaceholder_ = nullptr;
    QList<QAction*> windows_;
+
+   MainWindow* pMainWindow_;
 };
 
 } // namespace desktop
