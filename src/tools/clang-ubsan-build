@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 
-: ${ASANFLAGS="-fsanitize=address,undefined -fsanitize-recover=address,undefined -fno-omit-frame-pointer -fno-sanitize=float-divide-by-zero"}
-: ${LDFLAGS=""}
+read -r -d '' ASANFLAGS <<- EOF
+-fsanitize=address,undefined
+-fsanitize-recover=address,undefined
+-fno-sanitize=vptr,float-divide-by-zero
+-fno-omit-frame-pointer
+EOF
+ASANFLAGS="$(echo "${ASANFLAGS}" | tr '\n' ' ')"
+
 : ${BUILD_DIR="clang-ubsan-build"}
 : ${MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"}
 : ${R_HOME="$(R RHOME)"}
 
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
-cmake ../cpp                                    \
-    -DLIBR_HOME="${R_HOME}"                     \
-    -DCMAKE_BUILD_TYPE="Debug"                  \
-    -DCMAKE_C_FLAGS="${ASANFLAGS} ${LDFLAGS}"   \
-    -DCMAKE_CXX_FLAGS="${ASANFLAGS} ${LDFLAGS}" \
+cmake ../cpp                         \
+    -DLIBR_HOME="${R_HOME}"          \
+    -DCMAKE_BUILD_TYPE="Debug"       \
+    -DCMAKE_C_FLAGS="${ASANFLAGS}"   \
+    -DCMAKE_CXX_FLAGS="${ASANFLAGS}" \
     "$@"
 cd ..
 
