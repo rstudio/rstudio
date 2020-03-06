@@ -50,6 +50,8 @@ sudo apt-get -y install \
   libgtk-3-0 \
   libpam-dev \
   libpango1.0-dev \
+  libpq-dev \
+  libsqlite-dev \
   libssl-dev \
   libuser1-dev \
   libxslt1-dev \

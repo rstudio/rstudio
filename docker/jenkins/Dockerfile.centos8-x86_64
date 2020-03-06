@@ -23,6 +23,7 @@ RUN yum install -y \
     libcurl-devel \
     libacl-devel \
     libcap-devel \ 
+    libpq-devel \
     libuuid-devel \
     libXcursor-devel \
     libXrandr-devel \
@@ -42,6 +43,7 @@ RUN yum install -y \
     R \
     rpmdevtools \
     rpm-sign \
+    sqlite-devel \
     sudo \
     valgrind \
     wget \

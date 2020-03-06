@@ -23,6 +23,7 @@ set -e
 ./install-pandoc
 ./install-packages
 ./install-sentry-cli
+./install-soci
 
 # when installing dependencies to setup a dev environment, need to run install-crashpad
 # via sudo; however, this causes problems if used when building a Dockerfile

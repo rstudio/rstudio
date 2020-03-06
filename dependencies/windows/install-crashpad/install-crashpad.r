@@ -25,7 +25,7 @@ crashpad_debug_zip <- file.path(output_dir, "crashpad-debug.zip")
 crashpad_release_zip <- file.path(output_dir, "crashpad-release.zip")
 
 downloadAndUnzip <- function(outputFile, extractDir, outputDir, url) {
-   # download debug zip if we don't already have it
+   # download zip if we don't already have it
    if (!file.exists(outputFile)) {
       section("Downloading '%s' from '%s'", outputFile, url)
 	  download(url, destfile = outputFile)

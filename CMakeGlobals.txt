@@ -261,8 +261,15 @@ endfunction()
 # define custom installation macro to strip symbols from the binary
 macro(add_stripped_executable _target)
    add_executable(${_target} ${ARGN})
+
+   # set RPATH=$ORIGIN to ensure that any bundled libraries are found in our binary dir
+   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+   set_target_properties(${_target} PROPERTIES INSTALL_RPATH \$ORIGIN)
+
+   # only strip debug info in release builds
    if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)
       if(UNIX AND NOT APPLE)
+         # strip debug info
          add_custom_command(TARGET ${_target} POST_BUILD
                             COMMAND objcopy --only-keep-debug ${_target} ${_target}.debug
                             COMMAND objcopy --strip-debug --strip-unneeded ${_target}
