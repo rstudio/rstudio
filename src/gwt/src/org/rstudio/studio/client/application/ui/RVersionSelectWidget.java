@@ -17,11 +17,13 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RVersionSelectWidget extends SelectWidget
 {
@@ -104,12 +106,12 @@ public class RVersionSelectWidget extends SelectWidget
    {
       if (str != null)
       {
-         String[] values = str.split(SEP);
-         if (values.length == 3)
+         JsArrayString values = StringUtil.split(str, SEP);
+         if (values.length() == 3)
          {
-            String version = values[0];
-            String rHomeDir = values[1];
-            String label = values[2];
+            String version = values.get(0);
+            String rHomeDir = values.get(1);
+            String label = values.get(2);
             if (version.length() > 0 && rHomeDir.length() > 0)
                return RVersionSpec.create(version, rHomeDir, label);
          }
