@@ -21,63 +21,69 @@ if ("tools:rstudio" %in% search()) {
    .rs.Env <- attach(NULL, name = "tools:rstudio")
 }
 
+# allow access to tools env from symbol
+assign(".rs.Env", .rs.Env, envir = .rs.Env)
+
+# allow access to tools env from helper function
 assign(".rs.toolsEnv", envir = .rs.Env, function() { .rs.Env })
 
 # environment for completion hooks
 assign(".rs.RCompletionHooksEnv", new.env(parent = emptyenv()), envir = .rs.Env)
 
 # add a function to the tools:rstudio environment
-assign( envir = .rs.Env, ".rs.addFunction", function(
-   name, FN, attrs = list())
+assign(".rs.addFunction", function(name, FN, attrs = list())
 { 
    fullName = paste(".rs.", name, sep="")
    for (attrib in names(attrs))
      attr(FN, attrib) <- attrs[[attrib]]
    assign(fullName, FN, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
-})
+}, envir = .rs.Env)
+
+# force function to execute in tools environment
+environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 # add a global (non-scoped) variable to the tools:rstudio environment
-assign(envir = .rs.Env, ".rs.addGlobalVariable", function(name, var)
+.rs.addFunction("addGlobalVariable", function(name, var)
 { 
    assign(name, var, .rs.Env)
    environment(.rs.Env[[name]]) <- .rs.Env
 })
 
 # add a global (non-scoped) function to the tools:rstudio environment
-assign( envir = .rs.Env, ".rs.addGlobalFunction", function(name, FN)
+.rs.addFunction("addGlobalFunction", function(name, FN)
 { 
    assign(name, FN, .rs.Env)
    environment(.rs.Env[[name]]) <- .rs.Env
 })
 
 # add an rpc handler to the tools:rstudio environment
-.rs.addFunction( "addApiFunction", function(name, FN)
+.rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName = paste("api.", name, sep="")
    .rs.addFunction(fullName, FN)
 })
 
-assign( envir = .rs.Env, ".rs.setVar", function(name, var)
+.rs.addFunction("setVar", function(name, var)
 { 
    fullName = paste(".rs.", name, sep="")
    assign(fullName, var, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
 
-assign( envir = .rs.Env, ".rs.clearVar", function(name)
+.rs.addFunction("clearVar", function(name)
 { 
    fullName = paste(".rs.", name, sep="")
    remove(list=fullName, pos=.rs.Env)
 })
 
-assign(envir = .rs.Env, ".rs.getVar", function(name)
+.rs.addFunction("getVar", function(name)
 {
    fullName <- paste(".rs.", name, sep = "")
    .rs.Env[[fullName]]
 })
 
-assign(envir = .rs.Env, ".rs.hasVar", function(name)
+.rs.addFunction("hasVar", function(name)
 {
    fullName <- paste(".rs.", name, sep = "")
    exists(fullName, envir = .rs.Env)
