@@ -427,7 +427,7 @@ void resyncDisplayList()
       {
          std::string errMsg;
          if (r::isCodeExecutionError(error, &errMsg))
-            Rprintf(errMsg.c_str());
+            Rprintf("%s\n", errMsg.c_str());
          else
             LOG_ERROR(error);
       }
