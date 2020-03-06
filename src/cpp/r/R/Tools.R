@@ -15,78 +15,90 @@
 
 # target environment for rstudio supplemental tools
 # (guard against attempts to duplicate this environment)
-if ("tools:rstudio" %in% search()) {
-   .rs.Env <- as.environment("tools:rstudio")
+.rs.Env <- if ("tools:rstudio" %in% search()) {
+   as.environment("tools:rstudio")
 } else {
-   .rs.Env <- attach(NULL, name = "tools:rstudio")
+   attach(NULL, name = "tools:rstudio")
 }
 
-# allow access to tools env from symbol
-assign(".rs.Env", .rs.Env, envir = .rs.Env)
-
 # allow access to tools env from helper function
-assign(".rs.toolsEnv", envir = .rs.Env, function() { .rs.Env })
-
-# environment for completion hooks
-assign(".rs.RCompletionHooksEnv", new.env(parent = emptyenv()), envir = .rs.Env)
+assign(".rs.toolsEnv", function()
+{
+   .rs.Env
+}, envir = .rs.Env)
 
 # add a function to the tools:rstudio environment
 assign(".rs.addFunction", function(name, FN, attrs = list())
 { 
-   fullName = paste(".rs.", name, sep="")
+   # add optional attributes
    for (attrib in names(attrs))
-     attr(FN, attrib) <- attrs[[attrib]]
-   assign(fullName, FN, .rs.Env)
-   environment(.rs.Env[[fullName]]) <- .rs.Env
+      attr(FN, attrib) <- attrs[[attrib]]
+   
+   # get tools env
+   envir <- .rs.toolsEnv()
+   
+   # ensure function evaluates in tools env
+   environment(FN) <- envir
+   
+   # assign in tools env
+   fullName <- paste(".rs.", name, sep = "")
+   assign(fullName, FN, envir = envir)
+   
 }, envir = .rs.Env)
 
-# force function to execute in tools environment
+# force helper function to also execute in tools environment
 environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 # add a global (non-scoped) variable to the tools:rstudio environment
 .rs.addFunction("addGlobalVariable", function(name, var)
-{ 
-   assign(name, var, .rs.Env)
-   environment(.rs.Env[[name]]) <- .rs.Env
+{
+   envir <- .rs.toolsEnv()
+   environment(var) <- envir
+   assign(name, var, envir = envir)
 })
 
 # add a global (non-scoped) function to the tools:rstudio environment
 .rs.addFunction("addGlobalFunction", function(name, FN)
 { 
-   assign(name, FN, .rs.Env)
-   environment(.rs.Env[[name]]) <- .rs.Env
+   envir <- .rs.toolsEnv()
+   environment(FN) <- envir
+   assign(name, FN, envir = envir)
 })
 
 # add an rpc handler to the tools:rstudio environment
 .rs.addFunction("addApiFunction", function(name, FN)
 {
-   fullName = paste("api.", name, sep="")
+   fullName <- paste("api.", name, sep = "")
    .rs.addFunction(fullName, FN)
 })
 
 .rs.addFunction("setVar", function(name, var)
 { 
-   fullName = paste(".rs.", name, sep="")
-   assign(fullName, var, .rs.Env)
-   environment(.rs.Env[[fullName]]) <- .rs.Env
+   envir <- .rs.toolsEnv()
+   fullName <- paste(".rs.", name, sep = "")
+   environment(var) <- envir
+   assign(fullName, var, envir = envir)
 })
 
 .rs.addFunction("clearVar", function(name)
 { 
-   fullName = paste(".rs.", name, sep="")
-   remove(list=fullName, pos=.rs.Env)
+   envir <- .rs.toolsEnv()
+   fullName <- paste(".rs.", name, sep = "")
+   remove(list = fullName, pos = envir)
 })
 
 .rs.addFunction("getVar", function(name)
 {
+   envir <- .rs.toolsEnv()
    fullName <- paste(".rs.", name, sep = "")
-   .rs.Env[[fullName]]
+   envir[[fullName]]
 })
 
 .rs.addFunction("hasVar", function(name)
 {
+   envir <- .rs.toolsEnv()
    fullName <- paste(".rs.", name, sep = "")
-   exists(fullName, envir = .rs.Env)
+   exists(fullName, envir = envir)
 })
 
 .rs.addFunction( "evalInGlobalEnv", function(code)
@@ -636,7 +648,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 # add an rpc handler to the tools:rstudio environment
 .rs.addFunction( "addJsonRpcHandler", function(name, FN)
 {
-   fullName = paste("rpc.", name, sep="")
+   fullName <- paste("rpc.", name, sep = "")
    .rs.addFunction(fullName, FN, TRUE)
 })
 
