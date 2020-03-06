@@ -27,6 +27,8 @@ export class ImageNodeView implements NodeView {
   public readonly dom: HTMLElement;
   private readonly img: HTMLImageElement;
 
+  private readonly getPos: () => number;
+
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
@@ -48,6 +50,7 @@ export class ImageNodeView implements NodeView {
 
     this.node = node;
     this.view = view;
+    this.getPos = getPos;
     this.mapResourcePath = editorUI.context.mapResourcePath;
 
     const selectOnClick = () => {
@@ -72,12 +75,22 @@ export class ImageNodeView implements NodeView {
 
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
+      
+      // create figure wrapper
       this.dom = document.createElement('figure');
+
+      // create container and add resize handles to it
       const container = document.createElement('div');
+      this.addResizeHandles(container);
+      
+      // initialize the image, add it to the container, then add 
+      // the container to the DOM
       this.updateImg(node);
       container.append(this.img);
       container.contentEditable = 'false';
       this.dom.append(container);
+
+      // create the caption and make it our contentDOM
       this.figcaption = document.createElement('figcaption');
       this.figcaption.classList.add('pm-figcaption');
       this.figcaption.classList.add('pm-node-caption');
@@ -86,7 +99,9 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
     } else {
-      this.dom = this.img;
+      this.dom = document.createElement('span');
+      this.dom.append(this.img);
+      this.addResizeHandles(this.dom);
       this.contentDOM = null;
       this.figcaption = null;
       this.updateImg(node);
@@ -94,6 +109,7 @@ export class ImageNodeView implements NodeView {
   }
 
   public update(node: ProsemirrorNode) {
+
     if (node.type !== this.node.type) {
       return false;
     }
@@ -104,7 +120,16 @@ export class ImageNodeView implements NodeView {
     return true;
   }
 
+  // ignore resizing mutations
+  public ignoreMutation(mutation: MutationRecord | { type: "selection"; target: Element; }) {
+    if (!this.contentDOM) {
+      return true;
+    }
+    return !this.contentDOM.contains(mutation.target);
+  }
+
   private updateImg(node: ProsemirrorNode) {
+
     // update img attributes (ensure we display an alt attribute so that we get
     // default browser broken image treatment)
     this.img.alt = node.textContent || node.attrs.src;
@@ -112,31 +137,32 @@ export class ImageNodeView implements NodeView {
     this.img.title = node.attrs.title;
 
     // update figure container with width/alignment related keyvalue props
-    if (this.type === ImageType.Figure) {
+    // if (this.type === ImageType.Figure) {
       this.updateFigure(node);
-    }
+    // }
   }
 
   private updateFigure(node: ProsemirrorNode) {
     // clear existing styles
-    this.dom.setAttribute('style', '');
+    // TODO: how should this clearing work since we need the resize properties on there
+    // this.dom.setAttribute('style', '');
+    
     this.img.setAttribute('style', '');
+
+    // TODO: float properties need to go onto the figure
 
     // reset
     if (node.attrs.keyvalue) {
-      let hasWidth = false;
       (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
         const [key, value] = attr;
         if (key === 'style') {
           const style = this.dom.getAttribute('style');
           const baseStyle = style ? ';' + style : '';
-          this.dom.setAttribute('style', value + baseStyle);
-          hasWidth = hasWidth || value.includes('width:');
+          this.img.setAttribute('style', value + baseStyle);
         } else if (key === 'width') {
-          this.dom.style.width = value;
-          hasWidth = true;
+          this.img.style.width = value + "px";
         } else if (key === 'height') {
-          this.dom.style.height = value;
+          this.img.style.height = value + "px";
         } else if (key === 'align') {
           switch (value) {
             case 'left':
@@ -151,11 +177,89 @@ export class ImageNodeView implements NodeView {
           }
         }
       });
-
-      // if we have a width or height then set accordingly on image
-      if (hasWidth) {
-        this.img.style.width = '100%';
-      }
     }
+  }
+
+  private addResizeHandles(container: HTMLElement) {
+
+
+    // so that we are the offsetParent for the handles
+    container.style.position = "relative";
+
+    // so that the container matches the size of the contained image
+    container.style.display = "inline-block";
+
+    // so that the handles can be visible outside the boundaries of the image
+    container.style.overflow = "visible";
+
+    // create bottom right handle
+    const handle = document.createElement('span');
+    handle.style.position = "absolute";
+    handle.style.border = "3px solid black";
+    handle.style.borderTop = "none";
+    handle.style.borderLeft = "none";
+    handle.style.bottom = "-5px";
+    handle.style.right = "-8px";
+    handle.style.width = "10px";
+    handle.style.height = "10px";
+    handle.style.cursor = "nwse-resize";
+
+    handle.onmousedown = (ev: MouseEvent) => {
+
+      ev.preventDefault();
+
+      const startWidth = this.img!.offsetWidth;
+
+      const startX = ev.pageX;
+      const startY = ev.pageY;
+      
+
+      const onMouseMove = (e: MouseEvent) => {
+        const currentX = e.pageX;
+        const currentY = e.pageY;
+        
+        const diffInPx = currentX - startX;
+                
+        this.img!.style.width = (startWidth + diffInPx) + "px";
+      };
+      
+      const onMouseUp = (e: MouseEvent) => {    
+
+        e.preventDefault();
+        
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+
+        
+        const newAttrs = {
+          ...this.node.attrs,
+          keyvalue: [["width", this.img.width.toString()]]
+        };
+        
+        // create transaction
+        const tr = this.view.state.tr;
+
+        // set new attributes
+        tr.setNodeMarkup(this.getPos(), this.node.type, newAttrs);
+
+        // restore node selection if our tr.setNodeMarkup blew away the selection
+        const prevState = this.view.state;
+        if (prevState.selection instanceof NodeSelection && prevState.selection.from === this.getPos() ) {
+          tr.setSelection(NodeSelection.create(tr.doc, this.getPos()));
+        }
+
+        // dispatch transaction
+        this.view.dispatch(tr);
+      };
+      
+      
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+
+    };
+
+
+    container.append(handle);
+
   }
 }
