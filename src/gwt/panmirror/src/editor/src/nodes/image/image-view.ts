@@ -139,41 +139,65 @@ export class ImageNodeView implements NodeView {
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = node.textContent || node.attrs.src;
     
-    // are we a figure
-    const figure = this.type === ImageType.Figure;
-
-    // TODO: can we add another outer wrapper for spans
-
-    // alternatively, can we just guarantee that we only ever modfiy img.style (so can fully reset here)
-
-    // the dom.style below is only for figures
-
-    // clear existing styles
-    // TODO: how should this clearing work since we need the resize properties on there
-    // this.dom.setAttribute('style', '');
-    
     // reset img style
     this.img.setAttribute('style', '');
 
     // reset figure styles
-    this.dom.style.cssFloat = '';
-    this.dom.style.verticalAlign = '';
-
-    // TODO: float properties need to go onto the figure
+    const figure = this.type === ImageType.Figure;
+    if (figure) {
+      this.dom.style.cssFloat = '';
+      this.dom.style.verticalAlign = '';
+    }
 
     // reset
     if (node.attrs.keyvalue) {
       (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
-        const [key, value] = attr;
+        
+        // alias key and value
+        const key = attr[0];
+        let value = attr[1];
+       
+        // forward styles to image (but set align oriented styles on figure parent)
         if (key === 'style') {
-          const style = this.dom.getAttribute('style');
-          const baseStyle = style ? ';' + style : '';
-          this.img.setAttribute('style', value + baseStyle);
+
+          // pull out align styles 
+          const extractStyle = (style: string) => {
+            let styleValue = "";
+            value = value.replace(new RegExp(style + "\\:\\s*(\\w+)", "g"), (_match, p1) => { 
+              styleValue = p1;
+              return "";
+            });
+            return styleValue;
+          };
+
+          // forward align styles to figure (if we are a figure)
+
+          // TODO: also pull out margin-* and margin
+
+          if (figure) {
+            const float = extractStyle("float");
+            if (float) {
+              this.dom.style.cssFloat = float;
+            }
+            const verticalAlign = extractStyle("vertical-align");
+            if (verticalAlign) {
+              this.dom.style.verticalAlign = verticalAlign;
+            }
+          }
+
+          // set image style (modulo the align oriented properties above)
+          this.img.setAttribute('style', value);
+
         } else if (key === 'width') {
+
           this.img.style.width = value + "px";
+        
         } else if (key === 'height') {
+          
           this.img.style.height = value + "px";
-        } else if (key === 'align') {
+        
+        } else if (figure && key === 'align') {
+         
           switch (value) {
             case 'left':
             case 'right':
@@ -185,16 +209,16 @@ export class ImageNodeView implements NodeView {
               this.dom.style.verticalAlign = value;
               break;
           }
+          
         }
       });
     }
-
-
    
   }
 
-  private addResizeHandles(container: HTMLElement) {
 
+
+  private addResizeHandles(container: HTMLElement) {
 
     // so that we are the offsetParent for the handles
     container.style.position = "relative";
@@ -243,7 +267,10 @@ export class ImageNodeView implements NodeView {
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
 
-        
+        // TODO: need to preserve all existing keyvalue except for "width"
+
+        // TODO: what to do about "style" (pull out and apply to width)
+
         const newAttrs = {
           ...this.node.attrs,
           keyvalue: [["width", this.img.width.toString()]]
