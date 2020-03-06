@@ -427,7 +427,7 @@ void resyncDisplayList()
       {
          std::string errMsg;
          if (r::isCodeExecutionError(error, &errMsg))
-            Rprintf(errMsg.c_str());
+            Rprintf("%s\n", errMsg.c_str());
          else
             LOG_ERROR(error);
       }
@@ -457,7 +457,9 @@ SEXP rs_createGD()
          {
             std::string msg = error.getSummary();
             r::isCodeExecutionError(error, &msg);
-            Rf_warning(("Error creating graphics device: " + msg).c_str());
+            
+            std::string rMsg = "Error creating graphics device: " + msg;
+            Rf_warning("%s\n", rMsg.c_str());
          }
       }
       else
