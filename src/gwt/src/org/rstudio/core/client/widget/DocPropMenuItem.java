@@ -24,11 +24,17 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
 public class DocPropMenuItem extends CheckableMenuItem
-{
+{ 
    public DocPropMenuItem(String label, DocUpdateSentinel docUpdate, 
+                          boolean defaultChecked, String propName, String targetValue)
+   {
+      this(label, false, docUpdate, defaultChecked, propName, targetValue);
+   }
+   
+   public DocPropMenuItem(String label, boolean html, DocUpdateSentinel docUpdate, 
          boolean defaultChecked, String propName, String targetValue)
    {
-      super(label);
+      super(label, html);
       docUpdate_ = docUpdate;
       default_ = defaultChecked;
       propName_ = propName;
