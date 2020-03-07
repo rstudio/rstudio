@@ -81,18 +81,17 @@ export class ImageNodeView implements NodeView {
 
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
-      
       // create figure wrapper
       this.dom = document.createElement('figure');
 
       // create container and add resize handles to it
       const container = document.createElement('div');
       if (imageAttributes) {
-        this.dom.style.outline = "none";
+        this.dom.style.outline = 'none';
         this.resizeUIContainer = container;
       }
-      
-      // initialize the image, add it to the container, then add 
+
+      // initialize the image, add it to the container, then add
       // the container to the DOM
       this.updateImg(node);
       container.append(this.img);
@@ -108,9 +107,8 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
 
-    // standard inline image
+      // standard inline image
     } else {
-
       this.dom = document.createElement('span');
       if (imageAttributes) {
         this.resizeUIContainer = this.dom;
@@ -118,40 +116,32 @@ export class ImageNodeView implements NodeView {
 
       this.updateImg(node);
       this.dom.append(this.img);
-     
+
       this.contentDOM = null;
       this.figcaption = null;
     }
   }
 
-
-
   public selectNode() {
-    
     // mirror default implementation
-    this.dom.classList.add("ProseMirror-selectednode");
+    this.dom.classList.add('ProseMirror-selectednode');
     if (this.contentDOM || !this.node.type.spec.draggable) {
       this.dom.draggable = true;
-    } 
+    }
 
     // attach resize UI
     if (this.resizeUIContainer) {
-      this.removeResizeUI = attachResizeUI(
-        this.resizeUIContainer, 
-        this.img!, 
-        this.view, 
-        () => ({ 
-          pos: this.getPos(), 
-          node: this.node 
-        })
-      );
+      this.removeResizeUI = attachResizeUI(this.resizeUIContainer, this.img!, this.view, () => ({
+        pos: this.getPos(),
+        node: this.node,
+      }));
     }
   }
 
   public deselectNode() {
     // mirror default implementation
-    this.dom.classList.remove("ProseMirror-selectednode");
-    if (this.contentDOM || !this.node.type.spec.draggable) { 
+    this.dom.classList.remove('ProseMirror-selectednode');
+    if (this.contentDOM || !this.node.type.spec.draggable) {
       this.dom.draggable = false;
     }
 
@@ -173,7 +163,7 @@ export class ImageNodeView implements NodeView {
   }
 
   // ignore mutations outside of the content time so sizing actions don't cause PM re-render
-  public ignoreMutation(mutation: MutationRecord | { type: "selection"; target: Element; }) {
+  public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
     if (!this.contentDOM) {
       return true;
     }
@@ -182,7 +172,6 @@ export class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg(node: ProsemirrorNode) {
-
     // map to path reachable within current editing frame
     this.img.src = this.mapResourcePath(node.attrs.src);
 
@@ -191,7 +180,7 @@ export class ImageNodeView implements NodeView {
 
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = node.textContent || node.attrs.src;
-    
+
     // reset img style
     this.img.setAttribute('style', '');
 
@@ -210,43 +199,36 @@ export class ImageNodeView implements NodeView {
     // apply keyvalue attribute to image
     if (node.attrs.keyvalue) {
       (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
-        
         // alias key and value
         const key = attr[0];
         let value = attr[1];
-       
+
         // forward styles to image (but set align oriented styles on figure parent)
         if (key === 'style') {
-
           // pull out certain styles that shoudl really belong to the block container
           if (this.isFigure()) {
             const liftImageStyle = (style: string) => {
               // mutate the value to remove the lifted style
-              value = value.replace(new RegExp("(" + style + ")\\:\\s*(\\w+)", "g"), (_match, p1, p2) => { 
+              value = value.replace(new RegExp('(' + style + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
                 this.dom.style.setProperty(p1, p2);
-                return "";
+                return '';
               });
             };
-            liftImageStyle("float");
-            liftImageStyle("vertical-align");
-            liftImageStyle("margin(?:[\\w\\-])*");
-          }          
+            liftImageStyle('float');
+            liftImageStyle('vertical-align');
+            liftImageStyle('margin(?:[\\w\\-])*');
+          }
 
           // set image style (modulo the properties lifted above)
           this.img.setAttribute('style', value);
-
         } else if (key === 'width') {
-
-          this.img.style.width = value + "px";
-        
+          this.img.style.width = value + 'px';
         } else if (key === 'height') {
-          
-          this.img.style.height = value + "px";
-        
-        // use of legacy 'align' attribute is common for some pandoc users
-        // so we convert it to the requisite CSS
+          this.img.style.height = value + 'px';
+
+          // use of legacy 'align' attribute is common for some pandoc users
+          // so we convert it to the requisite CSS
         } else if (this.isFigure() && key === 'align') {
-         
           switch (value) {
             case 'left':
             case 'right':
@@ -258,7 +240,6 @@ export class ImageNodeView implements NodeView {
               this.dom.style.verticalAlign = value;
               break;
           }
-          
         }
       });
     }
@@ -267,5 +248,4 @@ export class ImageNodeView implements NodeView {
   private isFigure() {
     return this.type === ImageType.Figure;
   }
-
 }

@@ -1,4 +1,3 @@
-
 /*
  * image-resize.ts
  *
@@ -14,50 +13,52 @@
  *
  */
 
-import { EditorView } from "prosemirror-view";
-import { NodeWithPos } from "prosemirror-utils";
-import { NodeSelection } from "prosemirror-state";
-import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
+import { EditorView } from 'prosemirror-view';
+import { NodeWithPos } from 'prosemirror-utils';
+import { NodeSelection } from 'prosemirror-state';
+import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from '../../api/widgets';
 
-export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, view: EditorView, getNodeWithPos: () => NodeWithPos) {
-
+export function attachResizeUI(
+  container: HTMLElement,
+  img: HTMLImageElement,
+  view: EditorView,
+  getNodeWithPos: () => NodeWithPos,
+) {
   // so that we are the offsetParent for the handles
-  container.style.position = "relative";
+  container.style.position = 'relative';
 
   // so that the container matches the size of the contained image
-  container.style.display = "inline-block";
+  container.style.display = 'inline-block';
 
   // so that the handles can be visible outside the boundaries of the image
-  container.style.overflow = "visible";
+  container.style.overflow = 'visible';
 
   // don't show standard selected node outline (since we are showing the resizing handles)
-  container.style.outline = "none";
+  container.style.outline = 'none';
 
   // create resize shelf
   const popup = createPopup(view, []);
-  popup.style.left = "0";
-  popup.style.bottom = "-45px";
-  popup.style.right = "0";
+  popup.style.left = '0';
+  popup.style.bottom = '-45px';
+  popup.style.right = '0';
   container.append(popup);
   const panel = createHorizontalPanel();
   popup.append(panel);
-  const label = document.createElement("span");
-  label.innerText = "This is the resizer UI";
+  const label = document.createElement('span');
+  label.innerText = 'This is the resizer UI';
   addHorizontalPanelCell(panel, label);
-  
 
   // create bottom right handle
   const handle = document.createElement('span');
   handle.classList.add('pm-image-resize-handle');
-  handle.style.position = "absolute";
-  handle.style.bottom = "-5px";
-  handle.style.right = "-5px";
-  handle.style.width = "10px";
-  handle.style.height = "10px";
-  handle.style.cursor = "nwse-resize";
+  handle.style.position = 'absolute';
+  handle.style.bottom = '-5px';
+  handle.style.right = '-5px';
+  handle.style.width = '10px';
+  handle.style.height = '10px';
+  handle.style.cursor = 'nwse-resize';
 
-  handle.onmousedown = (ev: MouseEvent) => {
-
+  handle.onmousedown = (ev: MouseEvent) => {
     ev.preventDefault();
 
     const startWidth = img.offsetWidth;
@@ -69,29 +70,28 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
     const onMouseMove = (e: MouseEvent) => {
       // width
       const movedX = e.pageX - startX;
-      img.style.width = (startWidth + movedX) + "px";
+      img.style.width = startWidth + movedX + 'px';
 
       // height
       const movedY = e.pageY - startY;
-      img.style.height = (startHeight + movedY) + "px";     
+      img.style.height = startHeight + movedY + 'px';
     };
-    
-    const onMouseUp = (e: MouseEvent) => {    
 
+    const onMouseUp = (e: MouseEvent) => {
       e.preventDefault();
-      
+
       // stop listening to events
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
 
       // get node and position
       const { pos, node } = getNodeWithPos();
-    
+
       // edit width & height in keyvalue
-      let keyvalue = node.attrs.keyvalue as Array<[string,string]>;
-      keyvalue = keyvalue.filter(value => !["width", "height"].includes(value[0]));
-      keyvalue.push(["width", img.width.toString()]);
-      keyvalue.push(["height", img.height.toString()]);
+      let keyvalue = node.attrs.keyvalue as Array<[string, string]>;
+      keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
+      keyvalue.push(['width', img.width.toString()]);
+      keyvalue.push(['height', img.height.toString()]);
 
       // create transaction
       const tr = view.state.tr;
@@ -108,20 +108,17 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
       // dispatch transaction
       view.dispatch(tr);
     };
-    
-    
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
 
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   };
 
   // append the handle
   container.append(handle);
-  
+
   // return a function that can be used to destroy the resize UI
   return () => {
     handle.remove();
     popup.remove();
   };
-
 }
