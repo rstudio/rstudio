@@ -14,11 +14,14 @@
  */
 
 .ProseMirror .pm-image-resize-container.pm-image-resize-active {
-  outline: 3px solid;
+  outline: 2px solid;
 }
 
 .ProseMirror .pm-image-resize-handle {
-  border: 1px solid black;
+  border: 2px solid;
+  border-radius: 7px;
+  width: 7px;
+  height: 7px;
 }
 
 

@@ -175,6 +175,9 @@ export function applyTheme(theme: EditorTheme) {
     .ProseMirror-selectednode {
       outline-color: ${theme.selectionColor} !important;
     }
+    .pm-selected-node-border-color {
+      border-color: ${theme.selectionColor} !important;
+    }
     .pm-background-color *::selection {
       background-color: ${theme.selectionColor} !important;
     }

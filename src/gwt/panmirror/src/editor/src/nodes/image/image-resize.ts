@@ -63,12 +63,14 @@ export function attachResizeUI(
 
   // create bottom right handle
   const handle = document.createElement('span');
-  handle.classList.add('pm-image-resize-handle');
+  handle.classList.add(
+    'pm-image-resize-handle', 
+    'pm-background-color', 
+    'pm-selected-node-border-color'
+  );
   handle.style.position = 'absolute';
-  handle.style.bottom = '-5px';
-  handle.style.right = '-5px';
-  handle.style.width = '10px';
-  handle.style.height = '10px';
+  handle.style.bottom = '-6px';
+  handle.style.right = '-6px';
   handle.style.cursor = 'nwse-resize';
 
   handle.onmousedown = (ev: MouseEvent) => {
