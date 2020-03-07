@@ -20,6 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
+import { attachResizeUI } from './image-resize';
 
 import './image-styles.css';
 
@@ -83,7 +84,7 @@ export class ImageNodeView implements NodeView {
 
       // create container and add resize handles to it
       const container = document.createElement('div');
-      this.addResizeHandles(container);
+      this.attachResizeUI(container);
       
       // initialize the image, add it to the container, then add 
       // the container to the DOM
@@ -100,29 +101,29 @@ export class ImageNodeView implements NodeView {
       this.figcaption.ondblclick = noPropagateClick;
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
+
+    // standard inline image
     } else {
       this.dom = document.createElement('span');
       this.dom.append(this.img);
-      this.addResizeHandles(this.dom);
+      this.attachResizeUI(this.dom);
       this.contentDOM = null;
       this.figcaption = null;
       this.updateImg(node);
     }
   }
 
+  // update image with latest node/attributes
   public update(node: ProsemirrorNode) {
-
     if (node.type !== this.node.type) {
       return false;
     }
-
     this.node = node;
     this.updateImg(node);
-
     return true;
   }
 
-  // ignore resizing mutations
+  // ignore mutations outside of the content time so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: "selection"; target: Element; }) {
     if (!this.contentDOM) {
       return true;
@@ -130,6 +131,7 @@ export class ImageNodeView implements NodeView {
     return !this.contentDOM.contains(mutation.target);
   }
 
+  // map node to img tag
   private updateImg(node: ProsemirrorNode) {
 
     // map to path reachable within current editing frame
@@ -144,9 +146,9 @@ export class ImageNodeView implements NodeView {
     // reset img style
     this.img.setAttribute('style', '');
 
-    // reset figure styles
-    const figure = this.type === ImageType.Figure;
-    if (figure) {
+    // reset figure styles (only reset styles that we explicitly set below, b/c some
+    // styles may have been set by e.g. the attachResizeUI function)
+    if (this.isFigure()) {
       this.dom.style.cssFloat = '';
       this.dom.style.verticalAlign = '';
       this.dom.style.margin = '';
@@ -156,7 +158,7 @@ export class ImageNodeView implements NodeView {
       this.dom.style.marginLeft = '';
     }
 
-    // reset
+    // apply keyvalue attribute to image
     if (node.attrs.keyvalue) {
       (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
         
@@ -168,8 +170,9 @@ export class ImageNodeView implements NodeView {
         if (key === 'style') {
 
           // pull out certain styles that shoudl really belong to the block container
-          if (figure) {
+          if (this.isFigure()) {
             const liftImageStyle = (style: string) => {
+              // mutate the value to remove the lifted style
               value = value.replace(new RegExp("(" + style + ")\\:\\s*(\\w+)", "g"), (_match, p1, p2) => { 
                 this.dom.style.setProperty(p1, p2);
                 return "";
@@ -191,7 +194,9 @@ export class ImageNodeView implements NodeView {
           
           this.img.style.height = value + "px";
         
-        } else if (figure && key === 'align') {
+        // use of legacy 'align' attribute is common for some pandoc users
+        // so we convert it to the requisite CSS
+        } else if (this.isFigure() && key === 'align') {
          
           switch (value) {
             case 'left':
@@ -208,95 +213,21 @@ export class ImageNodeView implements NodeView {
         }
       });
     }
-   
   }
 
+  private isFigure() {
+    return this.type === ImageType.Figure;
+  }
 
-
-  private addResizeHandles(container: HTMLElement) {
-
-    // so that we are the offsetParent for the handles
-    container.style.position = "relative";
-
-    // so that the container matches the size of the contained image
-    container.style.display = "inline-block";
-
-    // so that the handles can be visible outside the boundaries of the image
-    container.style.overflow = "visible";
-
-    // create bottom right handle
-    const handle = document.createElement('span');
-    handle.classList.add('pm-image-resize-handle');
-    handle.style.position = "absolute";
-    handle.style.border = "3px solid black";
-    handle.style.borderTop = "none";
-    handle.style.borderLeft = "none";
-    handle.style.bottom = "-5px";
-    handle.style.right = "-8px";
-    handle.style.width = "10px";
-    handle.style.height = "10px";
-    handle.style.cursor = "nwse-resize";
-
-    handle.onmousedown = (ev: MouseEvent) => {
-
-      ev.preventDefault();
-
-      const startWidth = this.img!.offsetWidth;
-
-      const startX = ev.pageX;
-      const startY = ev.pageY;
-      
-
-      const onMouseMove = (e: MouseEvent) => {
-        const currentX = e.pageX;
-        const currentY = e.pageY;
-        
-        const diffInPx = currentX - startX;
-                
-        this.img!.style.width = (startWidth + diffInPx) + "px";
-      };
-      
-      const onMouseUp = (e: MouseEvent) => {    
-
-        e.preventDefault();
-        
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-
-        // TODO: incorporate height
-        // TODO: don't allow sizing to happen if we have no extended attributes
-        // (but we always do if we have raw_html). 
-        // TODO: make sure nodeview still happens even if no raw_html
-
-        // edit width in keyvalue
-        let keyvalue = this.node.attrs.keyvalue as Array<[string,string]>;
-        keyvalue = keyvalue.filter(value => value[0] !== "width");
-        keyvalue.push(["width", this.img.width.toString()]);
-              
-        // create transaction
-        const tr = this.view.state.tr;
-
-        // set new attributes
-        tr.setNodeMarkup(this.getPos(), this.node.type, { ...this.node.attrs, keyvalue });
-
-        // restore node selection if our tr.setNodeMarkup blew away the selection
-        const prevState = this.view.state;
-        if (prevState.selection instanceof NodeSelection && prevState.selection.from === this.getPos() ) {
-          tr.setSelection(NodeSelection.create(tr.doc, this.getPos()));
-        }
-
-        // dispatch transaction
-        this.view.dispatch(tr);
-      };
-      
-      
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-
-    };
-
-
-    container.append(handle);
-
+  private attachResizeUI(container: HTMLElement) {
+    attachResizeUI(
+      container, 
+      this.img!, 
+      this.view, 
+      () => ({ 
+        pos: this.getPos(), 
+        node: this.node 
+      })
+    );
   }
 }
