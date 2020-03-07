@@ -36,7 +36,7 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
   // create resize shelf
   const popup = createPopup(view, ['pm-image-resize-ui']);
   popup.style.left = "0";
-  popup.style.bottom = "-40px";
+  popup.style.bottom = "-45px";
   popup.style.right = "0";
   container.append(popup);
   const panel = createHorizontalPanel();
@@ -50,11 +50,11 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
   const handle = document.createElement('span');
   handle.classList.add('pm-image-resize-ui');
   handle.style.position = "absolute";
-  handle.style.border = "3px solid black";
-  handle.style.borderTop = "none";
-  handle.style.borderLeft = "none";
+  handle.style.border = "1px solid black";
+  // handle.style.borderTop = "none";
+  // handle.style.borderLeft = "none";
   handle.style.bottom = "-5px";
-  handle.style.right = "-8px";
+  handle.style.right = "-5px";
   handle.style.width = "10px";
   handle.style.height = "10px";
   handle.style.cursor = "nwse-resize";
