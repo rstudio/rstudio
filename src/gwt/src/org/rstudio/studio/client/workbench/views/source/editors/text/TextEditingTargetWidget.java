@@ -592,7 +592,7 @@ public class TextEditingTargetWidget
    {
       toggleRmdVisualModeButton_ = new LatchingToolbarButton(
          ToolbarButton.NoText,
-         commands_.toggleRmdVisualMode().getDesc(), 
+         commands_.toggleRmdVisualMode().getTooltip(), 
          false, /* textIndicatesState */
          new ImageResource2x(StandardIcons.INSTANCE.visual_mode2x()), event -> {
             boolean visible = !isVisualMode();
@@ -1532,12 +1532,17 @@ public class TextEditingTargetWidget
       if (isVisualModeEnabled())
       {
          DocPropMenuItem visualModeMenu = new DocPropMenuItem(
-            "Use Visual Editor", docUpdateSentinel_, 
+            "Use Visual Editor", true, docUpdateSentinel_, 
             visualMode,
             TextEditingTarget.RMD_VISUAL_MODE, 
             DocUpdateSentinel.PROPERTY_TRUE
-         );
-         
+         ) {
+            @Override
+            public String getShortcut() {
+               return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
+            }
+            
+         };
          menu.addItem(visualModeMenu);
          menu.addSeparator();
       }
