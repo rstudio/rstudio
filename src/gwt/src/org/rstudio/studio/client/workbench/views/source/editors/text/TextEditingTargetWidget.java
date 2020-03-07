@@ -1633,9 +1633,13 @@ public class TextEditingTargetWidget
       public void focus()
       {
          editor_.focus();
-         Scheduler.get().scheduleDeferred(() -> {
-            editor_.moveCursorNearTop();
-         });
+         new Timer() {
+            @Override
+            public void run()
+            {
+               editor_.moveCursorNearTop();
+            }
+         }.schedule(100);
       }
       
       @Override
