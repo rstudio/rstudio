@@ -163,7 +163,7 @@
                 },
                 "tabSet3": {
                     "type": "array",
-                    "description": "The panes included in the third tabset.",
+                    "description": "The panes hidden from the user.",
                     "items": {
                         "type": "string"
                     }
@@ -182,9 +182,11 @@
                     "Source", 
                     "Console", 
                     "TabSet1",
-                    "TabSet2"],
+                    "TabSet2",
+                    "TabSet3"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "tabSet3": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true
             },

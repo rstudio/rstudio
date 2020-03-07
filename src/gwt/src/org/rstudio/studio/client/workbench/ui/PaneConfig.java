@@ -48,6 +48,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_CONSOLE);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET3);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Environment");
@@ -75,7 +76,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
-         UserPrefsAccessor.Panes.QUADRANTS_TABSET2
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET3
       };
    }
 
@@ -175,13 +177,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       JsArrayString panes = getQuadrants();
       if (panes == null)
          return false;
-      if (!sameElements(panes, getAllPanes()))
-         return false;
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
-      if (ts1.length() == 0 || ts2.length() == 0)
-         return false;
 
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
@@ -209,14 +207,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       {
          if (!baseTabs.remove(tab) && !addableTabs.remove(tab))
             return false; // unknown tab
-      }
-
-      // These tabs can be hidden sometimes; they can't stand alone in a tabset
-      Set<String> hideableTabs = makeSet(getHideableTabs());
-      if (isSubset(hideableTabs, JsUtil.asIterable(ts1))
-          || isSubset(hideableTabs, JsUtil.asIterable(ts2)))
-      {
-         return false;
       }
 
       return true;
@@ -252,7 +242,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return other != null &&
              this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
-             this.tabSet2.toString() == other.tabSet2.toString();
+             this.tabSet2.toString() == other.tabSet2.toString() &&
+             this.tabSet3.toString() == other.tabSet3.toString();
    }-*/;
   
    private boolean sameElements(JsArrayString a, String[] b)
