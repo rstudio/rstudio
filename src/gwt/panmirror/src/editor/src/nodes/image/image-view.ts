@@ -20,7 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
-import { attachResizeUI } from './image-resize';
+import { attachResizeUI, initResizeContainer } from './image-resize';
 
 import './image-styles.css';
 
@@ -82,7 +82,7 @@ export class ImageNodeView implements NodeView {
     // function to set the resize container
     const setResizeContainer = (container: HTMLElement) => {
       this.dom.style.outline = 'none'; // disable standard PM outline
-      this.resizeUIContainer = container;
+      this.resizeUIContainer = initResizeContainer(container);
     };
 
     // wrap in figure if appropriate

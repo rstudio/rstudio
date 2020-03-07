@@ -16,7 +16,24 @@
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
-import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from '../../api/widgets';
+
+import { createPopup } from '../../api/widgets';
+
+export function initResizeContainer(container: HTMLElement) {
+
+  // so that we are the offsetParent for the resize handles and shelf
+  container.style.position = 'relative';
+
+  // so that the container matches the size of the contained image
+  // TODO: I don't think we need this if the container is a span
+  container.style.display = 'inline-block';
+
+  // so that the handles and shelf can be visible outside the boundaries of the image
+  container.style.overflow = 'visible';
+
+  // return for convenience
+  return container;
+}
 
 export function attachResizeUI(
   container: HTMLElement,
@@ -24,14 +41,6 @@ export function attachResizeUI(
   view: EditorView,
   getNodeWithPos: () => NodeWithPos,
 ) {
-  // so that we are the offsetParent for the handles
-  container.style.position = 'relative';
-
-  // so that the container matches the size of the contained image
-  container.style.display = 'inline-block';
-
-  // so that the handles can be visible outside the boundaries of the image
-  container.style.overflow = 'visible';
 
   // create resize shelf
   const popup = createPopup(view, []);
