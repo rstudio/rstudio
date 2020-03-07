@@ -2,11 +2,6 @@
 
  Discuss tokens / escaping / etc. with Joe
 
-CSS resize property might give us some stuff for free
-
-<https://discuss.prosemirror.net/t/image-resize/1489> <https://medium.com/the-z/making-a-resizable-div-in-js-is-not-easy-as-you-think-bda19a1bc53d> <https://konvajs.org/docs/sandbox/Image_Resize.html>
-
-<http://marcj.github.io/css-element-queries/> (Resize Sensor) on a div: .resizable { border: 1px solid black; width: 200px; height: 200px; resize: both; overflow: hidden; } sense resize events and update the image underneath (or just use a mutation observer) ResizeObserver polyfills: <https://github.com/WICG/ResizeObserver/issues/3> (<https://github.com/juggle/resize-observer>)
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
 
