@@ -13,6 +13,10 @@
  *
  */
 
+.ProseMirror .pm-image-resize-container.pm-image-resize-active {
+  outline: 3px solid;
+}
+
 .ProseMirror .pm-image-resize-handle {
   border: 1px solid black;
 }

@@ -21,6 +21,9 @@ import { createPopup } from '../../api/widgets';
 
 export function initResizeContainer(container: HTMLElement) {
 
+  // add standard parent class
+  container.classList.add('pm-image-resize-container', 'pm-selected-node-outline-color');
+
   // so that we are the offsetParent for the resize handles and shelf
   container.style.position = 'relative';
 
@@ -41,6 +44,8 @@ export function attachResizeUI(
   view: EditorView,
   getNodeWithPos: () => NodeWithPos,
 ) {
+
+  container.classList.add('pm-image-resize-active');
 
   // create resize shelf
   const popup = createPopup(view, []);
@@ -126,6 +131,7 @@ export function attachResizeUI(
 
   // return a function that can be used to destroy the resize UI
   return () => {
+    container.classList.remove('pm-image-resize-active');
     handle.remove();
     popup.remove();
   };

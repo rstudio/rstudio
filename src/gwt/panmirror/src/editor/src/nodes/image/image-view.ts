@@ -81,7 +81,9 @@ export class ImageNodeView implements NodeView {
 
     // function to set the resize container
     const setResizeContainer = (container: HTMLElement) => {
-      this.dom.style.outline = 'none'; // disable standard PM outline
+      if (container !== this.dom) {
+        this.dom.style.outline = 'none'; // disable standard PM outline
+      }
       this.resizeUIContainer = initResizeContainer(container);
     };
 
