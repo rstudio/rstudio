@@ -48,11 +48,8 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
 
   // create bottom right handle
   const handle = document.createElement('span');
-  handle.classList.add('pm-image-resize-ui');
+  handle.classList.add('pm-image-resize-ui', 'pm-image-resize-handle');
   handle.style.position = "absolute";
-  handle.style.border = "1px solid black";
-  // handle.style.borderTop = "none";
-  // handle.style.borderLeft = "none";
   handle.style.bottom = "-5px";
   handle.style.right = "-5px";
   handle.style.width = "10px";
