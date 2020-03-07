@@ -119,9 +119,13 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
 
   };
 
-
+  // append the handle
   container.append(handle);
   
-
+  // return a function that can be used to destroy the resize UI
+  return () => {
+    handle.remove();
+    popup.remove();
+  };
 
 }
