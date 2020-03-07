@@ -85,7 +85,7 @@ public class ConsoleOutputWriterTests extends GWTTestCase
    
    private ConsoleOutputWriter getCOW()
    {
-      return new ConsoleOutputWriter(new VCFactory());
+      return new ConsoleOutputWriter(new VCFactory(), null);
    }
 
    @Override
