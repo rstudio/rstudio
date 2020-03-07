@@ -119,7 +119,14 @@ export class ImageNodeView implements NodeView {
 
 
   public selectNode() {
+    
+    // mirror default implementation
     this.dom.classList.add("ProseMirror-selectednode");
+    if (this.contentDOM || !this.node.type.spec.draggable) {
+      this.dom.draggable = true;
+    } 
+
+    // attach resize UI
     this.removeResizeUI = attachResizeUI(
       this.resizeUIContainer, 
       this.img!, 
@@ -132,7 +139,13 @@ export class ImageNodeView implements NodeView {
   }
 
   public deselectNode() {
+    // mirror default implementation
     this.dom.classList.remove("ProseMirror-selectednode");
+    if (this.contentDOM || !this.node.type.spec.draggable) { 
+      this.dom.draggable = false;
+    }
+
+    // remove resize UI
     if (this.removeResizeUI) {
       this.removeResizeUI();
       this.removeResizeUI = undefined;
