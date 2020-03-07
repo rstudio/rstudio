@@ -19,10 +19,6 @@
   cursor: default;
 }
 
-.ProseMirror figure.ProseMirror-selectednode {
-  outline: none;
-}
-
 .ProseMirror figure img {
   max-width: 100%;
 }

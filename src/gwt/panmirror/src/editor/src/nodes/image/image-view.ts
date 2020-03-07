@@ -38,7 +38,7 @@ export class ImageNodeView implements NodeView {
   private node: ProsemirrorNode;
   private readonly view: EditorView;
 
-  private readonly resizeUIContainer: HTMLElement;
+  private readonly resizeUIContainer?: HTMLElement;
   private removeResizeUI?: () => void;
 
   private readonly mapResourcePath: (path: string) => string;
@@ -87,7 +87,10 @@ export class ImageNodeView implements NodeView {
 
       // create container and add resize handles to it
       const container = document.createElement('div');
-      this.resizeUIContainer = container;
+      if (imageAttributes) {
+        this.dom.style.outline = "none";
+        this.resizeUIContainer = container;
+      }
       
       // initialize the image, add it to the container, then add 
       // the container to the DOM
@@ -107,12 +110,17 @@ export class ImageNodeView implements NodeView {
 
     // standard inline image
     } else {
+
       this.dom = document.createElement('span');
+      if (imageAttributes) {
+        this.resizeUIContainer = this.dom;
+      }
+
+      this.updateImg(node);
       this.dom.append(this.img);
-      this.resizeUIContainer = this.dom;
+     
       this.contentDOM = null;
       this.figcaption = null;
-      this.updateImg(node);
     }
   }
 
@@ -127,15 +135,17 @@ export class ImageNodeView implements NodeView {
     } 
 
     // attach resize UI
-    this.removeResizeUI = attachResizeUI(
-      this.resizeUIContainer, 
-      this.img!, 
-      this.view, 
-      () => ({ 
-        pos: this.getPos(), 
-        node: this.node 
-      })
-    );
+    if (this.resizeUIContainer) {
+      this.removeResizeUI = attachResizeUI(
+        this.resizeUIContainer, 
+        this.img!, 
+        this.view, 
+        () => ({ 
+          pos: this.getPos(), 
+          node: this.node 
+        })
+      );
+    }
   }
 
   public deselectNode() {

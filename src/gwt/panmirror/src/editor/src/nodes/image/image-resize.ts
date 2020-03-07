@@ -84,10 +84,6 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
 
-      // TODO: don't allow sizing to happen if we have no extended attributes
-      // (but we always do if we have raw_html). 
-      // TODO: make sure nodeview still happens even if no raw_html
-
       // get node and position
       const { pos, node } = getNodeWithPos();
     
