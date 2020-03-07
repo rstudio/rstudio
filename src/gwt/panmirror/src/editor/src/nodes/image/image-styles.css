@@ -13,10 +13,10 @@
  *
  */
 
-.ProseMirror .pm-image-resize-handle {
+.ProseMirror .pm-image-resize-ui {
   display: none;
 }
 
-.ProseMirror .ProseMirror-selectednode .pm-image-resize-handle {
+.ProseMirror .ProseMirror-selectednode .pm-image-resize-ui {
   display: unset;
 }

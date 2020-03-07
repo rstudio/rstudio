@@ -17,6 +17,7 @@
 import { EditorView } from "prosemirror-view";
 import { NodeWithPos } from "prosemirror-utils";
 import { NodeSelection } from "prosemirror-state";
+import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from "../../api/widgets";
 
 export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, view: EditorView, getNodeWithPos: () => NodeWithPos) {
 
@@ -29,9 +30,25 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
   // so that the handles can be visible outside the boundaries of the image
   container.style.overflow = "visible";
 
+  // don't show standard selected node outline (since we are showing the resizing handles)
+  container.style.outline = "none";
+
+  // create resize shelf
+  const popup = createPopup(view, ['pm-image-resize-ui']);
+  popup.style.left = "0";
+  popup.style.bottom = "-40px";
+  popup.style.right = "0";
+  container.append(popup);
+  const panel = createHorizontalPanel();
+  popup.append(panel);
+  const label = document.createElement("span");
+  label.innerText = "This is the resizer UI";
+  addHorizontalPanelCell(panel, label);
+  
+
   // create bottom right handle
   const handle = document.createElement('span');
-  handle.classList.add('pm-image-resize-handle');
+  handle.classList.add('pm-image-resize-ui');
   handle.style.position = "absolute";
   handle.style.border = "3px solid black";
   handle.style.borderTop = "none";
