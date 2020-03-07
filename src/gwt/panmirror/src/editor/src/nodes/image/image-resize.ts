@@ -47,28 +47,29 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
     ev.preventDefault();
 
     const startWidth = img.offsetWidth;
+    const startHeight = img.offsetHeight;
 
     const startX = ev.pageX;
     const startY = ev.pageY;
-    
 
     const onMouseMove = (e: MouseEvent) => {
-      const currentX = e.pageX;
-      const currentY = e.pageY;
-      
-      const diffInPx = currentX - startX;
-              
-      img.style.width = (startWidth + diffInPx) + "px";
+      // width
+      const movedX = e.pageX - startX;
+      img.style.width = (startWidth + movedX) + "px";
+
+      // height
+      const movedY = e.pageY - startY;
+      img.style.height = (startHeight + movedY) + "px";     
     };
     
     const onMouseUp = (e: MouseEvent) => {    
 
       e.preventDefault();
       
+      // stop listening to events
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
 
-      // TODO: incorporate height
       // TODO: don't allow sizing to happen if we have no extended attributes
       // (but we always do if we have raw_html). 
       // TODO: make sure nodeview still happens even if no raw_html
@@ -76,12 +77,12 @@ export function attachResizeUI(container: HTMLElement, img: HTMLImageElement, vi
       // get node and position
       const { pos, node } = getNodeWithPos();
     
-
-      // edit width in keyvalue
+      // edit width & height in keyvalue
       let keyvalue = node.attrs.keyvalue as Array<[string,string]>;
-      keyvalue = keyvalue.filter(value => value[0] !== "width");
+      keyvalue = keyvalue.filter(value => !["width", "height"].includes(value[0]));
       keyvalue.push(["width", img.width.toString()]);
-            
+      keyvalue.push(["height", img.height.toString()]);
+
       // create transaction
       const tr = view.state.tr;
 
