@@ -33,14 +33,11 @@ export function attachResizeUI(
   // so that the handles can be visible outside the boundaries of the image
   container.style.overflow = 'visible';
 
-  // don't show standard selected node outline (since we are showing the resizing handles)
-  container.style.outline = 'none';
-
   // create resize shelf
   const popup = createPopup(view, []);
   popup.style.left = '0';
   popup.style.bottom = '-45px';
-  popup.style.right = '0';
+  popup.style.right = '-250px';
   container.append(popup);
   const panel = createHorizontalPanel();
   popup.append(panel);

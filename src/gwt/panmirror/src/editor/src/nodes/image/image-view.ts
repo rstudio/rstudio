@@ -38,7 +38,7 @@ export class ImageNodeView implements NodeView {
   private node: ProsemirrorNode;
   private readonly view: EditorView;
 
-  private readonly resizeUIContainer?: HTMLElement;
+  private resizeUIContainer?: HTMLElement;
   private removeResizeUI?: () => void;
 
   private readonly mapResourcePath: (path: string) => string;
@@ -79,6 +79,12 @@ export class ImageNodeView implements NodeView {
     this.img.onclick = selectOnClick;
     this.img.ondblclick = editOnDblClick;
 
+    // function to set the resize container
+    const setResizeContainer = (container: HTMLElement) => {
+      this.dom.style.outline = 'none'; // disable standard PM outline
+      this.resizeUIContainer = container;
+    };
+
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
       // create figure wrapper
@@ -87,8 +93,7 @@ export class ImageNodeView implements NodeView {
       // create container and add resize handles to it
       const container = document.createElement('div');
       if (imageAttributes) {
-        this.dom.style.outline = 'none';
-        this.resizeUIContainer = container;
+        setResizeContainer(container);
       }
 
       // initialize the image, add it to the container, then add
@@ -111,7 +116,7 @@ export class ImageNodeView implements NodeView {
     } else {
       this.dom = document.createElement('span');
       if (imageAttributes) {
-        this.resizeUIContainer = this.dom;
+        setResizeContainer(this.dom);
       }
 
       this.updateImg(node);
