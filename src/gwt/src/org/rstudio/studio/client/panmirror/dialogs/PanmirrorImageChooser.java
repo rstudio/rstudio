@@ -52,7 +52,19 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                         return;
 
                      // compute relative path
-                     setText(input.getPathRelativeTo(documentDir));
+                     String relativePath = input.getPathRelativeTo(documentDir);
+                     if (relativePath != null) 
+                     {
+                        setText(input.getPathRelativeTo(documentDir));
+                     }
+                     else
+                     {
+                        RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                           "Image Location Error",
+                           "The selected image is not contained " +
+                           "within the document directory (" + documentDir.getPath() + ").\n\n" +
+                           "Please select only images within the document directory.");
+                     }
                      indicator.onCompleted();
                     
                   }
