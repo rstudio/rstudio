@@ -13,16 +13,8 @@
  *
  */
 
-.ProseMirror .pm-image-resize-ui {
-  display: none;
-}
-
 .ProseMirror .pm-image-resize-handle {
   border: 1px solid black;
-}
-
-.ProseMirror .ProseMirror-selectednode .pm-image-resize-ui {
-  display: unset;
 }
 
 
