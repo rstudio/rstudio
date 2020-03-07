@@ -175,8 +175,10 @@ public:
 
 Logger& logger()
 {
-   static Logger logger;
-   return logger;
+   // Intentionally leak the logger object to avoid some crashes because we don't (can't currently) always wait for all
+   // the background threads of a process, and destruction isn't necessary.
+   static Logger* logger = new Logger();
+   return *logger;
 }
 
 void Logger::writeMessageToDestinations(

@@ -39,6 +39,7 @@ RUN yum install -y \
     R \
     rpmdevtools \
     rpm-sign \
+    sqlite-devel \
     sudo \
     wget \
     xml-commons-apis \

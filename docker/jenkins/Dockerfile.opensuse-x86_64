@@ -27,9 +27,11 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     openssl-devel \
     pam-devel \
     pango-devel \
+    postgresql-devel \
     python \
     R \
     rpm-build \
+    sqlite-devel \
     sudo \
     tar \
     unzip \

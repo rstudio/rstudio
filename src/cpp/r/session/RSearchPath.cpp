@@ -79,8 +79,8 @@ void reportRestoreError(const std::string& context,
    core::log::logError(restoreError, location);
    
    // notify end-user
-   std::string report = message + ": " + error.getMessage() + "\n";
-   REprintf(report.c_str());
+   std::string report = message + ": " + error.getMessage();
+   REprintf("%s\n", report.c_str());
 }   
    
 Error saveGlobalEnvironmentToFile(const FilePath& environmentFile)

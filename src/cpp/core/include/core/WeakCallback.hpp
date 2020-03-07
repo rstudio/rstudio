@@ -16,6 +16,8 @@
 #ifndef CORE_WEAK_CALLBACK_HPP
 #define CORE_WEAK_CALLBACK_HPP
 
+// these macros currently only work with GCC
+#if !defined(_WIN32) && !defined(__APPLE__)
 // macros to make the declaration and definition of weak callbacks much easier
 // usage: for a callback that would normally take a shared pointer that should only
 // capture a weak pointer, add WEAK_CALLBACK_DECL(instance type, return type, method name, arg 1 type, arg 1, ...);
@@ -111,5 +113,8 @@
    WEAK_CALLBACK_DECL_3, WEAK_CALLBACK_DECL_2, WEAK_CALLBACK_DECL_2, WEAK_CALLBACK_DECL_1,         \
    WEAK_CALLBACK_DECL_1, WEAK_CALLBACK_DECL_0, WEAK_CALLBACK_DECL_0)(instanceType, methodName,     \
    __VA_ARGS__)
+#else
+#error WeakCallback.hpp is only supported on Linux
+#endif
 
 #endif // CORE_WEAK_CALLBACK_HPP

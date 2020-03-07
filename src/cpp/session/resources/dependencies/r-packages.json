@@ -529,7 +529,8 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
-                "learnr"
+                "learnr",
+                "rstudioapi"
             ]
         }
     }

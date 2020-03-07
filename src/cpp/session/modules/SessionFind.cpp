@@ -127,6 +127,7 @@ public:
       running_(false),
       replace_(false),
       preview_(false),
+      gitFlag_(false),
       pReplaceProgress_(nullptr)
    {
    }

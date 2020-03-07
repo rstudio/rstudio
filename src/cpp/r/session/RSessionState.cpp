@@ -254,7 +254,7 @@ void reportError(const std::string& action,
    if (reportFunction)
       reportFunction(report.c_str());
    else
-      REprintf(report.c_str());
+      REprintf("%s", report.c_str());
 }
 
 struct ErrorRecorder

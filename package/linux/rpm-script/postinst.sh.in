@@ -9,6 +9,13 @@ useradd -r -U rstudio-server
 # create softlink to admin script in /usr/sbin
 ln -f -s "${CMAKE_INSTALL_PREFIX}"/bin/rstudio-server /usr/sbin/rstudio-server
 
+# create SOCI library softlinks
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libpq.so* ${CMAKE_INSTALL_PREFIX}/bin/$(ldd "${CMAKE_INSTALL_PREFIX}/bin/rserver" | grep libpq | awk '{print $1}')
+ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsqlite3.so* ${CMAKE_INSTALL_PREFIX}/bin/$(ldd "${CMAKE_INSTALL_PREFIX}/bin/rserver" | grep libsqlite | awk '{print $1}')
+
 # create config directory and default config files
 mkdir -p /etc/rstudio
 if ! test -f /etc/rstudio/rserver.conf
@@ -18,6 +25,12 @@ fi
 if ! test -f /etc/rstudio/rsession.conf
 then
    printf '# R Session Configuration File\n\n' > /etc/rstudio/rsession.conf
+fi
+if ! test -f /etc/rstudio/database.conf
+then
+  cp ${CMAKE_INSTALL_PREFIX}/extras/conf/database.conf /etc/rstudio/
+  chown rstudio-server /etc/rstudio/database.conf
+  chmod 600 /etc/rstudio/database.conf
 fi
 
 mkdir -p /etc/rstudio/themes

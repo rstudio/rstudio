@@ -16,7 +16,7 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
-set OPENSSL_FILES=openssl-1.1.1b.zip
+set OPENSSL_FILES=openssl-1.1.1d.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 
 set PANDOC_VERSION=2.7.3
@@ -176,3 +176,4 @@ popd
 regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd
+call install-soci.cmd

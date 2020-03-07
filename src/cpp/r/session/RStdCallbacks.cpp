@@ -175,7 +175,7 @@ bool consoleInputHook(const std::string& prompt,
    {
       if (!s_callbacks.handleUnsavedChanges())
       {
-         REprintf("User cancelled quit operation\n");
+         REprintf("%s\n", "User cancelled quit operation");
          return false;
       }
 
@@ -186,7 +186,7 @@ bool consoleInputHook(const std::string& prompt,
       std::string quitErr;
       bool didQuit = win32Quit(input, &quitErr);
       if (!didQuit)
-         REprintf((quitErr + "\n").c_str());
+         REprintf("%s\n", quitErr.c_str());
 
       // always return false (since we take over the command fully)
       return false;

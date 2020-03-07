@@ -469,12 +469,12 @@ Error system(const std::string& command, std::string* pOutput)
 
 void error(const std::string& message)   
 {
-   Rf_error(message.c_str());
+   Rf_error("%s", message.c_str());
 }
 
 void errorCall(SEXP call, const std::string& message)
 {
-   Rf_errorcall(call, message.c_str());
+   Rf_errorcall(call, "%s", message.c_str());
 }
    
 std::string getErrorMessage()
