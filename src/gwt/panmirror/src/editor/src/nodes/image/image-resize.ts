@@ -35,6 +35,7 @@ export function attachResizeUI(
 
   // create resize shelf
   const popup = createPopup(view, []);
+  /*
   popup.style.left = '0';
   popup.style.bottom = '-45px';
   popup.style.right = '-250px';
@@ -44,6 +45,7 @@ export function attachResizeUI(
   const label = document.createElement('span');
   label.innerText = 'This is the resizer UI';
   addHorizontalPanelCell(panel, label);
+  */
 
   // create bottom right handle
   const handle = document.createElement('span');
