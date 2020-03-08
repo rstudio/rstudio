@@ -400,7 +400,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private ArrayList<String> toArrayList(JsArrayString strings)
    {
       ArrayList<String> results = new ArrayList<>();
-      for (int i = 0; i < strings.length(); i++)
+      for (int i = 0; strings != null && i < strings.length(); i++)
          results.add(strings.get(i));
       return results;
    }

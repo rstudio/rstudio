@@ -89,23 +89,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                            "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
    }
 
-   public static String[] getAlwaysVisibleTabs()
-   {
-      return new String[] {"Environment", "History", "Files", "Plots",
-                           "Help", "Viewer"};
-   }
-
-   public static String[] getHideableTabs()
-   {
-      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Packages" };
-   }
-
-   // Any tabs that were added after our first public release.
-   public static String[] getAddableTabs()
-   {
-      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Viewer" };
-   }
-
    // Tabs that have been replaced by newer versions/replaceable supersets
    public static String[] getReplacedTabs()
    {
@@ -196,18 +179,11 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          return false;
       }
       
-      // If any of these tabs are missing, then they can be added
-      Set<String> addableTabs = makeSet(getAddableTabs());
-
-      // If any of these tabs are missing, then the whole config is invalid
-      Set<String> baseTabs = makeSet(getAllTabs());
-      baseTabs.removeAll(addableTabs);
-
-      for (String tab : JsUtil.asIterable(concat(ts1, ts2)))
-      {
-         if (!baseTabs.remove(tab) && !addableTabs.remove(tab))
-            return false; // unknown tab
-      }
+      // Check for any unknown tabs
+      Set<String> allTabs = makeSet(getAllTabs());
+      if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
+            isSubset(allTabs, JsUtil.asIterable(ts2))))
+         return false;
 
       return true;
    }
@@ -277,21 +253,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
    public static boolean isValidConfig(ArrayList<String> tabs)
    {
-      if (isSubset(makeSet(getHideableTabs()), tabs))
-      {
-         // The proposed tab config only contains hideable tabs (or possibly
-         // no tabs at all). Reject.
-         return false;
-      }
-      else if (isSubset(makeSet(tabs.toArray(new String[tabs.size()])),
-                        makeSet(getAlwaysVisibleTabs())))
-      {
-         // The proposed tab config contains all the always-visible tabs,
-         // which implies that the other tab config only contains hideable
-         // tabs (or possibly no tabs at all). Reject.
-         return false;
-      }
-      else
-         return true;
+      // This function was previously used to ensure tabsets didn't contain only "hideable" tabs or
+      // no tabs at all. As of 1.4 any tabs can be hidden so these checks have been removed. The
+      // function remains to maintain the structure if validation needs to be added in the future.
+     return true;
    }
 }
