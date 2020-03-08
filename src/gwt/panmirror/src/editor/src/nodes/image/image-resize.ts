@@ -17,7 +17,7 @@ import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
 
-import { createPopup } from '../../api/widgets';
+import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from '../../api/widgets';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -49,17 +49,17 @@ export function attachResizeUI(
 
   // create resize shelf
   const popup = createPopup(view, []);
-  /*
   popup.style.left = '0';
   popup.style.bottom = '-45px';
-  popup.style.right = '-250px';
+  // TODO: min width that inspects image width (i.e might have to set right to a negative value)
+  popup.style.right = '0';
   container.append(popup);
   const panel = createHorizontalPanel();
   popup.append(panel);
   const label = document.createElement('span');
-  label.innerText = 'This is the resizer UI';
+  label.innerHTML = "&nbsp;";
   addHorizontalPanelCell(panel, label);
-  */
+
 
   // create bottom right handle
   const handle = document.createElement('span');
