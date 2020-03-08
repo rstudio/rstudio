@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeSpec, NodeType } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos } from 'prosemirror-model';
 import { EditorState, Selection, NodeSelection, Transaction } from 'prosemirror-state';
 import {
   findParentNode,
@@ -23,6 +23,7 @@ import {
   findParentNodeOfType,
   findChildrenByType,
   findChildren,
+  findParentNodeOfTypeClosestToPos,
 } from 'prosemirror-utils';
 
 import {
@@ -151,4 +152,14 @@ export function insertAndSelectNode(
 export function editingRootNode(selection: Selection) {
   const schema = selection.$head.node().type.schema;
   return findParentNodeOfType(schema.nodes.body)(selection) || findParentNodeOfType(schema.nodes.note)(selection);
+
+
 }
+
+export function editingRootNodeClosestToPos($pos: ResolvedPos) {
+  const schema = $pos.node().type.schema;
+  return findParentNodeOfTypeClosestToPos($pos, schema.nodes.body) || 
+         findParentNodeOfTypeClosestToPos($pos, schema.nodes.note);
+}
+
+

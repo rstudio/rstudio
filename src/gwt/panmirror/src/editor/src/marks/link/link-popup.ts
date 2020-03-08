@@ -15,13 +15,11 @@
 
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
-import { findParentNode } from 'prosemirror-utils';
 
 import ClipboardJS from 'clipboard';
 
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
-import { editingRootNode } from '../../api/node';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
 import {
@@ -30,7 +28,7 @@ import {
   createHorizontalPanel,
   addHorizontalPanelCell,
   showTooltip,
-  createPopup,
+  createTextRangePopup,
 } from '../../api/widgets';
 import { navigateToId, navigateToHeading } from '../../api/navigation';
 
@@ -41,78 +39,6 @@ const key = new PluginKey<DecorationSet>('link-popup');
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
   constructor(ui: EditorUI, linkCmd: CommandFn, removeLinkCmd: CommandFn) {
     let editorView: EditorView;
-
-    function linkPopup(attrs: LinkProps, style?: { [key: string]: string }) {
-      // we may create a ClipboardJS instance. if we do then clean it up
-      // when the popup id destroyed
-      let clipboard: ClipboardJS;
-      const cleanup = () => {
-        if (clipboard) {
-          clipboard.destroy();
-        }
-      };
-
-      // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
-      // (this is so that links that start a line don't have their ragne derived from
-      // the previous line)
-      const popup = createPopup(editorView, ['pm-popup-link'], cleanup, style);
-  
-      const panel = createHorizontalPanel();
-      popup.append(panel);
-
-      // create link
-      const text = attrs.heading ? attrs.heading! : attrs.href;
-      const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
-      link.onclick = () => {
-        editorView.focus();
-        if (attrs.heading) {
-          navigateToHeading(editorView, attrs.heading);
-        } else if (attrs.href.startsWith('#')) {
-          navigateToId(editorView, attrs.href.substr(1));
-        } else {
-          ui.display.openURL(attrs.href);
-        }
-        return false;
-      };
-      addHorizontalPanelCell(panel, link);
-
-      // copy link
-      if (!attrs.heading && ClipboardJS.isSupported()) {
-        const copyLink = createImageButton(
-          ['pm-image-button-copy-link'],
-          ui.context.translateText('Copy Link to Clipboard'),
-        );
-        clipboard = new ClipboardJS(copyLink, {
-          text: () => text,
-        });
-        clipboard.on('success', () => {
-          showTooltip(copyLink, ui.context.translateText('Copied to Clipboard'), 's');
-        });
-        addHorizontalPanelCell(panel, copyLink);
-      }
-
-      // edit link
-      const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
-      editLink.onclick = () => {
-        linkCmd(editorView.state, editorView.dispatch, editorView);
-      };
-      addHorizontalPanelCell(panel, editLink);
-
-      // remove link
-      const removeLink = createImageButton(['pm-image-button-remove-link'], ui.context.translateText('Remove Link'));
-      removeLink.onclick = () => {
-        // in rstudio (w/ webkit) removing the link during the click results
-        // in a page-navigation! defer to next event cycle to avoid this
-        setTimeout(() => {
-          removeLinkCmd(editorView.state, editorView.dispatch, editorView);
-          editorView.focus();
-        }, 0);
-      };
-      addHorizontalPanelCell(panel, removeLink);
-
-      return popup;
-    }
-
     super({
       key,
       view(view: EditorView) {
@@ -120,78 +46,101 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         return {};
       },
       state: {
-        init: (_config: { [key: string]: any }, instance: EditorState) => {
+        init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
         },
-        apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
+        apply: (tr: Transaction, _old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
           }
 
           // if the selection is contained within a link then show the popup
-          const schema = tr.doc.type.schema;
-          const selection = tr.selection;
+          const schema = newState.doc.type.schema;
+          const selection = newState.selection;
           const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
-            // get link attributes
-            const attrs = getMarkAttrs(tr.doc, range, schema.marks.link) as LinkProps;
+            // get link attrs
+            const attrs = getMarkAttrs(editorView.state.doc, range, schema.marks.link) as LinkProps;
 
-            // get the (window) DOM coordinates for the start of the mark. we use range.from + 1 so
-            // that links that are at the beginning of a line don't have their position set
-            // to the previous line
-            const linkCoords = editorView.coordsAtPos(range.from + 1);
-
-            // get the (window) DOM coordinates for the current editing root note (body or notes)
-            const editingNode = editingRootNode(selection);
-            const editingEl = editorView.domAtPos(editingNode!.pos + 1).node as HTMLElement;
-            const editingBox = editingEl.getBoundingClientRect();
-
-            // we are going to stick the decoration at the beginning of the containing
-            // top level body block, then position it by calculating the relative location of 
-            // the link within text block. we do this so that the decoration isn't located
-            // *within* the link (which confounds double-click selection and spell checking)
-            const containingBlockPos = selection.$from.start(2);
-            const containingBlockEl = editorView.domAtPos(containingBlockPos).node as HTMLElement;
-            const containingBlockStyle = window.getComputedStyle(containingBlockEl);
-            const containingBlockBox = containingBlockEl.getBoundingClientRect();
-
-            // only remaining problem is that this doesn't take into account border and padding
-            // (so in a blockquote it's not quite right)
-
-            // base popup style
-            const popupStyle = {
-              'margin-top': (linkCoords.bottom - containingBlockBox.top + 3) + "px"
+            // we may create a ClipboardJS instance. if we do then clean it up
+            // when the popup id destroyed
+            let clipboard: ClipboardJS;
+            const cleanup = () => {
+              if (clipboard) {
+                clipboard.destroy();
+              }
             };
 
-            // we need to compute whether the popup will be visible (horizontally), do
-            // this by testing whether we have room for the max link width + controls/padding
+            // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
+            // (this is so that ranges that start a line don't have their ragne derived from
+            // the previous line)
             const kPopupChromeWidth = 70;
-            const positionRight = linkCoords.left + kMaxLinkWidth + kPopupChromeWidth > editingBox.right;
-            let popup: HTMLElement;
-            if (positionRight) {
-              const linkRightCoords = editorView.coordsAtPos(range.to);
-              const linkRightPos = editingBox.right - linkRightCoords.right;
-              popup = linkPopup(attrs, { 
-                ...popupStyle,
-                right: linkRightPos + 'px' 
+            const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
+            const textRangePopup = createTextRangePopup(
+              editorView, 
+              range, 
+              ['pm-popup-link'], 
+              maxWidth, 
+              cleanup
+            );
+        
+            // create panel that will host the ui and add it to the popup
+            const panel = createHorizontalPanel();
+            textRangePopup.popup.append(panel);
+
+            // link
+            const text = attrs.heading ? attrs.heading! : attrs.href;
+            const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
+            link.onclick = () => {
+              editorView.focus();
+              if (attrs.heading) {
+                navigateToHeading(editorView, attrs.heading);
+              } else if (attrs.href.startsWith('#')) {
+                navigateToId(editorView, attrs.href.substr(1));
+              } else {
+                ui.display.openURL(attrs.href);
+              }
+              return false;
+            };
+            addHorizontalPanelCell(panel, link);
+
+            // copy link
+            if (!attrs.heading && ClipboardJS.isSupported()) {
+              const copyLink = createImageButton(
+                ['pm-image-button-copy-link'],
+                ui.context.translateText('Copy Link to Clipboard'),
+              );
+              clipboard = new ClipboardJS(copyLink, {
+                text: () => text,
               });
-            } else {
-              const marginLeft = "calc(" + 
-                (linkCoords.left - containingBlockBox.left) + "px " + 
-                " - " + containingBlockStyle.borderLeftWidth + 
-                " - " + containingBlockStyle.paddingLeft + 
-                " - " + containingBlockStyle.marginLeft +
-                " - 1ch" + 
-              ")";
-              popup = linkPopup(attrs, {
-                ...popupStyle,
-                'margin-left': marginLeft
+              clipboard.on('success', () => {
+                showTooltip(copyLink, ui.context.translateText('Copied to Clipboard'), 's');
               });
+              addHorizontalPanelCell(panel, copyLink);
             }
 
+            // edit link
+            const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
+            editLink.onclick = () => {
+              linkCmd(editorView.state, editorView.dispatch, editorView);
+            };
+            addHorizontalPanelCell(panel, editLink);
+
+            // remove link
+            const removeLink = createImageButton(['pm-image-button-remove-link'], ui.context.translateText('Remove Link'));
+            removeLink.onclick = () => {
+              // in rstudio (w/ webkit) removing the link during the click results
+              // in a page-navigation! defer to next event cycle to avoid this
+              setTimeout(() => {
+                removeLinkCmd(editorView.state, editorView.dispatch, editorView);
+                editorView.focus();
+              }, 0);
+            };
+            addHorizontalPanelCell(panel, removeLink);
+
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(containingBlockPos, popup)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(textRangePopup.pos, textRangePopup.popup)]);
           } else {
             return DecorationSet.empty;
           }
