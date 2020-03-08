@@ -28,14 +28,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
                                           JsArrayString tabSet2,
-                                          JsArrayString tabSet3,
+                                          JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop) /*-{
       return { 
          quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
-         tabSet3: tabSet3,
+         hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop 
       };
@@ -48,7 +48,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_CONSOLE);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
-      panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET3);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Environment");
@@ -66,8 +66,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push("Help");
       tabSet2.push("Viewer");
 
-      JsArrayString tabSet3 = createArray().cast();
-      return create(panes, tabSet1, tabSet2, tabSet3, false, true);
+      JsArrayString hiddenTabSet = createArray().cast();
+      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true);
    }
 
    public static String[] getAllPanes()
@@ -77,7 +77,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
-         UserPrefsAccessor.Panes.QUADRANTS_TABSET3
+         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET
       };
    }
 
@@ -233,7 +233,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return create(copy(getQuadrants()),
                     copy(getTabSet1()),
                     copy(getTabSet2()),
-                    copy(getTabSet3()),
+                    copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop());
    }
@@ -243,7 +243,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
              this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
              this.tabSet2.toString() == other.tabSet2.toString() &&
-             this.tabSet3.toString() == other.tabSet3.toString();
+             this.hiddenTabSet.toString() == other.hiddenTabSet.toString();
    }-*/;
   
    private boolean sameElements(JsArrayString a, String[] b)

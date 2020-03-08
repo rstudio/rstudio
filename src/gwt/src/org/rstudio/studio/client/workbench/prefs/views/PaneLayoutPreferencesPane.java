@@ -232,8 +232,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       tabSet1ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet1()));
       tabSet2ModuleList_ = new ModuleList();
       tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
-      tabSet3ModuleList_ = new ModuleList();
-      tabSet3ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet3()));
+      hiddenTabSetModuleList_ = new ModuleList();
+      hiddenTabSetModuleList_.setValue(toArrayList(
+               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -249,7 +250,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             // an index should only be on for one of these lists,
             ArrayList<Boolean> indices = source.getSelectedIndices();
             ArrayList<Boolean> otherIndices = other.getSelectedIndices();
-            ArrayList<Boolean> hiddenIndices = tabSet3ModuleList_.getSelectedIndices();
+            ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
             if (!PaneConfig.isValidConfig(source.getValue()))
             {
                // when the configuration is invalid, we must reset sources to the prior valid
@@ -271,7 +272,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                      hiddenIndices.set(i, true);
                }
                other.setSelectedIndices(otherIndices);
-               tabSet3ModuleList_.setSelectedIndices(hiddenIndices);
+               hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
 
                updateTabSetLabels();
             }
@@ -337,9 +338,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          for (String tab : tabSet2ModuleList_.getValue())
             tabSet2.push(tab);
 
-         JsArrayString tabSet3 = JsArrayString.createArray().cast();
-         for (String tab : tabSet3ModuleList_.getValue())
-            tabSet3.push(tab);
+         JsArrayString hiddenTabSet = JsArrayString.createArray().cast();
+         for (String tab : hiddenTabSetModuleList_.getValue())
+            hiddenTabSet.push(tab);
          
          // Determine implicit preference for console top/bottom location
          // This needs to be saved so that when the user executes the 
@@ -359,7 +360,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             consoleRightOnTop = false;
          
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
-               panes, tabSet1, tabSet2, tabSet3, consoleLeftOnTop, consoleRightOnTop));
+               panes, tabSet1, tabSet2, hiddenTabSet, consoleLeftOnTop, consoleRightOnTop));
 
          dirty_ = false;
       }
@@ -382,8 +383,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             allPanePanels_[i].add(tabSet1ModuleList_);
          else if (value == "TabSet2")
             allPanePanels_[i].add(tabSet2ModuleList_);
-         else if (value == "TabSet3")
-            allPanePanels_[i].add(tabSet3ModuleList_);
+         else if (value == "HiddenTabSet")
+            allPanePanels_[i].add(hiddenTabSetModuleList_);
       }
    }
 
@@ -418,7 +419,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final VerticalPanel[] allPanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
-   private final ModuleList tabSet3ModuleList_;
+   private final ModuleList hiddenTabSetModuleList_;
    private boolean dirty_ = false;
   
 }

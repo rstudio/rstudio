@@ -144,7 +144,7 @@
                     "description": "Allocation of panes to quadrants.",
                     "items": {
                         "type": "string",
-                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "TabSet3"]
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet"]
                     }
                 },
                 "tabSet1": {
@@ -161,7 +161,7 @@
                         "type": "string"
                     }
                 },
-                "tabSet3": {
+                "hiddenTabSet": {
                     "type": "array",
                     "description": "The panes hidden from the user.",
                     "items": {
@@ -183,10 +183,10 @@
                     "Console", 
                     "TabSet1",
                     "TabSet2",
-                    "TabSet3"],
+                    "HiddenTabSet"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
-                "tabSet3": [],
+                "hiddenTabSet": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true
             },

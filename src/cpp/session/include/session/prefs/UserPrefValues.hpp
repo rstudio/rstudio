@@ -76,7 +76,7 @@ namespace prefs {
 #define kPanesQuadrants "quadrants"
 #define kPanesTabSet1 "tabSet1"
 #define kPanesTabSet2 "tabSet2"
-#define kPanesTabSet3 "tabSet3"
+#define kPanesHiddenTabSet "hiddenTabSet"
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kUseSpacesForTab "use_spaces_for_tab"
