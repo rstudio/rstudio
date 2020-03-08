@@ -36,7 +36,7 @@ export function createPopup(
   style?: { [key: string]: string },
 ) {
   // create popup
-  const popup = window.document.createElement('div');
+  const popup = window.document.createElement('span');
   popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color', ...classes);
   popup.style.position = 'absolute';
   popup.style.zIndex = '10';
@@ -67,7 +67,6 @@ export function createInlineTextPopup(
   style?: { [key: string]: string },
 ) {
   const popup = createPopup(view, [...classes, 'pm-popup-inline-text'], onDestroyed, style);
-  popup.style.display = 'inline-block';
   return popup;
 }
 
