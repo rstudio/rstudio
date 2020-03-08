@@ -15,6 +15,7 @@
 
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
+import { findParentNode } from 'prosemirror-utils';
 
 import ClipboardJS from 'clipboard';
 
@@ -54,12 +55,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
       // (this is so that links that start a line don't have their ragne derived from
       // the previous line)
-      const popup = createPopup(editorView, ['pm-popup-link'], cleanup, { 
-        'margin-left': '-1ch', 
-        'margin-top': '1.5em',
-        ...style 
-      });
-
+      const popup = createPopup(editorView, ['pm-popup-link'], cleanup, style);
+  
       const panel = createHorizontalPanel();
       popup.append(panel);
 
@@ -150,6 +147,23 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const editingEl = editorView.domAtPos(editingNode!.pos + 1).node as HTMLElement;
             const editingBox = editingEl.getBoundingClientRect();
 
+            // we are going to stick the decoration at the beginning of the containing
+            // top level body block, then position it by calculating the relative location of 
+            // the link within text block. we do this so that the decoration isn't located
+            // *within* the link (which confounds double-click selection and spell checking)
+            const containingBlockPos = selection.$from.start(2);
+            const containingBlockEl = editorView.domAtPos(containingBlockPos).node as HTMLElement;
+            const containingBlockStyle = window.getComputedStyle(containingBlockEl);
+            const containingBlockBox = containingBlockEl.getBoundingClientRect();
+
+            // only remaining problem is that this doesn't take into account border and padding
+            // (so in a blockquote it's not quite right)
+
+            // base popup style
+            const popupStyle = {
+              'margin-top': (linkCoords.bottom - containingBlockBox.top + 3) + "px"
+            };
+
             // we need to compute whether the popup will be visible (horizontally), do
             // this by testing whether we have room for the max link width + controls/padding
             const kPopupChromeWidth = 70;
@@ -158,13 +172,26 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             if (positionRight) {
               const linkRightCoords = editorView.coordsAtPos(range.to);
               const linkRightPos = editingBox.right - linkRightCoords.right;
-              popup = linkPopup(attrs, { right: linkRightPos + 'px' });
+              popup = linkPopup(attrs, { 
+                ...popupStyle,
+                right: linkRightPos + 'px' 
+              });
             } else {
-              popup = linkPopup(attrs);
+              const marginLeft = "calc(" + 
+                (linkCoords.left - containingBlockBox.left) + "px " + 
+                " - " + containingBlockStyle.borderLeftWidth + 
+                " - " + containingBlockStyle.paddingLeft + 
+                " - " + containingBlockStyle.marginLeft +
+                " - 1ch" + 
+              ")";
+              popup = linkPopup(attrs, {
+                ...popupStyle,
+                'margin-left': marginLeft
+              });
             }
 
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(range.from + 1, popup)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(containingBlockPos, popup)]);
           } else {
             return DecorationSet.empty;
           }
