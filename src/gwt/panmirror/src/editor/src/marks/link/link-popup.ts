@@ -24,12 +24,12 @@ import { editingRootNode } from '../../api/node';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
 import {
-  createInlineTextPopup,
   createLinkButton,
   createImageButton,
   createHorizontalPanel,
   addHorizontalPanelCell,
   showTooltip,
+  createPopup,
 } from '../../api/widgets';
 import { navigateToId, navigateToHeading } from '../../api/navigation';
 
@@ -54,7 +54,11 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
       // create popup. offset left -1ch b/c we use range.from + 1 to position the popup
       // (this is so that links that start a line don't have their ragne derived from
       // the previous line)
-      const popup = createInlineTextPopup(editorView, ['pm-popup-link'], cleanup, { 'margin-left': '-1ch', ...style });
+      const popup = createPopup(editorView, ['pm-popup-link'], cleanup, { 
+        'margin-left': '-1ch', 
+        'margin-top': '1.5em',
+        ...style 
+      });
 
       const panel = createHorizontalPanel();
       popup.append(panel);

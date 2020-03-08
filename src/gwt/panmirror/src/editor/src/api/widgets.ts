@@ -60,16 +60,6 @@ export function createPopup(
   return popup;
 }
 
-export function createInlineTextPopup(
-  view: EditorView,
-  classes: string[],
-  onDestroyed?: () => void,
-  style?: { [key: string]: string },
-) {
-  const popup = createPopup(view, [...classes, 'pm-popup-inline-text'], onDestroyed, style);
-  return popup;
-}
-
 export function createLinkButton(text: string, title?: string, maxWidth?: number, style?: { [key: string]: string }) {
   const link = window.document.createElement('a');
   link.classList.add('pm-link', 'pm-link-text-color');
