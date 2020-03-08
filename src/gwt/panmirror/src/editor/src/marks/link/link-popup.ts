@@ -131,7 +131,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           // if the selection is contained within a link then show the popup
           const schema = tr.doc.type.schema;
           const selection = tr.selection;
-          const range = getMarkRange(selection.$head, schema.marks.link);
+          const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
             // get link attributes
             const attrs = getMarkAttrs(tr.doc, range, schema.marks.link) as LinkProps;
