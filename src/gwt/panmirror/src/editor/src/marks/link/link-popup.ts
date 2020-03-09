@@ -88,6 +88,9 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             // create panel that will host the ui and add it to the popup
             const panel = createHorizontalPanel();
             textRangePopup.popup.append(panel);
+            const addToPanel = (widget: HTMLElement) => {
+              addHorizontalPanelCell(panel, widget);
+            };
 
             // link
             const text = attrs.heading ? attrs.heading! : attrs.href;
@@ -103,7 +106,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
               }
               return false;
             };
-            addHorizontalPanelCell(panel, link);
+            addToPanel(link);
 
             // copy link
             if (!attrs.heading && ClipboardJS.isSupported()) {
@@ -117,15 +120,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
               clipboard.on('success', () => {
                 showTooltip(copyLink, ui.context.translateText('Copied to Clipboard'), 's');
               });
-              addHorizontalPanelCell(panel, copyLink);
+              addToPanel(copyLink);
             }
-
-            // edit link
-            const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
-            editLink.onclick = () => {
-              linkCmd(editorView.state, editorView.dispatch, editorView);
-            };
-            addHorizontalPanelCell(panel, editLink);
 
             // remove link
             const removeLink = createImageButton(['pm-image-button-remove-link'], ui.context.translateText('Remove Link'));
@@ -137,7 +133,14 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 editorView.focus();
               }, 0);
             };
-            addHorizontalPanelCell(panel, removeLink);
+            addToPanel(removeLink);
+
+            // edit link
+            const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
+            editLink.onclick = () => {
+              linkCmd(editorView.state, editorView.dispatch, editorView);
+            };
+            addToPanel(editLink);           
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(textRangePopup.pos, textRangePopup.popup)]);
