@@ -2,9 +2,9 @@
 
  Discuss tokens / escaping / etc. with Joe
 
-Images that link to things need to be supported
+Do we need a pref bag from the host to store document related prefs?
 
-Link dialog results in propagation of link attributes: [different](https://www.google.com){.pm-link .pm-link-text-color}
+Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip!
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
 
