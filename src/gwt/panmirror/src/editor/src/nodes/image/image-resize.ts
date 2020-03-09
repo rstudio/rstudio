@@ -28,7 +28,6 @@ export function initResizeContainer(container: HTMLElement) {
   container.style.position = 'relative';
 
   // so that the container matches the size of the contained image
-  // TODO: I don't think we need this if the container is a span
   container.style.display = 'inline-block';
 
   // so that the handles and shelf can be visible outside the boundaries of the image

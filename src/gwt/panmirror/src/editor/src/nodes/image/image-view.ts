@@ -38,7 +38,7 @@ export class ImageNodeView implements NodeView {
   private node: ProsemirrorNode;
   private readonly view: EditorView;
 
-  private resizeUIContainer?: HTMLElement;
+  private readonly imageAttributes: boolean;
   private removeResizeUI?: () => void;
 
   private readonly mapResourcePath: (path: string) => string;
@@ -57,6 +57,7 @@ export class ImageNodeView implements NodeView {
     this.node = node;
     this.view = view;
     this.getPos = getPos;
+    this.imageAttributes = imageAttributes;
     this.mapResourcePath = editorUI.context.mapResourcePath;
 
     const selectOnClick = () => {
@@ -79,14 +80,6 @@ export class ImageNodeView implements NodeView {
     this.img.onclick = selectOnClick;
     this.img.ondblclick = editOnDblClick;
 
-    // function to set the resize container
-    const setResizeContainer = (container: HTMLElement) => {
-      if (container !== this.dom) {
-        this.dom.style.outline = 'none'; // disable standard PM outline
-      }
-      this.resizeUIContainer = initResizeContainer(container);
-    };
-
     // wrap in figure if appropriate
     if (this.type === ImageType.Figure) {
       // create figure wrapper
@@ -94,9 +87,6 @@ export class ImageNodeView implements NodeView {
 
       // create container and add resize handles to it
       const container = document.createElement('div');
-      if (imageAttributes) {
-        setResizeContainer(container);
-      }
 
       // initialize the image, add it to the container, then add
       // the container to the DOM
@@ -117,15 +107,17 @@ export class ImageNodeView implements NodeView {
       // standard inline image
     } else {
       this.dom = document.createElement('span');
-      if (imageAttributes) {
-        setResizeContainer(this.dom);
-      }
 
       this.updateImg(node);
       this.dom.append(this.img);
 
       this.contentDOM = null;
       this.figcaption = null;
+    }
+
+    // init resize if we support imageAttributes
+    if (imageAttributes) {
+      initResizeContainer(this.dom);
     }
   }
 
@@ -137,8 +129,8 @@ export class ImageNodeView implements NodeView {
     }
 
     // attach resize UI
-    if (this.resizeUIContainer) {
-      this.removeResizeUI = attachResizeUI(this.resizeUIContainer, this.img!, this.view, () => ({
+    if (this.imageAttributes) {
+      this.removeResizeUI = attachResizeUI(this.dom, this.img!, this.view, () => ({
         pos: this.getPos(),
         node: this.node,
       }));
