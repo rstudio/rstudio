@@ -72,7 +72,9 @@ export function attachResizeUI(
   handle.style.right = '-6px';
   handle.style.cursor = 'nwse-resize';
 
-  handle.onmousedown = (ev: MouseEvent) => {
+  const havePointerEvents = !!document.body.setPointerCapture;  
+
+  const onPointerDown = (ev: MouseEvent) => {
     ev.preventDefault();
 
     const startWidth = img.offsetWidth;
@@ -81,7 +83,7 @@ export function attachResizeUI(
     const startX = ev.pageX;
     const startY = ev.pageY;
 
-    const onMouseMove = (e: MouseEvent) => {
+    const onPointerMove = (e: MouseEvent) => {
 
       // detect pointer movement
       const movedX = e.pageX - startX;
@@ -102,13 +104,19 @@ export function attachResizeUI(
       }      
     };
 
-    const onMouseUp = (e: MouseEvent) => {
+    const onPointerUp = (e: MouseEvent) => {
       e.preventDefault();
 
       // stop listening to events
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-
+      if (havePointerEvents) {
+        handle.releasePointerCapture((e as PointerEvent).pointerId);
+        handle.removeEventListener('pointermove', onPointerMove);
+        handle.removeEventListener('pointerup', onPointerUp);
+      } else {
+        document.removeEventListener('mousemove', onPointerMove);
+        document.removeEventListener('mouseup', onPointerUp);
+      }
+      
       // get node and position
       const { pos, node } = getNodeWithPos();
 
@@ -134,10 +142,23 @@ export function attachResizeUI(
       view.dispatch(tr);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    if (havePointerEvents) {
+      handle.setPointerCapture((ev as PointerEvent).pointerId);
+      handle.addEventListener('pointermove', onPointerMove);
+      handle.addEventListener('pointerup', onPointerUp);
+    } else {
+      document.addEventListener('mousemove', onPointerMove);
+      document.addEventListener('mouseup', onPointerUp);
+    }
+    
   };
 
+  if (havePointerEvents) {
+    handle.addEventListener('pointerdown', onPointerDown);
+  } else {
+    handle.addEventListener('mousedown', onPointerDown);
+  }
+  
   // append the handle
   container.append(handle);
 
