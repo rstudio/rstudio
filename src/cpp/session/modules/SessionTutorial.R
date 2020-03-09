@@ -242,10 +242,18 @@
    # screen out some potentially invalid package names
    pkgs <- grep("^[a-zA-Z0-9._]+$", pkgs, value = TRUE)
    
-   # find packages which are not installed
+   # keep packages for which the required version is not installed
    installed <- vapply(pkgs, function(pkg) {
-      location <- find.package(pkg, quiet = TRUE)
-      length(location) > 0
+      
+      # FIXME: these versions shouldn't be hard-coded; need accessors
+      # for package versions defined in r-packages.json
+      if (pkg == "rstudioapi")
+         .rs.isPackageVersionInstalled("rstudioapi", "0.11")
+      else if (pkg == "learnr")
+         .rs.isPackageVersionInstalled("learnr", "0.10.1")
+      else
+         .rs.isPackageInstalled(pkg)
+      
    }, FUN.VALUE = logical(1))
    
    missing <- pkgs[!installed]
