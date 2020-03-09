@@ -38,10 +38,10 @@ export function initResizeContainer(container: HTMLElement) {
 }
 
 export function attachResizeUI(
+  nodeWithPos: NodeWithPos,
   container: HTMLElement,
   img: HTMLImageElement,
-  view: EditorView,
-  getNodeWithPos: () => NodeWithPos,
+  view: EditorView
 ) {
 
   container.classList.add('pm-image-resize-active');
@@ -63,7 +63,7 @@ export function attachResizeUI(
   addHorizontalPanelCell(panel, input);
 
   // create resize handle and add it to the container
-  const handle = resizeHandle(img, view, getNodeWithPos);
+  const handle = resizeHandle(nodeWithPos, img, view);
   container.append(handle);
   
   // return a function that can be used to destroy the resize UI
@@ -75,7 +75,7 @@ export function attachResizeUI(
 }
 
 
-function resizeHandle(img: HTMLImageElement, view: EditorView, getNodeWithPos: () => NodeWithPos) {
+function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView) {
 
   const handle = document.createElement('span');
   handle.classList.add(
@@ -134,7 +134,7 @@ function resizeHandle(img: HTMLImageElement, view: EditorView, getNodeWithPos: (
       }
       
       // get node and position
-      const { pos, node } = getNodeWithPos();
+      const { pos, node } = nodeWithPos;
 
       // edit width & height in keyvalue
       let keyvalue = node.attrs.keyvalue as Array<[string, string]>;

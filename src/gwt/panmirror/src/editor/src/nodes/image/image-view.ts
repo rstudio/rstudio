@@ -130,10 +130,8 @@ export class ImageNodeView implements NodeView {
 
     // attach resize UI
     if (this.imageAttributes) {
-      this.removeResizeUI = attachResizeUI(this.dom, this.img!, this.view, () => ({
-        pos: this.getPos(),
-        node: this.node,
-      }));
+      const nodeWithPos = { pos: this.getPos(), node: this.node };
+      this.removeResizeUI = attachResizeUI(nodeWithPos, this.dom, this.img!, this.view);
     }
   }
 
