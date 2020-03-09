@@ -22,6 +22,7 @@ public class PanmirrorTheme
 {
    public String cursorColor;
    public String selectionColor;
+   public String nodeSelectionColor;
    public String backgroundColor;
    public String metadataBackgroundColor;
    public String chunkBackgroundColor;

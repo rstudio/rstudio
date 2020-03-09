@@ -16,6 +16,7 @@
 export interface EditorTheme {
   cursorColor: string;
   selectionColor: string;
+  nodeSelectionColor: string;
   backgroundColor: string;
   metadataBackgroundColor: string;
   chunkBackgroundColor: string;
@@ -63,6 +64,7 @@ export function defaultTheme(): EditorTheme {
   return {
     cursorColor: 'black',
     selectionColor: '#8cf',
+    nodeSelectionColor: 'rgb(102,155,243)',
     backgroundColor: 'white',
     metadataBackgroundColor: 'rgb(251,251,251)',
     chunkBackgroundColor: 'rgb(251,251,251)',
@@ -173,10 +175,17 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
-      outline-color: ${theme.selectionColor} !important;
+      outline-color: ${theme.nodeSelectionColor} !important;
     }
     .pm-selected-node-border-color {
-      border-color: ${theme.selectionColor} !important;
+      border-color: ${theme.nodeSelectionColor} !important;
+    }
+    .editor_dark .pm-selected-node-outline-color,
+    .editor_dark .ProseMirror-selectednode {
+      outline-color: ${theme.linkTextColor} !important;
+    }
+    .editor_dark .pm-selected-node-border-color {
+      border-color: ${theme.linkTextColor} !important;
     }
     .pm-background-color *::selection {
       background-color: ${theme.selectionColor} !important;
