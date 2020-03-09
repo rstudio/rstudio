@@ -2,8 +2,7 @@
 
  Discuss tokens / escaping / etc. with Joe
 
-
-Image popup may need to go below caption (as otherwise there is no way to edit the cpation when the image is selected)
+Images that link to things need to be supported
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
 
