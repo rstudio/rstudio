@@ -169,6 +169,16 @@ export class ImageNodeView implements NodeView {
     return !this.contentDOM.contains(mutation.target);
   }
 
+  // prevent bubbling of events into editor
+  public stopEvent(event: Event) {
+    if (event.target instanceof HTMLElement) {
+      const stop = this.dom === event.target || this.dom.contains(event.target as HTMLElement);
+      return stop;
+    } else {
+      return false;
+    }
+  }
+
   // map node to img tag
   private updateImg(node: ProsemirrorNode) {
     // map to path reachable within current editing frame
