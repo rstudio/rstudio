@@ -82,13 +82,24 @@ export function attachResizeUI(
     const startY = ev.pageY;
 
     const onMouseMove = (e: MouseEvent) => {
-      // width
-      const movedX = e.pageX - startX;
-      img.style.width = startWidth + movedX + 'px';
 
-      // height
+      // detect pointer movement
+      const movedX = e.pageX - startX;
       const movedY = e.pageY - startY;
-      img.style.height = startHeight + movedY + 'px';
+
+      const lockRatio = true;
+      if (lockRatio) {
+        if (movedX >= movedY) {
+          img.style.width = startWidth + movedX + 'px'; 
+          img.style.height = startHeight + (movedX * (startHeight/startWidth)) + 'px';
+        } else {
+          img.style.height = startHeight + movedY + 'px';
+          img.style.width = startWidth + (movedY * (startWidth/startHeight)) + 'px';
+        }
+      } else {
+        img.style.width = startWidth + movedX + 'px';
+        img.style.height = startHeight + movedY + 'px';
+      }      
     };
 
     const onMouseUp = (e: MouseEvent) => {
