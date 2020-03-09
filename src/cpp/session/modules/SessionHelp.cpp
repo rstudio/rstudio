@@ -293,7 +293,7 @@ public:
    void do_filter(const Characters& src, Characters& dest)
    {
       std::string cssValue(src.begin(), src.end());
-      cssValue.append("body {\n   font-size:");
+      cssValue.append("body, td {\n   font-size:");
       cssValue.append(safe_convert::numberToString(prefs::userPrefs().helpFontSizePoints()));
       cssValue.append("pt;\n}");
       std::copy(cssValue.begin(), cssValue.end(), std::back_inserter(dest));
