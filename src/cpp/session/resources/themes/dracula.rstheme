@@ -1,3 +1,5 @@
+/* rs-theme-name: dracula */
+/* rs-theme-is-dark: FALSE */
 /*
  * Copyright © 2017 Zeno Rocha <hi@zenorocha.com>
  *
@@ -7,176 +9,126 @@
  *
  * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-/* rs-theme-name: Dracula */
-/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #282a36;
-  color: rgb(144,145,148);
+  color: rgb(144,145,148)
 }
-
 .ace_print-margin {
   width: 1px;
-  background: #363948;
+  background: #44475a
 }
-
 .ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
   background-color: #282a36;
-  color: #f8f8f2;
+  color: #f8f8f2
 }
-
-.ace_entity.ace_other.ace_attribute-name {
-  color: #50fa7b;
+.ace_cursor {
+  color: #f8f8f0
 }
-
-.ace_storage {
-  color: #ff79c6;
-}
-
-.ace_cursor,
-.ace_string.ace_regexp {
-  color: #f8f8f0;
-}
-
-.ace_marker-layer .ace_active-line {
-  background: #44475a;
-}
-
 .ace_marker-layer .ace_selection {
-  background: #707092;
+  background: #44475a
 }
-
 .ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #282a36;
   border-radius: 2px;
 }
-
 .ace_marker-layer .ace_step {
-  background: rgb(198, 219, 174);
+  background: rgb(198, 219, 174)
 }
-
 .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
-  border: 1px solid #3B3A32;
+  border: 1px solid #a29709
 }
-
+.ace_marker-layer .ace_active-line {
+  background: #44475a
+}
 .ace_gutter-active-line {
-  background-color: #44475a;
+  background-color: #44475a
 }
-
 .ace_marker-layer .ace_selected-word {
-  border: 1px solid #44475a;
+  box-shadow: 0px 0px 0px 1px #a29709;
+  border-radius: 3px;
 }
-
-.ace_invisible {
-  color: rgba(147, 161, 161, 0.50);
-}
-
-.ace_keyword,
-.ace_meta {
-  color: #ff79c6;
-}
-
-.ace_support.ace_class,
-.ace_support.ace_type {
-  font-style: italic;
-  color: #66d9ef;
-}
-
-.ace_constant.ace_character,
-.ace_constant.ace_other  {
-  color: #bd93f9;
-}
-
-.ace_constant.ace_language {
-  color: #bd93f9;
-}
-
-.ace_constant.ace_numeric {
-  color: #bd93f9;
-}
-
 .ace_fold {
   background-color: #50fa7b;
-  border-color: #f8f8f2;
+  border-color: #f8f8f2
 }
-
-.ace_entity.ace_name.ace_function {
-  color: #50fa7b;
+.ace_keyword {
+  color: #ff79c6
 }
-
-.ace_entity.ace_name.ace_tag {
-  color: #ff79c6;
+.ace_constant.ace_language {
+  color: #bd93f9
 }
-
-.ace_support.ace_function {
-  color: #8be9fd;
+.ace_constant.ace_numeric {
+  color: #bd93f9
 }
-
-.ace_variable,
-.ace_variable.ace_language {
-  color: #8be9fd;
+.ace_constant.ace_character {
+  color: #bd93f9
 }
-
-.ace_string {
-  color: #f1fa8c;
-}
-
-.ace_heading {
-  color: #bd93f9;
-}
-/* Markdown syntax fixes */
-.ace_string.ace_blockquote {
-  color: #6272a4;
-}
-
-.ace_constant.ace_language.ace_boolean {
-    color: #f1fa8c;
-}
-
-.ace_numeric.ace_constant {
-    color: #ffb86d;
-}
-
-.ace_comment {
-  color: #6272a4;
-}
-
 .ace_constant.ace_character.ace_escape {
-  color: #ff79c6;
+  color: #ff79c6
 }
-
+.ace_constant.ace_other {
+  color: #bd93f9
+}
+.ace_support.ace_function {
+  color: #8be9fd
+}
 .ace_support.ace_constant {
-  color: #6be5fd;
+  color: #6be5fd
 }
-
+.ace_support.ace_class {
+  font-style: italic;
+  color: #66d9ef
+}
+.ace_support.ace_type {
+  font-style: italic;
+  color: #66d9ef
+}
+.ace_storage {
+  color: #ff79c6
+}
 .ace_storage.ace_type {
   font-style: italic;
-  color: #8be9fd;
+  color: #8be9fd
 }
-
 .ace_invalid {
   color: #F8F8F0;
-  background-color: #ff79c6;
+  background-color: #ff79c6
 }
-
 .ace_invalid.ace_deprecated {
   color: #F8F8F0;
-  background-color: #bd93f9;
+  background-color: #bd93f9
 }
-
+.ace_string {
+  color: #f1fa8c
+}
+.ace_comment {
+  color: #6272a4
+}
+.ace_variable {
+  color: #50fa7b
+}
 .ace_variable.ace_parameter {
   font-style: italic;
-  color: #ffb86c;
+  color: #ffb86c
 }
-
+.ace_entity.ace_other.ace_attribute-name {
+  color: #50fa7b
+}
+.ace_entity.ace_name.ace_function {
+  color: #50fa7b
+}
+.ace_entity.ace_name.ace_tag {
+  color: #ff79c6
+}
+.ace_invisible {
+  color: #626680;
+}
 .ace_indent-guide {
-  border-right:1px dotted #333;
-  margin-right:-1px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGBgYHB3d/8PAAOIAdULw8qMAAAAAElFTkSuQmCC) right repeat-y
 }
-
 .nocolor.ace_editor .ace_line span {
-  color: #8abeb7 !important;
+  color: #ff79c6 !important;
 }
 .ace_bracket {
   margin: 0 !important;
@@ -186,59 +138,30 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #0E3640;
+  background-color: #3D3F49;
+}
+.ace_node-selector {
+  background-color: #FFFFFF
+}
+.ace_comment-highlight {
+  background-color: #FFFFFF
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #7F8437;
+  background-color: #948437;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #1D424B;
+  background-color: #52545C;
 }
 .ace_console_error {
-  background-color: #1D424B;
-}
-.ace_keyword.ace_operator {
-  color: #81A2BE !important;
-}
-.ace_paren.ace_keyword.ace_operator {
-  color: #cc6666 !important;
-}
-.nocolor.ace_editor .ace_line span {
-  color: #de935f !important;
-}
-.ace_bracket {
-  margin: 0 !important;
-  border: 0 !important;
-  background-color: rgba(128, 128, 128, 0.5);
-}
-.ace_marker-layer .ace_foreign_line {
-  position: absolute;
-  z-index: -1;
-  background-color: #354146;
-}
-.ace_marker-layer .ace_active_debug_line {
-  position: absolute;
-  z-index: -1;
-  background-color: #928838;
-}
-.ace_marker-layer .ace_find_line {
-  position: absolute;
-  z-index: -1;
-  background-color: #455054;
-}
-.ace_console_error {
-  background-color: #455054;
-}
-.editor_dark.ace_editor_theme a {
-  color: #FFF !important;
+  background-color: #52545C;
 }
 .terminal {
-  background-color: #282A36;
-  color: #F8F8F2;
+  background-color: #282a36;
+  color: #f8f8f2;
   font-feature-settings: "liga" 0;
   position: relative;
   user-select: none;
@@ -246,8 +169,8 @@
   -webkit-user-select: none;
 }
 .terminal.xterm-cursor-style-block.focus:not(.xterm-cursor-blink-on) .terminal-cursor {
-   background-color: #CCC;
-   color: #1e1e1e;
+  background-color: #CCC;
+  color: #1e1e1e;
 }
 .terminal.focus.xterm-cursor-style-bar:not(.xterm-cursor-blink-on) .terminal-cursor::before,
 .terminal.focus.xterm-cursor-style-underline:not(.xterm-cursor-blink-on) .terminal-cursor::before {
@@ -267,46 +190,46 @@
   background-color: #282a36;
   overflow-y: scroll;
 }
-.xtermInvertColor { color: #282A36; }
-.xtermInvertBgColor { background-color: #F8F8F2; }
+.xtermInvertColor { color: #282a36; }
+.xtermInvertBgColor { background-color: #f8f8f2; }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
 .xtermStrike { text-decoration: line-through; }
-.xtermColor0 { color: #000000 !important; }
-.xtermBgColor0 { background-color: #000000; }
-.xtermColor1 { color: #FF5555 !important; }
-.xtermBgColor1 { background-color: #FF5555; }
-.xtermColor2 { color: #50FA7B !important; }
-.xtermBgColor2 { background-color: #50FA7B; }
-.xtermColor3 { color: #F1FA8C !important; }
-.xtermBgColor3 { background-color: #F1FA8C; }
-.xtermColor4 { color: #BD93F9 !important; }
-.xtermBgColor4 { background-color: #BD93F9; }
-.xtermColor5 { color: #FF79C6 !important; }
-.xtermBgColor5 { background-color: #FF79C6; }
-.xtermColor6 { color: #8BE9FD !important; }
-.xtermBgColor6 { background-color: #8BE9FD; }
-.xtermColor7 { color: #BFBFBF !important; }
-.xtermBgColor7 { background-color: #BFBFBF; }
-.xtermColor8 { color: #4D4D4D !important; }
-.xtermBgColor8 { background-color: #4D4D4D; }
-.xtermColor9 { color: #FF6E67 !important; }
-.xtermBgColor9 { background-color: #FF6E67; }
-.xtermColor10 { color: #5AF78E !important; }
-.xtermBgColor10 { background-color: #5AF78E; }
-.xtermColor11 { color: #F4F99D !important; }
-.xtermBgColor11 { background-color: #F4F99D; }
-.xtermColor12 { color: #CAA9FA !important; }
-.xtermBgColor12 { background-color: #CAA9FA; }
-.xtermColor13 { color: #FF92D0 !important; }
-.xtermBgColor13 { background-color: #FF92D0; }
-.xtermColor14 { color: #9AEDFE !important; }
-.xtermBgColor14 { background-color: #9AEDFE; }
-.xtermColor15 { color: #E6E6E6 !important; }
-.xtermBgColor15 { background-color: #E6E6E6; }
+.xtermColor0 { color: #2e3436 !important; }
+.xtermBgColor0 { background-color: #2e3436; }
+.xtermColor1 { color: #cc0000 !important; }
+.xtermBgColor1 { background-color: #cc0000; }
+.xtermColor2 { color: #4e9a06 !important; }
+.xtermBgColor2 { background-color: #4e9a06; }
+.xtermColor3 { color: #c4a000 !important; }
+.xtermBgColor3 { background-color: #c4a000; }
+.xtermColor4 { color: #3465a4 !important; }
+.xtermBgColor4 { background-color: #3465a4; }
+.xtermColor5 { color: #75507b !important; }
+.xtermBgColor5 { background-color: #75507b; }
+.xtermColor6 { color: #06989a !important; }
+.xtermBgColor6 { background-color: #06989a; }
+.xtermColor7 { color: #d3d7cf !important; }
+.xtermBgColor7 { background-color: #d3d7cf; }
+.xtermColor8 { color: #555753 !important; }
+.xtermBgColor8 { background-color: #555753; }
+.xtermColor9 { color: #ef2929 !important; }
+.xtermBgColor9 { background-color: #ef2929; }
+.xtermColor10 { color: #8ae234 !important; }
+.xtermBgColor10 { background-color: #8ae234; }
+.xtermColor11 { color: #fce94f !important; }
+.xtermBgColor11 { background-color: #fce94f; }
+.xtermColor12 { color: #729fcf !important; }
+.xtermBgColor12 { background-color: #729fcf; }
+.xtermColor13 { color: #ad7fa8 !important; }
+.xtermBgColor13 { background-color: #ad7fa8; }
+.xtermColor14 { color: #34e2e2 !important; }
+.xtermBgColor14 { background-color: #34e2e2; }
+.xtermColor15 { color: #eeeeec !important; }
+.xtermBgColor15 { background-color: #eeeeec; }
 .xtermColor16 { color: #000000 !important; }
 .xtermBgColor16 { background-color: #000000; }
 .xtermColor17 { color: #00005f !important; }
@@ -802,7 +725,6 @@
 .ace_layer.ace_marker-layer {
    z-index: 1;
 }
-
 .rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete {
    background: #2f3941;
    border: solid 1px #4e5c68 !important;
