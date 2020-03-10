@@ -52,8 +52,8 @@ theme_details_map <- list(
 
 ## A set of operator colors to use, for each theme. Should match the name
 ## of the theme file in ace.
-## We need to explicity set themes that should be overridden with the default 
-## vaue to NULL
+## We need to explicitly set themes that should be overridden with the default 
+## value to NULL
 operator_theme_map <- list(
    "solarized_light" = "#93A1A1",
    "solarized_dark" = "#B58900",
