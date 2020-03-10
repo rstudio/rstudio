@@ -1,7 +1,7 @@
 /*
  * ServerInit.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,7 @@ http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
 {
    return new http::TcpIpAsyncServer("RStudio",
                                      std::string(),
-                                     options().wwwDisableOriginCheck(),
+                                     !options().wwwDisableOriginCheck(),
                                      options().wwwAllowedOrigins(),
                                      additionalHeaders);
 }
