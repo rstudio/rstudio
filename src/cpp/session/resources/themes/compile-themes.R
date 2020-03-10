@@ -99,6 +99,18 @@
                }
             }
             
+            # Handle any URL fields, because they're too complex to be parsed as below.
+            urlPattern <-"\\s*(background(?:-image)?)\\s*:\\s*(url\\((?:\"[^\"]*\"|[^)]*)\\)[^();]*?)\\s*(?:;|$)"
+            
+            while (grepl(urlPattern, currLine, ignore.case = TRUE, perl = TRUE))
+            {
+               ruleName = sub(urlPattern, "\\1", currLine, ignore.case = TRUE, perl = TRUE)
+               ruleValue = sub(urlPattern, "\\2", currLine, ignore.case = TRUE, perl = TRUE)
+               currLine <- sub(urlPattern, "", currLine, ignore.case = TRUE, perl = TRUE)
+               
+               css[[currKey]][[ruleName]] <- ruleValue
+            }
+            
             # Look for a : on the line. CSS rules always have the format "name: style", so this
             # indicates there is a description on this line..
             if (grepl(":", currLine))
