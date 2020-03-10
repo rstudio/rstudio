@@ -193,6 +193,12 @@ export function applyTheme(theme: EditorTheme) {
     .pm-background-color *::-moz-selection {
       background-color: ${theme.selectionColor} !important;
     }
+    .ProseMirror-selectednode *::selection {
+      background-color: transparent !important;
+    }
+    .ProseMirror-selectednode *::-moz-selection {
+      background-color: transparent !important;
+    }
     .ProseMirror .CodeMirror .CodeMirror-selectedtext  { 
       background: none !important;
     }
