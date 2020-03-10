@@ -20,7 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { EditorUI, ImageType, EditorUIContext } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
-import { attachResizeUI, initResizeContainer } from './image-resize';
+import { attachResizeUI, initResizeContainer, ResizeUI } from './image-resize';
 
 import './image-styles.css';
 
@@ -39,7 +39,7 @@ export class ImageNodeView implements NodeView {
   private readonly view: EditorView;
 
   private readonly imageAttributes: boolean;
-  private removeResizeUI?: () => void;
+  private resizeUI: ResizeUI | null;
 
   private readonly editorUI: EditorUI;
 
@@ -59,6 +59,7 @@ export class ImageNodeView implements NodeView {
     this.getPos = getPos;
     this.imageAttributes = imageAttributes;
     this.editorUI = editorUI;
+    this.resizeUI = null;
 
     const selectOnClick = () => {
       const tr = view.state.tr;
@@ -130,8 +131,8 @@ export class ImageNodeView implements NodeView {
 
     // attach resize UI
     if (this.imageAttributes) {
-      const nodeWithPos = { pos: this.getPos(), node: this.node };
-      this.removeResizeUI = attachResizeUI(nodeWithPos, this.dom, this.img!, this.view, this.editorUI);
+      const imageNode = () => ({ pos: this.getPos(), node: this.node });
+      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, this.view, this.editorUI);
     }
   }
 
@@ -143,9 +144,9 @@ export class ImageNodeView implements NodeView {
     }
 
     // remove resize UI
-    if (this.removeResizeUI) {
-      this.removeResizeUI();
-      this.removeResizeUI = undefined;
+    if (this.resizeUI) {
+      this.resizeUI.detach();
+      this.resizeUI = null;
     }
   }
 
@@ -156,6 +157,9 @@ export class ImageNodeView implements NodeView {
     }
     this.node = node;
     this.updateImg(node);
+    if (this.resizeUI) {
+      this.resizeUI.update();
+    }
     return true;
   }
 

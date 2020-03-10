@@ -41,13 +41,18 @@ export function initResizeContainer(container: HTMLElement) {
   return container;
 }
 
+export interface ResizeUI {
+  update: () => void;
+  detach: () => void;
+}
+
 export function attachResizeUI(
-  nodeWithPos: NodeWithPos,
+  imageNode: () => NodeWithPos,
   container: HTMLElement,
   img: HTMLImageElement,
   view: EditorView,
   ui: EditorUI 
-) {
+) : ResizeUI {
 
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
@@ -65,12 +70,13 @@ export function attachResizeUI(
 
   // handle editImage request from shelf
   const onEditImage = () => {
+    const nodeWithPos = imageNode();
     imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
   };
 
 
   // create resize shelf
-  const shelf = resizeShelf(view, onDimsChanged, onUnitsChanged, onEditImage, ui);
+  const shelf = resizeShelf(view, onDimsChanged, onUnitsChanged, onEditImage, ui.context.translateText);
   container.append(shelf.el);
 
   // initialize props
@@ -78,16 +84,28 @@ export function attachResizeUI(
   shelf.props.setHeight(img.offsetHeight);
   
   // create resize handle and add it to the container
-  const handle = resizeHandle(nodeWithPos, img, view, shelf.props);
+  const handle = resizeHandle(imageNode, img, view, shelf.props);
   container.append(handle);
   
-  // return a function that can be used to destroy the resize UI
-  return () => {
-    container.classList.remove('pm-image-resize-active');
-    handle.remove();
-    shelf.el.remove();
+  // return functions that can be used to update and detach the ui
+  return {
+    update: () => {
+      shelf.props.setWidth(img.offsetWidth);
+      shelf.props.setHeight(img.offsetHeight); 
+    },
+    detach: () => {
+      container.classList.remove('pm-image-resize-active');
+      handle.remove();
+      shelf.el.remove();
+    }
   };
 }
+
+
+// shelf gets out of sync with the image when it's updated
+// (b/c it stays alive after the update). So I think we
+//  need to trigger an update of everything including the
+// shelf in the update method.
 
 
 function resizeShelf(
@@ -95,7 +113,7 @@ function resizeShelf(
   onDimsChanged: () => void, 
   onUnitsChanged: () => void,
   onEditImage: () => void, 
-  ui: EditorUI
+  translateText: (text: string) => string
 ) : { el: HTMLElement, props: ResizeProps } {
 
   // create resize shelf
@@ -144,13 +162,13 @@ function resizeShelf(
   
   checkboxWrapper.append(lockCheckbox);
   addToPanel(checkboxWrapper, 4);
-  const lockLabel = createInputLabel(ui.context.translateText('Lock ratio'));
+  const lockLabel = createInputLabel(translateText('Lock ratio'));
   
   addToPanel(lockLabel, 20);
 
   const editImage = createImageButton(
     ['pm-image-button-edit-properties'], 
-    ui.context.translateText('Edit Image')
+    translateText('Edit Image')
   );
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
@@ -193,7 +211,7 @@ interface ResizeProps {
   lockRatio: () => boolean;
 }
 
-function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView, props: ResizeProps) {
+function resizeHandle(imageNode: () => NodeWithPos, img: HTMLImageElement, view: EditorView, props: ResizeProps) {
 
   const handle = document.createElement('span');
   handle.classList.add(
@@ -259,7 +277,7 @@ function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: Edi
       }
       
       // update image size
-      updateImageSize(view, nodeWithPos, img.width.toString(), img.height.toString());
+      updateImageSize(view, imageNode(), img.width.toString(), img.height.toString());
     };
 
     if (havePointerEvents) {
