@@ -497,6 +497,30 @@
            markerColor)
 })
 
+.rs.addFunction("createNodeSelectorRule", function(themeName, isDark, overrides = list()) {
+   nodeSelectorColor <- overrides[[themeName]]
+   if (is.null(nodeSelectorColor))
+      nodeSelectorColor <- if (isDark) "#FFFFFF" else "rgb(102, 155, 243)"
+   
+   sprintf(paste(sep = "\n",
+                 ".ace_node-selector {",
+                 "  background-color: %s",
+                 "}"),
+           nodeSelectorColor)
+})
+
+.rs.addFunction("createCommentBgRule", function(themeName, isDark, overrides = list()) {
+   commentBgColor <- overrides[[themeName]]
+   if (is.null(commentBgColor))
+      commentBgColor <- if (isDark) "#FFFFFF" else "rgb(254, 155, 243)"
+   
+   sprintf(paste(sep = "\n",
+                 ".ace_comment-highlight {",
+                 "  background-color: %s",
+                 "}"),
+           commentBgColor)
+})
+
 .rs.addFunction("get_chunk_bg_color", function(themeName, isDark, overrides = list()) {
    p <- overrides[[themeName]]
    if (is.null(p))
@@ -1181,7 +1205,16 @@
    content
 })
 
-.rs.addFunction("compile_theme", function(lines, isDark, name = "", chunkBgPropOverrideMap = list(), operatorOverrideMap = list(), keywordOverrideMap = list()) {
+.rs.addFunction("compile_theme", function(
+   lines,
+   isDark,
+   name = "",
+   chunkBgPropOverrideMap = list(),
+   operatorOverrideMap = list(),
+   keywordOverrideMap = list(),
+   nodeSelectorOverrideMap = list(),
+   commentBgOverrideMap = list())
+{
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", lines)
    stripped <- grep("^\\.", stripped, value = TRUE)
@@ -1288,7 +1321,9 @@
    
    content <- c(
       content,
-      .rs.create_line_marker_rule(".ace_foreign_line", mergedColor)
+      .rs.create_line_marker_rule(".ace_foreign_line", mergedColor),
+      .rs.createNodeSelectorRule(name, isDark, nodeSelectorOverrideMap),
+      .rs.createCommentBgRule(name, isDark, commentBgOverrideMap)
    )
    
    ## Generate a color used for 'debugging' backgrounds.
@@ -1342,7 +1377,7 @@
    
    # Add xterm-256 colors for colorized console output
    content <- c(content,
-                .rs.create_xterm_color_rules(background, foreground, isDark)) 
+                .rs.create_xterm_color_rules(background, foreground, isDark))
    
    # Theme rules
    content <- c(content,
