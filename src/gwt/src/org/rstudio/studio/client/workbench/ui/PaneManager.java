@@ -316,10 +316,13 @@ public class PaneManager
 
          tabSet1TabPanel_.clear();
          tabSet2TabPanel_.clear();
+         hiddenTabSetTabPanel_.clear();
          tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
          tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
+         hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
+         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
          manageLayoutCommands();
       });
@@ -375,6 +378,7 @@ public class PaneManager
          tabSet2TabPanel_.clear();
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
+         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
          manageLayoutCommands();
 
@@ -800,6 +804,13 @@ public class PaneManager
       panesByName_.put("TabSet2", ts2.first);
       tabSet2TabPanel_ = ts2.second;
       tabSet2MinPanel_ = ts2.third;
+
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> tsHide = createTabSet(
+            "HiddenTabSet",
+            tabNamesToTabs(config.getHiddenTabSet()));
+      panesByName_.put("HiddenTabSet", tsHide.first);
+      hiddenTabSetTabPanel_ = tsHide.second;
+      hiddenTabSetMinPanel_ = tsHide.third;
    }
    
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
@@ -875,9 +886,43 @@ public class PaneManager
    {
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
-      
-      // Ensure that the pane is visible (otherwise tab selection will fail)
       LogicalWindow parent = panel.getParentWindow();
+
+      // If the tab belongs to the hidden tabset, add it to one being displayed
+      if (parent == panesByName_.get("HiddenTabSet"))
+      {
+         // Try to find a visible tabSet, if both are hidden - add to tabSet1
+         LogicalWindow tabSet1 = panesByName_.get("TabSet1");
+         LogicalWindow tabSet2 = panesByName_.get("TabSet2");
+         MinimizedModuleTabLayoutPanel minimized;
+         ArrayList<Tab> tabs;
+         if ((tabSet1.getState() != WindowState.HIDE &&
+              tabSet1.getState() != WindowState.MINIMIZE) ||
+              (tabSet2.getState() == WindowState.HIDE ||
+               tabSet2.getState() == WindowState.MINIMIZE))
+         {
+            parent = tabSet1;
+            panel = tabSet1TabPanel_;
+            minimized = tabSet1MinPanel_;
+            tabs = tabs1_;
+         }
+         else
+         {
+            parent = tabSet2;
+            panel = tabSet2TabPanel_;
+            minimized = tabSet2MinPanel_;
+            tabs = tabs2_;
+         }
+         // Remove tab from hidden tabSet
+         hiddenTabs_.remove(tab);
+         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
+
+         // Add tab to new set
+         tabs.add(tab);
+         populateTabPanel(tabs, panel, minimized);
+      }
+
+      // Ensure that the pane is visible (otherwise tab selection will fail)
       if (parent.getState() == WindowState.MINIMIZE ||
           parent.getState() == WindowState.HIDE)
       {
@@ -1084,6 +1129,8 @@ public class PaneManager
          tabs1_ = tabs;
       else if (persisterName == "TabSet2")
          tabs2_ = tabs;
+      else if (persisterName == "HiddenTabSet")
+         hiddenTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -1338,6 +1385,8 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet1MinPanel_;
    private WorkbenchTabPanel tabSet2TabPanel_;
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
+   private WorkbenchTabPanel hiddenTabSetTabPanel_;
+   private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
    
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
@@ -1348,4 +1397,5 @@ public class PaneManager
    
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
+   private ArrayList<Tab> hiddenTabs_;
 }
