@@ -51,8 +51,10 @@ then
    sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
  
    # build SOCI
-   sudo cmake -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
-   sudo make
+   cmakeCommand=$(which cmake)
+   makeCommand=$(which make)
+   sudo $cmakeCommand -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
+   sudo $makeCommand
    
    # fix up permissions so bin dir will be readable by others
    sudo chmod -R 777 "$SOCI_BIN_DIR" 
