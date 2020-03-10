@@ -16,9 +16,9 @@ import { EditorView } from 'prosemirror-view';
 
 import tlite from 'tlite';
 
-import './widgets.css';
 import { editingRootNodeClosestToPos } from './node';
-import { selectionCell } from 'prosemirror-tables';
+
+import './widgets.css';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');

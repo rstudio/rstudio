@@ -18,8 +18,10 @@ import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
 
 import { createPopup, createHorizontalPanel, addHorizontalPanelCell, createInputLabel, createNumericInput, createImageButton, createSelectInput, createCheckboxInput } from '../../api/widgets';
-import { EditorDisplay, EditorUI } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
 import { imageDialog } from './image-dialog';
+import { ChangeEvent } from 'react';
+import { node } from 'prop-types';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -50,36 +52,59 @@ export function attachResizeUI(
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
+  // handle prop changed from shelf
+  const onDimsChanged = () => {
+
+    // updateImageSize(view, nodeWithPos, width + unitsSelect.value, height + unitsSelect.value);
+    console.log('dmis changed');
+  };
+
+  const onUnitsChanged = () => {
+    console.log('units changed');
+  };
+
+  // handle editImage request from shelf
+  const onEditImage = () => {
+    imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
+  };
+
+
   // create resize shelf
-  const shelf = resizeShelf(nodeWithPos, img, view, ui);
-  container.append(shelf);
+  const shelf = resizeShelf(view, onDimsChanged, onUnitsChanged, onEditImage, ui);
+  container.append(shelf.el);
+
+  // initialize props
+  shelf.props.setWidth(img.offsetWidth);
+  shelf.props.setHeight(img.offsetHeight);
   
   // create resize handle and add it to the container
-  const handle = resizeHandle(nodeWithPos, img, view);
+  const handle = resizeHandle(nodeWithPos, img, view, shelf.props);
   container.append(handle);
   
   // return a function that can be used to destroy the resize UI
   return () => {
     container.classList.remove('pm-image-resize-active');
     handle.remove();
-    shelf.remove();
+    shelf.el.remove();
   };
 }
 
 
 function resizeShelf(
-  nodeWithPos: NodeWithPos, 
-  img: HTMLImageElement, 
   view: EditorView, 
+  onDimsChanged: () => void, 
+  onUnitsChanged: () => void,
+  onEditImage: () => void, 
   ui: EditorUI
-) {
+) : { el: HTMLElement, props: ResizeProps } {
 
   // create resize shelf
-  const shelf = createPopup(view, ['pm-light-text-color']);
+  const shelf = createPopup(view, ['pm-text-color']);
  
   // TODO: min width that inspects image width (i.e might have to set right to a negative value)
   shelf.style.left = '0';
-  // shelf.style.right = '0';
+  // shelf.style.right = '0'; 
+  shelf.style.bottom = "-48px";
 
 
   const panel = createHorizontalPanel();
@@ -91,47 +116,84 @@ function resizeShelf(
     addHorizontalPanelCell(panel, paddingSpan);
   };
   
-  const inputClasses = ['pm-light-text-color', 'pm-background-color'];
+  const inputClasses = ['pm-text-color', 'pm-background-color'];
+
+
+  const wLabel = createInputLabel('w:');
+  addToPanel(wLabel, 4);
 
   const wInput = createNumericInput(4, 1, 10000, inputClasses);
-  addToPanel(wInput, 4);
+  wInput.onchange = onDimsChanged;
+  addToPanel(wInput, 8);
 
-  const xLabel = createInputLabel('x');
-  addToPanel(xLabel, 4);
+  const hLabel = createInputLabel('h:');
+  addToPanel(hLabel, 4);
 
   const hInput = createNumericInput(4, 1, 10000, inputClasses);
+  hInput.onchange = onDimsChanged;
   addToPanel(hInput, 10);
 
-  const unitsSelect = createSelectInput(["px", "pct"], inputClasses);
+  const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
+  unitsSelect.onchange = onUnitsChanged;
   addToPanel(unitsSelect, 12);
 
 
   const checkboxWrapper = window.document.createElement('div');
   const lockCheckbox = createCheckboxInput();
   lockCheckbox.checked = true;
+  
   checkboxWrapper.append(lockCheckbox);
   addToPanel(checkboxWrapper, 4);
   const lockLabel = createInputLabel(ui.context.translateText('Lock ratio'));
+  
   addToPanel(lockLabel, 20);
 
   const editImage = createImageButton(
     ['pm-image-button-edit-properties'], 
     ui.context.translateText('Edit Image')
   );
-  editImage.onclick = () => {
-    imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
-  };
+  editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
+  const getDim = (input: HTMLInputElement) => {
+    const value = input.valueAsNumber;
+    if (isNaN(value)) {
+      return null;
+    }
+    if (value > 0) {
+      return value;
+    } else {
+      return null;
+    }
+  };
 
-
-  shelf.style.bottom = "-45px";
-
-
-  return shelf;
+  return {
+    el: shelf,
+    props: {
+      width: () => getDim(wInput),
+      setWidth: (width: number) => {
+        wInput.value = width.toString();
+      },
+      height: () => getDim(hInput),
+      setHeight: (height: number) => {
+        hInput.value = height.toString();
+      },
+      units: () => unitsSelect.value,
+      lockRatio: () => lockCheckbox.checked
+    }
+  };
 }
 
-function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView) {
+interface ResizeProps {
+  width: () => number | null;
+  setWidth: (width: number) => void;
+  height: () => number | null;
+  setHeight: (height: number) => void;
+  units: () => string;
+  lockRatio: () => boolean;
+}
+
+function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView, props: ResizeProps) {
 
   const handle = document.createElement('span');
   handle.classList.add(
@@ -161,19 +223,26 @@ function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: Edi
       const movedX = e.pageX - startX;
       const movedY = e.pageY - startY;
 
-      const lockRatio = true;
-      if (lockRatio) {
+      let width;
+      let height;
+      if (props.lockRatio()) {
         if (movedX >= movedY) {
-          img.style.width = startWidth + movedX + 'px'; 
-          img.style.height = startHeight + (movedX * (startHeight/startWidth)) + 'px';
+          width = startWidth + movedX; 
+          height = startHeight + (movedX * (startHeight/startWidth));
         } else {
-          img.style.height = startHeight + movedY + 'px';
-          img.style.width = startWidth + (movedY * (startWidth/startHeight)) + 'px';
+          height = startHeight + movedY;
+          width = startWidth + (movedY * (startWidth/startHeight));
         }
       } else {
-        img.style.width = startWidth + movedX + 'px';
-        img.style.height = startHeight + movedY + 'px';
-      }      
+        width = startWidth + movedX;
+        height = startHeight + movedY;
+      }    
+      width = Math.round(width);
+      height = Math.round(height);
+      props.setWidth(width);
+      props.setHeight(height);
+      img.style.width = width + "px";
+      img.style.height = height + "px";  
     };
 
     const onPointerUp = (e: MouseEvent) => {
@@ -189,29 +258,8 @@ function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: Edi
         document.removeEventListener('mouseup', onPointerUp);
       }
       
-      // get node and position
-      const { pos, node } = nodeWithPos;
-
-      // edit width & height in keyvalue
-      let keyvalue = node.attrs.keyvalue as Array<[string, string]>;
-      keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
-      keyvalue.push(['width', img.width.toString()]);
-      keyvalue.push(['height', img.height.toString()]);
-
-      // create transaction
-      const tr = view.state.tr;
-
-      // set new attributes
-      tr.setNodeMarkup(pos, node.type, { ...node.attrs, keyvalue });
-
-      // restore node selection if our tr.setNodeMarkup blew away the selection
-      const prevState = view.state;
-      if (prevState.selection instanceof NodeSelection && prevState.selection.from === pos) {
-        tr.setSelection(NodeSelection.create(tr.doc, pos));
-      }
-
-      // dispatch transaction
-      view.dispatch(tr);
+      // update image size
+      updateImageSize(view, nodeWithPos, img.width.toString(), img.height.toString());
     };
 
     if (havePointerEvents) {
@@ -233,4 +281,28 @@ function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: Edi
 
   return handle;
 
+}
+
+function updateImageSize(view: EditorView, image: NodeWithPos, width: string, height: string) {
+
+  // edit width & height in keyvalue
+  let keyvalue = image.node.attrs.keyvalue as Array<[string, string]>;
+  keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
+  keyvalue.push(['width', width]);
+  keyvalue.push(['height', height]);
+
+  // create transaction
+  const tr = view.state.tr;
+
+  // set new attributes
+  tr.setNodeMarkup(image.pos, image.node.type, { ...image.node.attrs, keyvalue });
+
+  // restore node selection if our tr.setNodeMarkup blew away the selection
+  const prevState = view.state;
+  if (prevState.selection instanceof NodeSelection && prevState.selection.from === image.pos) {
+    tr.setSelection(NodeSelection.create(tr.doc, image.pos));
+  }
+
+  // dispatch transaction
+  view.dispatch(tr);
 }
