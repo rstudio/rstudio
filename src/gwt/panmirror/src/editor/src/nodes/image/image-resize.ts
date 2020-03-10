@@ -75,12 +75,13 @@ function resizeShelf(
 ) {
 
   // create resize shelf
-  const shelf = createPopup(view, []);
+  const shelf = createPopup(view, ['pm-light-text-color']);
  
   // TODO: min width that inspects image width (i.e might have to set right to a negative value)
   shelf.style.left = '0';
   // shelf.style.right = '0';
-  
+
+
   const panel = createHorizontalPanel();
   shelf.append(panel);
   const addToPanel = (widget: HTMLElement, paddingRight: number) => {
@@ -90,17 +91,18 @@ function resizeShelf(
     addHorizontalPanelCell(panel, paddingSpan);
   };
   
-  const wLabel = createInputLabel(ui.context.translateText('W:'));
-  addToPanel(wLabel, 4);
-  const wInput = createNumericInput(4, 1, 10000);
-  addToPanel(wInput, 8);
+  const inputClasses = ['pm-light-text-color', 'pm-background-color'];
 
-  const hLabel = createInputLabel(ui.context.translateText('H:'));
-  addToPanel(hLabel, 4);
-  const hInput = createNumericInput(4, 1, 10000);
-  addToPanel(hInput, 12);
+  const wInput = createNumericInput(4, 1, 10000, inputClasses);
+  addToPanel(wInput, 4);
 
-  const unitsSelect = createSelectInput(["px", "in", "pct"]);
+  const xLabel = createInputLabel('x');
+  addToPanel(xLabel, 4);
+
+  const hInput = createNumericInput(4, 1, 10000, inputClasses);
+  addToPanel(hInput, 10);
+
+  const unitsSelect = createSelectInput(["px", "pct"], inputClasses);
   addToPanel(unitsSelect, 12);
 
 
