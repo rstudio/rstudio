@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -67,6 +68,7 @@ public class TutorialPane
                           EventBus events,
                           Commands commands,
                           Session session,
+                          DependencyManager dependencies,
                           PackagesServerOperations server)
    {
       super("Tutorial");
@@ -75,6 +77,7 @@ public class TutorialPane
       events_        = events;
       commands_      = commands;
       session_       = session;
+      dependencies_  = dependencies;
       server_        = server;
       
       indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
@@ -226,8 +229,11 @@ public class TutorialPane
    private void runTutorial(String tutorialName,
                             String packageName)
    {
-      Tutorial tutorial = new Tutorial(tutorialName, packageName);
-      launchTutorial(tutorial);
+      dependencies_.withTutorialDependencies(() ->
+      {
+         Tutorial tutorial = new Tutorial(tutorialName, packageName);
+         launchTutorial(tutorial);
+      });
    }
    
    private void navigate(String url, boolean replaceUrl)
@@ -422,6 +428,7 @@ public class TutorialPane
    private final EventBus events_;
    private final Commands commands_;
    private final Session session_;
+   private final DependencyManager dependencies_;
    private final PackagesServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
