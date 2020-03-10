@@ -30,6 +30,13 @@
   vertical-align: middle;
 }
 
+.pm-input-numeric::-webkit-inner-spin-button, 
+.pm-input-numeric::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+
 .ProseMirror .tlite {
   background: #111;
   color: white;
