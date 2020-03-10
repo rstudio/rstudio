@@ -398,6 +398,7 @@ endif()
 # find SOCI libraries
 if(UNIX)
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+   set(CMAKE_INSTALL_RPATH "${SOCI_LIBRARY_DIR}")
    if (NOT APPLE)
       set(LIB_SUFFIX ".so")
       set(SOCI_LIB_SYMLINK "${LIB_SUFFIX}.4.0")
