@@ -1199,7 +1199,7 @@
       keywordColor <- parsed[[key[[1]]]]$color
    }
    if (is.null(keywordColor)) {
-      warning("No keyword color available for file '", paste0(name,".css"), "'", call. = FALSE)
+      warning("No field 'color' for rule 'ace_keyword' in file '", paste0(name,".css"), "'", call. = FALSE)
       return(c())
    }
    
@@ -1221,7 +1221,7 @@
    
    borderField <- parsed[[layerName]]$border
    if (is.null(borderField)) {
-      warning("No field for layer '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
+      warning("No field 'border' for rule '", layerName, "' in file '", paste0(name,".css"), "'; skipping", call. = FALSE)
       return(c())
    }
    
