@@ -21,6 +21,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/filesystem.hpp>
 
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -47,7 +48,8 @@ namespace errc {
 enum errc_t
 {
    Success = 0,
-   RegexError = 1
+   RegexError = 1,
+   PermissionsError = 2
 };
 
 const std::string& findCategory()
@@ -487,6 +489,42 @@ private:
       }
    }
 
+   Error setPermissions(const std::string& filePath, boost::filesystem::perms permissions)
+   {
+      boost::filesystem::path path(filePath);
+      try
+      {
+         boost::filesystem::permissions(path, permissions);
+      }
+      catch (const boost::filesystem::filesystem_error& e)
+      {
+         return Error(e.code(), ERROR_LOCATION);
+      }
+
+      return Success();
+   }
+
+   Error getPermissions(const std::string& filePath, boost::filesystem::perms* pPerms)
+   {
+      *pPerms = boost::filesystem::no_perms;
+
+      boost::filesystem::path path(filePath);
+      try
+      {
+         boost::filesystem::file_status fileStatus = status(path);
+         *pPerms = fileStatus.permissions();
+         return Success();
+      }
+      catch (const boost::filesystem::filesystem_error& e)
+      {
+         return (Error(
+                  errc::findCategory(),
+                  errc::PermissionsError,
+                  "A permissions error occured during replace operation.",
+                  ERROR_LOCATION));
+      }
+   }
+
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -548,7 +586,9 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
-            error = tempReplaceFile_.move(FilePath(currentFile_));
+            error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
+            if (!error)
+               error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
             if (error)
             {
@@ -617,6 +657,7 @@ private:
       Error error = file.testWritePermissions();
       if (error)
          return error;
+
       if (!findResults().preview())
       {
          tempReplaceFile_ =  module_context::tempFile("replace", "txt");
@@ -624,14 +665,20 @@ private:
          if (error)
             return error;
       }
+
       error = file.openForRead(inputStream_);
-      if (!error)
-      {
-         fileSuccess_ = true;
-         inputLineNum_ = 0;
-         currentFile_ = file.getAbsolutePath();
-      }
-      return error;
+      if (error)
+         return error;
+
+      error = getPermissions(file.getAbsolutePath(), &filePermissions_);
+      if (error)
+         return (error);
+
+      fileSuccess_ = true;
+      inputLineNum_ = 0;
+      currentFile_ = file.getAbsolutePath();
+
+      return Success();
    }
 
    void subtractOffsetIntegerToJsonArray(
@@ -1027,6 +1074,7 @@ private:
    FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
    std::shared_ptr<std::ostream> outputStream_;
+   boost::filesystem::perms filePermissions_;
    int inputLineNum_;
    bool fileSuccess_;
 };
