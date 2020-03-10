@@ -17,7 +17,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
-import { EditorUI, ImageType } from '../../api/ui';
+import { EditorUI, ImageType, EditorUIContext } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer } from './image-resize';
@@ -41,7 +41,7 @@ export class ImageNodeView implements NodeView {
   private readonly imageAttributes: boolean;
   private removeResizeUI?: () => void;
 
-  private readonly mapResourcePath: (path: string) => string;
+  private readonly editorUI: EditorUI;
 
   constructor(
     node: ProsemirrorNode,
@@ -58,7 +58,7 @@ export class ImageNodeView implements NodeView {
     this.view = view;
     this.getPos = getPos;
     this.imageAttributes = imageAttributes;
-    this.mapResourcePath = editorUI.context.mapResourcePath;
+    this.editorUI = editorUI;
 
     const selectOnClick = () => {
       const tr = view.state.tr;
@@ -131,7 +131,7 @@ export class ImageNodeView implements NodeView {
     // attach resize UI
     if (this.imageAttributes) {
       const nodeWithPos = { pos: this.getPos(), node: this.node };
-      this.removeResizeUI = attachResizeUI(nodeWithPos, this.dom, this.img!, this.view);
+      this.removeResizeUI = attachResizeUI(nodeWithPos, this.dom, this.img!, this.view, this.editorUI);
     }
   }
 
@@ -180,7 +180,7 @@ export class ImageNodeView implements NodeView {
   // map node to img tag
   private updateImg(node: ProsemirrorNode) {
     // map to path reachable within current editing frame
-    this.img.src = this.mapResourcePath(node.attrs.src);
+    this.img.src = this.editorUI.context.mapResourcePath(node.attrs.src);
 
     // title/tooltip
     this.img.title = node.attrs.title;

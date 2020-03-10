@@ -18,6 +18,7 @@ import tlite from 'tlite';
 
 import './widgets.css';
 import { editingRootNodeClosestToPos } from './node';
+import { selectionCell } from 'prosemirror-tables';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
@@ -38,10 +39,11 @@ export function createPopup(
 ) {
   // create popup
   const popup = window.document.createElement('span');
-  popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color', ...classes);
+  popup.contentEditable = "false";
+  popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color');
   popup.style.position = 'absolute';
   popup.style.zIndex = '10';
-  applyStyle(popup, style);
+  applyStyles(popup, classes, style);
 
   // create mutation observer that watches for destruction
   if (onDestroyed) {
@@ -127,7 +129,7 @@ export function createTextRangePopup(
 }
 
 
-export function createLinkButton(text: string, title?: string, maxWidth?: number, style?: { [key: string]: string }) {
+export function createLinkButton(text: string, title?: string, maxWidth?: number, classes?: string[], style?: { [key: string]: string }) {
   const link = window.document.createElement('a');
   link.classList.add('pm-link', 'pm-link-text-color');
   link.href = '#';
@@ -136,17 +138,69 @@ export function createLinkButton(text: string, title?: string, maxWidth?: number
   if (maxWidth) {
     link.style.maxWidth = maxWidth + 'px';
   }
-  applyStyle(link, style);
+  applyStyles(link, classes, style);
   return link;
 }
 
 export function createImageButton(classes: string[], title: string, style?: { [key: string]: string }) {
   const button = window.document.createElement('button');
-  button.classList.add('pm-image-button', ...classes);
+  button.classList.add('pm-image-button');
   button.title = title;
-  applyStyle(button, style);
+  applyStyles(button, classes, style);
   return button;
 }
+
+export function createInputLabel(text: string, classes?: string[], style?: { [key: string]: string }) {
+  const label = window.document.createElement('label');
+  label.innerText = text;
+  label.classList.add('pm-input-label');
+  applyStyles(label, classes, style);
+  return label;
+}
+
+export function createSelectInput(options: string[], classes?: string[], style?: { [key: string]: string }) {
+  const select = window.document.createElement('select');
+  options.forEach(option => {
+    const optionEl = window.document.createElement('option');
+    optionEl.value = option;
+    optionEl.textContent = option;
+    select.append(optionEl);
+  });
+  select.classList.add('pm-input-select');
+  applyStyles(select, classes, style);
+  return select;
+}
+
+export function createCheckboxInput(classes?: string[], style?: { [key: string]: string }) {
+  const input = window.document.createElement('input');
+  input.classList.add('pm-input-checkbox');
+  input.type = "checkbox";
+  applyStyles(input, classes, style);
+  return input;
+}
+
+export function createNumericInput(
+  digits: number, 
+  min?: number, 
+  max?: number, 
+  classes?: string[], 
+  style?: { [key: string]: string }
+) {
+    const input = document.createElement('input');
+    input.type = "number";
+    input.classList.add('pm-input-numeric');
+    applyStyles(input, classes, style);
+    input.style.width = (digits + 1) + "ch";
+    if (min) {
+      input.min = min.toString();
+    }
+    if (max) {
+      input.max = max.toString();
+    }
+
+    return input;
+}
+
 
 export function showTooltip(
   el: Element,
@@ -160,7 +214,13 @@ export function showTooltip(
   setTimeout(() => tlite.hide(el), timeout);
 }
 
-function applyStyle(el: HTMLElement, style?: { [key: string]: string }) {
+
+function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
+  if (classes) {
+    if (classes) {
+      classes.forEach(clz => el.classList.add(clz));
+    }
+  }
   if (style) {
     Object.keys(style).forEach(name => {
       el.style.setProperty(name, style[name]);

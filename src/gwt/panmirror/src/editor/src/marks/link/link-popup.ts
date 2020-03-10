@@ -136,7 +136,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             addToPanel(removeLink);
 
             // edit link
-            const editLink = createImageButton(['pm-image-button-edit-link'], ui.context.translateText('Edit Link'));
+            const editLink = createImageButton(['pm-image-button-edit-properties'], ui.context.translateText('Edit Link'));
             editLink.onclick = () => {
               linkCmd(editorView.state, editorView.dispatch, editorView);
             };

@@ -17,7 +17,9 @@ import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
 
-import { createPopup, createHorizontalPanel, addHorizontalPanelCell } from '../../api/widgets';
+import { createPopup, createHorizontalPanel, addHorizontalPanelCell, createInputLabel, createNumericInput, createImageButton, createSelectInput, createCheckboxInput } from '../../api/widgets';
+import { EditorDisplay, EditorUI } from '../../api/ui';
+import { imageDialog } from './image-dialog';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -41,14 +43,15 @@ export function attachResizeUI(
   nodeWithPos: NodeWithPos,
   container: HTMLElement,
   img: HTMLImageElement,
-  view: EditorView
+  view: EditorView,
+  ui: EditorUI 
 ) {
 
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
   // create resize shelf
-  const shelf = resizeShelf(nodeWithPos, img, view);
+  const shelf = resizeShelf(nodeWithPos, img, view, ui);
   container.append(shelf);
   
   // create resize handle and add it to the container
@@ -64,21 +67,64 @@ export function attachResizeUI(
 }
 
 
-function resizeShelf(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView) {
+function resizeShelf(
+  nodeWithPos: NodeWithPos, 
+  img: HTMLImageElement, 
+  view: EditorView, 
+  ui: EditorUI
+) {
+
   // create resize shelf
   const shelf = createPopup(view, []);
  
-  shelf.style.left = '0';
-  shelf.style.bottom = '-45px';
   // TODO: min width that inspects image width (i.e might have to set right to a negative value)
-  shelf.style.right = '0';
+  shelf.style.left = '0';
+  // shelf.style.right = '0';
   
   const panel = createHorizontalPanel();
   shelf.append(panel);
-  const input = document.createElement('input');
-  input.type = "number";
+  const addToPanel = (widget: HTMLElement, paddingRight: number) => {
+    addHorizontalPanelCell(panel, widget);
+    const paddingSpan = window.document.createElement('span');
+    paddingSpan.style.width = paddingRight + 'px';
+    addHorizontalPanelCell(panel, paddingSpan);
+  };
   
-  addHorizontalPanelCell(panel, input);
+  const wLabel = createInputLabel(ui.context.translateText('W:'));
+  addToPanel(wLabel, 4);
+  const wInput = createNumericInput(4, 1, 10000);
+  addToPanel(wInput, 8);
+
+  const hLabel = createInputLabel(ui.context.translateText('H:'));
+  addToPanel(hLabel, 4);
+  const hInput = createNumericInput(4, 1, 10000);
+  addToPanel(hInput, 12);
+
+  const unitsSelect = createSelectInput(["px", "in", "pct"]);
+  addToPanel(unitsSelect, 12);
+
+
+  const checkboxWrapper = window.document.createElement('div');
+  const lockCheckbox = createCheckboxInput();
+  lockCheckbox.checked = true;
+  checkboxWrapper.append(lockCheckbox);
+  addToPanel(checkboxWrapper, 4);
+  const lockLabel = createInputLabel(ui.context.translateText('Lock ratio'));
+  addToPanel(lockLabel, 20);
+
+  const editImage = createImageButton(
+    ['pm-image-button-edit-properties'], 
+    ui.context.translateText('Edit Image')
+  );
+  editImage.onclick = () => {
+    imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
+  };
+  addHorizontalPanelCell(panel, editImage);
+
+
+
+  shelf.style.bottom = "-45px";
+
 
   return shelf;
 }
