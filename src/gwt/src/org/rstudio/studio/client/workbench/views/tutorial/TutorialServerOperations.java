@@ -22,7 +22,6 @@ public interface TutorialServerOperations
                         String tutorialUrl,
                         ServerRequestCallback<Void> requestCallback);
    
-   void tutorialStop(String tutorialName,
-                     String tutorialPackage,
+   void tutorialStop(String tutorialUrl,
                      ServerRequestCallback<Void> requestCallback);
 }

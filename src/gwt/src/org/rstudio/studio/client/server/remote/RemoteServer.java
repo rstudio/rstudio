@@ -4231,13 +4231,11 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void tutorialStop(String tutorialName,
-                            String tutorialPackage,
+   public void tutorialStop(String tutorialUrl,
                             ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
-            .add(tutorialName)
-            .add(tutorialPackage)
+            .add(tutorialUrl)
             .get();
       
       sendRequest(RPC_SCOPE, TUTORIAL_STOP, params, requestCallback);

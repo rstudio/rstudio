@@ -18,6 +18,8 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -39,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHan
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
 
@@ -138,11 +141,16 @@ public class TutorialPane
    @Override
    public void popout()
    {
-      String url = frame_.getUrl();
+      final String url = frame_.getUrl();
       
       int width = Math.max(800, frame_.getElement().getClientWidth());
       int height = Math.max(800, frame_.getElement().getClientHeight());
+      
       NewWindowOptions options = new NewWindowOptions();
+      options.setCallback((WindowEx window) ->
+      {
+         initExternalWindowJsCallbacks(window, url);
+      });
       
       globalDisplay_.openWebMinimalWindow(
             url,
@@ -220,12 +228,6 @@ public class TutorialPane
       return frame_.getUrl();
    }
    
-   @Override
-   public String getRawSrcUrl()
-   {
-      return frame_.getElement().getAttribute("src");
-   }
-   
    private void runTutorial(String tutorialName,
                             String packageName)
    {
@@ -234,6 +236,13 @@ public class TutorialPane
          Tutorial tutorial = new Tutorial(tutorialName, packageName);
          launchTutorial(tutorial);
       });
+   }
+   
+   private void stopTutorial(String url)
+   {
+      JsObject data = JsObject.createJsObject();
+      data.setString("url", url);
+      events_.fireEvent(new TutorialCommandEvent(TutorialCommandEvent.TYPE_STOP, data));
    }
    
    private void navigate(String url, boolean replaceUrl)
@@ -407,6 +416,20 @@ public class TutorialPane
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
       });
       
+   }-*/;
+   
+   private final native void initExternalWindowJsCallbacks(WindowEx window, String url)
+   /*-{
+   
+      var self = this;
+      
+      var handler = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::stopTutorial(*)(url);
+      });
+      
+      window.addEventListener("unload", handler, true);
+      window.addEventListener("beforeunload", handler, true);
+   
    }-*/;
    
    // Resources ---- 
