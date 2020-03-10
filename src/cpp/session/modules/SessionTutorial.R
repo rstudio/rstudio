@@ -29,34 +29,27 @@
 
 .rs.addJsonRpcHandler("tutorial_stop", function(url)
 {
-   # search for tutorial bound to this url
-   keys <- ls(envir = .rs.tutorial.registry)
-   for (key in keys)
-   {
-      tutorial <- .rs.tutorial.registry[[key]]
-      
-      match <-
-         identical(url, tutorial[["shiny_url"]]) ||
-         identical(url, tutorial[["browser_url"]])
-      
-      if (match)
-      {
-         # found the tutorial; stop it and return
-         .rs.tutorial.stopTutorial(
-            name    = tutorial[["name"]],
-            package = tutorial[["package"]]
-         )
-         
-         return(TRUE)
-      }
-   }
+   tutorial <- .rs.tutorial.registryFind(url)
+   if (is.null(tutorial))
+      return(FALSE)
    
-   # failed to find tutorial; log a warning
-   fmt <- "no tutorial associated with url '%s'"
-   warning(sprintf(fmt, url))
+   .rs.tutorial.stopTutorial(
+      name    = tutorial[["name"]],
+      package = tutorial[["package"]]
+   )
+   
+   TRUE
+   
 })
 
-
+.rs.addJsonRpcHandler("tutorial_metadata", function(url)
+{
+   tutorial <- .rs.tutorial.registryFind(url)
+   if (is.null(tutorial))
+      return(list())
+   
+   .rs.scalarListFromList(as.list(tutorial))
+})
 
 # Methods ----
 
@@ -85,6 +78,25 @@
 {
    key <- .rs.tutorial.registryKey(name, package)
    .rs.tutorial.registry[[key]]
+})
+
+.rs.addFunction("tutorial.registryFind", function(url)
+{
+   keys <- ls(envir = .rs.tutorial.registry)
+   for (key in keys)
+   {
+      tutorial <- .rs.tutorial.registry[[key]]
+      
+      match <-
+         identical(url, tutorial[["shiny_url"]]) ||
+         identical(url, tutorial[["browser_url"]])
+      
+      if (match)
+         return(tutorial)
+   }
+   
+   NULL
+   
 })
 
 # TODO: local jobs are stopped when the session is suspended, and so running

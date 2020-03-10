@@ -4242,6 +4242,18 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void tutorialMetadata(String tutorialUrl,
+                                ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(tutorialUrl)
+            .get();
+      
+      sendRequest(RPC_SCOPE, TUTORIAL_METADATA, params, requestCallback);
+   }
+   
+   
+   @Override
    public void getSlideNavigationForFile(
                      String filePath,
                      ServerRequestCallback<SlideNavigation> requestCallback)
@@ -6406,6 +6418,7 @@ public class RemoteServer implements Server
    
    private static final String TUTORIAL_STARTED = "tutorial_started";
    private static final String TUTORIAL_STOP = "tutorial_stop";
+   private static final String TUTORIAL_METADATA = "tutorial_metadata";
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
    private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";

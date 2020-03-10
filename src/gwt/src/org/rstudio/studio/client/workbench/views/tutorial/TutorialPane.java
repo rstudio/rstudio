@@ -16,9 +16,11 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -141,17 +143,43 @@ public class TutorialPane
    {
       final String url = frame_.getUrl();
       
+      server_.tutorialMetadata(url, new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            onPopout(
+                  url,
+                  response.getString("name"),
+                  response.getString("package"));
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            onPopout(url, null, null);
+         }
+      });
+      
+   }
+   
+   private void onPopout(String tutorialUrl,
+                         String tutorialName,
+                         String tutorialPackage)
+   {
       int width = Math.max(800, frame_.getElement().getClientWidth());
       int height = Math.max(800, frame_.getElement().getClientHeight());
       
       NewWindowOptions options = new NewWindowOptions();
+      options.setName("rstudio-tutorial-" + StringUtil.makeRandomId(16));
       options.setCallback((WindowEx window) ->
       {
-         initExternalWindowJsCallbacks(window, url);
+         initExternalWindowJsCallbacks(window, tutorialUrl, tutorialName, tutorialPackage);
       });
       
       globalDisplay_.openWebMinimalWindow(
-            url,
+            tutorialUrl,
             false,
             width,
             height,
@@ -227,11 +255,16 @@ public class TutorialPane
    }
    
    private void runTutorial(String tutorialName,
-                            String packageName)
+                            String tutorialPackage)
    {
+      // check and see if this tutorial is running in a child window
+      if (focusExistingTutorialWindow(tutorialName, tutorialPackage))
+         return;
+      
+      // otherwise, launch tutorial in pane
       dependencies_.withTutorialDependencies(() ->
       {
-         Tutorial tutorial = new Tutorial(tutorialName, packageName);
+         Tutorial tutorial = new Tutorial(tutorialName, tutorialPackage);
          launchTutorial(tutorial);
       });
    }
@@ -414,12 +447,19 @@ public class TutorialPane
       
    }-*/;
    
-   private final native void initExternalWindowJsCallbacks(WindowEx window, String url)
+   private final native void initExternalWindowJsCallbacks(WindowEx window,
+                                                           String tutorialUrl,
+                                                           String tutorialName,
+                                                           String tutorialPackage)
    /*-{
       
       // register this window
       $wnd.tutorialWindows = $wnd.tutorialWindows || {};
-      $wnd.tutorialWindows[url] = window;
+      $wnd.tutorialWindows[tutorialUrl] = {
+         "package": tutorialPackage,
+         "name": tutorialName,
+         "window": window
+      };
       
       // start polling for window closure
       var self = this;
@@ -428,7 +468,9 @@ public class TutorialPane
          // stop any tutorials whose associated window was closed
          for (var url in $wnd.tutorialWindows)
          {
-            var window = $wnd.tutorialWindows[url];
+            var entry = $wnd.tutorialWindows[url];
+            
+            var window = entry["window"];
             if (window.closed)
             {
                self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::stopTutorial(*)(url);
@@ -445,6 +487,31 @@ public class TutorialPane
          }
          
       }, 500);
+      
+   }-*/;
+   
+   private final native boolean focusExistingTutorialWindow(String tutorialName,
+                                                            String tutorialPackage)
+   /*-{
+   
+      var windows = $wnd.tutorialWindows || {};
+      for (var url in windows)
+      {
+         var entry = $wnd.tutorialWindows[url];
+         
+         var match =
+            entry["name"] === tutorialName &&
+            entry["package"] == tutorialPackage;
+         
+         if (match)
+         {
+            var window = entry["window"];
+            $wnd.open("", window.name);
+            return true;
+         }
+      }
+      
+      return false;
       
    }-*/;
    

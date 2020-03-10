@@ -223,11 +223,11 @@ public class TutorialPresenter
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPING))
       {
-         Debug.logToRConsole("Tutorial: stopping");
+         // handled separately
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPED))
       {
-         Debug.logToRConsole("Tutorial: stopped");
+         // handled separately
       }
    }
    
