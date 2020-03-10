@@ -611,6 +611,7 @@ int main(int argc, char * const argv[])
       }
 
       // export important environment variables
+      core::system::setenv(kServerTmpDirEnvVar, serverTmpDir().getAbsolutePath());
       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
 
       // initialize File Lock
