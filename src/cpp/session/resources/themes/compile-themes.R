@@ -511,12 +511,29 @@
 })
 
 .rs.addFunction("updateSetting", function(content, newValue, cssClass, settingName) {
-   settingName <- paste0(settingName, ":")
-   blockLoc <- grep(paste0("\\.", cssClass, "( *){"), content, perl = TRUE)
-   settingLoc <- grep(paste0("(^| )",settingName),  content, perl = TRUE)
-   
-   loc <- settingLoc[settingLoc > blockLoc][1]
-   content[loc] <- paste0("  ", settingName, " ", newValue, ";")
+   classPat <- paste0("\\.", cssClass, "( *){")
+   if (any(grepl(classPat, content, perl = TRUE)))
+   {
+      settingName <- paste0(settingName, ":")
+      blockLoc <- grep(classPat, content, perl = TRUE)
+      
+      newLine <-  paste0("  ", settingName, " ", newValue, ";")
+      settingPat <- paste0("(^| )",settingName)
+      if (!any(grepl(settingPat, content, perl = TRUE)))
+      {
+         settingLoc <- grep("}",  content, perl = TRUE)
+         
+         loc <- settingLoc[settingLoc > blockLoc][1]
+         content <- c(content[1:loc-1], newLine, content[loc:length(content)])
+      }
+      else
+      {
+         settingLoc <- grep(settingPat,  content, perl = TRUE)
+      
+         loc <- settingLoc[settingLoc > blockLoc][1]
+         content[loc] <- newLine
+      }
+   }
    content
 })
 
@@ -526,6 +543,10 @@
 
 .rs.addFunction("setActiveDebugLineColor", function(content, color) {
    .rs.updateSetting(content, color, "ace_active_debug_line", "background-color")
+})
+
+.rs.addFunction("setSelectionStartBorderRadius", function(content) {
+   .rs.updateSetting(content, "2px", "ace_selection.ace_start", "border-radius")
 })
 
 .rs.addFunction("create_terminal_cursor_rules", function(isDark) {
@@ -1184,8 +1205,12 @@
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
    content <- gsub(regex, "", content)
    
+   ## Add border radius
+   content <- .rs.setSelectionStartBorderRadius(content)
+   
    ## Parse the css
    parsed <- .rs.parseCss(lines = content)
+   
    names(parsed)[grep("^\\.ace_editor(,.*|)$", names(parsed), perl = TRUE)] <- "ace_editor"
    
    if (!any(grepl("^\\.ace_keyword", names(parsed)))) {
