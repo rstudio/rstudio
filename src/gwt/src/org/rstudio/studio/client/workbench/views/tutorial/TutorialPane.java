@@ -19,7 +19,6 @@ import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -33,15 +32,14 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
-import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialNavigateEvent.Handler;
 
@@ -72,7 +70,7 @@ public class TutorialPane
                           Commands commands,
                           Session session,
                           DependencyManager dependencies,
-                          PackagesServerOperations server)
+                          TutorialServerOperations server)
    {
       super("Tutorial");
       
@@ -240,9 +238,7 @@ public class TutorialPane
    
    private void stopTutorial(String url)
    {
-      JsObject data = JsObject.createJsObject();
-      data.setString("url", url);
-      events_.fireEvent(new TutorialCommandEvent(TutorialCommandEvent.TYPE_STOP, data));
+      server_.tutorialStop(url, new VoidServerRequestCallback());
    }
    
    private void navigate(String url, boolean replaceUrl)
@@ -420,16 +416,36 @@ public class TutorialPane
    
    private final native void initExternalWindowJsCallbacks(WindowEx window, String url)
    /*-{
-   
+      
+      // register this window
+      $wnd.tutorialWindows = $wnd.tutorialWindows || {};
+      $wnd.tutorialWindows[url] = window;
+      
+      // start polling for window closure
       var self = this;
+      $wnd.tutorialWindowsCallback = $wnd.tutorialWindowsCallback || setInterval(function() {
+         
+         // stop any tutorials whose associated window was closed
+         for (var url in $wnd.tutorialWindows)
+         {
+            var window = $wnd.tutorialWindows[url];
+            if (window.closed)
+            {
+               self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::stopTutorial(*)(url);
+               delete $wnd.tutorialWindows[url];
+            }
+         }
+         
+         // stop polling if we have no more child windows
+         var keys = Object.keys($wnd.tutorialWindows);
+         if (keys.length === 0)
+         {
+            clearInterval($wnd.tutorialWindowsCallback);
+            $wnd.tutorialWindowsCallback = null;
+         }
+         
+      }, 500);
       
-      var handler = $entry(function() {
-         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::stopTutorial(*)(url);
-      });
-      
-      window.addEventListener("unload", handler, true);
-      window.addEventListener("beforeunload", handler, true);
-   
    }-*/;
    
    // Resources ---- 
@@ -452,7 +468,7 @@ public class TutorialPane
    private final Commands commands_;
    private final Session session_;
    private final DependencyManager dependencies_;
-   private final PackagesServerOperations server_;
+   private final TutorialServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
 }

@@ -24,4 +24,9 @@ public interface TutorialServerOperations
    
    void tutorialStop(String tutorialUrl,
                      ServerRequestCallback<Void> requestCallback);
+   
+   void isPackageInstalled(String packageName,
+                           String version,
+                           ServerRequestCallback<Boolean> requestCallback);
+   
 }
