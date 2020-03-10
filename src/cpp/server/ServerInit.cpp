@@ -30,7 +30,7 @@ http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
 {
    return new http::TcpIpAsyncServer("RStudio",
                                      std::string(),
-                                     !options().wwwDisableOriginCheck(),
+                                     !options().wwwEnableOriginCheck(),
                                      options().wwwAllowedOrigins(),
                                      additionalHeaders);
 }
