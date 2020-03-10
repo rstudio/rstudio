@@ -745,6 +745,21 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       );
    }
    
+   public void withTutorialDependencies(final Command command)
+   {
+      withDependencies(
+            "Starting tutorial",
+            "Starting a tutorial",
+            getFeatureDescription("tutorial"),
+            getFeatureDependencies("tutorial"),
+            true,
+            (Boolean succeeded) ->
+            {
+               if (succeeded)
+                  command.execute();
+            });
+   }
+   
    private ArrayList<Dependency> connectionPackageDependencies(
               String packageName,
               String packageVersion)
