@@ -44,24 +44,13 @@ export function attachResizeUI(
   view: EditorView
 ) {
 
+  // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
   // create resize shelf
-  const popup = createPopup(view, []);
- 
-  popup.style.left = '0';
-  popup.style.bottom = '-45px';
-  // TODO: min width that inspects image width (i.e might have to set right to a negative value)
-  popup.style.right = '0';
-  container.append(popup);
+  const shelf = resizeShelf(nodeWithPos, img, view);
+  container.append(shelf);
   
-  const panel = createHorizontalPanel();
-  popup.append(panel);
-  const input = document.createElement('input');
-  input.type = "number";
-  
-  addHorizontalPanelCell(panel, input);
-
   // create resize handle and add it to the container
   const handle = resizeHandle(nodeWithPos, img, view);
   container.append(handle);
@@ -70,10 +59,29 @@ export function attachResizeUI(
   return () => {
     container.classList.remove('pm-image-resize-active');
     handle.remove();
-    popup.remove();
+    shelf.remove();
   };
 }
 
+
+function resizeShelf(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView) {
+  // create resize shelf
+  const shelf = createPopup(view, []);
+ 
+  shelf.style.left = '0';
+  shelf.style.bottom = '-45px';
+  // TODO: min width that inspects image width (i.e might have to set right to a negative value)
+  shelf.style.right = '0';
+  
+  const panel = createHorizontalPanel();
+  shelf.append(panel);
+  const input = document.createElement('input');
+  input.type = "number";
+  
+  addHorizontalPanelCell(panel, input);
+
+  return shelf;
+}
 
 function resizeHandle(nodeWithPos: NodeWithPos, img: HTMLImageElement, view: EditorView) {
 
