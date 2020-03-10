@@ -19,7 +19,7 @@
    # Split any lines with "\n" for proper parsing.
    cssLines <- unlist(strsplit(gsub("\\}", "\\}\n", lines), c("\n"), perl = TRUE))
    
-   currKey = NULL
+   currKeys <-list()
    isLastDescForKey <- FALSE
    inCommentBlock <- FALSE
    candidateKey <- NULL
@@ -72,20 +72,23 @@
             
             if (!grepl("^\\s*$", candidateKey))
             {
-               if (!is.null(currKey))
+               if (length(currKeys) > 0)
                {
                   warning("Malformed CSS: ", orgLine, ". No closing bracket for last block.")
                }
-               currKey <- candidateKey
+               currKeys <- unlist(strsplit(candidateKey, "\\s*,\\s*", perl = TRUE))
                candidateKey <- NULL
                
-               css[[currKey]] <- list()
+               for (currKey in currKeys)
+               {
+                  css[[currKey]] <- list()
+               }
                currLine <- sub("^\\s*[^\\{]*?\\s*\\{", "", currLine)
             }
          }
          
          # If there is currently a key, look for it's descriptions.
-         if (!is.null(currKey))
+         if (length(currKeys) > 0)
          {
             # Determine if we're at the end of the block and remove the closing bracket to be able
             # to parse anything that comes before it on the same line.
@@ -108,7 +111,7 @@
                ruleValue = sub(urlPattern, "\\2", currLine, ignore.case = TRUE, perl = TRUE)
                currLine <- sub(urlPattern, "", currLine, ignore.case = TRUE, perl = TRUE)
                
-               css[[currKey]][[ruleName]] <- ruleValue
+               for (currKey in currKeys) css[[currKey]][[ruleName]] <- ruleValue
             }
             
             # Look for a : on the line. CSS rules always have the format "name: style", so this
@@ -130,7 +133,7 @@
                      }
                      else
                      {
-                        css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
+                        for (currKey in currKeys) css[[currKey]][[ desc[1] ]] <- tolower(desc[2])
                      }
                   }
                }
@@ -157,7 +160,7 @@
          # If we've finished a block, reset the key and the block-end indicator.
          if (isLastDescForKey)
          {
-            currKey <- NULL
+            currKeys <- list()
             isLastDescForKey <- FALSE
          }
          
