@@ -515,9 +515,6 @@
    blockLoc <- grep(paste0("\\.", cssClass, "( *){"), content, perl = TRUE)
    settingLoc <- grep(paste0("(^| )",settingName),  content, perl = TRUE)
    
-   print(paste(cssClass, settingName))
-   print(blockLoc)
-   print(settingLoc)
    loc <- settingLoc[settingLoc > blockLoc][1]
    content[loc] <- paste0("  ", settingName, " ", newValue, ";")
    content
