@@ -75,6 +75,48 @@ operator_theme_map <- list(
    NULL
 )
 
+node_selector_map <- list(
+   "solarized_light" = NULL,
+   "solarized_dark" = NULL,
+   "twilight" = NULL,
+   "idle_fingers" = NULL,
+   "clouds_midnight" = NULL,
+   "cobalt" = NULL,
+   "kr_theme" = NULL,
+   "clouds" = NULL,
+   "dawn" = NULL,
+   "eclipse" = NULL,
+   "katzenmilch" = NULL,
+   "merbivore" = NULL,
+   "merbivore_soft" = NULL,
+   "monokai" = NULL,
+   "pastel_on_dark" = NULL,
+   "vibrant_ink" = NULL,
+   "xcode" = NULL,
+   NULL
+)
+
+comment_bg_map <- list(
+   "solarized_light" = NULL,
+   "solarized_dark" = NULL,
+   "twilight" = NULL,
+   "idle_fingers" = NULL,
+   "clouds_midnight" = NULL,
+   "cobalt" = NULL,
+   "kr_theme" = NULL,
+   "clouds" = NULL,
+   "dawn" = NULL,
+   "eclipse" = NULL,
+   "katzenmilch" = NULL,
+   "merbivore" = NULL,
+   "merbivore_soft" = NULL,
+   "monokai" = NULL,
+   "pastel_on_dark" = NULL,
+   "vibrant_ink" = NULL,
+   "xcode" = NULL,
+   NULL
+)
+
 ## Similarly, colors for keywords that we might override.
 keyword_theme_map <- list(
    "eclipse" = "#800080",
@@ -199,7 +241,9 @@ for (themeFile in themeFiles) {
       fileName,
       chunkBgPropOverrideMap = chunk_bg_proportion_map,
       operatorOverrideMap = operator_theme_map,
-      keywordOverrideMap = keyword_theme_map)
+      keywordOverrideMap = keyword_theme_map,
+      nodeSelectorOverrideMap = node_selector_map,
+      commentBgOverrideMap = comment_bg_map)
 
    if (length(content) > 0)
    {
