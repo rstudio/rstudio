@@ -133,8 +133,9 @@ Error Plot::renderFromDisplay()
    std::string storageUuid = core::system::generateUuid();
    
    // generate snapshot and image files
-   Error error = graphicsDevice_.saveSnapshot(snapshotFilePath(storageUuid),
-                                              imageFilePath(storageUuid));
+   FilePath snapshotPath = snapshotFilePath(storageUuid);
+   FilePath imagePath = imageFilePath(storageUuid);
+   Error error = graphicsDevice_.saveSnapshot(snapshotPath, imagePath);
    if (error)
       return Error(errc::PlotRenderingError, error, ERROR_LOCATION);
    
