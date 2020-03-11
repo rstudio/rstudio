@@ -80,18 +80,24 @@ export function attachResizeUI(
   container.append(shelf.el);
 
   // initialize props
-  shelf.props.setWidth(img.offsetWidth);
-  shelf.props.setHeight(img.offsetHeight);
+  shelf.setDims(img.offsetWidth, img.offsetHeight);
   
   // create resize handle and add it to the container
-  const handle = resizeHandle(imageNode, img, view, shelf.props);
+  const handle = resizeHandle(
+    img, 
+    shelf.props.lockRatio,
+    shelf.setDims,
+    (width: number, height: number) => {
+      updateImageSize(view, imageNode(), width.toString(), height.toString());
+    }
+  );
+
   container.append(handle);
   
   // return functions that can be used to update and detach the ui
   return {
     update: () => {
-      shelf.props.setWidth(img.offsetWidth);
-      shelf.props.setHeight(img.offsetHeight); 
+      shelf.setDims(img.offsetWidth, img.offsetHeight);
     },
     detach: () => {
       container.classList.remove('pm-image-resize-active');
@@ -101,20 +107,13 @@ export function attachResizeUI(
   };
 }
 
-
-// shelf gets out of sync with the image when it's updated
-// (b/c it stays alive after the update). So I think we
-//  need to trigger an update of everything including the
-// shelf in the update method.
-
-
 function resizeShelf(
   view: EditorView, 
   onDimsChanged: () => void, 
   onUnitsChanged: () => void,
   onEditImage: () => void, 
   translateText: (text: string) => string
-) : { el: HTMLElement, props: ResizeProps } {
+)  {
 
   // create resize shelf
   const shelf = createPopup(view, ['pm-text-color']);
@@ -187,31 +186,28 @@ function resizeShelf(
 
   return {
     el: shelf,
+
+    setDims: (width: number, height: number) => {
+      wInput.value = width.toString();
+      hInput.value = height.toString();
+    },
+
     props: {
       width: () => getDim(wInput),
-      setWidth: (width: number) => {
-        wInput.value = width.toString();
-      },
       height: () => getDim(hInput),
-      setHeight: (height: number) => {
-        hInput.value = height.toString();
-      },
       units: () => unitsSelect.value,
       lockRatio: () => lockCheckbox.checked
     }
   };
 }
 
-interface ResizeProps {
-  width: () => number | null;
-  setWidth: (width: number) => void;
-  height: () => number | null;
-  setHeight: (height: number) => void;
-  units: () => string;
-  lockRatio: () => boolean;
-}
 
-function resizeHandle(imageNode: () => NodeWithPos, img: HTMLImageElement, view: EditorView, props: ResizeProps) {
+function resizeHandle(
+  img: HTMLImageElement, 
+  lockRatio: () => boolean,
+  onSizing: (width: number, height: number) => void,
+  onSizingComplete: (width: number, height: number) => void
+) {
 
   const handle = document.createElement('span');
   handle.classList.add(
@@ -243,7 +239,7 @@ function resizeHandle(imageNode: () => NodeWithPos, img: HTMLImageElement, view:
 
       let width;
       let height;
-      if (props.lockRatio()) {
+      if (lockRatio()) {
         if (movedX >= movedY) {
           width = startWidth + movedX; 
           height = startHeight + (movedX * (startHeight/startWidth));
@@ -257,10 +253,9 @@ function resizeHandle(imageNode: () => NodeWithPos, img: HTMLImageElement, view:
       }    
       width = Math.round(width);
       height = Math.round(height);
-      props.setWidth(width);
-      props.setHeight(height);
       img.style.width = width + "px";
       img.style.height = height + "px";  
+      onSizing(width, height);
     };
 
     const onPointerUp = (e: MouseEvent) => {
@@ -277,7 +272,7 @@ function resizeHandle(imageNode: () => NodeWithPos, img: HTMLImageElement, view:
       }
       
       // update image size
-      updateImageSize(view, imageNode(), img.width.toString(), img.height.toString());
+      onSizingComplete(img.offsetWidth, img.offsetHeight);
     };
 
     if (havePointerEvents) {
