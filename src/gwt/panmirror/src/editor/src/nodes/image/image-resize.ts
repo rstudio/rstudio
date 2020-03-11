@@ -17,6 +17,7 @@
  // unit conversion logic
  // lockdown for percent
  // container for percent
+ // figure is inline-block so percent based sizing doens't work well
 
  // selection not shown when double clicking number inputs
  // selection in textbox leads to "draggable"
