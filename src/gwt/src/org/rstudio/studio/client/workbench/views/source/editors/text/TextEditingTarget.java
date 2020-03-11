@@ -291,9 +291,17 @@ public class TextEditingTarget implements
          // (without this and when file monitoring is active we'd
          // end up immediately checking for external edits)
          externalEditCheckInterval_.reset(250);
+         boolean fileTypeChanged = true;
 
          if (newFileType_ != null)
+         {
+            // if we already had a file type, see if the underlying type has changed
+            if (fileType_ != null)
+            {
+               fileTypeChanged = !StringUtil.equals(newFileType_.getTypeId(), fileType_.getTypeId());
+            }
             fileType_ = newFileType_;
+         }
 
          if (file_ != null)
          {
@@ -314,7 +322,7 @@ public class TextEditingTarget implements
             dirtyState_.markClean();
          }
 
-         if (newFileType_ != null)
+         if (newFileType_ != null && fileTypeChanged)
          {
             // Make sure the icon gets updated, even if name hasn't changed
             name_.fireChangeEvent();
@@ -2879,6 +2887,10 @@ public class TextEditingTarget implements
    @Override
    public void adaptToExtendedFileType(String extendedType)
    {
+      // ignore if unchanged
+      if (StringUtil.equals(extendedType, extendedType_))
+         return;
+
       view_.adaptToExtendedFileType(extendedType);
       if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
