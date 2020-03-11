@@ -58,12 +58,32 @@ export function attachResizeUI(
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
-   // handle dims change
+   // handle both dims changed (from resize handle)
    const onDimsChanged = (width: number, height: number) => {
     updateImageSize(view, imageNode(), width.toString(), height.toString());
   };
 
+  // handle width changed from shelf
+  const onWidthChanged = (width: number) => {
+    const height = shelf.props.lockRatio() ?
+       (img.offsetHeight / img.offsetWidth) * width : 
+       shelf.props.height();
+    if (height) {
+      onDimsChanged(width, height);
+    }
+  };
 
+  // handle height changed from shelf
+  const onHeightChanged = (height: number) => {
+    const width = shelf.props.lockRatio() ? 
+      (img.offsetWidth / img.offsetHeight) * height :
+      shelf.props.width();
+    if (width) {
+      onDimsChanged(width, height);
+    }
+  };
+
+  // handle units changed from shelf
   const onUnitsChanged = () => {
     // console.log('units changed');
   };
@@ -78,8 +98,9 @@ export function attachResizeUI(
   // create resize shelf
   const shelf = resizeShelf(
     view, 
-    onDimsChanged, 
-    onUnitsChanged, 
+    onWidthChanged,
+    onHeightChanged,
+    onUnitsChanged,
     onEditImage, 
     ui.context.translateText
   );
@@ -114,7 +135,8 @@ export function attachResizeUI(
 
 function resizeShelf(
   view: EditorView, 
-  onDimsChanged: (width: number, height: number) => void, 
+  onWidthChanged: (width: number) => void, 
+  onHeightChanged: (height: number) => void,
   onUnitsChanged: () => void,
   onEditImage: () => void, 
   translateText: (text: string) => string
@@ -145,25 +167,29 @@ function resizeShelf(
   addToPanel(wLabel, 4);
 
   const wInput = createNumericInput(4, 1, 10000, inputClasses);
+  wInput.onchange = () => {
+    const width = getDim(wInput);
+    if (width) {
+      onWidthChanged(width);
+    }
+  };
   addToPanel(wInput, 8);
 
   const hLabel = createInputLabel('h:');
   addToPanel(hLabel, 4);
 
   const hInput = createNumericInput(4, 1, 10000, inputClasses);
+  hInput.onchange = () => {
+    const height = getDim(hInput);
+    if (height) {
+      onHeightChanged(height);
+    }
+  };
   addToPanel(hInput, 10);
 
   const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
   unitsSelect.onchange = onUnitsChanged;
   addToPanel(unitsSelect, 12);
-
-  wInput.onchange = hInput.onchange = () => {
-    const width = getDim(wInput);
-    const height = getDim(hInput);
-    if (width && height) {
-      onDimsChanged(width, height);
-    }
-  };
 
 
   const checkboxWrapper = window.document.createElement('div');
@@ -306,6 +332,7 @@ function resizeHandle(
   return handle;
 
 }
+
 
 function updateImageSize(view: EditorView, image: NodeWithPos, width: string, height: string) {
 
