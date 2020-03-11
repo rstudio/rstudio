@@ -13,7 +13,6 @@
  *
  */
 
- // Zerp shown at insert time
  // Units!
 
 import { EditorView } from 'prosemirror-view';
@@ -112,10 +111,7 @@ export function attachResizeUI(
     ui.context.translateText
   );
   container.append(shelf.el);
-
-  // initialize props
-  shelf.setDims(img.offsetWidth, img.offsetHeight);
-  
+ 
   // create resize handle and add it to the container
   const handle = resizeHandle(
     img, 
@@ -123,9 +119,8 @@ export function attachResizeUI(
     shelf.setDims,
     onDimsChanged
   );
-
-  // add the handle
   container.append(handle);
+
   
   // return functions that can be used to update and detach the ui
   return {
@@ -178,10 +173,9 @@ function resizeShelf(
       }
     }
   };
-  updatePosition();
 
-   // always position below
-   shelf.style.bottom = "-48px";
+  // always position below
+  shelf.style.bottom = "-48px";
 
   // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {
@@ -195,6 +189,22 @@ function resizeShelf(
       return null;
     }
   };
+
+  const setDims = (width: number, height: number) => {
+    wInput.value = width.toString();
+    hInput.value = height.toString();
+    updatePosition();
+  };
+
+  const syncDims = () => {
+    setDims(img.offsetWidth, img.offsetHeight);
+  };
+
+  if (img.complete) {
+    syncDims();
+  } else {
+    img.onload = syncDims;
+  }
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -257,11 +267,7 @@ function resizeShelf(
   return {
     el: shelf,
 
-    setDims: (width: number, height: number) => {
-      wInput.value = width.toString();
-      hInput.value = height.toString();
-      updatePosition();
-    },
+    setDims,
 
     props: {
       width: () => getDim(wInput),
