@@ -174,6 +174,13 @@ export class ImageNodeView implements NodeView {
 
   // prevent bubbling of events into editor
   public stopEvent(event: Event) {
+
+    // allow drag events
+    if (event instanceof DragEvent) {
+      return false;
+    }
+
+    // filter other events that target our element or it's children
     if (event.target instanceof HTMLElement) {
       const stop = this.dom === event.target || this.dom.contains(event.target as HTMLElement);
       return stop;
