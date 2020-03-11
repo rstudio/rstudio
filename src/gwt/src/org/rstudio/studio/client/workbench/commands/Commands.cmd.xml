@@ -870,7 +870,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
          <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
