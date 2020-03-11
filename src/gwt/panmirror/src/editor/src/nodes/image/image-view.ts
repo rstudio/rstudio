@@ -17,10 +17,11 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
-import { EditorUI, ImageType, EditorUIContext } from '../../api/ui';
+import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI } from './image-resize';
+import { sizePropToStyle } from './image-util';
 
 import './image-styles.css';
 
@@ -233,9 +234,9 @@ export class ImageNodeView implements NodeView {
           // set image style (modulo the properties lifted above)
           this.img.setAttribute('style', value);
         } else if (key === 'width') {
-          this.img.style.width = value + 'px';
+          this.img.style.width = sizePropToStyle(value);
         } else if (key === 'height') {
-          this.img.style.height = value + 'px';
+          this.img.style.height = sizePropToStyle(value);
 
           // use of legacy 'align' attribute is common for some pandoc users
           // so we convert it to the requisite CSS

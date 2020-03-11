@@ -60,7 +60,12 @@ export function attachResizeUI(
 
    // handle both dims changed (from resize handle)
    const onDimsChanged = (width: number, height: number) => {
-    updateImageSize(view, imageNode(), width.toString(), height.toString());
+    updateImageSize(
+      view, 
+      imageNode(), 
+      width + shelf.props.units(), 
+      height + shelf.props.units()
+    );
   };
 
   // handle width changed from shelf
