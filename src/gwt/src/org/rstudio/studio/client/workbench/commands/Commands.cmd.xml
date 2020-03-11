@@ -871,7 +871,8 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
          <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
-         <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -3633,8 +3634,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleScreenReaderSupport"
         menuLabel="_Screen Reader Support"
         checkable="true"
-        windowMode="main"
-        rebindable="false"/>
+        windowMode="main"/>
 
    <cmd id="showAccessibilityOptions"
         menuLabel="Accessibility _Options..."
