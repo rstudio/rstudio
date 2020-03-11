@@ -515,7 +515,6 @@ private:
       {
          boost::filesystem::file_status fileStatus = status(path);
          *pPerms = fileStatus.permissions();
-         return Success();
       }
       catch (const boost::filesystem::filesystem_error& e)
       {
@@ -525,6 +524,7 @@ private:
                   "A permissions error occured during replace operation.",
                   ERROR_LOCATION));
       }
+      return Success();
    }
 #endif
 
