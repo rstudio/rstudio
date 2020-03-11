@@ -19,7 +19,16 @@ import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
 
-import { createPopup, createHorizontalPanel, addHorizontalPanelCell, createInputLabel, createNumericInput, createImageButton, createSelectInput, createCheckboxInput } from '../../api/widgets';
+import { 
+  createPopup, 
+  createHorizontalPanel, 
+  addHorizontalPanelCell, 
+  createInputLabel, 
+  createNumericInput, 
+  createImageButton, 
+  createCheckboxInput, 
+  createSelectInput
+} from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { imageDialog } from './image-dialog';
 import { editingRootNode } from '../../api/node';
