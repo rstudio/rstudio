@@ -14,10 +14,12 @@
  */
 
 
- // units
- // sync implementation
- // units from sizing
+ // unit conversion logic
+ // lockdown for percent
+ // container for percent
+
  // selection not shown when double clicking number inputs
+ // selection in textbox leads to "draggable"
 
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
@@ -37,7 +39,7 @@ import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { sizePropWithUnits } from './image-util';
+import { sizePropWithUnit, imageDimsWithUnits, pixelsToUnit, roundUnit } from './image-util';
 
 // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
 const kValidUnits = ["px", "in", "cm", "mm", "%"];// 
@@ -70,11 +72,11 @@ export function isResizeUICompatible(img: HTMLImageElement) {
 
   const isCompatibleSize = (size: string | null) => {
 
-    const sizeWithUnits = sizePropWithUnits(size);
+    const sizeWithUnits = sizePropWithUnit(size);
     if (sizeWithUnits) {
-      if (sizeWithUnits.units) {
+      if (sizeWithUnits.unit) {
         
-        return kValidUnits.includes(sizeWithUnits.units);
+        return kValidUnits.includes(sizeWithUnits.unit);
       
       // no units is compatible (we'll just use pixels)
       } else {
@@ -102,13 +104,13 @@ export function attachResizeUI(
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
-   // handle both dims changed (from resize handle)
-   const onDimsChanged = (width: number, height: number) => {
+  // handle both dims changed (from resize handle)
+  const syncFromShelf = () => {
     updateImageSize(
       view, 
       imageNode(), 
-      width + shelf.props.units(), 
-      height + shelf.props.units()
+      shelf.props.width() + shelf.props.units(), 
+      shelf.props.height() + shelf.props.units()
     );
   };
 
@@ -120,7 +122,9 @@ export function attachResizeUI(
         (img.offsetHeight / img.offsetWidth) * width : 
         shelf.props.height();
       if (height) {
-        onDimsChanged(width, height);
+        const unit = shelf.props.units();
+        shelf.props.setHeight(roundUnit(height, unit));
+        syncFromShelf();
       }
     }
   };
@@ -133,14 +137,18 @@ export function attachResizeUI(
         (img.offsetWidth / img.offsetHeight) * height :
         shelf.props.width();
       if (width) {
-        onDimsChanged(width, height);
+        const unit = shelf.props.units();
+        shelf.props.setWidth(roundUnit(width, unit));
+        syncFromShelf();
       }
     }
   };
 
-  // handle units changed from shelf
   const onUnitsChanged = () => {
-    // console.log('units changed');
+
+    // TODO: unit conversion 
+
+    syncFromShelf();
   };
 
   // handle editImage request from shelf
@@ -148,7 +156,6 @@ export function attachResizeUI(
     const nodeWithPos = imageNode();
     imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
   };
-
 
   // create resize shelf
   const shelf = resizeShelf(
@@ -170,7 +177,7 @@ export function attachResizeUI(
     img, 
     shelf.props.lockRatio,
     shelf.sync,
-    onDimsChanged
+    syncFromShelf
   );
   container.append(handle);
 
@@ -204,7 +211,7 @@ function resizeShelf(
  
   // update shelf position to make sure it's visible
   const updatePosition = () => {
-    const kShelfRequiredSize = 336;
+    const kShelfRequiredSize = 340;
     const editingNode = editingRootNode(view.state.selection);
     const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
     const editingBox = editingEl.getBoundingClientRect();
@@ -302,20 +309,28 @@ function resizeShelf(
   return {
     el: shelf,
 
+    // sync the shelf props to the current size/units of the image
+    // we don't sync to the node b/c we want to benefit from automatic
+    // unit handling in the conversion to the DOM
     sync: () => {
 
-      // TODO: convert offsetWidth, etc. into
-      // native units shown in shelf
-
-      wInput.value = img.offsetWidth.toString();
-      hInput.value = img.offsetHeight.toString();
+      // set ui based on current width and height style attributes
+      const dims = imageDimsWithUnits(img);
+      wInput.value = dims.width.size.toString();
+      hInput.value = dims.height.size.toString();
+      unitsSelect.value = dims.width.unit;
+      
+      // ensure we are positioned correctly (not offscreen, wide enough, etc.)
       updatePosition();
-;   },
+    },
 
     props: {
       width: () => getDim(wInput),
+      setWidth: (width: string) => wInput.value = width,
       height: () => getDim(hInput),
+      setHeight: (height: string) => hInput.value = height,
       units: () => unitsSelect.value,
+      setUnits: (units: string) => unitsSelect.value = units,
       lockRatio: () => lockCheckbox.checked
     }
   };
@@ -326,7 +341,7 @@ function resizeHandle(
   img: HTMLImageElement, 
   lockRatio: () => boolean,
   onSizing: () => void,
-  onSizingComplete: (width: number, height: number) => void
+  onSizingComplete: () => void
 ) {
 
   const handle = document.createElement('span');
@@ -371,10 +386,12 @@ function resizeHandle(
         width = startWidth + movedX;
         height = startHeight + movedY;
       }    
-      width = Math.round(width);
-      height = Math.round(height);
-      img.style.width = width + "px";
-      img.style.height = height + "px";  
+      
+      // set image width and height based on units currnetly in use
+      const dims = imageDimsWithUnits(img);
+      img.style.width = pixelsToUnit(width, dims.width.unit, 0);
+      img.style.height = pixelsToUnit(height, dims.height.unit, 0);
+
       onSizing();
     };
 
@@ -392,7 +409,7 @@ function resizeHandle(
       }
       
       // update image size
-      onSizingComplete(img.offsetWidth, img.offsetHeight);
+      onSizingComplete();
     };
 
     if (havePointerEvents) {
