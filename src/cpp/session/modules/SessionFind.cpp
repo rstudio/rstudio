@@ -592,8 +592,7 @@ private:
 
 // Unneccesary on Windows because this only sets write permissions which we
 // already know are correct if we are writing.
-// For efficiency, this should not be combined with the above check as flushing
-// outputStream could change the file permissions
+// This needs to happen after outputStream is flushed
 #ifndef _WIN32
             error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
 #endif
