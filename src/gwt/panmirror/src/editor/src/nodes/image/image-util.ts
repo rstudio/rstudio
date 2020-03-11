@@ -24,12 +24,19 @@
   }
  }
 
- export function sizePropWithUnits(prop: string) {
-  const match = prop.match(/(^\d*\.?\d*)(.*)$/);
-  if (match) {
-    return {
-      size: parseFloat(match[1]),
-      units: match[2]
-    };
+ export function sizePropWithUnits(prop: string | null) {
+  if (prop) {
+    const match = prop.match(/(^\d*\.?\d*)(.*)$/);
+    if (match) {
+      return {
+        size: parseFloat(match[1]),
+        units: match[2]
+      };
+    } else {
+      return null;
+    }
+  } else {
+    return null;
   }
+ 
  }

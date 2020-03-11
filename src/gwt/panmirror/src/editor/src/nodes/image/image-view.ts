@@ -20,7 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
-import { attachResizeUI, initResizeContainer, ResizeUI } from './image-resize';
+import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
 import { sizePropToStyle } from './image-util';
 
 import './image-styles.css';
@@ -131,10 +131,7 @@ export class ImageNodeView implements NodeView {
     }
 
     // attach resize UI
-    if (this.imageAttributes) {
-      const imageNode = () => ({ pos: this.getPos(), node: this.node });
-      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, this.view, this.editorUI);
-    }
+    this.attachResizeUI();
   }
 
   public deselectNode() {
@@ -159,7 +156,14 @@ export class ImageNodeView implements NodeView {
     this.node = node;
     this.updateImg(node);
     if (this.resizeUI) {
-      this.resizeUI.update();
+      if (isResizeUICompatible(this.img!)) {
+        this.resizeUI.update();
+      } else {
+        this.resizeUI.detach();
+        this.resizeUI = null;
+      }
+    } else if (this.isNodeSelected()) {
+      this.attachResizeUI();
     }
     return true;
   }
@@ -188,6 +192,19 @@ export class ImageNodeView implements NodeView {
       return false;
     }
   }
+
+  private isNodeSelected() {
+    return this.dom.classList.contains('ProseMirror-selectednode');
+  }
+
+  // attach resize UI if appropriate
+  private attachResizeUI() {
+    if (this.imageAttributes && isResizeUICompatible(this.img!)) {
+      const imageNode = () => ({ pos: this.getPos(), node: this.node });
+      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, this.view, this.editorUI);
+    }
+  }
+
 
   // map node to img tag
   private updateImg(node: ProsemirrorNode) {

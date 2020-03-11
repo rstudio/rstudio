@@ -30,8 +30,15 @@ import {
   createSelectInput
 } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
-import { imageDialog } from './image-dialog';
 import { editingRootNode } from '../../api/node';
+
+import { imageDialog } from './image-dialog';
+import { sizePropWithUnits } from './image-util';
+
+const kValidUnits = ["px", "in", "%"];
+
+// Do inches even work?
+// https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -54,6 +61,32 @@ export function initResizeContainer(container: HTMLElement) {
 export interface ResizeUI {
   update: () => void;
   detach: () => void;
+}
+
+
+export function isResizeUICompatible(img: HTMLImageElement) {
+
+  const isCompatibleSize = (size: string | null) => {
+
+    const sizeWithUnits = sizePropWithUnits(size);
+    if (sizeWithUnits) {
+      if (sizeWithUnits.units) {
+        
+        return kValidUnits.includes(sizeWithUnits.units);
+      
+      // no units is compatible (we'll just use pixels)
+      } else {
+        return true;
+      }
+    
+    // no size at all is compatible (we'll just use pixels)
+    } else {
+      return true;
+    }
+  };
+
+  return isCompatibleSize(img.style.width) && 
+         isCompatibleSize(img.style.height);
 }
 
 export function attachResizeUI(
@@ -240,7 +273,7 @@ function resizeShelf(
   addToPanel(hInput, 10);
 
   // units
-  const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
+  const unitsSelect = createSelectInput(kValidUnits, inputClasses);
   unitsSelect.onchange = onUnitsChanged;
   addToPanel(unitsSelect, 12);
 
