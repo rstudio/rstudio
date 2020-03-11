@@ -171,11 +171,19 @@ public class TutorialPane
       int width = Math.max(800, frame_.getElement().getClientWidth());
       int height = Math.max(800, frame_.getElement().getClientHeight());
       
+      String windowName = "rstudio-tutorial-" + StringUtil.makeRandomId(16);
+      
       NewWindowOptions options = new NewWindowOptions();
-      options.setName("rstudio-tutorial-" + StringUtil.makeRandomId(16));
+      options.setAppendClientId(false);
+      options.setName(windowName);
       options.setCallback((WindowEx window) ->
       {
-         initExternalWindowJsCallbacks(window, tutorialUrl, tutorialName, tutorialPackage);
+         initExternalWindowJsCallbacks(
+               window,
+               tutorialUrl,
+               tutorialName,
+               tutorialPackage,
+               windowName);
       });
       
       globalDisplay_.openWebMinimalWindow(
@@ -450,7 +458,8 @@ public class TutorialPane
    private final native void initExternalWindowJsCallbacks(WindowEx window,
                                                            String tutorialUrl,
                                                            String tutorialName,
-                                                           String tutorialPackage)
+                                                           String tutorialPackage,
+                                                           String windowName)
    /*-{
       
       // register this window
@@ -458,7 +467,8 @@ public class TutorialPane
       $wnd.tutorialWindows[tutorialUrl] = {
          "package": tutorialPackage,
          "name": tutorialName,
-         "window": window
+         "window": window,
+         "windowName": windowName
       };
       
       // start polling for window closure
@@ -505,8 +515,8 @@ public class TutorialPane
          
          if (match)
          {
-            var window = entry["window"];
-            $wnd.open("", window.name);
+            var windowName = entry["windowName"];
+            this.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::focusExistingTutorialWindowImpl(*)(windowName);
             return true;
          }
       }
@@ -514,6 +524,11 @@ public class TutorialPane
       return false;
       
    }-*/;
+   
+   private void focusExistingTutorialWindowImpl(String name)
+   {
+      globalDisplay_.bringWindowToFront(name);
+   }
    
    // Resources ---- 
    public interface Resources extends ClientBundle

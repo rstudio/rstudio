@@ -147,12 +147,13 @@ public class WebWindowOpener implements WindowOpener
       if (name == null)
          name = "_blank";
 
-      if (!name.equals("_blank")
+      if (options.appendClientId()
+          && !name.equals("_blank")
           && !name.equals("_top")
           && !name.equals("_parent")
           && !name.equals("_self"))
       {
-         name += "_" + clientId;
+         name += "_" + CLIENT_ID;
       }
 
       // Need to make the URL absolute because IE resolves relative URLs
@@ -213,6 +214,6 @@ public class WebWindowOpener implements WindowOpener
       return window;
    }-*/;
 
-   private static final String clientId = (int)(Math.random() * 10000) + "";
+   public static final String CLIENT_ID = (int)(Math.random() * 10000) + "";
 
 }
