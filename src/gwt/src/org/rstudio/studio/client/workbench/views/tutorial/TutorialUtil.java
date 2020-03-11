@@ -16,11 +16,16 @@ import com.google.gwt.core.client.GWT;
 
 public class TutorialUtil
 {
+   // NOTE: Shiny URLs are either accessed through a proxied path
+   // (using the 'p/' or 'p6/' path component as appropriate),
+   // or directly from a separate authority (which may be a different
+   // port on the same host)
    public static boolean isShinyUrl(String url)
    {
+      String host = GWT.getHostPageBaseURL();
       return
-            url.startsWith(GWT.getHostPageBaseURL() + "p/") ||
-            url.startsWith(GWT.getHostPageBaseURL() + "p6/") ||
-            !url.startsWith(GWT.getHostPageBaseURL());
+            url.startsWith(host + "p/") ||
+            url.startsWith(host + "p6/") ||
+            !url.startsWith(host);
    }
 }

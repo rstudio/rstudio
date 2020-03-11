@@ -13,6 +13,7 @@
 package org.rstudio.studio.client.workbench.views.tutorial;
 
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface TutorialServerOperations
@@ -22,7 +23,14 @@ public interface TutorialServerOperations
                         String tutorialUrl,
                         ServerRequestCallback<Void> requestCallback);
    
-   void tutorialStop(String tutorialName,
-                     String tutorialPackage,
+   void tutorialStop(String tutorialUrl,
                      ServerRequestCallback<Void> requestCallback);
+   
+   void tutorialMetadata(String tutorialUrl,
+                         ServerRequestCallback<JsObject> requestCallback);
+   
+   void isPackageInstalled(String packageName,
+                           String version,
+                           ServerRequestCallback<Boolean> requestCallback);
+   
 }
