@@ -13,7 +13,11 @@
  *
  */
 
- // Units!
+
+ // units
+ // sync implementation
+ // units from sizing
+ // selection not shown when double clicking number inputs
 
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
@@ -109,22 +113,28 @@ export function attachResizeUI(
   };
 
   // handle width changed from shelf
-  const onWidthChanged = (width: number) => {
-    const height = shelf.props.lockRatio() ?
-       (img.offsetHeight / img.offsetWidth) * width : 
-       shelf.props.height();
-    if (height) {
-      onDimsChanged(width, height);
+  const onWidthChanged = () => {
+    const width = shelf.props.width();
+    if (width) {
+      const height = shelf.props.lockRatio() ?
+        (img.offsetHeight / img.offsetWidth) * width : 
+        shelf.props.height();
+      if (height) {
+        onDimsChanged(width, height);
+      }
     }
   };
 
   // handle height changed from shelf
-  const onHeightChanged = (height: number) => {
-    const width = shelf.props.lockRatio() ? 
-      (img.offsetWidth / img.offsetHeight) * height :
-      shelf.props.width();
-    if (width) {
-      onDimsChanged(width, height);
+  const onHeightChanged = () => {
+    const height = shelf.props.height();
+    if (height) {
+      const width = shelf.props.lockRatio() ? 
+        (img.offsetWidth / img.offsetHeight) * height :
+        shelf.props.width();
+      if (width) {
+        onDimsChanged(width, height);
+      }
     }
   };
 
@@ -145,7 +155,7 @@ export function attachResizeUI(
     view, 
     img,
     () => {
-      shelf.setDims(img.offsetWidth, img.offsetHeight);
+      shelf.sync();
     },
     onWidthChanged,
     onHeightChanged,
@@ -159,7 +169,7 @@ export function attachResizeUI(
   const handle = resizeHandle(
     img, 
     shelf.props.lockRatio,
-    shelf.setDims,
+    shelf.sync,
     onDimsChanged
   );
   container.append(handle);
@@ -168,7 +178,7 @@ export function attachResizeUI(
   // return functions that can be used to update and detach the ui
   return {
     update: () => {
-      shelf.setDims(img.offsetWidth, img.offsetHeight);
+      shelf.sync();
     },
     detach: () => {
       container.classList.remove('pm-image-resize-active');
@@ -182,8 +192,8 @@ function resizeShelf(
   view: EditorView, 
   img: HTMLImageElement,
   onInit: () => void,
-  onWidthChanged: (width: number) => void, 
-  onHeightChanged: (height: number) => void,
+  onWidthChanged: () => void, 
+  onHeightChanged: () => void,
   onUnitsChanged: () => void,
   onEditImage: () => void, 
   translateText: (text: string) => string
@@ -194,7 +204,7 @@ function resizeShelf(
  
   // update shelf position to make sure it's visible
   const updatePosition = () => {
-    const kShelfRequiredSize = 330;
+    const kShelfRequiredSize = 336;
     const editingNode = editingRootNode(view.state.selection);
     const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
     const editingBox = editingEl.getBoundingClientRect();
@@ -250,24 +260,14 @@ function resizeShelf(
   const wLabel = createInputLabel('w:');
   addToPanel(wLabel, 4);
   const wInput = createNumericInput(4, 1, 10000, inputClasses);
-  wInput.onchange = () => {
-    const width = getDim(wInput);
-    if (width) {
-      onWidthChanged(width);
-    }
-  };
+  wInput.onchange = onWidthChanged;
   addToPanel(wInput, 8);
 
   // height
   const hLabel = createInputLabel('h:');
   addToPanel(hLabel, 4);
   const hInput = createNumericInput(4, 1, 10000, inputClasses);
-  hInput.onchange = () => {
-    const height = getDim(hInput);
-    if (height) {
-      onHeightChanged(height);
-    }
-  };
+  hInput.onchange = onHeightChanged;
   addToPanel(hInput, 10);
 
   // units
@@ -302,11 +302,15 @@ function resizeShelf(
   return {
     el: shelf,
 
-    setDims: (width: number, height: number) => {
-      wInput.value = width.toString();
-      hInput.value = height.toString();
+    sync: () => {
+
+      // TODO: convert offsetWidth, etc. into
+      // native units shown in shelf
+
+      wInput.value = img.offsetWidth.toString();
+      hInput.value = img.offsetHeight.toString();
       updatePosition();
-    },
+;   },
 
     props: {
       width: () => getDim(wInput),
@@ -321,7 +325,7 @@ function resizeShelf(
 function resizeHandle(
   img: HTMLImageElement, 
   lockRatio: () => boolean,
-  onSizing: (width: number, height: number) => void,
+  onSizing: () => void,
   onSizingComplete: (width: number, height: number) => void
 ) {
 
@@ -371,7 +375,7 @@ function resizeHandle(
       height = Math.round(height);
       img.style.width = width + "px";
       img.style.height = height + "px";  
-      onSizing(width, height);
+      onSizing();
     };
 
     const onPointerUp = (e: MouseEvent) => {
