@@ -35,10 +35,8 @@ import { editingRootNode } from '../../api/node';
 import { imageDialog } from './image-dialog';
 import { sizePropWithUnits } from './image-util';
 
-const kValidUnits = ["px", "in", "%"];
-
-// Do inches even work?
 // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
+const kValidUnits = ["px", "in", "cm", "mm", "%"];// 
 
 export function initResizeContainer(container: HTMLElement) {
 
