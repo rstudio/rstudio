@@ -489,6 +489,8 @@ private:
       }
    }
 
+// permissions getter/setter (only applicable to Unix platforms)
+#ifndef _WIN32
    Error setPermissions(const std::string& filePath, boost::filesystem::perms permissions)
    {
       boost::filesystem::path path(filePath);
@@ -524,6 +526,7 @@ private:
                   ERROR_LOCATION));
       }
    }
+#endif
 
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
@@ -565,8 +568,8 @@ private:
              outputStream_->good())
          {
              Error error;
-             // For Windows we ignore this additional safety check
-             // it will always fail because we have inputStream_ reading the file
+// For Windows we ignore this additional safety check
+// it will always fail because we have inputStream_ reading the file
 #ifndef _WIN32
             error = FilePath(currentFile_).testWritePermissions();
             if (error)
@@ -587,10 +590,10 @@ private:
             inputStream_.reset();
             outputStream_.reset();
 
-            // Unneccesary on Windows because this only sets write permissions which we
-            // already know are correct if we are writing.
-            // For efficiency, this should not be combined with the above check as flushing
-            // outputStream could change the file permissions
+// Unneccesary on Windows because this only sets write permissions which we
+// already know are correct if we are writing.
+// For efficiency, this should not be combined with the above check as flushing
+// outputStream could change the file permissions
 #ifndef _WIN32
             error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
 #endif
