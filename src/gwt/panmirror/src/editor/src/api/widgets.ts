@@ -19,6 +19,7 @@ import tlite from 'tlite';
 import { editingRootNodeClosestToPos } from './node';
 
 import './widgets.css';
+import { uuidv4 } from './util';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
@@ -160,15 +161,42 @@ export function createInputLabel(text: string, classes?: string[], style?: { [ke
 
 export function createSelectInput(options: string[], classes?: string[], style?: { [key: string]: string }) {
   const select = window.document.createElement('select');
+  appendOptions(select, options);
+  select.classList.add('pm-input-select');
+  applyStyles(select, classes, style);
+  return select;
+}
+
+export function createDatalistInput(options: string[], classes?: string[], style?: { [key: string]: string }) {
+  
+  const container = window.document.createElement('span');
+  
+  const datalistId = uuidv4();
+  const datalist = window.document.createElement('datalist');
+  datalist.id = datalistId;
+  appendOptions(datalist, options);
+  container.append(datalist);
+
+  const input = window.document.createElement('input');
+  input.type = 'text';
+  input.setAttribute('list', datalistId);
+  input.classList.add('pm-input-datalist');
+  applyStyles(input, classes, style);
+  container.append(input);
+  
+  return  {
+    container,
+    input
+  };
+}
+
+function appendOptions(container: HTMLElement, options: string[]) {
   options.forEach(option => {
     const optionEl = window.document.createElement('option');
     optionEl.value = option;
     optionEl.textContent = option;
-    select.append(optionEl);
+    container.append(optionEl);
   });
-  select.classList.add('pm-input-select');
-  applyStyles(select, classes, style);
-  return select;
 }
 
 export function createCheckboxInput(classes?: string[], style?: { [key: string]: string }) {
