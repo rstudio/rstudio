@@ -244,7 +244,7 @@ public class TutorialPane
       }
       else
       {
-         frame_.getElement().setAttribute("sandbox", "allow-scripts");
+         frame_.getElement().setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-popups");
       }
      
       frame_.setUrl(url);
