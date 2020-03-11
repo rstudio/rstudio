@@ -586,7 +586,14 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
+
+            // Unneccesary on Windows because this only sets write permissions which we
+            // already know are correct if we are writing.
+            // For efficiency, this should not be combined with the above check as flushing
+            // outputStream could change the file permissions
+#ifndef _WIN32
             error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
+#endif
             if (!error)
                error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
@@ -670,9 +677,12 @@ private:
       if (error)
          return error;
 
+      // boost only acknowledges write permissions on Windows which we already know exist
+#ifndef _WIN32
       error = getPermissions(file.getAbsolutePath(), &filePermissions_);
       if (error)
          return (error);
+#endif
 
       fileSuccess_ = true;
       inputLineNum_ = 0;
