@@ -511,7 +511,7 @@ public class TutorialPane
          
          var match =
             entry["name"] === tutorialName &&
-            entry["package"] == tutorialPackage;
+            entry["package"] === tutorialPackage;
          
          if (match)
          {
