@@ -104,6 +104,9 @@ export function attachResizeUI(
   const shelf = resizeShelf(
     view, 
     img,
+    () => {
+      shelf.setDims(img.offsetWidth, img.offsetHeight);
+    },
     onWidthChanged,
     onHeightChanged,
     onUnitsChanged,
@@ -138,6 +141,7 @@ export function attachResizeUI(
 function resizeShelf(
   view: EditorView, 
   img: HTMLImageElement,
+  onInit: () => void,
   onWidthChanged: (width: number) => void, 
   onHeightChanged: (height: number) => void,
   onUnitsChanged: () => void,
@@ -189,22 +193,6 @@ function resizeShelf(
       return null;
     }
   };
-
-  const setDims = (width: number, height: number) => {
-    wInput.value = width.toString();
-    hInput.value = height.toString();
-    updatePosition();
-  };
-
-  const syncDims = () => {
-    setDims(img.offsetWidth, img.offsetHeight);
-  };
-
-  if (img.complete) {
-    syncDims();
-  } else {
-    img.onload = syncDims;
-  }
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -264,10 +252,21 @@ function resizeShelf(
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
+  // run onInit
+  if (img.complete) {
+    setTimeout(onInit, 0);
+  } else {
+    img.onload = onInit;
+  }
+
   return {
     el: shelf,
 
-    setDims,
+    setDims: (width: number, height: number) => {
+      wInput.value = width.toString();
+      hInput.value = height.toString();
+      updatePosition();
+    },
 
     props: {
       width: () => getDim(wInput),
