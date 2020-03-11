@@ -25,7 +25,7 @@ BOOST_VERSION="1_69_0"
 RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
 SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
 SOCI_BIN_DIR=$SOCI_DIR/build
-SOCI_BRANCH=release/4.0
+SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
 BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
@@ -36,12 +36,11 @@ then
    # download SOCI from source
    if ! [ -d "$SOCI_DIR" ]
    then
-      sudo git clone git://github.com/SOCI/soci.git
+      sudo wget $SOCI_URL
+      sudo tar zxvf soci.tar.gz
+      sudo rm soci.tar.gz
    fi
    cd $SOCI_DIR
-
-   # checkout desired soci branch (version pinned)
-   sudo git checkout "$SOCI_BRANCH"  
 
    # make build directory
    sudo mkdir -p $SOCI_BIN_DIR
