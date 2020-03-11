@@ -23,4 +23,5 @@ public class PanmirrorWriterOptions
 {    
    public boolean atxHeaders;
    public int wrapColumn;
+   public int dpi;
 }

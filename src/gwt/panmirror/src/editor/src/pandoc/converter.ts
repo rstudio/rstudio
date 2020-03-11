@@ -39,6 +39,7 @@ import { ExtensionManager } from '../extensions';
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
   wrapColumn?: boolean | number;
+  dpi?: number;
 }
 
 export class PandocConverter {
@@ -117,6 +118,9 @@ export class PandocConverter {
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
       pandocOptions.push('--atx-headers');
+    }
+    if (options.dpi) {
+      pandocOptions.push('--dpi');
     }
     pandocOptions = pandocOptions.concat(this.wrapColumnOptions(options));
 
