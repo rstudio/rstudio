@@ -36,7 +36,7 @@ then
    # download SOCI from source
    if ! [ -d "$SOCI_DIR" ]
    then
-      sudo wget $SOCI_URL
+      sudo curl $SOCI_URL -o soci.tar.gz
       sudo tar zxvf soci.tar.gz
       sudo rm soci.tar.gz
    fi
