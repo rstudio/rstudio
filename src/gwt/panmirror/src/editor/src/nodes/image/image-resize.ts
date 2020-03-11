@@ -13,6 +13,9 @@
  *
  */
 
+ // Positioning of shelf (right side overflow, position at right edge, etc.)
+ // Units!
+
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
@@ -20,8 +23,6 @@ import { NodeSelection } from 'prosemirror-state';
 import { createPopup, createHorizontalPanel, addHorizontalPanelCell, createInputLabel, createNumericInput, createImageButton, createSelectInput, createCheckboxInput } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { imageDialog } from './image-dialog';
-import { ChangeEvent } from 'react';
-import { node } from 'prop-types';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -57,15 +58,14 @@ export function attachResizeUI(
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
-  // handle prop changed from shelf
-  const onDimsChanged = () => {
-
-    // updateImageSize(view, nodeWithPos, width + unitsSelect.value, height + unitsSelect.value);
-    console.log('dmis changed');
+   // handle dims change
+   const onDimsChanged = (width: number, height: number) => {
+    updateImageSize(view, imageNode(), width.toString(), height.toString());
   };
 
+
   const onUnitsChanged = () => {
-    console.log('units changed');
+    // console.log('units changed');
   };
 
   // handle editImage request from shelf
@@ -76,7 +76,13 @@ export function attachResizeUI(
 
 
   // create resize shelf
-  const shelf = resizeShelf(view, onDimsChanged, onUnitsChanged, onEditImage, ui.context.translateText);
+  const shelf = resizeShelf(
+    view, 
+    onDimsChanged, 
+    onUnitsChanged, 
+    onEditImage, 
+    ui.context.translateText
+  );
   container.append(shelf.el);
 
   // initialize props
@@ -87,11 +93,10 @@ export function attachResizeUI(
     img, 
     shelf.props.lockRatio,
     shelf.setDims,
-    (width: number, height: number) => {
-      updateImageSize(view, imageNode(), width.toString(), height.toString());
-    }
+    onDimsChanged
   );
 
+  // add the handle
   container.append(handle);
   
   // return functions that can be used to update and detach the ui
@@ -109,7 +114,7 @@ export function attachResizeUI(
 
 function resizeShelf(
   view: EditorView, 
-  onDimsChanged: () => void, 
+  onDimsChanged: (width: number, height: number) => void, 
   onUnitsChanged: () => void,
   onEditImage: () => void, 
   translateText: (text: string) => string
@@ -140,19 +145,25 @@ function resizeShelf(
   addToPanel(wLabel, 4);
 
   const wInput = createNumericInput(4, 1, 10000, inputClasses);
-  wInput.onchange = onDimsChanged;
   addToPanel(wInput, 8);
 
   const hLabel = createInputLabel('h:');
   addToPanel(hLabel, 4);
 
   const hInput = createNumericInput(4, 1, 10000, inputClasses);
-  hInput.onchange = onDimsChanged;
   addToPanel(hInput, 10);
 
   const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
   unitsSelect.onchange = onUnitsChanged;
   addToPanel(unitsSelect, 12);
+
+  wInput.onchange = hInput.onchange = () => {
+    const width = getDim(wInput);
+    const height = getDim(hInput);
+    if (width && height) {
+      onDimsChanged(width, height);
+    }
+  };
 
 
   const checkboxWrapper = window.document.createElement('div');
