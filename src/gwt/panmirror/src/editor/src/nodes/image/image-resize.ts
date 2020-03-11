@@ -13,7 +13,7 @@
  *
  */
 
- // Positioning of shelf (right side overflow, position at right edge, etc.)
+ // Zerp shown at insert time
  // Units!
 
 import { EditorView } from 'prosemirror-view';
@@ -23,6 +23,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { createPopup, createHorizontalPanel, addHorizontalPanelCell, createInputLabel, createNumericInput, createImageButton, createSelectInput, createCheckboxInput } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { imageDialog } from './image-dialog';
+import { editingRootNode } from '../../api/node';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -103,6 +104,7 @@ export function attachResizeUI(
   // create resize shelf
   const shelf = resizeShelf(
     view, 
+    img,
     onWidthChanged,
     onHeightChanged,
     onUnitsChanged,
@@ -140,6 +142,7 @@ export function attachResizeUI(
 
 function resizeShelf(
   view: EditorView, 
+  img: HTMLImageElement,
   onWidthChanged: (width: number) => void, 
   onHeightChanged: (height: number) => void,
   onUnitsChanged: () => void,
@@ -150,70 +153,37 @@ function resizeShelf(
   // create resize shelf
   const shelf = createPopup(view, ['pm-text-color']);
  
-  // TODO: min width that inspects image width (i.e might have to set right to a negative value)
-  shelf.style.left = '0';
-  // shelf.style.right = '0'; 
-  shelf.style.bottom = "-48px";
-
-
-  const panel = createHorizontalPanel();
-  shelf.append(panel);
-  const addToPanel = (widget: HTMLElement, paddingRight: number) => {
-    addHorizontalPanelCell(panel, widget);
-    const paddingSpan = window.document.createElement('span');
-    paddingSpan.style.width = paddingRight + 'px';
-    addHorizontalPanelCell(panel, paddingSpan);
-  };
-  
-  const inputClasses = ['pm-text-color', 'pm-background-color'];
-
-
-  const wLabel = createInputLabel('w:');
-  addToPanel(wLabel, 4);
-
-  const wInput = createNumericInput(4, 1, 10000, inputClasses);
-  wInput.onchange = () => {
-    const width = getDim(wInput);
-    if (width) {
-      onWidthChanged(width);
+  // update shelf position to make sure it's visible
+  const updatePosition = () => {
+    const kShelfRequiredSize = 330;
+    const editingNode = editingRootNode(view.state.selection);
+    const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
+    const editingBox = editingEl.getBoundingClientRect();
+    const imageBox = img.getBoundingClientRect();
+    const positionLeft = (imageBox.left + kShelfRequiredSize) < editingBox.right;
+    if (positionLeft) {
+      shelf.style.left = '0';
+      if (img.offsetWidth < kShelfRequiredSize) {
+        shelf.style.right = (img.offsetWidth - kShelfRequiredSize) + 'px';
+      } else {
+        shelf.style.right = '';
+      }
+    }
+    else {
+      shelf.style.right = '0';
+      if (img.offsetWidth < kShelfRequiredSize) {
+        shelf.style.left = (img.offsetWidth - kShelfRequiredSize) + 'px';
+      } else {
+        shelf.style.left = '';
+      }
     }
   };
-  addToPanel(wInput, 8);
+  updatePosition();
 
-  const hLabel = createInputLabel('h:');
-  addToPanel(hLabel, 4);
+   // always position below
+   shelf.style.bottom = "-48px";
 
-  const hInput = createNumericInput(4, 1, 10000, inputClasses);
-  hInput.onchange = () => {
-    const height = getDim(hInput);
-    if (height) {
-      onHeightChanged(height);
-    }
-  };
-  addToPanel(hInput, 10);
-
-  const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
-  unitsSelect.onchange = onUnitsChanged;
-  addToPanel(unitsSelect, 12);
-
-
-  const checkboxWrapper = window.document.createElement('div');
-  const lockCheckbox = createCheckboxInput();
-  lockCheckbox.checked = true;
-  
-  checkboxWrapper.append(lockCheckbox);
-  addToPanel(checkboxWrapper, 4);
-  const lockLabel = createInputLabel(translateText('Lock ratio'));
-  
-  addToPanel(lockLabel, 20);
-
-  const editImage = createImageButton(
-    ['pm-image-button-edit-properties'], 
-    translateText('Edit Image')
-  );
-  editImage.onclick = onEditImage;
-  addHorizontalPanelCell(panel, editImage);
-
+  // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {
     const value = input.valueAsNumber;
     if (isNaN(value)) {
@@ -226,12 +196,71 @@ function resizeShelf(
     }
   };
 
+  // main panel that holds the controls
+  const panel = createHorizontalPanel();
+  shelf.append(panel);
+  const addToPanel = (widget: HTMLElement, paddingRight: number) => {
+    addHorizontalPanelCell(panel, widget);
+    const paddingSpan = window.document.createElement('span');
+    paddingSpan.style.width = paddingRight + 'px';
+    addHorizontalPanelCell(panel, paddingSpan);
+  };
+  
+  const inputClasses = ['pm-text-color', 'pm-background-color'];
+
+  // width
+  const wLabel = createInputLabel('w:');
+  addToPanel(wLabel, 4);
+  const wInput = createNumericInput(4, 1, 10000, inputClasses);
+  wInput.onchange = () => {
+    const width = getDim(wInput);
+    if (width) {
+      onWidthChanged(width);
+    }
+  };
+  addToPanel(wInput, 8);
+
+  // height
+  const hLabel = createInputLabel('h:');
+  addToPanel(hLabel, 4);
+  const hInput = createNumericInput(4, 1, 10000, inputClasses);
+  hInput.onchange = () => {
+    const height = getDim(hInput);
+    if (height) {
+      onHeightChanged(height);
+    }
+  };
+  addToPanel(hInput, 10);
+
+  // units
+  const unitsSelect = createSelectInput(["px", "in", "%"], inputClasses);
+  unitsSelect.onchange = onUnitsChanged;
+  addToPanel(unitsSelect, 12);
+
+  // lock ratio
+  const checkboxWrapper = window.document.createElement('div');
+  const lockCheckbox = createCheckboxInput();
+  lockCheckbox.checked = true;
+  checkboxWrapper.append(lockCheckbox);
+  addToPanel(checkboxWrapper, 4);
+  const lockLabel = createInputLabel(translateText('Lock ratio'));
+  addToPanel(lockLabel, 20);
+
+  // edit button
+  const editImage = createImageButton(
+    ['pm-image-button-edit-properties'], 
+    translateText('Edit Image')
+  );
+  editImage.onclick = onEditImage;
+  addHorizontalPanelCell(panel, editImage);
+
   return {
     el: shelf,
 
     setDims: (width: number, height: number) => {
       wInput.value = width.toString();
       hInput.value = height.toString();
+      updatePosition();
     },
 
     props: {
