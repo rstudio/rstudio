@@ -119,6 +119,14 @@ export class ImageNodeView implements NodeView {
       this.figcaption = null;
     }
 
+    // prevent drag/drop if the event doesn't target the
+    this.dom.ondragstart = (event: DragEvent) => {
+      if (event.target !== this.img) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
     // init resize if we support imageAttributes
     if (imageAttributes) {
       initResizeContainer(this.dom);
@@ -172,17 +180,23 @@ export class ImageNodeView implements NodeView {
 
   // ignore mutations outside of the content time so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
+   
     if (!this.contentDOM) {
       return true;
     }
+
+    if (mutation.target === this.img) {
+      return true;
+    }
+
     return !this.contentDOM.contains(mutation.target);
   }
 
   // prevent bubbling of events into editor
   public stopEvent(event: Event) {
 
-    // allow drag events
-    if (event instanceof DragEvent) {
+    // allow drag events if they target the image
+    if (event instanceof DragEvent && event.target instanceof HTMLImageElement) {
       return false;
     }
 

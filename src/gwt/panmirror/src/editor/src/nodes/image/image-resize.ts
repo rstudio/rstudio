@@ -16,6 +16,10 @@
 
 // include a 'blank' state for dims unspecified? 
 
+// handle only one dim specified
+
+// general code review/cleanup
+
 // audit all uses of data-width, etc. to make sure there are no unexpected states
 
 // percentage sizing (esp. how do we get containerWidth at the beginning)
@@ -27,14 +31,10 @@
 
 // use of naturalWidth / naturalHeight to hold off on height attribute
 
-// resize after a unit switch fails (lose selection)
-
 // initialize lockRatio using naturalWidth / naturalHeight
  
 // sync shelf on container resize
 
-// selection not shown when double clicking number inputs
-// selection in textbox leads to "draggable"
 
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
@@ -48,7 +48,8 @@ import {
   createNumericInput, 
   createImageButton, 
   createCheckboxInput, 
-  createSelectInput
+  createSelectInput,
+  createTextInput
 } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
@@ -269,7 +270,7 @@ function resizeShelf(
 
   // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {
-    const value = input.valueAsNumber;
+    const value = parseFloat(input.value);
     if (isNaN(value)) {
       return null;
     }
@@ -295,20 +296,29 @@ function resizeShelf(
   // width
   const wLabel = createInputLabel('w:');
   addToPanel(wLabel, 4);
-  const wInput = createNumericInput(4, 1, 10000, inputClasses);
+  const wInput = createTextInput(4, inputClasses);
   wInput.onchange = onWidthChanged;
   addToPanel(wInput, 8);
 
   // height
   const hLabel = createInputLabel('h:');
   addToPanel(hLabel, 4);
-  const hInput = createNumericInput(4, 1, 10000, inputClasses);
+  const hInput = createTextInput(4, inputClasses);
   hInput.onchange = onHeightChanged;
   addToPanel(hInput, 10);
 
   // units
   const unitsSelect = createSelectInput(kValidUnits, inputClasses);
-  unitsSelect.onchange = onUnitsChanged;
+  unitsSelect.onchange = () => {
+    // drive focus to width and back to prevent wierd selection change 
+    // detection condition that causes PM to re-render the node the 
+    // next time we resize it
+    wInput.focus();
+    unitsSelect.focus();
+
+    // notify client
+    onUnitsChanged();
+  }
   addToPanel(unitsSelect, 12);
 
   // lock ratio
@@ -335,6 +345,13 @@ function resizeShelf(
     img.onload = onInit;
   }
 
+  const setWidth = (width: number) => {
+    wInput.value = roundUnit(width, unitsSelect.value);  
+  };
+  const setHeight = (height: number) => {
+    hInput.value = roundUnit(height, unitsSelect.value);
+  };
+
   return {
     el: shelf,
 
@@ -345,23 +362,20 @@ function resizeShelf(
 
       // set ui based on current width and height style attributes
       const size = shelfSizeFromImage(img);
-      wInput.value = roundUnit(size.width, size.unit);
-      hInput.value = roundUnit(size.height, size.unit);
       unitsSelect.value = size.unit;
+      setWidth(size.width);
+      setHeight(size.height);
       
       // ensure we are positioned correctly (not offscreen, wide enough, etc.)
       updatePosition();
+
     },
 
     props: {
       width: () => getDim(wInput),
-      setWidth: (width: number) => {
-        wInput.value = roundUnit(width, unitsSelect.value);
-      },
+      setWidth,
       height: () => getDim(hInput),
-      setHeight: (height: number) => {
-        hInput.value = roundUnit(height, unitsSelect.value);
-      },
+      setHeight,
       units: () => unitsSelect.value,
       setUnits: (units: string) => unitsSelect.value = units,
       lockRatio: () => lockCheckbox.checked

@@ -207,6 +207,19 @@ export function createCheckboxInput(classes?: string[], style?: { [key: string]:
   return input;
 }
 
+export function createTextInput(
+  widthChars: number,
+  classes?: string[], 
+  style?: { [key: string]: string }
+) {
+  const input = document.createElement('input');
+  input.type = "text";
+  input.classList.add('pm-input-text');
+  applyStyles(input, classes, style);
+  input.style.width = (widthChars) + "ch";
+  return input;
+}
+
 export function createNumericInput(
   digits: number, 
   min?: number, 
