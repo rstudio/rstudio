@@ -17,11 +17,13 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
+import { findParentNodeClosestToPos } from 'prosemirror-utils';
+
 import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { sizePropToStyle } from './image-util';
+import { sizePropToStyle, sizePropToStylePixels } from './image-util';
 
 import './image-styles.css';
 
@@ -201,7 +203,14 @@ export class ImageNodeView implements NodeView {
   private attachResizeUI() {
     if (this.imageAttributes && isResizeUICompatible(this.img!)) {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
-      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, this.view, this.editorUI);
+      this.resizeUI = attachResizeUI(
+        imageNode, 
+        this.dom, 
+        this.img!, 
+        this.containerWidth(), 
+        this.view, 
+        this.editorUI
+      );
     }
   }
 
@@ -234,6 +243,10 @@ export class ImageNodeView implements NodeView {
 
     // apply keyvalue attribute to image
     if (node.attrs.keyvalue) {
+
+      // determine containerWidth
+      const containerWidth = this.containerWidth();
+      
       (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
         // alias key and value
         const key = attr[0];
@@ -257,13 +270,25 @@ export class ImageNodeView implements NodeView {
 
           // set image style (modulo the properties lifted above)
           this.img.setAttribute('style', value);
-        } else if (key === 'width') {
-          this.img.style.width = sizePropToStyle(value);
-        } else if (key === 'height') {
-          this.img.style.height = sizePropToStyle(value);
 
-          // use of legacy 'align' attribute is common for some pandoc users
-          // so we convert it to the requisite CSS
+        } else if (key === 'width') {
+
+          const width = sizePropToStylePixels(value, containerWidth);
+          if (width) {
+            this.img.style.width = width;
+            this.img.setAttribute('data-width', sizePropToStyle(value));
+          }
+
+        } else if (key === 'height') {
+
+          const height = sizePropToStylePixels(value, containerWidth);
+          if (height) {
+            this.img.style.height = height;
+            this.img.setAttribute('data-height', sizePropToStyle(value));
+          }
+
+        // use of legacy 'align' attribute is common for some pandoc users
+        // so we convert it to the requisite CSS
         } else if (this.isFigure() && key === 'align') {
           switch (value) {
             case 'left':
@@ -283,5 +308,20 @@ export class ImageNodeView implements NodeView {
 
   private isFigure() {
     return this.type === ImageType.Figure;
+  }
+
+  private containerWidth() {
+    let containerWidth = (this.view.dom as HTMLElement).offsetWidth;
+    if (containerWidth > 0) {
+      const imagePos = this.view.state.doc.resolve(this.getPos());
+      const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
+      if (resizeContainer) {
+        const resizeEl = this.view.domAtPos(resizeContainer.pos);
+        containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
+      }
+      return containerWidth;
+    } else {
+      return 1000;
+    }
   }
 }

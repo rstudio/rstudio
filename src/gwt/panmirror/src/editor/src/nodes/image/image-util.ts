@@ -15,22 +15,44 @@ import { mathAppendMarkTransaction } from "../../marks/math/math-transaction";
  *
  */
 
+const kDpi = 96;
 
-
-export function pixelsToUnit(pixels: number, unit: string, containerWidth: number) {
-  const dpi = 96;
+export function unitToPixels(value: number, unit: string, containerWidth: number) {
+  let pixels;
   switch(unit) {
     case "in":
-      return roundUnit(pixels / dpi, unit) + unit;
+      pixels = value * kDpi;
+      break;
     case "mm":
-      return roundUnit((pixels / dpi) * 25.4, unit) + unit;
+      pixels = value * (kDpi / 25.4);
+      break;
     case "cm":
-      return roundUnit((pixels / dpi) * 2.54, unit) + unit;
+      pixels = value * (kDpi / 2.54);
+      break;
     case "%":
-      return roundUnit((pixels / containerWidth) * 100, unit) + unit;
+      pixels = (value / 100) * containerWidth;
+      break;
     case "px":
     default:
-      return roundUnit(pixels, unit) + unit;
+      pixels = value;
+      break;
+  }
+  return Math.round(pixels);
+}
+
+export function pixelsToUnit(pixels: number, unit: string, containerWidth: number) {
+  switch(unit) {
+    case "in":
+      return pixels / kDpi;
+    case "mm":
+      return (pixels / kDpi) * 25.4;
+    case "cm":
+      return (pixels / kDpi) * 2.54;
+    case "%":
+      return (pixels / containerWidth) * 100;
+    case "px":
+    default:
+      return pixels;
   }
 }
 
@@ -60,6 +82,16 @@ export function sizePropToStyle(prop: string) {
     return prop + "px";
   } else {
     return prop;
+  }
+}
+
+export function sizePropToStylePixels(prop: string, containerWidth: number) {
+  const sizeWithUnits = sizePropWithUnit(prop);
+  if (sizeWithUnits) {
+    sizeWithUnits.unit = sizeWithUnits.unit || 'px';
+    return unitToPixels(sizeWithUnits.size, sizeWithUnits.unit, containerWidth) + 'px';
+  } else {
+    return null;
   }
 }
 
