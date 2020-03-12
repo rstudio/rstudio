@@ -18,6 +18,11 @@
 
 // handle only one dim specified
 
+// defending against null images. perhaps if 
+// the current value is invalid we revert to offsetWidth/offsetHeight?
+// or, when a change event comes in if it's invalid
+// then we set it back to data-width or data-height
+
 // general code review/cleanup
 
 // audit all uses of data-width, etc. to make sure there are no unexpected states
@@ -30,8 +35,6 @@
 // don't write px if it's px?
 
 // use of naturalWidth / naturalHeight to hold off on height attribute
-
-// initialize lockRatio using naturalWidth / naturalHeight
  
 // sync shelf on container resize
 
@@ -45,7 +48,6 @@ import {
   createHorizontalPanel, 
   addHorizontalPanelCell, 
   createInputLabel, 
-  createNumericInput, 
   createImageButton, 
   createCheckboxInput, 
   createSelectInput,
@@ -131,6 +133,21 @@ export function attachResizeUI(
     );
   };
 
+  // shelf init
+  const onInitShelf = () => {
+    
+    // sync props
+    shelf.sync();
+
+    // default for lockRatio based on naturalWidth/naturalHeight
+    const width = shelf.props.width();
+    const height = shelf.props.height();
+    if (img.naturalWidth && img.naturalHeight && width && height) {
+      const natural = Math.abs((width/height) - (img.naturalWidth/img.naturalHeight)) <= 0.05;
+      shelf.props.setLockRatio(natural);
+    }
+  };
+
   // handle width changed from shelf
   const onWidthChanged = () => {
     const width = shelf.props.width();
@@ -189,9 +206,7 @@ export function attachResizeUI(
   const shelf = resizeShelf(
     view, 
     img,
-    () => {
-      shelf.sync();
-    },
+    onInitShelf,
     onWidthChanged,
     onHeightChanged,
     onUnitsChanged,
@@ -360,7 +375,6 @@ function resizeShelf(
     // unit handling in the conversion to the DOM
     sync: () => {
 
-      // set ui based on current width and height style attributes
       const size = shelfSizeFromImage(img);
       unitsSelect.value = size.unit;
       setWidth(size.width);
@@ -378,7 +392,8 @@ function resizeShelf(
       setHeight,
       units: () => unitsSelect.value,
       setUnits: (units: string) => unitsSelect.value = units,
-      lockRatio: () => lockCheckbox.checked
+      lockRatio: () => lockCheckbox.checked,
+      setLockRatio: (lock: boolean) => lockCheckbox.checked = lock
     }
   };
 }
@@ -526,7 +541,12 @@ function resizeHandle(
 }
 
 
-function updateImageSize(view: EditorView, image: NodeWithPos, width: string, height: string) {
+function updateImageSize(
+  view: EditorView, 
+  image: NodeWithPos, 
+  width: string, 
+  height: string
+) {
 
   // edit width & height in keyvalue
   let keyvalue = image.node.attrs.keyvalue as Array<[string, string]>;
