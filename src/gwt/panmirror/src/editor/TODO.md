@@ -2,6 +2,8 @@
 
  Discuss tokens / escaping / etc. with Joe
 
+If we start in VisualMode PM devtools not visible
+
 Do we need a pref bag from the host to store document related prefs?
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip!
