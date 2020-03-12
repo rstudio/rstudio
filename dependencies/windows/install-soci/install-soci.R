@@ -15,12 +15,6 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
-# try to find a perl installation directory
-perl <- head(Filter(file.exists, c("C:/Perl64/bin", "C:/Perl/bin")), n = 1)
-if (length(perl) == 0)
-   fatal("No perl installation detected (please install ActiveState Perl via 'choco install activeperl')")
-PATH$prepend(perl)
-
 # try to find MSVC 2017
 msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build",
                                    "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build")), n = 1)
