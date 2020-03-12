@@ -184,10 +184,10 @@
    
    if (length(args) > 0)
    {
-      for (ee in args)
+      for (i in seq_along(args))
          # Filter empty string https://github.com/rstudio/rstudio/issues/5285
          if (!identical(args[[i]], expression()))
-             freeVars <- c(freeVars, codetools:::walkCode(ee, w))
+            freeVars <- c(freeVars, codetools:::walkCode(args[[i]], w))
    }
    return(unique(freeVars))
 })
