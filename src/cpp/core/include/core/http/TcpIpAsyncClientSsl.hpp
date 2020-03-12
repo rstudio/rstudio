@@ -25,6 +25,13 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <wincrypt.h>
+#include <cryptuiapi.h>
+#include <openssl/x509.h>
+#endif
+
 namespace rstudio {
 namespace core {
 namespace http {  
@@ -62,6 +69,28 @@ public:
             if (ec)
                LOG_ERROR(Error(ec, ERROR_LOCATION));
          }
+
+      #ifdef _WIN32
+         // on Windows, OpenSSL does not support loading certificates from the Windows certificate store
+         // because of this, each time we need to verify certificates, we initialize
+         // all certificates individually with OpenSSL
+         const WindowsCertificateStore& certStore = getCertificateStore();
+         for (const auto& cert : certStore.certificates)
+         {
+            if (X509_STORE* store = SSL_CTX_get_cert_store(sslContext_.native_handle()))
+            {
+               if (::X509_STORE_add_cert(store, cert) != 1)
+               {
+                  boost::system::error_code ec = rstudio_boost::system::error_code(
+                              static_cast<int>(::ERR_get_error()),
+                              boost::asio::error::get_ssl_category());
+                  Error error(ec, ERROR_LOCATION);
+                  error.addProperty("Description", "Could not add Windows certificate to OpenSSL cert store");
+                  LOG_ERROR(error);
+               }
+            }
+         }
+      #endif
       }
       else
       {
@@ -153,6 +182,56 @@ private:
    {
       return util::isSslShutdownError(ec);
    }
+
+#ifdef _WIN32
+   struct WindowsCertificateStore
+   {
+      WindowsCertificateStore()
+      {
+         // load certificates from important stores
+         LPCSTR stores[] = {"ROOT", "CA"};
+         for (const LPCSTR& store : stores)
+         {
+             HCERTSTORE hStore = nullptr;
+             hStore = CertOpenSystemStore(NULL, store);
+             if (!hStore)
+             {
+                LOG_ERROR_MESSAGE("Could not open certificate store");
+                return;
+             }
+
+             PCCERT_CONTEXT pContext = nullptr;
+             while (pContext = CertEnumCertificatesInStore(hStore, pContext))
+             {
+                // convert the certificate returned from the Windows store into a
+                // format that OpenSSL can understand
+                X509* x509 = nullptr;
+                x509 = d2i_X509(nullptr,
+                                const_cast<const unsigned char**>(
+                                   reinterpret_cast<const unsigned char* const*>(&pContext->pbCertEncoded)),
+                                pContext->cbCertEncoded);
+                if (x509)
+                   certificates.push_back(x509);
+             }
+
+             CertFreeCertificateContext(pContext);
+             CertCloseStore(hStore, 0);
+         }
+      }
+
+      // certificate pointers - these are intentionally leaked
+      // as they need to be available for the entire run of the program
+      std::vector<X509*> certificates;
+   };
+
+   static const WindowsCertificateStore& getCertificateStore()
+   {
+       // Myers singleton - guarantees this is thread safe
+       // and will be initialized exactly once by the first caller
+       static WindowsCertificateStore instance;
+       return instance;
+   }
+#endif
 
 private:
    boost::asio::ssl::context sslContext_;
