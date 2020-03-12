@@ -184,10 +184,10 @@
    
    if (length(args) > 0)
    {
-      # Filter empty string https://github.com/rstudio/rstudio/issues/5285
-      args <- args[sapply(args, function(x) nchar(as.character(as.expression(x))) > 0 )]
       for (ee in args)
-         freeVars <- c(freeVars, codetools:::walkCode(ee, w))
+         # Filter empty string https://github.com/rstudio/rstudio/issues/5285
+         if (!identical(args[[i]], expression()))
+             freeVars <- c(freeVars, codetools:::walkCode(ee, w))
    }
    return(unique(freeVars))
 })
