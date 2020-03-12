@@ -15,6 +15,19 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
+# try to find a perl installation directory
+perl <- head(Filter(file.exists, c("C:/Perl64/bin", "C:/Perl/bin")), n = 1)
+if (length(perl) == 0)
+   fatal("No perl installation detected (please install ActiveState Perl via 'choco install activeperl')")
+PATH$prepend(perl)
+
+# try to find MSVC 2017
+msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build",
+                                   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build")), n = 1)
+if (length(msvc) == 0)
+   fatal("No MSVC 2017 installation detected (please install Visual Studio 2017 using 'Install-RStudio-Prereqs.ps1')")
+PATH$prepend(msvc)
+
 # initialize variables
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
 boost_dir <- normalizePath(file.path(output_dir, "boost-1.69.0-win-msvc141-release-static\\boost64"), winslash = "\\")
