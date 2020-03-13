@@ -14,6 +14,7 @@
  */
 
 
+
 // include a 'blank' state for dims unspecified? 
 
 // handle only one dim specified
@@ -57,10 +58,7 @@ import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { sizePropWithUnit, imageDimsWithUnits, pixelsToUnit, roundUnit, unitToPixels } from './image-util';
-
-// https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
-const kValidUnits = ["px", "in", "cm", "mm", "%"];// 
+import { sizePropWithUnit, pixelsToUnit, roundUnit, unitToPixels, isValidUnit, validUnits, isNaturalAspectRatio } from './image-util';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -88,27 +86,13 @@ export interface ResizeUI {
 
 export function isResizeUICompatible(img: HTMLImageElement) {
 
-  const isCompatibleSize = (size: string | null) => {
+  // incompatible if it has a width, but not a data-width
+  const incompatibleWidth = img.style.width && !img.hasAttribute('data-width');
 
-    const sizeWithUnits = sizePropWithUnit(size);
-    if (sizeWithUnits) {
-      if (sizeWithUnits.unit) {
-        
-        return kValidUnits.includes(sizeWithUnits.unit);
-      
-      // no units is compatible (we'll just use pixels)
-      } else {
-        return true;
-      }
-    
-    // no size at all is compatible (we'll just use pixels)
-    } else {
-      return true;
-    }
-  };
+  // incompatible if it has a height, but not a data-height
+  const incompatibleHeight = img.style.height && !img.hasAttribute('data-height');
 
-  return isCompatibleSize(img.getAttribute('data-width')) && 
-         isCompatibleSize(img.getAttribute('data-height'));
+  return (!incompatibleWidth && !incompatibleHeight);
 }
 
 export function attachResizeUI(
@@ -140,42 +124,31 @@ export function attachResizeUI(
     shelf.sync();
 
     // default for lockRatio based on naturalWidth/naturalHeight
-    const width = shelf.props.width();
-    const height = shelf.props.height();
-    if (img.naturalWidth && img.naturalHeight && width && height) {
-      const natural = Math.abs((width/height) - (img.naturalWidth/img.naturalHeight)) <= 0.05;
-      shelf.props.setLockRatio(natural);
-    }
+    shelf.props.setLockRatio(
+      isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img)
+    );
   };
 
   // handle width changed from shelf
   const onWidthChanged = () => {
     const width = shelf.props.width();
-    if (width) {
-      const height = shelf.props.lockRatio() ?
-        (img.offsetHeight / img.offsetWidth) * width : 
-        shelf.props.height();
-      if (height) {
-        const unit = shelf.props.units();
-        shelf.props.setHeight(height);
-        syncFromShelf();
-      }
-    }
+    const height = shelf.props.lockRatio() ?
+      (img.offsetHeight / img.offsetWidth) * width : 
+      shelf.props.height();
+    shelf.props.setHeight(height);
+    
+    syncFromShelf();
   };
 
   // handle height changed from shelf
   const onHeightChanged = () => {
     const height = shelf.props.height();
-    if (height) {
-      const width = shelf.props.lockRatio() ? 
-        (img.offsetWidth / img.offsetHeight) * height :
-        shelf.props.width();
-      if (width) {
-        const unit = shelf.props.units();
-        shelf.props.setWidth(width);
-        syncFromShelf();
-      }
-    }
+    const width = shelf.props.lockRatio() ? 
+      (img.offsetWidth / img.offsetHeight) * height :
+      shelf.props.width();
+    shelf.props.setWidth(width);
+
+    syncFromShelf();
   };
 
   const onUnitsChanged = () => {
@@ -183,15 +156,12 @@ export function attachResizeUI(
     const prevUnits = shelfSizeFromImage(img).unit;
     
     const width = shelf.props.width();
-    if (width) { 
-      const widthPixels = unitToPixels(width, prevUnits, imgContainerWidth); 
-      shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), imgContainerWidth));
-    }
+    const widthPixels = unitToPixels(width, prevUnits, imgContainerWidth); 
+    shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), imgContainerWidth));
+  
     const height = shelf.props.height();
-    if (height) {
-      const heightPixels = unitToPixels(height, prevUnits, imgContainerWidth); 
-      shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), imgContainerWidth));
-    }
+    const heightPixels = unitToPixels(height, prevUnits, imgContainerWidth); 
+    shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), imgContainerWidth));
 
     syncFromShelf();
   };
@@ -283,19 +253,6 @@ function resizeShelf(
   // always position below
   shelf.style.bottom = "-48px";
 
-  // helper function to get a dimension (returns null if input not currently valid)
-  const getDim = (input: HTMLInputElement) => {
-    const value = parseFloat(input.value);
-    if (isNaN(value)) {
-      return null;
-    }
-    if (value > 0) {
-      return value;
-    } else {
-      return null;
-    }
-  };
-
   // main panel that holds the controls
   const panel = createHorizontalPanel();
   shelf.append(panel);
@@ -323,7 +280,7 @@ function resizeShelf(
   addToPanel(hInput, 10);
 
   // units
-  const unitsSelect = createSelectInput(kValidUnits, inputClasses);
+  const unitsSelect = createSelectInput(validUnits(), inputClasses);
   unitsSelect.onchange = () => {
     // drive focus to width and back to prevent wierd selection change 
     // detection condition that causes PM to re-render the node the 
@@ -333,7 +290,7 @@ function resizeShelf(
 
     // notify client
     onUnitsChanged();
-  }
+  };
   addToPanel(unitsSelect, 12);
 
   // lock ratio
@@ -359,6 +316,19 @@ function resizeShelf(
   } else {
     img.onload = onInit;
   }
+
+  // helper function to get a dimension (returns null if input not currently valid)
+  const getDim = (input: HTMLInputElement) => {
+    const value = parseFloat(input.value);
+    if (isNaN(value)) {
+      return null;
+    }
+    if (value > 0) {
+      return value;
+    } else {
+      return null;
+    }
+  };
 
   const setWidth = (width: number) => {
     wInput.value = roundUnit(width, unitsSelect.value);  
@@ -386,9 +356,9 @@ function resizeShelf(
     },
 
     props: {
-      width: () => getDim(wInput),
+      width: () => getDim(wInput) || shelfSizeFromImage(img).width,
       setWidth,
-      height: () => getDim(hInput),
+      height: () => getDim(hInput) || shelfSizeFromImage(img).height,
       setHeight,
       units: () => unitsSelect.value,
       setUnits: (units: string) => unitsSelect.value = units,
@@ -406,7 +376,6 @@ function shelfSizeFromImage(img: HTMLImageElement) {
  
   // if there is no width and no height, then use pixels
   if (!width && !height) {
-    const dims = imageDimsWithUnits(img);
     return {
       width: img.offsetWidth,
       height: img.offsetHeight,

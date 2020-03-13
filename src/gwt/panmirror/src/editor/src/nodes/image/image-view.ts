@@ -23,7 +23,7 @@ import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { sizePropToStyle, sizePropToStylePixels } from './image-util';
+import { sizePropToStyle, sizePropToStylePixels, sizePropWithUnit, isValidUnit, unitToPixels } from './image-util';
 
 import './image-styles.css';
 
@@ -240,8 +240,10 @@ export class ImageNodeView implements NodeView {
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = node.textContent || node.attrs.src;
 
-    // reset img style
-    this.img.setAttribute('style', '');
+    // reset attributes
+    this.img.removeAttribute('style');
+    this.img.removeAttribute('data-width');
+    this.img.removeAttribute('data-height');
 
     // reset figure styles (only reset styles that we explicitly set below, b/c some
     // styles may have been set by e.g. the attachResizeUI function)
@@ -266,39 +268,65 @@ export class ImageNodeView implements NodeView {
         const key = attr[0];
         let value = attr[1];
 
+        // remove a style, either lifting it to the parent or just ignoring it
+        const removeImageStyle = (style: string, lift: boolean) => {
+          // mutate the value to remove the lifted style
+          value = value.replace(new RegExp('(' + style + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
+            if (lift) {
+              this.dom.style.setProperty(p1, p2);
+            }
+            return '';
+          });
+        };
+
         // forward styles to image (but set align oriented styles on figure parent)
         if (key === 'style') {
           // pull out certain styles that shoudl really belong to the block container
           if (this.isFigure()) {
-            const liftImageStyle = (style: string) => {
-              // mutate the value to remove the lifted style
-              value = value.replace(new RegExp('(' + style + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
-                this.dom.style.setProperty(p1, p2);
-                return '';
-              });
-            };
-            liftImageStyle('float');
-            liftImageStyle('vertical-align');
-            liftImageStyle('margin(?:[\\w\\-])*');
+            removeImageStyle('float', true);
+            removeImageStyle('vertical-align', true);
+            removeImageStyle('margin(?:[\\w\\-])*', true);
           }
 
-          // set image style (modulo the properties lifted above)
+          // remove width and height (they require explicit props)
+          removeImageStyle('width', false);
+          removeImageStyle('height', false);
+
+          // set image style (modulo the properties lifted/removed above)
           this.img.setAttribute('style', value);
 
         } else if (key === 'width') {
 
-          const width = sizePropToStylePixels(value, containerWidth);
-          if (width) {
-            this.img.style.width = width;
-            this.img.setAttribute('data-width', sizePropToStyle(value));
+          // see if this is a unit we can edit
+          const widthProp = sizePropWithUnit(value);
+          if (widthProp) {
+            widthProp.unit = widthProp.unit || 'px';
+            if (isValidUnit(widthProp.unit)) {
+              this.img.setAttribute('data-width', widthProp.size + widthProp.unit);
+              this.img.style.width = unitToPixels(widthProp.size, widthProp.unit, containerWidth) + 'px';
+            }
+          }
+          
+          // if not, just pass it straight through (editing UI will be disabled)
+          if (!this.img.hasAttribute('data-width')) {
+            this.img.style.width = value;
           }
 
         } else if (key === 'height') {
 
-          const height = sizePropToStylePixels(value, containerWidth);
-          if (height) {
-            this.img.style.height = height;
-            this.img.setAttribute('data-height', sizePropToStyle(value));
+          // see if this is a unit we can edit
+          const heightProp = sizePropWithUnit(value);
+          if (heightProp) {
+            heightProp.unit = heightProp.unit || 'px';
+            if (isValidUnit(heightProp.unit)) {
+              this.img.setAttribute('data-height', heightProp.size + heightProp.unit);
+              this.img.style.height = unitToPixels(heightProp.size, heightProp.unit, containerWidth) + 'px';
+            }
+          }
+          
+          // if not, just pass it straight through (editing UI will be disabled)
+          if (!this.img.hasAttribute('data-height')) {
+            this.img.style.height = value;
           }
 
         // use of legacy 'align' attribute is common for some pandoc users

@@ -17,6 +17,28 @@ import { mathAppendMarkTransaction } from "../../marks/math/math-transaction";
 
 const kDpi = 96;
 
+// https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
+const kValidUnits = ["px", "in", "cm", "mm", "%"];// 
+
+export function validUnits() {
+  return kValidUnits;
+}
+
+export function isValidUnit(unit: string) {
+  return kValidUnits.includes(unit);
+}
+
+
+export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement) {
+  if (img.naturalWidth && img.naturalHeight) {
+    const diff = Math.abs((width/height) - (img.naturalWidth/img.naturalHeight));
+    return diff <= 0.02;
+  } else {
+    // no naturalWidth or naturalHeight, assume it's natural (perhaps the image isn't loaded yet?)
+    return true;
+  }
+}
+
 export function unitToPixels(value: number, unit: string, containerWidth: number) {
   let pixels;
   switch(unit) {
@@ -67,14 +89,6 @@ export function roundUnit(value: number, unit: string)  {
   }
 }
 
-export function imageDimsWithUnits(img: HTMLImageElement) {
-  const width = sizePropWithUnit(img.style.width || (img.offsetWidth + 'px'))!;
-  const height = sizePropWithUnit(img.style.height || (img.offsetHeight + 'px'))!;
-  return {
-    width,
-    height
-  };
-}
 
 export function sizePropToStyle(prop: string) {
   // if it's a number, append px
@@ -111,3 +125,4 @@ export function sizePropWithUnit(prop: string | null) {
   }
  
 }
+
