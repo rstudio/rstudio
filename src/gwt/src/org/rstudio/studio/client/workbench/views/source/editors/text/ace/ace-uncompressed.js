@@ -62436,6 +62436,10 @@ var Text = function(parentEl) {
                 this.$renderLine(
                     lineElement, row, row == foldStart ? foldLine : false
                 );
+
+                if (heightChanged)
+                    lineElement.style.top = this.$lines.computeLineTop(row, config, this.session) + "px";
+
                 var height = (config.lineHeight * this.session.getRowLength(row)) + "px";
                 if (lineElement.style.height != height) {
                     heightChanged = true;
@@ -64552,6 +64556,7 @@ var VirtualRenderer = function(container, theme) {
             this.scroller.className = this.scrollLeft <= 0 ? "ace_scroller" : "ace_scroller ace_scroll-left";
         }
         if (changes & this.CHANGE_FULL) {
+            this.$changedLines = null;
             this.$textLayer.update(config);
             if (this.$showGutter)
                 this.$gutterLayer.update(config);
@@ -64563,6 +64568,7 @@ var VirtualRenderer = function(container, theme) {
             return;
         }
         if (changes & this.CHANGE_SCROLL) {
+            this.$changedLines = null;
             if (changes & this.CHANGE_TEXT || changes & this.CHANGE_LINES)
                 this.$textLayer.update(config);
             else
@@ -64583,6 +64589,7 @@ var VirtualRenderer = function(container, theme) {
         }
 
         if (changes & this.CHANGE_TEXT) {
+            this.$changedLines = null;
             this.$textLayer.update(config);
             if (this.$showGutter)
                 this.$gutterLayer.update(config);
