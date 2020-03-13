@@ -34,7 +34,7 @@
 
 namespace rstudio {
 namespace core {
-namespace http {  
+namespace http {
 
 class TcpIpAsyncClientSsl
    : public AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
@@ -192,8 +192,7 @@ private:
          LPCSTR stores[] = {"ROOT", "CA"};
          for (const LPCSTR& store : stores)
          {
-             HCERTSTORE hStore = nullptr;
-             hStore = CertOpenSystemStore(NULL, store);
+             HCERTSTORE hStore = CertOpenSystemStore(NULL, store);
              if (!hStore)
              {
                 LOG_ERROR_MESSAGE("Could not open certificate store");
@@ -205,16 +204,12 @@ private:
              {
                 // convert the certificate returned from the Windows store into a
                 // format that OpenSSL can understand
-                X509* x509 = nullptr;
-                x509 = d2i_X509(nullptr,
-                                const_cast<const unsigned char**>(
-                                   reinterpret_cast<const unsigned char* const*>(&pContext->pbCertEncoded)),
-                                pContext->cbCertEncoded);
+                const BYTE* certPtr = pContext->pbCertEncoded;
+                X509* x509 = d2i_X509(nullptr, &certPtr, pContext->cbCertEncoded);
                 if (x509)
                    certificates.push_back(x509);
              }
 
-             CertFreeCertificateContext(pContext);
              CertCloseStore(hStore, 0);
          }
       }
@@ -242,7 +237,7 @@ private:
    std::string certificateAuthority_;
    boost::posix_time::time_duration connectionTimeout_;
 };
-   
+
 
 } // namespace http
 } // namespace core
