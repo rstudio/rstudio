@@ -17,14 +17,15 @@
 
 // general code review/cleanup
 
+// pull width/height out of style (but also on write!)
+
+// use of naturalWidth / naturalHeight to hold off on height attribute
+
 // percentage sizing (esp. how do we get containerWidth at the beginning)
 // lockdown for percent
 // container for percent
-// figure is inline-block so percent based sizing doens't work well
-
-// use of naturalWidth / naturalHeight to hold off on height attribute
  
-// sync shelf on container resize
+// sync shelf on container resize (could help with percent problem!)
 
 
 import { EditorView } from 'prosemirror-view';
