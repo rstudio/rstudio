@@ -20,6 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { EditorUI, ImageType } from '../../api/ui';
+import { removeStyleAttrib } from '../../api/css';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
@@ -269,29 +270,19 @@ export class ImageNodeView implements NodeView {
         const key = attr[0];
         let value = attr[1];
 
-        // remove a style, either lifting it to the parent or just ignoring it
-        const removeImageStyle = (style: string, lift: boolean) => {
-          // mutate the value to remove the lifted style
-          value = value.replace(new RegExp('(' + style + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
-            if (lift) {
-              this.dom.style.setProperty(p1, p2);
-            }
-            return '';
-          });
-        };
-
         // forward styles to image (but set align oriented styles on figure parent)
         if (key === 'style') {
           // pull out certain styles that shoudl really belong to the block container
           if (this.isFigure()) {
-            removeImageStyle('float', true);
-            removeImageStyle('vertical-align', true);
-            removeImageStyle('margin(?:[\\w\\-])*', true);
+            const liftStyle = (attrib: string, val: string) => this.dom.style.setProperty(attrib, val);
+            value = removeStyleAttrib(value, 'float', liftStyle);
+            value = removeStyleAttrib(value, 'vertical-align', liftStyle);
+            value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
           }
 
           // remove width and height (they require explicit props)
-          removeImageStyle('width', false);
-          removeImageStyle('height', false);
+          value = removeStyleAttrib(value, 'width');
+          value = removeStyleAttrib(value, 'height');
 
           // set image style (modulo the properties lifted/removed above)
           this.img.setAttribute('style', value);

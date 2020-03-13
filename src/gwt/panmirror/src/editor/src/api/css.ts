@@ -1,5 +1,5 @@
 /*
- * dom.ts
+ * css.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,8 +13,13 @@
  *
  */
 
-import { EditorView } from 'prosemirror-view';
 
-export function bodyElement(view: EditorView): HTMLElement {
-  return view.dom.firstChild as HTMLElement;
-}
+ export function removeStyleAttrib(style: string, attrib: string, handler?: (attrib: string, value: string) => void) {
+  return style.replace(new RegExp('(' + attrib + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
+    if (handler) {
+      handler(p1, p2);
+    }
+    return '';
+  });
+
+ }
