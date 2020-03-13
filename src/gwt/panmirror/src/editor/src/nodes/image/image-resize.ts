@@ -389,7 +389,7 @@ function shelfSizeFromImage(img: HTMLImageElement) {
 
     if (!widthWithUnit) {
       widthWithUnit = {
-        size: heightWithUnit!.size * (img.offsetWidth / img.offsetWidth),
+        size: heightWithUnit!.size * (img.offsetWidth / img.offsetHeight),
         unit: heightWithUnit!.unit
       };
     }
