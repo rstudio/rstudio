@@ -221,7 +221,7 @@ private:
 
    static const WindowsCertificateStore& getCertificateStore()
    {
-       // Myers singleton - guarantees this is thread safe
+       // Meyer's singleton - guarantees this is thread safe
        // and will be initialized exactly once by the first caller
        static WindowsCertificateStore instance;
        return instance;
