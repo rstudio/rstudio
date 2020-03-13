@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -62,6 +64,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    public FilesPane(GlobalDisplay globalDisplay,
                     FileDialogs fileDialogs,
                     Commands commands,
+                    EventBus events,
                     FileTypeRegistry fileTypeRegistry,
                     Session session,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
@@ -69,6 +72,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       super("Files");
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      events_ = events;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
@@ -290,6 +294,13 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        });
    }
    
+   @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Files"));
+      super.bringToFront();
+   }
+
    @Override 
    protected Widget createMainWidget()
    {
@@ -346,5 +357,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
 
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;
+   private final EventBus events_;
    private final Provider<FileCommandToolbar> pFileCommandToolbar_;
 }

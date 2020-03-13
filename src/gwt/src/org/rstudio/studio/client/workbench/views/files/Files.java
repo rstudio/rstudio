@@ -129,6 +129,8 @@ public class Files
       void showDataImportFileChoice(FileSystemItem file, 
                                     Command onView, 
                                     Command onImport);
+
+      void bringToFront();
    }
 
    @Inject
