@@ -81,11 +81,16 @@ public:
             {
                if (::X509_STORE_add_cert(store, cert) != 1)
                {
+                  char* subjectName = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
+                  std::string subjectNameStr(subjectName);
+                  OPENSSL_free(subjectName);
+
                   boost::system::error_code ec = rstudio_boost::system::error_code(
                               static_cast<int>(::ERR_get_error()),
                               boost::asio::error::get_ssl_category());
                   Error error(ec, ERROR_LOCATION);
-                  error.addProperty("Description", "Could not add Windows certificate to OpenSSL cert store");
+                  error.addProperty("Description", "Could not add Windows certificate to OpenSSL cert store: " + subjectNameStr);
+
                   LOG_ERROR(error);
                }
             }
