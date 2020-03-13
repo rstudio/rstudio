@@ -23,7 +23,7 @@ import { EditorUI, ImageType } from '../../api/ui';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { sizePropToStyle, sizePropToStylePixels, sizePropWithUnit, isValidUnit, unitToPixels } from './image-util';
+import { sizePropWithUnit, isValidUnit, unitToPixels } from './image-util';
 
 import './image-styles.css';
 
@@ -217,11 +217,12 @@ export class ImageNodeView implements NodeView {
   private attachResizeUI() {
     if (this.imageAttributes && isResizeUICompatible(this.img!)) {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
+      const imgContainerWidth = () => this.containerWidth();
       this.resizeUI = attachResizeUI(
         imageNode, 
         this.dom, 
         this.img!, 
-        this.containerWidth(), 
+        imgContainerWidth,
         this.view, 
         this.editorUI
       );
@@ -361,9 +362,7 @@ export class ImageNodeView implements NodeView {
         const resizeEl = this.view.domAtPos(resizeContainer.pos);
         containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
       }
-      return containerWidth;
-    } else {
-      return 1000;
-    }
+    } 
+    return containerWidth;
   }
 }

@@ -1,5 +1,3 @@
-import { mathAppendMarkTransaction } from "../../marks/math/math-transaction";
-
 /*
  * image-util.ts
  *
@@ -52,7 +50,7 @@ export function unitToPixels(value: number, unit: string, containerWidth: number
       pixels = value * (kDpi / 2.54);
       break;
     case "%":
-      pixels = (value / 100) * containerWidth;
+      pixels = (value / 100) * ensureContainerWidth(containerWidth);
       break;
     case "px":
     default:
@@ -71,7 +69,7 @@ export function pixelsToUnit(pixels: number, unit: string, containerWidth: numbe
     case "cm":
       return (pixels / kDpi) * 2.54;
     case "%":
-      return (pixels / containerWidth) * 100;
+      return (pixels / ensureContainerWidth(containerWidth)) * 100;
     case "px":
     default:
       return pixels;
@@ -86,26 +84,6 @@ export function roundUnit(value: number, unit: string)  {
       return value.toFixed(1);
     default:
       return Math.round(value).toString();
-  }
-}
-
-
-export function sizePropToStyle(prop: string) {
-  // if it's a number, append px
-  if (/^\d*\.?\d*$/.test(prop)) {
-    return prop + "px";
-  } else {
-    return prop;
-  }
-}
-
-export function sizePropToStylePixels(prop: string, containerWidth: number) {
-  const sizeWithUnits = sizePropWithUnit(prop);
-  if (sizeWithUnits) {
-    sizeWithUnits.unit = sizeWithUnits.unit || 'px';
-    return unitToPixels(sizeWithUnits.size, sizeWithUnits.unit, containerWidth) + 'px';
-  } else {
-    return null;
   }
 }
 
@@ -126,3 +104,8 @@ export function sizePropWithUnit(prop: string | null) {
  
 }
 
+// sometime when we are called before the DOM renders the containerWidth
+// is 0, in this case provide a default of 1000 
+function ensureContainerWidth(containerWidth: number) {
+  return containerWidth || 1000;
+}

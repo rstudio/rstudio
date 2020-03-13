@@ -44,7 +44,7 @@ import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { sizePropWithUnit, pixelsToUnit, roundUnit, unitToPixels, isValidUnit, validUnits, isNaturalAspectRatio, sizePropToStylePixels } from './image-util';
+import { unitToPixels, isNaturalAspectRatio, pixelsToUnit, roundUnit, sizePropWithUnit, validUnits } from './image-util';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -64,12 +64,6 @@ export function initResizeContainer(container: HTMLElement) {
   return container;
 }
 
-export interface ResizeUI {
-  update: () => void;
-  detach: () => void;
-}
-
-
 export function isResizeUICompatible(img: HTMLImageElement) {
 
   // incompatible if it has a width, but not a data-width
@@ -81,11 +75,16 @@ export function isResizeUICompatible(img: HTMLImageElement) {
   return (!incompatibleWidth && !incompatibleHeight);
 }
 
+export interface ResizeUI {
+  update: () => void;
+  detach: () => void;
+}
+
 export function attachResizeUI(
   imageNode: () => NodeWithPos,
   container: HTMLElement,
   img: HTMLImageElement,
-  imgContainerWidth: number,
+  imgContainerWidth: () => number,
   view: EditorView,
   ui: EditorUI 
 ) : ResizeUI {
@@ -143,13 +142,15 @@ export function attachResizeUI(
 
     const prevUnits = shelfSizeFromImage(img).unit;
     
+    const containerWidth = imgContainerWidth();
+
     const width = shelf.props.width();
-    const widthPixels = unitToPixels(width, prevUnits, imgContainerWidth); 
-    shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), imgContainerWidth));
+    const widthPixels = unitToPixels(width, prevUnits, containerWidth); 
+    shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), containerWidth));
   
     const height = shelf.props.height();
-    const heightPixels = unitToPixels(height, prevUnits, imgContainerWidth); 
-    shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), imgContainerWidth));
+    const heightPixels = unitToPixels(height, prevUnits, containerWidth); 
+    shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), containerWidth));
 
     syncFromShelf();
   };
@@ -400,7 +401,7 @@ function shelfSizeFromImage(img: HTMLImageElement) {
 
 function resizeHandle(
   img: HTMLImageElement, 
-  imgContainerWidth: number,
+  imgContainerWidth: () => number,
   lockRatio: () => boolean,
   units: () => string,
   onSizing: () => void,
@@ -429,6 +430,8 @@ function resizeHandle(
     const startX = ev.pageX;
     const startY = ev.pageY;
 
+    const containerWidth = imgContainerWidth();
+
     const onPointerMove = (e: MouseEvent) => {
 
       // detect pointer movement
@@ -452,9 +455,9 @@ function resizeHandle(
       
       // set image width and height based on units currnetly in use
       img.style.width = width + 'px';
-      img.setAttribute('data-width', pixelsToUnit(width, units(), imgContainerWidth) + units());
+      img.setAttribute('data-width', pixelsToUnit(width, units(), containerWidth) + units());
       img.style.height = height + 'px';
-      img.setAttribute('data-height', pixelsToUnit(height, units(), imgContainerWidth) + units());
+      img.setAttribute('data-height', pixelsToUnit(height, units(), containerWidth) + units());
 
       onSizing();
     };
