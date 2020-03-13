@@ -15,25 +15,12 @@
 
 
 
-// include a 'blank' state for dims unspecified? 
-
-// handle only one dim specified
-
-// defending against null images. perhaps if 
-// the current value is invalid we revert to offsetWidth/offsetHeight?
-// or, when a change event comes in if it's invalid
-// then we set it back to data-width or data-height
-
 // general code review/cleanup
-
-// audit all uses of data-width, etc. to make sure there are no unexpected states
 
 // percentage sizing (esp. how do we get containerWidth at the beginning)
 // lockdown for percent
 // container for percent
 // figure is inline-block so percent based sizing doens't work well
-
-// don't write px if it's px?
 
 // use of naturalWidth / naturalHeight to hold off on height attribute
  
@@ -58,7 +45,7 @@ import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { sizePropWithUnit, pixelsToUnit, roundUnit, unitToPixels, isValidUnit, validUnits, isNaturalAspectRatio } from './image-util';
+import { sizePropWithUnit, pixelsToUnit, roundUnit, unitToPixels, isValidUnit, validUnits, isNaturalAspectRatio, sizePropToStylePixels } from './image-util';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -517,11 +504,21 @@ function updateImageSize(
   height: string
 ) {
 
+  // don't write pixels explicitly
+  const widthWithUnit = sizePropWithUnit(width)!;
+  if (widthWithUnit.unit === 'px') {
+    widthWithUnit.unit = '';
+  }
+  const heightWithUnit = sizePropWithUnit(height)!;
+  if (heightWithUnit.unit === 'px') {
+    heightWithUnit.unit = '';
+  }
+
   // edit width & height in keyvalue
   let keyvalue = image.node.attrs.keyvalue as Array<[string, string]>;
   keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
-  keyvalue.push(['width', width]);
-  keyvalue.push(['height', height]);
+  keyvalue.push(['width', widthWithUnit.size + widthWithUnit.unit]);
+  keyvalue.push(['height', heightWithUnit.size + heightWithUnit.unit]);
 
   // create transaction
   const tr = view.state.tr;
