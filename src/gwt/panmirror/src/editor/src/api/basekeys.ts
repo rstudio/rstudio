@@ -30,13 +30,13 @@ import { keymap } from 'prosemirror-keymap';
 import { CommandFn } from './command';
 
 export enum BaseKey {
-  Enter,
-  ModEnter,
-  ShiftEnter,
-  Backspace,
-  Delete,
-  Tab,
-  ShiftTab,
+  Enter = "Enter",
+  ModEnter = "Mod-Enter",
+  ShiftEnter = "Shift-Enter",
+  Backspace = "Backspace",
+  Delete = "Delete|Mod-Delete", // Use pipes to register multiple commands
+  Tab = "Tab",
+  ShiftTab = "Shift-Tab",
 }
 
 export interface BaseKeyBinding {
@@ -70,52 +70,24 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
   ];
 
   // build arrays for each BaseKey type
-  const enter: CommandFn[] = [];
-  const modEnter: CommandFn[] = [];
-  const shiftEnter: CommandFn[] = [];
-  const backspace: CommandFn[] = [];
-  const del: CommandFn[] = [];
-  const tab: CommandFn[] = [];
-  const shiftTab: CommandFn[] = [];
+  const commandMap : { [key: string ]: CommandFn[] } = {};
+  for (const baseKey of Object.values(BaseKey)) {
+    commandMap[baseKey] = [];
+  }
   pluginKeys.forEach(key => {
-    switch (key.key) {
-      case BaseKey.Enter:
-        enter.unshift(key.command);
-        break;
-      case BaseKey.ModEnter:
-        modEnter.unshift(key.command);
-        break;
-      case BaseKey.ShiftEnter:
-        shiftEnter.unshift(key.command);
-        break;
-      case BaseKey.Backspace:
-        backspace.unshift(key.command);
-        break;
-      case BaseKey.Delete:
-        del.unshift(key.command);
-        break;
-      case BaseKey.Tab:
-        tab.unshift(key.command);
-        break;
-      case BaseKey.ShiftTab:
-        shiftTab.unshift(key.command);
-        break;
-    }
+    commandMap[key.key].unshift(key.command);
   });
 
-  // create bindings
-  const bindings = {
-    Enter: chainCommands(...enter),
-    'Mod-Enter': chainCommands(...modEnter),
-    'Shift-Enter': chainCommands(...shiftEnter),
-    Backspace: chainCommands(...backspace),
-    'Mod-Backspace': chainCommands(...backspace),
-    Delete: chainCommands(...del),
-    'Mod-Delete': chainCommands(...del),
-    Tab: chainCommands(...tab),
-    'Shift-Tab': chainCommands(...shiftTab),
-  };
+  const bindings: {[key: string]: CommandFn} = {};
+  for (const baseKey of Object.values(BaseKey)) {
+    const commands = commandMap[baseKey];
+    // baseKey may contain multiple keys, separated by |
+    for (const subkey of baseKey.split(/\|/)) {
+      bindings[subkey] = chainCommands(...commands);
+    }
+  }
 
   // return keymap
   return keymap(bindings);
 }
+
