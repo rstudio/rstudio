@@ -1,16 +1,14 @@
 ## TODO
 
- Discuss tokens / escaping / etc. with Joe
+Discuss tokens / escaping / etc. with Joe
+
+Sentinel cursor could end up outside of text node (e.g. in an attribute or between dollar signs) and in that case would result in a loss of content. perhaps we need something more approximate (e.g. paragraph or line level)
 
 If we start in VisualMode PM devtools not visible
-
-Do we need a pref bag from the host to store document related prefs?
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip!
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
-
-Sizing/alignment inline for images
 
 Clipboard / DragDrop support for images
 
