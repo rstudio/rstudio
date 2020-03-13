@@ -19,8 +19,6 @@
 
 // pull width/height out of style (but also on write!)
 
-// use of naturalWidth / naturalHeight to hold off on height attribute
-
 // percentage sizing (esp. how do we get containerWidth at the beginning)
 // lockdown for percent
 // container for percent
