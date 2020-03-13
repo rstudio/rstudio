@@ -29,13 +29,13 @@ export function isValidUnit(unit: string) {
 }
 
 
-export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement) {
+export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement, defaultValue: boolean) {
   if (img.naturalWidth && img.naturalHeight) {
     const diff = Math.abs((width/height) - (img.naturalWidth/img.naturalHeight));
     return diff <= 0.02;
   } else {
-    // no naturalWidth or naturalHeight, assume it's natural (perhaps the image isn't loaded yet?)
-    return true;
+    // no naturalWidth or naturalHeight, return default
+    return defaultValue;
   }
 }
 

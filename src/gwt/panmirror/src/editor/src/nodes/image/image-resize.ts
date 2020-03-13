@@ -95,13 +95,15 @@ export function attachResizeUI(
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
-  // handle both dims changed (from resize handle)
+  // sync current state of shelf to node
   const syncFromShelf = () => {
     updateImageSize(
       view, 
       imageNode(), 
-      shelf.props.width() + shelf.props.units(), 
-      shelf.props.height() + shelf.props.units()
+      img,
+      shelf.props.width(), 
+      shelf.props.height(),
+      shelf.props.units()
     );
   };
 
@@ -113,7 +115,7 @@ export function attachResizeUI(
 
     // default for lockRatio based on naturalWidth/naturalHeight
     shelf.props.setLockRatio(
-      isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img)
+      isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img, true)
     );
   };
 
@@ -501,25 +503,23 @@ function resizeHandle(
 function updateImageSize(
   view: EditorView, 
   image: NodeWithPos, 
-  width: string, 
-  height: string
+  img: HTMLImageElement,
+  width: number, 
+  height: number,
+  unit: string
 ) {
 
   // don't write pixels explicitly
-  const widthWithUnit = sizePropWithUnit(width)!;
-  if (widthWithUnit.unit === 'px') {
-    widthWithUnit.unit = '';
-  }
-  const heightWithUnit = sizePropWithUnit(height)!;
-  if (heightWithUnit.unit === 'px') {
-    heightWithUnit.unit = '';
-  }
+  unit = unit === 'px' ? '' : unit;
 
   // edit width & height in keyvalue
   let keyvalue = image.node.attrs.keyvalue as Array<[string, string]>;
   keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
-  keyvalue.push(['width', widthWithUnit.size + widthWithUnit.unit]);
-  keyvalue.push(['height', heightWithUnit.size + heightWithUnit.unit]);
+  keyvalue.push(['width', width + unit]);
+  if (!isNaturalAspectRatio(width, height, img, false)) {
+    keyvalue.push(['height', height + unit]);
+  }
+  
 
   // create transaction
   const tr = view.state.tr;
