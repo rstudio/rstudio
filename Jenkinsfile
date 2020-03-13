@@ -271,12 +271,12 @@ try {
         }
         // trigger desktop builds if we're in open-source repo
         if (env.JOB_NAME == 'IDE/open-source-pipeline/master') {
+          trigger_external_build('IDE/macos-v1.4')
+          trigger_external_build('IDE/windows-v1.4')
+        }
+        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.3') {
           trigger_external_build('IDE/macos-v1.3')
           trigger_external_build('IDE/windows-v1.3')
-        }
-        else if (env.JOB_NAME == 'IDE/open-source-pipeline/v1.2-patch') {
-          trigger_external_build('IDE/macos-v1.2')
-          trigger_external_build('IDE/windows-v1.2')
         }
         parallel parallel_containers
 
@@ -284,19 +284,15 @@ try {
         // the pro variants
         // additionally, run qa-autotest against the version we've just built
         if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/pro-docs')
-          trigger_external_build('IDE/launcher-docs')
-          trigger_external_build('IDE/pro-desktop-docs')
+          trigger_external_build('IDE/pro-docs-v1.4')
+          trigger_external_build('IDE/launcher-docs-v1.4')
+          trigger_external_build('IDE/pro-desktop-docs-v1.4')
           trigger_external_build('IDE/qa-autotest')
           trigger_external_build('IDE/qa-automation')
-          trigger_external_build('IDE/monitor')
-          trigger_external_build('IDE/macos-v1.3-pro')
-          trigger_external_build('IDE/windows-v1.3-pro')
-          trigger_external_build('IDE/session')
-        }
-        else if (env.JOB_NAME == 'IDE/pro-pipeline/v1.2') {
-          trigger_external_build('IDE/macos-v1.2-pro')
-          trigger_external_build('IDE/windows-v1.2-pro')
+          trigger_external_build('IDE/monitor-v1.4')
+          trigger_external_build('IDE/macos-v1.4-pro')
+          trigger_external_build('IDE/windows-v1.4-pro')
+          trigger_external_build('IDE/session-v1.4')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
