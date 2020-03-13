@@ -287,12 +287,21 @@ try {
           trigger_external_build('IDE/pro-docs-v1.4')
           trigger_external_build('IDE/launcher-docs-v1.4')
           trigger_external_build('IDE/pro-desktop-docs-v1.4')
-          trigger_external_build('IDE/qa-autotest')
-          trigger_external_build('IDE/qa-automation')
           trigger_external_build('IDE/monitor-v1.4')
           trigger_external_build('IDE/macos-v1.4-pro')
           trigger_external_build('IDE/windows-v1.4-pro')
           trigger_external_build('IDE/session-v1.4')
+        }
+        else if (env.JOB_NAME == 'IDE/pro-pipeline/v1.3') {
+          trigger_external_build('IDE/pro-docs-v1.3')
+          trigger_external_build('IDE/launcher-docs-v1.3')
+          trigger_external_build('IDE/pro-desktop-docs-v1.3')
+          trigger_external_build('IDE/qa-autotest')
+          trigger_external_build('IDE/qa-automation')
+          trigger_external_build('IDE/monitor-v1.3')
+          trigger_external_build('IDE/macos-v1.3-pro')
+          trigger_external_build('IDE/windows-v1.3-pro')
+          trigger_external_build('IDE/session-v1.3')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
