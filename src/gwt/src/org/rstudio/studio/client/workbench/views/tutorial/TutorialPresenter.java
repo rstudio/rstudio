@@ -16,7 +16,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.container.SafeMap;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -63,7 +63,6 @@ public class TutorialPresenter
       void home();
       
       String getUrl();
-      String getRawSrcUrl();
       
       void launchTutorial(Tutorial tutorial);
       
@@ -127,7 +126,6 @@ public class TutorialPresenter
       commands_ = commands;
       server_ = server;
       
-      paramsMap_ = new SafeMap<>();
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
       
       events_.addHandler(TutorialCommandEvent.TYPE, this);
@@ -161,6 +159,14 @@ public class TutorialPresenter
          JsObject data = event.getData().cast();
          String url = data.getString("url");
          display_.openTutorial(url);
+      }
+      
+      // Stop a running tutorial.
+      else if (StringUtil.equals(type, TutorialCommandEvent.TYPE_STOP))
+      {
+         JsObject data = event.getData().cast();
+         String url = data.getString("url");
+         tutorialStop(url);
       }
       
       // Tutorial indexing completed; if we're viewing the list of available
@@ -198,34 +204,30 @@ public class TutorialPresenter
       if (StringUtil.equals(state, ShinyApplicationParams.STATE_STARTED))
       {
          display_.bringToFront();
-         if (Desktop.hasDesktopFrame())
-         {
-            String url = event.getParams().getUrl();
-            Desktop.getFrame().setTutorialUrl(url);
-         }
          
          ShinyApplicationParams params = event.getParams();
          String tutorialName = params.getMeta().getString("name");
-         String packageName  = params.getMeta().getString("package");
-         String url = params.getUrl();
+         String tutorialPackage = params.getMeta().getString("package");
+         String tutorialUrl = DomUtils.makeAbsoluteUrl(params.getUrl());
          
-         paramsMap_.put(url, params);
+         if (Desktop.hasDesktopFrame())
+            Desktop.getFrame().setTutorialUrl(tutorialUrl);
          
          server_.tutorialStarted(
                tutorialName,
-               packageName,
-               url,
+               tutorialPackage,
+               tutorialUrl,
                new VoidServerRequestCallback());
          
-         display_.openTutorial(url);
+         display_.openTutorial(tutorialUrl);
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPING))
       {
-         Debug.logToRConsole("Tutorial: stopping");
+         // handled separately
       }
       else if (StringUtil.equals(state, ShinyApplicationParams.STATE_STOPPED))
       {
-         Debug.logToRConsole("Tutorial: stopped");
+         // handled separately
       }
    }
    
@@ -243,31 +245,8 @@ public class TutorialPresenter
    @Handler
    void onTutorialStop()
    {
-      // NOTE: 'getUrl()' will automatically prepend the scheme + authority
-      // to the 'raw' src attribute set on an iframe; in our case, we require
-      // the 'raw' src URL for our mapping so grab that instead
-      String url = display_.getRawSrcUrl();
-      ShinyApplicationParams params = paramsMap_.get(url);
-      assert params != null :
-         "no known tutorial associated with URL '" + url + "'";
-            
-      server_.tutorialStop(
-            params.getMeta().getString("name"),
-            params.getMeta().getString("package"),
-            new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void response)
-               {
-                  onTutorialStopped();
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
+      String url = DomUtils.makeAbsoluteUrl(display_.getUrl());
+      tutorialStop(url);
    }
    
    @Handler
@@ -322,15 +301,29 @@ public class TutorialPresenter
       commands_.tutorialPopout().setEnabled(isShiny);
    }
    
-   
+   private void tutorialStop(String url)
+   {
+      server_.tutorialStop(url, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void response)
+         {
+            onTutorialStopped();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
    
    private final Display display_;
    private final EventBus events_;
    private final Commands commands_;
    private final TutorialServerOperations server_;
    private final ShinyDisconnectNotifier disconnectNotifier_;
-   
-   private final SafeMap<String, ShinyApplicationParams> paramsMap_;
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
    

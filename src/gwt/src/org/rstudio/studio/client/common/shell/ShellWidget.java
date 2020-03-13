@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -86,7 +85,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
+      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
@@ -191,17 +190,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
-      if (StringUtil.isNullOrEmpty(outputLabel))
-         verticalPanel_.add(output_.getWidget());
-      else
-      {
-         HTML wrapper = new HTML();
-         Roles.getRegionRole().set(wrapper.getElement());
-         Roles.getRegionRole().setAriaLabelProperty(wrapper.getElement(), outputLabel);
-         Roles.getDocumentRole().set(output_.getElement());
-         wrapper.getElement().appendChild(output_.getElement());
-         verticalPanel_.add(wrapper);
-      }
+      verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
       verticalPanel_.setWidth("100%");

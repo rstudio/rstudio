@@ -505,7 +505,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showLicenseDialog"/>
          <cmd refid="checkForUpdates"/>
          <separator/>
-         <menu label="Acc_essibility">
+         <menu label="_Accessibility">
             <cmd refid="toggleScreenReaderSupport"/>
             <separator/>
             <menu label="S_peak">
@@ -870,17 +870,19 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+Shift+/"/>
-         <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+Shift+T"/>
-         <shortcut refid="speakEditorLocation" value="Ctrl+Alt+Shift+B"/>
+         <shortcut refid="toggleTabKeyMovesFocus" value="Ctrl+Alt+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleTabKeyMovesFocus" value="Alt+Shift+[" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="speakEditorLocation" value="Ctrl+Alt+1" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="speakEditorLocation" value="Alt+Shift+1" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusMainToolbar" value="Ctrl+Alt+Y" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusMainToolbar" value="Alt+Shift+Y" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <!-- 
-      Shortcuts in this group won't be shown in the quick reference card. 
+      Shortcuts in this group won't be shown in the quick reference card.
        -->
       <shortcutgroup name="Not Displayed">
          <shortcut refid="layoutZoomSource" value="Ctrl+Shift+1"/>
@@ -3081,7 +3083,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="showAboutDialog"
         label="About RStudio..."
-        menuLabel="_About RStudio"
+        menuLabel="A_bout RStudio"
         rebindable="false"
         windowMode="main"/>
 
@@ -3631,8 +3633,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleScreenReaderSupport"
         menuLabel="_Screen Reader Support"
         checkable="true"
-        windowMode="main"
-        rebindable="false"/>
+        windowMode="main"/>
 
    <cmd id="showAccessibilityOptions"
         menuLabel="Accessibility _Options..."

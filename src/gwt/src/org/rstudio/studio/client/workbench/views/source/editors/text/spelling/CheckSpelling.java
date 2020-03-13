@@ -168,7 +168,7 @@ public class CheckSpelling
          showProgress();
 
          Iterable<Range> wordSource = docDisplay_.getWords(
-               docDisplay_.getFileType().getTokenPredicate(),
+               docDisplay_.getFileType().getSpellCheckTokenPredicate(),
                docDisplay_.getFileType().getCharPredicate(),
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : null);

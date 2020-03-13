@@ -1,7 +1,7 @@
 #
 # SessionTutorial.R
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -22,15 +22,34 @@
 # JSON RPC ----
 .rs.addJsonRpcHandler("tutorial_started", function(name, package, url)
 {
-   .rs.tutorial.setRunningTutorialUrl(name, package, url)
+   # tag the associated tutorial with the browser url
+   tutorial <- .rs.tutorial.registryGet(name, package)
+   tutorial[["browser_url"]] <- url
 })
 
-.rs.addJsonRpcHandler("tutorial_stop", function(name, package)
+.rs.addJsonRpcHandler("tutorial_stop", function(url)
 {
-   .rs.tutorial.stopTutorial(name, package)
+   tutorial <- .rs.tutorial.registryFind(url)
+   if (is.null(tutorial))
+      return(FALSE)
+   
+   .rs.tutorial.stopTutorial(
+      name    = tutorial[["name"]],
+      package = tutorial[["package"]]
+   )
+   
+   TRUE
+   
 })
 
-
+.rs.addJsonRpcHandler("tutorial_metadata", function(url)
+{
+   tutorial <- .rs.tutorial.registryFind(url)
+   if (is.null(tutorial))
+      return(list())
+   
+   .rs.scalarListFromList(as.list(tutorial))
+})
 
 # Methods ----
 
@@ -39,24 +58,45 @@
    paste(package, name, sep = "::")
 })
 
+.rs.addFunction("tutorial.registryCreate", function(name, package)
+{
+   # NOTE: we use an R environment here just so we can get reference semantics
+   # (makes mutation of existing tutorial objects more straight-forward, which
+   # is necessary as we'll need to tag tutorial objects with extra meta-data
+   # after creation)
+   tutorial <- as.environment(list(name = name, package = package))
+   
+   # store in registry
+   key <- .rs.tutorial.registryKey(name, package)
+   .rs.tutorial.registry[[key]] <- tutorial
+   
+   # return tutorial object
+   tutorial
+})
+
 .rs.addFunction("tutorial.registryGet", function(name, package)
 {
    key <- .rs.tutorial.registryKey(name, package)
    .rs.tutorial.registry[[key]]
 })
 
-.rs.addFunction("tutorial.registrySet", function(name, package, tutorial)
+.rs.addFunction("tutorial.registryFind", function(url)
 {
-   key <- .rs.tutorial.registryKey(name, package)
-   tutorial$package <- package
-   tutorial$name <- name
-   .rs.tutorial.registry[[key]] <- tutorial
-})
-
-.rs.addFunction("tutorial.registryClear", function(name, package)
-{
-   key <- .rs.tutorial.registryKey(name, package)
-   .rs.tutorial.registry[[key]] <- NULL
+   keys <- ls(envir = .rs.tutorial.registry)
+   for (key in keys)
+   {
+      tutorial <- .rs.tutorial.registry[[key]]
+      
+      match <-
+         identical(url, tutorial[["shiny_url"]]) ||
+         identical(url, tutorial[["browser_url"]])
+      
+      if (match)
+         return(tutorial)
+   }
+   
+   NULL
+   
 })
 
 # TODO: local jobs are stopped when the session is suspended, and so running
@@ -72,52 +112,40 @@
 
 .rs.addFunction("tutorial.launchBrowser", function(url)
 {
+   # get the pending tutorial
    tutorial <- .rs.getVar("tutorial.pendingTutorial")
    .rs.clearVar("tutorial.pendingTutorial")
    
+   # tag that tutorial with the shiny url
+   tutorial[["shiny_url"]] <- url
+   
+   # open tutorial in pane
    meta <- .rs.scalarListFromList(tutorial)
    .rs.invokeShinyTutorialViewer(url, meta)
 })
 
-.rs.addFunction("tutorial.getRunningTutorial", function(name, package)
-{
-   .rs.tutorial.registryGet(name, package)
-})
-
-.rs.addFunction("tutorial.setRunningTutorial", function(name, package, job)
-{
-   tutorial <- list(name = name, package = package, job = job)
-   .rs.tutorial.registrySet(name, package, tutorial)
-})
-
-.rs.addFunction("tutorial.setRunningTutorialUrl", function(name, package, url)
-{
-   tutorial <- .rs.tutorial.registryGet(name, package)
-   tutorial$url <- url
-   .rs.tutorial.registrySet(name, package, tutorial)
-})
-
-.rs.addFunction("tutorial.clearRunningTutorial", function(name, package)
-{
-   .rs.tutorial.registryClear(name, package)
-})
-
 .rs.addFunction("tutorial.openExistingTutorial", function(name, package)
 {
-   tutorial <- .rs.tutorial.getRunningTutorial(name, package)
+   # find tutorial in registry
+   tutorial <- .rs.tutorial.registryGet(name, package)
    if (is.null(tutorial))
       return(FALSE)
 
-   url <- tutorial$url
+   # get underlying shiny url
+   url <- tutorial[["shiny_url"]]
    if (is.null(url))
       return(FALSE)   
    
-   job <- tutorial$job
+   # check for an associated active job
+   job <- tutorial[["job"]]
    running <- .rs.tryCatch(.Call("rs_isJobRunning", job, PACKAGE = "(embedding)"))
    if (!identical(running, TRUE))
       return(FALSE)
    
-   .rs.tutorial.enqueueClientEvent("navigate", list(url = url))
+   # open tutorial in pane
+   meta <- .rs.scalarListFromList(tutorial)
+   .rs.invokeShinyTutorialViewer(url, meta)
+   
    TRUE
 })
 
@@ -161,11 +189,14 @@
       encoding = "UTF-8"
    )
    
-   # set and return job id for caller
-   .rs.tutorial.setRunningTutorial(name, package, job)
+   # register a tutorial object
+   tutorial <- .rs.tutorial.registryCreate(name, package)
    
-   pendingTutorial <- list(name = name, package = package, job = job)
-   .rs.setVar("tutorial.pendingTutorial", pendingTutorial)
+   # add job id
+   tutorial[["job"]] <- job
+   
+   # set as pending
+   .rs.setVar("tutorial.pendingTutorial", tutorial)
    
    invisible(job)
    
@@ -173,9 +204,15 @@
 
 .rs.addFunction("tutorial.stopTutorial", function(name, package)
 {
-   tutorial <- .rs.tutorial.getRunningTutorial(name, package)
-   .rs.api.stopJob(tutorial$job)
-   .rs.tutorial.clearRunningTutorial(name, package)
+   # find tutorial in registry
+   tutorial <- .rs.tutorial.registryGet(name, package)
+   
+   # stop its associated job
+   .rs.api.stopJob(tutorial[["job"]])
+   
+   # remove from registry
+   key <- .rs.tutorial.registryKey(name, package)
+   .rs.tutorial.registry[[key]] <- NULL
 })
 
 .rs.addFunction("tutorial.enqueueClientEvent", function(type, data = list())

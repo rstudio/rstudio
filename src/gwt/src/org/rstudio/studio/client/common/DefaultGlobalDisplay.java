@@ -396,6 +396,20 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    }
    
    @Override
+   public void bringWindowToFront(String name)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().activateMinimalWindow(name);
+      else
+         bringWindowToFrontImpl(name);
+   }
+   
+   private static final native void bringWindowToFrontImpl(String name)
+   /*-{
+      $wnd.open("", name);
+   }-*/;
+   
+   @Override
    public void openRStudioLink(String linkName, boolean includeVersionInfo)
    {
       // build url
