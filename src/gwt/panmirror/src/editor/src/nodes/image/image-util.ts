@@ -104,6 +104,10 @@ export function sizePropWithUnit(prop: string | null) {
  
 }
 
+export function hasPercentWidth(size: string | null) {
+  return !!size && size.endsWith('%');
+}
+
 // sometime when we are called before the DOM renders the containerWidth
 // is 0, in this case provide a default of 1000 
 function ensureContainerWidth(containerWidth: number) {

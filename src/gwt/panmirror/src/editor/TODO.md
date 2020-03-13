@@ -2,6 +2,8 @@
 
 Discuss tokens / escaping / etc. with Joe
 
+Image alone in a paragraph does not become a figure (so our hoisting of float: left, etc. doesn't work)
+
 Sentinel cursor could end up outside of text node (e.g. in an attribute or between dollar signs) and in that case would result in a loss of content. perhaps we need something more approximate (e.g. paragraph or line level)
 
 If we start in VisualMode PM devtools not visible

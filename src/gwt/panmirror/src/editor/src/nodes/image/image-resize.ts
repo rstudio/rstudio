@@ -14,18 +14,6 @@
  */
 
 
-
-// general code review/cleanup
-
-// pull width/height out of style (but also on write!)
-
-// percentage sizing (esp. how do we get containerWidth at the beginning)
-// lockdown for percent
-// container for percent
- 
-// sync shelf on container resize (could help with percent problem!)
-
-
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
@@ -44,7 +32,7 @@ import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { unitToPixels, isNaturalAspectRatio, pixelsToUnit, roundUnit, sizePropWithUnit, validUnits } from './image-util';
+import { unitToPixels, isNaturalAspectRatio, pixelsToUnit, roundUnit, sizePropWithUnit, validUnits, hasPercentWidth } from './image-util';
 import { extractSizeStyles } from '../../api/css';
 
 export function initResizeContainer(container: HTMLElement) {
@@ -71,7 +59,7 @@ export function isResizeUICompatible(img: HTMLImageElement) {
   const incompatibleWidth = img.style.width && !img.hasAttribute('data-width');
 
   // incompatible if it has a height, but not a data-height
-  const incompatibleHeight = img.style.height && !img.hasAttribute('data-height');
+  const incompatibleHeight = img.style.height && img.style.height !== 'auto' && !img.hasAttribute('data-height');
 
   return (!incompatibleWidth && !incompatibleHeight);
 }
@@ -156,6 +144,20 @@ export function attachResizeUI(
     syncFromShelf();
   };
 
+  // update image width for changes in container
+  let lastContainerWidth = imgContainerWidth();
+  const containerWidthTimer = setInterval(() => {
+    const containerWidth = imgContainerWidth();
+    if (containerWidth !== lastContainerWidth) {
+      lastContainerWidth = containerWidth;
+      if (shelf.props.units() === '%') {
+        img.style.width = unitToPixels(shelf.props.width(), shelf.props.units(), containerWidth) + 'px';
+        shelf.position();
+      }
+    }
+  }, 25);
+
+
   // handle editImage request from shelf
   const onEditImage = () => {
     const nodeWithPos = imageNode();
@@ -194,6 +196,7 @@ export function attachResizeUI(
     },
     detach: () => {
       container.classList.remove('pm-image-resize-active');
+      clearInterval(containerWidthTimer);
       handle.remove();
       shelf.el.remove();
     }
@@ -248,9 +251,11 @@ function resizeShelf(
   shelf.append(panel);
   const addToPanel = (widget: HTMLElement, paddingRight: number) => {
     addHorizontalPanelCell(panel, widget);
-    const paddingSpan = window.document.createElement('span');
-    paddingSpan.style.width = paddingRight + 'px';
-    addHorizontalPanelCell(panel, paddingSpan);
+    if (paddingRight) {
+      const paddingSpan = window.document.createElement('span');
+      paddingSpan.style.width = paddingRight + 'px';
+      addHorizontalPanelCell(panel, paddingSpan);
+    }
   };
   
   const inputClasses = ['pm-text-color', 'pm-background-color'];
@@ -263,11 +268,14 @@ function resizeShelf(
   addToPanel(wInput, 8);
 
   // height
+  const kHeightWidth = '38px';
   const hLabel = createInputLabel('h:');
   addToPanel(hLabel, 4);
-  const hInput = createTextInput(4, inputClasses);
+  const hInput = createTextInput(4, inputClasses, { width: kHeightWidth });
   hInput.onchange = onHeightChanged;
-  addToPanel(hInput, 10);
+  addToPanel(hInput, 0);
+  const hAutoLabel = createInputLabel('(auto)', ['pm-light-text-color'], { width: kHeightWidth });
+  addToPanel(hAutoLabel, 10);
 
   // units
   const unitsSelect = createSelectInput(validUnits(), inputClasses);
@@ -277,6 +285,9 @@ function resizeShelf(
     // next time we resize it
     wInput.focus();
     unitsSelect.focus();
+
+    // manage UI
+    manageUnitsUI();
 
     // notify client
     onUnitsChanged();
@@ -306,6 +317,24 @@ function resizeShelf(
   } else {
     img.onload = onInit;
   }
+
+
+  // function used to manage ui
+  const manageUnitsUI = () => {
+
+    const percentSizing = unitsSelect.value === '%';
+
+    if (percentSizing) {
+      lockCheckbox.checked = true;
+      lockCheckbox.disabled = true;
+    } else {
+      lockCheckbox.disabled = false;
+    }
+
+    hInput.style.display = percentSizing ? 'none' : '';
+    hAutoLabel.style.display = percentSizing ? '' : 'none';
+  };
+
 
   // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {
@@ -339,10 +368,17 @@ function resizeShelf(
       unitsSelect.value = size.unit;
       setWidth(size.width);
       setHeight(size.height);
+
+      // manage units ui
+      manageUnitsUI();
       
       // ensure we are positioned correctly (not offscreen, wide enough, etc.)
       updatePosition();
 
+    },
+
+    position: () => {
+      updatePosition();
     },
 
     props: {
@@ -353,7 +389,11 @@ function resizeShelf(
       units: () => unitsSelect.value,
       setUnits: (units: string) => unitsSelect.value = units,
       lockRatio: () => lockCheckbox.checked,
-      setLockRatio: (lock: boolean) => lockCheckbox.checked = lock
+      setLockRatio: (lock: boolean) => {
+        if (!lockCheckbox.disabled) { 
+          lockCheckbox.checked = lock;
+        }
+      }
     }
   };
 }
@@ -518,7 +558,7 @@ function updateImageSize(
   let keyvalue = extractSizeStyles(image.node.attrs.keyvalue as Array<[string, string]>)!;
   keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
   keyvalue.push(['width', width + unit]);
-  if (!isNaturalAspectRatio(width, height, img, false)) {
+  if (!hasPercentWidth(width + unit) && !isNaturalAspectRatio(width, height, img, false)) {
     keyvalue.push(['height', height + unit]);
   }
   

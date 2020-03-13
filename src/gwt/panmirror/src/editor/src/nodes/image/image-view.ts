@@ -24,7 +24,7 @@ import { removeStyleAttrib, extractSizeStyles } from '../../api/css';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { sizePropWithUnit, isValidUnit, unitToPixels } from './image-util';
+import { sizePropWithUnit, isValidUnit, unitToPixels, hasPercentWidth } from './image-util';
 
 import './image-styles.css';
 
@@ -282,8 +282,9 @@ export class ImageNodeView implements NodeView {
             value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
           }
 
-          // set image style (modulo the properties lifted/removed above)
-          this.img.setAttribute('style', value);
+          // we don't set the style, because that will override styles set in width/height.
+          // if there are specific styles we want to reflect we should whitelist them in
+          // via calls to removeStyleAttrib
 
         } else if (key === 'width') {
 
@@ -335,6 +336,11 @@ export class ImageNodeView implements NodeView {
           }
         }
       });
+
+      // if width is a percentage, then displayed height needs to be 'auto'
+      if (hasPercentWidth(this.img.getAttribute('data-width'))) {
+        this.img.style.height = 'auto';
+      }
     }
   }
 
@@ -345,11 +351,14 @@ export class ImageNodeView implements NodeView {
   private containerWidth() {
     let containerWidth = (this.view.dom as HTMLElement).offsetWidth;
     if (containerWidth > 0) {
-      const imagePos = this.view.state.doc.resolve(this.getPos());
-      const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
-      if (resizeContainer) {
-        const resizeEl = this.view.domAtPos(resizeContainer.pos);
-        containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
+      const pos = this.getPos();
+      if (pos) {
+        const imagePos = this.view.state.doc.resolve(pos);
+        const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
+        if (resizeContainer) {
+          const resizeEl = this.view.domAtPos(resizeContainer.pos);
+          containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
+        }
       }
     } 
     return containerWidth;
